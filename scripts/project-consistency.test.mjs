@@ -17301,9 +17301,14 @@ describe("IMP-036I implementation authorization persistence", () => {
     assert.equal(evaluateImp036jComplimentaryItemContract(staleKept).code, "IMP036J_FREE_ITEM_PROSE");
     const secondRecovery = live.replace(
       "And the best valid combination is recomputed without it through the single accepted commercial evaluation\n",
-      "And the best valid combination is recomputed without it through the single accepted commercial evaluation using a second Promotion evaluator\n",
+      "And the best valid combination is recomputed without it through the single accepted commercial evaluation, followed by a second commercial evaluation\n",
     );
     assert.equal(evaluateImp036jComplimentaryItemContract(secondRecovery).code, "IMP036J_FREE_ITEM_PROSE");
+    const equalTieDropped = live.replace(
+      "And the same payable amount as a combination with no primary merchandise or order Offer does not defeat this complimentary combination\n",
+      "",
+    );
+    assert.equal(evaluateImp036jComplimentaryItemContract(equalTieDropped).code, "IMP036J_FREE_ITEM_PROSE");
   });
 
   it("keeps IMP-036J stories unready before the Gate and rejects a stale Gate blocker after PASS", () => {

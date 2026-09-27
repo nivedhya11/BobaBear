@@ -38697,6 +38697,7 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
     [applied, "no silent substitute is introduced"],
     [applied, "makes the complimentary benefit understandable"],
     [applied, "single accepted commercial evaluation"],
+    [applied, "same payable amount as a combination with no primary merchandise or order Offer does not defeat this complimentary combination"],
     [purchased, "purchased Order retains the exact complimentary item that was purchased"],
     [purchased, "historical line remains no-extra-merchandise-charge"],
     [purchased, "live Offer evaluation does not rewrite the purchased Order"],
@@ -38715,10 +38716,15 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
       };
     }
   }
+  const rejectsSecondEvaluator = (block) =>
+    /second(?:\s+\S+){0,6}\s+evaluat/i.test(block) ||
+    /another(?:\s+\S+){0,6}\s+evaluat/i.test(block) ||
+    /additional(?:\s+\S+){0,6}\s+evaluat/i.test(block) ||
+    /second money engine/i.test(block);
   if (
-    /second evaluation/i.test(applied) ||
+    rejectsSecondEvaluator(applied) ||
     /charges the normal merchandise/i.test(applied) ||
-    /second evaluation|second promotion evaluator|second money engine/i.test(unavailable)
+    rejectsSecondEvaluator(unavailable)
   ) {
     return {
       ok: false,
