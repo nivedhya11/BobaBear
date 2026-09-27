@@ -1763,7 +1763,7 @@ export function isSupportedImp030GovernanceCheckpoint(roadmapVersion, stateVersi
   const imp036iImplementationComplete = roadmapVersion === "GTM-R161" && stateVersion === "STATE-R159";
   const imp036iAcceptance = roadmapVersion === "GTM-R162" && stateVersion === "STATE-R160";
   const imp036jProductDefinitionActivation = roadmapVersion === "GTM-R163" && stateVersion === "STATE-R161";
-  const imp036jProductDefinitionDraftReady = roadmapVersion === "GTM-R165" && stateVersion === "STATE-R163";
+  const imp036jProductDefinitionDraftReady = roadmapVersion === "GTM-R166" && stateVersion === "STATE-R164";
   if (kind === "activation") return activation;
   if (kind === "lock") return lock;
   if (kind === "authorization") return authorization;
@@ -25136,7 +25136,8 @@ function checkProductDeliveryProcessAuthorities() {
       (roadmapMeta?.roadmapVersion === "GTM-R162" && stateMeta?.stateVersion === "STATE-R160") ||
       (roadmapMeta?.roadmapVersion === "GTM-R163" && stateMeta?.stateVersion === "STATE-R161") ||
       (roadmapMeta?.roadmapVersion === "GTM-R164" && stateMeta?.stateVersion === "STATE-R162") ||
-      (roadmapMeta?.roadmapVersion === "GTM-R165" && stateMeta?.stateVersion === "STATE-R163")
+      (roadmapMeta?.roadmapVersion === "GTM-R165" && stateMeta?.stateVersion === "STATE-R163") ||
+      (roadmapMeta?.roadmapVersion === "GTM-R166" && stateMeta?.stateVersion === "STATE-R164")
     );
   const atImp036hProductDefinitionActivationCheckpoint =
     roadmapMeta?.roadmapVersion === "GTM-R141" &&
@@ -38329,7 +38330,7 @@ const IMP036J_DRAFT_READY_META = {
   status: "DRAFT",
   authority: "PRODUCT_DEFINITION",
   capability: "IMP-036J",
-  productDefinitionVersion: "PD-IMP-036J-DRAFT-3",
+  productDefinitionVersion: "PD-IMP-036J-DRAFT-4",
   productDefinitionStatus: "PRE_GATE_DRAFT",
   productDefinitionGate: "NOT_PERFORMED",
   architectureFit: "NOT_PERFORMED",
@@ -38337,7 +38338,7 @@ const IMP036J_DRAFT_READY_META = {
 };
 
 const IMP036J_DRAFT_READY_BODY = {
-  PRODUCT_DEFINITION_VERSION: "PD-IMP-036J-DRAFT-3",
+  PRODUCT_DEFINITION_VERSION: "PD-IMP-036J-DRAFT-4",
   STATUS: "DRAFT",
   PRE_GATE_DRAFT: "YES",
   PRODUCT_DEFINITION_IN_PROGRESS: "YES",
@@ -38352,7 +38353,7 @@ const IMP036J_DRAFT_READY_BODY = {
 };
 
 /**
- * Leading governance-meta plus the first status fence for the ungated IMP-036J DRAFT-3 candidate.
+ * Leading governance-meta plus the first status fence for the ungated IMP-036J DRAFT-4 candidate.
  * PRE_GATE_DRAFT does not mean approval. DRAFT_READY_FOR_GATE does not mean Gate PASS.
  * @param {string} productDefinitionText
  * @returns {{ ok: true } | { ok: false, code: string, message: string }}
@@ -38551,6 +38552,120 @@ export function evaluateImp036jStackingContract(productDefinitionText) {
 }
 
 /**
+ * Unrestricted guest coupon evaluation must have a pass/fail outcome.
+ * Identity alone does not reject the coupon. Best-valid-combination still decides the winner.
+ * @param {string} productDefinitionText
+ * @returns {{ ok: true } | { ok: false, code: string, message: string }}
+ */
+export function evaluateImp036jGuestCouponContract(productDefinitionText) {
+  const text = String(productDefinitionText);
+  const start = text.indexOf("AC-036J-002-05 —");
+  const end = text.indexOf("AC-036J-002-06 —", start + 1);
+  const scenario = start < 0 || end < 0 ? "" : text.slice(start, end);
+  if (!scenario) {
+    return { ok: false, code: "IMP036J_GUEST_COUPON_AC", message: "AC-036J-002-05 is missing" };
+  }
+  if (/may apply/i.test(scenario)) {
+    return {
+      ok: false,
+      code: "IMP036J_GUEST_COUPON_MAY_APPLY",
+      message: "AC-036J-002-05 must not use a nondeterministic may-apply outcome",
+    };
+  }
+  if (/must always apply/i.test(scenario)) {
+    return {
+      ok: false,
+      code: "IMP036J_GUEST_COUPON_ALWAYS",
+      message: "AC-036J-002-05 must not require the unrestricted coupon to apply in every case",
+    };
+  }
+  if (!/GUEST_IDENTITY_ALONE_REJECTS = NO/.test(scenario)) {
+    return {
+      ok: false,
+      code: "IMP036J_GUEST_COUPON_IDENTITY_REJECTION",
+      message: "AC-036J-002-05 must not let missing customer identity reject an unrestricted coupon by itself",
+    };
+  }
+  const markers = [
+    "ENTERS_SAME_COMMERCIAL_CANDIDATE_EVALUATION = YES",
+    "COUPON_BACKED_OFFER_APPLIES_WHEN_BEST_COMBINATION_DEPENDS_ON_IT = YES",
+    "BETTER_NON_COUPON_COMBINATION_REMAINS = YES",
+    "FIRST_ORDER_AND_PER_CUSTOMER_CAP_REQUIRE_AUTHENTICATED_IDENTITY = YES",
+  ];
+  for (const marker of markers) {
+    if (!scenario.includes(marker)) {
+      return {
+        ok: false,
+        code: "IMP036J_GUEST_COUPON_DETERMINISTIC",
+        message: `AC-036J-002-05 must record ${marker}`,
+      };
+    }
+  }
+  return { ok: true };
+}
+
+/**
+ * Complimentary menu-item V1 remains a mandatory acceptance outcome and a Fit safety boundary.
+ * @param {string} productDefinitionText
+ * @returns {{ ok: true } | { ok: false, code: string, message: string }}
+ */
+export function evaluateImp036jComplimentaryItemContract(productDefinitionText) {
+  const text = String(productDefinitionText);
+  const storyMap = text.split("## 7. Story map")[1]?.split("## 8.")[0] ?? "";
+  const row = storyMap.split("\n").find((line) => line.includes("`US-036J-013`"));
+  if (row?.includes("FOLLOW_UP")) {
+    return {
+      ok: false,
+      code: "IMP036J_FREE_ITEM_FOLLOW_UP",
+      message: "US-036J-013 must not be classified as follow-up",
+    };
+  }
+  if (!row || !row.includes("V1_ACCEPTANCE_SLICE")) {
+    return {
+      ok: false,
+      code: "IMP036J_FREE_ITEM_SLICE",
+      message: "US-036J-013 must remain in the V1 acceptance slice",
+    };
+  }
+  if (!text.includes("AC-036J-013-01 —") || !text.includes("AC-036J-013-02 —") || !text.includes("AC-036J-012-04 —")) {
+    return {
+      ok: false,
+      code: "IMP036J_FREE_ITEM_AC",
+      message: "mandatory complimentary-item acceptance scenarios are missing",
+    };
+  }
+  const markers = [
+    "COMPLIMENTARY_MENU_ITEM_V1_ACCEPTANCE = MANDATORY",
+    "COMPLIMENTARY_MENU_ITEM_FOLLOW_UP = PROHIBITED",
+    "COMPLIMENTARY_MENU_ITEM_STACKING_SLOT = PRIMARY_MERCHANDISE_OR_ORDER_OFFER",
+    "COMPLIMENTARY_MENU_ITEM_NEW_STACKING_SLOT = NO",
+    "FIT_COMPLIMENTARY_ITEM_UNSAFE = STOP_CONTRADICTION_DECISION_REQUIRED",
+    "COMPLIMENTARY_ITEM_NO_EXTRA_MERCHANDISE_CHARGE = YES",
+    "COMPLIMENTARY_ITEM_CUSTOMER_CHOICE = NO",
+    "COMPLIMENTARY_ITEM_PURCHASED_TRUTH = CHECKOUT_SNAPSHOT",
+    "COMPLIMENTARY_ITEM_EXACT_OPERATOR_ITEM = YES",
+  ];
+  for (const marker of markers) {
+    if (!text.includes(marker)) {
+      return {
+        ok: false,
+        code: "IMP036J_FREE_ITEM_MARKER",
+        message: `IMP-036J must record ${marker}`,
+      };
+    }
+  }
+  const followUp = text.split("### FOLLOW_UP_NOT_V1")[1]?.split("### EXPLICIT_NON_GOALS")[0] ?? "";
+  if (/US-036J-013/.test(followUp)) {
+    return {
+      ok: false,
+      code: "IMP036J_FREE_ITEM_FOLLOW_UP",
+      message: "US-036J-013 must not be moved into FOLLOW_UP_NOT_V1",
+    };
+  }
+  return { ok: true };
+}
+
+/**
  * Pre-gate stories stay NOT_READY_FOR_IMPLEMENTATION.
  * A future Gate PASS must drop the Gate from the readiness blocker.
  * @param {string} productDefinitionText
@@ -38575,7 +38690,7 @@ export function evaluateImp036jStoryReadiness(productDefinitionText) {
   );
   const stories = text.split("## 9. User stories")[1]?.split("## 10. Acceptance scenarios")[0] ?? "";
   const readiness = [...stories.matchAll(/Story ID: (US-036J-\d+)\n[\s\S]*?^Readiness: (.+)$/gm)];
-  const expected = Array.from({ length: 12 }, (_, index) => `US-036J-${String(index + 1).padStart(3, "0")}`);
+  const expected = Array.from({ length: 13 }, (_, index) => `US-036J-${String(index + 1).padStart(3, "0")}`);
   const found = readiness.map((match) => match[1]);
   if (found.join(",") !== expected.join(",")) {
     return {
@@ -38606,7 +38721,7 @@ export function evaluateImp036jStoryReadiness(productDefinitionText) {
       return {
         ok: false,
         code: "IMP036J_READINESS_FUTURE",
-        message: "DRAFT-3 must record that a future Gate PASS drops the Gate readiness blocker",
+        message: "The pre-gate draft must record that a future Gate PASS drops the Gate readiness blocker",
       };
     }
     const preGateCell = imp036jReadinessCell(text);
@@ -38789,7 +38904,7 @@ function checkImp036jProductDefinitionActivation(roadmap, state, architecture, d
 }
 
 /**
- * CURRENT checkpoint: IMP-036J Product Definition draft ready for Gate (GTM-R165 / STATE-R163).
+ * CURRENT checkpoint: IMP-036J Product Definition draft ready for Gate (GTM-R166 / STATE-R164).
  * Ready for independent Gate review. The Gate is not performed. The definition is not approved.
  * @param {Record<string, any>} roadmap
  * @param {Record<string, any>} state
@@ -38803,17 +38918,17 @@ function checkImp036jProductDefinitionDraftReady(roadmap, state, architecture, d
   const roadmapText = roadmap?.text ?? "";
   const stateText = state?.text ?? "";
   const currentRoadmapSection = roadmapText.split("## 2. Current Position")[1]?.split("\n## ")[0] ?? "";
-  const currentMarker = currentRoadmapSection.split("**GTM-R164**")[0] || currentRoadmapSection;
+  const currentMarker = currentRoadmapSection.split("**GTM-R165**")[0] || currentRoadmapSection;
   const stateSection2 = stateText.split("## 2. Current Work Position")[1]?.split("\n## ")[0] ?? "";
   const futureSliceSection = roadmapText.split("## 5. Future GTM Slices")[1]?.split("\n## ")[0] ?? "";
   const acceptedSection = roadmapText.split("## 3. Accepted Slices")[1]?.split("\n## ")[0] ?? "";
   const productDefAbs = resolveExactRelativeFile("docs/platform/product/IMP-036J/product-definition.md");
   const productDefinitionText = productDefAbs ? readFileSync(productDefAbs, "utf8") : "";
-  if (roadmapVersion !== "GTM-R165" || stateVersion !== "STATE-R163") {
-    fail("IMP036J_DRAFT_READY_IDENTITY", "IMP-036J draft-ready must be the current GTM-R165 / STATE-R163 checkpoint");
+  if (roadmapVersion !== "GTM-R166" || stateVersion !== "STATE-R164") {
+    fail("IMP036J_DRAFT_READY_IDENTITY", "IMP-036J draft-ready must be the current GTM-R166 / STATE-R164 checkpoint");
   }
-  if (roadmap?.meta.supersedes !== "GTM-R164" || state?.meta.supersedes !== "STATE-R162") {
-    fail("IMP036J_DRAFT_READY_SUPERSEDES", "GTM-R165 must supersede GTM-R164 and STATE-R163 must supersede STATE-R162");
+  if (roadmap?.meta.supersedes !== "GTM-R165" || state?.meta.supersedes !== "STATE-R163") {
+    fail("IMP036J_DRAFT_READY_SUPERSEDES", "GTM-R166 must supersede GTM-R165 and STATE-R164 must supersede STATE-R163");
   }
   if (roadmap?.meta.acceptedThrough !== "IMP-036I" || state?.meta.acceptedThrough !== "IMP-036I") {
     fail("IMP036J_ACCEPTED_THROUGH", "IMP-036J draft-ready must keep acceptedThrough at IMP-036I");
@@ -38831,7 +38946,7 @@ function checkImp036jProductDefinitionDraftReady(roadmap, state, architecture, d
     "IMP-036J: PLANNED",
     "IMP036J_ACTIVATED: YES",
     "IMP036J_PRODUCT_DEFINITION: DRAFT_READY_FOR_GATE",
-    "IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-3",
+    "IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-4",
     "IMP036J_PRODUCT_DEFINITION_GATE: NOT_PERFORMED",
     "IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED",
     "IMP036J_IMPLEMENTATION_AUTHORIZED: NO",
@@ -38854,8 +38969,11 @@ function checkImp036jProductDefinitionDraftReady(roadmap, state, architecture, d
       fail("IMP036J_DRAFT_READY_TOKEN", `STATE current work position must record ${token}`);
     }
   }
+  if (!stateText.includes("STATE-R164 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY")) {
+    fail("IMP036J_DRAFT_READY_RECORD", "STATE must record STATE-R164 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY");
+  }
   if (!stateText.includes("STATE-R163 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY")) {
-    fail("IMP036J_DRAFT_READY_RECORD", "STATE must record STATE-R163 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY");
+    fail("IMP036J_DRAFT3_HISTORY", "STATE must preserve historical STATE-R163 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY");
   }
   if (!stateText.includes("STATE-R162 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY")) {
     fail("IMP036J_DRAFT2_HISTORY", "STATE must preserve historical STATE-R162 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY");
@@ -38889,6 +39007,12 @@ function checkImp036jProductDefinitionDraftReady(roadmap, state, architecture, d
   if (!pd.ok) fail(pd.code || "IMP036J_PD_META", pd.message || "IMP-036J Product Definition draft-ready metadata is invalid");
   const stacking = evaluateImp036jStackingContract(productDefinitionText);
   if (!stacking.ok) fail(stacking.code || "IMP036J_STACK", stacking.message || "IMP-036J stacking contract is invalid");
+  const guestCoupon = evaluateImp036jGuestCouponContract(productDefinitionText);
+  if (!guestCoupon.ok) fail(guestCoupon.code || "IMP036J_GUEST_COUPON", guestCoupon.message || "IMP-036J guest coupon contract is invalid");
+  const complimentaryItem = evaluateImp036jComplimentaryItemContract(productDefinitionText);
+  if (!complimentaryItem.ok) {
+    fail(complimentaryItem.code || "IMP036J_FREE_ITEM", complimentaryItem.message || "IMP-036J complimentary-item contract is invalid");
+  }
   const readiness = evaluateImp036jStoryReadiness(productDefinitionText);
   if (!readiness.ok) fail(readiness.code || "IMP036J_READINESS", readiness.message || "IMP-036J story readiness is invalid");
   note("IMP-036J Product Definition draft-ready is CURRENT (Gate NOT_PERFORMED; not approved)");
