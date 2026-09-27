@@ -9751,7 +9751,7 @@ describe("D-374 cost-optimized pilot infrastructure checkpoint", () => {
     assert.match(roadmap, /"roadmapVersion":\s*"GTM-R1(?:37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56|57|58|59|60|61)"/);
     assert.match(state, /"stateVersion":\s*"STATE-R1(?:35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56|57|58|59)"/);
     assert.match(architecture, /"architectureVersion":\s*"ARCH-R2[0-3]"/);
-    assert.match(decision, /"decisionRegisterVersion":\s*"DR-(?:1[6789]|2[01])"/);
+    assert.match(decision, /"decisionRegisterVersion":\s*"DR-(?:1[6789]|2[0-2])"/);
     assert.match(decision, /\|\s*D-374\s*\|[^\n]*\|\s*CURRENT\s*\|/);
     assert.match(decision, /D-375/);
     assert.match(decision, /D-376/);
@@ -16883,7 +16883,7 @@ describe("IMP-036I architecture lock authority (D-379/D-380 CURRENT)", () => {
   it("validates live implementation-complete architecture artifacts", () => {
     const result = evaluateImp036iImplementationComplete({
       architectureVersion: "ARCH-R23",
-      decisionRegisterVersion: "DR-21",
+      decisionRegisterVersion: "DR-22",
       decisionText: readFileSync("docs/platform/decision-register.md", "utf8"),
       architectureText: readFileSync("docs/platform/ARCHITECTURE.md", "utf8"),
       capabilityText: readFileSync("docs/platform/capabilities/IMP-036I-scheduled-fulfilment.md", "utf8"),
@@ -17420,7 +17420,7 @@ describe("IMP-036I implementation authorization persistence", () => {
   it("accepts the corrected live execution plan", () => {
     const result = evaluateImp036iImplementationComplete({
       architectureVersion: "ARCH-R23",
-      decisionRegisterVersion: "DR-21",
+      decisionRegisterVersion: "DR-22",
       decisionText: readFileSync("docs/platform/decision-register.md", "utf8"),
       architectureText: readFileSync("docs/platform/ARCHITECTURE.md", "utf8"),
       capabilityText: readFileSync("docs/platform/capabilities/IMP-036I-scheduled-fulfilment.md", "utf8"),
@@ -17629,7 +17629,7 @@ describe("IMP-036I implementation authorization persistence", () => {
   it("accepts the live IMP-036I implementation plan governance metadata", () => {
     const result = evaluateImp036iImplementationComplete({
       architectureVersion: "ARCH-R23",
-      decisionRegisterVersion: "DR-21",
+      decisionRegisterVersion: "DR-22",
       decisionText: readFileSync("docs/platform/decision-register.md", "utf8"),
       architectureText: readFileSync("docs/platform/ARCHITECTURE.md", "utf8"),
       capabilityText: readFileSync("docs/platform/capabilities/IMP-036I-scheduled-fulfilment.md", "utf8"),
