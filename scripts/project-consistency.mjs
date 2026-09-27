@@ -16204,6 +16204,9 @@ function checkDecisionRegister(decision, roadmap, state) {
     requiredIds.push("D-379");
     requiredIds.push("D-380");
   }
+  if (isImp036iImplementationCompleteCheckpoint(roadmap, state)) {
+    requiredIds.push("D-381");
+  }
   for (const id of requiredIds) {
     if (!seen.has(id)) {
       fail("DECISION_REQUIRED_IDS", `DECISION-REGISTER must register ${id}`);
@@ -18040,14 +18043,15 @@ function checkImp028ArchitectureLock(roadmap, state, architecture, decision) {
   }
 
   if (decision) {
-    const expectedDecisionRegisterVersion = isImp036iArchitectureLockCheckpoint(roadmap, state) ||
+    const expectedDecisionRegisterVersion = isImp036iImplementationCompleteCheckpoint(roadmap, state)
+      ? "DR-22"
+      : isImp036iArchitectureLockCheckpoint(roadmap, state) ||
       isImp036iImplementationAuthorizationCheckpoint(roadmap, state) ||
       isImp036iImplementationStartCheckpoint(roadmap, state) ||
       isImp036iTranche2Checkpoint(roadmap, state) ||
       isImp036iTranche3Checkpoint(roadmap, state) ||
       isImp036iTranche4Checkpoint(roadmap, state) ||
-      isImp036iTranche5Checkpoint(roadmap, state) ||
-      isImp036iImplementationCompleteCheckpoint(roadmap, state)
+      isImp036iTranche5Checkpoint(roadmap, state)
       ? "DR-21"
       : isImp036hArchitectureLockCheckpoint(roadmap, state) ||
       isImp036hImplementationAuthorizationCheckpoint(roadmap, state) ||
@@ -35522,12 +35526,31 @@ export function evaluateImp036iArchitectureLockAuthority(docs) {
       message: "IMP-036I architecture lock requires CURRENT architecture ARCH-R23",
     };
   }
-  if (decisionRegisterVersion && decisionRegisterVersion !== "DR-21") {
+  if (
+    decisionRegisterVersion &&
+    decisionRegisterVersion !== "DR-21" &&
+    decisionRegisterVersion !== "DR-22"
+  ) {
     return {
       ok: false,
       code: "IMP036I_DR_21",
-      message: "IMP-036I architecture lock requires decision register DR-21",
+      message: "IMP-036I architecture lock requires decision register DR-21, or DR-22 after D-381 with architecture unchanged",
     };
+  }
+  if (decisionRegisterVersion === "DR-22") {
+    const outletRetirementRow = [...decisionText.split("\n")].find((line) => /^\|\s*D-381\s*\|/.test(line));
+    if (
+      !outletRetirementRow ||
+      !/\|\s*CURRENT\s*\|/.test(outletRetirementRow) ||
+      !/scopeType = outlet/.test(outletRetirementRow) ||
+      !/pricing\.manage/.test(outletRetirementRow)
+    ) {
+      return {
+        ok: false,
+        code: "IMP036I_D381",
+        message: "DR-22 requires CURRENT D-381 active outlet PriceBook retirement under existing pricing.manage",
+      };
+    }
   }
 
   const globalSection = decisionText.split("## 2. Current Global Decisions")[1]?.split("## 3.")[0] || decisionText;
@@ -37999,8 +38022,22 @@ function checkImp036iImplementationComplete(roadmap, state, architecture, decisi
   if (architecture?.meta.architectureVersion !== "ARCH-R23") {
     fail("IMP036I_ARCH_R23", "ARCHITECTURE must remain ARCH-R23 at IMP-036I implementation complete");
   }
-  if (decision?.meta.decisionRegisterVersion !== "DR-21") {
-    fail("IMP036I_DR_21", "decision register must remain DR-21 at IMP-036I implementation complete");
+  if (decision?.meta.decisionRegisterVersion !== "DR-22" || decision?.meta.supersedes !== "DR-21") {
+    fail("IMP036I_DR_22", "decision register must be DR-22 superseding DR-21 at IMP-036I implementation complete after D-381");
+  }
+  const decisionText = decision?.text ?? "";
+  const d381Row = decisionText.split("\n").find((line) => /^\|\s*D-381\s*\|/.test(line));
+  if (
+    !d381Row ||
+    !/\|\s*CURRENT\s*\|/.test(d381Row) ||
+    !/scopeType = outlet/.test(d381Row) ||
+    !/pricing\.manage/.test(d381Row) ||
+    !/does not authorize UI retirement for Brand/.test(d381Row)
+  ) {
+    fail("IMP036I_D381", "D-381 must be CURRENT and limit retirement to active outlet PriceBooks under existing pricing.manage");
+  }
+  if (!/next ID \*\*D-382\*\*/.test(decisionText)) {
+    fail("IMP036I_D381", "Decision register next free ID must advance to D-382 after D-381");
   }
   const result = evaluateImp036iImplementationComplete({
     decisionText: decision?.text,
