@@ -2,13 +2,13 @@
 {
   "status": "CURRENT",
   "authority": "IMPLEMENTATION_SEQUENCE",
-  "roadmapVersion": "GTM-R162",
+  "roadmapVersion": "GTM-R163",
   "acceptedThrough": "IMP-036I",
-  "currentProductSlice": "NONE",
+  "currentProductSlice": "IMP-036J",
   "nextProductSlice": "IMP-037",
   "gtmBoundary": "IMP-040",
   "lastReviewed": "2026-09-27",
-  "supersedes": "GTM-R161"
+  "supersedes": "GTM-R162"
 }
 -->
 
@@ -34,7 +34,7 @@
   change) before the next slice begins: **ACCEPT → RECONCILE → ADVANCE**.
 - The historical IMP-026 → IMP-028 controlled-continuation exception (GTM-R15 onward) is **CLOSED**.
   It does **not** generalize to future slices and is **not** reopened by GTM-R138 / GTM-R139 /
-  GTM-R140 / GTM-R141 / GTM-R142 / GTM-R143 / GTM-R144 / GTM-R145 / GTM-R146 / GTM-R147 / GTM-R148 / GTM-R149 / GTM-R150 / GTM-R151 / GTM-R152 / GTM-R153 / GTM-R154 / GTM-R155 / GTM-R156 / GTM-R157 / GTM-R158 / GTM-R159 / GTM-R160 / GTM-R161 / GTM-R162.
+  GTM-R140 / GTM-R141 / GTM-R142 / GTM-R143 / GTM-R144 / GTM-R145 / GTM-R146 / GTM-R147 / GTM-R148 / GTM-R149 / GTM-R150 / GTM-R151 / GTM-R152 / GTM-R153 / GTM-R154 / GTM-R155 / GTM-R156 / GTM-R157 / GTM-R158 / GTM-R159 / GTM-R160 / GTM-R161 / GTM-R162 / GTM-R163.
 - **GTM-R138** records a **NEW**, Founder-authorized one-off exception
   `CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038` (authority PR#179/5771367844) so
   IMP-038 may activate for PD-1 Product Definition work while IMP-037 remains an
@@ -50,6 +50,14 @@
   **not** erased. This decision does **not** accept IMP-037 or IMP-038, does **not** close
   `GAP-EXT-ASSESS-001`, does **not** authorize IMP-036H implementation, and does **not** activate
   IMP-036I / IMP-039 / IMP-040.
+- **GTM-R163** records a **NEW**, Founder-authorized sequencing decision **D-382**
+  (2026-09-27) that inserts **IMP-036J — Promotions, Coupons & Offers** before held IMP-037
+  and activates it for Product Definition work only. D-377 remains CURRENT program-pause
+  authority. D-382 does not reinterpret D-377 as unlimited insertion authority. Deals,
+  Campaigns, and Revenue Recommendations remain parked discovery with no IMP identity.
+  This decision does **not** authorize IMP-036J implementation, pass a Product Definition
+  Gate, perform Architecture Fit, change ARCH-R23, unhold IMP-037 / IMP-038, close
+  `GAP-EXT-ASSESS-001`, or activate IMP-039 / IMP-040.
 - Current lifecycle is determined only by CURRENT metadata and CURRENT position fields in this
   document and [`STATE.md`](./STATE.md).
 - Historical GTM-R15…GTM-R113 exception narration, candidate/failure detail, and revision prose are
@@ -133,17 +141,18 @@ snapshot. `ARCHITECTURE_LOCKED` remains the retained lock vocabulary for accepte
 
 ```text
 Accepted Through:     IMP-036I — Scheduled Fulfilment
-Current Product Slice: NONE
+Current Product Slice: IMP-036J — Promotions, Coupons & Offers
 Next Product Slice:    IMP-037 — Backup, Restore & Migration Readiness
 Pending Acceptance:    NONE
 Public GTM Boundary:   IMP-040 — Launch Validation & Cutover
 
 PROGRAM_PAUSE: PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED
 PROGRAM_PAUSE_AUTHORITY: D-377
+ADDITIONAL_SEQUENCING_AUTHORITY: D-382
 HISTORICAL_CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038
 CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038
 CONTINUATION_EXCEPTION_AUTHORITY: PR#179/5771367844
-CONTINUATION_EXCEPTION_REASON: IMP-037 qualifying external/provider work blocked by unavailable DigitalOcean/Spaces operator authority after repository implementation and local recovery prequalification were completed. Preserved as historical authorization; CURRENT tip currentProductSlice is NONE after IMP-036I COMPLETE_AND_ACCEPTED under D-377 (nextProductSlice remains IMP-037 held).
+CONTINUATION_EXCEPTION_REASON: IMP-037 qualifying external/provider work blocked by unavailable DigitalOcean/Spaces operator authority after repository implementation and local recovery prequalification were completed. Preserved as historical authorization. After IMP-036I COMPLETE_AND_ACCEPTED the prior tip currentProductSlice was NONE under D-377. D-382 sets CURRENT currentProductSlice to IMP-036J for Product Definition only. nextProductSlice remains IMP-037 held.
 HISTORICAL_IMP026_TO_IMP028_CONTINUATION: CLOSED
 UNRESOLVED_PREDECESSOR: IMP-037
 IMP037_PROVIDER_BLOCKED_TO_IMP038: YES
@@ -494,6 +503,7 @@ IMP-040: PLANNED / NOT_ACTIVATED / NOT_AUTHORIZED / NOT_STARTED
 IMP040_ACTIVATED: NO
 PROGRAM_PAUSE: PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED
 PROGRAM_PAUSE_AUTHORITY: D-377
+ADDITIONAL_SEQUENCING_AUTHORITY: D-382
 HISTORICAL_CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038
 CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038
 CONTINUATION_EXCEPTION_AUTHORITY: PR#179/5771367844
@@ -510,7 +520,34 @@ IMP-036D: COMPLETE_AND_ACCEPTED
 IMP-036D_ARCHITECTURE_LOCKED: YES
 IMP-036D_ACCEPTED: YES
 IMP-036D_FOUNDER_UAT: PASS
+IMP-036J: PLANNED
+IMP036J_ACTIVATED: YES
+IMP036J_PRODUCT_DEFINITION: DRAFT_IN_PROGRESS
+IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-1
+IMP036J_PRODUCT_DEFINITION_GATE: NOT_PERFORMED
+IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036J_IMPLEMENTATION_AUTHORIZED: NO
+IMP036J_STARTED: NO
+IMP036J_IMPLEMENTATION_STARTED: NO
+IMP036J_IMPLEMENTATION_COMPLETE: NO
+IMP036J_ACCEPTED: NO
 ```
+
+**GTM-R163** records Founder-authorized sequencing **D-382** (2026-09-27) inserting
+**IMP-036J — Promotions, Coupons & Offers** before held IMP-037 and activating it for
+Product Definition work only (`IMP036J_ACTIVATED: YES`;
+`IMP036J_PRODUCT_DEFINITION: DRAFT_IN_PROGRESS`; `PD-IMP-036J-DRAFT-1`;
+`IMP036J_PRODUCT_DEFINITION_GATE: NOT_PERFORMED`; `IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED`;
+`IMP036J_IMPLEMENTATION_AUTHORIZED: NO`; `IMP036J_STARTED: NO`;
+`IMP036J_IMPLEMENTATION_COMPLETE: NO`; `IMP036J_ACCEPTED: NO`). Formal lifecycle remains
+`PLANNED`. `acceptedThrough` remains IMP-036I. `currentProductSlice` is IMP-036J.
+`pendingAcceptance` remains NONE. `nextProductSlice` remains IMP-037 and is not advanced.
+`PROGRAM_PAUSE` remains `PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED` under D-377. D-382 is
+additional sequencing authority. Deals, Campaigns, and Revenue Recommendations remain
+parked discovery with no IMP identity. Architecture remains ARCH-R23. Decision register
+advances to DR-23. D-377 remains CURRENT. This record does not authorize implementation,
+perform the Product Definition Gate, perform Architecture Fit, unhold IMP-037 / IMP-038,
+close `GAP-EXT-ASSESS-001`, or activate IMP-039 / IMP-040.
 
 **GTM-R162** records formal acceptance of IMP-036I — Scheduled Fulfilment after Founder UAT
 PASS on 2026-09-27. The accepted application/UAT candidate remains main
@@ -1153,8 +1190,13 @@ IMP-036D remains `COMPLETE_AND_ACCEPTED`. Concise acceptance identity: UAT candi
 
 ## 4. Current Product Slice
 
-Under `PROGRAM_PAUSE: PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED` (**D-377**), there is no active
-product slice (`currentProductSlice = NONE`; `pendingAcceptance = NONE`). IMP-036I — Scheduled
+Under `PROGRAM_PAUSE: PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED` (**D-377**) and additional
+sequencing authority **D-382**, the active product slice is **IMP-036J — Promotions, Coupons &
+Offers** (`currentProductSlice = IMP-036J`; `pendingAcceptance = NONE`;
+`IMP036J_ACTIVATED: YES`; formal lifecycle `PLANNED`; Product Definition
+`PD-IMP-036J-DRAFT-1` is `DRAFT` / `PRE_GATE_DRAFT` / `PRODUCT_DEFINITION_IN_PROGRESS`;
+Product Definition Gate `NOT_PERFORMED`; Architecture Fit `NOT_PERFORMED`; implementation
+`NOT_AUTHORIZED`). IMP-036I — Scheduled
 Fulfilment is `COMPLETE_AND_ACCEPTED` (`IMP036I_ACCEPTED: YES`; `IMP036I_FOUNDER_UAT: PASS`;
 `IMP036I_FORMAL_ACCEPTANCE: ACCEPTED`; Product Definition `PD-IMP-036I-DRAFT-4` APPROVED; Gate
 PASS; Architecture Fit PASS; architecture LOCKED). Accepted UAT runtime candidate remains
@@ -1276,8 +1318,10 @@ Historical acceptance evidence remains in the pre-compression ROADMAP snapshot.
 
 Remaining numeric GTM range IMP-037 → IMP-040: **4** IMP numbers. Enterprise Experience suffix
 slices IMP-036A–I are accepted. Founder-authorized pre-GTM product suffix slices IMP-036H
-(COMPLETE_AND_ACCEPTED) and IMP-036I (COMPLETE_AND_ACCEPTED) are inserted after IMP-036G and
-before IMP-037 without consuming or renaming existing numeric identities. Accepted inserted
+(COMPLETE_AND_ACCEPTED), IMP-036I (COMPLETE_AND_ACCEPTED), and IMP-036J (PLANNED; Product
+Definition in progress under D-382) are inserted after IMP-036G and before IMP-037 without
+consuming or renaming existing numeric identities. Deals, Campaigns, and Revenue
+Recommendations remain parked discovery and have no ledger identity. Accepted inserted
 slices IMP-026C and IMP-028A–D remain in the accepted ledger and are not future identities.
 Historical Food Direct insertion narration remains in
 [`history/ROADMAP-GTM-R113-pre-compression.md`](./history/ROADMAP-GTM-R113-pre-compression.md).
@@ -1293,6 +1337,7 @@ Historical Food Direct insertion narration remains in
 | IMP-036G | Administration Console V2 | COMPLETE_AND_ACCEPTED |
 | IMP-036H | Customer Pickup / Takeaway | COMPLETE_AND_ACCEPTED |
 | IMP-036I | Scheduled Fulfilment | COMPLETE_AND_ACCEPTED (IMP036I_ACTIVATED: YES; APPROVED; Gate PASS; Fit PASS; locked YES; implementation AUTHORIZED / STARTED / COMPLETE; IMP036I_IMPLEMENTATION_COMPLETE: YES; IMP036I_INDEPENDENT_IMPLEMENTATION_REVIEW: PASS; IMP036I_ACCEPTED: YES; IMP036I_FOUNDER_UAT: PASS; IMP036I_FORMAL_ACCEPTANCE: ACCEPTED) |
+| IMP-036J | Promotions, Coupons & Offers | PLANNED (IMP036J_ACTIVATED: YES; PRODUCT_DEFINITION DRAFT_IN_PROGRESS; PD-IMP-036J-DRAFT-1; Gate NOT_PERFORMED; Fit NOT_PERFORMED; implementation NOT_AUTHORIZED; IMP036J_ACCEPTED: NO) |
 | IMP-037 | Backup, Restore & Migration Readiness | IMPLEMENTATION_IN_PROGRESS (IMP037_HOLD: YES; BLOCKED_PROVIDER_ACCESS) |
 | IMP-038 | Security & Privacy Hardening | IMPLEMENTATION_IN_PROGRESS (IMP038_HOLD: YES; IMPLEMENTATION_COMPLETE / NOT_ACCEPTED; external assessment deferred) |
 | IMP-039 | Production Infrastructure & Release Pipeline | PLANNED |
@@ -1303,12 +1348,13 @@ Historical Food Direct insertion narration remains in
 The [Enterprise Experience Programme](./experience/enterprise-experience/README.md) defines supporting
 UX/workflow contracts (not locked capability architecture). Accepted Enterprise Experience order
 remains IMP-036A → B → C → D → E → F → G. Founder-authorized pre-GTM product insertions continue
-IMP-036G → IMP-036H → IMP-036I (COMPLETE_AND_ACCEPTED; APPROVED / Gate PASS / Architecture Fit PASS) → IMP-037 (held; not advanced) without reopening accepted EE slices.
+IMP-036G → IMP-036H → IMP-036I (COMPLETE_AND_ACCEPTED; APPROVED / Gate PASS / Architecture Fit PASS) → IMP-036J (PLANNED; Product Definition in progress; D-382; Gate / Fit / implementation not performed) → IMP-037 (held; not advanced) without reopening accepted EE slices.
 
 ```text
 FIGMA_REQUIRED_FOR_INITIAL_IMPLEMENTATION: NO
 IMP-036A → IMP-036I: COMPLETE_AND_ACCEPTED
-IMP-036I: COMPLETE_AND_ACCEPTED (IMP036I_ACTIVATED: YES; APPROVED; Gate PASS; Fit PASS; implementation AUTHORIZED / STARTED / COMPLETE; IMP036I_IMPLEMENTATION_COMPLETE: YES; IMP036I_ACCEPTED: YES; IMP036I_FOUNDER_UAT: PASS; currentProductSlice NONE)
+IMP-036I: COMPLETE_AND_ACCEPTED (IMP036I_ACTIVATED: YES; APPROVED; Gate PASS; Fit PASS; implementation AUTHORIZED / STARTED / COMPLETE; IMP036I_IMPLEMENTATION_COMPLETE: YES; IMP036I_ACCEPTED: YES; IMP036I_FOUNDER_UAT: PASS)
+IMP-036J: PLANNED (IMP036J_ACTIVATED: YES; PRODUCT_DEFINITION DRAFT_IN_PROGRESS; Gate NOT_PERFORMED; Fit NOT_PERFORMED; IMP036J_IMPLEMENTATION_AUTHORIZED: NO; IMP036J_ACCEPTED: NO; currentProductSlice IMP-036J)
 IMP-037: IMPLEMENTATION_IN_PROGRESS (IMP037_HOLD: YES; IMP037_ACTIVATED: YES; provider-blocked)
 IMP-038: IMPLEMENTATION_IN_PROGRESS (IMP038_HOLD: YES; IMP038_ACTIVATED: YES; IMPLEMENTATION_COMPLETE / NOT_ACCEPTED; external assessment deferred)
 IMP-039: PLANNED / NOT_ACTIVATED (IMP039_ACTIVATED: NO)

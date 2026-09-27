@@ -31,7 +31,7 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2195,
+    "trackedPathsConsidered": 2196,
     "executableTestFiles": 479,
     "sourceTestFiles": 142,
     "testsTreeExecutableFiles": 265,
