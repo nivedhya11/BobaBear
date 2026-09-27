@@ -19,13 +19,23 @@ FOUNDER_APPROVED_DISCOVERY_DIRECTION: 14
 OPEN_DISCOVERY_DECISIONS: 0
 
 WORKING_CAPABILITY_NAME: Offers, Deals & Campaigns
-CANDIDATE_WORKING_LABEL: "IMP-036J" — CANDIDATE / WORKING LABEL / NOT GOVERNANCE IDENTITY
-  (must never be presented as allocated, activated, planned in ROADMAP, or authorized)
+CANDIDATE_WORKING_LABEL: "IMP-036J" — historical candidate label only.
+  Formal identity IMP-036J now means Promotions, Coupons & Offers and does not
+  absorb Deals or Campaigns.
 
-PROCESS_PHASES_IN_SCOPE: ANCHOR → DISCOVER → STORY_MAP
+SEQUENCED_BY: D-382 (2026-09-27)
+IMP-036J_FORMALLY_CONSUMES: Promotions, Coupons & Offers subset
+DEALS: PARKED_DISCOVERY
+DEALS_ROADMAP_IDENTITY: NONE
+CAMPAIGNS: PARKED_DISCOVERY
+CAMPAIGNS_ROADMAP_IDENTITY: NONE
+REVENUE_RECOMMENDATIONS: PARKED_DISCOVERY
+REVENUE_RECOMMENDATIONS_ROADMAP_IDENTITY: NONE
+
+PROCESS_PHASES_IN_SCOPE: ANCHOR → DISCOVER → STORY_MAP (historical discovery)
 PROCESS_PHASES_EXPLICITLY_OUT: PRODUCT_DEFINITION_GATE | ARCHITECTURE_FIT | IMPLEMENTATION
 
-PARALLEL_TO: IMP-036I — Scheduled Fulfilment (active Product Definition slice; do not interfere)
+PARALLEL_TO: historical during IMP-036I discovery. D-382 (2026-09-27) sequences formal Product Definition to IMP-036J only.
 RUNTIME_SEMANTIC_DRIFT: NONE (documentation only)
 ```
 
@@ -43,9 +53,11 @@ capability architectures, or IMP-036I artifacts. Companion story map:
 [`offers-deals-campaigns-story-map.md`](./offers-deals-campaigns-story-map.md).
 
 Founder approved discovery recommendations **ODC-01…ODC-14** on **2026-09-24**. That
-approval records product direction for a future slice only. It does **not** assign IMP
-identity, activate the capability, create or approve a Product Definition, pass a Gate,
-perform Architecture Fit, or authorize implementation.
+approval remains historical discovery authority. **D-382** later sequenced only the
+Promotions, Coupons & Offers subset into formal **IMP-036J** Product Definition work.
+Deals and Campaigns stay parked discovery with no IMP identity. ODC IDs are not
+renumbered and are not reopened by that sequencing. Approval of discovery direction
+does **not** by itself pass a Product Definition Gate or authorize implementation.
 
 ---
 
@@ -898,13 +910,14 @@ Likely permission reuse: `promotions.*` / `coupons.*` / `pricing.*` / `catalog.*
 FOUNDER_DISCOVERY_DIRECTION = APPROVED (ODC-01..ODC-14, 2026-09-24)
 OPEN_FOUNDER_DISCOVERY_DECISIONS = 0
 
-Continue discovery safely in parallel with IMP-036I.
-Do NOT assign formal IMP identity.
-Do NOT activate the capability.
-Do NOT create Product Definition.
-Do NOT perform Product Definition Gate.
-Do NOT perform Architecture Fit.
-Do NOT implement.
+SEQUENCED_2026_09_27:
+  IMP-036J formally consumes the Promotions, Coupons & Offers subset.
+  Deals = PARKED_DISCOVERY; ROADMAP_IDENTITY = NONE
+  Campaigns = PARKED_DISCOVERY; ROADMAP_IDENTITY = NONE
+  Revenue Recommendations remain a separate parked discovery.
 
-Create formal Product Definition only when ROADMAP assigns and activates a future slice.
+ODC decisions remain historical discovery authority.
+This file does not assign future IMP identities to Deals or Campaigns.
+Product Definition Gate, Architecture Fit, and implementation remain unauthorized
+by this discovery file.
 ```

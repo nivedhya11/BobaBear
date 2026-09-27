@@ -16,14 +16,23 @@ FOUNDER_DISCOVERY_DECISIONS: ODC-01..ODC-14
 OPEN_FOUNDER_DISCOVERY_DECISIONS: 0
 
 WORKING_CAPABILITY_NAME: Offers, Deals & Campaigns
-CANDIDATE_WORKING_LABEL: "IMP-036J" — CANDIDATE / WORKING LABEL / NOT GOVERNANCE IDENTITY
+CANDIDATE_WORKING_LABEL: "IMP-036J" — historical candidate label only.
+  Formal IMP-036J consumes Promotions, Coupons & Offers stories.
+  Deal and Campaign stories below remain PARKED_DISCOVERY and are not deleted.
 
-STORY_IDS: ODC-US-* are discovery-only and may be remapped later
-AC_IDS: NOT CREATED (no AC-IMP-* yet)
-ACCEPTANCE_EXAMPLES: labelled DISCOVERY_ACCEPTANCE_EXAMPLE only
+SEQUENCED_BY: D-382 (2026-09-27)
+IMP-036J_FORMALLY_CONSUMES: Promotions, Coupons & Offers subset
+DEALS: PARKED_DISCOVERY
+DEALS_ROADMAP_IDENTITY: NONE
+CAMPAIGNS: PARKED_DISCOVERY
+CAMPAIGNS_ROADMAP_IDENTITY: NONE
+
+STORY_IDS: ODC-US-* remain discovery-only historical IDs and are not renumbered
+AC_IDS: formal AC-036J-* live only in the IMP-036J Product Definition for the promotions subset
+ACCEPTANCE_EXAMPLES: Deal and Campaign examples below remain DISCOVERY_ACCEPTANCE_EXAMPLE only
 
 PROCESS: ANCHOR → DISCOVER → STORY_MAP (this artifact)
-PARALLEL_TO: IMP-036I — do not interfere
+PARALLEL_TO: historical during IMP-036I discovery. D-382 (2026-09-27) sequences formal Product Definition to IMP-036J only.
 Companion discovery: offers-deals-campaigns.md
 ```
 
