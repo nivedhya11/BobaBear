@@ -38556,6 +38556,17 @@ export function evaluateImp036jStackingContract(productDefinitionText) {
  * @param {string} productDefinitionText
  * @returns {{ ok: true } | { ok: false, code: string, message: string }}
  */
+function imp036jReadinessCell(text) {
+  const definitionOfReady = text.split("## 26. Definition of Ready")[1]?.split("## 27.")[0] ?? "";
+  const readinessRow = definitionOfReady.match(/^\| `US-036J-001`.*\|$/m);
+  return (
+    readinessRow?.[0]
+      .split("|")
+      .map((cell) => cell.trim())
+      .filter((cell) => cell.length > 0)[3] ?? ""
+  );
+}
+
 export function evaluateImp036jStoryReadiness(productDefinitionText) {
   const text = String(productDefinitionText);
   const fence = text.match(/```text\n([\s\S]*?)```/);
@@ -38598,15 +38609,23 @@ export function evaluateImp036jStoryReadiness(productDefinitionText) {
         message: "DRAFT-3 must record that a future Gate PASS drops the Gate readiness blocker",
       };
     }
+    const preGateCell = imp036jReadinessCell(text);
+    if (
+      !preGateCell.startsWith("`NOT_READY_FOR_IMPLEMENTATION`") ||
+      !/Product Definition Gate NOT_PERFORMED/.test(preGateCell) ||
+      !/Architecture Fit NOT_PERFORMED/.test(preGateCell) ||
+      !/implementation NOT_AUTHORIZED/.test(preGateCell)
+    ) {
+      return {
+        ok: false,
+        code: "IMP036J_READINESS_PRE_GATE",
+        message: "Definition of Ready must stay NOT_READY_FOR_IMPLEMENTATION while the Gate is NOT_PERFORMED",
+      };
+    }
     return { ok: true };
   }
   if (gate === "PASS") {
-    const definitionOfReady = text.split("## 26. Definition of Ready")[1]?.split("## 27.")[0] ?? "";
-    const readinessRow = definitionOfReady.match(/^\| `US-036J-001`.*\|$/m);
-    const readinessCell = readinessRow?.[0]
-      .split("|")
-      .map((cell) => cell.trim())
-      .filter((cell) => cell.length > 0)[3] ?? "";
+    const readinessCell = imp036jReadinessCell(text);
     const postGateBlockers =
       readinessCell.startsWith("`NOT_READY_FOR_IMPLEMENTATION`") &&
       /Architecture Fit NOT_PERFORMED/.test(readinessCell) &&

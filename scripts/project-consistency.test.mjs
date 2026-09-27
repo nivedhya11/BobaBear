@@ -17224,6 +17224,13 @@ describe("IMP-036I implementation authorization persistence", () => {
   it("keeps IMP-036J stories unready before the Gate and rejects a stale Gate blocker after PASS", () => {
     const live = readFileSync("docs/platform/product/IMP-036J/product-definition.md", "utf8");
     assert.deepEqual(evaluateImp036jStoryReadiness(live), { ok: true });
+    const tablePremature = live.replace(
+      "| `NOT_READY_FOR_IMPLEMENTATION`. Reason: Product Definition Gate NOT_PERFORMED; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED. |",
+      "| `READY_FOR_IMPLEMENTATION`. Reason: Product Definition Gate NOT_PERFORMED; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED. |",
+    );
+    const tablePreGate = evaluateImp036jStoryReadiness(tablePremature);
+    assert.equal(tablePreGate.ok, false);
+    assert.equal(tablePreGate.code, "IMP036J_READINESS_PRE_GATE");
     const gated = live.replace("PRODUCT_DEFINITION_GATE = NOT_PERFORMED", "PRODUCT_DEFINITION_GATE = PASS");
     const stale = evaluateImp036jStoryReadiness(gated);
     assert.equal(stale.ok, false);
