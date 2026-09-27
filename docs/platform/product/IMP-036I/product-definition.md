@@ -202,7 +202,7 @@ authorization (this Product Definition is **not** lifecycle authority):
 
 ```text
 acceptedThrough = IMP-036I
-currentProductSlice = NONE
+currentProductSlice = IMP-036J
 pendingAcceptance = NONE
 nextProductSlice = IMP-037
 
@@ -232,10 +232,11 @@ IMP039: NOT_ACTIVATED / HOLD
 IMP040: NOT_ACTIVATED / HOLD
 
 PROGRAM_PAUSE_AUTHORITY = D-377
-ROADMAP = GTM-R162
-STATE = STATE-R160
+ADDITIONAL_SEQUENCING_AUTHORITY = D-382
+ROADMAP = GTM-R163
+STATE = STATE-R161
 ARCHITECTURE = ARCH-R23
-decision-register = DR-22
+decision-register = DR-23
 ```
 
 Product Definition Gate PASS for IMP-036I does **not** resolve IMP-037/038, activate

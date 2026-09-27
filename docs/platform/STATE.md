@@ -2,15 +2,15 @@
 {
   "status": "CURRENT",
   "authority": "ACCEPTED_STATE",
-  "stateVersion": "STATE-R160",
+  "stateVersion": "STATE-R161",
   "acceptedThrough": "IMP-036I",
-  "currentProductSlice": "NONE",
+  "currentProductSlice": "IMP-036J",
   "nextProductSlice": "IMP-037",
   "pendingAcceptance": "NONE",
   "gtmBoundary": "IMP-040",
   "governanceHealth": "ALIGNED",
   "lastReviewed": "2026-09-27",
-  "supersedes": "STATE-R159"
+  "supersedes": "STATE-R160"
 }
 -->
 
@@ -36,13 +36,26 @@ Accepted Range:            IMP-001 → IMP-036I (including IMP-005A and IMP-026C
 ```text
 Current Product Implementation: IMP-037 (unresolved held predecessor; provider-blocked; not acceptance)
 Pending Acceptance:             NONE
-Current Product Slice:          NONE
+Current Product Slice:          IMP-036J — Promotions, Coupons & Offers
 Next Product Slice:             IMP-037 — Backup, Restore & Migration Readiness
 Unresolved Predecessor:         IMP-037 — Backup, Restore & Migration Readiness
-Current Governance Activity:    IMP-036I COMPLETE_AND_ACCEPTED
-                              (formal lifecycle COMPLETE_AND_ACCEPTED;
-                              GTM-R162 / STATE-R160;
-                              prior tip GTM-R161 / STATE-R159;
+Current Governance Activity:    IMP-036J PRODUCT_DEFINITION_IN_PROGRESS
+                              (formal lifecycle PLANNED;
+                              GTM-R163 / STATE-R161;
+                              prior tip GTM-R162 / STATE-R160;
+                              IMP-036I remains COMPLETE_AND_ACCEPTED;
+                              IMP036J_ACTIVATED: YES;
+                              IMP036J_PRODUCT_DEFINITION: DRAFT_IN_PROGRESS
+                              (PD-IMP-036J-DRAFT-1);
+                              IMP036J_PRODUCT_DEFINITION_GATE: NOT_PERFORMED;
+                              IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED;
+                              IMP036J_IMPLEMENTATION_AUTHORIZED: NO;
+                              IMP036J_STARTED: NO;
+                              IMP036J_IMPLEMENTATION_STARTED: NO;
+                              IMP036J_IMPLEMENTATION_COMPLETE: NO;
+                              IMP036J_ACCEPTED: NO;
+                              D-382 CURRENT additional sequencing;
+                              D-377 remains CURRENT program pause;
                               prior tip GTM-R160 / STATE-R158;
                               prior tip GTM-R159 / STATE-R157;
                               prior tip GTM-R158 / STATE-R156;
@@ -366,6 +379,15 @@ ARCH_R22_CREATED:         YES
 D-379_CREATED:            YES
 D-380_CREATED:            YES
 ARCH_R23_CREATED:         YES
+IMP-036J: PLANNED
+IMP-036I: COMPLETE_AND_ACCEPTED
+IMP036I_ACCEPTED:         YES
+ADDITIONAL_SEQUENCING_AUTHORITY: D-382
+IMP036J_PRODUCT_DEFINITION_GATE: NOT_PERFORMED
+IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036J_IMPLEMENTATION_AUTHORIZED: NO
+IMP036J_IMPLEMENTATION_COMPLETE: NO
+PROGRAM_PAUSE_AUTHORITY:  D-377
 ```
 
 Active Product Definition (IMP-036I; APPROVED / PD-IMP-036I-DRAFT-4; Gate PASS for CURRENT DRAFT-4 — review 5307761142; historical DRAFT-1, DRAFT-2, and DRAFT-3 Gate STOP; Architecture Fit PASS review 5312653831; architecture LOCKED; implementation AUTHORIZED / STARTED / NOT_COMPLETE):
@@ -520,10 +542,11 @@ Cart → Checkout → Payment → Order
 ```text
 acceptedThrough: IMP-036I
 pendingAcceptance: NONE
-currentProductSlice: NONE
+currentProductSlice: IMP-036J
 nextProductSlice: IMP-037 — Backup, Restore & Migration Readiness
 PROGRAM_PAUSE: PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED
 PROGRAM_PAUSE_AUTHORITY: D-377
+ADDITIONAL_SEQUENCING_AUTHORITY: D-382
 IMP-036F: COMPLETE_AND_ACCEPTED
 IMP-036F_ARCHITECTURE: LOCKED
 IMP036F_ARCHITECTURE_LOCKED: YES
@@ -912,6 +935,7 @@ Implementation/review provenance for IMP-036F is recorded in
 
 ## 8. Explicitly Not Yet Accepted
 
+- IMP-036J — Promotions, Coupons & Offers (`PLANNED`; `IMP036J_ACTIVATED: YES`; Product Definition `PD-IMP-036J-DRAFT-1` = `DRAFT` / `PRE_GATE_DRAFT` / `PRODUCT_DEFINITION_IN_PROGRESS`; Product Definition Gate `NOT_PERFORMED`; Architecture Fit `NOT_PERFORMED`; `IMP036J_IMPLEMENTATION_AUTHORIZED: NO`; `IMP036J_IMPLEMENTATION_COMPLETE: NO`; `IMP036J_ACCEPTED: NO`; activated for Product Definition only under D-382)
 - IMP-037 — Backup, Restore & Migration Readiness (`IMPLEMENTATION_IN_PROGRESS`; `IMP037_HOLD: YES`; `IMP037_ACTIVATED: YES`; Product Definition APPROVED / `PD-IMP-037-DRAFT-1`; Gate PASS; Architecture Fit PASS; architecture LOCKED; implementation AUTHORIZED / STARTED; `IMP037_IMPLEMENTATION_COMPLETE: NO`; `IMP037_ACCEPTED: NO`; independent Architecture Fit review PASS; authorization evidence PR#171/5743814105; start evidence PR#172/5744869269; `PHASE1_BLOCK_STATUS: BLOCKED_PROVIDER_ACCESS`; held under D-377 program pause)
 - IMP-038 — Security & Privacy Hardening (`IMPLEMENTATION_IN_PROGRESS (HOLD — IMPLEMENTATION_COMPLETE / NOT_ACCEPTED)`; `IMP038_HOLD: YES`; `IMP038_ACTIVATED: YES`; historical `CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038` preserved; Product Definition APPROVED / `PD-IMP-038-DRAFT-2`; Gate PASS; Architecture Fit PASS; architecture LOCKED; independent Architecture Fit review PASS (reviewed head `3b03164d6581c5a98a893c24e92eaddece004e90`); implementation AUTHORIZED / STARTED / COMPLETE (`FOUNDER_IMP038_IMPLEMENTATION_AUTHORIZATION: CURSOR_SESSION_MANDATE`); `IMP038_IMPLEMENTATION_COMPLETE: YES`; `IMP038_ACCEPTED: NO`; `IMP038_ACCEPTANCE_BLOCKED_BY_IMP037: YES`; `IMP038_EXTERNAL_ASSESSMENT: DEFERRED_UNTIL_PRE_GTM_APPLICATION_SCOPE_STABILIZES`; frozen runtime `dc6b19e6f88d4084e424d927e6467c374596fb0a` / tree `c3aefb57f3f6c941d7f14907b6c095c4aa7f0547` / fingerprint `2800fe11397ee2a01e9decf572f85adf5c3a8b244ca34b1f53d579e05feac589`; `GAP-EXT-ASSESS-001: NOT_CLOSED`; held under D-377 program pause; `D-375_CREATED: YES`; `ARCH_R21_CREATED: YES`)
 - IMP-039 — Production Infrastructure & Release Pipeline (`PLANNED` / `NOT_ACTIVATED`; `IMP039_ACTIVATED: NO`)
@@ -939,7 +963,27 @@ Implementation/review provenance for IMP-036F is recorded in
 Agents may propose a STATE delta in their report. Only independent acceptance updates this file's
 accepted position and may promote `governanceHealth` to `ALIGNED`.
 
-## 10. STATE-R160 record
+## 10. STATE-R161 record
+
+```text
+STATE-R161 = IMP036J_PRODUCT_DEFINITION_ACTIVATION
+supersedes: STATE-R160
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-037
+Current Governance Activity: IMP-036J PRODUCT_DEFINITION_IN_PROGRESS under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377) with additional sequencing authority D-382; formal lifecycle PLANNED; PD-IMP-036J-DRAFT-1 DRAFT / PRE_GATE_DRAFT; IMP036J_ACTIVATED: YES; IMP036J_PRODUCT_DEFINITION: DRAFT_IN_PROGRESS; IMP036J_PRODUCT_DEFINITION_GATE: NOT_PERFORMED; IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED; IMP036J_IMPLEMENTATION_AUTHORIZED: NO; IMP036J_STARTED: NO; IMP036J_IMPLEMENTATION_STARTED: NO; IMP036J_IMPLEMENTATION_COMPLETE: NO; IMP036J_ACCEPTED: NO; IMP-036I remains COMPLETE_AND_ACCEPTED; ARCH-R23 unchanged; DR-23; D-382 CURRENT; D-377 remains CURRENT; D-381 remains CURRENT; no ARCH-R24; IMP-037 and IMP-038 remain HOLD; Deals PARKED_DISCOVERY; Campaigns PARKED_DISCOVERY; Revenue Recommendations PARKED_DISCOVERY; GAP-EXT-ASSESS-001 NOT_CLOSED; IMP-039 and IMP-040 not activated
+governanceHealth: ALIGNED
+IMP036J_ACTIVATED: YES
+IMP036J_PRODUCT_DEFINITION: DRAFT_IN_PROGRESS
+IMP036J_PRODUCT_DEFINITION_GATE: NOT_PERFORMED
+IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036J_IMPLEMENTATION_AUTHORIZED: NO
+IMP036J_IMPLEMENTATION_COMPLETE: NO
+IMP036J_ACCEPTED: NO
+```
+
+## 11. STATE-R160 record
 
 ```text
 STATE-R160 = IMP036I_ACCEPTANCE
