@@ -38609,6 +38609,15 @@ export function evaluateImp036jStoryReadiness(productDefinitionText) {
         message: "After Gate PASS, readiness must leave only Architecture Fit and implementation authorization outstanding",
       };
     }
+    for (const match of readiness) {
+      if (/Product Definition Gate NOT_PERFORMED/.test(match[2])) {
+        return {
+          ok: false,
+          code: "IMP036J_READINESS_STALE_AFTER_GATE",
+          message: `${match[1]} still cites an unperformed Product Definition Gate after Gate PASS`,
+        };
+      }
+    }
     return { ok: true };
   }
   return {

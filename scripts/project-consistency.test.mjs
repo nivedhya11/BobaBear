@@ -17228,6 +17228,14 @@ describe("IMP-036I implementation authorization persistence", () => {
     const stale = evaluateImp036jStoryReadiness(gated);
     assert.equal(stale.ok, false);
     assert.equal(stale.code, "IMP036J_READINESS_STALE_AFTER_GATE");
+    const storiesStillBlocked = gated.replace(
+      "| `NOT_READY_FOR_IMPLEMENTATION`. Reason: Product Definition Gate NOT_PERFORMED; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED. |",
+      "| `NOT_READY_FOR_IMPLEMENTATION`. Reason: Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED. |",
+    );
+    const storyStale = evaluateImp036jStoryReadiness(storiesStillBlocked);
+    assert.equal(storyStale.ok, false);
+    assert.equal(storyStale.code, "IMP036J_READINESS_STALE_AFTER_GATE");
+    assert.match(storyStale.message, /US-036J-001/);
   });
 
   it("recognizes GTM-R163 / STATE-R161 as IMP-036J Product Definition activation, not IMP-036I acceptance", () => {
