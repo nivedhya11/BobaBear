@@ -38739,7 +38739,21 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
       .join("\n");
   const closedScenarios = [
     [
-      applied,
+      scenarioBetween("AC-036J-012-05 —", "AC-036J-013-01 —"),
+      [
+        "AC-036J-012-05 — Second complimentary-item Offer cannot be activated",
+        "Story: US-036J-012",
+        "Given an authorized operator on the existing commercial Promotions and coupons surface",
+        "And one complimentary-item Offer is already active",
+        "When the operator attempts to activate a second complimentary-item Offer",
+        "Then activation is rejected",
+        "And the already active complimentary-item Offer remains the only active one",
+        "COMPLIMENTARY_ITEM_SINGLE_ACTIVE = YES",
+        "Mandatory in acceptance slice: YES",
+      ].join("\n"),
+    ],
+    [
+      scenarioBetween("AC-036J-013-01 —", "AC-036J-013-02 —"),
       [
         "AC-036J-013-01 — Complimentary item applies",
         "Story: US-036J-013",
@@ -38757,11 +38771,14 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
         "And the Offer or saving explanation makes the complimentary benefit understandable",
         "And the payable total remains produced by the single accepted commercial evaluation",
         "And the same payable amount as a combination with no primary merchandise or order Offer does not defeat this complimentary combination",
+        "COMPLIMENTARY_ITEM_EXACT_OPERATOR_ITEM = YES",
+        "COMPLIMENTARY_ITEM_CUSTOMER_CHOICE = NO",
+        "COMPLIMENTARY_ITEM_NO_EXTRA_MERCHANDISE_CHARGE = YES",
         "Mandatory in acceptance slice: YES",
       ].join("\n"),
     ],
     [
-      unavailable,
+      scenarioBetween("AC-036J-013-03 —", "AC-036J-013-04 —"),
       [
         "AC-036J-013-03 — Complimentary item unavailable before payment",
         "Story: US-036J-013",
@@ -38773,6 +38790,21 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
         "And the customer is told the complimentary item is no longer available",
         "And payment does not proceed on the stale complimentary line",
         "And recovery stays on the pre-payment Review path",
+        "COMPLIMENTARY_ITEM_UNAVAILABLE_RECOVERY = RECOMPUTE_WITHOUT_SUBSTITUTE",
+        "Mandatory in acceptance slice: YES",
+      ].join("\n"),
+    ],
+    [
+      scenarioBetween("AC-036J-013-04 —", "\n```"),
+      [
+        "AC-036J-013-04 — Competing complimentary items are not chosen",
+        "Story: US-036J-013",
+        "Given more than one complimentary-item Offer would qualify for the same cart",
+        "When the commercial result is presented before payment",
+        "Then neither competing complimentary item is chosen or presented",
+        "And the payable total remains produced by the single accepted commercial evaluation",
+        "And no silent substitute is introduced",
+        "COMPLIMENTARY_ITEM_COMPETING_OFFERS = NONE_CHOSEN",
         "Mandatory in acceptance slice: YES",
       ].join("\n"),
     ],

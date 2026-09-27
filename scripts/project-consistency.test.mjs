@@ -17314,6 +17314,16 @@ describe("IMP-036I implementation authorization persistence", () => {
       "",
     );
     assert.equal(evaluateImp036jComplimentaryItemContract(equalTieDropped).code, "IMP036J_FREE_ITEM_PROSE");
+    const flippedMarker = live.replace(
+      "COMPLIMENTARY_ITEM_SINGLE_ACTIVE = YES",
+      "COMPLIMENTARY_ITEM_SINGLE_ACTIVE = NO",
+    );
+    assert.equal(evaluateImp036jComplimentaryItemContract(flippedMarker).code, "IMP036J_FREE_ITEM_PROSE");
+    const extraEvaluation = live.replace(
+      "COMPLIMENTARY_ITEM_UNAVAILABLE_RECOVERY = RECOMPUTE_WITHOUT_SUBSTITUTE\n",
+      "COMPLIMENTARY_ITEM_UNAVAILABLE_RECOVERY = RECOMPUTE_WITHOUT_SUBSTITUTE\nSECOND_COMMERCIAL_EVALUATION = YES\n",
+    );
+    assert.equal(evaluateImp036jComplimentaryItemContract(extraEvaluation).code, "IMP036J_FREE_ITEM_PROSE");
   });
 
   it("keeps IMP-036J stories unready before the Gate and rejects a stale Gate blocker after PASS", () => {
