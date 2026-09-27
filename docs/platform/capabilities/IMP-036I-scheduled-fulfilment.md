@@ -8,16 +8,17 @@
   "architectureFit": "PASS",
   "architectureFitResult": "PASS",
   "architectureFitExecution": "PERFORMED",
-  "implementation": "IMPLEMENTATION_COMPLETE_PENDING_ACCEPTANCE",
+  "implementation": "COMPLETE_AND_ACCEPTED",
   "implementationAuthorized": true,
   "implementationStarted": true,
   "implementationComplete": true,
-  "impAccepted": false,
+  "impAccepted": true,
   "schemaChangeRequired": true,
   "migrationRequired": true,
   "founderUatRequired": true,
-  "founderUat": "NOT_PERFORMED",
-  "lastReviewed": "2026-09-26",
+  "founderUat": "PASS",
+  "formalAcceptance": "ACCEPTED",
+  "lastReviewed": "2026-09-27",
   "productDefinition": "PD-IMP-036I-DRAFT-4",
   "productDefinitionGate": "PASS",
   "bindingDecisions": ["D-379", "ADR-019", "D-380", "ADR-020"],
@@ -48,7 +49,7 @@ Human architecture lock approval **2026-09-25**. Explicit human implementation a
 Execution plan: [`../product/IMP-036I/implementation-plan.md`](../product/IMP-036I/implementation-plan.md).
 
 ```text
-STATUS = IMPLEMENTATION_COMPLETE_PENDING_ACCEPTANCE
+STATUS = COMPLETE_AND_ACCEPTED
 AUTHORITY = CAPABILITY_ARCHITECTURE
 PRODUCT_DEFINITION = PD-IMP-036I-DRAFT-4
 PRODUCT_DEFINITION_GATE = PASS
@@ -59,7 +60,11 @@ ARCHITECTURE_LOCK = LOCKED
 IMPLEMENTATION_AUTHORIZED = YES
 IMPLEMENTATION_STARTED = YES
 IMPLEMENTATION_COMPLETE = YES
-IMP_ACCEPTED = NO
+IMP_ACCEPTED = YES
+IMP036I_ACCEPTED = YES
+IMP036I_FOUNDER_UAT = PASS
+IMP036I_FORMAL_ACCEPTANCE = ACCEPTED
+FOUNDER_UAT = PASS
 
 INDEPENDENT_ARCHITECTURE_FIT_REVIEW = PASS
 INDEPENDENT_ARCHITECTURE_FIT_REVIEW_ID = 5312653831
@@ -89,7 +94,7 @@ ADR019_STATUS = Accepted
 D380_STATUS = CURRENT
 ADR020_STATUS = Accepted
 CURRENT_ARCHITECTURE = ARCH-R23
-CURRENT_DECISION_REGISTER = DR-21
+CURRENT_DECISION_REGISTER = DR-22
 ARCH_G29_STATUS = CURRENT
 ARCH_G30_STATUS = CURRENT
 CURRENT_D378 = AMENDED (ASAP-only / no-scheduled-schema clauses only; mode remainder binding)
@@ -106,19 +111,35 @@ IMP036I_ARCHITECTURE_FIT = PASS
 IMP036I_ARCHITECTURE_LOCKED = YES
 IMP036I_IMPLEMENTATION_AUTHORIZED = YES
 IMP036I_IMPLEMENTATION_STARTED = YES
+IMP036I_IMPLEMENTATION_COMPLETE = YES
+IMP036I_ACCEPTED = YES
+IMP036I_FOUNDER_UAT_REQUIRED = YES
+IMP036I_FOUNDER_UAT = PASS
+IMP036I_FORMAL_ACCEPTANCE = ACCEPTED
+IMP036I_INDEPENDENT_TECHNICAL_ACCEPTANCE = PASS
+IMP036I_ACCEPTED_MAIN_SHA = 44f4d7d84af07c3226da606476844d8f05454b28
+IMP036I_ACCEPTED_TREE = 3ec8a7714c25e6066453b47b7d006ef127abddbb
+IMP036I_FOUNDER_UAT_CANDIDATE_BRANCH = main
+IMP036I_FOUNDER_UAT_CANDIDATE_HEAD = 44f4d7d84af07c3226da606476844d8f05454b28
+IMP036I_FOUNDER_UAT_CANDIDATE_TREE = 3ec8a7714c25e6066453b47b7d006ef127abddbb
+IMP036I_FOUNDER_UAT_CANDIDATE_FINGERPRINT = 85fe93db116bfe86b7f5ba4c266c829433d44401ffd03bdec536b5f61be9c27c
+IMP036I_FOUNDER_UAT_DECISION_DATE = 2026-09-27
+IMP036I_FOUNDER_UAT_ACCEPTANCE_AUTHORITY = Founder
+IMP036I_FOUNDER_UAT_FINDING_001 = RESOLVED
+BLOCKING_FINDINGS_AT_ACCEPTANCE = NONE
 ```
 
-Architecture lock itself did **not** create migrations, deploy, perform Founder UAT, or accept IMP-036I. Tranche 1 later persisted migration `0045`. Implementation is **COMPLETE** and pending acceptance (`IMPLEMENTATION_COMPLETE_PENDING_ACCEPTANCE`). Founder UAT is **NOT_PERFORMED**. This document does not accept IMP-036I.
+Architecture lock itself did **not** create migrations or deploy. Tranche 1 later persisted migration `0045`. Implementation is **COMPLETE_AND_ACCEPTED**. Founder UAT is **PASS** (2026-09-27). Formal acceptance is **ACCEPTED**. The accepted UAT candidate remains `44f4d7d84af07c3226da606476844d8f05454b28`.
 Historical independent Fit STOP reviews (`5309072645`, `5309240283`,
 `5309972440`) remain historical; they are not current blockers.
 
 | Field | Value |
 |---|---|
 | Architecture lock | `LOCKED` / `YES` |
-| Formal ROADMAP lifecycle | `IMPLEMENTATION_COMPLETE_PENDING_ACCEPTANCE` (`IMP036I_ACTIVATED: YES`) |
+| Formal ROADMAP lifecycle | `COMPLETE_AND_ACCEPTED` (`IMP036I_ACTIVATED: YES`; `IMP036I_ACCEPTED: YES`; `IMP036I_FOUNDER_UAT: PASS`) |
 | Product Definition | `PD-IMP-036I-DRAFT-4` **APPROVED**; Gate **PASS** |
 | Canonical Architecture Fit | **PASS** (independent review `5312653831`) |
-| Implementation | **AUTHORIZED** / **STARTED** / **COMPLETE** / pending acceptance |
+| Implementation | **AUTHORIZED** / **STARTED** / **COMPLETE** / **ACCEPTED** |
 | Schema change / migration | **YES** (authorized for tranche 1; not executed by authorization persistence) |
 | Binding D-number (timing) | **D-379** (`CURRENT`) |
 | Binding ADR (timing) | **ADR-019** (`Accepted`) |
@@ -128,7 +149,7 @@ Historical independent Fit STOP reviews (`5309072645`, `5309240283`,
 | D-378 relationship | **AMENDED** by D-379 only for ASAP-only / no-scheduled-schema reservation; mode remainder binding |
 | Delivery replacement relationship | IMP-031 remains CURRENT/LOCKED; D-380 clarifies successful-completion finality prospectively; does not supersede IMP-031 wholesale |
 | New permission / role / auth / deployable | **NO** |
-| Founder UAT required (future acceptance) | **YES** |
+| Founder UAT | **PASS** (required; Founder 2026-09-27) |
 
 ---
 
@@ -180,7 +201,7 @@ post-`DELIVERED` normal replacement; no unique “lineage tip” dependency; det
 DELIVERED-predecessor acceptance remains an implementation conformance obligation.
 AF-036I-13 and AF-036I-16 are **accepted Architecture Fit authority** against CURRENT D-380.
 Independent Architecture Fit review `5312653831` = **PASS**. Architecture remains **LOCKED**.
-Implementation is **AUTHORIZED** / **STARTED** / **COMPLETE** (`IMPLEMENTATION_COMPLETE_PENDING_ACCEPTANCE`). Independent implementation review is **PASS** against reviewed main `335e8b55c74b81d745e923b3d078d6af9ec0b5cc` / tree `4b75582d1726e552bdc1e45da15cf667b05de8e0` / fingerprint `5d79b21381f190682d3cb3f0a2f7e99d43919476f5384c3e1d74d3904218409b`. No numeric independent-review ID exists. This document does not accept IMP-036I.
+Implementation is **AUTHORIZED** / **STARTED** / **COMPLETE** / **ACCEPTED** (`COMPLETE_AND_ACCEPTED`). Independent implementation review is **PASS** against reviewed main `335e8b55c74b81d745e923b3d078d6af9ec0b5cc` / tree `4b75582d1726e552bdc1e45da15cf667b05de8e0` / fingerprint `5d79b21381f190682d3cb3f0a2f7e99d43919476f5384c3e1d74d3904218409b`. No numeric independent-review ID exists. That review candidate is not the accepted UAT candidate. The accepted UAT candidate is main `44f4d7d84af07c3226da606476844d8f05454b28` / tree `3ec8a7714c25e6066453b47b7d006ef127abddbb` / fingerprint `85fe93db116bfe86b7f5ba4c266c829433d44401ffd03bdec536b5f61be9c27c`. Founder UAT is **PASS**. Formal acceptance is **ACCEPTED**.
 
 Canonical ROADMAP/STATE tip markers after implementation authorization:
 
@@ -193,10 +214,20 @@ IMP036I_IMPLEMENTATION_AUTHORIZED: YES
 IMP036I_STARTED: YES
 IMP036I_IMPLEMENTATION_STARTED: YES
 IMP036I_IMPLEMENTATION_COMPLETE: YES
-IMP036I_ACCEPTED: NO
+IMP036I_ACCEPTED: YES
+IMP036I_FOUNDER_UAT: PASS
+IMP036I_FORMAL_ACCEPTANCE: ACCEPTED
 IMP036I_INDEPENDENT_IMPLEMENTATION_REVIEW: PASS
-IMP-036I formal lifecycle: IMPLEMENTATION_COMPLETE_PENDING_ACCEPTANCE
+IMP036I_INDEPENDENT_TECHNICAL_ACCEPTANCE: PASS
+IMP-036I formal lifecycle: COMPLETE_AND_ACCEPTED
 PROGRAM_PAUSE_AUTHORITY: D-377
+acceptedThrough = IMP-036I
+currentProductSlice = NONE
+pendingAcceptance = NONE
+nextProductSlice = IMP-037
+ROADMAP = GTM-R162
+STATE = STATE-R160
+DECISION REGISTER = DR-22
 ```
 
 `product_semantics_changed = NO` relative to approved `PD-IMP-036I-DRAFT-4`.
@@ -1661,14 +1692,23 @@ NEW_EXTERNAL_PROVIDER = NO
 
 ## 32. Explicit non-claims
 
-Tranche 1 persistence and domain foundations have started. This capability architecture does **not**
-change locked semantics, and this implementation-start record does **not**:
+CURRENT lifecycle is **COMPLETE_AND_ACCEPTED**. Founder UAT is **PASS**. Formal acceptance is
+**ACCEPTED**. Architecture semantics are unchanged by acceptance. IMP-037 and IMP-038 remain on
+hold. IMP-039 and IMP-040 are not activated.
+
+<!-- historical-lifecycle-evidence:begin
+Historical implementation-start non-claims, superseded by COMPLETE_AND_ACCEPTED on 2026-09-27.
+They are not current lifecycle instructions.
+
+Tranche 1 persistence and domain foundations have started. This capability architecture does not
+change locked semantics, and this implementation-start record does not:
 
 - complete IMP-036I implementation
 - change approved Product Definition semantics
 - resolve IMP-037/038 or activate IMP-039/040
 - accept IMP-036I or perform Founder UAT
 - rewrite historical Delivery rows or add a DELIVERED correction workflow
+historical-lifecycle-evidence:end -->
 
 `PRE_EXISTING_DELIVERY_CONFORMANCE_DEBT` is CLOSED by the Tranche 1 runtime correction.
 Incorrect committed `DELIVERED` history remains outside IMP-036I.
@@ -1692,7 +1732,14 @@ PRE_EXISTING_DELIVERY_CONFORMANCE_DEBT = CLOSED
 
 ## 33. Recommended next action
 
-Independent verification of IMP-036I Implementation Tranche 1. Do not start Tranche 2 until that
-verification passes. Execution plan:
+CURRENT next action is **NONE**. IMP-036I is **COMPLETE_AND_ACCEPTED**. Do not advance or unhold
+IMP-037 from this acceptance record. Execution history:
 [`../product/IMP-036I/implementation-plan.md`](../product/IMP-036I/implementation-plan.md).
-Do not treat this architecture document as implementation or acceptance authority.
+ROADMAP and STATE remain lifecycle authority. This architecture document does not by itself
+accept or advance a slice.
+
+<!-- historical-lifecycle-evidence:begin
+Historical Tranche 1 next action, superseded after T1–T5 PASS and formal acceptance.
+Independent verification of IMP-036I Implementation Tranche 1. Do not start Tranche 2 until that
+verification passes.
+historical-lifecycle-evidence:end -->
