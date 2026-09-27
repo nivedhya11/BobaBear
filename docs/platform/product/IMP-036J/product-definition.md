@@ -1,13 +1,17 @@
 <!-- governance-meta
 {
-  "status": "DRAFT",
+  "status": "APPROVED",
   "authority": "PRODUCT_DEFINITION",
   "capability": "IMP-036J",
   "productDefinitionVersion": "PD-IMP-036J-DRAFT-2",
-  "productDefinitionStatus": "PRE_GATE_DRAFT",
-  "productDefinitionGate": "NOT_PERFORMED",
+  "productDefinitionGateExecution": "PERFORMED",
+  "productDefinitionGateResult": "PASS",
+  "architectureFitExecution": "NOT_PERFORMED",
   "architectureFit": "NOT_PERFORMED",
-  "implementationAuthorized": false
+  "implementationAuthorized": false,
+  "documentStatus": "APPROVED",
+  "preGateDraft": "NO",
+  "readyForProductDefinitionGate": "NO"
 }
 -->
 
@@ -15,16 +19,22 @@
 
 ```text
 PRODUCT_DEFINITION_VERSION = PD-IMP-036J-DRAFT-2
-STATUS = DRAFT
-PRE_GATE_DRAFT = YES
-PRODUCT_DEFINITION_IN_PROGRESS = YES
-DRAFT_READY_FOR_GATE = YES
-APPROVED = NO
-PRODUCT_DEFINITION_GATE = NOT_PERFORMED
+STATUS = APPROVED
+PRE_GATE_DRAFT = NO
+PRODUCT_DEFINITION_IN_PROGRESS = NO
+DRAFT_READY_FOR_GATE = NO
+APPROVED = YES
+PRODUCT_DEFINITION_GATE_EXECUTION = PERFORMED
+PRODUCT_DEFINITION_GATE_RESULT = PASS
+IMP036J_PRODUCT_DEFINITION = APPROVED
+IMP036J_PRODUCT_DEFINITION_GATE = PASS
 ARCHITECTURE_FIT = NOT_PERFORMED
+IMP036J_ARCHITECTURE_FIT = NOT_PERFORMED
 IMPLEMENTATION_AUTHORIZED = NO
+IMP036J_IMPLEMENTATION_AUTHORIZED = NO
 IMP036J_ACCEPTED = NO
 OPEN_FOUNDER_PRODUCT_DECISIONS = 0
+FOUNDER_UAT_REQUIRED = YES
 
 PRODUCT_DELIVERY_PROCESS_EFFECTIVE_FROM = IMP-036F
 HISTORICAL_ACCEPTED_IMPS_REWRITTEN = NO
@@ -32,9 +42,9 @@ IMP036E_LIFECYCLE_CHANGED = NO
 PD1_DID_NOT_ACTIVATE_IMP036F_AT_ADOPTION = YES
 ```
 
-This artifact is a **pre-gate draft** that is ready for an independent Product Definition Gate.
-`DRAFT_READY_FOR_GATE` is not Gate PASS and is not approval. This revision does not execute the
-Gate, perform Architecture Fit, or authorize implementation. Lifecycle truth remains
+This artifact is the **APPROVED** Product Definition `PD-IMP-036J-DRAFT-2` after an independently
+executed Product Definition Gate **PASS**. Gate PASS does not perform Architecture Fit, lock
+architecture, or authorize implementation. Lifecycle truth remains
 [`ROADMAP.md`](../../ROADMAP.md) and [`STATE.md`](../../STATE.md).
 
 ### Historical candidate — `PD-IMP-036J-DRAFT-1`
@@ -51,8 +61,8 @@ is not the current candidate.
 ### Program context (CURRENT tip — verify against ROADMAP/STATE)
 
 ```text
-ROADMAP = GTM-R164
-STATE = STATE-R162
+ROADMAP = GTM-R165
+STATE = STATE-R163
 ARCHITECTURE = ARCH-R23
 decision-register = DR-23
 acceptedThrough = IMP-036I
@@ -63,13 +73,15 @@ PROGRAM_PAUSE = PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED
 PROGRAM_PAUSE_AUTHORITY = D-377
 ADDITIONAL_SEQUENCING_AUTHORITY = D-382
 IMP036J_ACTIVATED = YES
-IMP036J_PRODUCT_DEFINITION = DRAFT_READY_FOR_GATE
+IMP036J_PRODUCT_DEFINITION = APPROVED
 IMP036J_PRODUCT_DEFINITION_VERSION = PD-IMP-036J-DRAFT-2
-IMP036J_PRODUCT_DEFINITION_GATE = NOT_PERFORMED
+IMP036J_PRODUCT_DEFINITION_GATE = PASS
 IMP036J_ARCHITECTURE_FIT = NOT_PERFORMED
+IMP036J_ARCHITECTURE_LOCKED = NO
 IMP036J_IMPLEMENTATION_AUTHORIZED = NO
 IMP036J_STARTED = NO
 IMP036J_ACCEPTED = NO
+nextGate = ARCHITECTURE_FIT
 ```
 
 Discovery history in
@@ -88,12 +100,12 @@ Revenue Recommendations.
 | Field | Definition |
 |---|---|
 | Capability / title | IMP-036J — Promotions, Coupons & Offers |
-| Product Definition version / document status | `PD-IMP-036J-DRAFT-2`; **Document status: DRAFT**; `PRE_GATE_DRAFT`; `PRODUCT_DEFINITION_IN_PROGRESS`; `DRAFT_READY_FOR_GATE = YES`. Not `APPROVED`. |
-| Product owner / approval evidence | Founder sequencing authorization 2026-09-27 (Promotions first) recorded as **D-382**. FD-036J-01 approved by the Founder on 2026-09-27. Product Definition approval is not claimed. |
+| Product Definition version / document status | `PD-IMP-036J-DRAFT-2`; **Document status: APPROVED**; `PRE_GATE_DRAFT = NO`; `PRODUCT_DEFINITION_IN_PROGRESS = NO`; `DRAFT_READY_FOR_GATE = NO`; `APPROVED = YES`. |
+| Product owner / approval evidence | Founder sequencing authorization 2026-09-27 (Promotions first) recorded as **D-382**. FD-036J-01 approved by the Founder on 2026-09-27. Founder Product Definition approval on 2026-09-27. Independent Product Definition Gate **PASS** on the evaluated candidate recorded in §27. No numeric GitHub review ID is recorded. |
 | Process / verification policy | PD-1 / TEST-1 |
-| Canonical anchors | VISION-1; ROADMAP GTM-R164; STATE STATE-R162; ARCH-R23; DR-23 (D-377 CURRENT; D-382 CURRENT; next decision ID D-383; no D-383 created); accepted IMP-016 Promotions; accepted IMP-036F commercial management; ADR-007 CURRENT; accepted IMP-036H fulfilment mode; accepted IMP-036I scheduled timing |
+| Canonical anchors | VISION-1; ROADMAP GTM-R165; STATE STATE-R163; ARCH-R23; DR-23 (D-377 CURRENT; D-382 CURRENT; next decision ID D-383; no D-383 created); accepted IMP-016 Promotions; accepted IMP-036F commercial management; ADR-007 CURRENT; accepted IMP-036H fulfilment mode; accepted IMP-036I scheduled timing |
 | Repository candidate | `/home/ajoshi/repos/boba-bear-platform`; branch recorded at publication; HEAD / tree / fingerprint recorded by the activating change. This draft is not an acceptance candidate. |
-| Capability lifecycle / authorization | ROADMAP/STATE: formal lifecycle `PLANNED`; `IMP036J_ACTIVATED: YES`; Gate `NOT_PERFORMED`; Fit `NOT_PERFORMED`; implementation `NOT_AUTHORIZED`; `IMP036J_ACCEPTED: NO` |
+| Capability lifecycle / authorization | ROADMAP/STATE: formal lifecycle `PLANNED`; `IMP036J_ACTIVATED: YES`; Product Definition `APPROVED`; Gate `PASS`; Fit `NOT_PERFORMED`; implementation `NOT_AUTHORIZED`; `IMP036J_ACCEPTED: NO` |
 | Relevant capability architecture / ADRs | No IMP-036J capability architecture exists. Fit has not been performed. Binding money authority remains accepted Promotion / Coupon / Pricing / Checkout Snapshot (ADR-007; IMP-016; IMP-036F). Fulfilment mode remains D-378 / IMP-036H. Scheduled timing remains D-379 / IMP-036I. |
 | Founder UAT applicability | `FOUNDER_UAT_REQUIRED = YES` when this capability later changes customer-visible savings and operator-visible commercial operation. UAT is not in progress and is not passed by this draft. |
 
@@ -845,7 +857,8 @@ are in V1. Deal views, campaign aggregates, and incremental-revenue claims are n
 | Promotion / Coupon / Pricing / Checkout Snapshot | Accepted IMP-016, IMP-021, IMP-036F, ADR-007 | All monetary outcomes | Fit must not add an evaluator |
 | Fulfilment mode | IMP-036H COMPLETE_AND_ACCEPTED | `US-036J-006` | None for product meaning |
 | Scheduled timing | IMP-036I COMPLETE_AND_ACCEPTED | `US-036J-006` | Do not redefine Scheduled |
-| Product Definition Gate and Architecture Fit | NOT_PERFORMED | Implementation | Blocks implementation |
+| Product Definition Gate | PASS | Architecture Fit | Does not authorize implementation |
+| Architecture Fit | NOT_PERFORMED | Implementation | Blocks implementation |
 | FD-036J-01 | APPROVED 2026-09-27: Cart and Checkout Review share one coupon state; Payment does not mutate it | None for Gate readiness | Does not itself pass the Gate |
 
 ## 22. Supported now
@@ -927,7 +940,7 @@ is required. This boundary is not ordinary commercial follow-up.
 
 | `UNRESOLVED_DECISION_REQUIRED` item | Material user/business impact | Decision owner / evidence needed | Affected stories / gate |
 |---|---|---|---|
-| None | `OPEN_FOUNDER_PRODUCT_DECISIONS = 0` | FD-036J-01 is APPROVED | Gate may be reviewed; it is not performed by this draft |
+| None | `OPEN_FOUNDER_PRODUCT_DECISIONS = 0` | FD-036J-01 is APPROVED | Product Definition Gate PASS; Architecture Fit is not performed |
 
 `FD-036J-01` = `APPROVED` on 2026-09-27.
 
@@ -953,7 +966,7 @@ application and redemption visibility, not campaign analytics.
 
 | Story ID | Applicable fields complete / evidence | Open material decisions | Readiness / blocker |
 |---|---|---|---|
-| `US-036J-001` … `US-036J-012` | Sections 9–18 state the outcome. Fit and permissions binding are not done. | None. Program Gate, Fit, and implementation authorization are not performed. | `NOT_READY_FOR_IMPLEMENTATION` |
+| `US-036J-001` … `US-036J-012` | Sections 9–18 state the outcome. Fit and permissions binding are not done. | None. Product Definition Gate PASS. Architecture Fit and implementation authorization are not performed. | `NOT_READY_FOR_IMPLEMENTATION` |
 
 ## 27. Product Definition Gate
 
@@ -961,32 +974,43 @@ application and redemption visibility, not campaign analytics.
 PRODUCT_DEFINITION_GATE
 Capability: IMP-036J — Promotions, Coupons & Offers
 Product Definition Version: PD-IMP-036J-DRAFT-2
-Business Outcome: stated
-Primary Personas: stated
-Journeys Defined: stated
-Story Map Complete: stated for the promotions subset
-Acceptance Slice Defined: stated
-Happy Paths Defined: stated
-Alternate Paths Defined: stated
-Empty / First-Use States Defined: stated
-Error / Recovery Paths Defined: stated
-Authorization Variants Defined: stated at product level; exact permission keys are Fit
-Cross-Scope Scenarios Defined: stated
-Concurrency Considered: outcome stated; mechanism is Fit
-Destructive Actions Defined: coupon removal and replacement on Cart and Checkout Review; promotion retirement; Payment cannot remove a coupon
-UX State Matrix Complete: stated for Cart, Checkout Review, and Payment
-Accessibility Considered: stated
-Golden Journeys Identified: stated
-Explicit Deferrals Recorded: stated as parked, follow-up, prohibited, and merchandise-boundary categories
+Business Outcome: PASS
+Primary Personas: PASS
+Journeys Defined: PASS
+Story Map Complete: PASS
+Acceptance Slice Defined: PASS
+Happy Paths Defined: PASS
+Alternate Paths Defined: PASS
+Empty / First-Use States Defined: PASS
+Error / Recovery Paths Defined: PASS
+Authorization Variants Defined: PASS
+Cross-Scope Scenarios Defined: PASS
+Concurrency Considered: PASS
+Destructive Actions Defined: PASS
+UX State Matrix Complete: PASS
+Accessibility Considered: PASS
+Golden Journeys Identified: PASS
+Explicit Deferrals Recorded: PASS
 Unresolved Product Decisions: NONE
-Architecture Conflicts: NONE identified. Architecture Fit NOT_PERFORMED.
-PRODUCT_DEFINITION_GATE_EXECUTION: NOT_PERFORMED
-Gate Result: NOT_PERFORMED
+Architecture Conflicts: NONE IDENTIFIED
+PRODUCT_DEFINITION_GATE_EXECUTION: PERFORMED
+Gate Result: PASS
+INDEPENDENT_PRODUCT_DEFINITION_GATE: PASS
+FOUNDER_PRODUCT_DEFINITION_APPROVAL_DATE: 2026-09-27
+FOUNDER_PRODUCT_DEFINITION_APPROVAL_AUTHORITY: Founder
+GATE_EVALUATED_HEAD: c64d6cea2c3dadbcefa433c0ae320c21315bf124
+GATE_EVALUATED_TREE: 3fe461f877a2ee3de4a4b90538b20bcef34f1273
+GATE_EVALUATED_FINGERPRINT: 14676bb535169e6d407c21f221859f8cc87069dd30dd538f29612652db412388
+ARCHITECTURE_FIT: NOT_PERFORMED
+IMPLEMENTATION_AUTHORIZED: NO
+nextGate: ARCHITECTURE_FIT
 ```
 
 ```text
 DRAFT_READY_FOR_GATE ≠ PRODUCT_DEFINITION_GATE_PASS ≠ APPROVED
+PRODUCT_DEFINITION_GATE_PASS ≠ ARCHITECTURE_FIT_PASS
 ```
 
-`NOT_PERFORMED` means no gate evaluation has occurred. It is not a PASS. This draft does not
-execute the Product Definition Gate.
+`NONE IDENTIFIED` records that the Product Definition Gate found no architecture conflict in the
+product definition. It is not Architecture Fit PASS. Architecture Fit remains `NOT_PERFORMED`.
+No numeric GitHub review ID is recorded for this Gate PASS.
