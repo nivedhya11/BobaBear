@@ -234,7 +234,7 @@ Discovery story IDs `ODC-US-*` are discovery examples, not these formal story ID
 
 | Slice | Mandatory story IDs | Mandatory AC IDs | Required Golden Journeys | Observable acceptance boundary |
 |---|---|---|---|---|
-| `V1_ACCEPTANCE_SLICE` | `US-036J-001` … `US-036J-013` | `AC-036J-001-01` … `AC-036J-013-02`, including `AC-036J-002-05`, `AC-036J-012-04`, `AC-036J-013-01`, and `AC-036J-013-02` | `GJ-FIRST-ORDER`, `GJ-RETURNING-ORDER` for explainable savings on an otherwise accepted purchase path. This slice does not redefine those journeys' non-offer steps. | A customer can receive an automatic or coupon-backed Offer, understand the saving, receive a qualifying complimentary menu item when that Offer is selected, and pay a revalidated total. An authorized operator can operate the accepted Promotion/Coupon surface for the V1 benefit and eligibility rules this definition includes. `MANDATORY_STORIES = US-036J-001..US-036J-013`. `COMPLIMENTARY_MENU_ITEM_V1_ACCEPTANCE = MANDATORY`. |
+| `V1_ACCEPTANCE_SLICE` | `US-036J-001` … `US-036J-013` | `AC-036J-001-01` … `AC-036J-013-03`, including `AC-036J-002-05`, `AC-036J-012-04`, `AC-036J-013-01`, `AC-036J-013-02`, and `AC-036J-013-03` | `GJ-FIRST-ORDER`, `GJ-RETURNING-ORDER` for explainable savings on an otherwise accepted purchase path. This slice does not redefine those journeys' non-offer steps. | A customer can receive an automatic or coupon-backed Offer, understand the saving, receive a qualifying complimentary menu item when that Offer is selected, and pay a revalidated total. An authorized operator can operate the accepted Promotion/Coupon surface for the V1 benefit and eligibility rules this definition includes. `MANDATORY_STORIES = US-036J-001..US-036J-013`. `COMPLIMENTARY_MENU_ITEM_V1_ACCEPTANCE = MANDATORY`. |
 | `FOLLOW_UP` | Items already classified as follow-up inside the commercial / Offer domain. See section 23 `FOLLOW_UP_NOT_V1`. | Not defined | Not added | Requires later authorization. Not a rejection and not a cut from an approved IMP-036J V1. |
 | `PARKED_SEQUENCED_FUTURE_CAPABILITIES` | Deals, Campaigns, and Revenue Recommendations. See section 23. | Not defined | Not added | Parked discovery. Not rejected. No IMP identity is assigned here. |
 | `EXPLICIT_NON_GOALS_AND_PROHIBITED_DIRECTIONS` | Second money engine, second Promotion evaluator, second Pricing engine, generic platform-wide rules engine, arbitrary marketing-automation platform. | Not defined | Not added | Intentionally not part of the desired architecture or product. Not deferred. |
@@ -515,11 +515,11 @@ so that the Offer I was shown is actually delivered and explained.
 Journey / activity: JOURNEY-036J-AUTO / JOURNEY-036J-COUPON as applicable
 Classification: V1_ACCEPTANCE_SLICE
 Preconditions: An active V1 Offer specifies exactly one operator-selected complementary menu item. The customer and cart satisfy that Offer's qualification. The item is eligible under accepted commerce and availability truth. Architecture Fit has established a safe accepted commercial-authority path. This Offer is the one selected by normal commercial evaluation.
-Acceptance scenarios: AC-036J-013-01, AC-036J-013-02
+Acceptance scenarios: AC-036J-013-01, AC-036J-013-02, AC-036J-013-03
 Business rules: BR-036J-001, BR-036J-005, BR-036J-008, BR-036J-011, BR-036J-012, BR-036J-014
 UX states: qualifying complimentary item applied; exact item line visible; no extra merchandise charge; understandable Offer explanation; purchased-order historical presentation
 Permission / resource context: Customer commerce. No workforce permission. The customer does not choose from a gift catalogue.
-Error / recovery: If the complimentary item is not eligible under accepted commerce or availability truth, the Offer does not pretend to deliver a substitute. If Architecture Fit cannot express the outcome safely, that is a Fit STOP, not a silent customer fallback.
+Error / recovery: If the complimentary item is not eligible under accepted commerce or availability truth, the Offer does not pretend to deliver a substitute. The Offer leaves the payable result, evaluation continues with the best valid combination that remains, and the customer is told the complimentary item is no longer available. Payment does not proceed on that stale line. If the menu item still requires a customer variant or modifier choice, it cannot be activated as a V1 complimentary item. If Architecture Fit cannot express the outcome safely, that is a Fit STOP, not a silent customer fallback.
 Dependencies: Accepted Promotion, Coupon, Pricing, catalog, availability, and Checkout Snapshot authority. No second money engine.
 Explicit non-goals: Customer gift selection. A second merchandise or order Offer slot. A second pricing authority.
 Data implications: The presented line and the purchased snapshot come from the single accepted commercial evaluation. Live Offer changes do not rewrite a purchased Order.
@@ -819,6 +819,9 @@ And Architecture Fit has established a safe accepted commercial-authority path f
 When the operator chooses exactly one operator-specified menu item as the complimentary benefit and attempts to activate that V1 Offer
 Then activation records that exact item
 And an incomplete or invalid free-item configuration cannot be activated
+And if the selected menu item still requires a customer variant choice or a required or positive-price modifier selection under accepted customization authority, activation is rejected
+And the activated configuration is one complete line that does not ask the customer to choose a variant, required modifier, or paid modifier
+And the complimentary line adds no merchandise charge, including no customer-selected modifier merchandise charge
 And the operator does not offer the customer a gift catalogue
 COMPLIMENTARY_ITEM_AUTHORING = EXACT_OPERATOR_ITEM
 Mandatory in acceptance slice: YES
@@ -828,6 +831,7 @@ Story: US-036J-013
 Given an active V1 Offer specifies exactly one operator-selected complementary menu item
 And the customer and cart satisfy the Offer qualification
 And the complimentary item is eligible under accepted commerce and availability truth
+And the operator-specified item is a complete line under accepted catalog and customization authority, with no unresolved customer variant or modifier choice
 And Architecture Fit has established a safe accepted commercial-authority path
 And this Offer is selected by the normal commercial evaluation
 When the qualifying commercial result is presented before payment
@@ -851,6 +855,19 @@ And the historical line remains no-extra-merchandise-charge according to the pur
 And live Offer evaluation does not rewrite the purchased Order
 COMPLIMENTARY_ITEM_PURCHASED_TRUTH = CHECKOUT_SNAPSHOT
 Mandatory in acceptance slice: YES
+
+AC-036J-013-03 — Complimentary item unavailable before payment
+Story: US-036J-013
+Given a qualifying complimentary item is already shown as the exact operator-specified line
+When that item is no longer eligible under accepted availability or commerce truth before payment
+Then no silent substitute is introduced
+And that Offer does not remain in the payable result
+And the best valid combination is recomputed without it
+And the customer is told the complimentary item is no longer available
+And payment does not proceed on the stale complimentary line
+And recovery stays on the pre-payment Review path
+COMPLIMENTARY_ITEM_UNAVAILABLE_RECOVERY = RECOMPUTE_WITHOUT_SUBSTITUTE
+Mandatory in acceptance slice: YES
 ```
 
 | Story / AC ID | Required behaviour / risk | Applicable test layers | Planned proof | Actual evidence |
@@ -865,6 +882,7 @@ Mandatory in acceptance slice: YES
 | `US-036J-012` | Operator allow/deny | Authorization positive and negative, integration | Existing commercial scope | NOT_EXECUTED |
 | `US-036J-012` / `AC-036J-012-04` | Operator can activate only a complete exact complimentary-item configuration | Authorization, integration | Later implementation evidence under TEST-1 | NOT_EXECUTED |
 | `US-036J-013` / `AC-036J-013-01` | Exact operator-specified complementary item, no extra merchandise charge, no gift catalogue | Domain, HTTP, Cart/Checkout browser journey | Later implementation evidence under TEST-1 | NOT_EXECUTED |
+| `US-036J-013` / `AC-036J-013-03` | Unavailable complimentary item is not substituted; the Offer leaves the payable result | Domain, Cart/Checkout browser journey, recovery | Later implementation evidence under TEST-1 | NOT_EXECUTED |
 
 ## 11. Business rules
 
@@ -883,7 +901,7 @@ Mandatory in acceptance slice: YES
 | `BR-036J-010` | V1 controls are max discount where applicable, per-customer redemption cap, and global Offer redemption cap. Reuse coupon claims where they fit. Campaign budgets and pacing are follow-up. | ODC-11 | `US-036J-007`, `US-036J-012` |
 | `BR-036J-011` | V1 benefit intent is percentage, flat ₹, BOGO / Buy X Get Y, one operator-specified complementary menu item only where accepted authority can express it safely, and temporary free delivery. The complimentary item is non-BOGO benefit intent. Fixed promotional item or combo pricing is Deal/Pricing, not this slice. | ODC-05 | `US-036J-001`, `US-036J-012`, `US-036J-013` |
 | `BR-036J-012` | `NO_SECOND_MONEY_ENGINE`. No second Promotion evaluator and no second Pricing engine. | D-382; ADR-007 | All |
-| `BR-036J-014` | A complimentary-menu-item Offer promises exactly one operator-specified menu item, shown as a distinct line with no extra merchandise charge, and only through the single accepted commercial evaluation and Checkout Snapshot. The customer does not choose a gift. A purchased Order keeps that item as historical truth. If Architecture Fit cannot express that outcome without a second money engine, a second Promotion evaluator, a broken Checkout Snapshot, or a breach of accepted catalog or availability authority, Fit returns STOP / CONTRADICTION / DECISION_REQUIRED. Fit does not drop the requirement, downgrade it to follow-up, or invent a separate money engine. `FIT_COMPLIMENTARY_ITEM_UNSAFE = STOP_CONTRADICTION_DECISION_REQUIRED`. | BR-036J-011; BR-036J-012; Checkout Snapshot authority | `US-036J-012`, `US-036J-013` |
+| `BR-036J-014` | A complimentary-menu-item Offer promises exactly one operator-specified menu item as a complete line that needs no further customer variant or modifier choice. It is shown as a distinct line with no extra merchandise charge, and only through the single accepted commercial evaluation and Checkout Snapshot. The customer does not choose a gift. A menu item that still requires that choice cannot be activated. If the item is no longer eligible before payment, it is not substituted and the payable result is recomputed without that Offer. A purchased Order keeps that item as historical truth. If Architecture Fit cannot express that outcome without a second money engine, a second Promotion evaluator, a broken Checkout Snapshot, or a breach of accepted catalog or availability authority, Fit returns STOP / CONTRADICTION / DECISION_REQUIRED. Fit does not drop the requirement, downgrade it to follow-up, or invent a separate money engine. `FIT_COMPLIMENTARY_ITEM_UNSAFE = STOP_CONTRADICTION_DECISION_REQUIRED`. | BR-036J-011; BR-036J-012; Checkout Snapshot authority; accepted customization authority | `US-036J-012`, `US-036J-013` |
 
 ### V1 benefit intent and engine gaps
 
@@ -961,6 +979,7 @@ Percentage, flat amount, and BOGO are product-intended because the accepted engi
 | Checkout Review / payable | Revalidated total | Breakdown and payable amount remain readable on a narrow viewport. A selected complimentary item remains a distinct no-merchandise-charge line. | Totals are text | Pay or revalidation error | `AC-036J-004-01`, `AC-036J-013-01` |
 | Order detail / historical | Purchased snapshot | Purchased savings only | Readable text | N/A live evaluation | `AC-036J-011-01` |
 | Order detail / purchased complimentary item | The purchased snapshot includes the complimentary item | The exact purchased item remains, with no extra merchandise charge according to the purchased snapshot. Live Offer evaluation does not rewrite it. | Readable text | N/A live evaluation | `AC-036J-013-02` |
+| Cart / complimentary item unavailable | The shown complimentary item is no longer eligible | The item is not substituted. The Offer leaves the payable result. The customer is told it is no longer available. | Status is text | Recomputed combination on Review | `AC-036J-013-03` |
 | Operator / validation | Bad configuration | Reason; not activated | Error on the field | Correct and retry | `AC-036J-012-02` |
 | Operator / denied | Operator is outside commercial scope | Activation and retirement are denied. The Offer is unchanged. | Denial is text, not colour alone | No change | `AC-036J-012-02` |
 | Operator / retire | Explicit retire | Confirmation first. Confirmed retirement stops future application and leaves purchased history. Cancelled confirmation leaves the Offer active. | Confirmation and cancel are keyboard operable | Retired, or still active if cancelled | `AC-036J-012-03` |

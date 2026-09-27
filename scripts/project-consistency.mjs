@@ -38681,11 +38681,16 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
       .join("\n");
   const authoring = proseOf(scenarioBetween("AC-036J-012-04 —", "AC-036J-013-01 —"));
   const applied = proseOf(scenarioBetween("AC-036J-013-01 —", "AC-036J-013-02 —"));
-  const purchased = proseOf(scenarioBetween("AC-036J-013-02 —", "\n```"));
+  const purchased = proseOf(scenarioBetween("AC-036J-013-02 —", "AC-036J-013-03 —"));
+  const unavailable = proseOf(scenarioBetween("AC-036J-013-03 —", "\n```"));
   const proseClauses = [
     [authoring, "chooses exactly one operator-specified menu item"],
     [authoring, "incomplete or invalid free-item configuration cannot be activated"],
+    [authoring, "still requires a customer variant choice or a required or positive-price modifier selection under accepted customization authority, activation is rejected"],
+    [authoring, "does not ask the customer to choose a variant, required modifier, or paid modifier"],
+    [authoring, "no customer-selected modifier merchandise charge"],
     [authoring, "does not offer the customer a gift catalogue"],
+    [applied, "no unresolved customer variant or modifier choice"],
     [applied, "exact operator-specified complementary item appears"],
     [applied, "that line adds no merchandise charge"],
     [applied, "does not choose from a gift catalogue"],
@@ -38695,6 +38700,11 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
     [purchased, "purchased Order retains the exact complimentary item that was purchased"],
     [purchased, "historical line remains no-extra-merchandise-charge"],
     [purchased, "live Offer evaluation does not rewrite the purchased Order"],
+    [unavailable, "no silent substitute is introduced"],
+    [unavailable, "that Offer does not remain in the payable result"],
+    [unavailable, "best valid combination is recomputed without it"],
+    [unavailable, "told the complimentary item is no longer available"],
+    [unavailable, "payment does not proceed on the stale complimentary line"],
   ];
   for (const [block, clause] of proseClauses) {
     if (!block.includes(clause)) {

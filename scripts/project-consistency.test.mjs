@@ -17289,6 +17289,16 @@ describe("IMP-036I implementation authorization persistence", () => {
       "And live Offer evaluation rewrites the purchased Order\n",
     );
     assert.equal(evaluateImp036jComplimentaryItemContract(rewritten).code, "IMP036J_FREE_ITEM_PROSE");
+    const choiceAllowed = live.replace(
+      "And if the selected menu item still requires a customer variant choice or a required or positive-price modifier selection under accepted customization authority, activation is rejected\n",
+      "",
+    );
+    assert.equal(evaluateImp036jComplimentaryItemContract(choiceAllowed).code, "IMP036J_FREE_ITEM_PROSE");
+    const staleKept = live.replace(
+      "And that Offer does not remain in the payable result\n",
+      "",
+    );
+    assert.equal(evaluateImp036jComplimentaryItemContract(staleKept).code, "IMP036J_FREE_ITEM_PROSE");
   });
 
   it("keeps IMP-036J stories unready before the Gate and rejects a stale Gate blocker after PASS", () => {
