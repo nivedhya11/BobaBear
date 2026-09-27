@@ -31,10 +31,10 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2192,
-    "executableTestFiles": 477,
+    "trackedPathsConsidered": 2195,
+    "executableTestFiles": 479,
     "sourceTestFiles": 142,
-    "testsTreeExecutableFiles": 263,
+    "testsTreeExecutableFiles": 265,
     "scriptTestFiles": 72,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
@@ -273,6 +273,7 @@
     "tests/checkout-security/checkout.security.test.ts",
     "tests/checkout/checkout.domain.test.ts",
     "tests/checkout/checkout.pickup.domain.test.ts",
+    "tests/checkout/legacy-outlet-price-book-retirement.domain.test.ts",
     "tests/checkout/parse-fulfilment-input.test.ts",
     "tests/checkout/scheduled-fulfilment.domain.test.ts",
     "tests/checkout/scheduled-surfaces.tranche3.test.ts",
@@ -429,6 +430,7 @@
     "tests/pricing-tax/price-book-f4-correction.test.ts",
     "tests/pricing-tax/price-book-revision.test.ts",
     "tests/pricing-tax/resolve.test.ts",
+    "tests/pricing-tax/retire-active-outlet-price-book.test.ts",
     "tests/pricing-tax/tax-profiles.test.ts",
     "tests/promotion-coupons/outcomes.test.ts",
     "tests/promotion-pricing-parity/parity.test.ts",
@@ -6740,6 +6742,24 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "tests/checkout/legacy-outlet-price-book-retirement.domain.test.ts",
+      "runner": "vitest",
+      "domain": "checkout",
+      "testType": "unit-or-domain",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:checkout"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "tests/checkout/parse-fulfilment-input.test.ts",
       "runner": "vitest",
       "domain": "checkout",
@@ -9446,6 +9466,23 @@
     },
     {
       "path": "tests/pricing-tax/resolve.test.ts",
+      "runner": "vitest",
+      "domain": "pricing-tax",
+      "testType": "unit-or-domain",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:pricing-tax"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/pricing-tax/retire-active-outlet-price-book.test.ts",
       "runner": "vitest",
       "domain": "pricing-tax",
       "testType": "unit-or-domain",
