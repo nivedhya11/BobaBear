@@ -862,7 +862,7 @@ Given a qualifying complimentary item is already shown as the exact operator-spe
 When that item is no longer eligible under accepted availability or commerce truth before payment
 Then no silent substitute is introduced
 And that Offer does not remain in the payable result
-And the best valid combination is recomputed without it
+And the best valid combination is recomputed without it through the single accepted commercial evaluation
 And the customer is told the complimentary item is no longer available
 And payment does not proceed on the stale complimentary line
 And recovery stays on the pre-payment Review path

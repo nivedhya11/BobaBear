@@ -17299,6 +17299,11 @@ describe("IMP-036I implementation authorization persistence", () => {
       "",
     );
     assert.equal(evaluateImp036jComplimentaryItemContract(staleKept).code, "IMP036J_FREE_ITEM_PROSE");
+    const secondRecovery = live.replace(
+      "And the best valid combination is recomputed without it through the single accepted commercial evaluation\n",
+      "And the best valid combination is recomputed without it through the single accepted commercial evaluation using a second Promotion evaluator\n",
+    );
+    assert.equal(evaluateImp036jComplimentaryItemContract(secondRecovery).code, "IMP036J_FREE_ITEM_PROSE");
   });
 
   it("keeps IMP-036J stories unready before the Gate and rejects a stale Gate blocker after PASS", () => {

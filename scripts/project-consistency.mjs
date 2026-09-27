@@ -38702,7 +38702,7 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
     [purchased, "live Offer evaluation does not rewrite the purchased Order"],
     [unavailable, "no silent substitute is introduced"],
     [unavailable, "that Offer does not remain in the payable result"],
-    [unavailable, "best valid combination is recomputed without it"],
+    [unavailable, "best valid combination is recomputed without it through the single accepted commercial evaluation"],
     [unavailable, "told the complimentary item is no longer available"],
     [unavailable, "payment does not proceed on the stale complimentary line"],
   ];
@@ -38715,7 +38715,11 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
       };
     }
   }
-  if (/second evaluation/i.test(applied) || /charges the normal merchandise/i.test(applied)) {
+  if (
+    /second evaluation/i.test(applied) ||
+    /charges the normal merchandise/i.test(applied) ||
+    /second evaluation|second promotion evaluator|second money engine/i.test(unavailable)
+  ) {
     return {
       ok: false,
       code: "IMP036J_FREE_ITEM_PROSE",
