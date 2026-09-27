@@ -38602,11 +38602,16 @@ export function evaluateImp036jStoryReadiness(productDefinitionText) {
   }
   if (gate === "PASS") {
     const definitionOfReady = text.split("## 26. Definition of Ready")[1]?.split("## 27.")[0] ?? "";
+    const readinessRow = definitionOfReady.match(/^\| `US-036J-001`.*\|$/m);
+    const readinessCell = readinessRow?.[0]
+      .split("|")
+      .map((cell) => cell.trim())
+      .filter((cell) => cell.length > 0)[3] ?? "";
     const postGateBlockers =
-      /NOT_READY_FOR_IMPLEMENTATION/.test(definitionOfReady) &&
-      /Architecture Fit NOT_PERFORMED/.test(definitionOfReady) &&
-      /implementation NOT_AUTHORIZED/.test(definitionOfReady) &&
-      !/Product Definition Gate NOT_PERFORMED/.test(definitionOfReady);
+      readinessCell.startsWith("`NOT_READY_FOR_IMPLEMENTATION`") &&
+      /Architecture Fit NOT_PERFORMED/.test(readinessCell) &&
+      /implementation NOT_AUTHORIZED/.test(readinessCell) &&
+      !/Product Definition Gate NOT_PERFORMED/.test(readinessCell);
     if (!postGateBlockers) {
       return {
         ok: false,
