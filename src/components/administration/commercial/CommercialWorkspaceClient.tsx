@@ -496,6 +496,7 @@ export function CommercialWorkspaceClient() {
           capabilities={capabilities}
           authoringAllowed={authoringAllowed}
           onStatus={onStatus}
+          outlets={outlets}
         />
       ) : null}
 

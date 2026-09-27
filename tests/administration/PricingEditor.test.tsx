@@ -457,6 +457,45 @@ describe("PricingEditor outlet retirement", () => {
     expect(retireActiveOutletPriceBook).not.toHaveBeenCalled();
   });
 
+  it("identifies the book's outlet when the working context is not that outlet", async () => {
+    mockInspection(outletBook());
+    const user = userEvent.setup();
+    render(
+      <PricingEditor
+        context={{ ...context, outletId: null, outletLabel: null }}
+        capabilities={capabilities}
+        authoringAllowed
+        onStatus={vi.fn()}
+        outlets={[{ id: "outlet-1", code: "MALL", name: "Mall Road", status: "active" }]}
+      />,
+    );
+    await user.click(await screen.findByRole("button", { name: /Outlet book \(OUTLET-1\)/ }));
+    await screen.findByTestId("price-book-lifecycle");
+    await user.click(screen.getByTestId("retire-price-book"));
+    const dialog = await screen.findByTestId("price-book-retirement-dialog");
+    expect(within(dialog).getByText("Mall Road")).toBeInTheDocument();
+    expect(retireActiveOutletPriceBook).not.toHaveBeenCalled();
+  });
+
+  it("shows the outlet id when no outlet name is known", async () => {
+    mockInspection(outletBook());
+    const user = userEvent.setup();
+    render(
+      <PricingEditor
+        context={{ ...context, outletId: null, outletLabel: null }}
+        capabilities={capabilities}
+        authoringAllowed
+        onStatus={vi.fn()}
+      />,
+    );
+    await user.click(await screen.findByRole("button", { name: /Outlet book \(OUTLET-1\)/ }));
+    await screen.findByTestId("price-book-lifecycle");
+    await user.click(screen.getByTestId("retire-price-book"));
+    expect(
+      within(await screen.findByTestId("price-book-retirement-dialog")).getByText("outlet-1"),
+    ).toBeInTheDocument();
+  });
+
   it("Cancel closes confirmation without a retirement request", async () => {
     mockInspection(outletBook());
     const user = userEvent.setup();

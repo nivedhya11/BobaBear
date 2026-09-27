@@ -11,6 +11,7 @@ import {
   enterprisePanelClass,
 } from "@/components/enterprise/enterprise-tokens";
 import { Button } from "@/components/ui/Button";
+import type { AdministrationResource } from "@/lib/administration/api";
 import { getCatalogProductGraph } from "@/lib/administration/commercial-catalog";
 import {
   activatePriceBook,
@@ -41,7 +42,18 @@ type PricingEditorProps = Readonly<{
   capabilities: CommercialCapabilities;
   authoringAllowed: boolean;
   onStatus: (message: string) => void;
+  outlets?: readonly AdministrationResource[];
 }>;
+
+function retirementOutletLabel(
+  book: PriceBook,
+  context: CommercialContext,
+  outlets: readonly AdministrationResource[],
+): string | null {
+  if (book.scopeType !== "outlet" || !book.outletId) return null;
+  if (context.outletId === book.outletId && context.outletLabel) return context.outletLabel;
+  return outlets.find((outlet) => outlet.id === book.outletId)?.name ?? book.outletId;
+}
 
 type ReviewState = Readonly<{
   expectedPriceBookRevision: string;
@@ -60,7 +72,7 @@ type ModifierPriceChoice = Readonly<{
 }>;
 
 export function PricingEditor(props: PricingEditorProps) {
-  const { context, capabilities, authoringAllowed, onStatus } = props;
+  const { context, capabilities, authoringAllowed, onStatus, outlets = [] } = props;
   const canRead = capabilities.pricingRead;
   const canManage = capabilities.pricingManage && authoringAllowed;
 
@@ -613,9 +625,7 @@ export function PricingEditor(props: PricingEditorProps) {
         name={inspection?.priceBook.name ?? ""}
         code={inspection?.priceBook.code ?? ""}
         outletLabel={
-          inspection?.priceBook.outletId && context.outletId === inspection.priceBook.outletId
-            ? context.outletLabel
-            : null
+          inspection ? retirementOutletLabel(inspection.priceBook, context, outlets) : null
         }
         busy={retireBusy}
         error={retireError}
