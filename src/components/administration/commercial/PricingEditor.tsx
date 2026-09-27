@@ -11,6 +11,7 @@ import {
   enterprisePanelClass,
 } from "@/components/enterprise/enterprise-tokens";
 import { Button } from "@/components/ui/Button";
+import type { AdministrationResource } from "@/lib/administration/api";
 import { getCatalogProductGraph } from "@/lib/administration/commercial-catalog";
 import {
   activatePriceBook,
@@ -20,6 +21,7 @@ import {
   getPriceBook,
   listPriceBooks,
   previewPriceBookActivation,
+  retireActiveOutletPriceBook,
   type PriceBook,
   type PriceBookInspection,
 } from "@/lib/administration/commercial-pricing";
@@ -32,6 +34,7 @@ import { TAX_CATEGORY_RESTAURANT_SERVICE_ID } from "@/shared/pricing";
 import { cn } from "@/lib/utils";
 
 import { ConsequenceReviewDialog } from "./ConsequenceReviewDialog";
+import { PriceBookRetirementDialog } from "./PriceBookRetirementDialog";
 import type { CommercialCapabilities, CommercialContext } from "./commercial-types";
 
 type PricingEditorProps = Readonly<{
@@ -39,7 +42,18 @@ type PricingEditorProps = Readonly<{
   capabilities: CommercialCapabilities;
   authoringAllowed: boolean;
   onStatus: (message: string) => void;
+  outlets?: readonly AdministrationResource[];
 }>;
+
+function retirementOutletLabel(
+  book: PriceBook,
+  context: CommercialContext,
+  outlets: readonly AdministrationResource[],
+): string | null {
+  if (book.scopeType !== "outlet" || !book.outletId) return null;
+  if (context.outletId === book.outletId && context.outletLabel) return context.outletLabel;
+  return outlets.find((outlet) => outlet.id === book.outletId)?.name ?? book.outletId;
+}
 
 type ReviewState = Readonly<{
   expectedPriceBookRevision: string;
@@ -58,7 +72,7 @@ type ModifierPriceChoice = Readonly<{
 }>;
 
 export function PricingEditor(props: PricingEditorProps) {
-  const { context, capabilities, authoringAllowed, onStatus } = props;
+  const { context, capabilities, authoringAllowed, onStatus, outlets = [] } = props;
   const canRead = capabilities.pricingRead;
   const canManage = capabilities.pricingManage && authoringAllowed;
 
@@ -79,6 +93,15 @@ export function PricingEditor(props: PricingEditorProps) {
   const [review, setReview] = useState<ReviewState | null>(null);
   const [reviewBusy, setReviewBusy] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
+  const [retireOpen, setRetireOpen] = useState(false);
+  const [retireBusy, setRetireBusy] = useState(false);
+  const [retireError, setRetireError] = useState<string | null>(null);
+  const [retireStatus, setRetireStatus] = useState<string | null>(null);
+
+  const canRetireActiveOutlet =
+    canManage &&
+    inspection?.priceBook.scopeType === "outlet" &&
+    inspection.priceBook.lifecycleStatus === "active";
 
   const hasInspection = inspection !== null;
 
@@ -336,6 +359,31 @@ export function PricingEditor(props: PricingEditorProps) {
     await loadInspection();
   }
 
+  function retirementFailureMessage(result: Awaited<ReturnType<typeof retireActiveOutletPriceBook>>): string {
+    if (result.ok) return "";
+    if (result.status === 500 || result.status === 0) return describeAdminFailure(result);
+    if (result.message) return result.message;
+    return describeAdminFailure(result);
+  }
+
+  async function confirmRetire() {
+    if (!canRetireActiveOutlet || !context.brandId || !selectedId) return;
+    setRetireBusy(true);
+    setRetireError(null);
+    const result = await retireActiveOutletPriceBook(context.brandId, selectedId);
+    setRetireBusy(false);
+    if (!result.ok) {
+      setRetireError(retirementFailureMessage(result));
+      return;
+    }
+    setRetireOpen(false);
+    const message = "Outlet price book retired. It remains available for inspection.";
+    setRetireStatus(message);
+    onStatus(message);
+    await loadBooks();
+    await loadInspection();
+  }
+
   return (
     <div data-testid="pricing-editor" className="space-y-4">
       {!authoringAllowed ? (
@@ -345,6 +393,11 @@ export function PricingEditor(props: PricingEditorProps) {
       ) : null}
 
       {error ? <Alert tone="danger">{error}</Alert> : null}
+      {retireStatus ? (
+        <p role="status" data-testid="price-book-retirement-status">
+          {retireStatus}
+        </p>
+      ) : null}
 
       <div className={cn(enterprisePanelClass, "space-y-3 px-4 py-4")}>
         <h3 className="text-sm font-semibold">Price books</h3>
@@ -403,8 +456,20 @@ export function PricingEditor(props: PricingEditorProps) {
         <div className={cn(enterprisePanelClass, "space-y-4 px-4 py-4")}>
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-base font-semibold">{inspection.priceBook.name}</h3>
+            <StatusBadge
+              tone={
+                inspection.priceBook.lifecycleStatus === "active"
+                  ? "success"
+                  : inspection.priceBook.lifecycleStatus === "retired"
+                    ? "neutral"
+                    : "info"
+              }
+            >
+              <span data-testid="price-book-lifecycle">{inspection.priceBook.lifecycleStatus}</span>
+            </StatusBadge>
             <span className="text-xs text-[var(--enterprise-muted,#C4D4A8)]">
-              Revision {inspection.priceBook.revision} · {inspection.priceBook.currency}
+              {inspection.priceBook.scopeType} · revision {inspection.priceBook.revision} ·{" "}
+              {inspection.priceBook.currency}
             </span>
           </div>
 
@@ -516,6 +581,20 @@ export function PricingEditor(props: PricingEditorProps) {
               Review &amp; activate
             </Button>
           ) : null}
+
+          {canRetireActiveOutlet ? (
+            <Button
+              type="button"
+              variant="destructive"
+              data-testid="retire-price-book"
+              onClick={() => {
+                setRetireError(null);
+                setRetireOpen(true);
+              }}
+            >
+              Retire price book
+            </Button>
+          ) : null}
         </div>
       ) : null}
 
@@ -539,6 +618,23 @@ export function PricingEditor(props: PricingEditorProps) {
           props.onStatus("No effect — draft work remains.");
         }}
         onConfirm={() => void confirmActivate()}
+      />
+
+      <PriceBookRetirementDialog
+        open={retireOpen}
+        name={inspection?.priceBook.name ?? ""}
+        code={inspection?.priceBook.code ?? ""}
+        outletLabel={
+          inspection ? retirementOutletLabel(inspection.priceBook, context, outlets) : null
+        }
+        busy={retireBusy}
+        error={retireError}
+        onCancel={() => {
+          if (retireBusy) return;
+          setRetireOpen(false);
+          setRetireError(null);
+        }}
+        onConfirm={() => void confirmRetire()}
       />
     </div>
   );

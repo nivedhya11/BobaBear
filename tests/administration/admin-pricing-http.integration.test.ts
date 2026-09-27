@@ -13,7 +13,11 @@ import {
   WORKFORCE_AUTH_SESSION_COOKIE_NAME,
 } from "../../src/server/auth/workforce";
 import { loadAuthFoundationConfig } from "../../src/server/auth/shared/config";
-import { pricingTaxAuditEventsTable } from "../../src/platform/database/schema/pricing";
+import {
+  priceBookVariantPricesTable,
+  priceBooksTable,
+  pricingTaxAuditEventsTable,
+} from "../../src/platform/database/schema/pricing";
 import { classifyAdminPricingRoute } from "../../src/server/operations/http/admin-pricing-routes";
 import { routeOperationsRequest } from "../../src/server/operations/http/router";
 import { getApplicationPersistence } from "../../src/server/persistence";
@@ -127,6 +131,11 @@ describe("classifyAdminPricingRoute", () => {
     });
     expect(classifyAdminPricingRoute(`${base}/price-books/${priceBookId}/activate`)).toEqual({
       kind: "activate",
+      brandId,
+      priceBookId,
+    });
+    expect(classifyAdminPricingRoute(`${base}/price-books/${priceBookId}/retire`)).toEqual({
+      kind: "retire",
       brandId,
       priceBookId,
     });
@@ -683,6 +692,308 @@ describe("IMP-036F F4 Pricing commercial Admin HTTP", () => {
           spy.mockRestore();
         }
       }
+    });
+  });
+});
+
+describe("IMP-036I active outlet price book retirement HTTP", () => {
+  it("retires only an active outlet book and maps pricing resolution rejection off 500", async () => {
+    await withIsolatedTestDatabase(adminConnectionInfo(), async (database) => {
+      await applyMigrations(database.connectionString);
+      const persistence = getApplicationPersistence(applicationConfig(database.connectionString));
+      openHandles.push(persistence);
+
+      const tree = await persistence.transaction((tx) => seedBrandTree(tx, "rtr1"));
+      const otherTree = await persistence.transaction((tx) => seedBrandTree(tx, "rtr2"));
+      const brandAdmin = await createEligibleWorkforceUser(persistence);
+      const otherBrandAdmin = await createEligibleWorkforceUser(persistence);
+      const reader = await createEligibleWorkforceUser(persistence);
+      const actor = principalFor(brandAdmin.id);
+
+      await persistence.transaction(async (tx) => {
+        const membership = await createMembership(tx, {
+          workforceUserId: brandAdmin.id,
+          scope: { scopeType: "brand", brandId: tree.brand.id },
+          status: "active",
+        });
+        await grantRole(tx, { membershipId: membership.id, roleKey: "brand_admin" });
+        const otherMembership = await createMembership(tx, {
+          workforceUserId: otherBrandAdmin.id,
+          scope: { scopeType: "brand", brandId: otherTree.brand.id },
+          status: "active",
+        });
+        await grantRole(tx, { membershipId: otherMembership.id, roleKey: "brand_admin" });
+        const readerMembership = await createMembership(tx, {
+          workforceUserId: reader.id,
+          scope: { scopeType: "brand", brandId: tree.brand.id },
+          status: "active",
+        });
+        await grantRole(tx, {
+          membershipId: readerMembership.id,
+          roleKey: "support_refund_operator",
+        });
+      });
+
+      const catalog = await seedActiveVariantWithModifier(persistence, tree.brand.id, actor, "rtrvar");
+      const runtime = getWorkforceAuthRuntime({
+        auth: workforceAuthConfig().workforce,
+        persistence: applicationConfig(database.connectionString),
+      });
+      openHandles.push(runtime);
+      const adapter = await adapterFor(runtime);
+      const server = createServer((req, res) => {
+        void routeOperationsRequest(
+          req,
+          res,
+          {
+            runtime,
+            persistence,
+            trustedOrigin: workforceAuthConfig().workforce.baseURL.origin,
+            stepUpSessionHashSecret: workforceAuthConfig().workforce.secret,
+          },
+          "pricing-retire-http-request",
+        );
+      });
+      await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+      const address = server.address();
+      if (!address || typeof address === "string") throw new Error("Missing test server address");
+      const base = `http://127.0.0.1:${address.port}`;
+      openHandles.push({
+        close: () =>
+          new Promise<void>((resolve, reject) => {
+            server.close((err) => (err ? reject(err) : resolve()));
+          }),
+      });
+      const headersFor = async (userId: string) => {
+        const session = await adapter.createSession(userId);
+        return {
+          cookie: await signedCookie(session.token),
+          origin: workforceAuthConfig().workforce.baseURL.origin,
+          "content-type": "application/json",
+        };
+      };
+      const json = async (res: Response) => res.json() as Promise<Record<string, unknown>>;
+      const brandPath = `/api/admin/v1/brands/${tree.brand.id}/pricing`;
+
+      async function createBook(body: Record<string, unknown>) {
+        const res = await fetch(`${base}${brandPath}/price-books`, {
+          method: "POST",
+          headers: await headersFor(brandAdmin.id),
+          body: JSON.stringify(body),
+        });
+        expect(res.status).toBe(200);
+        return (await json(res)).priceBook as { id: string; revision: string };
+      }
+
+      const brandBook = await createBook({
+        scopeType: "brand",
+        code: `brand-${randomUUID().slice(0, 8)}`,
+        name: "Brand baseline",
+        taxInclusionMode: "exclusive",
+        effectiveFrom: EFFECTIVE_FROM,
+        currency: "INR",
+      });
+      const attachBrand = await fetch(`${base}${brandPath}/price-books/${brandBook.id}/variant-prices`, {
+        method: "POST",
+        headers: await headersFor(brandAdmin.id),
+        body: JSON.stringify({
+          variantId: catalog.variantId,
+          amountPaise: "23900",
+          taxCategoryId: TAX_CATEGORY_RESTAURANT_SERVICE_ID,
+          allowOutletOverride: false,
+          expectedPriceBookRevision: brandBook.revision,
+        }),
+      });
+      expect(attachBrand.status).toBe(200);
+      const brandRevision = (await json(attachBrand)).priceBookRevision;
+      const activateBrand = await fetch(`${base}${brandPath}/price-books/${brandBook.id}/activate`, {
+        method: "POST",
+        headers: await headersFor(brandAdmin.id),
+        body: JSON.stringify({ expectedPriceBookRevision: brandRevision }),
+      });
+      expect(activateBrand.status).toBe(200);
+
+      const outletDraft = await createBook({
+        scopeType: "outlet",
+        territoryId: tree.terrA.id,
+        organizationId: tree.orgA.id,
+        outletId: tree.outletA.id,
+        code: `outlet-${randomUUID().slice(0, 8)}`,
+        name: "Illegal outlet draft",
+        taxInclusionMode: "exclusive",
+        effectiveFrom: EFFECTIVE_FROM,
+        currency: "INR",
+      });
+      const attachOutlet = await fetch(`${base}${brandPath}/price-books/${outletDraft.id}/variant-prices`, {
+        method: "POST",
+        headers: await headersFor(brandAdmin.id),
+        body: JSON.stringify({
+          variantId: catalog.variantId,
+          amountPaise: "24100",
+          taxCategoryId: TAX_CATEGORY_RESTAURANT_SERVICE_ID,
+          expectedPriceBookRevision: outletDraft.revision,
+        }),
+      });
+      expect(attachOutlet.status).toBe(200);
+      const outletRevision = (await json(attachOutlet)).priceBookRevision;
+      const activateOutlet = await fetch(`${base}${brandPath}/price-books/${outletDraft.id}/activate`, {
+        method: "POST",
+        headers: await headersFor(brandAdmin.id),
+        body: JSON.stringify({ expectedPriceBookRevision: outletRevision }),
+      });
+      expect(activateOutlet.status).toBe(409);
+      const activationBody = await json(activateOutlet);
+      expect(activationBody).toMatchObject({
+        ok: false,
+        code: "OVERRIDE_NOT_PERMITTED",
+      });
+      expect(activationBody.stack).toBeUndefined();
+      expect(JSON.stringify(activationBody)).not.toMatch(/at /);
+
+      const retireDraft = await fetch(`${base}${brandPath}/price-books/${outletDraft.id}/retire`, {
+        method: "POST",
+        headers: await headersFor(brandAdmin.id),
+        body: "{}",
+      });
+      expect(retireDraft.status).toBe(409);
+      expect(await json(retireDraft)).toMatchObject({
+        ok: false,
+        code: "PRICING_INVALID_STATE",
+      });
+
+      const retireBrand = await fetch(`${base}${brandPath}/price-books/${brandBook.id}/retire`, {
+        method: "POST",
+        headers: await headersFor(brandAdmin.id),
+        body: "{}",
+      });
+      expect(retireBrand.status).toBe(409);
+      expect(await json(retireBrand)).toMatchObject({ ok: false, code: "PRICING_INVALID_STATE" });
+
+      const legacyId = randomUUID();
+      const seededAt = new Date("2026-08-01T00:00:00.000Z");
+      await persistence.withContext(async (ctx) => {
+        await ctx.db.insert(priceBooksTable).values({
+          id: legacyId,
+          brandId: tree.brand.id,
+          scopeType: "outlet",
+          territoryId: tree.terrA.id,
+          organizationId: tree.orgA.id,
+          outletId: tree.outletA.id,
+          code: `legacy-${legacyId.slice(0, 8)}`,
+          name: "Historical outlet book",
+          salesChannel: "direct",
+          currency: "INR",
+          taxInclusionMode: "exclusive",
+          effectiveFrom: new Date("2026-09-01T00:00:00.000Z"),
+          lifecycleStatus: "active",
+          revision: BigInt(4),
+          createdByWorkforceUserId: brandAdmin.id,
+          activatedByWorkforceUserId: brandAdmin.id,
+          createdAt: seededAt,
+          updatedAt: seededAt,
+          activatedAt: seededAt,
+        });
+        await ctx.db.insert(priceBookVariantPricesTable).values({
+          id: randomUUID(),
+          brandId: tree.brand.id,
+          priceBookId: legacyId,
+          variantId: catalog.variantId,
+          amountPaise: BigInt(24100),
+          allowTerritoryOverride: false,
+          allowOrganizationOverride: false,
+          allowOutletOverride: false,
+          taxCategoryId: TAX_CATEGORY_RESTAURANT_SERVICE_ID,
+          createdAt: seededAt,
+        });
+      });
+
+      const unauthenticated = await fetch(`${base}${brandPath}/price-books/${legacyId}/retire`, {
+        method: "POST",
+        headers: { "content-type": "application/json", origin: workforceAuthConfig().workforce.baseURL.origin },
+        body: "{}",
+      });
+      expect(unauthenticated.status).toBe(401);
+
+      const readerDenied = await fetch(`${base}${brandPath}/price-books/${legacyId}/retire`, {
+        method: "POST",
+        headers: await headersFor(reader.id),
+        body: "{}",
+      });
+      expect(readerDenied.status).toBe(403);
+
+      const wrongBrand = await fetch(
+        `${base}/api/admin/v1/brands/${otherTree.brand.id}/pricing/price-books/${legacyId}/retire`,
+        {
+          method: "POST",
+          headers: await headersFor(otherBrandAdmin.id),
+          body: "{}",
+        },
+      );
+      expect(wrongBrand.status).toBe(404);
+
+      const forged = await fetch(`${base}${brandPath}/price-books/${legacyId}/retire`, {
+        method: "POST",
+        headers: await headersFor(brandAdmin.id),
+        body: JSON.stringify({
+          scopeType: "outlet",
+          outletId: tree.outletA.id,
+          actor: brandAdmin.id,
+          status: "retired",
+          retiredAt: seededAt.toISOString(),
+          retiredBy: brandAdmin.id,
+        }),
+      });
+      expect(forged.status).toBe(400);
+      expect(await json(forged)).toMatchObject({ ok: false, code: "PRICING_REQUEST_INVALID" });
+
+      const retired = await fetch(`${base}${brandPath}/price-books/${legacyId}/retire`, {
+        method: "POST",
+        headers: await headersFor(brandAdmin.id),
+        body: "{}",
+      });
+      expect(retired.status).toBe(200);
+      const retiredBody = await json(retired);
+      expect(retiredBody.ok).toBe(true);
+      expect(retiredBody.priceBook).toMatchObject({
+        id: legacyId,
+        scopeType: "outlet",
+        lifecycleStatus: "retired",
+        retiredByWorkforceUserId: brandAdmin.id,
+      });
+
+      const again = await fetch(`${base}${brandPath}/price-books/${legacyId}/retire`, {
+        method: "POST",
+        headers: await headersFor(brandAdmin.id),
+        body: "{}",
+      });
+      expect(again.status).toBe(409);
+      expect(await json(again)).toMatchObject({
+        ok: false,
+        code: "PRICING_INVALID_STATE",
+        message: "Price book is already retired.",
+      });
+
+      const inspection = await fetch(`${base}${brandPath}/price-books/${legacyId}`, {
+        headers: await headersFor(brandAdmin.id),
+      });
+      expect(inspection.status).toBe(200);
+      const inspected = await json(inspection);
+      const inspectedBook = (inspected.inspection as { priceBook: { lifecycleStatus: string }; variantPrices: unknown[] });
+      expect(inspectedBook.priceBook.lifecycleStatus).toBe("retired");
+      expect(inspectedBook.variantPrices).toHaveLength(1);
+
+      const audits = await persistence.withContext((ctx) =>
+        ctx.db
+          .select({ actorWorkforceUserId: pricingTaxAuditEventsTable.actorWorkforceUserId })
+          .from(pricingTaxAuditEventsTable)
+          .where(
+            and(
+              eq(pricingTaxAuditEventsTable.targetId, legacyId),
+              eq(pricingTaxAuditEventsTable.action, "price_book.retired"),
+            ),
+          ),
+      );
+      expect(audits).toEqual([{ actorWorkforceUserId: brandAdmin.id }]);
     });
   });
 });

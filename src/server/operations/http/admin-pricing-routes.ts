@@ -29,6 +29,7 @@ import {
   readOutletDeliveryTariff,
   requirePricingManage,
   requirePricingRead,
+  retireActiveOutletPriceBook,
   updateOutletDeliveryTariff,
 } from "../../pricing";
 import {
@@ -49,6 +50,7 @@ export type AdminPricingRouteKind =
   | "attach_modifier_price"
   | "consequence_preview"
   | "activate"
+  | "retire"
   | "get_delivery_tariff"
   | "update_delivery_tariff"
   | "delivery_tariff_consequence_preview";
@@ -266,6 +268,9 @@ export function classifyAdminPricingRoute(pathname: string): AdminPricingRoute |
   if (rest.length === 3 && rest[0] === "price-books" && rest[1] && rest[2] === "activate") {
     return { kind: "activate", brandId, priceBookId: rest[1] };
   }
+  if (rest.length === 3 && rest[0] === "price-books" && rest[1] && rest[2] === "retire") {
+    return { kind: "retire", brandId, priceBookId: rest[1] };
+  }
   if (rest.length === 3 && rest[0] === "outlets" && rest[1] && rest[2] === "delivery-tariff") {
     return { kind: "get_delivery_tariff", brandId, outletId: rest[1] };
   }
@@ -440,6 +445,20 @@ async function dispatchMutation(
         expectedPriceBookRevision: requireExpectedPriceBookRevision(body),
       });
       return { revision: result.revision.toString(10) };
+    }
+
+    case "retire": {
+      if (Object.keys(body).length > 0) {
+        throw new PricingValidationError({
+          message: "Price book retirement does not accept caller-supplied fields.",
+        });
+      }
+      const retired = await retireActiveOutletPriceBook(context, {
+        actor: principal,
+        brandId: route.brandId,
+        priceBookId: route.priceBookId!,
+      });
+      return { priceBook: retired };
     }
 
     case "delivery_tariff_consequence_preview": {
