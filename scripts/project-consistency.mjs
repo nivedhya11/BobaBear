@@ -38690,6 +38690,7 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
     [authoring, "does not ask the customer to choose a variant, required modifier, or paid modifier"],
     [authoring, "no customer-selected modifier merchandise charge"],
     [authoring, "does not offer the customer a gift catalogue"],
+    [authoring, "a second complimentary-item Offer cannot be activated while another complimentary-item Offer is active"],
     [applied, "no unresolved customer variant or modifier choice"],
     [applied, "exact operator-specified complementary item appears"],
     [applied, "that line adds no merchandise charge"],
@@ -38698,6 +38699,7 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
     [applied, "makes the complimentary benefit understandable"],
     [applied, "single accepted commercial evaluation"],
     [applied, "same payable amount as a combination with no primary merchandise or order Offer does not defeat this complimentary combination"],
+    [applied, "when more than one complimentary-item Offer would qualify, neither competing complimentary item is chosen or presented"],
     [purchased, "purchased Order retains the exact complimentary item that was purchased"],
     [purchased, "historical line remains no-extra-merchandise-charge"],
     [purchased, "live Offer evaluation does not rewrite the purchased Order"],
@@ -38716,20 +38718,20 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
       };
     }
   }
-  const rejectsSecondEvaluator = (block) =>
-    /second(?:\s+\S+){0,6}\s+evaluat/i.test(block) ||
-    /another(?:\s+\S+){0,6}\s+evaluat/i.test(block) ||
-    /additional(?:\s+\S+){0,6}\s+evaluat/i.test(block) ||
-    /second money engine/i.test(block);
+  const hidesAnotherEvaluation = (block) =>
+    (block.match(/evaluation/gi) || []).length !== (block === applied ? 2 : block === unavailable ? 1 : -1) ||
+    /\b(?:second|another|additional)\b|evaluator|money engine/i.test(block);
   if (
-    rejectsSecondEvaluator(applied) ||
-    /charges the normal merchandise/i.test(applied) ||
-    rejectsSecondEvaluator(unavailable)
+    hidesAnotherEvaluation(applied) ||
+    hidesAnotherEvaluation(unavailable) ||
+    (applied.match(/evaluation/gi) || []).length !== 2 ||
+    (unavailable.match(/evaluation/gi) || []).length !== 1 ||
+    /charges the normal merchandise/i.test(applied)
   ) {
     return {
       ok: false,
       code: "IMP036J_FREE_ITEM_PROSE",
-      message: "AC-036J-013-01 must stay on one commercial evaluation with no extra merchandise charge",
+      message: "complimentary application and recovery must stay on one commercial evaluation with no extra merchandise charge",
     };
   }
   const markers = [

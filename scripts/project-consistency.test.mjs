@@ -17301,9 +17301,14 @@ describe("IMP-036I implementation authorization persistence", () => {
     assert.equal(evaluateImp036jComplimentaryItemContract(staleKept).code, "IMP036J_FREE_ITEM_PROSE");
     const secondRecovery = live.replace(
       "And the best valid combination is recomputed without it through the single accepted commercial evaluation\n",
-      "And the best valid combination is recomputed without it through the single accepted commercial evaluation, followed by a second commercial evaluation\n",
+      "And the best valid combination is recomputed without it through the single accepted commercial evaluation followed by a second pass that independently sends the recomputed result through the commercial evaluation\n",
     );
     assert.equal(evaluateImp036jComplimentaryItemContract(secondRecovery).code, "IMP036J_FREE_ITEM_PROSE");
+    const competingGifts = live.replace(
+      "And when more than one complimentary-item Offer would qualify, neither competing complimentary item is chosen or presented\n",
+      "",
+    );
+    assert.equal(evaluateImp036jComplimentaryItemContract(competingGifts).code, "IMP036J_FREE_ITEM_PROSE");
     const equalTieDropped = live.replace(
       "And the same payable amount as a combination with no primary merchandise or order Offer does not defeat this complimentary combination\n",
       "",
