@@ -916,7 +916,15 @@ SEQUENCED_2026_09_27:
   Campaigns = PARKED_DISCOVERY; ROADMAP_IDENTITY = NONE
   Revenue Recommendations remain a separate parked discovery.
 
-ODC decisions remain historical discovery authority.
+SCOPE_TAXONOMY (explicit categories; not equivalent):
+  PARKED_SEQUENCED_FUTURE_CAPABILITIES = Deals, Campaigns, Revenue Recommendations
+    These keep earlier Deal and Campaign V1 candidates. They are not rejected.
+  FOLLOW_UP_NOT_V1 = items this discovery already marked follow-up or did not require in V1
+  EXPLICIT_NON_GOALS_AND_PROHIBITED_DIRECTIONS = second money engine and a second evaluator / Pricing engine / generic rules engine / marketing-automation platform
+  PHYSICAL_MERCHANDISE_BOUNDARY = ODC-14 conceptual compatibility may remain; inventory, reservation, shipping, warehouse, and merchandise fulfilment are not this discovery's V1 and are not ordinary commercial follow-up
+
+ODC-01..ODC-14 remain historical discovery authority. ODC IDs are not renumbered.
+Earlier V1 candidates remain as proposed in this file.
 This file does not assign future IMP identities to Deals or Campaigns.
 Product Definition Gate, Architecture Fit, and implementation remain unauthorized
 by this discovery file.

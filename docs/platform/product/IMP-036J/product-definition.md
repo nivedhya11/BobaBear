@@ -3,7 +3,7 @@
   "status": "DRAFT",
   "authority": "PRODUCT_DEFINITION",
   "capability": "IMP-036J",
-  "productDefinitionVersion": "PD-IMP-036J-DRAFT-1",
+  "productDefinitionVersion": "PD-IMP-036J-DRAFT-2",
   "productDefinitionStatus": "PRE_GATE_DRAFT",
   "productDefinitionGate": "NOT_PERFORMED",
   "architectureFit": "NOT_PERFORMED",
@@ -14,16 +14,17 @@
 # IMP-036J — Promotions, Coupons & Offers
 
 ```text
-PRODUCT_DEFINITION_VERSION = PD-IMP-036J-DRAFT-1
+PRODUCT_DEFINITION_VERSION = PD-IMP-036J-DRAFT-2
 STATUS = DRAFT
 PRE_GATE_DRAFT = YES
 PRODUCT_DEFINITION_IN_PROGRESS = YES
-DRAFT_READY_FOR_GATE = NO
+DRAFT_READY_FOR_GATE = YES
 APPROVED = NO
 PRODUCT_DEFINITION_GATE = NOT_PERFORMED
 ARCHITECTURE_FIT = NOT_PERFORMED
 IMPLEMENTATION_AUTHORIZED = NO
 IMP036J_ACCEPTED = NO
+OPEN_FOUNDER_PRODUCT_DECISIONS = 0
 
 PRODUCT_DELIVERY_PROCESS_EFFECTIVE_FROM = IMP-036F
 HISTORICAL_ACCEPTED_IMPS_REWRITTEN = NO
@@ -31,15 +32,27 @@ IMP036E_LIFECYCLE_CHANGED = NO
 PD1_DID_NOT_ACTIVATE_IMP036F_AT_ADOPTION = YES
 ```
 
-This artifact is a **pre-gate draft**. It does not approve the Product Definition, pass the
-Product Definition Gate, perform Architecture Fit, or authorize implementation. Lifecycle truth
-remains [`ROADMAP.md`](../../ROADMAP.md) and [`STATE.md`](../../STATE.md).
+This artifact is a **pre-gate draft** that is ready for an independent Product Definition Gate.
+`DRAFT_READY_FOR_GATE` is not Gate PASS and is not approval. This revision does not execute the
+Gate, perform Architecture Fit, or authorize implementation. Lifecycle truth remains
+[`ROADMAP.md`](../../ROADMAP.md) and [`STATE.md`](../../STATE.md).
+
+### Historical candidate — `PD-IMP-036J-DRAFT-1`
+
+DRAFT-1 remains historical. It was `PRE_GATE_DRAFT` with `DRAFT_READY_FOR_GATE = NO`. Its only
+open material Founder decision was FD-036J-01. That draft recommended Cart as the only coupon
+entry field, with Checkout showing the applied or failed result, removal, and retry, and it
+stated that a second Checkout entry field was not required under that recommendation. DRAFT-1
+also grouped Deals, Campaigns, Revenue Recommendations, loyalty program, experimentation, and a
+second money engine under one coarse `DEFERRED` label. DRAFT-2 keeps that history. It records
+Founder approval of FD-036J-01 and replaces the coarse label with separate categories. DRAFT-1
+is not the current candidate.
 
 ### Program context (CURRENT tip — verify against ROADMAP/STATE)
 
 ```text
-ROADMAP = GTM-R163
-STATE = STATE-R161
+ROADMAP = GTM-R164
+STATE = STATE-R162
 ARCHITECTURE = ARCH-R23
 decision-register = DR-23
 acceptedThrough = IMP-036I
@@ -50,10 +63,13 @@ PROGRAM_PAUSE = PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED
 PROGRAM_PAUSE_AUTHORITY = D-377
 ADDITIONAL_SEQUENCING_AUTHORITY = D-382
 IMP036J_ACTIVATED = YES
-IMP036J_PRODUCT_DEFINITION = DRAFT_IN_PROGRESS
+IMP036J_PRODUCT_DEFINITION = DRAFT_READY_FOR_GATE
+IMP036J_PRODUCT_DEFINITION_VERSION = PD-IMP-036J-DRAFT-2
 IMP036J_PRODUCT_DEFINITION_GATE = NOT_PERFORMED
 IMP036J_ARCHITECTURE_FIT = NOT_PERFORMED
 IMP036J_IMPLEMENTATION_AUTHORIZED = NO
+IMP036J_STARTED = NO
+IMP036J_ACCEPTED = NO
 ```
 
 Discovery history in
@@ -72,14 +88,26 @@ Revenue Recommendations.
 | Field | Definition |
 |---|---|
 | Capability / title | IMP-036J — Promotions, Coupons & Offers |
-| Product Definition version / document status | `PD-IMP-036J-DRAFT-1`; `DRAFT`; `PRE_GATE_DRAFT`; `PRODUCT_DEFINITION_IN_PROGRESS`. Not `APPROVED`. Not `DRAFT_READY_FOR_GATE`. |
-| Product owner / approval evidence | Founder sequencing authorization 2026-09-27 (Promotions first) recorded as **D-382**. Product Definition approval is not claimed. |
+| Product Definition version / document status | `PD-IMP-036J-DRAFT-2`; **Document status: DRAFT**; `PRE_GATE_DRAFT`; `PRODUCT_DEFINITION_IN_PROGRESS`; `DRAFT_READY_FOR_GATE = YES`. Not `APPROVED`. |
+| Product owner / approval evidence | Founder sequencing authorization 2026-09-27 (Promotions first) recorded as **D-382**. FD-036J-01 approved by the Founder on 2026-09-27. Product Definition approval is not claimed. |
 | Process / verification policy | PD-1 / TEST-1 |
-| Canonical anchors | VISION-1; ROADMAP GTM-R163; STATE STATE-R161; ARCH-R23; DR-23 (D-377 CURRENT; D-382 CURRENT); accepted IMP-016 Promotions; accepted IMP-036F commercial management; ADR-007 CURRENT; accepted IMP-036H fulfilment mode; accepted IMP-036I scheduled timing |
+| Canonical anchors | VISION-1; ROADMAP GTM-R164; STATE STATE-R162; ARCH-R23; DR-23 (D-377 CURRENT; D-382 CURRENT; next decision ID D-383; no D-383 created); accepted IMP-016 Promotions; accepted IMP-036F commercial management; ADR-007 CURRENT; accepted IMP-036H fulfilment mode; accepted IMP-036I scheduled timing |
 | Repository candidate | `/home/ajoshi/repos/boba-bear-platform`; branch recorded at publication; HEAD / tree / fingerprint recorded by the activating change. This draft is not an acceptance candidate. |
 | Capability lifecycle / authorization | ROADMAP/STATE: formal lifecycle `PLANNED`; `IMP036J_ACTIVATED: YES`; Gate `NOT_PERFORMED`; Fit `NOT_PERFORMED`; implementation `NOT_AUTHORIZED`; `IMP036J_ACCEPTED: NO` |
 | Relevant capability architecture / ADRs | No IMP-036J capability architecture exists. Fit has not been performed. Binding money authority remains accepted Promotion / Coupon / Pricing / Checkout Snapshot (ADR-007; IMP-016; IMP-036F). Fulfilment mode remains D-378 / IMP-036H. Scheduled timing remains D-379 / IMP-036I. |
 | Founder UAT applicability | `FOUNDER_UAT_REQUIRED = YES` when this capability later changes customer-visible savings and operator-visible commercial operation. UAT is not in progress and is not passed by this draft. |
+
+### Terminology
+
+These words stay distinct:
+
+| Term | Meaning in this Product Definition |
+|---|---|
+| `PROMOTION` | The existing monetary/commercial authority. |
+| `OFFER` | Conditional customer and operator commercial meaning over that accepted Promotion authority. An Offer does not independently set money. |
+| `COUPON` | The Offer activation mechanism when code activation is used. |
+| `DEAL` | A directly purchasable value proposition / merchandise-like commerce concept. Parked. Not this slice. |
+| `CAMPAIGN` | An operator/business orchestration concept over Deals and Offers. Parked. Not this slice. |
 
 ## 2. Business outcome
 
@@ -148,9 +176,9 @@ Discovery story IDs `ODC-US-*` are discovery examples, not these formal story ID
 | Journey ID | Entry / context | Ordered activities | Success / downstream outcome | Alternate / recovery paths |
 |---|---|---|---|---|
 | `JOURNEY-036J-AUTO` | Eligible cart | Qualification is evaluated from accepted commercial authority. Customer sees the Offer applied, the monetary saving, and why it applied where that reason is knowable. | Payable merchandise/order benefit matches the explanation. | Not yet eligible shows truthful progress. Expired or not-yet-effective Offers are not applied and are not promised. |
-| `JOURNEY-036J-COUPON` | Customer has a code | Enter code, see `APPLIED` or a specific failure, optionally remove it, and retry after authentication when identity is required. | Savings update from the same commercial evaluation. Entering a code never makes the customer worse off than the better automatic Offer. | Invalid, expired, inapplicable, exhausted, and identity-required are distinct. |
+| `JOURNEY-036J-COUPON` | Customer has a code | Enter, apply, replace, or remove the code on Cart or on Checkout Review. Both surfaces use one shared coupon / commercial state. See `APPLIED` or a specific failure. Retry after authentication when identity is required. | Savings update from the same commercial evaluation. Entering a code never makes the customer worse off than the better automatic Offer. There is one entered coupon state, not two. | Invalid, expired, inapplicable, exhausted, personal limit, and identity-required are distinct. |
 | `JOURNEY-036J-THRESHOLD` | An Offer has a real remaining threshold | Customer sees progress such as add a stated amount to unlock the real benefit. | Crossing the threshold applies the real saving. Falling below removes it. | No fabricated remaining amount and no fabricated saving. |
-| `JOURNEY-036J-PAY` | Customer is about to pay | See merchandise/order discount, coupon-backed Offer where applicable, delivery saving where applicable, total saved, and final payable amount. Revalidation runs before payment. | The payable total is the revalidated total. The purchased snapshot keeps that explanation. | A stale Offer cannot remain inside the payable total. The customer can remove the coupon, change the cart, or continue without that Offer. |
+| `JOURNEY-036J-PAY` | Customer moves from Checkout Review toward Payment | On Review, see merchandise/order discount, coupon-backed Offer where applicable, automatic-versus-coupon result, delivery saving where applicable, total saved, and final payable amount. Revalidation runs before payment. Once the customer crosses into Payment, coupon state is read-only. | The payable total is the revalidated total. The purchased snapshot keeps that explanation. | A stale Offer cannot remain inside the payable total. Recovery returns through the pre-payment Review path. Payment does not add, replace, or remove a coupon. |
 | `JOURNEY-036J-OPERATOR` | Authorized workforce user | Create or edit a Promotion, choose automatic or coupon activation, set scope, window, qualifier, supported benefit, minimum, stacking posture, caps, and a Coupon where activation needs one. Activate, inspect, retire. | Operators can run the accepted engine for V1 benefits and see redemption/application facts sufficient to operate. | Validation failures are understandable. Retirement stops future application and does not rewrite purchased Orders. |
 
 ## 7. Story map
@@ -158,7 +186,7 @@ Discovery story IDs `ODC-US-*` are discovery examples, not these formal story ID
 | Business outcome | Persona | Journey | Activity | Story IDs | Slice classification |
 |---|---|---|---|---|---|
 | Explainable automatic benefit | `PERSONA-CUSTOMER` | `JOURNEY-036J-AUTO` | See a qualifying automatic Offer and its saving | `US-036J-001` | `V1_ACCEPTANCE_SLICE` |
-| Usable coupon | `PERSONA-CUSTOMER` | `JOURNEY-036J-COUPON` | Enter, apply, reject, remove, retry | `US-036J-002` | `V1_ACCEPTANCE_SLICE` |
+| Usable coupon | `PERSONA-CUSTOMER` | `JOURNEY-036J-COUPON` | Enter, apply, reject, remove, replace, and retry on Cart and Checkout Review; Payment is read-only | `US-036J-002` | `V1_ACCEPTANCE_SLICE` |
 | Truthful threshold progress | `PERSONA-CUSTOMER` | `JOURNEY-036J-THRESHOLD` | See remaining amount derived from eligibility | `US-036J-003` | `V1_ACCEPTANCE_SLICE` |
 | Pre-payment savings breakdown | `PERSONA-CUSTOMER` | `JOURNEY-036J-PAY` | Read discount, delivery saving, total saved, payable amount | `US-036J-004` | `V1_ACCEPTANCE_SLICE` |
 | First-order acquisition | `PERSONA-CUSTOMER` | `JOURNEY-036J-AUTO` | Receive a first-order Offer only while eligible | `US-036J-005` | `V1_ACCEPTANCE_SLICE` |
@@ -170,15 +198,16 @@ Discovery story IDs `ODC-US-*` are discovery examples, not these formal story ID
 | Immutable purchased savings | `PERSONA-CUSTOMER` | `JOURNEY-036J-PAY` | Order detail shows purchased savings and does not re-evaluate | `US-036J-011` | `V1_ACCEPTANCE_SLICE` |
 | Operable Promotions and Coupons | `PERSONA-WORKFORCE-OPERATOR` | `JOURNEY-036J-OPERATOR` | Author, activate, inspect, retire | `US-036J-012` | `V1_ACCEPTANCE_SLICE` |
 | Claimable / targeted / loyalty activation | `PERSONA-CUSTOMER` | n/a | Wallet, push, or points activation | none in V1 | `FOLLOW_UP` |
-| Deals hub and Campaigns | `PERSONA-CUSTOMER` | n/a | Browsable Deals and Campaign orchestration | discovery stories retained historically | `DEFERRED` |
+| Parked sequenced capabilities | `PERSONA-CUSTOMER` | n/a | Deal commerce, Campaign orchestration, Revenue Recommendations | discovery stories retained historically | `PARKED_SEQUENCED_FUTURE_CAPABILITIES` |
 
 ## 8. Acceptance slice
 
 | Slice | Mandatory story IDs | Mandatory AC IDs | Required Golden Journeys | Observable acceptance boundary |
 |---|---|---|---|---|
 | `V1_ACCEPTANCE_SLICE` | `US-036J-001` … `US-036J-012` | `AC-036J-001-01` … `AC-036J-012-02` | `GJ-FIRST-ORDER`, `GJ-RETURNING-ORDER` for explainable savings on an otherwise accepted purchase path. This slice does not redefine those journeys' non-offer steps. | A customer can receive an automatic or coupon-backed Offer, understand the saving, and pay a revalidated total. An authorized operator can operate the accepted Promotion/Coupon surface for the V1 benefit and eligibility rules this definition includes. |
-| `FOLLOW_UP` | Claimable, targeted one-off, and loyalty-reward activation; daypart; category targeting; campaign monetary budgets, pacing, and advanced daily budgets; My BOBA / Offers for You; full public Offers browse | Not defined | Not added | Requires a later authorized scope. |
-| `DEFERRED` | Deals, Campaigns, Revenue Recommendations, loyalty program, experimentation, second money engine | Not defined | Not added | Parked or excluded. No IMP identity is assigned here. |
+| `FOLLOW_UP` | Items already classified as follow-up inside the commercial / Offer domain. See section 23 `FOLLOW_UP_NOT_V1`. | Not defined | Not added | Requires later authorization. Not a rejection and not a cut from an approved IMP-036J V1. |
+| `PARKED_SEQUENCED_FUTURE_CAPABILITIES` | Deals, Campaigns, and Revenue Recommendations. See section 23. | Not defined | Not added | Parked discovery. Not rejected. No IMP identity is assigned here. |
+| `EXPLICIT_NON_GOALS_AND_PROHIBITED_DIRECTIONS` | Second money engine, second Promotion evaluator, second Pricing engine, generic platform-wide rules engine, arbitrary marketing-automation platform. | Not defined | Not added | Intentionally not part of the desired architecture or product. Not deferred. |
 
 ## 9. User stories
 
@@ -207,23 +236,23 @@ Readiness: NOT_READY_FOR_IMPLEMENTATION — Gate, Fit, and implementation author
 ```text
 Story ID: US-036J-002
 As a customer
-I want to enter a coupon code and see a clear result
-so that I can use a code, understand a refusal, remove it, and retry when I must sign in.
+I want to enter a coupon code on Cart or Checkout Review and see one shared result
+so that I can use a code, understand a refusal, change or remove it, and retry when I must sign in.
 
 Journey / activity: JOURNEY-036J-COUPON / coupon entry
 Preconditions: A Coupon exists for a coupon-activated Offer, or the entered text does not.
-Acceptance scenarios: AC-036J-002-01 through AC-036J-002-05
-Business rules: BR-036J-003, BR-036J-009
-UX states: empty, applied, invalid, expired, identity required, removed
-Permission / resource context: Unrestricted coupons may be entered without a customer identity. Identity-restricted coupons require authentication. See FD-036J-01 for where the field is shown.
-Error / recovery: Failures name the reason class and allow correction or removal.
-Dependencies: Existing Coupon activation authority.
-Explicit non-goals: A second coupon domain.
-Data implications: The entered code is an activation attempt, not a new monetary fact.
-Security implications: Do not reveal whether a code belongs to another customer beyond the allowed reason class.
-Architecture fit / applicable invariants: Coupon remains activation/redemption authority.
-Open material decisions: FD-036J-01 (entry surface).
-Readiness: NOT_READY_FOR_IMPLEMENTATION
+Acceptance scenarios: AC-036J-002-01 through AC-036J-002-09. Monetary competition with an automatic Offer is AC-036J-009-01 and AC-036J-009-02, not a second evaluation.
+Business rules: BR-036J-003, BR-036J-009, BR-036J-013
+UX states: Cart empty, applying, applied, invalid, expired, inapplicable, globally exhausted, personal limit, identity required, removed. Checkout Review inherited applied coupon, no coupon / entry, changed coupon, removed coupon, validation failure, best automatic Offer retained, coupon wins, stale Offer recovery. Payment final read-only summary with no coupon edit control.
+Permission / resource context: Unrestricted coupons may be entered without a customer identity. An identity-restricted coupon may be entered while unauthenticated; the response may require sign-in; after successful authentication the same attempt is preserved and retried where existing identity and cart continuity already allow it. Private eligibility facts of another customer are not exposed. Founder-approved FD-036J-01 (2026-09-27): entry exists on both Cart and Checkout Review over one shared coupon / commercial state. Payment does not mutate coupon state.
+Error / recovery: Failures name the reason class and allow correction, replacement, or removal on Cart or Checkout Review. After a failed apply, focus returns to the coupon input and the error stays associated with it. After sign-in, focus returns to the coupon result on the same surface. Payment does not host those controls.
+Dependencies: Existing Coupon activation authority and existing identity/cart continuity. No second coupon store.
+Explicit non-goals: A second coupon domain. A second simultaneous entered coupon. Coupon mutation inside Payment.
+Data implications: The entered code is an activation attempt against one shared commercial intent, not a new monetary fact and not a Checkout-Review-only record.
+Security implications: Do not reveal whether a code belongs to another customer beyond the allowed reason class. Do not expose another customer's private eligibility.
+Architecture fit / applicable invariants: Coupon remains activation/redemption authority. NO_SECOND_MONEY_ENGINE.
+Open material decisions: NONE
+Readiness: NOT_READY_FOR_IMPLEMENTATION — Gate, Fit, and implementation authorization are not performed.
 ```
 
 ```text
@@ -343,12 +372,12 @@ I want an Offer that became invalid to leave my payable total before I pay
 so that I cannot pay a stale saving, and I still have a way to continue.
 
 Journey / activity: JOURNEY-036J-PAY / revalidation
-Preconditions: An applied Offer or coupon is no longer valid at payment preparation.
+Preconditions: An applied Offer or coupon is no longer valid when payment is prepared.
 Acceptance scenarios: AC-036J-008-01
 Business rules: BR-036J-005
-UX states: revalidation error, recovered payable total
+UX states: Checkout Review stale Offer recovery; Payment read-only commercial summary; recovered payable total on Review
 Permission / resource context: Customer checkout.
-Error / recovery: Remove coupon, adjust cart, or continue without that Offer. No pay action while the total still includes the invalid benefit.
+Error / recovery: Return through the pre-payment Review path. Remove or change the coupon, adjust the cart, or continue without that Offer there. Payment does not mutate coupon state while the total is stale. No pay action while the total still includes the invalid benefit.
 Dependencies: Existing checkout revalidation posture.
 Explicit non-goals: Silently keeping the old discount.
 Data implications: Payable total is recomputed. No snapshot is sealed with the stale benefit.
@@ -486,8 +515,10 @@ Then the commercial total no longer includes that coupon-backed Offer
 AC-036J-002-04 — Authentication retry
 Story: US-036J-002
 Given the coupon requires a customer identity and the customer is not authenticated
-When the customer enters it
-Then the customer is asked to sign in and can retry the same code afterward
+When the customer enters it on Cart or Checkout Review
+Then the customer is asked to sign in
+And after successful authentication the same coupon attempt is preserved and retried where existing identity and cart continuity allow it
+And private eligibility facts belonging to another customer are not shown
 
 AC-036J-002-05 — Unrestricted coupon without identity
 Story: US-036J-002
@@ -495,6 +526,33 @@ Given the coupon has no customer-identity restriction and the cart otherwise qua
 When an unauthenticated customer enters it
 Then it may apply
 And a first-order or per-customer restricted Offer still requires authentication
+
+AC-036J-002-06 — Cart entry is the Checkout Review coupon
+Story: US-036J-002
+Given the customer enters a valid coupon on Cart
+When the customer opens Checkout Review
+Then the same applied coupon and commercial result are visible there
+And Checkout Review has not created a second coupon state
+
+AC-036J-002-07 — First entry on Checkout Review
+Story: US-036J-002
+Given no coupon has been entered yet
+When the customer enters a valid coupon for the first time on Checkout Review
+Then the shared cart / commercial intent records that same coupon
+And the evaluated totals update from that one state
+
+AC-036J-002-08 — Review change or removal recomputes totals
+Story: US-036J-002
+Given a coupon is part of the shared commercial state
+When the customer removes it or replaces it on Checkout Review
+Then the shared state updates
+And the totals are recomputed from that same commercial evaluation
+
+AC-036J-002-09 — Payment does not edit the coupon
+Story: US-036J-002
+Given the customer has crossed from Checkout Review into Payment
+Then the customer sees the final commercial summary only
+And Payment offers no coupon entry, replacement, or removal control
 
 AC-036J-003-01 — Threshold progress
 Story: US-036J-003
@@ -542,8 +600,8 @@ Then eligibility uses that accepted timing truth and does not invent a new Sched
 
 AC-036J-007-01 — Distinct limit states
 Story: US-036J-007
-Given one of invalid, expired, globally exhausted, or personal redemption limit
-When the customer attempts the Offer or coupon
+Given one of invalid, expired, inapplicable, globally exhausted, or personal redemption limit
+When the customer attempts the Offer or coupon on Cart or Checkout Review
 Then the visible failure matches that case and does not collapse them into one generic invalid
 
 AC-036J-008-01 — Stale Offer cannot be paid
@@ -551,13 +609,15 @@ Story: US-036J-008
 Given an applied Offer that is no longer valid at payment preparation
 When the customer attempts to pay
 Then payment does not proceed on the stale total
-And the customer can remove the coupon, change the cart, or continue without that Offer on a recomputed total
+And accepted pre-payment revalidation remains authoritative
+And recovery returns through the pre-payment Review path, where the customer can remove or change the coupon, change the cart, or continue without that Offer on a recomputed total
+And Payment does not mutate coupon state to perform that recovery
 
 AC-036J-009-01 — Automatic Offer is better
 Story: US-036J-009
 Given the automatic Offer saves more than the entered coupon and they do not stack
 When the customer enters the coupon
-Then the automatic Offer remains applied and the customer is told it is the better saving
+Then the automatic Offer remains applied and the customer is told the entered coupon did not improve the result
 
 AC-036J-009-02 — Coupon is better
 Story: US-036J-009
@@ -615,7 +675,8 @@ Then activation does not succeed, the reason is visible for invalid configuratio
 | `BR-036J-006` | First-order eligible means no previous successfully purchased direct BOBA Bear Order for that authenticated customer. Failed or abandoned payments do not consume it. Later cancellation or refund of a successful Order does not restore it. | ODC-06 | `US-036J-005` |
 | `BR-036J-007` | Eligibility may distinguish DELIVERY and PICKUP. Scheduled eligibility consumes accepted IMP-036I timing and does not redefine it. Standing free delivery in the delivery tariff is not the same thing as a temporary free-delivery Offer. The customer sees one delivery-charge result. | ODC-05, ODC-06; IMP-036H; IMP-036I | `US-036J-006`, `US-036J-004` |
 | `BR-036J-008` | Default maximum is one primary merchandise or order Offer plus one compatible delivery incentive. Two merchandise discounts do not stack. BOGO plus another merchandise discount does not stack. When several automatic Offers qualify, the best deterministic customer monetary outcome wins. | ODC-07..ODC-10. Deal compatibility is moot while Deals are out of this slice. | `US-036J-009`, `US-036J-010` |
-| `BR-036J-009` | An entered coupon competes with the automatic Offer. The customer must not be worse off for entering it. If the automatic Offer is better, it stays and is explained. If the coupon-backed Offer is better, it wins. Incompatible discounts are not silently stacked. | ODC-10 | `US-036J-002`, `US-036J-009` |
+| `BR-036J-009` | An entered coupon competes with the automatic Offer. The customer must not be worse off for entering it. If the automatic Offer is better, it stays and the customer is told the coupon did not improve the result. If the coupon-backed Offer is better, it wins and the result is explained. Incompatible coupon and automatic Offer benefits are not silently stacked. One entered coupon state exists at a time. | ODC-10; Founder coupon policy already approved in discovery | `US-036J-002`, `US-036J-009` |
+| `BR-036J-013` | Coupon entry exists on Cart and on Checkout Review. Both surfaces operate one shared coupon / commercial state. Checkout Review is not a second coupon store. The customer may enter, apply, replace, remove, and retry on either surface before Payment. After the customer crosses from Review into Payment, coupon state is read-only: no new entry, replacement, or removal. If commercial truth is stale, recovery returns through the normal pre-payment Review path. | FD-036J-01 APPROVED 2026-09-27 | `US-036J-002`, `US-036J-008` |
 | `BR-036J-010` | V1 controls are max discount where applicable, per-customer redemption cap, and global Offer redemption cap. Reuse coupon claims where they fit. Campaign budgets and pacing are follow-up. | ODC-11 | `US-036J-007`, `US-036J-012` |
 | `BR-036J-011` | V1 benefit intent is percentage, flat ₹, BOGO / Buy X Get Y, a free menu item only where accepted authority can express it, and temporary free delivery. Fixed promotional item or combo pricing is Deal/Pricing, not this slice. | ODC-05 | `US-036J-001`, `US-036J-012` |
 | `BR-036J-012` | `NO_SECOND_MONEY_ENGINE`. No second Promotion evaluator and no second Pricing engine. | D-382; ADR-007 | All |
@@ -624,8 +685,8 @@ Then activation does not succeed, the reason is visible for invalid configuratio
 
 This draft does not treat the following as already implemented:
 
-- Free menu item as a non-BOGO benefit is an engine gap. V1 customer outcome, if Fit can express it through accepted authority, is one operator-specified complementary menu item shown as a line with no extra merchandise charge. Customer choice among several gifts is out of this slice.
-- Temporary free delivery must produce one coherent delivery charge together with the existing tariff. Architecture Fit decides the interaction. This draft does not choose a table or formula.
+- Free menu item as a non-BOGO benefit is an engine gap. V1 customer outcome, only where accepted commercial authority can express it safely, is one operator-specified complementary menu item shown as a line with no extra merchandise charge. The customer does not choose from a gift catalogue in IMP-036J. Customer-choice gift selection is Deal-like future behavior. If Architecture Fit proves the current authority cannot safely express that free-item outcome without creating a second engine, Fit must surface that contradiction rather than silently dropping this requirement.
+- Temporary free-delivery Offer is part of IMP-036J V1. The standing tariff threshold and the temporary Offer are distinct product concepts. The customer sees one coherent delivery-charge outcome. Architecture Fit decides the minimum implementation interaction. This draft does not choose a table or formula and does not create a second delivery-charge calculator.
 - First-order, fulfilment-mode eligibility, and global caps on automatic Offers that have no coupon are product requirements with known engine gaps. Fit decides the minimum extension. Until that extension exists, those rules are not pretend-supported.
 
 Percentage, flat amount, and BOGO are product-intended because the accepted engine already has them. V1 still includes making them operable and explainable.
@@ -634,8 +695,9 @@ Percentage, flat amount, and BOGO are product-intended because the accepted engi
 
 | Surface | V1 |
 |---|---|
-| Cart | Offer status, threshold progress, coupon entry (see FD-036J-01), savings explanation |
-| Checkout | Applied benefits, revalidation errors, removal/recovery, truthful payable total |
+| Cart | Offer status, threshold progress, coupon entry, apply, remove, replace, failure classes, savings explanation |
+| Checkout Review | The same coupon and commercial state: inherited applied coupon, first-time entry, change, remove, retry, automatic-versus-coupon explanation, recomputed totals, stale-Offer recovery |
+| Payment | Final read-only commercial summary. No coupon entry, change, or removal. |
 | Order detail | Historical purchased savings only |
 | Menu / Home | No Offers browse and no Deals hub. A minimal mention is allowed only when a V1 cart or checkout outcome needs the customer to know an Offer exists. It is not a new destination. |
 | My BOBA / Offers for You | Follow-up, as in the discovery story map |
@@ -654,14 +716,14 @@ Percentage, flat amount, and BOGO are product-intended because the accepted engi
 | AUTHORIZATION | Operator allow/deny on existing commercial scope. Customer identity when the Offer requires it. | `AC-036J-002-04`, `AC-036J-012-02` |
 | NOT FOUND / STALE REFERENCE | Unknown code; Offer retired before payment; purchased order does not use live Offers. | `US-036J-008`, `US-036J-011` |
 | SERVER / NETWORK ERROR | Failure must not show a false applied state or a false paid total. | `US-036J-002`, `US-036J-008` |
-| RECOVERY | Remove, retry after sign-in, adjust cart, continue without the Offer. | `US-036J-002`, `US-036J-008` |
+| RECOVERY | Remove, replace, retry after sign-in, adjust cart, or continue without the Offer on Cart or Checkout Review. Stale payment recovery returns to Review. | `US-036J-002`, `US-036J-008` |
 | CONCURRENCY | Last global redemption and first-order qualification must not both succeed incorrectly. Mechanism is Fit. | `US-036J-005`, `US-036J-007` |
-| DESTRUCTIVE ACTION | Removing a coupon and retiring a Promotion are explicit. Retirement does not rewrite purchased orders. | `AC-036J-002-03`, `US-036J-012` |
+| DESTRUCTIVE ACTION | Removing or replacing a coupon, on Cart or Checkout Review, is explicit and recomputes totals. Retiring a Promotion is explicit and does not rewrite purchased orders. Payment cannot remove the coupon. | `AC-036J-002-03`, `AC-036J-002-08`, `US-036J-012` |
 | SUCCESS FEEDBACK | Applied state, saving, and operator activation/inspection. | `US-036J-001`, `US-036J-012` |
 | DOWNSTREAM EFFECT | Payable total and snapshot change only through accepted evaluation. | `BR-036J-005` |
 | REVISIT / RELOAD | Cart and checkout show the current evaluation. Order detail shows purchased facts. | `US-036J-011` |
-| RESPONSIVE / MOBILE | Cart, checkout, and the commercial surface must be usable on mobile. | Section 18 |
-| ACCESSIBILITY | Savings, errors, and progress are text, not colour alone, and are keyboard reachable. | Section 18 |
+| RESPONSIVE / MOBILE | Cart coupon entry, Checkout Review coupon entry, and the savings summary remain usable and readable on a narrow viewport. | Section 18 |
+| ACCESSIBILITY | Coupon input has an accessible name. Results and errors are associated with that input. Apply, Remove, and Change are keyboard operable. Status is not communicated only by colour. Focus recovery after validation and sign-in is defined. | Section 18 |
 
 ## 13. UX state matrix
 
@@ -669,11 +731,26 @@ Percentage, flat amount, and BOGO are product-intended because the accepted engi
 |---|---|---|---|---|---|
 | Cart / applied | Offer qualifies | Applied name, saving, short why | Savings announced in text | Reload keeps current evaluation | `AC-036J-001-01` |
 | Cart / progress | Threshold not met | Real remaining amount | Readable text | Unlock or drop-off | `AC-036J-003-01` |
-| Cart / coupon empty | No code entered | Entry field recommended; see FD-036J-01 | Field is named and focusable | Applied or validation error | `US-036J-002` |
-| Cart / coupon applied | Valid code | APPLIED and saving; remove available | Remove is focusable | Removed total | `AC-036J-002-01` |
-| Cart / coupon error | Bad, expired, exhausted, or limited code | Distinct reason; edit and retry | Error is associated with the field | Applied or still invalid | `AC-036J-007-01` |
-| Checkout / payable | Revalidated total | Breakdown and payable amount | Totals are text | Pay or revalidation error | `AC-036J-004-01` |
-| Checkout / stale | Offer no longer valid | Pay blocked; recover by remove, edit cart, or continue without it | Focus moves to the error and recovery action | Recomputed total | `AC-036J-008-01` |
+| Cart / coupon empty | No code entered | Named coupon field; Apply available | Field has an accessible name and is keyboard focusable | Applying, then applied or a validation error | `US-036J-002` |
+| Cart / coupon applying | Customer has submitted a code | Applying status in text, not colour alone | Apply is keyboard operable; the control does not imply a second coupon | Applied, a distinct failure, or identity required | `AC-036J-002-01` |
+| Cart / coupon applied | Valid code | APPLIED and saving; Remove and Change available | Remove and Change are keyboard operable | Removed or replaced total | `AC-036J-002-01` |
+| Cart / coupon invalid | Text is not a valid code | Invalid reason associated with the input | Focus returns to the input | Another code or empty | `AC-036J-002-02` |
+| Cart / coupon expired | Code is past its window | Expired reason, distinct from invalid | Error associated with the input; focus returns to it | Another code or removal | `AC-036J-007-01` |
+| Cart / coupon inapplicable | Code is valid but the cart does not qualify | Inapplicable reason, distinct from invalid | Error associated with the input | Cart change or another code | `AC-036J-007-01` |
+| Cart / coupon exhausted | Global redemption cap is spent | Globally exhausted reason | Error associated with the input | Continue without that coupon | `AC-036J-007-01` |
+| Cart / personal limit | This customer has reached the cap | Personal redemption limit reason | Error associated with the input | Continue without that coupon | `AC-036J-007-01` |
+| Cart / identity required | Coupon needs a customer identity | Sign-in request; the attempt is kept for retry | After sign-in, focus returns to the coupon result on this surface | Retried applied result or a remaining failure | `AC-036J-002-04` |
+| Cart / coupon removed | Customer removes the applied code | Shared state has no entered coupon; totals recompute | Focus remains on the coupon field | Empty or a new entry | `AC-036J-002-03` |
+| Checkout Review / inherited coupon | Coupon already applied on Cart | Same applied coupon and saving; Remove and Change available | Same keyboard rules as Cart | Removed, changed, or continued total | `AC-036J-002-06` |
+| Checkout Review / no coupon | Shared state has no coupon | Entry field and Apply are available | Field has an accessible name | Applied or a validation failure | `AC-036J-002-07` |
+| Checkout Review / changed coupon | Customer replaces the code | Shared state updates; totals recompute; explanation follows BR-036J-009 | Change is keyboard operable | New applied result, automatic retained, or failure | `AC-036J-002-08` |
+| Checkout Review / removed coupon | Customer removes the code | Shared state clears the coupon; totals recompute | Remove is keyboard operable | Entry or continued total | `AC-036J-002-08` |
+| Checkout Review / validation failure | Entry fails a reason class | Same distinct reason as Cart, associated with the input | Focus returns to the input | Corrected code or removal | `AC-036J-007-01` |
+| Checkout Review / automatic retained | Automatic Offer is the better compatible monetary result | Automatic Offer stays; text says the entered coupon did not improve the result | Status is text, not colour alone | Remove coupon or continue | `AC-036J-009-01` |
+| Checkout Review / coupon wins | Coupon-backed Offer is the better result | Coupon-backed Offer is explained as the winning saving | Status is text | Continue or remove | `AC-036J-009-02` |
+| Checkout Review / stale Offer | Revalidation finds the Offer no longer valid | Pay is not offered on the stale total; recovery actions are on Review | Focus moves to the error and a recovery action | Recomputed total | `AC-036J-008-01` |
+| Payment / read-only summary | Customer has crossed into Payment | Final commercial summary only | No coupon entry, Change, or Remove control is present | Revalidation failure returns through Review | `AC-036J-002-09` |
+| Checkout Review / payable | Revalidated total | Breakdown and payable amount remain readable on a narrow viewport | Totals are text | Pay or revalidation error | `AC-036J-004-01` |
 | Order detail / historical | Purchased snapshot | Purchased savings only | Readable text | N/A live evaluation | `AC-036J-011-01` |
 | Operator / validation | Bad configuration | Reason; not activated | Error on the field | Correct and retry | `AC-036J-012-02` |
 | Operator / retire | Explicit retire | Future application stops; purchased history remains | Confirmation of the action | Retired | `US-036J-012` |
@@ -714,10 +791,15 @@ merchandise discounts.
 
 ## 18. Accessibility/responsive expectations
 
-Cart, checkout, and the existing commercial form must work on a narrow mobile viewport and
-with keyboard. Coupon errors and savings amounts have text names. Progress is not conveyed
-by colour alone. Focus stays on the coupon field or moves to its error after a failed entry.
-This draft does not specify components.
+Cart, Checkout Review, Payment's read-only summary, and the existing commercial form must
+work on a narrow mobile viewport and with keyboard. Cart coupon entry and Checkout Review
+coupon entry stay usable. The savings summary stays readable.
+
+The coupon input has an accessible name. The result or error is associated with that input.
+Apply, Remove, and Change are keyboard operable. Status is not communicated only by colour.
+After validation failure, focus returns to the coupon input. After sign-in, focus returns to
+the coupon result on the surface where the attempt was made. This draft does not specify
+components.
 
 ## 19. Observability/supportability if applicable
 
@@ -743,7 +825,7 @@ are in V1. Deal views, campaign aggregates, and incremental-revenue claims are n
 | Fulfilment mode | IMP-036H COMPLETE_AND_ACCEPTED | `US-036J-006` | None for product meaning |
 | Scheduled timing | IMP-036I COMPLETE_AND_ACCEPTED | `US-036J-006` | Do not redefine Scheduled |
 | Product Definition Gate and Architecture Fit | NOT_PERFORMED | Implementation | Blocks implementation |
-| FD-036J-01 | Open | Coupon field placement before Gate PASS | Blocks Gate, not this draft's existence |
+| FD-036J-01 | APPROVED 2026-09-27: Cart and Checkout Review share one coupon state; Payment does not mutate it | None for Gate readiness | Does not itself pass the Gate |
 
 ## 22. Supported now
 
@@ -752,30 +834,71 @@ are in V1. Deal views, campaign aggregates, and incremental-revenue claims are n
 | Promotion and Coupon monetary evaluation for existing benefit types | Existing accepted engine, not this slice's acceptance claim | IMP-016 / IMP-036F |
 | Customer explanation, coupon entry, threshold copy, first-order, mode eligibility, caps, and operator completeness | V1 acceptance commitment. Not yet implemented or proven. | `US-036J-001` … `US-036J-012` |
 
-## 23. Explicitly deferred
+## 23. Scope taxonomy
 
-| `EXPLICITLY_DEFERRED` behaviour | FOLLOW_UP or DEFERRED | Reason / consequence | Revisit dependency / decision owner |
-|---|---|---|---|
-| Claimable, targeted one-off, and loyalty-reward activation | FOLLOW_UP | ODC-04 follow-up | Later Founder scope |
-| Daypart, category targeting | FOLLOW_UP | Not required by V1 direction | Later Offer eligibility |
-| Campaign monetary budget, pacing, advanced daily caps | FOLLOW_UP | ODC-11 | Later campaign work, still unallocated |
-| My BOBA / Offers for You and a public Offers browse | FOLLOW_UP | Discovery story map already classifies My BOBA as follow-up | Later Founder promotion of the surface |
-| Customer-choice free gifts | FOLLOW_UP | V1 free item is one specified complementary item if expressible | Fit plus a later product scope |
-| Short terms document for an applied Offer | FOLLOW_UP | Discovery `ODC-US-062` is follow-up. V1 still explains the saving and why it applied where practical. | Later content scope |
-| Deals, including hubs, fixed-price combos, and choice configuration | DEFERRED | PARKED_DISCOVERY; no IMP identity | Future sequencing, not this slice |
-| Campaigns | DEFERRED | PARKED_DISCOVERY; no IMP identity | Future sequencing, not this slice |
-| Revenue Recommendations | DEFERRED | PARKED_DISCOVERY; no IMP identity | Future sequencing, not this slice |
+These categories are not equivalent. DRAFT-1's single `DEFERRED` label mixed them. That label is
+not current.
+
+### PARKED_SEQUENCED_FUTURE_CAPABILITIES
+
+These were not rejected. They must not disappear. They were deliberately sequenced out of
+IMP-036J by D-382. They are not "never planned." No future IMP number is assigned.
+
+| Capability | Status | What is preserved |
+|---|---|---|
+| Deals | `PARKED_DISCOVERY`; `ROADMAP_IDENTITY = NONE`; `ACTIVATED = NO` | Historical Founder-approved discovery direction. The earlier broad discovery included meaningful Deal V1 candidates: fixed-price combo, Meal for One, Meal for Two / Group, multi-item Deal, choice-based combo, Deal discovery/browse, Deal configuration, direct Add-to-cart, and Deal availability behavior. |
+| Campaigns | `PARKED_DISCOVERY`; `ROADMAP_IDENTITY = NONE`; `ACTIVATED = NO` | Historical Founder-approved discovery direction. Campaign means a first-class business/operator orchestration concept over Deals/Offers, timing, scope, merchandising, objective, redemption visibility, and descriptive measurement. Earlier discovery V1 direction included lightweight Campaign orchestration and descriptive measurement. |
+| Revenue Recommendations | `PARKED_DISCOVERY`; `ROADMAP_IDENTITY = NONE`; `ACTIVATED = NO` | A separate parked discovery initiative. It was not part of the original Offers/Deals/Campaigns capability. This definition does not change its product semantics and does not imply it was removed from that earlier plan. |
+
+### FOLLOW_UP_NOT_V1
+
+Earlier discovery already classified these as follow-up, or did not require them in V1. They are
+not rejected. They were not cut from an approved IMP-036J V1. They require later authorization.
+
+- claimable Offer activation
+- targeted one-off Offer activation
+- loyalty reward activation
+- My BOBA / Offers for You
+- full personalized Offer center
+- daypart recurrence / targeting
+- category / menu-section targeting
+- Campaign monetary budgets
+- Campaign budget pacing
+- advanced per-day budget controls
+- advanced Offer segmentation
+- advanced Offer personalization
+- advanced experimentation
+- causal / incremental-lift measurement
+- customer-choice gift selection (Deal-like future behavior; not the V1 complementary item)
+- short terms document for an applied Offer (`ODC-US-062`); V1 still explains the saving and why it applied where practical
+
+### EXPLICIT_NON_GOALS_AND_PROHIBITED_DIRECTIONS
+
+These are not deferred. They are intentionally not part of the desired architecture or product.
+
+- second money engine (`NO_SECOND_MONEY_ENGINE`)
+- second Promotion evaluator
+- second Pricing engine
+- generic platform-wide rules engine
+- arbitrary marketing-automation platform
+
+### Physical merchandise boundary
+
+ODC-14 future conceptual compatibility for rewards such as a sticker, a collectible, or apparel
+may remain. IMP-036J does not create merchandise inventory, stock reservation, merchandise
+shipping, warehouse logic, or merchandise fulfilment. A future separately authorized capability
+is required. This boundary is not ordinary commercial follow-up.
 
 ## 24. Not supported by design
 
 | `NOT_SUPPORTED_BY_DESIGN` behaviour | Reason / authority | User-visible boundary / relevant AC |
 |---|---|---|
-| Second Promotion or Pricing engine | D-382; `BR-036J-012` | Customer still sees one payable evaluation |
+| Second money engine, second Promotion evaluator, or second Pricing engine | D-382; `BR-036J-012`; prohibited, not deferred | Customer still sees one payable evaluation |
 | Loyalty points, rewards wallet, cashback balance, gift cards | Discovery deferrals | No points balance |
-| Physical merchandise fulfilment | ODC-14 | No merch reward in V1 |
-| General segmentation, recommendation ranking, personalized ML | Out of promotions-first scope | No “offers for you” model |
-| Experimentation and causal lift claims | ODC-13 | Operators must not label sales as incremental revenue |
-| Arbitrary marketing automation or a generic rules engine | Out of scope | Operator surface stays Promotion and Coupon operation |
+| Merchandise inventory, stock reservation, shipping, warehouse logic, or merchandise fulfilment | ODC-14 boundary. Conceptual sticker, collectible, or apparel compatibility may remain. A future separately authorized capability is required. | No merchandise fulfilment in IMP-036J |
+| General segmentation, recommendation ranking, or a personalization engine | Out of promotions-first scope. Advanced personalization is `FOLLOW_UP_NOT_V1`, not a V1 engine. | No “offers for you” model in IMP-036J |
+| Presenting sales as causal incremental revenue | ODC-13. Advanced experimentation and lift measurement are `FOLLOW_UP_NOT_V1`. | Operators must not label sales as incremental revenue in V1 |
+| Arbitrary marketing automation or a generic rules engine | Prohibited direction, not deferred | Operator surface stays Promotion and Coupon operation |
 | Directly purchasable Deals | Promotions-first split | No Deals destination |
 | Restoring first-order eligibility after cancel or refund | ODC-06 | `AC-036J-005-02` |
 
@@ -783,27 +906,40 @@ are in V1. Deal views, campaign aggregates, and incremental-revenue claims are n
 
 | `UNRESOLVED_DECISION_REQUIRED` item | Material user/business impact | Decision owner / evidence needed | Affected stories / gate |
 |---|---|---|---|
-| `FD-036J-01` — Where the customer types a coupon code. Discovery allows cart or checkout. This draft recommends Cart as the only entry field, with Checkout showing the applied or failed result, removal, and retry. A second Checkout entry field is not required for V1 under that recommendation. | Customers need one obvious place to type a code, and checkout must still recover before payment. | Founder confirmation before Product Definition Gate. Do not treat the recommendation as approved. | `US-036J-002`; Gate remains `NOT_PERFORMED` while this is open |
+| None | `OPEN_FOUNDER_PRODUCT_DECISIONS = 0` | FD-036J-01 is APPROVED | Gate may be reviewed; it is not performed by this draft |
 
-Other questions in the task list are consumed from discovery or decided as draft scope above:
+`FD-036J-01` = `APPROVED` on 2026-09-27.
+
+```text
+COUPON_ENTRY_SURFACE = CART + CHECKOUT_REVIEW
+ONE_SHARED_COUPON_STATE = YES
+PAYMENT_COUPON_MUTATION = NO
+```
+
+DRAFT-1 recommended Cart-only entry. The Founder instead approved entry on both Cart and
+Checkout Review, over one shared coupon / commercial state, with Payment read-only for coupon
+changes.
+
+Other questions are consumed from discovery or from this draft's scope:
 public Offers browse is follow-up; free-item V1 is one specified complementary item when
-expressible; free delivery is one coherent charge result; unrestricted coupons may be used
-without sign-in; full terms are follow-up; operator V1 measurement is operational
+accepted authority can express it safely; customer-choice gifts stay future/Deal-like; free
+delivery is one coherent charge result; unrestricted coupons may be used without sign-in;
+identity-restricted coupons may be attempted before sign-in and retried afterward where
+existing continuity allows; full terms are follow-up; operator V1 measurement is operational
 application and redemption visibility, not campaign analytics.
 
 ## 26. Definition of Ready
 
 | Story ID | Applicable fields complete / evidence | Open material decisions | Readiness / blocker |
 |---|---|---|---|
-| `US-036J-001`, `US-036J-003` … `US-036J-012` | Sections 9–18 state the outcome. Fit and permissions binding are not done. | None inside the story. Program gates are open. | `NOT_READY_FOR_IMPLEMENTATION` |
-| `US-036J-002` | Outcome stated. Entry surface is a recommendation only. | `FD-036J-01` | `NOT_READY_FOR_IMPLEMENTATION` |
+| `US-036J-001` … `US-036J-012` | Sections 9–18 state the outcome. Fit and permissions binding are not done. | None. Program Gate, Fit, and implementation authorization are not performed. | `NOT_READY_FOR_IMPLEMENTATION` |
 
 ## 27. Product Definition Gate
 
 ```text
 PRODUCT_DEFINITION_GATE
 Capability: IMP-036J — Promotions, Coupons & Offers
-Product Definition Version: PD-IMP-036J-DRAFT-1
+Product Definition Version: PD-IMP-036J-DRAFT-2
 Business Outcome: stated
 Primary Personas: stated
 Journeys Defined: stated
@@ -816,15 +952,20 @@ Error / Recovery Paths Defined: stated
 Authorization Variants Defined: stated at product level; exact permission keys are Fit
 Cross-Scope Scenarios Defined: stated
 Concurrency Considered: outcome stated; mechanism is Fit
-Destructive Actions Defined: coupon removal and promotion retirement
-UX State Matrix Complete: stated
+Destructive Actions Defined: coupon removal and replacement on Cart and Checkout Review; promotion retirement; Payment cannot remove a coupon
+UX State Matrix Complete: stated for Cart, Checkout Review, and Payment
 Accessibility Considered: stated
 Golden Journeys Identified: stated
-Explicit Deferrals Recorded: stated
-Unresolved Product Decisions: FD-036J-01
+Explicit Deferrals Recorded: stated as parked, follow-up, prohibited, and merchandise-boundary categories
+Unresolved Product Decisions: NONE
 Architecture Conflicts: NONE identified. Architecture Fit NOT_PERFORMED.
 PRODUCT_DEFINITION_GATE_EXECUTION: NOT_PERFORMED
 Gate Result: NOT_PERFORMED
 ```
 
-`NOT_PERFORMED` means no gate evaluation has occurred. It is not a PASS.
+```text
+DRAFT_READY_FOR_GATE ≠ PRODUCT_DEFINITION_GATE_PASS ≠ APPROVED
+```
+
+`NOT_PERFORMED` means no gate evaluation has occurred. It is not a PASS. This draft does not
+execute the Product Definition Gate.

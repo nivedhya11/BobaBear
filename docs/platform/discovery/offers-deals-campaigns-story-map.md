@@ -27,6 +27,12 @@ DEALS_ROADMAP_IDENTITY: NONE
 CAMPAIGNS: PARKED_DISCOVERY
 CAMPAIGNS_ROADMAP_IDENTITY: NONE
 
+SCOPE_TAXONOMY:
+  PARKED_SEQUENCED_FUTURE_CAPABILITIES = Deals, Campaigns, and separately parked Revenue Recommendations. Not rejected.
+  FOLLOW_UP_NOT_V1 = rows already marked FOLLOW_UP. Not a cut from an approved IMP-036J V1.
+  EXPLICIT_NON_GOALS = a second money engine is prohibited, not deferred.
+  PHYSICAL_MERCHANDISE_BOUNDARY = ODC-US-520 / ODC-14 is not ordinary commercial follow-up.
+
 STORY_IDS: ODC-US-* remain discovery-only historical IDs and are not renumbered
 AC_IDS: formal AC-036J-* live only in the IMP-036J Product Definition for the promotions subset
 ACCEPTANCE_EXAMPLES: Deal and Campaign examples below remain DISCOVERY_ACCEPTANCE_EXAMPLE only
