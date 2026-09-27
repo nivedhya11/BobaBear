@@ -17227,7 +17227,7 @@ describe("IMP-036I implementation authorization persistence", () => {
     const gated = live.replace("PRODUCT_DEFINITION_GATE = NOT_PERFORMED", "PRODUCT_DEFINITION_GATE = PASS");
     const stale = evaluateImp036jStoryReadiness(gated);
     assert.equal(stale.ok, false);
-    assert.equal(stale.code, "IMP036J_READINESS_STALE_AFTER_GATE");
+    assert.equal(stale.code, "IMP036J_READINESS_POST_GATE");
     const storiesStillBlocked = gated.replace(
       "| `NOT_READY_FOR_IMPLEMENTATION`. Reason: Product Definition Gate NOT_PERFORMED; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED. |",
       "| `NOT_READY_FOR_IMPLEMENTATION`. Reason: Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED. |",
@@ -17236,6 +17236,13 @@ describe("IMP-036I implementation authorization persistence", () => {
     assert.equal(storyStale.ok, false);
     assert.equal(storyStale.code, "IMP036J_READINESS_STALE_AFTER_GATE");
     assert.match(storyStale.message, /US-036J-001/);
+    const premature = storiesStillBlocked.replaceAll(
+      "Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate NOT_PERFORMED; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED.",
+      "Readiness: READY_FOR_IMPLEMENTATION",
+    );
+    const tooReady = evaluateImp036jStoryReadiness(premature);
+    assert.equal(tooReady.ok, false);
+    assert.equal(tooReady.code, "IMP036J_READINESS_POST_GATE");
   });
 
   it("recognizes GTM-R163 / STATE-R161 as IMP-036J Product Definition activation, not IMP-036I acceptance", () => {

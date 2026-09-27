@@ -38602,19 +38602,36 @@ export function evaluateImp036jStoryReadiness(productDefinitionText) {
   }
   if (gate === "PASS") {
     const definitionOfReady = text.split("## 26. Definition of Ready")[1]?.split("## 27.")[0] ?? "";
-    if (/Product Definition Gate NOT_PERFORMED/.test(definitionOfReady)) {
+    const postGateBlockers =
+      /NOT_READY_FOR_IMPLEMENTATION/.test(definitionOfReady) &&
+      /Architecture Fit NOT_PERFORMED/.test(definitionOfReady) &&
+      /implementation NOT_AUTHORIZED/.test(definitionOfReady) &&
+      !/Product Definition Gate NOT_PERFORMED/.test(definitionOfReady);
+    if (!postGateBlockers) {
       return {
         ok: false,
-        code: "IMP036J_READINESS_STALE_AFTER_GATE",
-        message: "After Gate PASS, readiness must leave only Architecture Fit and implementation authorization outstanding",
+        code: "IMP036J_READINESS_POST_GATE",
+        message: "After Gate PASS, definition of ready must stay NOT_READY with only Architecture Fit and implementation authorization outstanding",
       };
     }
     for (const match of readiness) {
-      if (/Product Definition Gate NOT_PERFORMED/.test(match[2])) {
+      const line = match[2];
+      if (/Product Definition Gate NOT_PERFORMED/.test(line)) {
         return {
           ok: false,
           code: "IMP036J_READINESS_STALE_AFTER_GATE",
           message: `${match[1]} still cites an unperformed Product Definition Gate after Gate PASS`,
+        };
+      }
+      if (
+        !line.startsWith("NOT_READY_FOR_IMPLEMENTATION") ||
+        !/Architecture Fit NOT_PERFORMED/.test(line) ||
+        !/implementation NOT_AUTHORIZED/.test(line)
+      ) {
+        return {
+          ok: false,
+          code: "IMP036J_READINESS_POST_GATE",
+          message: `${match[1]} must stay NOT_READY_FOR_IMPLEMENTATION with Architecture Fit and implementation authorization outstanding after Gate PASS`,
         };
       }
     }
