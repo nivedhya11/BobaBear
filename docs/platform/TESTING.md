@@ -36,11 +36,11 @@ Definition `PD-IMP-036H-DRAFT-1` = `APPROVED`; Product Definition Gate
 `PASS`; Architecture Fit `PASS`; architecture `LOCKED`; implementation
 `AUTHORIZED` / `STARTED` / `COMPLETE`; `IMP036H_IMPLEMENTATION_COMPLETE: YES`;
 `IMP036H_ACCEPTED: YES`; `IMP036H_FOUNDER_UAT: PASS`; `IMP036H_FORMAL_ACCEPTANCE: ACCEPTED`
-(acceptance provenance GTM-R147 / STATE-R145); CURRENT tip GTM-R165 / STATE-R163 (prior tip GTM-R164 / STATE-R162; prior tip GTM-R162 / STATE-R160; prior tip GTM-R161 / STATE-R159; prior tip GTM-R156 / STATE-R154; prior tip GTM-R155 / STATE-R153; prior tip GTM-R154 / STATE-R152; prior tip GTM-R153 / STATE-R151; prior tip GTM-R152 / STATE-R150; prior tip GTM-R151 / STATE-R149; prior tip GTM-R150 / STATE-R148; prior tip GTM-R149 / STATE-R147);
+(acceptance provenance GTM-R147 / STATE-R145); CURRENT tip GTM-R166 / STATE-R164 (prior tip GTM-R165 / STATE-R163; prior tip GTM-R164 / STATE-R162; prior tip GTM-R162 / STATE-R160; prior tip GTM-R161 / STATE-R159; prior tip GTM-R156 / STATE-R154; prior tip GTM-R155 / STATE-R153; prior tip GTM-R154 / STATE-R152; prior tip GTM-R153 / STATE-R151; prior tip GTM-R152 / STATE-R150; prior tip GTM-R151 / STATE-R149; prior tip GTM-R150 / STATE-R148; prior tip GTM-R149 / STATE-R147);
 `acceptedThrough` = IMP-036I; `currentProductSlice` = IMP-036J;
 `pendingAcceptance` = NONE; `nextProductSlice` = IMP-037; `IMP036I_ACTIVATED: YES`;
 `IMP036J_ACTIVATED: YES`; `IMP036J_PRODUCT_DEFINITION: DRAFT_READY_FOR_GATE`
-(`PD-IMP-036J-DRAFT-3`; Gate `NOT_PERFORMED`; Architecture Fit `NOT_PERFORMED`;
+(`PD-IMP-036J-DRAFT-4`; Gate `NOT_PERFORMED`; Architecture Fit `NOT_PERFORMED`;
 implementation `NOT_AUTHORIZED`);
 `IMP036I_PRODUCT_DEFINITION: APPROVED` (`PD-IMP-036I-DRAFT-4`);
 `IMP036I_PRODUCT_DEFINITION_GATE: PASS` (independent review `5307761142`); Architecture Fit
@@ -112,7 +112,10 @@ Maintain this mapping in the per-IMP Product Definition or its linked implementa
 | `US-<IMP>-NNN` | `AC-<IMP>-NNN-NN` / `GJ-...` | Observable outcome | Selected layers | Executable test or explicit manual procedure | Exact candidate, command, exit/result, evidence path |
 
 Before implementation, identify the expected proof. At completion, record actual results rather than
-treating the planned test as evidence. Preserve relevant commands, raw failure/pass output, browser
+treating the planned test as evidence. IMP-036J DRAFT-4 identifies planned proof for unrestricted
+guest-coupon evaluation, complimentary-item commercial evaluation, Cart and Checkout browser
+presentation, purchased-order history, and operator authoring validation. Those proofs remain
+`NOT_EXECUTED` until implementation. Preserve relevant commands, raw failure/pass output, browser
 artifacts when useful, limitations, and repository/branch/HEAD/tree/content-sensitive
 `WORKING_TREE_FINGERPRINT`. Disclose skipped, failed, quarantined, or substituted checks and any
 mandatory AC without proof. Use the canonical fingerprint command in `AGENTS.md`; a path-only Git
