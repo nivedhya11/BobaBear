@@ -204,7 +204,7 @@ Discovery story IDs `ODC-US-*` are discovery examples, not these formal story ID
 
 | Slice | Mandatory story IDs | Mandatory AC IDs | Required Golden Journeys | Observable acceptance boundary |
 |---|---|---|---|---|
-| `V1_ACCEPTANCE_SLICE` | `US-036J-001` … `US-036J-012` | `AC-036J-001-01` … `AC-036J-012-02` | `GJ-FIRST-ORDER`, `GJ-RETURNING-ORDER` for explainable savings on an otherwise accepted purchase path. This slice does not redefine those journeys' non-offer steps. | A customer can receive an automatic or coupon-backed Offer, understand the saving, and pay a revalidated total. An authorized operator can operate the accepted Promotion/Coupon surface for the V1 benefit and eligibility rules this definition includes. |
+| `V1_ACCEPTANCE_SLICE` | `US-036J-001` … `US-036J-012` | `AC-036J-001-01` … `AC-036J-012-03` | `GJ-FIRST-ORDER`, `GJ-RETURNING-ORDER` for explainable savings on an otherwise accepted purchase path. This slice does not redefine those journeys' non-offer steps. | A customer can receive an automatic or coupon-backed Offer, understand the saving, and pay a revalidated total. An authorized operator can operate the accepted Promotion/Coupon surface for the V1 benefit and eligibility rules this definition includes. |
 | `FOLLOW_UP` | Items already classified as follow-up inside the commercial / Offer domain. See section 23 `FOLLOW_UP_NOT_V1`. | Not defined | Not added | Requires later authorization. Not a rejection and not a cut from an approved IMP-036J V1. |
 | `PARKED_SEQUENCED_FUTURE_CAPABILITIES` | Deals, Campaigns, and Revenue Recommendations. See section 23. | Not defined | Not added | Parked discovery. Not rejected. No IMP identity is assigned here. |
 | `EXPLICIT_NON_GOALS_AND_PROHIBITED_DIRECTIONS` | Second money engine, second Promotion evaluator, second Pricing engine, generic platform-wide rules engine, arbitrary marketing-automation platform. | Not defined | Not added | Intentionally not part of the desired architecture or product. Not deferred. |
@@ -241,11 +241,11 @@ so that I can use a code, understand a refusal, change or remove it, and retry w
 
 Journey / activity: JOURNEY-036J-COUPON / coupon entry
 Preconditions: A Coupon exists for a coupon-activated Offer, or the entered text does not.
-Acceptance scenarios: AC-036J-002-01 through AC-036J-002-09. Monetary competition with an automatic Offer is AC-036J-009-01 and AC-036J-009-02, not a second evaluation.
+Acceptance scenarios: AC-036J-002-01 through AC-036J-002-10. Monetary competition with an automatic Offer is AC-036J-009-01 and AC-036J-009-02, not a second evaluation.
 Business rules: BR-036J-003, BR-036J-009, BR-036J-013
 UX states: Cart empty, applying, applied, invalid, expired, inapplicable, globally exhausted, personal limit, identity required, removed. Checkout Review inherited applied coupon, no coupon / entry, changed coupon, removed coupon, validation failure, best automatic Offer retained, coupon wins, stale Offer recovery. Payment final read-only summary with no coupon edit control.
 Permission / resource context: Unrestricted coupons may be entered without a customer identity. An identity-restricted coupon may be entered while unauthenticated; the response may require sign-in; after successful authentication the same attempt is preserved and retried where existing identity and cart continuity already allow it. Private eligibility facts of another customer are not exposed. Founder-approved FD-036J-01 (2026-09-27): entry exists on both Cart and Checkout Review over one shared coupon / commercial state. Payment does not mutate coupon state.
-Error / recovery: Failures name the reason class and allow correction, replacement, or removal on Cart or Checkout Review. After a failed apply, focus returns to the coupon input and the error stays associated with it. After sign-in, focus returns to the coupon result on the same surface. Payment does not host those controls.
+Error / recovery: Failures name the reason class and allow correction, replacement, or removal on Cart or Checkout Review. After a failed apply, focus returns to the coupon input and the error stays associated with it. After sign-in, focus returns to the coupon result on the same surface. A server or network failure leaves the previous shared coupon state in place and does not show a false applied state or a false payable total. Payment does not host those controls.
 Dependencies: Existing Coupon activation authority and existing identity/cart continuity. No second coupon store.
 Explicit non-goals: A second coupon domain. A second simultaneous entered coupon. Coupon mutation inside Payment.
 Data implications: The entered code is an activation attempt against one shared commercial intent, not a new monetary fact and not a Checkout-Review-only record.
@@ -461,11 +461,11 @@ so that I can create, limit, activate, inspect, and retire them without a second
 
 Journey / activity: JOURNEY-036J-OPERATOR / authoring and operations
 Preconditions: The operator already holds the existing promotions and coupons authorization for the applicable scope.
-Acceptance scenarios: AC-036J-012-01, AC-036J-012-02
+Acceptance scenarios: AC-036J-012-01, AC-036J-012-02, AC-036J-012-03
 Business rules: BR-036J-001, BR-036J-011
 UX states: draft, active, validation failure, retired, redemption visibility
 Permission / resource context: Existing `promotions` and `coupons` authorization and commercial scope. No new role. Exact permission keys are Fit, not a new model.
-Error / recovery: Invalid configuration is rejected with a reason the operator can correct. Unauthorized scope is denied.
+Error / recovery: Invalid configuration is rejected with a reason the operator can correct. Unauthorized activation or retirement is denied and does not change the Offer. Confirmed retirement stops future application and leaves purchased orders unchanged. Cancelling the retire confirmation leaves the Offer active.
 Dependencies: Accepted IMP-036F commercial workspace. This story makes that surface operable for V1; it does not replace it.
 Explicit non-goals: Campaign screens, Deal composition, new permissions, schema design in this document.
 Data implications: Authoring writes accepted Promotion/Coupon authority or the minimum Fit-owned extension required for V1 eligibility and caps. Purchased orders are not rewritten.
@@ -553,6 +553,14 @@ Story: US-036J-002
 Given the customer has crossed from Checkout Review into Payment
 Then the customer sees the final commercial summary only
 And Payment offers no coupon entry, replacement, or removal control
+
+AC-036J-002-10 — Incomplete coupon change leaves the shared state
+Story: US-036J-002
+Given a coupon is or is not already in the shared commercial state
+When apply, replace, or remove on Cart or Checkout Review does not complete because of a server or network failure
+Then the previously shown shared coupon state remains
+And the customer does not see a false applied state or a false payable total
+And the customer can retry the same action
 
 AC-036J-003-01 — Threshold progress
 Story: US-036J-003
@@ -653,8 +661,18 @@ Then a qualifying customer evaluation can apply it and an operator can see that 
 AC-036J-012-02 — Operator failure and denial
 Story: US-036J-012
 Given invalid configuration or an operator outside the commercial scope
-When they attempt to activate
-Then activation does not succeed, the reason is visible for invalid configuration, and out-of-scope action is denied
+When they attempt to activate or retire
+Then the attempt does not change the Offer, the reason is visible for invalid configuration, and out-of-scope action is denied
+
+AC-036J-012-03 — Operator retires an Offer
+Story: US-036J-012
+Given an authorized operator and an active V1 Offer
+When the operator confirms retirement
+Then future applications of that Offer stop
+And the operator sees confirmation that it is retired
+And purchased orders keep the savings already recorded
+When the operator cancels the retirement confirmation
+Then the Offer stays active
 ```
 
 | Story / AC ID | Required behaviour / risk | Applicable test layers | Planned proof | Actual evidence |
@@ -715,10 +733,10 @@ Percentage, flat amount, and BOGO are product-intended because the accepted engi
 | VALIDATION FAILURE | Invalid, expired, inapplicable, exhausted, personal cap, operator configuration errors. | `US-036J-002`, `US-036J-007`, `US-036J-012` |
 | AUTHORIZATION | Operator allow/deny on existing commercial scope. Customer identity when the Offer requires it. | `AC-036J-002-04`, `AC-036J-012-02` |
 | NOT FOUND / STALE REFERENCE | Unknown code; Offer retired before payment; purchased order does not use live Offers. | `US-036J-008`, `US-036J-011` |
-| SERVER / NETWORK ERROR | Failure must not show a false applied state or a false paid total. | `US-036J-002`, `US-036J-008` |
+| SERVER / NETWORK ERROR | A coupon apply, replace, or remove that does not complete leaves the previous shared state. Failure must not show a false applied state or a false paid total. | `AC-036J-002-10`, `US-036J-008` |
 | RECOVERY | Remove, replace, retry after sign-in, adjust cart, or continue without the Offer on Cart or Checkout Review. Stale payment recovery returns to Review. | `US-036J-002`, `US-036J-008` |
 | CONCURRENCY | Last global redemption and first-order qualification must not both succeed incorrectly. Mechanism is Fit. | `US-036J-005`, `US-036J-007` |
-| DESTRUCTIVE ACTION | Removing or replacing a coupon, on Cart or Checkout Review, is explicit and recomputes totals. Retiring a Promotion is explicit and does not rewrite purchased orders. Payment cannot remove the coupon. | `AC-036J-002-03`, `AC-036J-002-08`, `US-036J-012` |
+| DESTRUCTIVE ACTION | Removing or replacing a coupon, on Cart or Checkout Review, is explicit and recomputes totals. Retiring a Promotion requires confirmation, stops future application, and does not rewrite purchased orders. Cancelling that confirmation leaves the Offer active. Payment cannot remove the coupon. | `AC-036J-002-03`, `AC-036J-002-08`, `AC-036J-012-03` |
 | SUCCESS FEEDBACK | Applied state, saving, and operator activation/inspection. | `US-036J-001`, `US-036J-012` |
 | DOWNSTREAM EFFECT | Payable total and snapshot change only through accepted evaluation. | `BR-036J-005` |
 | REVISIT / RELOAD | Cart and checkout show the current evaluation. Order detail shows purchased facts. | `US-036J-011` |
@@ -741,10 +759,12 @@ Percentage, flat amount, and BOGO are product-intended because the accepted engi
 | Cart / personal limit | This customer has reached the cap | Personal redemption limit reason | Error associated with the input | Continue without that coupon | `AC-036J-007-01` |
 | Cart / identity required | Coupon needs a customer identity | Sign-in request; the attempt is kept for retry | After sign-in, focus returns to the coupon result on this surface | Retried applied result or a remaining failure | `AC-036J-002-04` |
 | Cart / coupon removed | Customer removes the applied code | Shared state has no entered coupon; totals recompute | Focus remains on the coupon field | Empty or a new entry | `AC-036J-002-03` |
+| Cart / coupon server error | Apply, replace, or remove does not complete | Prior shared coupon state remains. No false APPLIED and no false payable total. | Focus stays on the coupon action. Retry is keyboard operable. | Retry or continue from the unchanged state | `AC-036J-002-10` |
 | Checkout Review / inherited coupon | Coupon already applied on Cart | Same applied coupon and saving; Remove and Change available | Same keyboard rules as Cart | Removed, changed, or continued total | `AC-036J-002-06` |
 | Checkout Review / no coupon | Shared state has no coupon | Entry field and Apply are available | Field has an accessible name | Applied or a validation failure | `AC-036J-002-07` |
 | Checkout Review / changed coupon | Customer replaces the code | Shared state updates; totals recompute; explanation follows BR-036J-009 | Change is keyboard operable | New applied result, automatic retained, or failure | `AC-036J-002-08` |
 | Checkout Review / removed coupon | Customer removes the code | Shared state clears the coupon; totals recompute | Remove is keyboard operable | Entry or continued total | `AC-036J-002-08` |
+| Checkout Review / coupon server error | Apply, replace, or remove does not complete | Prior shared coupon state remains. No false APPLIED and no false payable total. | Focus stays on the coupon action. Retry is keyboard operable. | Retry or continue from the unchanged state | `AC-036J-002-10` |
 | Checkout Review / validation failure | Entry fails a reason class | Same distinct reason as Cart, associated with the input | Focus returns to the input | Corrected code or removal | `AC-036J-007-01` |
 | Checkout Review / automatic retained | Automatic Offer is the better compatible monetary result | Automatic Offer stays; text says the entered coupon did not improve the result | Status is text, not colour alone | Remove coupon or continue | `AC-036J-009-01` |
 | Checkout Review / coupon wins | Coupon-backed Offer is the better result | Coupon-backed Offer is explained as the winning saving | Status is text | Continue or remove | `AC-036J-009-02` |
@@ -753,7 +773,8 @@ Percentage, flat amount, and BOGO are product-intended because the accepted engi
 | Checkout Review / payable | Revalidated total | Breakdown and payable amount remain readable on a narrow viewport | Totals are text | Pay or revalidation error | `AC-036J-004-01` |
 | Order detail / historical | Purchased snapshot | Purchased savings only | Readable text | N/A live evaluation | `AC-036J-011-01` |
 | Operator / validation | Bad configuration | Reason; not activated | Error on the field | Correct and retry | `AC-036J-012-02` |
-| Operator / retire | Explicit retire | Future application stops; purchased history remains | Confirmation of the action | Retired | `US-036J-012` |
+| Operator / denied | Operator is outside commercial scope | Activation and retirement are denied. The Offer is unchanged. | Denial is text, not colour alone | No change | `AC-036J-012-02` |
+| Operator / retire | Explicit retire | Confirmation first. Confirmed retirement stops future application and leaves purchased history. Cancelled confirmation leaves the Offer active. | Confirmation and cancel are keyboard operable | Retired, or still active if cancelled | `AC-036J-012-03` |
 
 ## 14. Permissions / resource context
 
