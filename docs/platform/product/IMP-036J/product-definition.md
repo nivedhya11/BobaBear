@@ -421,7 +421,7 @@ Permission / resource context: Customer cart.
 Error / recovery: Removing the coupon restores the previous eligible result when that result remains better.
 Dependencies: Same evaluator. No second comparison engine and no second coupon state.
 Explicit non-goals: Silent stacking of incompatible benefits. Multi-coupon entry. A coupon-created extra stacking slot.
-Data implications: One entered coupon state. The coupon occupies the slot of its benefit class. A merchandise-class coupon that wins still leaves the single delivery-incentive slot available.
+Data implications: One entered coupon state. Coupon and automatic candidates are compared as complete valid combinations. The coupon occupies the slot of its benefit class. A merchandise-class coupon selected by that comparison still leaves only the single delivery-incentive slot.
 Security implications: N/A.
 Architecture fit / applicable invariants: Deterministic non-monetary tie-break is Fit-owned. Customer-visible rule is the best monetary outcome.
 Open material decisions: NONE
@@ -642,27 +642,36 @@ And accepted pre-payment revalidation remains authoritative
 And recovery returns through the pre-payment Review path, where the customer can remove or change the coupon, change the cart, or continue without that Offer on a recomputed total
 And Payment does not mutate coupon state to perform that recovery
 
-AC-036J-009-01 — Automatic Offer is better
+AC-036J-009-01 — Entered coupon does not improve the payable outcome
 Story: US-036J-009
-Given the automatic Offer saves more than the entered coupon and they do not stack
+Given an automatic merchandise or order Offer and an entered coupon both qualify
+And each is judged inside the best valid combination that uses its benefit class
+And that comparison includes at most one compatible delivery incentive when that incentive produces a real monetary benefit
+And the best valid combination without the entered coupon has the better final payable amount
 When the customer enters the coupon
-Then the automatic Offer remains applied and the customer is told the entered coupon did not improve the result
+Then the combination that does not depend on the entered coupon remains
+And the customer is told the entered coupon did not improve the result
+And the customer is not worse off
+For example, an automatic merchandise saving of ₹80 that pairs with a ₹40 delivery incentive remains when a coupon that saves ₹90 cannot pair with that delivery incentive
 
-AC-036J-009-02 — Coupon is better
+AC-036J-009-02 — Entered coupon improves the payable outcome
 Story: US-036J-009
-Given the coupon-backed merchandise or order Offer saves more
+Given the best valid combination that includes the entered coupon produces a better final payable amount than the best valid combination without it
+And that comparison includes at most one compatible delivery incentive when that incentive produces a real monetary benefit
 When the customer enters the coupon
-Then that coupon-backed Offer wins the merchandise or order slot and the saving is explained
-And the customer pays no more than the best valid combination
+Then that complete combination is selected and the saving is explained
+And a coupon with a smaller merchandise saving can still win when it pairs with a compatible delivery incentive
+And the customer is not worse off
+For example, a ₹90 coupon that pairs with a ₹20 delivery incentive is selected over a ₹100 automatic Offer that cannot pair with that delivery incentive
 
 AC-036J-009-03 — Winning merchandise coupon still pairs with delivery
 Story: US-036J-009
-Given the entered coupon backs a merchandise or order Offer that wins that slot
-And one compatible delivery incentive also qualifies and produces a real monetary benefit
+Given the best valid complete combination selects an entered coupon in the merchandise or order slot
+And one compatible delivery incentive in that same combination produces a real monetary benefit
 When the payable commercial outcome is evaluated
 Then both apply
 And the coupon did not create a second merchandise slot or a second coupon state
-And the customer is not worse off than the best valid combination
+And the comparison that selected this combination used the final payable amount, not the merchandise saving alone
 
 AC-036J-009-04 — Delivery coupon uses the delivery slot
 Story: US-036J-009
@@ -773,7 +782,7 @@ Then the Offer stays active
 | `BR-036J-006` | First-order eligible means no previous successfully purchased direct BOBA Bear Order for that authenticated customer. Failed or abandoned payments do not consume it. Later cancellation or refund of a successful Order does not restore it. | ODC-06 | `US-036J-005` |
 | `BR-036J-007` | Eligibility may distinguish DELIVERY and PICKUP. Scheduled eligibility consumes accepted IMP-036I timing and does not redefine it. Standing free delivery in the delivery tariff is not the same thing as a temporary free-delivery Offer. The customer sees one delivery-charge result. A standing-free outcome does not create a second delivery credit or a fabricated delivery saving. | ODC-05, ODC-06; IMP-036H; IMP-036I; FD-036J-02 | `US-036J-006`, `US-036J-004`, `US-036J-010` |
 | `BR-036J-008` | V1 stacking is at most one primary merchandise or order Offer plus one compatible delivery incentive. When the selected pair both qualify, are compatible, and each produces a real monetary benefit, both apply (`COMPATIBLE_STACK_RESULT = BOTH_APPLY`). Valid compatible combinations compete on the best customer monetary outcome (`MULTIPLE_CANDIDATE_SELECTION = BEST_VALID_MONETARY_COMBINATION`). Two merchandise discounts do not stack. Multiple delivery incentives do not stack with each other. BOGO does not stack with another merchandise discount. A delivery incentive with zero incremental monetary benefit is not an additional saving. Standing free delivery does not create a duplicate or fabricated delivery saving (`STANDING_FREE_DELIVERY_DUPLICATE_SAVING = PROHIBITED`). Exact evaluator representation, search, persistence, and deterministic non-monetary tie-breaks belong to Architecture Fit. | FD-036J-02 APPROVED 2026-09-27; ODC-07..ODC-10. Deal compatibility is moot while Deals are out of this slice. | `US-036J-009`, `US-036J-010` |
-| `BR-036J-009` | An entered coupon participates in the same commercial candidate evaluation. Entering it must not make the customer worse off. The coupon-backed Offer uses its actual benefit class and does not create another stacking slot. If it wins the merchandise or order slot, one compatible delivery incentive that produces a real monetary benefit applies with it. If the coupon-backed Offer is a delivery incentive, it competes only in the delivery-incentive position. Incompatible benefits do not stack. One entered coupon state exists at a time. There is no second monetary engine. | ODC-10; FD-036J-02 APPROVED 2026-09-27; Founder coupon policy already approved in discovery | `US-036J-002`, `US-036J-009` |
+| `BR-036J-009` | An entered coupon participates in the same commercial candidate evaluation. The comparison is the final payable amount of each valid compatible combination, including at most one delivery incentive, not the merchandise saving alone. Entering the coupon must not make the customer worse off. The coupon-backed Offer uses its actual benefit class and does not create another stacking slot. If the selected combination places it in the merchandise or order slot, one compatible delivery incentive that produces a real monetary benefit applies with it. If the coupon-backed Offer is a delivery incentive, it competes only in the delivery-incentive position. Incompatible benefits do not stack. One entered coupon state exists at a time. There is no second monetary engine. | ODC-10; FD-036J-02 APPROVED 2026-09-27; Founder coupon policy already approved in discovery | `US-036J-002`, `US-036J-009` |
 | `BR-036J-013` | Coupon entry exists on Cart and on Checkout Review. Both surfaces operate one shared coupon / commercial state. Checkout Review is not a second coupon store. The customer may enter, apply, replace, remove, and retry on either surface before Payment. After the customer crosses from Review into Payment, coupon state is read-only: no new entry, replacement, or removal. If commercial truth is stale, recovery returns through the normal pre-payment Review path. | FD-036J-01 APPROVED 2026-09-27 | `US-036J-002`, `US-036J-008` |
 | `BR-036J-010` | V1 controls are max discount where applicable, per-customer redemption cap, and global Offer redemption cap. Reuse coupon claims where they fit. Campaign budgets and pacing are follow-up. | ODC-11 | `US-036J-007`, `US-036J-012` |
 | `BR-036J-011` | V1 benefit intent is percentage, flat ₹, BOGO / Buy X Get Y, a free menu item only where accepted authority can express it, and temporary free delivery. Fixed promotional item or combo pricing is Deal/Pricing, not this slice. | ODC-05 | `US-036J-001`, `US-036J-012` |

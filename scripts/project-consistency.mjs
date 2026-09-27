@@ -38515,6 +38515,26 @@ export function evaluateImp036jStackingContract(productDefinitionText) {
       message: "AC-036J-010-04 must prohibit a duplicate standing-free-delivery saving",
     };
   }
+  const ac00901 = scenario("AC-036J-009-01 —", "AC-036J-009-02 —");
+  const ac00902 = scenario("AC-036J-009-02 —", "AC-036J-009-03 —");
+  if (
+    /saves more than the entered coupon/.test(ac00901) ||
+    !/final payable amount/.test(ac00901) ||
+    !/final payable amount/.test(ac00902)
+  ) {
+    return {
+      ok: false,
+      code: "IMP036J_COUPON_COMBINATION",
+      message: "AC-036J-009-01 and AC-036J-009-02 must compare complete valid combinations by final payable amount",
+    };
+  }
+  if (!/not the merchandise saving alone/.test(br008 + text.split("| `BR-036J-009` |")[1]?.split("| `BR-036J-013` |")[0])) {
+    return {
+      ok: false,
+      code: "IMP036J_COUPON_COMBINATION",
+      message: "BR-036J-009 must compare combinations by final payable amount, not merchandise saving alone",
+    };
+  }
   if (!/AC-036J-010-02 — BOGO does not stack/.test(text)) {
     return { ok: false, code: "IMP036J_STACK_BOGO", message: "AC-036J-010-02 BOGO boundary is missing" };
   }

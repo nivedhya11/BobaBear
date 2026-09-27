@@ -17214,6 +17214,11 @@ describe("IMP-036I implementation authorization persistence", () => {
     const failed = evaluateImp036jStackingContract(optional);
     assert.equal(failed.ok, false);
     assert.equal(failed.code, "IMP036J_STACK_MAY_APPLY");
+    const merchandiseOnly = live.replace(
+      "AC-036J-009-01 — Entered coupon does not improve the payable outcome",
+      "AC-036J-009-01 — Automatic Offer is better\nGiven the automatic Offer saves more than the entered coupon",
+    );
+    assert.equal(evaluateImp036jStackingContract(merchandiseOnly).code, "IMP036J_COUPON_COMBINATION");
   });
 
   it("keeps IMP-036J stories unready before the Gate and rejects a stale Gate blocker after PASS", () => {
