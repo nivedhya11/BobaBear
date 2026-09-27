@@ -38565,26 +38565,60 @@ export function evaluateImp036jGuestCouponContract(productDefinitionText) {
   if (!scenario) {
     return { ok: false, code: "IMP036J_GUEST_COUPON_AC", message: "AC-036J-002-05 is missing" };
   }
-  if (/may apply/i.test(scenario)) {
+  const prose = scenario
+    .split("\n")
+    .filter((line) => !/^[A-Z0-9_]+ = /.test(line.trim()))
+    .join("\n");
+  if (/may apply/i.test(prose)) {
     return {
       ok: false,
       code: "IMP036J_GUEST_COUPON_MAY_APPLY",
       message: "AC-036J-002-05 must not use a nondeterministic may-apply outcome",
     };
   }
-  if (/must always apply/i.test(scenario)) {
+  if (/must always apply/i.test(prose) || /never applies/i.test(prose)) {
     return {
       ok: false,
       code: "IMP036J_GUEST_COUPON_ALWAYS",
-      message: "AC-036J-002-05 must not require the unrestricted coupon to apply in every case",
+      message: "AC-036J-002-05 must not require the unrestricted coupon to apply in every case or never apply",
     };
   }
-  if (!/GUEST_IDENTITY_ALONE_REJECTS = NO/.test(scenario)) {
+  if (
+    !prose.includes("absence of customer identity does not by itself reject the Coupon") ||
+    !/GUEST_IDENTITY_ALONE_REJECTS = NO/.test(scenario)
+  ) {
     return {
       ok: false,
       code: "IMP036J_GUEST_COUPON_IDENTITY_REJECTION",
       message: "AC-036J-002-05 must not let missing customer identity reject an unrestricted coupon by itself",
     };
+  }
+  if (/second evaluator/i.test(prose) || /displaces a better/i.test(prose) || /better combination is displaced/i.test(prose)) {
+    return {
+      ok: false,
+      code: "IMP036J_GUEST_COUPON_PROSE",
+      message: "AC-036J-002-05 prose must keep one candidate evaluation and must not displace a better combination",
+    };
+  }
+  const clauses = [
+    "enters the same commercial candidate evaluation",
+    "uses its actual benefit class",
+    "best-valid-combination policy remains authoritative",
+    "the Coupon-backed Offer applies",
+    "better combination remains",
+    "told the entered Coupon did not improve the result",
+    "first-order eligibility rule still requires authenticated identity",
+    "per-customer redemption-cap rule still requires authenticated identity",
+    "private eligibility facts are not exposed",
+  ];
+  for (const clause of clauses) {
+    if (!prose.includes(clause)) {
+      return {
+        ok: false,
+        code: "IMP036J_GUEST_COUPON_PROSE",
+        message: `AC-036J-002-05 must state: ${clause}`,
+      };
+    }
   }
   const markers = [
     "ENTERS_SAME_COMMERCIAL_CANDIDATE_EVALUATION = YES",
@@ -38632,6 +38666,50 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
       ok: false,
       code: "IMP036J_FREE_ITEM_AC",
       message: "mandatory complimentary-item acceptance scenarios are missing",
+    };
+  }
+  const scenarioBetween = (startHeading, endHeading) => {
+    const start = text.indexOf(startHeading);
+    if (start < 0) return "";
+    const end = endHeading ? text.indexOf(endHeading, start + startHeading.length) : text.length;
+    return text.slice(start, end < 0 ? text.length : end);
+  };
+  const proseOf = (block) =>
+    block
+      .split("\n")
+      .filter((line) => !/^[A-Z0-9_]+ = /.test(line.trim()))
+      .join("\n");
+  const authoring = proseOf(scenarioBetween("AC-036J-012-04 —", "AC-036J-013-01 —"));
+  const applied = proseOf(scenarioBetween("AC-036J-013-01 —", "AC-036J-013-02 —"));
+  const purchased = proseOf(scenarioBetween("AC-036J-013-02 —", "\n```"));
+  const proseClauses = [
+    [authoring, "chooses exactly one operator-specified menu item"],
+    [authoring, "incomplete or invalid free-item configuration cannot be activated"],
+    [authoring, "does not offer the customer a gift catalogue"],
+    [applied, "exact operator-specified complementary item appears"],
+    [applied, "that line adds no merchandise charge"],
+    [applied, "does not choose from a gift catalogue"],
+    [applied, "no silent substitute is introduced"],
+    [applied, "makes the complimentary benefit understandable"],
+    [applied, "single accepted commercial evaluation"],
+    [purchased, "purchased Order retains the exact complimentary item that was purchased"],
+    [purchased, "historical line remains no-extra-merchandise-charge"],
+    [purchased, "live Offer evaluation does not rewrite the purchased Order"],
+  ];
+  for (const [block, clause] of proseClauses) {
+    if (!block.includes(clause)) {
+      return {
+        ok: false,
+        code: "IMP036J_FREE_ITEM_PROSE",
+        message: `complimentary-item acceptance must state: ${clause}`,
+      };
+    }
+  }
+  if (/second evaluation/i.test(applied) || /charges the normal merchandise/i.test(applied)) {
+    return {
+      ok: false,
+      code: "IMP036J_FREE_ITEM_PROSE",
+      message: "AC-036J-013-01 must stay on one commercial evaluation with no extra merchandise charge",
     };
   }
   const markers = [

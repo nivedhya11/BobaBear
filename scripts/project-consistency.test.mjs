@@ -17242,6 +17242,21 @@ describe("IMP-036I implementation authorization persistence", () => {
       "the coupon must always apply",
     );
     assert.equal(evaluateImp036jGuestCouponContract(alwaysApplies).code, "IMP036J_GUEST_COUPON_ALWAYS");
+    const identityProse = live.replace(
+      "absence of customer identity does not by itself reject the Coupon",
+      "absence of customer identity rejects the Coupon",
+    );
+    assert.equal(evaluateImp036jGuestCouponContract(identityProse).code, "IMP036J_GUEST_COUPON_IDENTITY_REJECTION");
+    const secondEvaluator = live.replace(
+      "And the Coupon-backed Offer enters the same commercial candidate evaluation",
+      "And the Coupon-backed Offer enters a second evaluator",
+    );
+    assert.equal(evaluateImp036jGuestCouponContract(secondEvaluator).code, "IMP036J_GUEST_COUPON_PROSE");
+    const explanationDropped = live.replace(
+      "And the customer is told the entered Coupon did not improve the result\n",
+      "",
+    );
+    assert.equal(evaluateImp036jGuestCouponContract(explanationDropped).code, "IMP036J_GUEST_COUPON_PROSE");
   });
 
   it("requires mandatory complimentary-item acceptance and rejects a silent follow-up downgrade", () => {
@@ -17254,6 +17269,26 @@ describe("IMP-036I implementation authorization persistence", () => {
       "| Complimentary menu-item Offer | `PERSONA-CUSTOMER` | `JOURNEY-036J-AUTO` / `JOURNEY-036J-COUPON` | Receive the exact operator-specified complementary item with no extra merchandise charge | `US-036J-013` | `FOLLOW_UP` |",
     );
     assert.equal(evaluateImp036jComplimentaryItemContract(followUp).code, "IMP036J_FREE_ITEM_FOLLOW_UP");
+    const activatable = live.replace(
+      "And an incomplete or invalid free-item configuration cannot be activated\n",
+      "",
+    );
+    assert.equal(evaluateImp036jComplimentaryItemContract(activatable).code, "IMP036J_FREE_ITEM_PROSE");
+    const charged = live.replace(
+      "And that line adds no merchandise charge\n",
+      "And that line charges the normal merchandise price\n",
+    );
+    assert.equal(evaluateImp036jComplimentaryItemContract(charged).code, "IMP036J_FREE_ITEM_PROSE");
+    const gift = live.replace(
+      "And the customer does not choose from a gift catalogue\n",
+      "And the customer chooses from a gift catalogue\n",
+    );
+    assert.equal(evaluateImp036jComplimentaryItemContract(gift).code, "IMP036J_FREE_ITEM_PROSE");
+    const rewritten = live.replace(
+      "And live Offer evaluation does not rewrite the purchased Order\n",
+      "And live Offer evaluation rewrites the purchased Order\n",
+    );
+    assert.equal(evaluateImp036jComplimentaryItemContract(rewritten).code, "IMP036J_FREE_ITEM_PROSE");
   });
 
   it("keeps IMP-036J stories unready before the Gate and rejects a stale Gate blocker after PASS", () => {
