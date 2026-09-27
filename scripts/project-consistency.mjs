@@ -38661,7 +38661,14 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
       message: "US-036J-013 must remain in the V1 acceptance slice",
     };
   }
-  if (!text.includes("AC-036J-013-01 —") || !text.includes("AC-036J-013-02 —") || !text.includes("AC-036J-012-04 —")) {
+  if (
+    !text.includes("AC-036J-013-01 —") ||
+    !text.includes("AC-036J-013-02 —") ||
+    !text.includes("AC-036J-013-03 —") ||
+    !text.includes("AC-036J-013-04 —") ||
+    !text.includes("AC-036J-012-04 —") ||
+    !text.includes("AC-036J-012-05 —")
+  ) {
     return {
       ok: false,
       code: "IMP036J_FREE_ITEM_AC",
@@ -38679,10 +38686,12 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
       .split("\n")
       .filter((line) => !/^[A-Z0-9_]+ = /.test(line.trim()))
       .join("\n");
-  const authoring = proseOf(scenarioBetween("AC-036J-012-04 —", "AC-036J-013-01 —"));
+  const authoring = proseOf(scenarioBetween("AC-036J-012-04 —", "AC-036J-012-05 —"));
+  const singleActive = proseOf(scenarioBetween("AC-036J-012-05 —", "AC-036J-013-01 —"));
   const applied = proseOf(scenarioBetween("AC-036J-013-01 —", "AC-036J-013-02 —"));
   const purchased = proseOf(scenarioBetween("AC-036J-013-02 —", "AC-036J-013-03 —"));
-  const unavailable = proseOf(scenarioBetween("AC-036J-013-03 —", "\n```"));
+  const unavailable = proseOf(scenarioBetween("AC-036J-013-03 —", "AC-036J-013-04 —"));
+  const competing = proseOf(scenarioBetween("AC-036J-013-04 —", "\n```"));
   const proseClauses = [
     [authoring, "chooses exactly one operator-specified menu item"],
     [authoring, "incomplete or invalid free-item configuration cannot be activated"],
@@ -38690,7 +38699,9 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
     [authoring, "does not ask the customer to choose a variant, required modifier, or paid modifier"],
     [authoring, "no customer-selected modifier merchandise charge"],
     [authoring, "does not offer the customer a gift catalogue"],
-    [authoring, "a second complimentary-item Offer cannot be activated while another complimentary-item Offer is active"],
+    [singleActive, "attempts to activate a second complimentary-item Offer"],
+    [singleActive, "Then activation is rejected"],
+    [singleActive, "already active complimentary-item Offer remains the only active one"],
     [applied, "no unresolved customer variant or modifier choice"],
     [applied, "exact operator-specified complementary item appears"],
     [applied, "that line adds no merchandise charge"],
@@ -38699,7 +38710,6 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
     [applied, "makes the complimentary benefit understandable"],
     [applied, "single accepted commercial evaluation"],
     [applied, "same payable amount as a combination with no primary merchandise or order Offer does not defeat this complimentary combination"],
-    [applied, "when more than one complimentary-item Offer would qualify, neither competing complimentary item is chosen or presented"],
     [purchased, "purchased Order retains the exact complimentary item that was purchased"],
     [purchased, "historical line remains no-extra-merchandise-charge"],
     [purchased, "live Offer evaluation does not rewrite the purchased Order"],
@@ -38708,6 +38718,9 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
     [unavailable, "best valid combination is recomputed without it through the single accepted commercial evaluation"],
     [unavailable, "told the complimentary item is no longer available"],
     [unavailable, "payment does not proceed on the stale complimentary line"],
+    [competing, "more than one complimentary-item Offer would qualify for the same cart"],
+    [competing, "neither competing complimentary item is chosen or presented"],
+    [competing, "single accepted commercial evaluation"],
   ];
   for (const [block, clause] of proseClauses) {
     if (!block.includes(clause)) {
@@ -38718,21 +38731,60 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
       };
     }
   }
-  const hidesAnotherEvaluation = (block) =>
-    (block.match(/evaluation/gi) || []).length !== (block === applied ? 2 : block === unavailable ? 1 : -1) ||
-    /\b(?:second|another|additional)\b|evaluator|money engine/i.test(block);
-  if (
-    hidesAnotherEvaluation(applied) ||
-    hidesAnotherEvaluation(unavailable) ||
-    (applied.match(/evaluation/gi) || []).length !== 2 ||
-    (unavailable.match(/evaluation/gi) || []).length !== 1 ||
-    /charges the normal merchandise/i.test(applied)
-  ) {
-    return {
-      ok: false,
-      code: "IMP036J_FREE_ITEM_PROSE",
-      message: "complimentary application and recovery must stay on one commercial evaluation with no extra merchandise charge",
-    };
+  const exactProse = (block) =>
+    block
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .join("\n");
+  const closedScenarios = [
+    [
+      applied,
+      [
+        "AC-036J-013-01 — Complimentary item applies",
+        "Story: US-036J-013",
+        "Given an active V1 Offer specifies exactly one operator-selected complementary menu item",
+        "And the customer and cart satisfy the Offer qualification",
+        "And the complimentary item is eligible under accepted commerce and availability truth",
+        "And the operator-specified item is a complete line under accepted catalog and customization authority, with no unresolved customer variant or modifier choice",
+        "And Architecture Fit has established a safe accepted commercial-authority path",
+        "And this Offer is selected by the normal commercial evaluation",
+        "When the qualifying commercial result is presented before payment",
+        "Then the exact operator-specified complementary item appears in Cart and Checkout Review as a distinct item line",
+        "And that line adds no merchandise charge",
+        "And the customer does not choose from a gift catalogue",
+        "And no silent substitute is introduced",
+        "And the Offer or saving explanation makes the complimentary benefit understandable",
+        "And the payable total remains produced by the single accepted commercial evaluation",
+        "And the same payable amount as a combination with no primary merchandise or order Offer does not defeat this complimentary combination",
+        "Mandatory in acceptance slice: YES",
+      ].join("\n"),
+    ],
+    [
+      unavailable,
+      [
+        "AC-036J-013-03 — Complimentary item unavailable before payment",
+        "Story: US-036J-013",
+        "Given a qualifying complimentary item is already shown as the exact operator-specified line",
+        "When that item is no longer eligible under accepted availability or commerce truth before payment",
+        "Then no silent substitute is introduced",
+        "And that Offer does not remain in the payable result",
+        "And the best valid combination is recomputed without it through the single accepted commercial evaluation",
+        "And the customer is told the complimentary item is no longer available",
+        "And payment does not proceed on the stale complimentary line",
+        "And recovery stays on the pre-payment Review path",
+        "Mandatory in acceptance slice: YES",
+      ].join("\n"),
+    ],
+  ];
+  for (const [block, expected] of closedScenarios) {
+    if (exactProse(block) !== expected) {
+      return {
+        ok: false,
+        code: "IMP036J_FREE_ITEM_PROSE",
+        message: "complimentary apply and recovery scenarios must stay on their exact single-evaluation wording",
+      };
+    }
   }
   const markers = [
     "COMPLIMENTARY_MENU_ITEM_V1_ACCEPTANCE = MANDATORY",

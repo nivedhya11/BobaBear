@@ -234,7 +234,7 @@ Discovery story IDs `ODC-US-*` are discovery examples, not these formal story ID
 
 | Slice | Mandatory story IDs | Mandatory AC IDs | Required Golden Journeys | Observable acceptance boundary |
 |---|---|---|---|---|
-| `V1_ACCEPTANCE_SLICE` | `US-036J-001` … `US-036J-013` | `AC-036J-001-01` … `AC-036J-013-03`, including `AC-036J-002-05`, `AC-036J-012-04`, `AC-036J-013-01`, `AC-036J-013-02`, and `AC-036J-013-03` | `GJ-FIRST-ORDER`, `GJ-RETURNING-ORDER` for explainable savings on an otherwise accepted purchase path. This slice does not redefine those journeys' non-offer steps. | A customer can receive an automatic or coupon-backed Offer, understand the saving, receive a qualifying complimentary menu item when that Offer is selected, and pay a revalidated total. An authorized operator can operate the accepted Promotion/Coupon surface for the V1 benefit and eligibility rules this definition includes. `MANDATORY_STORIES = US-036J-001..US-036J-013`. `COMPLIMENTARY_MENU_ITEM_V1_ACCEPTANCE = MANDATORY`. |
+| `V1_ACCEPTANCE_SLICE` | `US-036J-001` … `US-036J-013` | `AC-036J-001-01` … `AC-036J-013-04`, including `AC-036J-002-05`, `AC-036J-012-04`, `AC-036J-012-05`, `AC-036J-013-01`, `AC-036J-013-02`, `AC-036J-013-03`, and `AC-036J-013-04` | `GJ-FIRST-ORDER`, `GJ-RETURNING-ORDER` for explainable savings on an otherwise accepted purchase path. This slice does not redefine those journeys' non-offer steps. | A customer can receive an automatic or coupon-backed Offer, understand the saving, receive a qualifying complimentary menu item when that Offer is selected, and pay a revalidated total. An authorized operator can operate the accepted Promotion/Coupon surface for the V1 benefit and eligibility rules this definition includes. `MANDATORY_STORIES = US-036J-001..US-036J-013`. `COMPLIMENTARY_MENU_ITEM_V1_ACCEPTANCE = MANDATORY`. |
 | `FOLLOW_UP` | Items already classified as follow-up inside the commercial / Offer domain. See section 23 `FOLLOW_UP_NOT_V1`. | Not defined | Not added | Requires later authorization. Not a rejection and not a cut from an approved IMP-036J V1. |
 | `PARKED_SEQUENCED_FUTURE_CAPABILITIES` | Deals, Campaigns, and Revenue Recommendations. See section 23. | Not defined | Not added | Parked discovery. Not rejected. No IMP identity is assigned here. |
 | `EXPLICIT_NON_GOALS_AND_PROHIBITED_DIRECTIONS` | Second money engine, second Promotion evaluator, second Pricing engine, generic platform-wide rules engine, arbitrary marketing-automation platform. | Not defined | Not added | Intentionally not part of the desired architecture or product. Not deferred. |
@@ -491,7 +491,7 @@ so that I can create, limit, activate, inspect, and retire them without a second
 
 Journey / activity: JOURNEY-036J-OPERATOR / authoring and operations
 Preconditions: The operator already holds the existing promotions and coupons authorization for the applicable scope.
-Acceptance scenarios: AC-036J-012-01, AC-036J-012-02, AC-036J-012-03, AC-036J-012-04
+Acceptance scenarios: AC-036J-012-01, AC-036J-012-02, AC-036J-012-03, AC-036J-012-04, AC-036J-012-05
 Business rules: BR-036J-001, BR-036J-011
 UX states: draft, active, validation failure, retired, redemption visibility, complimentary-item configuration rejected when incomplete
 Permission / resource context: Existing `promotions` and `coupons` authorization and commercial scope. No new role. Exact permission keys are Fit, not a new model.
@@ -515,7 +515,7 @@ so that the Offer I was shown is actually delivered and explained.
 Journey / activity: JOURNEY-036J-AUTO / JOURNEY-036J-COUPON as applicable
 Classification: V1_ACCEPTANCE_SLICE
 Preconditions: An active V1 Offer specifies exactly one operator-selected complementary menu item. The customer and cart satisfy that Offer's qualification. The item is eligible under accepted commerce and availability truth. Architecture Fit has established a safe accepted commercial-authority path. This Offer is the one selected by normal commercial evaluation.
-Acceptance scenarios: AC-036J-013-01, AC-036J-013-02, AC-036J-013-03
+Acceptance scenarios: AC-036J-013-01, AC-036J-013-02, AC-036J-013-03, AC-036J-013-04
 Business rules: BR-036J-001, BR-036J-005, BR-036J-008, BR-036J-011, BR-036J-012, BR-036J-014
 UX states: qualifying complimentary item applied; exact item line visible; no extra merchandise charge; understandable Offer explanation; purchased-order historical presentation
 Permission / resource context: Customer commerce. No workforce permission. The customer does not choose from a gift catalogue.
@@ -823,8 +823,17 @@ And if the selected menu item still requires a customer variant choice or a requ
 And the activated configuration is one complete line that does not ask the customer to choose a variant, required modifier, or paid modifier
 And the complimentary line adds no merchandise charge, including no customer-selected modifier merchandise charge
 And the operator does not offer the customer a gift catalogue
-And a second complimentary-item Offer cannot be activated while another complimentary-item Offer is active
 COMPLIMENTARY_ITEM_AUTHORING = EXACT_OPERATOR_ITEM
+Mandatory in acceptance slice: YES
+
+AC-036J-012-05 — Second complimentary-item Offer cannot be activated
+Story: US-036J-012
+Given an authorized operator on the existing commercial Promotions and coupons surface
+And one complimentary-item Offer is already active
+When the operator attempts to activate a second complimentary-item Offer
+Then activation is rejected
+And the already active complimentary-item Offer remains the only active one
+COMPLIMENTARY_ITEM_SINGLE_ACTIVE = YES
 Mandatory in acceptance slice: YES
 
 AC-036J-013-01 — Complimentary item applies
@@ -843,7 +852,6 @@ And no silent substitute is introduced
 And the Offer or saving explanation makes the complimentary benefit understandable
 And the payable total remains produced by the single accepted commercial evaluation
 And the same payable amount as a combination with no primary merchandise or order Offer does not defeat this complimentary combination
-And when more than one complimentary-item Offer would qualify, neither competing complimentary item is chosen or presented
 COMPLIMENTARY_ITEM_EXACT_OPERATOR_ITEM = YES
 COMPLIMENTARY_ITEM_CUSTOMER_CHOICE = NO
 COMPLIMENTARY_ITEM_NO_EXTRA_MERCHANDISE_CHARGE = YES
@@ -871,6 +879,16 @@ And payment does not proceed on the stale complimentary line
 And recovery stays on the pre-payment Review path
 COMPLIMENTARY_ITEM_UNAVAILABLE_RECOVERY = RECOMPUTE_WITHOUT_SUBSTITUTE
 Mandatory in acceptance slice: YES
+
+AC-036J-013-04 — Competing complimentary items are not chosen
+Story: US-036J-013
+Given more than one complimentary-item Offer would qualify for the same cart
+When the commercial result is presented before payment
+Then neither competing complimentary item is chosen or presented
+And the payable total remains produced by the single accepted commercial evaluation
+And no silent substitute is introduced
+COMPLIMENTARY_ITEM_COMPETING_OFFERS = NONE_CHOSEN
+Mandatory in acceptance slice: YES
 ```
 
 | Story / AC ID | Required behaviour / risk | Applicable test layers | Planned proof | Actual evidence |
@@ -886,6 +904,7 @@ Mandatory in acceptance slice: YES
 | `US-036J-012` / `AC-036J-012-04` | Operator can activate only a complete exact complimentary-item configuration | Authorization, integration | Later implementation evidence under TEST-1 | NOT_EXECUTED |
 | `US-036J-013` / `AC-036J-013-01` | Exact operator-specified complementary item, no extra merchandise charge, no gift catalogue | Domain, HTTP, Cart/Checkout browser journey | Later implementation evidence under TEST-1 | NOT_EXECUTED |
 | `US-036J-013` / `AC-036J-013-03` | Unavailable complimentary item is not substituted; the Offer leaves the payable result | Domain, Cart/Checkout browser journey, recovery | Later implementation evidence under TEST-1 | NOT_EXECUTED |
+| `US-036J-013` / `AC-036J-013-04` | Competing complimentary items are not chosen | Domain, Cart/Checkout browser journey | Later implementation evidence under TEST-1 | NOT_EXECUTED |
 
 ## 11. Business rules
 
