@@ -37,6 +37,7 @@ export {
   findOverlappingActivePriceBooks,
   loadOutletsInPriceBookScope,
   parseExpectedPriceBookRevision,
+  retireActiveOutletPriceBook,
   retirePriceBook,
   rowToBook,
 } from "./price-books";

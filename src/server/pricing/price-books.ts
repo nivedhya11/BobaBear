@@ -842,6 +842,34 @@ export async function activatePriceBook(
   return { revision: next };
 }
 
+async function applyPriceBookRetirement(
+  context: PersistenceTransactionContext,
+  book: PriceBookRecord,
+  workforceUserId: string,
+  now: Date,
+): Promise<void> {
+  await context.db
+    .update(priceBooksTable)
+    .set({
+      lifecycleStatus: "retired",
+      retiredAt: now,
+      retiredByWorkforceUserId: workforceUserId,
+      updatedAt: now,
+    })
+    .where(eq(priceBooksTable.id, book.id));
+
+  await insertPricingTaxAuditEvent(context, {
+    actorWorkforceUserId: workforceUserId,
+    action: "price_book.retired",
+    brandId: book.brandId,
+    territoryId: book.territoryId,
+    organizationId: book.organizationId,
+    outletId: book.outletId,
+    targetType: "price_book",
+    targetId: book.id,
+  });
+}
+
 export async function retirePriceBook(
   context: PersistenceTransactionContext,
   input: { actor: unknown; priceBookId: string; brandId: string },
@@ -855,25 +883,51 @@ export async function retirePriceBook(
     throw new PricingInvalidStateError({ message: "Price book is already retired." });
   }
 
-  const now = new Date();
-  await context.db
-    .update(priceBooksTable)
-    .set({
-      lifecycleStatus: "retired",
-      retiredAt: now,
-      retiredByWorkforceUserId: principal.workforceUserId,
-      updatedAt: now,
-    })
-    .where(eq(priceBooksTable.id, book.id));
+  await applyPriceBookRetirement(context, book, principal.workforceUserId, new Date());
+}
 
-  await insertPricingTaxAuditEvent(context, {
-    actorWorkforceUserId: principal.workforceUserId,
-    action: "price_book.retired",
-    brandId: book.brandId,
-    territoryId: book.territoryId,
-    organizationId: book.organizationId,
-    outletId: book.outletId,
-    targetType: "price_book",
-    targetId: book.id,
-  });
+/**
+ * Product retirement exposed for Commercial Pricing.
+ * Scope and lifecycle are judged on the locked row; caller body cannot supply them.
+ */
+export async function retireActiveOutletPriceBook(
+  context: PersistenceTransactionContext,
+  input: { actor: unknown; priceBookId: string; brandId: string },
+): Promise<{
+  id: string;
+  scopeType: "outlet";
+  lifecycleStatus: "retired";
+  retiredAt: Date;
+  retiredByWorkforceUserId: string;
+}> {
+  assertTransactionContext(context, "retireActiveOutletPriceBook");
+  const brandId = assertUuid(input.brandId, "brandId");
+  const priceBookId = assertUuid(input.priceBookId, "priceBookId");
+  await requirePricingManage(context, input.actor, brandId);
+  const principal = requireWorkforcePrincipal(input.actor);
+  await lockBrandPricingOverlapAuthority(context, brandId);
+  const book = await lockBrandPriceBook(context, brandId, priceBookId);
+  if (book.scopeType !== "outlet") {
+    throw new PricingInvalidStateError({
+      message: "Only an outlet-scoped price book can be retired through this operation.",
+    });
+  }
+  if (book.lifecycleStatus !== "active") {
+    throw new PricingInvalidStateError({
+      message:
+        book.lifecycleStatus === "retired"
+          ? "Price book is already retired."
+          : "Only an active price book can be retired through this operation.",
+    });
+  }
+
+  const now = new Date();
+  await applyPriceBookRetirement(context, book, principal.workforceUserId, now);
+  return {
+    id: book.id,
+    scopeType: "outlet",
+    lifecycleStatus: "retired",
+    retiredAt: now,
+    retiredByWorkforceUserId: principal.workforceUserId,
+  };
 }

@@ -7,6 +7,7 @@ import {
   PricingConflictError,
   PricingInvalidStateError,
   PricingNotFoundError,
+  PricingResolutionError,
   PricingValidationError,
 } from "../../pricing";
 
@@ -67,6 +68,18 @@ export function mapPricingAdminError(error: unknown, requestId: string): MappedP
       body: {
         ok: false,
         code: "PRICING_INVALID_STATE",
+        requestId,
+        message: error.message,
+      },
+    };
+  }
+
+  if (error instanceof PricingResolutionError) {
+    return {
+      status: 409,
+      body: {
+        ok: false,
+        code: error.pricingErrorCode,
         requestId,
         message: error.message,
       },

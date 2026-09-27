@@ -197,6 +197,22 @@ export function activatePriceBook(
   );
 }
 
+export function retireActiveOutletPriceBook(brandId: string, priceBookId: string) {
+  return adminRequest<{
+    ok: true;
+    priceBook: Readonly<{
+      id: string;
+      scopeType: "outlet";
+      lifecycleStatus: "retired";
+      retiredAt: string;
+      retiredByWorkforceUserId: string;
+    }>;
+  }>(`${brandPricing(brandId)}/price-books/${priceBookId}/retire`, {
+    method: "POST",
+    body: {},
+  });
+}
+
 export function getDeliveryTariff(brandId: string, outletId: string) {
   return adminRequest<{ ok: true; tariff: DeliveryTariff }>(
     `${brandPricing(brandId)}/outlets/${outletId}/delivery-tariff`,
