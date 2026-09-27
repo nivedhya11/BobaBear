@@ -1692,14 +1692,23 @@ NEW_EXTERNAL_PROVIDER = NO
 
 ## 32. Explicit non-claims
 
-Tranche 1 persistence and domain foundations have started. This capability architecture does **not**
-change locked semantics, and this implementation-start record does **not**:
+CURRENT lifecycle is **COMPLETE_AND_ACCEPTED**. Founder UAT is **PASS**. Formal acceptance is
+**ACCEPTED**. Architecture semantics are unchanged by acceptance. IMP-037 and IMP-038 remain on
+hold. IMP-039 and IMP-040 are not activated.
+
+<!-- historical-lifecycle-evidence:begin
+Historical implementation-start non-claims, superseded by COMPLETE_AND_ACCEPTED on 2026-09-27.
+They are not current lifecycle instructions.
+
+Tranche 1 persistence and domain foundations have started. This capability architecture does not
+change locked semantics, and this implementation-start record does not:
 
 - complete IMP-036I implementation
 - change approved Product Definition semantics
 - resolve IMP-037/038 or activate IMP-039/040
 - accept IMP-036I or perform Founder UAT
 - rewrite historical Delivery rows or add a DELIVERED correction workflow
+historical-lifecycle-evidence:end -->
 
 `PRE_EXISTING_DELIVERY_CONFORMANCE_DEBT` is CLOSED by the Tranche 1 runtime correction.
 Incorrect committed `DELIVERED` history remains outside IMP-036I.
@@ -1723,7 +1732,14 @@ PRE_EXISTING_DELIVERY_CONFORMANCE_DEBT = CLOSED
 
 ## 33. Recommended next action
 
-Independent verification of IMP-036I Implementation Tranche 1. Do not start Tranche 2 until that
-verification passes. Execution plan:
+CURRENT next action is **NONE**. IMP-036I is **COMPLETE_AND_ACCEPTED**. Do not advance or unhold
+IMP-037 from this acceptance record. Execution history:
 [`../product/IMP-036I/implementation-plan.md`](../product/IMP-036I/implementation-plan.md).
-Do not treat this architecture document as implementation or acceptance authority.
+ROADMAP and STATE remain lifecycle authority. This architecture document does not by itself
+accept or advance a slice.
+
+<!-- historical-lifecycle-evidence:begin
+Historical Tranche 1 next action, superseded after T1–T5 PASS and formal acceptance.
+Independent verification of IMP-036I Implementation Tranche 1. Do not start Tranche 2 until that
+verification passes.
+historical-lifecycle-evidence:end -->

@@ -519,7 +519,11 @@ PASS on 2026-09-27. The accepted application/UAT candidate remains main
 `85fe93db116bfe86b7f5ba4c266c829433d44401ffd03bdec536b5f61be9c27c`
 (`IMP036I_FOUNDER_UAT: PASS`; `IMP036I_FORMAL_ACCEPTANCE: ACCEPTED`;
 `IMP036I_ACCEPTED: YES`; `IMP036I_INDEPENDENT_TECHNICAL_ACCEPTANCE: PASS`;
-no numeric independent implementation review ID). Founder UAT Finding 001
+no numeric independent implementation review ID). Independent technical acceptance
+of that accepted candidate is the merge on main after independently reviewed
+remediation PRs #287, #288, and #290 (PR #289 persisted D-381). The earlier
+implementation-review head `335e8b55c74b81d745e923b3d078d6af9ec0b5cc` remains the
+pre-remediation review candidate and is not the accepted UAT candidate. Founder UAT Finding 001
 (`CHECKOUT_DEPENDENCY_INDETERMINATE`) is RESOLVED. Blocking findings at acceptance
 are NONE. Suggested final spot checks for fresh Delivery ASAP, customer self-service
 Scheduled cancellation, and a final narrow/mobile pass were
@@ -1383,7 +1387,10 @@ Historical revision evidence for GTM-R1…GTM-R113 is preserved byte-for-byte in
   `IMP036I_INDEPENDENT_TECHNICAL_ACCEPTANCE: PASS`. No numeric independent implementation
   review ID is recorded. Independent implementation review of the earlier implementation
   candidate remains PASS against reviewed main `335e8b55c74b81d745e923b3d078d6af9ec0b5cc`;
-  that review candidate is not rewritten as the accepted UAT candidate.
+  that review candidate is not rewritten as the accepted UAT candidate. Independent
+  technical acceptance of accepted candidate `44f4d7d84af07c3226da606476844d8f05454b28`
+  is the main merge after independently reviewed remediation PRs #287, #288, and #290
+  (PR #289 persisted D-381). No new numeric review ID is created for that acceptance.
 - Founder UAT check marks: configuration / finding_001_recovery / pickup_asap /
   pickup_scheduled / delivery_scheduled / operations_visibility / derived_timing_cues /
   pickup_boundary / delivery_manual_dispatch / commercial_recovery = PASS;
