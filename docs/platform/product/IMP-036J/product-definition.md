@@ -3,7 +3,7 @@
   "status": "DRAFT",
   "authority": "PRODUCT_DEFINITION",
   "capability": "IMP-036J",
-  "productDefinitionVersion": "PD-IMP-036J-DRAFT-2",
+  "productDefinitionVersion": "PD-IMP-036J-DRAFT-3",
   "productDefinitionStatus": "PRE_GATE_DRAFT",
   "productDefinitionGate": "NOT_PERFORMED",
   "architectureFit": "NOT_PERFORMED",
@@ -14,17 +14,23 @@
 # IMP-036J — Promotions, Coupons & Offers
 
 ```text
-PRODUCT_DEFINITION_VERSION = PD-IMP-036J-DRAFT-2
+PRODUCT_DEFINITION_VERSION = PD-IMP-036J-DRAFT-3
 STATUS = DRAFT
 PRE_GATE_DRAFT = YES
 PRODUCT_DEFINITION_IN_PROGRESS = YES
 DRAFT_READY_FOR_GATE = YES
 APPROVED = NO
+PRODUCT_DEFINITION_GATE_EXECUTION = NOT_PERFORMED
 PRODUCT_DEFINITION_GATE = NOT_PERFORMED
 ARCHITECTURE_FIT = NOT_PERFORMED
 IMPLEMENTATION_AUTHORIZED = NO
 IMP036J_ACCEPTED = NO
 OPEN_FOUNDER_PRODUCT_DECISIONS = 0
+UNRESOLVED_MATERIAL_PRODUCT_DECISIONS = 0
+FD-036J-01 = APPROVED
+FD-036J-01_DECISION_DATE = 2026-09-27
+FD-036J-02 = APPROVED
+FD-036J-02_DECISION_DATE = 2026-09-27
 
 PRODUCT_DELIVERY_PROCESS_EFFECTIVE_FROM = IMP-036F
 HISTORICAL_ACCEPTED_IMPS_REWRITTEN = NO
@@ -36,6 +42,19 @@ This artifact is a **pre-gate draft** that is ready for an independent Product D
 `DRAFT_READY_FOR_GATE` is not Gate PASS and is not approval. This revision does not execute the
 Gate, perform Architecture Fit, or authorize implementation. Lifecycle truth remains
 [`ROADMAP.md`](../../ROADMAP.md) and [`STATE.md`](../../STATE.md).
+
+### Historical candidate — `PD-IMP-036J-DRAFT-2`
+
+DRAFT-2 remains historical. It was the previous current candidate and recorded
+`DRAFT_READY_FOR_GATE = YES`. An independent Product Definition Gate evaluation of the
+persistence candidate initially returned PASS. Exact-head persistence review `5329990164`
+then found a material omission (comment `4115044083`): the compatible merchandise-plus-delivery
+outcome was not a required deterministic result. A secondary finding (comment `4115044090`)
+noted a story-readiness contradiction in that attempted Gate-PASS version. Gate persistence
+was stopped. Pull request #310 was closed without merge. Canonical main never recorded
+DRAFT-2 as `APPROVED` or Product Definition Gate PASS. The Product Definition was reopened.
+FD-036J-02 became required and is approved in DRAFT-3. DRAFT-2 is superseded by DRAFT-3.
+DRAFT-2 did not authorize implementation.
 
 ### Historical candidate — `PD-IMP-036J-DRAFT-1`
 
@@ -51,8 +70,8 @@ is not the current candidate.
 ### Program context (CURRENT tip — verify against ROADMAP/STATE)
 
 ```text
-ROADMAP = GTM-R164
-STATE = STATE-R162
+ROADMAP = GTM-R165
+STATE = STATE-R163
 ARCHITECTURE = ARCH-R23
 decision-register = DR-23
 acceptedThrough = IMP-036I
@@ -64,7 +83,7 @@ PROGRAM_PAUSE_AUTHORITY = D-377
 ADDITIONAL_SEQUENCING_AUTHORITY = D-382
 IMP036J_ACTIVATED = YES
 IMP036J_PRODUCT_DEFINITION = DRAFT_READY_FOR_GATE
-IMP036J_PRODUCT_DEFINITION_VERSION = PD-IMP-036J-DRAFT-2
+IMP036J_PRODUCT_DEFINITION_VERSION = PD-IMP-036J-DRAFT-3
 IMP036J_PRODUCT_DEFINITION_GATE = NOT_PERFORMED
 IMP036J_ARCHITECTURE_FIT = NOT_PERFORMED
 IMP036J_IMPLEMENTATION_AUTHORIZED = NO
@@ -88,10 +107,10 @@ Revenue Recommendations.
 | Field | Definition |
 |---|---|
 | Capability / title | IMP-036J — Promotions, Coupons & Offers |
-| Product Definition version / document status | `PD-IMP-036J-DRAFT-2`; **Document status: DRAFT**; `PRE_GATE_DRAFT`; `PRODUCT_DEFINITION_IN_PROGRESS`; `DRAFT_READY_FOR_GATE = YES`. Not `APPROVED`. |
-| Product owner / approval evidence | Founder sequencing authorization 2026-09-27 (Promotions first) recorded as **D-382**. FD-036J-01 approved by the Founder on 2026-09-27. Product Definition approval is not claimed. |
+| Product Definition version / document status | `PD-IMP-036J-DRAFT-3`; **Document status: DRAFT**; `PRE_GATE_DRAFT`; `PRODUCT_DEFINITION_IN_PROGRESS`; `DRAFT_READY_FOR_GATE = YES`. Not `APPROVED`. |
+| Product owner / approval evidence | Founder sequencing authorization 2026-09-27 (Promotions first) recorded as **D-382**. FD-036J-01 and FD-036J-02 approved by the Founder on 2026-09-27. Product Definition approval is not claimed. |
 | Process / verification policy | PD-1 / TEST-1 |
-| Canonical anchors | VISION-1; ROADMAP GTM-R164; STATE STATE-R162; ARCH-R23; DR-23 (D-377 CURRENT; D-382 CURRENT; next decision ID D-383; no D-383 created); accepted IMP-016 Promotions; accepted IMP-036F commercial management; ADR-007 CURRENT; accepted IMP-036H fulfilment mode; accepted IMP-036I scheduled timing |
+| Canonical anchors | VISION-1; ROADMAP GTM-R165; STATE STATE-R163; ARCH-R23; DR-23 (D-377 CURRENT; D-382 CURRENT; next decision ID D-383; no D-383 created); accepted IMP-016 Promotions; accepted IMP-036F commercial management; ADR-007 CURRENT; accepted IMP-036H fulfilment mode; accepted IMP-036I scheduled timing |
 | Repository candidate | `/home/ajoshi/repos/boba-bear-platform`; branch recorded at publication; HEAD / tree / fingerprint recorded by the activating change. This draft is not an acceptance candidate. |
 | Capability lifecycle / authorization | ROADMAP/STATE: formal lifecycle `PLANNED`; `IMP036J_ACTIVATED: YES`; Gate `NOT_PERFORMED`; Fit `NOT_PERFORMED`; implementation `NOT_AUTHORIZED`; `IMP036J_ACCEPTED: NO` |
 | Relevant capability architecture / ADRs | No IMP-036J capability architecture exists. Fit has not been performed. Binding money authority remains accepted Promotion / Coupon / Pricing / Checkout Snapshot (ADR-007; IMP-016; IMP-036F). Fulfilment mode remains D-378 / IMP-036H. Scheduled timing remains D-379 / IMP-036I. |
@@ -193,8 +212,8 @@ Discovery story IDs `ODC-US-*` are discovery examples, not these formal story ID
 | Fulfilment-shaped incentive | `PERSONA-CUSTOMER` | `JOURNEY-036J-AUTO` | Eligibility respects Delivery, Pickup, and accepted Scheduled timing | `US-036J-006` | `V1_ACCEPTANCE_SLICE` |
 | Limit honesty | `PERSONA-CUSTOMER` | `JOURNEY-036J-COUPON` | Distinguish invalid, expired, globally exhausted, and personal limit | `US-036J-007` | `V1_ACCEPTANCE_SLICE` |
 | No stale payable benefit | `PERSONA-CUSTOMER` | `JOURNEY-036J-PAY` | Revalidate before payment and recover | `US-036J-008` | `V1_ACCEPTANCE_SLICE` |
-| Best customer outcome | `PERSONA-CUSTOMER` | `JOURNEY-036J-COUPON` | Coupon competes with automatic Offer; customer is not made worse off | `US-036J-009` | `V1_ACCEPTANCE_SLICE` |
-| Margin-safe stacking | `PERSONA-CUSTOMER` | `JOURNEY-036J-PAY` | One primary merchandise/order Offer plus one compatible delivery incentive | `US-036J-010` | `V1_ACCEPTANCE_SLICE` |
+| Best customer outcome | `PERSONA-CUSTOMER` | `JOURNEY-036J-COUPON` | Entered coupon joins the same candidate evaluation and does not make the customer worse off | `US-036J-009` | `V1_ACCEPTANCE_SLICE` |
+| Margin-safe stacking | `PERSONA-CUSTOMER` | `JOURNEY-036J-PAY` | Best valid combination of one primary merchandise/order Offer plus one compatible delivery incentive | `US-036J-010` | `V1_ACCEPTANCE_SLICE` |
 | Immutable purchased savings | `PERSONA-CUSTOMER` | `JOURNEY-036J-PAY` | Order detail shows purchased savings and does not re-evaluate | `US-036J-011` | `V1_ACCEPTANCE_SLICE` |
 | Operable Promotions and Coupons | `PERSONA-WORKFORCE-OPERATOR` | `JOURNEY-036J-OPERATOR` | Author, activate, inspect, retire | `US-036J-012` | `V1_ACCEPTANCE_SLICE` |
 | Claimable / targeted / loyalty activation | `PERSONA-CUSTOMER` | n/a | Wallet, push, or points activation | none in V1 | `FOLLOW_UP` |
@@ -230,7 +249,7 @@ Data implications: Application facts come from accepted evaluation. Purchased tr
 Security implications: Do not disclose another customer's eligibility.
 Architecture fit / applicable invariants: NO_SECOND_MONEY_ENGINE. Exact evaluator representation is Fit.
 Open material decisions: NONE for this story.
-Readiness: NOT_READY_FOR_IMPLEMENTATION — Gate, Fit, and implementation authorization are not performed.
+Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate NOT_PERFORMED; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED.
 ```
 
 ```text
@@ -252,7 +271,7 @@ Data implications: The entered code is an activation attempt against one shared 
 Security implications: Do not reveal whether a code belongs to another customer beyond the allowed reason class. Do not expose another customer's private eligibility.
 Architecture fit / applicable invariants: Coupon remains activation/redemption authority. NO_SECOND_MONEY_ENGINE.
 Open material decisions: NONE
-Readiness: NOT_READY_FOR_IMPLEMENTATION — Gate, Fit, and implementation authorization are not performed.
+Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate NOT_PERFORMED; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED.
 ```
 
 ```text
@@ -274,29 +293,29 @@ Data implications: Display is a projection of eligibility.
 Security implications: N/A beyond ordinary cart privacy.
 Architecture fit / applicable invariants: No fabricated commercial numbers.
 Open material decisions: NONE
-Readiness: NOT_READY_FOR_IMPLEMENTATION
+Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate NOT_PERFORMED; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED.
 ```
 
 ```text
 Story ID: US-036J-004
 As a customer
-I want the pre-payment total to explain each saving
-so that I know the merchandise or order discount, any delivery saving, the total saved, and what I will pay.
+I want the pre-payment total to explain each real saving
+so that I can see the merchandise or order saving, the delivery saving when it changes what I pay, the total saved, and the final amount, without a duplicate or invented delivery saving.
 
 Journey / activity: JOURNEY-036J-PAY / savings breakdown
 Preconditions: Checkout is presenting a payable total.
 Acceptance scenarios: AC-036J-004-01
 Business rules: BR-036J-005, BR-036J-008
-UX states: ready breakdown; missing delivery line when Pickup has no delivery charge
+UX states: ready breakdown; delivery saving only when it has a real monetary effect; no delivery-saving line when the charge was already zero or Pickup has no delivery charge
 Permission / resource context: Customer checkout.
 Error / recovery: Covered by US-036J-008.
 Dependencies: Checkout Snapshot remains payable truth after payment bind.
-Explicit non-goals: Tax policy changes; fictional reference prices.
+Explicit non-goals: Tax policy changes; fictional reference prices; a second delivery-charge calculator; a fabricated rupee saving from a delivery charge that was already zero.
 Data implications: Components must sum to the explained saving. Payable amount is the evaluated amount.
 Security implications: Do not show another customer's commercial facts.
 Architecture fit / applicable invariants: One coherent delivery-charge result.
 Open material decisions: NONE
-Readiness: NOT_READY_FOR_IMPLEMENTATION
+Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate NOT_PERFORMED; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED.
 ```
 
 ```text
@@ -318,7 +337,7 @@ Data implications: Eligibility reads purchased-order history. It does not write 
 Security implications: Do not expose another customer's order history.
 Architecture fit / applicable invariants: Exact query and concurrency are Fit-owned.
 Open material decisions: NONE — definition is the approved ODC-06 direction.
-Readiness: NOT_READY_FOR_IMPLEMENTATION
+Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate NOT_PERFORMED; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED.
 ```
 
 ```text
@@ -340,7 +359,7 @@ Data implications: Eligibility consumes accepted mode and timing facts.
 Security implications: N/A.
 Architecture fit / applicable invariants: No duplicate scheduling authority.
 Open material decisions: NONE
-Readiness: NOT_READY_FOR_IMPLEMENTATION
+Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate NOT_PERFORMED; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED.
 ```
 
 ```text
@@ -362,7 +381,7 @@ Data implications: Caps are consumption facts, not a second price.
 Security implications: Personal-cap messaging must not leak another customer's usage count.
 Architecture fit / applicable invariants: Concurrency-safe consumption is Fit-owned.
 Open material decisions: NONE for the customer-visible distinction.
-Readiness: NOT_READY_FOR_IMPLEMENTATION
+Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate NOT_PERFORMED; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED.
 ```
 
 ```text
@@ -384,51 +403,51 @@ Data implications: Payable total is recomputed. No snapshot is sealed with the s
 Security implications: N/A.
 Architecture fit / applicable invariants: Checkout Snapshot remains the purchased commercial truth.
 Open material decisions: NONE
-Readiness: NOT_READY_FOR_IMPLEMENTATION
+Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate NOT_PERFORMED; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED.
 ```
 
 ```text
 Story ID: US-036J-009
 As a customer
-I want an entered coupon to compete with an automatic Offer
-so that I keep the better saving and I am told which one won.
+I want an entered coupon to take part in the same commercial evaluation
+so that I keep the best valid outcome, a winning merchandise coupon can still pair with one compatible delivery incentive, and entering a coupon never makes me pay more.
 
 Journey / activity: JOURNEY-036J-COUPON / best offer
-Preconditions: An automatic Offer and a coupon-backed Offer both qualify and are not a permitted stack.
-Acceptance scenarios: AC-036J-009-01, AC-036J-009-02
-Business rules: BR-036J-009
-UX states: automatic retained, coupon wins, explanation
+Preconditions: An automatic Offer and a coupon-backed Offer can both qualify. The coupon uses its actual benefit class. One entered coupon state exists.
+Acceptance scenarios: AC-036J-009-01, AC-036J-009-02, AC-036J-009-03, AC-036J-009-04
+Business rules: BR-036J-009, BR-036J-008
+UX states: automatic retained, coupon wins the merchandise slot, coupon competes as a delivery incentive, explanation
 Permission / resource context: Customer cart.
-Error / recovery: Removing the coupon restores the automatic result when that result is better or remains eligible.
-Dependencies: Same evaluator. No second comparison engine.
-Explicit non-goals: Silent stacking of incompatible merchandise discounts.
-Data implications: One winning primary merchandise/order benefit unless stacking BR-036J-008 allows the delivery class as well.
+Error / recovery: Removing the coupon restores the previous eligible result when that result remains better.
+Dependencies: Same evaluator. No second comparison engine and no second coupon state.
+Explicit non-goals: Silent stacking of incompatible benefits. Multi-coupon entry. A coupon-created extra stacking slot.
+Data implications: One entered coupon state. Coupon and automatic candidates are compared as complete valid combinations. The coupon occupies the slot of its benefit class. A merchandise-class coupon selected by that comparison still leaves only the single delivery-incentive slot.
 Security implications: N/A.
-Architecture fit / applicable invariants: Deterministic tie-break is Fit-owned. Customer-visible rule is best monetary outcome.
+Architecture fit / applicable invariants: Deterministic non-monetary tie-break is Fit-owned. Customer-visible rule is the best monetary outcome.
 Open material decisions: NONE
-Readiness: NOT_READY_FOR_IMPLEMENTATION
+Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate NOT_PERFORMED; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED.
 ```
 
 ```text
 Story ID: US-036J-010
 As a customer
-I want compatible delivery incentives to remain available with one merchandise Offer
-so that a free-delivery incentive is not discarded merely because an order discount applied, and two merchandise discounts do not stack.
+I want the best valid combination of one primary merchandise or order Offer and one compatible delivery incentive
+so that compatible delivery value is not silently lost and unintended multi-discount stacking cannot occur.
 
 Journey / activity: JOURNEY-036J-PAY / stacking
-Preconditions: More than one Offer qualifies.
-Acceptance scenarios: AC-036J-010-01, AC-036J-010-02
+Preconditions: More than one Offer may qualify.
+Acceptance scenarios: AC-036J-010-01, AC-036J-010-02, AC-036J-010-03, AC-036J-010-04
 Business rules: BR-036J-008
-UX states: one merchandise benefit plus one delivery incentive; refused second merchandise discount
+UX states: one merchandise or order benefit plus one delivery incentive when both have a real effect; best valid combination; no second merchandise discount; no second delivery incentive; no fabricated delivery saving
 Permission / resource context: Customer cart.
-Error / recovery: The customer sees which benefit applied.
-Dependencies: Benefit class is a product rule. Representation is Fit.
-Explicit non-goals: Deal built-in value stacking. Campaign budgets.
+Error / recovery: The customer sees the savings that changed the payable amount.
+Dependencies: Benefit class is a product rule. Representation, search, and non-monetary tie-breaks are Fit.
+Explicit non-goals: Deal built-in value stacking. Campaign budgets. Optional discarding of a qualifying compatible delivery benefit.
 Data implications: Applied benefits remain inside the single commercial evaluation.
 Security implications: N/A.
-Architecture fit / applicable invariants: Existing exclusive/combinable mechanics are reconciled at Fit and are not rewritten by this draft.
+Architecture fit / applicable invariants: Existing exclusive/combinable mechanics are reconciled at Fit and are not rewritten by this draft. Exact evaluator representation belongs to Fit.
 Open material decisions: NONE
-Readiness: NOT_READY_FOR_IMPLEMENTATION
+Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate NOT_PERFORMED; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED.
 ```
 
 ```text
@@ -450,7 +469,7 @@ Data implications: Order detail reads purchased facts.
 Security implications: Order commercial facts stay with the owning customer and authorized workforce scope.
 Architecture fit / applicable invariants: No new snapshot authority.
 Open material decisions: NONE
-Readiness: NOT_READY_FOR_IMPLEMENTATION
+Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate NOT_PERFORMED; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED.
 ```
 
 ```text
@@ -472,7 +491,7 @@ Data implications: Authoring writes accepted Promotion/Coupon authority or the m
 Security implications: Cross-scope denial is mandatory. Client-supplied role or scope is not authority.
 Architecture fit / applicable invariants: No new service, role, or permission is decided here.
 Open material decisions: NONE for the operator outcomes. Mechanism is Fit.
-Readiness: NOT_READY_FOR_IMPLEMENTATION
+Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate NOT_PERFORMED; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED.
 ```
 
 ## 10. Acceptance scenarios
@@ -576,10 +595,12 @@ Then the Offer applies only while the minimum holds, and the customer is told wh
 
 AC-036J-004-01 — Pre-payment breakdown
 Story: US-036J-004
-Given applied merchandise and, where relevant, delivery savings
+Given an applied merchandise or order saving and, where it changes the charge, a delivery saving
 When the customer reviews the payable total
-Then they see the merchandise or order discount, the coupon-backed Offer where one applied, the delivery saving where one applied, the total saved, and the final payable amount
-And total saved equals the explainable components
+Then they see the merchandise or order discount, the coupon-backed Offer where one applied, the delivery saving where that saving has a real monetary effect, the total saved, and the final payable amount
+And total saved equals those explainable components
+And a delivery charge that was already zero does not appear again as a second rupee saving
+Mandatory in acceptance slice: YES
 
 AC-036J-005-01 — First successful order has not happened
 Story: US-036J-005
@@ -621,30 +642,95 @@ And accepted pre-payment revalidation remains authoritative
 And recovery returns through the pre-payment Review path, where the customer can remove or change the coupon, change the cart, or continue without that Offer on a recomputed total
 And Payment does not mutate coupon state to perform that recovery
 
-AC-036J-009-01 — Automatic Offer is better
+AC-036J-009-01 — Entered coupon does not improve the payable outcome
 Story: US-036J-009
-Given the automatic Offer saves more than the entered coupon and they do not stack
+Given an automatic merchandise or order Offer and an entered coupon both qualify
+And each is judged inside the best valid combination that uses its benefit class
+And that comparison includes at most one compatible delivery incentive when that incentive produces a real monetary benefit
+And the best valid combination without the entered coupon has the better final payable amount
 When the customer enters the coupon
-Then the automatic Offer remains applied and the customer is told the entered coupon did not improve the result
+Then the combination that does not depend on the entered coupon remains
+And the customer is told the entered coupon did not improve the result
+And the customer is not worse off
+For example, an automatic merchandise saving of ₹80 that pairs with a ₹40 delivery incentive remains when a coupon that saves ₹90 cannot pair with that delivery incentive
 
-AC-036J-009-02 — Coupon is better
+AC-036J-009-02 — Entered coupon improves the payable outcome
 Story: US-036J-009
-Given the coupon-backed Offer saves more
+Given the best valid combination that includes the entered coupon produces a better final payable amount than the best valid combination without it
+And that comparison includes at most one compatible delivery incentive when that incentive produces a real monetary benefit
 When the customer enters the coupon
-Then the coupon-backed Offer wins and the saving is explained
+Then that complete combination is selected and the saving is explained
+And a coupon with a smaller merchandise saving can still win when it pairs with a compatible delivery incentive
+And the customer is not worse off
+For example, a ₹90 coupon that pairs with a ₹20 delivery incentive is selected over a ₹100 automatic Offer that cannot pair with that delivery incentive
 
-AC-036J-010-01 — Merchandise plus delivery
+AC-036J-009-03 — Winning merchandise coupon still pairs with delivery
+Story: US-036J-009
+Given the best valid complete combination selects an entered coupon in the merchandise or order slot
+And one compatible delivery incentive in that same combination produces a real monetary benefit
+When the payable commercial outcome is evaluated
+Then both apply
+And the coupon did not create a second merchandise slot or a second coupon state
+And the comparison that selected this combination used the final payable amount, not the merchandise saving alone
+
+AC-036J-009-04 — Delivery coupon uses the delivery slot
+Story: US-036J-009
+Given the entered coupon backs a delivery incentive
+And another delivery incentive also qualifies
+When the payable commercial outcome is evaluated
+Then the coupon-backed Offer competes only in the delivery-incentive position
+And at most one delivery incentive applies
+And it does not open a second merchandise or order slot
+And the customer is not worse off
+
+AC-036J-010-01 — Compatible merchandise plus delivery both apply
 Story: US-036J-010
-Given one merchandise or order Offer and one compatible delivery incentive
-When both qualify
-Then both may apply
-And a second merchandise discount does not also apply
+Given at least one merchandise or order Offer qualifies
+And at least one delivery incentive qualifies
+And the selected merchandise or order Offer and the selected delivery incentive are compatible
+And each produces a real monetary benefit in the current commercial context
+When the payable commercial outcome is evaluated
+Then exactly one primary merchandise or order Offer is selected
+And at most one delivery incentive is selected
+And the selected compatible delivery incentive applies alongside the selected merchandise or order Offer
+And both savings are reflected in the one coherent commercial result
+And another merchandise or order Offer does not also apply
+And another delivery incentive does not also apply
+And the savings breakdown reflects the actual monetary effects
+COMPATIBLE_STACK_RESULT = BOTH_APPLY
+Mandatory in acceptance slice: YES
 
 AC-036J-010-02 — BOGO does not stack
 Story: US-036J-010
 Given a BOGO Offer and another merchandise discount
 When both qualify
 Then only the better deterministic merchandise outcome applies unless a later explicit product decision allows the stack
+And when a separately compatible delivery incentive also qualifies and produces a real monetary benefit, that delivery incentive applies with the selected merchandise outcome
+And that delivery incentive does not add a second merchandise discount
+
+AC-036J-010-03 — Best valid combination
+Story: US-036J-010
+Given more than one merchandise or order Offer qualifies
+And more than one delivery incentive qualifies
+When the payable commercial outcome is evaluated
+Then only valid compatible combinations are considered
+And the valid combination that produces the best customer monetary outcome is selected
+And that combination is one primary merchandise or order Offer plus at most one delivery incentive
+And an incompatible combination is not applied
+MULTIPLE_CANDIDATE_SELECTION = BEST_VALID_MONETARY_COMBINATION
+Mandatory in acceptance slice: YES
+
+AC-036J-010-04 — Standing free delivery is not a second saving
+Story: US-036J-010
+Given the delivery charge is already ₹0 because accepted standing delivery-tariff authority makes delivery free
+And a temporary free-delivery Offer otherwise qualifies
+When commercial evaluation runs
+Then delivery remains ₹0
+And no duplicate delivery credit is created
+And no fabricated extra delivery saving is shown
+And the final total stays commercially coherent
+STANDING_FREE_DELIVERY_DUPLICATE_SAVING = PROHIBITED
+Mandatory in acceptance slice: YES
 
 AC-036J-011-01 — Historical savings stay put
 Story: US-036J-011
@@ -678,6 +764,9 @@ Then the Offer stays active
 | Story / AC ID | Required behaviour / risk | Applicable test layers | Planned proof | Actual evidence |
 |---|---|---|---|---|
 | `US-036J-001` … `US-036J-011` | Customer benefit truth | Unit, domain, HTTP, browser journey, accessibility | Later implementation evidence under TEST-1 | Not executed |
+| `US-036J-004` / `AC-036J-004-01` | Savings breakdown without a duplicate or fabricated delivery saving | Domain, browser journey | Later implementation evidence under TEST-1 | Not executed |
+| `US-036J-009` / `AC-036J-009-03`, `AC-036J-009-04` | Coupon uses its benefit-class slot and does not make the customer worse off | Domain, HTTP, browser journey | Later implementation evidence under TEST-1 | Not executed |
+| `US-036J-010` / `AC-036J-010-01`, `AC-036J-010-02`, `AC-036J-010-03`, `AC-036J-010-04` | Deterministic compatible stacking, best valid combination, and standing-free-delivery coherence | Domain, browser journey | Later implementation evidence under TEST-1 | Not executed |
 | `US-036J-005`, `US-036J-007`, `US-036J-008` | Eligibility, caps, stale payment | Domain, concurrency where Fit identifies a race, recovery | Real overlap only where cap consumption races | Not executed |
 | `US-036J-012` | Operator allow/deny | Authorization positive and negative, integration | Existing commercial scope | Not executed |
 
@@ -691,9 +780,9 @@ Then the Offer stays active
 | `BR-036J-004` | Progress and “you saved” figures are derived from real eligibility and real evaluated savings. No fabricated reference price or fabricated remaining amount. | Discovery truthful-savings principle | `US-036J-003`, `US-036J-004` |
 | `BR-036J-005` | Before payment, a stale or invalid Offer is removed from the payable total. After payment, purchased savings stay on the snapshot and are not live-evaluated. | Checkout Snapshot authority | `US-036J-004`, `US-036J-008`, `US-036J-011` |
 | `BR-036J-006` | First-order eligible means no previous successfully purchased direct BOBA Bear Order for that authenticated customer. Failed or abandoned payments do not consume it. Later cancellation or refund of a successful Order does not restore it. | ODC-06 | `US-036J-005` |
-| `BR-036J-007` | Eligibility may distinguish DELIVERY and PICKUP. Scheduled eligibility consumes accepted IMP-036I timing and does not redefine it. Standing free delivery in the delivery tariff is not the same thing as a temporary free-delivery Offer. The customer sees one delivery-charge result. | ODC-05, ODC-06; IMP-036H; IMP-036I | `US-036J-006`, `US-036J-004` |
-| `BR-036J-008` | Default maximum is one primary merchandise or order Offer plus one compatible delivery incentive. Two merchandise discounts do not stack. BOGO plus another merchandise discount does not stack. When several automatic Offers qualify, the best deterministic customer monetary outcome wins. | ODC-07..ODC-10. Deal compatibility is moot while Deals are out of this slice. | `US-036J-009`, `US-036J-010` |
-| `BR-036J-009` | An entered coupon competes with the automatic Offer. The customer must not be worse off for entering it. If the automatic Offer is better, it stays and the customer is told the coupon did not improve the result. If the coupon-backed Offer is better, it wins and the result is explained. Incompatible coupon and automatic Offer benefits are not silently stacked. One entered coupon state exists at a time. | ODC-10; Founder coupon policy already approved in discovery | `US-036J-002`, `US-036J-009` |
+| `BR-036J-007` | Eligibility may distinguish DELIVERY and PICKUP. Scheduled eligibility consumes accepted IMP-036I timing and does not redefine it. Standing free delivery in the delivery tariff is not the same thing as a temporary free-delivery Offer. The customer sees one delivery-charge result. A standing-free outcome does not create a second delivery credit or a fabricated delivery saving. | ODC-05, ODC-06; IMP-036H; IMP-036I; FD-036J-02 | `US-036J-006`, `US-036J-004`, `US-036J-010` |
+| `BR-036J-008` | V1 stacking is at most one primary merchandise or order Offer plus one compatible delivery incentive. When the selected pair both qualify, are compatible, and each produces a real monetary benefit, both apply (`COMPATIBLE_STACK_RESULT = BOTH_APPLY`). Valid compatible combinations compete on the best customer monetary outcome (`MULTIPLE_CANDIDATE_SELECTION = BEST_VALID_MONETARY_COMBINATION`). Two merchandise discounts do not stack. Multiple delivery incentives do not stack with each other. BOGO does not stack with another merchandise discount. A delivery incentive with zero incremental monetary benefit is not an additional saving. Standing free delivery does not create a duplicate or fabricated delivery saving (`STANDING_FREE_DELIVERY_DUPLICATE_SAVING = PROHIBITED`). Exact evaluator representation, search, persistence, and deterministic non-monetary tie-breaks belong to Architecture Fit. | FD-036J-02 APPROVED 2026-09-27; ODC-07..ODC-10. Deal compatibility is moot while Deals are out of this slice. | `US-036J-009`, `US-036J-010` |
+| `BR-036J-009` | An entered coupon participates in the same commercial candidate evaluation. The comparison is the final payable amount of each valid compatible combination, including at most one delivery incentive, not the merchandise saving alone. Entering the coupon must not make the customer worse off. The coupon-backed Offer uses its actual benefit class and does not create another stacking slot. If the selected combination places it in the merchandise or order slot, one compatible delivery incentive that produces a real monetary benefit applies with it. If the coupon-backed Offer is a delivery incentive, it competes only in the delivery-incentive position. Incompatible benefits do not stack. One entered coupon state exists at a time. There is no second monetary engine. | ODC-10; FD-036J-02 APPROVED 2026-09-27; Founder coupon policy already approved in discovery | `US-036J-002`, `US-036J-009` |
 | `BR-036J-013` | Coupon entry exists on Cart and on Checkout Review. Both surfaces operate one shared coupon / commercial state. Checkout Review is not a second coupon store. The customer may enter, apply, replace, remove, and retry on either surface before Payment. After the customer crosses from Review into Payment, coupon state is read-only: no new entry, replacement, or removal. If commercial truth is stale, recovery returns through the normal pre-payment Review path. | FD-036J-01 APPROVED 2026-09-27 | `US-036J-002`, `US-036J-008` |
 | `BR-036J-010` | V1 controls are max discount where applicable, per-customer redemption cap, and global Offer redemption cap. Reuse coupon claims where they fit. Campaign budgets and pacing are follow-up. | ODC-11 | `US-036J-007`, `US-036J-012` |
 | `BR-036J-011` | V1 benefit intent is percentage, flat ₹, BOGO / Buy X Get Y, a free menu item only where accepted authority can express it, and temporary free delivery. Fixed promotional item or combo pricing is Deal/Pricing, not this slice. | ODC-05 | `US-036J-001`, `US-036J-012` |
@@ -704,7 +793,7 @@ Then the Offer stays active
 This draft does not treat the following as already implemented:
 
 - Free menu item as a non-BOGO benefit is an engine gap. V1 customer outcome, only where accepted commercial authority can express it safely, is one operator-specified complementary menu item shown as a line with no extra merchandise charge. The customer does not choose from a gift catalogue in IMP-036J. Customer-choice gift selection is Deal-like future behavior. If Architecture Fit proves the current authority cannot safely express that free-item outcome without creating a second engine, Fit must surface that contradiction rather than silently dropping this requirement.
-- Temporary free-delivery Offer is part of IMP-036J V1. The standing tariff threshold and the temporary Offer are distinct product concepts. The customer sees one coherent delivery-charge outcome. Architecture Fit decides the minimum implementation interaction. This draft does not choose a table or formula and does not create a second delivery-charge calculator.
+- Temporary free-delivery Offer is part of IMP-036J V1. The standing tariff threshold and the temporary Offer are distinct product concepts. Standing free delivery is delivery-tariff / serviceability authority. Temporary free delivery is an Offer incentive. The customer sees one coherent delivery-charge outcome. If standing authority already makes delivery ₹0, evaluation does not add a duplicate credit, a fabricated delivery saving, or a second monetary claim for a delivery incentive that changes nothing. A delivery incentive with zero incremental monetary benefit is not displayed as an additional saving. Architecture Fit decides the minimum implementation interaction. This draft does not choose a table or formula and does not create a second delivery-charge calculator.
 - First-order, fulfilment-mode eligibility, and global caps on automatic Offers that have no coupon are product requirements with known engine gaps. Fit decides the minimum extension. Until that extension exists, those rules are not pretend-supported.
 
 Percentage, flat amount, and BOGO are product-intended because the accepted engine already has them. V1 still includes making them operable and explainable.
@@ -729,7 +818,7 @@ Percentage, flat amount, and BOGO are product-intended because the accepted engi
 | CONTEXT | Outlet, fulfilment mode, timing, and authentication context are consumed from accepted commerce. | `US-036J-005`, `US-036J-006` |
 | EMPTY / FIRST USE | No Offer is a valid empty state. First-order is a specific eligibility state, not an empty catalogue. | `US-036J-001`, `US-036J-005` |
 | HAPPY PATH | Automatic apply, coupon apply, operator activate. | `AC-036J-001-01`, `AC-036J-002-01`, `AC-036J-012-01` |
-| ALTERNATE VALID PATHS | Coupon better or automatic better; Delivery versus Pickup. | `US-036J-006`, `US-036J-009` |
+| ALTERNATE VALID PATHS | Coupon better or automatic better; merchandise coupon plus compatible delivery; Delivery versus Pickup; best valid stacking combination. | `US-036J-006`, `US-036J-009`, `US-036J-010` |
 | VALIDATION FAILURE | Invalid, expired, inapplicable, exhausted, personal cap, operator configuration errors. | `US-036J-002`, `US-036J-007`, `US-036J-012` |
 | AUTHORIZATION | Operator allow/deny on existing commercial scope. Customer identity when the Offer requires it. | `AC-036J-002-04`, `AC-036J-012-02` |
 | NOT FOUND / STALE REFERENCE | Unknown code; Offer retired before payment; purchased order does not use live Offers. | `US-036J-008`, `US-036J-011` |
@@ -847,6 +936,7 @@ are in V1. Deal views, campaign aggregates, and incremental-revenue claims are n
 | Scheduled timing | IMP-036I COMPLETE_AND_ACCEPTED | `US-036J-006` | Do not redefine Scheduled |
 | Product Definition Gate and Architecture Fit | NOT_PERFORMED | Implementation | Blocks implementation |
 | FD-036J-01 | APPROVED 2026-09-27: Cart and Checkout Review share one coupon state; Payment does not mutate it | None for Gate readiness | Does not itself pass the Gate |
+| FD-036J-02 | APPROVED 2026-09-27: one primary merchandise or order Offer plus one compatible delivery incentive; a qualifying compatible pair with real monetary benefit both apply; best valid monetary combination wins; standing free delivery creates no duplicate saving | None for Gate readiness | Product Definition decision. Not a Decision Register entry. Does not itself pass the Gate |
 
 ## 22. Supported now
 
@@ -927,19 +1017,28 @@ is required. This boundary is not ordinary commercial follow-up.
 
 | `UNRESOLVED_DECISION_REQUIRED` item | Material user/business impact | Decision owner / evidence needed | Affected stories / gate |
 |---|---|---|---|
-| None | `OPEN_FOUNDER_PRODUCT_DECISIONS = 0` | FD-036J-01 is APPROVED | Gate may be reviewed; it is not performed by this draft |
+| None | `OPEN_FOUNDER_PRODUCT_DECISIONS = 0`; `UNRESOLVED_MATERIAL_PRODUCT_DECISIONS = 0` | FD-036J-01 and FD-036J-02 are APPROVED | Gate may be reviewed; it is not performed by this draft |
 
 `FD-036J-01` = `APPROVED` on 2026-09-27.
+`FD-036J-02` = `APPROVED` on 2026-09-27.
 
 ```text
 COUPON_ENTRY_SURFACE = CART + CHECKOUT_REVIEW
 ONE_SHARED_COUPON_STATE = YES
 PAYMENT_COUPON_MUTATION = NO
+MAX_PRIMARY_MERCHANDISE_OR_ORDER_OFFERS = 1
+MAX_DELIVERY_INCENTIVES = 1
+COMPATIBLE_STACK_RESULT = BOTH_APPLY
+MULTIPLE_CANDIDATE_SELECTION = BEST_VALID_MONETARY_COMBINATION
+STANDING_FREE_DELIVERY_DUPLICATE_SAVING = PROHIBITED
 ```
 
 DRAFT-1 recommended Cart-only entry. The Founder instead approved entry on both Cart and
 Checkout Review, over one shared coupon / commercial state, with Payment read-only for coupon
-changes.
+changes. FD-036J-02 approves deterministic compatible-delivery stacking. Where two valid
+combinations produce the same monetary outcome, a stable technical tie-break may be chosen in
+Architecture Fit because it does not change the customer's monetary result. Exact evaluator
+representation stays in Architecture Fit. FD-036J-02 is not Decision Register entry D-383.
 
 Other questions are consumed from discovery or from this draft's scope:
 public Offers browse is follow-up; free-item V1 is one specified complementary item when
@@ -953,14 +1052,23 @@ application and redemption visibility, not campaign analytics.
 
 | Story ID | Applicable fields complete / evidence | Open material decisions | Readiness / blocker |
 |---|---|---|---|
-| `US-036J-001` … `US-036J-012` | Sections 9–18 state the outcome. Fit and permissions binding are not done. | None. Program Gate, Fit, and implementation authorization are not performed. | `NOT_READY_FOR_IMPLEMENTATION` |
+| `US-036J-001` … `US-036J-012` | Sections 9–18 state the outcome. Fit and permissions binding are not done. | None. | `NOT_READY_FOR_IMPLEMENTATION`. Reason: Product Definition Gate NOT_PERFORMED; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED. |
+
+```text
+READINESS_WHILE_GATE_NOT_PERFORMED = NOT_READY_FOR_IMPLEMENTATION
+AFTER_GATE_PASS_READINESS_MUST_DROP_GATE_BLOCKER = YES
+```
+
+Stories stay `NOT_READY_FOR_IMPLEMENTATION` while the Product Definition Gate has not been
+performed. After a future Gate PASS is persisted, readiness must be updated so only Architecture
+Fit and implementation authorization remain outstanding. This draft does not perform that Gate.
 
 ## 27. Product Definition Gate
 
 ```text
 PRODUCT_DEFINITION_GATE
 Capability: IMP-036J — Promotions, Coupons & Offers
-Product Definition Version: PD-IMP-036J-DRAFT-2
+Product Definition Version: PD-IMP-036J-DRAFT-3
 Business Outcome: stated
 Primary Personas: stated
 Journeys Defined: stated
