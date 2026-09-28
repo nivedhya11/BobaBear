@@ -1764,6 +1764,7 @@ export function isSupportedImp030GovernanceCheckpoint(roadmapVersion, stateVersi
   const imp036iAcceptance = roadmapVersion === "GTM-R162" && stateVersion === "STATE-R160";
   const imp036jProductDefinitionActivation = roadmapVersion === "GTM-R163" && stateVersion === "STATE-R161";
   const imp036jProductDefinitionDraftReady = roadmapVersion === "GTM-R168" && stateVersion === "STATE-R166";
+  const imp036jProductDefinitionGatePass = roadmapVersion === "GTM-R169" && stateVersion === "STATE-R167";
   if (kind === "activation") return activation;
   if (kind === "lock") return lock;
   if (kind === "authorization") return authorization;
@@ -1860,7 +1861,8 @@ export function isSupportedImp030GovernanceCheckpoint(roadmapVersion, stateVersi
   if (kind === "imp036iAcceptance") return imp036iAcceptance;
   if (kind === "imp036jProductDefinitionActivation") return imp036jProductDefinitionActivation;
   if (kind === "imp036jProductDefinitionDraftReady") return imp036jProductDefinitionDraftReady;
-  return activation || lock || authorization || start || routeAmendment || consistencyRepair || acceptance || imp031Activation || imp031Draft || imp031Lock || imp031Authorization || imp031Start || imp031Completion || imp031Acceptance || imp032Activation || imp032Draft || imp032Lock || imp032Authorization || imp032Start || imp032BoundaryClarification || imp032Completion || imp032Acceptance || imp033Activation || imp033Completion || imp033Acceptance || imp034Completion || imp034Acceptance || imp035Completion || imp035Acceptance || imp036Completion || imp036Acceptance || enterpriseExperiencePlan || imp036aCompletion || imp036aAcceptance || imp036bCompletion || imp036bAcceptance || imp036cCompletion || imp036cAcceptance || imp036dActivation || imp036dLock || imp036dAuthorization || imp036dStart || imp036dCompletion || imp036dAcceptance || imp036eActivation || imp036eLock || imp036eAuthorization || imp036eStart || imp036eCompletion || authorityCompression || imp036eAcceptance || imp036fActivation || imp036fProductDefinitionDraftAuthorized || imp036fProductDefinitionGatePass || imp036fArchitectureLock || imp036fImplementationAuthorization || imp036fImplementationStart || imp036fAcceptance || imp036gActivation || imp036gProductDefinitionDraft || imp036gProductDefinitionGatePass || imp036gArchitectureLock || imp036gImplementationStart || imp036gCompletion || imp036gAcceptance || imp037Activation || imp037ProductDefinitionGatePass || d374CostOptimizedPilotInfrastructure || imp037ArchitectureLock || imp037ImplementationAuthorization || imp037ImplementationStart || imp037PostMergeReconciliation || imp038ControlledContinuationActivation || imp038ArchitectureLock || imp038ImplementationAuthorizeStart || imp036hProductDefinitionActivation || imp036hProductDefinitionGatePass || imp036hArchitectureLock || imp036hImplementationAuthorization || imp036hImplementationStart || imp036hImplementationComplete || imp036hAcceptance || imp036iProductDefinitionActivation || imp036iProductDefinitionDraftReady || imp036iProductDefinitionGatePass || imp036iArchitectureLock || imp036iImplementationAuthorization || imp036iImplementationStart || imp036iTranche2 || imp036iTranche3 || imp036iTranche4 || imp036iTranche5 || imp036iImplementationComplete || imp036iAcceptance || imp036jProductDefinitionActivation || imp036jProductDefinitionDraftReady;
+  if (kind === "imp036jProductDefinitionGatePass") return imp036jProductDefinitionGatePass;
+  return activation || lock || authorization || start || routeAmendment || consistencyRepair || acceptance || imp031Activation || imp031Draft || imp031Lock || imp031Authorization || imp031Start || imp031Completion || imp031Acceptance || imp032Activation || imp032Draft || imp032Lock || imp032Authorization || imp032Start || imp032BoundaryClarification || imp032Completion || imp032Acceptance || imp033Activation || imp033Completion || imp033Acceptance || imp034Completion || imp034Acceptance || imp035Completion || imp035Acceptance || imp036Completion || imp036Acceptance || enterpriseExperiencePlan || imp036aCompletion || imp036aAcceptance || imp036bCompletion || imp036bAcceptance || imp036cCompletion || imp036cAcceptance || imp036dActivation || imp036dLock || imp036dAuthorization || imp036dStart || imp036dCompletion || imp036dAcceptance || imp036eActivation || imp036eLock || imp036eAuthorization || imp036eStart || imp036eCompletion || authorityCompression || imp036eAcceptance || imp036fActivation || imp036fProductDefinitionDraftAuthorized || imp036fProductDefinitionGatePass || imp036fArchitectureLock || imp036fImplementationAuthorization || imp036fImplementationStart || imp036fAcceptance || imp036gActivation || imp036gProductDefinitionDraft || imp036gProductDefinitionGatePass || imp036gArchitectureLock || imp036gImplementationStart || imp036gCompletion || imp036gAcceptance || imp037Activation || imp037ProductDefinitionGatePass || d374CostOptimizedPilotInfrastructure || imp037ArchitectureLock || imp037ImplementationAuthorization || imp037ImplementationStart || imp037PostMergeReconciliation || imp038ControlledContinuationActivation || imp038ArchitectureLock || imp038ImplementationAuthorizeStart || imp036hProductDefinitionActivation || imp036hProductDefinitionGatePass || imp036hArchitectureLock || imp036hImplementationAuthorization || imp036hImplementationStart || imp036hImplementationComplete || imp036hAcceptance || imp036iProductDefinitionActivation || imp036iProductDefinitionDraftReady || imp036iProductDefinitionGatePass || imp036iArchitectureLock || imp036iImplementationAuthorization || imp036iImplementationStart || imp036iTranche2 || imp036iTranche3 || imp036iTranche4 || imp036iTranche5 || imp036iImplementationComplete || imp036iAcceptance || imp036jProductDefinitionActivation || imp036jProductDefinitionDraftReady || imp036jProductDefinitionGatePass;
 }
 
 function isImp032ArchitectureActivationCheckpoint(roadmap, state) {
@@ -2369,6 +2371,14 @@ function isImp036jProductDefinitionDraftReadyCheckpoint(roadmap, state) {
   );
 }
 
+function isImp036jProductDefinitionGatePassCheckpoint(roadmap, state) {
+  return isSupportedImp030GovernanceCheckpoint(
+    roadmap?.meta.roadmapVersion,
+    state?.meta.stateVersion,
+    "imp036jProductDefinitionGatePass",
+  );
+}
+
 function isImp030ArchitectureCheckpoint(roadmap, state) {
   return isImp030ArchitectureActivationCheckpoint(roadmap, state) || isImp030ArchitectureLockCheckpoint(roadmap, state);
 }
@@ -2470,7 +2480,8 @@ function isImp030GovernanceCheckpoint(roadmap, state) {
     isImp036iImplementationCompleteCheckpoint(roadmap, state) ||
     isImp036iAcceptanceCheckpoint(roadmap, state) ||
     isImp036jProductDefinitionActivationCheckpoint(roadmap, state) ||
-    isImp036jProductDefinitionDraftReadyCheckpoint(roadmap, state)
+    isImp036jProductDefinitionDraftReadyCheckpoint(roadmap, state) ||
+    isImp036jProductDefinitionGatePassCheckpoint(roadmap, state)
   );
 }
 
@@ -17909,7 +17920,8 @@ function checkImp028ArchitectureLock(roadmap, state, architecture, decision) {
     } else {
       note("ARCHITECTURE.md records ARCH-G16 / ARCH-G17 / ARCH-G18 / D-365 / D-366 / D-367");
     }
-    const expectedArchitectureVersion = isImp036jProductDefinitionDraftReadyCheckpoint(roadmap, state) ||
+    const expectedArchitectureVersion = isImp036jProductDefinitionGatePassCheckpoint(roadmap, state) ||
+      isImp036jProductDefinitionDraftReadyCheckpoint(roadmap, state) ||
       isImp036jProductDefinitionActivationCheckpoint(roadmap, state) ||
       isImp036iArchitectureLockCheckpoint(roadmap, state) ||
       isImp036iImplementationAuthorizationCheckpoint(roadmap, state) ||
@@ -18083,7 +18095,8 @@ function checkImp028ArchitectureLock(roadmap, state, architecture, decision) {
   }
 
   if (decision) {
-    const expectedDecisionRegisterVersion = isImp036jProductDefinitionDraftReadyCheckpoint(roadmap, state) ||
+    const expectedDecisionRegisterVersion = isImp036jProductDefinitionGatePassCheckpoint(roadmap, state) ||
+      isImp036jProductDefinitionDraftReadyCheckpoint(roadmap, state) ||
       isImp036jProductDefinitionActivationCheckpoint(roadmap, state)
       ? "DR-23"
       : isImp036iImplementationCompleteCheckpoint(roadmap, state) ||
@@ -25139,7 +25152,8 @@ function checkProductDeliveryProcessAuthorities() {
       (roadmapMeta?.roadmapVersion === "GTM-R165" && stateMeta?.stateVersion === "STATE-R163") ||
       (roadmapMeta?.roadmapVersion === "GTM-R166" && stateMeta?.stateVersion === "STATE-R164") ||
       (roadmapMeta?.roadmapVersion === "GTM-R167" && stateMeta?.stateVersion === "STATE-R165") ||
-      (roadmapMeta?.roadmapVersion === "GTM-R168" && stateMeta?.stateVersion === "STATE-R166")
+      (roadmapMeta?.roadmapVersion === "GTM-R168" && stateMeta?.stateVersion === "STATE-R166") ||
+      (roadmapMeta?.roadmapVersion === "GTM-R169" && stateMeta?.stateVersion === "STATE-R167")
     );
   const atImp036hProductDefinitionActivationCheckpoint =
     roadmapMeta?.roadmapVersion === "GTM-R141" &&
@@ -25755,7 +25769,8 @@ export function runProjectConsistency() {
       !isImp036iImplementationCompleteCheckpoint(roadmap, state) &&
       !isImp036iAcceptanceCheckpoint(roadmap, state) &&
       !isImp036jProductDefinitionActivationCheckpoint(roadmap, state) &&
-      !isImp036jProductDefinitionDraftReadyCheckpoint(roadmap, state)
+      !isImp036jProductDefinitionDraftReadyCheckpoint(roadmap, state) &&
+      !isImp036jProductDefinitionGatePassCheckpoint(roadmap, state)
     ) {
       fail("UNSUPPORTED_GOVERNANCE_CHECKPOINT", "Governance revisions at or beyond GTM-R66 / STATE-R64 require an exact supported canonical checkpoint");
     }
@@ -25902,6 +25917,7 @@ export function runProjectConsistency() {
   checkImp036iAcceptance(roadmap, state, architecture, decision);
   checkImp036jProductDefinitionActivation(roadmap, state, architecture, decision);
   checkImp036jProductDefinitionDraftReady(roadmap, state, architecture, decision);
+  checkImp036jProductDefinitionGatePass(roadmap, state, architecture, decision);
   checkImp038CurrentImplementationCompleteMarkerConsistency(roadmap, state);
   checkTechnicalInventory();
   checkStaticWeb();
@@ -38475,6 +38491,172 @@ export function evaluateImp036jDraftReadyProductDefinition(productDefinitionText
   return { ok: true };
 }
 
+const IMP036J_APPROVED_META = {
+  status: "APPROVED",
+  authority: "PRODUCT_DEFINITION",
+  capability: "IMP-036J",
+  productDefinitionVersion: "PD-IMP-036J-DRAFT-6",
+  productDefinitionStatus: "APPROVED",
+  productDefinitionGate: "PASS",
+  architectureFit: "NOT_PERFORMED",
+  implementationAuthorized: false,
+};
+
+const IMP036J_APPROVED_BODY = {
+  PRODUCT_DEFINITION_VERSION: "PD-IMP-036J-DRAFT-6",
+  STATUS: "APPROVED",
+  PRE_GATE_DRAFT: "NO",
+  PRODUCT_DEFINITION_IN_PROGRESS: "NO",
+  DRAFT_READY_FOR_GATE: "NO",
+  APPROVED: "YES",
+  PRODUCT_DEFINITION_GATE_EXECUTION: "PERFORMED",
+  PRODUCT_DEFINITION_GATE: "PASS",
+  IMP036J_PRODUCT_DEFINITION: "APPROVED",
+  IMP036J_PRODUCT_DEFINITION_GATE: "PASS",
+  ARCHITECTURE_FIT: "NOT_PERFORMED",
+  IMP036J_ARCHITECTURE_FIT: "NOT_PERFORMED",
+  IMP036J_ARCHITECTURE_LOCKED: "NO",
+  IMPLEMENTATION_AUTHORIZED: "NO",
+  IMP036J_IMPLEMENTATION_AUTHORIZED: "NO",
+  OPEN_FOUNDER_PRODUCT_DECISIONS: "0",
+  UNRESOLVED_MATERIAL_PRODUCT_DECISIONS: "0",
+  FOUNDER_UAT_REQUIRED: "YES",
+  "FD-036J-01": "APPROVED",
+  "FD-036J-01_DECISION_DATE": "2026-09-27",
+  "FD-036J-02": "APPROVED",
+  "FD-036J-02_DECISION_DATE": "2026-09-27",
+  "FD-036J-03": "APPROVED",
+  "FD-036J-03_DECISION_DATE": "2026-09-28",
+  FOUNDER_PRODUCT_DEFINITION_APPROVAL: "YES",
+  FOUNDER_PRODUCT_DEFINITION_APPROVAL_DATE: "2026-09-28",
+  INDEPENDENT_PRODUCT_DEFINITION_GATE: "PASS",
+  GATE_EVALUATED_HEAD: "24aa3ced280dbfc18ac52275ed97ae919904481d",
+  GATE_EVALUATED_TREE: "e7fd72f2af3b0267f438bf9b65e7f7f23bf43f27",
+  GATE_EVALUATED_FINGERPRINT: "9f9c708306a76e140ea4143feaf8e007ca975f03c3dc418f65e30aaf8bbbd1e1",
+};
+
+/**
+ * Leading governance-meta plus the first status fence after IMP-036J Gate PASS.
+ * Gate PASS is approval of PD-IMP-036J-DRAFT-6. It is not Architecture Fit or implementation.
+ * @param {string} productDefinitionText
+ * @returns {{ ok: true } | { ok: false, code: string, message: string }}
+ */
+export function evaluateImp036jApprovedProductDefinition(productDefinitionText) {
+  const text = String(productDefinitionText);
+  const metaMatch = text.match(/<!--\s*governance-meta\s*([\s\S]*?)-->/);
+  if (!metaMatch || text.indexOf(metaMatch[0]) > 0) {
+    return {
+      ok: false,
+      code: "IMP036J_PD_META",
+      message: "IMP-036J Product Definition must open with a governance-meta JSON block",
+    };
+  }
+  let meta;
+  try {
+    meta = JSON.parse(metaMatch[1]);
+  } catch {
+    return {
+      ok: false,
+      code: "IMP036J_PD_META",
+      message: "IMP-036J Product Definition governance-meta JSON is malformed",
+    };
+  }
+  if (meta.status === "DRAFT" || meta.productDefinitionStatus === "PRE_GATE_DRAFT" || meta.productDefinitionStatus === "DRAFT") {
+    return {
+      ok: false,
+      code: "IMP036J_PD_META_DRAFT",
+      message: "Approved IMP-036J Product Definition must not return to DRAFT",
+    };
+  }
+  if (meta.productDefinitionGate === "NOT_PERFORMED" || meta.productDefinitionGate === "STOP") {
+    return {
+      ok: false,
+      code: "IMP036J_PD_GATE_REGRESSION",
+      message: "Approved IMP-036J Product Definition gate must stay PASS",
+    };
+  }
+  if (meta.architectureFit === "PASS") {
+    return {
+      ok: false,
+      code: "IMP036J_PD_FIT_PREMATURE",
+      message: "IMP-036J Product Definition must not claim Architecture Fit PASS",
+    };
+  }
+  if (meta.implementationAuthorized === true) {
+    return {
+      ok: false,
+      code: "IMP036J_PD_IMPLEMENTATION_PREMATURE",
+      message: "IMP-036J Product Definition must not claim implementation authorization",
+    };
+  }
+  for (const [key, expected] of Object.entries(IMP036J_APPROVED_META)) {
+    if (meta[key] !== expected) {
+      return {
+        ok: false,
+        code: "IMP036J_PD_META",
+        message: `IMP-036J Product Definition governance-meta.${key} must be ${JSON.stringify(expected)} (got ${JSON.stringify(meta[key])})`,
+      };
+    }
+  }
+  const fence = text.match(/```text\n([\s\S]*?)```/);
+  const body = fence?.[1] ?? "";
+  const markers = Object.fromEntries(
+    [...body.matchAll(/^([A-Z0-9_-]+) = (.+)$/gm)].map((match) => [match[1], match[2].trim()]),
+  );
+  if (markers.STATUS === "DRAFT" || markers.APPROVED === "NO" || markers.PRE_GATE_DRAFT === "YES" || markers.DRAFT_READY_FOR_GATE === "YES") {
+    return {
+      ok: false,
+      code: "IMP036J_PD_META_DRAFT",
+      message: "Approved IMP-036J Product Definition body must not return to pre-Gate draft status",
+    };
+  }
+  if (markers.PRODUCT_DEFINITION_GATE === "NOT_PERFORMED" || markers.PRODUCT_DEFINITION_GATE === "STOP" || /Gate Result:\s*(?:NOT_PERFORMED|STOP)/.test(text)) {
+    return {
+      ok: false,
+      code: "IMP036J_PD_GATE_REGRESSION",
+      message: "Approved IMP-036J Product Definition must keep Product Definition Gate PASS",
+    };
+  }
+  if (markers.ARCHITECTURE_FIT === "PASS" || markers.IMP036J_ARCHITECTURE_FIT === "PASS") {
+    return {
+      ok: false,
+      code: "IMP036J_PD_FIT_PREMATURE",
+      message: "IMP-036J Product Definition must not claim Architecture Fit PASS",
+    };
+  }
+  if (markers.IMP036J_ARCHITECTURE_LOCKED === "YES") {
+    return {
+      ok: false,
+      code: "IMP036J_PD_LOCK_PREMATURE",
+      message: "IMP-036J architecture must stay unlocked",
+    };
+  }
+  if (markers.IMPLEMENTATION_AUTHORIZED === "YES" || markers.IMP036J_IMPLEMENTATION_AUTHORIZED === "YES") {
+    return {
+      ok: false,
+      code: "IMP036J_PD_IMPLEMENTATION_PREMATURE",
+      message: "IMP-036J Product Definition must not claim implementation authorization",
+    };
+  }
+  for (const [key, expected] of Object.entries(IMP036J_APPROVED_BODY)) {
+    if (markers[key] !== expected) {
+      return {
+        ok: false,
+        code: "IMP036J_PD_BODY",
+        message: `IMP-036J Product Definition body ${key} must be ${expected} (got ${markers[key] ?? "MISSING"})`,
+      };
+    }
+  }
+  if (/Readiness:\s*READY_FOR_IMPLEMENTATION/.test(text)) {
+    return {
+      ok: false,
+      code: "IMP036J_READINESS_POST_GATE",
+      message: "IMP-036J stories must not become READY_FOR_IMPLEMENTATION before Architecture Fit and implementation authorization",
+    };
+  }
+  return { ok: true };
+}
+
 /**
  * Current mandatory stacking wording. Compatible delivery is a required result.
  * "both may apply" is not an acceptance outcome.
@@ -38998,6 +39180,87 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
 }
 
 /**
+ * Authoritative FD-036J-03 decision block. Acceptance scenarios are a separate copy
+ * and are not this authority.
+ * @param {string} productDefinitionText
+ * @returns {string}
+ */
+export function extractImp036jFd036j03Decision(productDefinitionText) {
+  const text = String(productDefinitionText);
+  const start = text.indexOf("### FD-036J-03 —");
+  if (start < 0) return "";
+  const end = text.indexOf("\n```text\nCOUPON_ENTRY_SURFACE", start);
+  if (end < 0) return "";
+  return text.slice(start, end);
+}
+
+/**
+ * Bind the complimentary-item concurrency and product outcomes to FD-036J-03 itself.
+ * Mutating only this block must fail even when acceptance scenarios stay unchanged.
+ * @param {string} productDefinitionText
+ * @returns {{ ok: true } | { ok: false, code: string, message: string }}
+ */
+export function evaluateImp036jFd036j03Authority(productDefinitionText) {
+  const founder = extractImp036jFd036j03Decision(productDefinitionText);
+  if (!founder) {
+    return {
+      ok: false,
+      code: "IMP036J_FD03_AUTHORITY",
+      message: "FD-036J-03 authoritative decision block is missing",
+    };
+  }
+  const requireClause = (clause) => {
+    if (!founder.includes(clause)) {
+      return {
+        ok: false,
+        code: "IMP036J_FD03_AUTHORITY",
+        message: `FD-036J-03 decision block must state: ${clause}`,
+      };
+    }
+    return null;
+  };
+  const required = [
+    "COMPLIMENTARY_ITEM_SINGLE_ACTIVE = YES",
+    "At most one complimentary-item Offer may be ACTIVE",
+    "Activating a second complimentary-item Offer while another remains active is rejected.",
+    "COMPLIMENTARY_ITEM_CONCURRENT_ACTIVE_MAX = 1",
+    "ACTIVE_COUNT <= 1",
+    "settled authoritative state still contains at most one ACTIVE complimentary-item Offer",
+    "COMPLIMENTARY_ITEM_COMPETING_OFFERS = NONE_CHOSEN",
+    "neither competing complimentary item is silently chosen",
+    "COMPLIMENTARY_ITEM_EQUAL_PAYABLE_TIE = COMPLIMENTARY_COMBINATION_SELECTED",
+    "there is no silent substitute",
+    "COMPLIMENTARY_ITEM_UNAVAILABLE_RECOVERY = RECOMPUTE_WITHOUT_SUBSTITUTE",
+    "PRIMARY_MERCHANDISE_OR_ORDER_OFFER",
+    "creates no new stacking slot",
+    "FIT_COMPLIMENTARY_ITEM_UNSAFE = STOP_CONTRADICTION_DECISION_REQUIRED",
+  ];
+  for (const clause of required) {
+    const missing = requireClause(clause);
+    if (missing) return missing;
+  }
+  const contradictions = [
+    [/two complimentary(?:-item)? Offers may be ACTIVE/i, "FD-036J-03 must not allow two complimentary Offers to be ACTIVE"],
+    [/COMPLIMENTARY_ITEM_SINGLE_ACTIVE\s*=\s*NO/i, "FD-036J-03 must keep COMPLIMENTARY_ITEM_SINGLE_ACTIVE = YES"],
+    [/two ACTIVE complimentary-item Offers may/i, "FD-036J-03 must not permit two settled ACTIVE complimentary Offers"],
+    [/one of the competing complimentary items is (?:silently )?chosen/i, "FD-036J-03 must not silently select a competing complimentary gift"],
+    [/silently selects a competing/i, "FD-036J-03 must not silently select a competing complimentary gift"],
+    [/COMPLIMENTARY_ITEM_EQUAL_PAYABLE_TIE\s*=\s*(?!COMPLIMENTARY_COMBINATION_SELECTED\b)\S+/, "FD-036J-03 equal-payable tie must stay COMPLIMENTARY_COMBINATION_SELECTED"],
+    [/silent substitute is permitted/i, "FD-036J-03 must not permit silent substitution"],
+    [/COMPLIMENTARY_ITEM_UNAVAILABLE_RECOVERY\s*=\s*(?!RECOMPUTE_WITHOUT_SUBSTITUTE\b)\S+/, "FD-036J-03 unavailable recovery must stay RECOMPUTE_WITHOUT_SUBSTITUTE"],
+    [/\bcreates a new stacking slot\b/i, "FD-036J-03 must not create a new stacking slot"],
+    [/COMPLIMENTARY_MENU_ITEM_NEW_STACKING_SLOT\s*=\s*YES/i, "FD-036J-03 must not create a new stacking slot"],
+    [/FIT_COMPLIMENTARY_ITEM_UNSAFE\s*=\s*(?!STOP_CONTRADICTION_DECISION_REQUIRED\b)\S+/, "FD-036J-03 Fit-unsafe outcome must stay STOP_CONTRADICTION_DECISION_REQUIRED"],
+  ];
+  for (const [pattern, message] of contradictions) {
+    if (pattern.test(founder)) {
+      return { ok: false, code: "IMP036J_FD03_AUTHORITY", message };
+    }
+  }
+  return { ok: true };
+}
+
+/**
  * Concurrent complimentary-item activation must settle at ACTIVE_COUNT <= 1.
  * Product Definition does not choose the winning attempt.
  * @param {string} productDefinitionText
@@ -39497,9 +39760,171 @@ function checkImp036jProductDefinitionDraftReady(roadmap, state, architecture, d
       complimentaryConcurrency.message || "IMP-036J complimentary activation concurrency contract is invalid",
     );
   }
+  const fd036j03 = evaluateImp036jFd036j03Authority(productDefinitionText);
+  if (!fd036j03.ok) {
+    fail(fd036j03.code || "IMP036J_FD03_AUTHORITY", fd036j03.message || "FD-036J-03 authority is invalid");
+  }
   const readiness = evaluateImp036jStoryReadiness(productDefinitionText);
   if (!readiness.ok) fail(readiness.code || "IMP036J_READINESS", readiness.message || "IMP-036J story readiness is invalid");
   note("IMP-036J Product Definition draft-ready is CURRENT (Gate NOT_PERFORMED; not approved)");
+}
+
+/**
+ * CURRENT checkpoint: IMP-036J Product Definition Gate PASS (GTM-R169 / STATE-R167).
+ * PD-IMP-036J-DRAFT-6 is APPROVED. Architecture Fit and implementation stay unperformed.
+ * @param {Record<string, any>} roadmap
+ * @param {Record<string, any>} state
+ * @param {Record<string, any>} architecture
+ * @param {Record<string, any>} decision
+ */
+function checkImp036jProductDefinitionGatePass(roadmap, state, architecture, decision) {
+  if (!isImp036jProductDefinitionGatePassCheckpoint(roadmap, state)) return;
+  const roadmapVersion = roadmap?.meta.roadmapVersion;
+  const stateVersion = state?.meta.stateVersion;
+  const roadmapText = roadmap?.text ?? "";
+  const stateText = state?.text ?? "";
+  const currentRoadmapSection = roadmapText.split("## 2. Current Position")[1]?.split("\n## ")[0] ?? "";
+  const currentMarker = currentRoadmapSection.split("**GTM-R168**")[0] || currentRoadmapSection;
+  const stateSection2 = stateText.split("## 2. Current Work Position")[1]?.split("\n## ")[0] ?? "";
+  const futureSliceSection = roadmapText.split("## 5. Future GTM Slices")[1]?.split("\n## ")[0] ?? "";
+  const acceptedSection = roadmapText.split("## 3. Accepted Slices")[1]?.split("\n## ")[0] ?? "";
+  const productDefAbs = resolveExactRelativeFile("docs/platform/product/IMP-036J/product-definition.md");
+  const productDefinitionText = productDefAbs ? readFileSync(productDefAbs, "utf8") : "";
+  const productReadmeAbs = resolveExactRelativeFile("docs/platform/product/README.md");
+  const productReadmeText = productReadmeAbs ? readFileSync(productReadmeAbs, "utf8") : "";
+  if (roadmapVersion !== "GTM-R169" || stateVersion !== "STATE-R167") {
+    fail("IMP036J_GATE_PASS_IDENTITY", "IMP-036J Gate PASS must be the current GTM-R169 / STATE-R167 checkpoint");
+  }
+  if (roadmap?.meta.supersedes !== "GTM-R168" || state?.meta.supersedes !== "STATE-R166") {
+    fail("IMP036J_GATE_PASS_SUPERSEDES", "GTM-R169 must supersede GTM-R168 and STATE-R167 must supersede STATE-R166");
+  }
+  if (roadmap?.meta.acceptedThrough !== "IMP-036I" || state?.meta.acceptedThrough !== "IMP-036I") {
+    fail("IMP036J_ACCEPTED_THROUGH", "IMP-036J Gate PASS must keep acceptedThrough at IMP-036I");
+  }
+  if (roadmap?.meta.currentProductSlice !== "IMP-036J" || state?.meta.currentProductSlice !== "IMP-036J") {
+    fail("IMP036J_CURRENT_SLICE", "currentProductSlice must be IMP-036J");
+  }
+  if (roadmap?.meta.nextProductSlice !== "IMP-037" || state?.meta.nextProductSlice !== "IMP-037") {
+    fail("IMP036J_NEXT_SLICE", "nextProductSlice must remain IMP-037");
+  }
+  if (state?.meta.pendingAcceptance !== "NONE") {
+    fail("IMP036J_PENDING", "pendingAcceptance must remain NONE");
+  }
+  const tokens = [
+    "IMP-036J: PLANNED",
+    "IMP036J_ACTIVATED: YES",
+    "IMP036J_PRODUCT_DEFINITION: APPROVED",
+    "IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-6",
+    "IMP036J_PRODUCT_DEFINITION_GATE: PASS",
+    "IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED",
+    "IMP036J_ARCHITECTURE_LOCKED: NO",
+    "IMP036J_IMPLEMENTATION_AUTHORIZED: NO",
+    "IMP036J_STARTED: NO",
+    "IMP036J_IMPLEMENTATION_STARTED: NO",
+    "IMP036J_IMPLEMENTATION_COMPLETE: NO",
+    "IMP036J_ACCEPTED: NO",
+    "nextGate: ARCHITECTURE_FIT",
+    "IMP-036I: COMPLETE_AND_ACCEPTED",
+    "IMP036I_ACCEPTED: YES",
+    "PROGRAM_PAUSE: PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED",
+    "PROGRAM_PAUSE_AUTHORITY: D-377",
+    "ADDITIONAL_SEQUENCING_AUTHORITY: D-382",
+    "IMP037_HOLD: YES",
+    "IMP038_HOLD: YES",
+    "FD-036J-03: APPROVED 2026-09-28",
+  ];
+  for (const token of tokens) {
+    if (!currentMarker.includes(token)) {
+      fail("IMP036J_GATE_PASS_TOKEN", `ROADMAP current marker must record ${token}`);
+    }
+    if (!stateSection2.includes(token)) {
+      fail("IMP036J_GATE_PASS_TOKEN", `STATE current work position must record ${token}`);
+    }
+  }
+  const premature = [
+    "IMP036J_PRODUCT_DEFINITION: DRAFT_READY_FOR_GATE",
+    "IMP036J_PRODUCT_DEFINITION_GATE: NOT_PERFORMED",
+    "IMP036J_PRODUCT_DEFINITION_GATE: STOP",
+    "IMP036J_ARCHITECTURE_FIT: PASS",
+    "IMP036J_ARCHITECTURE_LOCKED: YES",
+    "IMP036J_IMPLEMENTATION_AUTHORIZED: YES",
+  ];
+  for (const token of premature) {
+    if (currentMarker.includes(token) || stateSection2.includes(token)) {
+      fail("IMP036J_GATE_PASS_PREMATURE", `CURRENT IMP-036J position must not record ${token}`);
+    }
+  }
+  if (!stateText.includes("STATE-R167 = IMP036J_PRODUCT_DEFINITION_APPROVED")) {
+    fail("IMP036J_GATE_PASS_RECORD", "STATE must record STATE-R167 = IMP036J_PRODUCT_DEFINITION_APPROVED");
+  }
+  if (!stateText.includes("STATE-R166 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY")) {
+    fail("IMP036J_DRAFT6_HISTORY", "STATE must preserve historical STATE-R166 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY");
+  }
+  if (!stateText.includes("STATE-R165 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY")) {
+    fail("IMP036J_DRAFT5_HISTORY", "STATE must preserve historical STATE-R165 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY");
+  }
+  if (!stateText.includes("STATE-R164 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY")) {
+    fail("IMP036J_DRAFT4_HISTORY", "STATE must preserve historical STATE-R164 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY");
+  }
+  if (!stateText.includes("STATE-R163 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY")) {
+    fail("IMP036J_DRAFT3_HISTORY", "STATE must preserve historical STATE-R163 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY");
+  }
+  if (!stateText.includes("STATE-R162 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY")) {
+    fail("IMP036J_DRAFT2_HISTORY", "STATE must preserve historical STATE-R162 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY");
+  }
+  if (!stateText.includes("STATE-R161 = IMP036J_PRODUCT_DEFINITION_ACTIVATION")) {
+    fail("IMP036J_ACTIVATION_HISTORY", "STATE must preserve historical STATE-R161 activation record");
+  }
+  if (acceptedSection.includes("| IMP-036J |")) {
+    fail("IMP036J_NOT_ACCEPTED_LEDGER", "Accepted slice ledger must not include IMP-036J");
+  }
+  const futureRow = futureSliceSection.split("\n").find((line) => line.includes("| IMP-036J |"));
+  if (!futureRow?.includes("PLANNED") || futureRow.includes("COMPLETE_AND_ACCEPTED") || !futureRow.includes("Gate PASS") || !futureRow.includes("Fit NOT_PERFORMED")) {
+    fail("IMP036J_FUTURE_LEDGER", "Future GTM slice ledger must record IMP-036J as PLANNED, Gate PASS, Fit NOT_PERFORMED, and unaccepted");
+  }
+  if (architecture?.meta.architectureVersion !== "ARCH-R23") {
+    fail("IMP036J_ARCH_R23", "ARCHITECTURE must remain ARCH-R23");
+  }
+  if (decision?.meta.decisionRegisterVersion !== "DR-23" || decision?.meta.supersedes !== "DR-22") {
+    fail("IMP036J_DR_23", "decision register must be DR-23 superseding DR-22");
+  }
+  const decisionText = decision?.text ?? "";
+  if (!/next ID \*\*D-383\*\*/.test(decisionText) || /\| D-383 \|/.test(decisionText)) {
+    fail("IMP036J_D383", "next free ID must remain D-383 and D-383 must not be created");
+  }
+  const d382Row = evaluateD382Current(decisionText);
+  if (!d382Row.ok) fail(d382Row.code, d382Row.message);
+  if (/IMP036J_IMPLEMENTATION_AUTHORIZED:\s*YES/.test(currentMarker) || /IMP036J_ACCEPTED:\s*YES/.test(currentMarker)) {
+    fail("IMP036J_NO_IMPLEMENTATION", "IMP-036J must not be implementation-authorized or accepted");
+  }
+  const readmeRow = productReadmeText.split("\n").find((line) => line.includes("IMP-036J Product Definition")) ?? "";
+  if (!readmeRow.includes("**APPROVED**") || !readmeRow.includes("**PASS**") || !readmeRow.includes("**NOT_PERFORMED**") || !readmeRow.includes("NOT_AUTHORIZED") || readmeRow.includes("DRAFT_READY_FOR_GATE")) {
+    fail("IMP036J_PRODUCT_README", "product/README.md IMP-036J row must record APPROVED / Gate PASS / Fit NOT_PERFORMED / implementation NOT_AUTHORIZED");
+  }
+  const pd = evaluateImp036jApprovedProductDefinition(productDefinitionText);
+  if (!pd.ok) fail(pd.code || "IMP036J_PD_META", pd.message || "IMP-036J approved Product Definition metadata is invalid");
+  const stacking = evaluateImp036jStackingContract(productDefinitionText);
+  if (!stacking.ok) fail(stacking.code || "IMP036J_STACK", stacking.message || "IMP-036J stacking contract is invalid");
+  const guestCoupon = evaluateImp036jGuestCouponContract(productDefinitionText);
+  if (!guestCoupon.ok) fail(guestCoupon.code || "IMP036J_GUEST_COUPON", guestCoupon.message || "IMP-036J guest coupon contract is invalid");
+  const complimentaryItem = evaluateImp036jComplimentaryItemContract(productDefinitionText);
+  if (!complimentaryItem.ok) {
+    fail(complimentaryItem.code || "IMP036J_FREE_ITEM", complimentaryItem.message || "IMP-036J complimentary-item contract is invalid");
+  }
+  const complimentaryConcurrency = evaluateImp036jComplimentaryActivationConcurrency(productDefinitionText);
+  if (!complimentaryConcurrency.ok) {
+    fail(
+      complimentaryConcurrency.code || "IMP036J_CONCURRENCY_AC",
+      complimentaryConcurrency.message || "IMP-036J complimentary activation concurrency contract is invalid",
+    );
+  }
+  const fd036j03 = evaluateImp036jFd036j03Authority(productDefinitionText);
+  if (!fd036j03.ok) {
+    fail(fd036j03.code || "IMP036J_FD03_AUTHORITY", fd036j03.message || "FD-036J-03 authority is invalid");
+  }
+  const readiness = evaluateImp036jStoryReadiness(productDefinitionText);
+  if (!readiness.ok) fail(readiness.code || "IMP036J_READINESS", readiness.message || "IMP-036J story readiness is invalid");
+  note("IMP-036J Product Definition Gate PASS is CURRENT (APPROVED; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED)");
 }
 
 /**
