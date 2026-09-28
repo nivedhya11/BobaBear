@@ -3,7 +3,7 @@
   "status": "CANDIDATE",
   "authority": "EXPERIENCE_DEFINITION_CANDIDATE",
   "capability": "IMP-036J",
-  "experienceDefinitionVersion": "XD-IMP-036J-DRAFT-1",
+  "experienceDefinitionVersion": "XD-IMP-036J-DRAFT-2",
   "productDefinition": "PD-IMP-036J-DRAFT-6",
   "productDefinitionGate": "PASS",
   "experienceCriticality": "X3",
@@ -19,7 +19,7 @@
 # IMP-036J — Experience Definition candidate
 
 ```text
-EXPERIENCE_DEFINITION_VERSION = XD-IMP-036J-DRAFT-1
+EXPERIENCE_DEFINITION_VERSION = XD-IMP-036J-DRAFT-2
 AUTHORITY = EXPERIENCE_DEFINITION_CANDIDATE
 CAPABILITY = IMP-036J
 PRODUCT_DEFINITION = PD-IMP-036J-DRAFT-6
@@ -51,7 +51,9 @@ change [`product-definition.md`](./product-definition.md). Lifecycle truth remai
 stays `REQUIRED / NOT_PERFORMED` until an Experience Gate is actually performed.
 
 EXP-1 does not yet record a prior IMP Experience Definition version pattern. This candidate uses
-`XD-IMP-036J-DRAFT-1`, parallel to `PD-IMP-036J-DRAFT-N`, and remains a draft candidate.
+`XD-IMP-036J-DRAFT-N`, parallel to `PD-IMP-036J-DRAFT-N`, and remains a draft candidate.
+`XD-IMP-036J-DRAFT-2` remediates equal-payable coupon presentation and X3 measurement intent on
+`XD-IMP-036J-DRAFT-1`. It does not record Experience Gate PASS.
 
 Supporting material under [`../../experience/`](../../experience/README.md) is source only
 (`Authority: NONE`). It is not used here as higher authority than EXP-1 or LANG-1.
@@ -63,7 +65,7 @@ Supporting material under [`../../experience/`](../../experience/README.md) is s
 | Field | Definition |
 |---|---|
 | Capability | IMP-036J — Promotions, Coupons & Offers |
-| Experience Definition version / status | `XD-IMP-036J-DRAFT-1`; **EXPERIENCE_DEFINITION_CANDIDATE**; not approved; Experience Gate `NOT_PERFORMED` |
+| Experience Definition version / status | `XD-IMP-036J-DRAFT-2`; **EXPERIENCE_DEFINITION_CANDIDATE**; not approved; Experience Gate `NOT_PERFORMED` |
 | Product Definition reference | `PD-IMP-036J-DRAFT-6`; status `APPROVED`; Product Definition Gate `PASS`; FD-036J-01, FD-036J-02, FD-036J-03 `APPROVED` |
 | Experience Criticality | `X3`. Customer money, conversion, trust, and identity meet on Cart, Checkout Review, Payment, and purchased history. |
 | Change Risk | `CR2`. Recorded in ROADMAP/STATE. Not an AGENTS `R` level. Money, caps, identity, and purchased truth are in scope; this candidate does not recalibrate that risk. |
@@ -138,7 +140,7 @@ Classification uses EXP-1 exactly. Nothing below is customer research or product
 |---|---|---|---|---|
 | Coupon entry is required on Cart and on Checkout Review, over one shared state; Payment does not mutate it | `PRODUCT_DECISION` | Founder decision FD-036J-01 | Mis-stating it would reopen an approved decision | Do not re-decide. Trace `US-036J-002`. |
 | Best valid combination is one primary merchandise or order Offer plus at most one compatible delivery incentive; both apply when each has a real monetary effect; a coupon must not make the customer worse off | `PRODUCT_DECISION` | FD-036J-02 | A simpler UX that drops a real delivery saving would weaken an AC | Keep both effects visible when both are real. |
-| Complimentary V1 is one complete no-choice item, one active Offer, no substitute. When a valid complimentary combination has the same payable amount as the otherwise equivalent result with no primary merchandise or order Offer, the complimentary combination is selected. | `PRODUCT_DECISION` | FD-036J-03 | A picker, a silent substitute, or treating that tie as "the coupon was better" would change product behaviour | Specify the line experience. Do not add choice. Other equal-payable ties that do not change delivered merchandise stay with Architecture Fit. |
+| Complimentary V1 is one complete no-choice item, one active Offer, no substitute. When a valid complimentary combination has the same payable amount as the otherwise equivalent result with no primary merchandise or order Offer, the complimentary combination is selected. | `PRODUCT_DECISION` | FD-036J-03 | A picker, a silent substitute, or treating that tie as "the coupon was better" would change product behaviour | Specify the line experience. Do not add choice. Do not call that tie a better price. Other equal-payable ties that do not change delivered merchandise stay with Architecture Fit. Section 12 states how both of those Fit outcomes are presented. This candidate does not choose the general winner. |
 | Today the customer cart has no coupon field. `CartClient` shows an estimated subtotal and Checkout. Menu (`/order`) has no offer browse. Checkout money rows are Subtotal, a single Discount when `promotionDiscountPaise` is positive, charge names, Tax, and Total payable. Confirmation (`/order/confirmation`) reuses that payment summary. Order history detail reads purchased money. Workforce authoring is `/workforce/admin/commercial` (`PromotionsEditor`), including draft create, percentage or fixed-amount benefit in that editor, coupon create, activate, and retire. | `FACT` | Repository inspection of those surfaces at the candidate base. Not a claim that the engine lacks evaluation. | Treating today's lump Discount as the desired explanation | Desired presentation is specified here. Current UI is the gap. |
 | Product Definition records that automatic benefits are not explained and coupon entry is not a customer surface | `SUPPORTED_EVIDENCE` | Product Definition current-state journey, consistent with the code inspection above | Over-claiming a production metric | No production behaviour claim is made. |
 | Customers will ask "am I getting the best value?" rather than "which promotion revision won?" | `ASSUMPTION` | `FOUNDER_HEURISTIC_REVIEW` direction in this task, compatible with EXP-1 intent. Not customer research. | Copy that still sounds like an engine | Founder Experience UAT and internal usability review of the low-fidelity flows |
@@ -197,7 +199,7 @@ The customer asks whether they are paying more than they need to. First they see
 
 ### Coupon entry
 
-Same shared state on Cart and on Review. The customer types a code they already have, applies it, and gets one honest result: it improved the total, it was valid and did not beat the value already in the total, or a specific failure. They can replace or remove it on either surface before payment. Sign-in, when identity is required, keeps that same attempt and returns to the result.
+Same shared state on Cart and on Review. The customer types a code they already have, applies it, and gets one honest result: it lowered the payable total; it is valid and the selected result already pays less without it; it is valid and the payable amount is the same as the valid non-coupon alternative, whether the evaluator kept the coupon combination or not; or a specific failure. An equal payable amount is not described as a better total. They can replace or remove the code on either surface before payment. Sign-in, when identity is required, keeps that same attempt and returns to the result.
 
 ### Checkout Review
 
@@ -248,7 +250,7 @@ Conceptual hierarchy only. Not a layout specification.
 
 1. Primary: items, including a complimentary line when selected, and the current amount.
 2. Secondary: applied saving explanation; threshold progress when a real gap remains; delivery amount when delivery is in play.
-3. Progressive: coupon entry, then failure or "did not improve" detail after an attempt.
+3. Progressive: coupon entry, then the result of the attempt: a failure, a strictly better non-coupon total, or an equal-payable result that does not claim a better total.
 4. Primary action: continue to checkout. Apply, remove, and change are actions on the coupon, not competitors with continue.
 
 Relationship: item amounts, then order saving if any, then delivery charge and delivery saving only when that saving is real, then total. An automatic result and a coupon result are one outcome. The customer does not see two competing authorities.
@@ -284,7 +286,7 @@ Cognitive load stays bounded by showing at most:
 - one coupon attempt and its result
 - one complimentary item, with no choices
 
-The customer is never asked to pick a winner between an automatic offer and a coupon. The platform keeps the better payable result and explains it.
+The customer is never asked to pick a winner between an automatic offer and a coupon. When one valid result has a lower payable amount, the platform keeps that result and explains it. When the valid coupon combination and the valid non-coupon alternative have the same payable amount, the platform explains the combination the evaluation selected and does not call either amount better. The customer does not see a tie-break.
 
 An automatic offer is not something the customer activates. A coupon is the only code they type. There is one code at a time. Replacing it is explicit.
 
@@ -367,13 +369,43 @@ Customer vocabulary for this capability:
 
 Pickup versus delivery is contextual. A delivery saving is not shown on pickup. A delivery-only offer that does not apply is not described as broken; it is absent, or, if they entered a code, inapplicable to this order. The same internal "not applicable" meaning can therefore be quiet on an automatic pickup cart and explicit after a submitted code.
 
+### Equal-payable coupon presentation
+
+Best monetary outcome stays the customer-visible product rule in `PD-IMP-036J-DRAFT-6`. This candidate does not choose which combination wins when the final payable amounts are equal. The general deterministic non-monetary tie-break stays Architecture Fit-owned. Presentation is defined for both possible Fit outcomes. The labels below are experience states only. They are not backend enums, and they are not customer copy.
+
+```text
+EQUAL_PAYABLE_COMMERCIAL_WINNER = NOT_CHOSEN_HERE
+GENERAL_NON_MONETARY_TIE_BREAK = ARCHITECTURE_FIT
+COMPLIMENTARY_ITEM_EQUAL_PAYABLE_TIE = COMPLIMENTARY_COMBINATION_SELECTED
+```
+
+`COUPON_EQUAL_PAYABLE_SELECTED`. The coupon is valid. The evaluator selected the coupon-backed combination. The final payable amount equals the valid non-coupon alternative.
+
+The customer is told the coupon is valid and applied. The copy does not claim a better total. It does not fabricate a saving. It makes clear that the payable total did not decrease relative to that alternative. The saving stack shows only actual evaluated monetary effects of the selected result. The selected commercial result stays the one the evaluator supplied.
+
+Candidate direction, not locked microcopy: "Coupon applied. Your total stays the same."
+
+`COUPON_EQUAL_PAYABLE_NOT_SELECTED`. The coupon is valid. The Fit-owned deterministic tie-break retained the non-coupon combination. The payable amounts are equal.
+
+The customer is told the coupon is valid. The retained result is not called better. The coupon is not called invalid or inapplicable. The copy makes clear the coupon does not change what the customer pays. The authoritative selected combination remains. Tie-break and engine words stay off the screen.
+
+Candidate direction: "This coupon is valid. It doesn't change your total." Where the retained result is an offer that stays applied, "Your current offer stays applied" may follow. Use that second sentence only when it describes the selected result. Do not use it when the selected result has no applied offer. Do not say "we kept the better amount." The amounts are equal, so "better" would be false.
+
+These two sentences are presentation semantics. Design Readiness owns the exact words.
+
+The strictly lower payable cases stay separate and do not use the equal-payable sentences. When the coupon-backed combination pays less, the customer sees "Coupon applied" and the actual saving. When the non-coupon combination pays less, the customer sees "This coupon is valid. It doesn't improve your total, so we kept the better amount." That sentence is forbidden when the payable amounts are equal.
+
+The Founder complimentary rule is unchanged and is not moved into Architecture Fit. When the otherwise equivalent combination with no primary merchandise or order Offer and the qualifying complimentary combination have the same payable amount, the complimentary combination is selected (`FD-036J-03`, `COMPLIMENTARY_ITEM_EQUAL_PAYABLE_TIE = COMPLIMENTARY_COMBINATION_SELECTED`). Experience still shows the exact included item, the "Included with your offer" semantic, a ₹0 merchandise charge, and no customer choice. A compatible delivery saving is shown separately only when that saving is a real evaluated effect. Copy does not suggest that a coupon, or another offer, was monetarily better merely because of that tie.
+
 ### Content / product language matrix
 
 | Situation | Internal meaning | Customer intent | Candidate customer wording | Tone | Recovery / action | Leakage risk |
 |---|---|---|---|---|---|---|
 | Automatic offer applied | A qualifying automatic benefit changed the evaluated amount | See that value was included and how much | "Offer applied." The saving stack shows the real rupee effect. A short plain reason is added only when the evaluation can support it, such as the threshold that was met. | Clear, lightly branded on Cart; precise on Review | None. Continue. | Do not name other customers or unpublished offers. |
-| Coupon applied and selected | The entered code is part of the selected combination | Know the code worked and the saving | "Coupon applied." The same saving stack shows what changed. | Precise | Remove or change | Do not echo rules that identify who else could use it. |
-| Coupon valid but not selected | The code can qualify, and the best combination that does not depend on it has the better payable amount | Trust that the code is not broken | "This coupon is valid. It doesn't improve your total, so we kept the better amount." | Calm, precise | Remove the code or continue | Do not show the lost combination's internal names or another customer's prices. Do not show a raw reason code. Do not use this sentence when the amounts are equal. An equal payable amount is not "already better." The complimentary equal-payable rule selects the complimentary combination against the result with no primary offer. Any other equal-payable tie that does not change delivered merchandise is not decided here. |
+| Coupon applied and selected | The entered code is part of the selected combination, and that combination has the lower payable amount | Know the code worked and the saving | "Coupon applied." The same saving stack shows the actual evaluated effect. | Precise | Remove or change | Do not echo rules that identify who else could use it. Do not use this row when the payable amount equals the valid non-coupon alternative. |
+| Coupon equal payable, selected | Experience state `COUPON_EQUAL_PAYABLE_SELECTED`, not customer copy. The coupon is valid. The evaluator selected the coupon-backed combination. The payable amount equals the valid non-coupon alternative. Fit owns that general tie-break. | Know the code worked, and that the amount did not go down | "Coupon applied. Your total stays the same." Show only actual evaluated monetary effects of the selected result. | Precise, calm | Remove or change, or continue on the selected result | Do not claim a better total. Do not fabricate a saving. Do not say the total decreased relative to the valid non-coupon alternative. Do not show the internal label or tie-break words. Preserve the evaluator's selected result. |
+| Coupon valid but not selected | The code can qualify, and the best combination that does not depend on it has the strictly lower payable amount | Trust that the code is not broken | "This coupon is valid. It doesn't improve your total, so we kept the better amount." | Calm, precise | Remove the code or continue | Do not show the lost combination's internal names or another customer's prices. Do not show a raw reason code. Use this sentence only when the retained payable amount is lower. An equal payable amount is not "already better." |
+| Coupon equal payable, not selected | Experience state `COUPON_EQUAL_PAYABLE_NOT_SELECTED`, not customer copy. The coupon is valid. The Fit-owned tie-break retained the non-coupon combination. The payable amounts are equal. | Know the code is real, and that it does not change what I pay | "This coupon is valid. It doesn't change your total." Add "Your current offer stays applied" only when an offer remains the selected result. | Calm, precise | Remove the code or continue. Removing it keeps the retained result. | Do not call the retained result better. Do not call the coupon invalid or inapplicable. Do not say "we kept the better amount." Do not show the internal label or tie-break words. Keep the authoritative selected combination. |
 | Invalid | The text is not a valid code | Correct it | "That code isn't valid. Check it and try again." | Direct | Focus returns to the field | Do not say how close the text was, or whether a similar code exists. |
 | Expired | The code is outside its window | Distinguish expiry from a typo | "This coupon has expired." | Direct | Try another code or remove it | Do not publish the operator's future schedule. |
 | Inapplicable | The code is recognized and this cart, mode, or history does not qualify | Know it is not a typo | "This coupon doesn't apply to this order." Add a practical clause only when it does not leak private facts, for example "It applies to delivery orders" when the offer is delivery-only and they chose pickup. | Direct | Change the order or fulfilment, or remove the code | Do not disclose another person's orders. A first-order coupon for a returning customer stays "doesn't apply to this order" and does not narrate their history. |
@@ -384,7 +416,7 @@ Pickup versus delivery is contextual. A delivery saving is not shown on pickup. 
 | Threshold reached | The minimum now holds and the offer applies | See that the progress became a saving | Replace the progress line with the applied saving. | Positive and precise | None | Do not add a celebratory claim that invents extra value. |
 | Temporary free delivery | A delivery incentive makes a charge that would otherwise exist ₹0, and that change is a real monetary effect | See one delivery result and the saving once | Delivery row ₹0, and "Delivery saving ₹X" only for the evaluated effect, included in total saved. | Precise | None | Do not invent the previous charge on the client. |
 | Standing ₹0 delivery | Accepted delivery pricing is already ₹0 | Not think they received a second discount | "Delivery ₹0" with no extra delivery-saving line. | Precise | None | Do not label standing free delivery as an offer saving. |
-| Complimentary item | The selected offer adds one exact item at no merchandise charge | Know what it is and why it is here | Item name, "Included with your offer", merchandise amount ₹0. | Precise, not a surprise gift theatre | No customize, no replace-with-another-item | Do not imply they may choose a different item. |
+| Complimentary item | The selected offer adds one exact item at no merchandise charge. When payable equals the otherwise equivalent result with no primary offer, FD-036J-03 still selects this combination. | Know what it is and why it is here | Item name, "Included with your offer", merchandise amount ₹0. A real compatible delivery saving stays a separate line. | Precise, not a surprise gift theatre | No customize, no replace-with-another-item | Do not imply they may choose a different item. Do not say a coupon or another offer was monetarily better because this tie selected the included item. |
 | Complimentary item unavailable | The shown item can no longer be included | Understand the loss and the new total | "That included item is no longer available. Your total has been updated." | Calm | Stay on Review. No substitute. | Do not offer a hidden menu of replacements. |
 | Stale revalidation | The amount they were about to pay included a benefit that is no longer valid | Not pay the old amount | "Your total changed before payment. Review the updated amount." | Trustworthy | Return to Review. Pay is not offered on the old amount. | Do not blame the customer. Do not keep the old saving on screen as current. |
 | Purchased savings | History of the bound purchase | Know what they paid | "You saved ₹X on this order." Split order saving and delivery saving when both were purchased. Complimentary line remains the purchased item at no extra merchandise charge. | Transparent | None. Not a live offer. | Do not show live offer changes as if they rewrote the order. |
@@ -417,7 +449,7 @@ When both an order saving and a delivery saving are real, the customer sees thos
 
 Capitalization in candidate sentences is sentence case. Money is rupees from the evaluation, not a rounded marketing figure. "You save ₹80" is allowed only when ₹80 is the evaluated total saved.
 
-Testable content requirements: `XR-IMP-036J-001` through `XR-IMP-036J-012` in section 23. Final strings are Content QA at implementation time, not this candidate's approval of pixels.
+Testable content requirements: `XR-IMP-036J-001` through `XR-IMP-036J-013` in section 27. Final strings are Content QA at implementation time, not this candidate's approval of pixels.
 
 ---
 
@@ -430,8 +462,10 @@ Testable content requirements: `XR-IMP-036J-001` through `XR-IMP-036J-012` in se
 | Automatic removed after cart mutation | Cart, Review | Why did the total go up? | Updated total and a plain line that the offer no longer applies | Continue or add items if progress remains | Show progress again only if a real gap returns | No stale saving | See the removal | Announce the total change |
 | Coupon untouched | Cart, Review | Can I use a code? | Named field, apply | Continue, or apply | Empty is fine | Field has an accessible name | Coupon field seen | Keyboard focusable |
 | Coupon applying | Cart, Review | Did it send? | Previous amounts stay put. Text says the coupon is being checked. | Wait | Retry if it fails | No optimistic new total | Submit started and finished | Apply does not look like a second code was created. Busy state is text. |
-| Coupon selected | Cart, Review, then read-only on Payment | Did it help? | Coupon applied and the saving | Continue. Remove or change before payment. | Remove restores the result without that code | One shared state | Selected outcome | Remove and change are keyboard operable |
-| Valid, not selected | Cart, Review | Is the code broken? | The better total remains. Copy says the coupon is valid and did not improve the total. | Continue or remove | Removing it keeps the better result | Never the internal not-selected code | This outcome is understood | Status in text |
+| Coupon selected | Cart, Review, then read-only on Payment | Did it help? | Coupon applied and the actual saving, because this combination pays less | Continue. Remove or change before payment. | Remove restores the result without that code | One shared state. Not the equal-payable sentence. | Selected outcome, descriptive segment | Remove and change are keyboard operable |
+| Valid, not selected | Cart, Review | Is the code broken? | The lower non-coupon total remains. Copy says the coupon is valid and did not improve the total. | Continue or remove | Removing it keeps the lower result | Never the internal not-selected code. Do not use this row when the payable amounts are equal. | This outcome is understood. Continuation is a secondary metric, not a cause. | Status in text |
+| `COUPON_EQUAL_PAYABLE_SELECTED` | Cart, Review, then read-only summary on Payment | Did the code work, and did the amount go down? | Coupon applied. The total stays the same as the valid non-coupon alternative. Only actual evaluated effects are shown. The internal label is not shown. | Continue. Remove or change before payment. | Remove or change recomputes from the result without that code. Continue keeps the selected combination. | Do not claim a better total. Do not fabricate a saving. Do not say the total decreased relative to the valid non-coupon alternative. | Descriptive segment of the primary completion rate. Continuation after this sentence is secondary. Not causal. | Status in text. Announce the applied coupon and that the total stayed the same. Do not read the internal label. |
+| `COUPON_EQUAL_PAYABLE_NOT_SELECTED` | Cart, Review | Is the code broken, or did it change what I pay? | The coupon is valid. It does not change the total. The retained combination stays. If an offer remains applied, say so. The internal label is not shown. | Continue or remove | Removing the code keeps the retained result. Do not let the screen swap in the coupon combination. | Do not call the retained result better. Do not call the coupon invalid or inapplicable. Do not say "we kept the better amount." | Descriptive segment. Continuation after this sentence is secondary. Not causal. | Status in text. Announce that the coupon is valid and the total is unchanged. Do not read the internal label. |
 | Invalid, expired, inapplicable, globally exhausted, personally exhausted | Cart, Review | Which kind of no is this? | The distinct sentence from section 12. No saving from that attempt. | Correct, replace, or continue | Focus returns to the field | Do not collapse these into one "invalid" | Which class occurred, as a coarse class | Error associated with the input |
 | Identity required | Cart or Review, wherever they submitted | Do I need to sign in? | Sign-in request. The attempt is kept. | Sign in | After success, focus returns to the coupon result on that same surface | Unrestricted codes are not sent down this path | Sign-in retry started and completed | Focus move is defined |
 | Preserved through sign-in retry | Same surface | Do I have to type it again? | The same attempt is retried when continuity allows | Read the result | If continuity cannot keep it, say the code needs to be entered again. Do not invent a success. | No false applied state | Retry result | Focus on the result |
@@ -444,7 +478,7 @@ Testable content requirements: `XR-IMP-036J-001` through `XR-IMP-036J-012` in se
 | Standing ₹0 delivery | Same | Is this an offer? | Delivery ₹0. No second saving line. | Continue | None | Do not call it an offer saving | Do not count it as offer savings in measurement | Text |
 | Temporary free delivery | Same, while the incentive has a real effect | Did delivery change? | Delivery ₹0 and one delivery saving inside total saved | Continue | If the incentive drops, the charge returns and the saving line leaves | One coherent delivery result | Delivery saving shown | Text |
 | No fabricated duplicate saving | All money surfaces | Am I double-counting? | Components sum to total saved. Standing ₹0 adds nothing. | Continue | Recompute if inputs change | Total saved equals the explained parts | Integrity of displayed savings | Readable hierarchy |
-| Complimentary applied | Cart, Review | What is this extra line? | Exact item, included, ₹0 merchandise | Continue. No edit of options. | None while it remains eligible | No catalogue | Complimentary impression | Line is text |
+| Complimentary applied | Cart, Review | What is this extra line? | Exact item, included, ₹0 merchandise. The same presentation is used when FD-036J-03 selects it because the payable amount equals the no-primary result. | Continue. No edit of options. | None while it remains eligible | No catalogue. Do not describe the equal-payable selection as a better price or as a coupon winning. | Complimentary impression. Descriptive segment only. | Line is text |
 | Complimentary plus delivery incentive | Cart, Review | Did I lose delivery value because of the item? | The item line and, when real, the delivery saving, in one total | Continue | None | Both are one result | Both effects understood | Both are text |
 | Complimentary unavailable before payment | Review | Can I still pay the old total? | The line is gone. The sentence says it is no longer available. The new total is shown. Pay is not offered on the old line. | Continue on the new total or change the cart | No substitute | Recovery stays on Review | Recovery seen | Focus moves to the explanation and the updated total |
 | Complimentary removed and recomputed | Review | What do I pay now? | The best remaining result, explained | Continue | Same as unavailable | No silent swap | Recomputed total | Announce |
@@ -542,55 +576,108 @@ Privacy and abuse experience inputs, for later Architecture Fit and quality plan
 
 ## 17. Measurement intent and analytics contract
 
-Business intent is the Product Definition's outcome list: direct conversion, acquisition offers that reach eligible first orders, threshold behaviour, usable coupons, explainable savings, and margin held inside the approved limits. No numeric target is locked. No baseline series is available in current authority. Observation, once the capability exists, is not acceptance.
+Business intent is the approved experience outcome: a customer reaches a direct order with an understandable payable amount, including when an Offer, a coupon, a threshold, or a complimentary item is part of that amount. Margin stays inside the approved commercial rules. No numeric target is locked. No revenue KPI is added. Measurement does not replace acceptance.
 
-Primary learning question: when a saving is shown, can the customer tell what changed and complete payment on that amount?
+```text
+PRIMARY_METRIC = CHECKOUT_REVIEW_TO_SUCCESSFUL_DIRECT_ORDER_COMPLETION_RATE
+PRIMARY_METRIC_COUNT = 1
+```
 
-No baseline is available. No numeric observation window is locked. Before production, comprehension is reviewed in Founder Experience UAT and internal usability review of the low-fidelity flows. After release, a production window is not interpreted as a conversion winner while volume remains too small. That limit is `INSUFFICIENT_EVIDENCE`. Acceptance stays separate from whatever that window later shows.
+The primary metric is the Checkout Review → successful direct-order completion rate.
 
-Candidate primary signals, not targets:
+Denominator: eligible direct-order checkout journeys that reach Checkout Review with an authoritative commercial evaluation. Eligible here means a customer direct-order journey that can check out. Menu browsing, a cart that never reaches Review, workforce actions, and non-direct channels are outside the denominator. Count one journey per Review arrival that presents that evaluation, not once per repaint.
 
-- Checkout Review to Payment continuation
-- Payment completion on a revalidated amount
-- Share of shown savings where the explained parts equal the evaluated saving
+Numerator: those denominator journeys that complete the direct order successfully. Successful completion means the direct order is placed and payment for that order succeeds under accepted payment truth. A stopped stale pay attempt, a failed payment, and an abandoned Review are not numerator events.
 
-Candidate secondary signals:
+Current authority has no analytics policy that names a different primary metric for this slice, and it has no trustworthy pre-release series. This rate matches the business intent without inventing a revenue target.
 
-- Coupon submit, and the coarse outcome class
-- Share of valid-but-not-selected outcomes that continue rather than immediately abandon
-- Cart to Review continuation when an automatic saving is present, when progress is present, and when neither is present
-- Threshold: progress shown, then either unlock or abandon. This is descriptive.
-- Complimentary line shown, then purchase, or unavailable recovery and continuation
-- Recovery after a changed revalidation: continuation on the new total versus exit
+The rate may be described in these segments. Segments are descriptive. They are not causal evidence.
 
-Guardrails, as categories only:
+- no Offer
+- automatic saving
+- Coupon selected, with equal-payable selected as a descriptive sub-segment when that state was shown
+- Coupon valid but not selected, with equal-payable not selected as a descriptive sub-segment when that state was shown
+- threshold progress
+- complimentary item
+- changed-total recovery
 
-- conversion to a completed direct order
-- margin inside the approved combination rules, not a new margin policy
-- refund and cancellation
-- support contacts that mention coupons, totals, or included items
-- error rate on coupon submit and on activation
+Secondary metrics stay subordinate to the primary metric. None of them is a second primary metric.
+
+- Cart → Checkout Review continuation
+- Review → Payment continuation
+- payment completion after revalidation
+- coupon attempt outcome distribution, as the coarse class only
+- continuation after valid-but-not-selected, including continuation after the equal-payable not-selected sentence
+- continuation after changed-total recovery
+- complimentary unavailable recovery continuation
+- repeated invalid attempts
+- support contacts about a coupon, an Offer, the total, or an included item
+- displayed savings integrity: the explained parts equal the evaluated saving
+
+Whether the customer understood a sentence cannot be inferred reliably from these events. Comprehension stays a usability and research question for Founder Experience UAT and internal usability review. It is not pretended into an analytics metric.
+
+```text
+BASELINE = FIRST_VALID_PRODUCTION_OBSERVATION_WINDOW
+BASELINE_PROVES_LAUNCH_UPLIFT = NO
+INITIAL_OBSERVATION_WINDOW = FIRST_28_CALENDAR_DAYS_AFTER_PRODUCTION_RELEASE
+FOLLOW_UP_WINDOW = SUBSEQUENT_COMPARABLE_28_DAY_WINDOWS_WHERE_USEFUL
+STATISTICAL_SIGNIFICANCE_THRESHOLD = NOT_CLAIMED
+```
+
+No trustworthy pre-release baseline exists. The first valid production window may establish a baseline. That baseline cannot prove launch uplift. A later window is compared with an earlier window only as a description. Improvement is not claimed merely because the first window exists. Low direct-order volume does not justify a significance test. No repository measurement-window convention for this slice overrides the 28-day window.
+
+Interpretation rule, fixed before data exists:
+
+- Acceptance is not determined by this metric.
+- A production window does not prove causality.
+- Segments are descriptive unless a valid controlled experiment exists.
+- Low volume is `INSUFFICIENT_EVIDENCE`, not success and not failure.
+- Financial truth, privacy, authorization, and accessibility are never traded against conversion.
+- Material deterioration in payment completion, error rate, refunds, cancellations, support contacts, or margin guardrails triggers new Discovery or investigation.
+- Improvement may justify further research or iteration. It does not silently rewrite accepted Product behaviour.
+- A controlled experiment requires the full EXP-1 experiment contract before any causal claim.
+
+Guardrails. Do not optimize the primary rate at the expense of any of these.
+
+- margin inside the approved commercial rules, not a new margin policy
 - payment completion
+- refund and cancellation
+- support contacts about a coupon, an Offer, the total, or an included item
+- commercial evaluation errors and coupon errors
 - delivery and pickup completion
-- a confusion proxy such as remove-immediately after "valid but did not improve", or repeated invalid submits
+- privacy, including no raw coupon text and no private eligibility facts
+- accessibility minimums
+- financial truth: displayed savings match evaluated effects, and no saving is fabricated
 
 ```text
 CAUSAL_CONVERSION_CLAIM = NOT_MADE
 CURRENT_EVIDENCE_FOR_LIFT = INSUFFICIENT_EVIDENCE
+LOW_VOLUME = INSUFFICIENT_EVIDENCE
+MEASUREMENT_SUBSTITUTES_FOR_ACCEPTANCE = NO
 ```
 
-Success learning: people reach payment with a breakdown that matches the evaluation, and failure copy is followed by a corrected attempt or a calm continuation. Failure learning: repeated invalid submits, abandonment at the valid-but-not-selected sentence, or support contacts that quote engine words. Those are signals for a later discovery, not permission to change approved rules silently.
+Success learning signal: in a window that is not low volume, the primary rate can be described together with intact guardrails, and displayed savings still match the evaluation. That description is a reason to keep observing or to research further. It is not acceptance and not a rewrite of product behaviour.
+
+Failure learning signal: a material deterioration in the primary rate that arrives with a guardrail breach, repeated displayed-savings mismatches, repeated invalid coupon attempts, or support contacts about the total, a coupon, an Offer, or an included item. Those signals open Discovery or investigation. They do not authorize a silent product change.
+
+Known causal limitations: there is no pre-release baseline; the first window cannot prove uplift; segments are not causes; low traffic cannot separate an experience effect from ordinary volume; menu, price, season, and payment-provider changes can move the rate; comprehension is outside this metric.
 
 ### Analytics data-contract requirements
 
-Do not implement collection. Do not add attributes because they might be useful.
+Do not implement collection. Do not add attributes because they might be useful. Do not add raw coupon text. Do not add private eligibility facts.
+
+Event ownership is not assigned in this candidate. It is finalized later in the Measurement Plan. A placeholder name here would pretend that assignment already exists.
+
+The events below are sufficient, once implemented under that plan, to calculate the primary metric and the telemetry secondary metrics. Support-contact counts stay an operational guardrail from existing support handling. This candidate does not define a support-ticket schema.
 
 | Event meaning | Trigger | Owner | Required attributes | Forbidden | Identity | Dedup | Schema | Source of truth | Validation | Retention |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Offer result viewed | Cart or Review shows an authoritative result | Later measurement owner under the X3 plan | Surface, whether a saving is present, whether progress is present, coarse shape (none, order saving, delivery saving, both, complimentary line) | Raw code, item-level free text that is not already on the order, another customer's id | Existing customer or guest commerce identity. No new identity. | One view per presented evaluation result, not per repaint | Versioned when implemented | The evaluation result the screen rendered | The recorded shape matches the rendered rows | Follow existing commerce analytics retention. Do not extend it here. |
-| Coupon attempt finished | Apply, replace, or remove completes or fails | Same | Surface, coarse outcome class, whether the total changed | Raw coupon text, cap sizes, other customer ids | Same | One outcome per completed attempt | Versioned when implemented | Server result of that attempt | Class matches the sentence family shown | Same |
-| Step progression | Continue from Cart, continue from Review, pay attempt, pay completion, confirmation view | Same | Step names that match the journey, not internal workflow states | Payment instrument details | Same | One progression per user action | Versioned when implemented | The navigation or payment result the customer hit | Do not count a stale pay attempt as completion | Same |
-| Recovery shown | Revalidation changes the amount, or a complimentary line is removed | Same | Recovery kind, whether they later continue | The discarded benefit's internal id in customer analytics, unless a later plan explicitly needs an operator-safe id outside customer analytics | Same | One recovery per changed result | Versioned when implemented | Revalidation result | The event exists only when the customer-facing recovery exists | Same |
+| Offer result viewed | Cart or Review shows an authoritative result | Finalized later in the Measurement Plan. Not assigned here. | Surface; saving present; progress present; whether displayed parts match the evaluated saving; coarse descriptive shape: none, automatic saving, order saving, delivery saving, both, complimentary line, coupon selected, coupon valid but not selected, equal-payable selected, equal-payable not selected, threshold progress | Raw coupon text, private eligibility facts, item-level free text that is not already on the order, another customer's id | Existing customer or guest commerce identity. No new identity. | One view per presented evaluation result, not per repaint | Versioned when implemented | The evaluation result the screen rendered | The recorded shape matches the rendered rows, and the match flag is true only when the explained parts equal the evaluated saving | Follow existing commerce analytics retention. Do not extend it here. |
+| Coupon attempt finished | Apply, replace, or remove completes or fails | Same later plan. Not assigned here. | Surface; coarse outcome class: selected, equal-payable selected, valid not selected, equal-payable not selected, invalid, expired, inapplicable, globally exhausted, personally exhausted, identity required, removed, replaced, failed; whether the payable total changed relative to the valid alternative | Raw coupon text, cap sizes, private eligibility facts, other customer ids | Same | One outcome per completed attempt | Versioned when implemented | Server result of that attempt | Class matches the sentence family shown | Same |
+| Step progression | Cart continue, Review reached with an authoritative evaluation, Review continue to Payment, pay attempt, successful direct-order completion, confirmation view | Same later plan. Not assigned here. | Step name; for Review reached, that an authoritative evaluation was shown; for completion, that the direct order completed successfully | Payment instrument details, raw coupon text, private eligibility facts | Same existing commerce identity, used as the journey join. No new identity. | One denominator event per Review arrival with an authoritative evaluation. One numerator event when that journey completes the direct order successfully. Re-renders do not add events. | Versioned when implemented | The navigation or payment result the customer hit | A stale or failed pay attempt is not successful completion | Same |
+| Recovery shown | Revalidation changes the amount, or a complimentary line is removed | Same later plan. Not assigned here. | Recovery kind: changed total, or complimentary unavailable; whether they later continue | The discarded benefit's internal id in customer analytics, raw coupon text, private eligibility facts, unless a later plan explicitly needs an operator-safe id outside customer analytics | Same | One recovery per changed result | Versioned when implemented | Revalidation result | The event exists only when the customer-facing recovery exists | Same |
+
+The denominator is Review-reached step progression joined to the offer result on that Review. The numerator is successful direct-order completion for the same journey. Secondary continuation, coupon-class, recovery, and savings-integrity metrics use the other events. Descriptive segments use the coarse shape. They are not an experiment assignment.
 
 Operator application and redemption visibility required by the Product Definition is operational, on the commercial surface, and is not this customer analytics contract. It is not campaign lift.
 
@@ -612,19 +699,27 @@ Items, including an included ₹0 line when a complimentary item is selected. Th
 
 ### Coupon states
 
-Untouched field. Checking, with the old total held. Applied. Valid and kept the previous total, with the sentence in section 12. Each failure sentence. Remove. Change.
+Untouched field. Checking, with the old total held. Applied, when the coupon combination pays less. Each failure sentence. Remove. Change. The two equal-payable flows below are separate from "applied" and from "valid but not selected."
 
 ### Review
 
-Same stack, plus fulfilment. Inherited coupon is already filled as a result, not a blank second field. First entry can happen here. Total sits with continue to payment.
+Same stack, plus fulfilment. Inherited coupon is already filled as a result, not a blank second field. First entry can happen here. Total sits with continue to payment. An inherited equal-payable result uses the same sentence it used on Cart.
 
 ### Valid but not selected
 
-The previous saving remains the one in the stack. The coupon area says the code is valid and it does not improve the total. The pay amount does not increase. This flow is the strictly better non-coupon result. It is not the complimentary equal-payable case, which shows the included item instead.
+The previous saving remains the one in the stack. The coupon area says the code is valid and it does not improve the total, and that the better amount was kept. The pay amount does not increase. This flow is only the strictly lower non-coupon payable amount. It is not either equal-payable flow. It is not the complimentary equal-payable case, which shows the included item instead.
+
+### Equal payable, coupon selected
+
+The evaluator's selected result is the coupon-backed combination, and the payable amount equals the valid non-coupon alternative. The coupon area says the coupon is applied and the total stays the same. The stack shows only actual evaluated effects. It does not add a saving that the alternative did not already match. No "better" wording.
+
+### Equal payable, coupon not selected
+
+The retained result stays in the stack. The coupon area says the coupon is valid and it does not change the total. If an offer remains applied, the flow may say the current offer stays applied. It does not say the amount is better. It does not mark the coupon invalid. The customer cannot switch to the other combination from this sentence.
 
 ### Complimentary
 
-An item row named as the operator's item, "Included with your offer", ₹0. No options. If delivery saving is real, it is a separate row.
+An item row named as the operator's item, "Included with your offer", ₹0. No options. If delivery saving is real, it is a separate row. When this line is selected because the payable amount equals the no-primary combination, the flow is the same. It does not say a coupon or another offer was the better amount.
 
 ### Threshold
 
@@ -640,7 +735,7 @@ The same stack in one column. Total and the next action are in the first screenf
 
 Validation method before treating any hypothesis as learned: `FOUNDER_HEURISTIC_REVIEW` during Founder Experience UAT, and `INTERNAL_USABILITY_REVIEW` of these flows. Not customer research unless it is later actually run.
 
-Controlled experiments are not recommended for security, privacy, financial truth, authorization, or minimum accessibility. A later prominence experiment is optional and only inside the hierarchy already decided: the field stays on Cart and Review, the total stays primary, and money text stays truthful. Until traffic exists, the result of any such idea is `INSUFFICIENT_EVIDENCE`. An experiment plan, when later authorized, still needs hypothesis, assignment unit, population, control, variant, primary metric, guardrails, observation window, decision rule, and stop conditions. None of those are set to a winner here.
+Controlled experiments are not recommended for security, privacy, financial truth, authorization, or minimum accessibility. A later prominence experiment is optional and only inside the hierarchy already decided: the field stays on Cart and Review, the total stays primary, and money text stays truthful. Until traffic exists, the result of any such idea is `INSUFFICIENT_EVIDENCE`. The 28-day window in section 17 is an observation window for the primary metric. It is not an experiment decision rule and it does not declare a winner. An experiment plan, when later authorized, still needs the full EXP-1 contract: hypothesis, assignment unit, population, control, variant, primary metric, guardrails, observation window, decision rule, and stop conditions. None of those are set to a winner here.
 
 ---
 
@@ -665,12 +760,13 @@ Accessibility considered: YES (candidate)
 Service / operational promise aligned where applicable: YES (candidate)
 Performance experience considered: YES (candidate)
 Measurement intent defined: YES (candidate)
+Equal-payable Coupon experience defined: YES
 Research / evidence level disclosed: YES
 Unresolved experience decisions: NONE
 Result: NOT_PERFORMED
 ```
 
-`Unresolved experience decisions: NONE` means this candidate does not leave a presentation choice that changes product behaviour. Hypotheses in section 4 stay hypotheses. They are not open product decisions and they are not a Gate verdict.
+`Unresolved experience decisions: NONE` means this candidate does not leave a presentation choice that changes product behaviour. Equal-payable coupon presentation covers both Architecture Fit outcomes and does not choose the general winner. The complimentary equal-payable rule stays the approved Product rule. Hypotheses in section 4 stay hypotheses. They are not open product decisions and they are not a Gate verdict. Experience Gate remains `NOT_PERFORMED`.
 
 ```text
 EXPERIENCE_GATE_EXECUTION = NOT_PERFORMED
@@ -691,6 +787,7 @@ Experience requirements that Architecture Fit must later prove. These are not sc
 - Purchased confirmation and history can show the saved amount and complimentary line from purchased truth after the live offer changes.
 - Complimentary presentation can include the item identity, the no-extra-merchandise-charge fact, and the included reason.
 - Customer-visible failures can be the coarse classes in section 12.
+- When a valid coupon combination and the valid non-coupon alternative have the same payable amount, Fit can return either selected outcome. The experience renders the matching sentence in section 12. Fit is not asked to invent customer copy, and this candidate does not choose that winner. The complimentary equal-payable selection remains the Product rule, not a Fit tie-break.
 - Pre-payment change can return the customer to Review with an explanation of the new result.
 - Operator activation can return truthful non-success when a complimentary activation is not authoritative.
 
@@ -778,7 +875,7 @@ Experience consequence only. Mechanisms are later Fit and quality planning.
 | Menu has no offer | People may not feel "a deal" before the cart | Adding a hub would lift adds | `HYPOTHESIS` | none | Not claimed. A hub is out of product scope. | Do not add one to chase conversion | Not an experiment |
 | Cart total | Uncertainty if only an estimated subtotal remains | Explaining a real saving increases confidence | `HYPOTHESIS` | Current UI fact only | Unknown magnitude | Total integrity | Founder heuristic, internal review |
 | Empty coupon field | External search and abandonment | A loud empty field increases exits | `ASSUMPTION` | none | Unknown | Coupon still discoverable on the surface | Do not lock collapse. Review the secondary placement. |
-| Valid but not selected | The customer thinks the code failed and leaves | The sentence in section 12 reduces that misread versus a generic error | `HYPOTHESIS` | none | Unknown | They are not made to pay more | Internal review of that state |
+| Valid but not selected | The customer thinks the code failed and leaves | The strictly-better sentence in section 12 reduces that misread versus a generic error. The equal-payable sentences do not call the result better. | `HYPOTHESIS` | none | Unknown | They are not made to pay more, and an equal total is not described as a saving | Internal review of the strictly-better state and both equal-payable states |
 | Identity required | Sign-in drop-off | Necessary sign-in loses some guests | `ASSUMPTION` | Product requires identity for those rules | Some loss is accepted | Unrestricted codes still apply for guests | Not waived for conversion |
 | Stale total | Surprise price | An unexplained change causes exit or distrust | `HYPOTHESIS` | none | Unknown | They never pay the stale amount | Review the recovery sentence |
 | Complimentary surprise | Confusion at an unexpected line | A named included line is understood if it has no choices | `HYPOTHESIS` | none | Unknown | No substitute and no picker | Review that flow |
@@ -805,13 +902,13 @@ INSUFFICIENT_EVIDENCE = all causal conversion claims in this section
 
 - Goal: the best eligible amount. Question: am I paying more than I need to?
 - Notice first: items and amount. Then the applied offer or the real progress. Coupon is available without a hunt through settings.
-- Action: continue, or apply a code. Trust: the saving matches the amount. If nothing applies, the total is still honest.
+- Action: continue, or apply a code. Trust: the saving matches the amount. If the coupon is valid and the payable amount is unchanged versus the alternative, the screen says so and does not invent a saving. If nothing applies, the total is still honest.
 - Error: section 13. Exit: Review, with the same coupon state.
 
 ### Checkout Review
 
 - Question: is this the best total, and can it still change?
-- Notice first: the payable total and fulfilment. Then the saving stack. Inherited coupon result.
+- Notice first: the payable total and fulfilment. Then the saving stack. Inherited coupon result, including an equal-payable sentence when that is the shared state.
 - They should understand the total can still be checked again before payment. Copy does not call it frozen.
 - Exit: Payment, or stay to change the cart, fulfilment, or coupon.
 
@@ -848,7 +945,7 @@ INSUFFICIENT_EVIDENCE = all causal conversion claims in this section
 | `XR-IMP-036J-002` | Coupon entry, result, change, remove, and failure classes work on Cart and Review as one state; Payment has no coupon mutation | `US-036J-002`, `US-036J-007` |
 | `XR-IMP-036J-003` | Threshold progress uses the authoritative gap, appears with the cart total story, and updates when the offer applies or drops | `US-036J-003` |
 | `XR-IMP-036J-004` | The customer can read order saving, a real delivery saving, total saved, and payable amount as one model, with no fabricated or duplicate delivery saving | `US-036J-004`, `US-036J-010` |
-| `XR-IMP-036J-005` | A valid coupon that does not win is explained as valid and not an improvement, and the better total remains | `US-036J-009` |
+| `XR-IMP-036J-005` | A valid coupon that does not produce a strictly lower payable amount is not called a better price when the amounts are equal: the strictly lower non-coupon result uses the valid-but-not-selected sentence and keeps that lower total; equal-payable selected says the coupon is applied and the total stays the same, with only actual evaluated effects; equal-payable not selected says the coupon is valid and does not change the total, and keeps the retained combination | `US-036J-009` |
 | `XR-IMP-036J-006` | The complimentary item is a distinct no-choice line at no extra merchandise charge, including when a real delivery saving is also present; competing complimentary items are not offered as a choice | `US-036J-013`, `US-036J-010` |
 | `XR-IMP-036J-007` | Payment stays commercially read-only, and a changed revalidation is recovered on Review with a clear new total | `US-036J-008`, `US-036J-002` |
 | `XR-IMP-036J-008` | Confirmation and history explain purchased savings and a purchased complimentary item after later offer changes | `US-036J-011`, `US-036J-013` |
@@ -856,6 +953,7 @@ INSUFFICIENT_EVIDENCE = all causal conversion claims in this section
 | `XR-IMP-036J-010` | Mobile hierarchy and keyboard, focus, and non-colour status behaviour in section 14 | All customer stories |
 | `XR-IMP-036J-011` | Failure copy stays inside the privacy boundaries in section 16 | `US-036J-002`, `US-036J-005`, `US-036J-007` |
 | `XR-IMP-036J-012` | First-order and fulfilment eligibility change what is shown, without a lecture that leaks history, and pickup does not show a delivery saving | `US-036J-005`, `US-036J-006` |
+| `XR-IMP-036J-013` | The complimentary equal-payable selection still shows the exact included item, the included semantic, ₹0 merchandise, no customer choice, and a separate real delivery saving when one exists, without calling a coupon or another offer monetarily better because of that tie | `US-036J-013` |
 
 ### Acceptance scenarios
 
@@ -867,7 +965,7 @@ INSUFFICIENT_EVIDENCE = all causal conversion claims in this section
 | `AC-036J-002-02` | Invalid |
 | `AC-036J-002-03` | Removed |
 | `AC-036J-002-04` | Identity required and sign-in retry |
-| `AC-036J-002-05` | Guest unrestricted coupon is not an identity failure. First-order and personal cap still require sign-in. Better non-coupon result uses the valid-but-not-selected sentence. |
+| `AC-036J-002-05` | Guest unrestricted coupon is not an identity failure. First-order and personal cap still require sign-in. A strictly better non-coupon result uses the valid-but-not-selected sentence. An equal payable amount uses the equal-payable sentences in section 12, not that sentence. |
 | `AC-036J-002-06` | Review shows the cart's coupon as the same state |
 | `AC-036J-002-07` | First entry on Review |
 | `AC-036J-002-08` | Change or remove on Review recomputes and is explained |
@@ -882,7 +980,7 @@ INSUFFICIENT_EVIDENCE = all causal conversion claims in this section
 | `AC-036J-006-02` | Scheduled timing is consumed. The experience does not rename or explain a new scheduled product. Changing timing recomputes before payment. |
 | `AC-036J-007-01` | Distinct sentences |
 | `AC-036J-008-01` | Stale recovery |
-| `AC-036J-009-01` | Valid not selected, including the example where the automatic pair is better |
+| `AC-036J-009-01` | Strictly better non-coupon result uses the valid-but-not-selected sentence, including the example where the automatic pair pays less. Equal payable amounts do not use that sentence. |
 | `AC-036J-009-02` | Coupon wins and the saving is explained, including when delivery pairing is why it wins |
 | `AC-036J-009-03` | Winning merchandise coupon still shows a real delivery saving with it |
 | `AC-036J-009-04` | A delivery coupon is only the delivery part of the story and does not open a second order saving |
@@ -897,7 +995,7 @@ INSUFFICIENT_EVIDENCE = all causal conversion claims in this section
 | `AC-036J-012-04` | Complimentary authoring experience: one complete item, rejection when a choice remains |
 | `AC-036J-012-05` | Second activation refusal |
 | `AC-036J-012-06` | Concurrent non-success. The experience does not pick the winner. |
-| `AC-036J-013-01` | Complimentary line on Cart and Review |
+| `AC-036J-013-01` | Complimentary line on Cart and Review, including when FD-036J-03 selects it because the payable amount equals the no-primary combination. That tie is not described as a better price. |
 | `AC-036J-013-02` | Purchased line remains |
 | `AC-036J-013-03` | Unavailable recovery, no substitute, stay on Review |
 | `AC-036J-013-04` | Neither competing item is presented |
@@ -948,7 +1046,8 @@ This is not the Experience Gate verdict.
 | Accessibility | Defined |
 | Service / operational alignment | Defined |
 | Evidence / assumptions | Classified |
-| Measurement intent | Defined |
+| Measurement intent | Defined. One primary metric, secondary metrics, guardrails, baseline, 28-day window, and interpretation rule. |
+| Equal-payable coupon experience | Defined for both Fit outcomes. Complimentary equal-payable rule preserved. |
 | Analytics contract requirements | Defined |
 | Experiment / validation | Defined, with insufficient-evidence limits |
 | Prototype needs | Low-fidelity flows in section 18 |
@@ -959,4 +1058,4 @@ This is not the Experience Gate verdict.
 CANDIDATE_RESULT = READY_FOR_INDEPENDENT_EXPERIENCE_GATE
 ```
 
-Independent ChatGPT Experience Gate review is the next gate. This document stops there.
+Independent ChatGPT Experience Gate re-review is the next gate. This document does not record PASS. It stops there.
