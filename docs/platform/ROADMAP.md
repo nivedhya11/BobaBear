@@ -2,13 +2,13 @@
 {
   "status": "CURRENT",
   "authority": "IMPLEMENTATION_SEQUENCE",
-  "roadmapVersion": "GTM-R166",
+  "roadmapVersion": "GTM-R167",
   "acceptedThrough": "IMP-036I",
   "currentProductSlice": "IMP-036J",
   "nextProductSlice": "IMP-037",
   "gtmBoundary": "IMP-040",
-  "lastReviewed": "2026-09-27",
-  "supersedes": "GTM-R165"
+  "lastReviewed": "2026-09-28",
+  "supersedes": "GTM-R166"
 }
 -->
 
@@ -34,7 +34,7 @@
   change) before the next slice begins: **ACCEPT → RECONCILE → ADVANCE**.
 - The historical IMP-026 → IMP-028 controlled-continuation exception (GTM-R15 onward) is **CLOSED**.
   It does **not** generalize to future slices and is **not** reopened by GTM-R138 / GTM-R139 /
-  GTM-R140 / GTM-R141 / GTM-R142 / GTM-R143 / GTM-R144 / GTM-R145 / GTM-R146 / GTM-R147 / GTM-R148 / GTM-R149 / GTM-R150 / GTM-R151 / GTM-R152 / GTM-R153 / GTM-R154 / GTM-R155 / GTM-R156 / GTM-R157 / GTM-R158 / GTM-R159 / GTM-R160 / GTM-R161 / GTM-R162 / GTM-R163 / GTM-R164 / GTM-R165 / GTM-R166.
+  GTM-R140 / GTM-R141 / GTM-R142 / GTM-R143 / GTM-R144 / GTM-R145 / GTM-R146 / GTM-R147 / GTM-R148 / GTM-R149 / GTM-R150 / GTM-R151 / GTM-R152 / GTM-R153 / GTM-R154 / GTM-R155 / GTM-R156 / GTM-R157 / GTM-R158 / GTM-R159 / GTM-R160 / GTM-R161 / GTM-R162 / GTM-R163 / GTM-R164 / GTM-R165 / GTM-R166 / GTM-R167.
 - **GTM-R138** records a **NEW**, Founder-authorized one-off exception
   `CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038` (authority PR#179/5771367844) so
   IMP-038 may activate for PD-1 Product Definition work while IMP-037 remains an
@@ -74,6 +74,14 @@
   exact-head review findings `4115981679` and `4115981682` on unmerged pull request #312
   reopened the acceptance slice. Gate PASS was not persisted. Canonical main never recorded
   DRAFT-3 as APPROVED. DRAFT-4 supersedes DRAFT-3.
+- **GTM-R167** records `PD-IMP-036J-DRAFT-5` as `DRAFT_READY_FOR_GATE` after Founder approval
+  of FD-036J-03 on 2026-09-28. It does not create D-383, does not approve the Product
+  Definition, does not execute the Product Definition Gate, does not perform Architecture Fit,
+  and does not authorize implementation. Historical DRAFT-4 was ready for Gate. An independent
+  Product Definition Gate review returned `DECISION_REQUIRED` because the complimentary-item
+  operating rules did not yet have explicit Founder product authority. Gate PASS was not
+  persisted. Architecture Fit was not performed. Implementation was not authorized. DRAFT-5
+  supersedes DRAFT-4 after that Founder approval. DRAFT-4 history is not rewritten.
 - Current lifecycle is determined only by CURRENT metadata and CURRENT position fields in this
   document and [`STATE.md`](./STATE.md).
 - Historical GTM-R15…GTM-R113 exception narration, candidate/failure detail, and revision prose are
@@ -539,15 +547,38 @@ IMP-036D_FOUNDER_UAT: PASS
 IMP-036J: PLANNED
 IMP036J_ACTIVATED: YES
 IMP036J_PRODUCT_DEFINITION: DRAFT_READY_FOR_GATE
-IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-4
+IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-5
 IMP036J_PRODUCT_DEFINITION_GATE: NOT_PERFORMED
 IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036J_ARCHITECTURE_LOCKED: NO
 IMP036J_IMPLEMENTATION_AUTHORIZED: NO
+FD-036J-03: APPROVED 2026-09-28
 IMP036J_STARTED: NO
 IMP036J_IMPLEMENTATION_STARTED: NO
 IMP036J_IMPLEMENTATION_COMPLETE: NO
 IMP036J_ACCEPTED: NO
 ```
+
+**GTM-R167** records `PD-IMP-036J-DRAFT-5` as `DRAFT_READY_FOR_GATE` after Founder approval of
+FD-036J-03 on 2026-09-28. This is a pre-Gate draft transition. It does not execute the Product
+Definition Gate, perform Architecture Fit, or authorize implementation. Formal lifecycle remains
+`PLANNED`. `IMP036J_PRODUCT_DEFINITION` remains `DRAFT_READY_FOR_GATE`.
+`IMP036J_PRODUCT_DEFINITION_VERSION` is `PD-IMP-036J-DRAFT-5`.
+`IMP036J_PRODUCT_DEFINITION_GATE` remains `NOT_PERFORMED`. `IMP036J_ARCHITECTURE_FIT` remains
+`NOT_PERFORMED`. `IMP036J_ARCHITECTURE_LOCKED` remains `NO`. `IMP036J_IMPLEMENTATION_AUTHORIZED`
+remains `NO`. `IMP036J_STARTED` remains `NO`. `IMP036J_ACCEPTED` remains `NO`. `acceptedThrough`
+remains IMP-036I. `currentProductSlice` remains IMP-036J. `pendingAcceptance` remains NONE.
+`nextProductSlice` remains IMP-037. `IMP037_HOLD` and `IMP038_HOLD` remain YES. Architecture
+remains ARCH-R23. Decision register remains DR-23. D-377 remains CURRENT. D-382 remains CURRENT.
+Next decision ID remains D-383. No D-383 is created. `OPEN_FOUNDER_PRODUCT_DECISIONS = 0`.
+`DRAFT_READY_FOR_GATE` is not Gate PASS and is not approval. Historical `PD-IMP-036J-DRAFT-4`
+was ready for Gate. An independent Product Definition Gate review returned `DECISION_REQUIRED`
+because FD-036J-03 was not yet Founder-approved. Gate PASS was not persisted. Architecture Fit
+was not performed. Implementation was not authorized. Canonical main never recorded DRAFT-4 as
+APPROVED. DRAFT-5 supersedes DRAFT-4 after Founder approval of FD-036J-03. FD-036J-03 is a
+Product Definition decision, not D-383. FD-036J-02 remains the general stacking policy. Deals,
+Campaigns, and Revenue Recommendations remain parked discovery and are not rejected. A second
+money engine remains prohibited.
 
 **GTM-R166** records `PD-IMP-036J-DRAFT-4` as `DRAFT_READY_FOR_GATE`. This is a pre-Gate draft
 transition. It does not execute the Product Definition Gate, perform Architecture Fit, or
@@ -1265,7 +1296,7 @@ Under `PROGRAM_PAUSE: PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED` (**D-377**) an
 sequencing authority **D-382**, the active product slice is **IMP-036J — Promotions, Coupons &
 Offers** (`currentProductSlice = IMP-036J`; `pendingAcceptance = NONE`;
 `IMP036J_ACTIVATED: YES`; formal lifecycle `PLANNED`; Product Definition
-`PD-IMP-036J-DRAFT-4` is `DRAFT` / `PRE_GATE_DRAFT` / `DRAFT_READY_FOR_GATE`;
+`PD-IMP-036J-DRAFT-5` is `DRAFT` / `PRE_GATE_DRAFT` / `DRAFT_READY_FOR_GATE`;
 Product Definition Gate `NOT_PERFORMED`; Architecture Fit `NOT_PERFORMED`; implementation
 `NOT_AUTHORIZED`). IMP-036I — Scheduled
 Fulfilment is `COMPLETE_AND_ACCEPTED` (`IMP036I_ACCEPTED: YES`; `IMP036I_FOUNDER_UAT: PASS`;
@@ -1390,7 +1421,7 @@ Historical acceptance evidence remains in the pre-compression ROADMAP snapshot.
 Remaining numeric GTM range IMP-037 → IMP-040: **4** IMP numbers. Enterprise Experience suffix
 slices IMP-036A–I are accepted. Founder-authorized pre-GTM product suffix slices IMP-036H
 (COMPLETE_AND_ACCEPTED), IMP-036I (COMPLETE_AND_ACCEPTED), and IMP-036J (PLANNED; Product
-Definition `PD-IMP-036J-DRAFT-4` `DRAFT_READY_FOR_GATE` under D-382) are inserted after IMP-036G and before IMP-037 without
+Definition `PD-IMP-036J-DRAFT-5` `DRAFT_READY_FOR_GATE` under D-382) are inserted after IMP-036G and before IMP-037 without
 consuming or renaming existing numeric identities. Deals, Campaigns, and Revenue
 Recommendations remain parked discovery and have no ledger identity. Accepted inserted
 slices IMP-026C and IMP-028A–D remain in the accepted ledger and are not future identities.
@@ -1408,7 +1439,7 @@ Historical Food Direct insertion narration remains in
 | IMP-036G | Administration Console V2 | COMPLETE_AND_ACCEPTED |
 | IMP-036H | Customer Pickup / Takeaway | COMPLETE_AND_ACCEPTED |
 | IMP-036I | Scheduled Fulfilment | COMPLETE_AND_ACCEPTED (IMP036I_ACTIVATED: YES; APPROVED; Gate PASS; Fit PASS; locked YES; implementation AUTHORIZED / STARTED / COMPLETE; IMP036I_IMPLEMENTATION_COMPLETE: YES; IMP036I_INDEPENDENT_IMPLEMENTATION_REVIEW: PASS; IMP036I_ACCEPTED: YES; IMP036I_FOUNDER_UAT: PASS; IMP036I_FORMAL_ACCEPTANCE: ACCEPTED) |
-| IMP-036J | Promotions, Coupons & Offers | PLANNED (IMP036J_ACTIVATED: YES; PRODUCT_DEFINITION DRAFT_READY_FOR_GATE; PD-IMP-036J-DRAFT-4; Gate NOT_PERFORMED; Fit NOT_PERFORMED; implementation NOT_AUTHORIZED; IMP036J_ACCEPTED: NO) |
+| IMP-036J | Promotions, Coupons & Offers | PLANNED (IMP036J_ACTIVATED: YES; PRODUCT_DEFINITION DRAFT_READY_FOR_GATE; PD-IMP-036J-DRAFT-5; Gate NOT_PERFORMED; Fit NOT_PERFORMED; implementation NOT_AUTHORIZED; IMP036J_ACCEPTED: NO) |
 | IMP-037 | Backup, Restore & Migration Readiness | IMPLEMENTATION_IN_PROGRESS (IMP037_HOLD: YES; BLOCKED_PROVIDER_ACCESS) |
 | IMP-038 | Security & Privacy Hardening | IMPLEMENTATION_IN_PROGRESS (IMP038_HOLD: YES; IMPLEMENTATION_COMPLETE / NOT_ACCEPTED; external assessment deferred) |
 | IMP-039 | Production Infrastructure & Release Pipeline | PLANNED |
