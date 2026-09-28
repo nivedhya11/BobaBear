@@ -2,9 +2,10 @@
 {
   "status": "CURRENT",
   "authority": "PRODUCT_DELIVERY_PROCESS",
-  "version": "PD-1",
+  "version": "PD-2",
   "effectiveFrom": "IMP-036F",
-  "lastReviewed": "2026-09-10"
+  "lastReviewed": "2026-09-28",
+  "supersedes": "PD-1"
 }
 -->
 
@@ -12,142 +13,227 @@
 
 ## Authority and prospective application
 
-**USER OUTCOME FIRST.** This document owns how product work is defined and delivered: product
-definition, story slicing, readiness, completion, journey completeness, explicit deferrals, and
-the connection to architecture, verification, UAT, and agent handoffs.
+**USER OUTCOME FIRST.** This document owns how product work is defined and delivered. It does not
+own roadmap sequence, accepted state, architecture, binding decisions, experience presentation
+detail, product language, or proof technique.
 
-It does not own roadmap sequence, accepted state, architecture, RBAC, or domain decisions.
-[`VISION.md`](./VISION.md) owns why; [`ROADMAP.md`](./ROADMAP.md) owns identity, sequence, and
-lifecycle; [`STATE.md`](./STATE.md) owns accepted/current reality;
-[`product/`](./product/README.md) records personas, journeys, and story definitions;
-[`ARCHITECTURE.md`](./ARCHITECTURE.md) owns technical invariants;
-[`decision-register.md`](./decision-register.md) owns binding decisions;
-[`TESTING.md`](./TESTING.md) owns how behaviour is proven; [`AGENTS.md`](../../AGENTS.md) owns
-agent execution, safety, provenance, and promotion rules.
+| Question | Authority |
+|---|---|
+| Why | [`VISION.md`](./VISION.md) |
+| Identity, sequence, lifecycle | [`ROADMAP.md`](./ROADMAP.md) |
+| Accepted and current reality | [`STATE.md`](./STATE.md) |
+| Product entitlement and observable behaviour | [`product/`](./product/README.md) Product Definition |
+| Experience intent and interaction | [`EXPERIENCE.md`](./EXPERIENCE.md) (EXP-1) |
+| Customer and operator language | [`PRODUCT-LANGUAGE.md`](./PRODUCT-LANGUAGE.md) (LANG-1) |
+| Technical invariants | [`ARCHITECTURE.md`](./ARCHITECTURE.md) |
+| Binding decisions | [`decision-register.md`](./decision-register.md) |
+| How behaviour is proven | [`TESTING.md`](./TESTING.md) (TEST-1) |
+| Agent execution | [`AGENTS.md`](../../AGENTS.md) |
 
 ```text
+PRODUCT_DELIVERY_PROCESS = PD-2
 PRODUCT_DELIVERY_PROCESS_EFFECTIVE_FROM = IMP-036F
+PD2_ADOPTED = 2026-09-28
+PD2_FIRST_TRANSITION_SLICE = IMP-036J
+PD1_REMAINS_HISTORICAL_PROCESS_FOR_ACCEPTED_WORK = YES
 HISTORICAL_ACCEPTED_IMPS_REWRITTEN = NO
 IMP036E_LIFECYCLE_CHANGED = NO
 PD1_DID_NOT_ACTIVATE_IMP036F_AT_ADOPTION = YES
+EXPERIENCE_STANDARD = EXP-1
+PRODUCT_LANGUAGE_STANDARD = LANG-1
+TESTING_AUTHORITY = TEST-1
+RAW_BACKEND_LANGUAGE_TO_CUSTOMER = PROHIBITED
 ```
 
-PD-1 is mandatory for new substantial product work beginning with IMP-036F. A per-IMP Product
-Definition is required using the [template](./product/templates/product-definition-template.md).
-IMP-036E continues under its existing lifecycle; accepted IMPs are not rewritten or reopened by
-this policy. PD-1 did not itself activate IMP-036F when introduced; current activation truth is
-owned only by [`ROADMAP.md`](./ROADMAP.md) / [`STATE.md`](./STATE.md) (`IMP036F_ACTIVATED`).
-These adoption markers do not replace ROADMAP/STATE lifecycle authority. Engineering-only changes
-with no product behaviour change may remain specification-driven.
+PD-2 is prospective. Accepted IMPs stay accepted. PD-2 does not rewrite their lifecycle and does
+not require historical Experience Definitions. PD-1 did not itself activate IMP-036F. Current
+activation truth remains [`ROADMAP.md`](./ROADMAP.md) / [`STATE.md`](./STATE.md). Engineering-only
+changes with no product behaviour change may remain specification-driven.
 
-A **Journey Gap Audit** of previously implemented product journeys is required before public GTM
-cutover / IMP-040 acceptance. Session 1 establishes that requirement; it does not perform the audit.
-The audit must surface gaps and proposed follow-ups without retroactively changing acceptance or
-silently authorizing implementation.
+These phases and gates are **process** phases. They are not automatically new ROADMAP lifecycle
+states. A phase transition never grants push, PR, merge, or deployment authority.
 
-## Outcome hierarchy and discovery
+## Canonical lifecycle
+
+```text
+ANCHOR
+→ REQUIREMENT / OPPORTUNITY INTAKE
+→ DISCOVERY
+→ EXPERIENCE STRATEGY
+→ JOURNEY + STORY MAP
+→ PRODUCT DEFINITION + EXPERIENCE DEFINITION
+→ PRODUCT DEFINITION GATE + EXPERIENCE GATE
+→ ARCHITECTURE FIT
+→ ARCHITECTURE LOCK
+→ DESIGN READINESS
+   + QUALITY / TEST PLAN FINALIZATION
+   + MEASUREMENT / INSTRUMENTATION PLAN FINALIZATION
+→ IMPLEMENTATION PLAN
+→ IMPLEMENTATION AUTHORIZATION
+→ SMALL IMPLEMENTATION TRANCHES
+→ CONTINUOUS MACHINE PROOF
+→ FUNCTIONAL QA
+   + EXPERIENCE QA
+   + CONTENT QA
+   + ACCESSIBILITY / RESPONSIVE QA
+   + PERFORMANCE / SECURITY QA
+→ INDEPENDENT IMPLEMENTATION REVIEW
+→ STAGING RELEASE CANDIDATE
+→ FOUNDER UAT
+   FUNCTIONAL UAT
+   EXPERIENCE UAT
+→ FORMAL ACCEPTANCE
+→ PRODUCTION READINESS GATE
+→ PRODUCTION RELEASE
+→ POST-RELEASE VERIFICATION
+→ OBSERVE / MEASURE / EXPERIMENT
+→ LEARN / NEW DISCOVERY
+→ RECONCILE
+→ ADVANCE
+```
+
+| Phase or gate | Required result |
+|---|---|
+| ANCHOR | Verify repository candidate, canonical versions, current slice, dependencies, and authorized scope. |
+| REQUIREMENT / OPPORTUNITY INTAKE | Record the opportunity, the person affected, and why it is in or out of the current slice. |
+| DISCOVERY | Establish outcome, personas, current evidence, and material questions. |
+| EXPERIENCE STRATEGY | For applicable X2/X3 work, state Experience Intent before treating screens as the product. X0/X1 may record a lightweight reason instead. |
+| JOURNEY + STORY MAP | Map journeys, activities, and stories. Classify every identified possibility. |
+| PRODUCT DEFINITION + EXPERIENCE DEFINITION | Persist product behaviour and, where required, experience behaviour as separate authorities. |
+| PRODUCT DEFINITION GATE + EXPERIENCE GATE | Product behaviour is complete. For X2/X3 the intended experience is understood. Either gate may `STOP`. |
+| ARCHITECTURE FIT | Show how approved Product and Experience fit existing technical authority. |
+| ARCHITECTURE LOCK | Persist required capability architecture before implementation. |
+| DESIGN READINESS | Implementation-ready interaction and presentation for X2/X3. |
+| QUALITY / TEST PLAN FINALIZATION | Expected proof for mandatory behaviour and risks, under TEST-1. |
+| MEASUREMENT / INSTRUMENTATION PLAN FINALIZATION | For X3, how the real-world outcome will be observed. |
+| IMPLEMENTATION PLAN | Small tranches inside the authorized slice. |
+| IMPLEMENTATION AUTHORIZATION | Human or explicit task authority to build. Not implied by earlier gates. |
+| SMALL IMPLEMENTATION TRANCHES | Build only authorized scope. |
+| CONTINUOUS MACHINE PROOF | Preserve failing and passing machine evidence under TEST-1. |
+| FUNCTIONAL QA | Approved behaviour works. |
+| EXPERIENCE QA | Approved interaction was delivered and the journey is coherent. |
+| CONTENT QA | Language is intentional, correct, and free of backend leakage. |
+| ACCESSIBILITY / RESPONSIVE QA | Keyboard, semantics, and supported viewports behave as specified. |
+| PERFORMANCE / SECURITY QA | Applied where the Quality Attribute Profile or CR level requires it. |
+| INDEPENDENT IMPLEMENTATION REVIEW | Independent review of the slice, architecture, and evidence. |
+| STAGING RELEASE CANDIDATE | Exact candidate prepared for Founder UAT under AGENTS provenance. |
+| FOUNDER UAT | Functional UAT and, where Founder UAT applies, Experience UAT. Only the Founder gives the verdict. |
+| FORMAL ACCEPTANCE | Applicable independent acceptance and founder verdicts. |
+| PRODUCTION READINESS GATE | Release risks below are assessed. Missing controls are blockers, not implied readiness. |
+| PRODUCTION RELEASE | Release the accepted candidate through existing release authority. |
+| POST-RELEASE VERIFICATION | Bounded production checks. Release is not proof of successful operation. |
+| OBSERVE / MEASURE / EXPERIMENT | Watch the measurement plan. Do not treat observation as acceptance. |
+| LEARN / NEW DISCOVERY | Feed learning into a new intake. Do not silently change accepted behaviour. |
+| RECONCILE | Update applicable canonical records and run `npm run project:consistency`. |
+| ADVANCE | Proceed only when reconciliation and the next slice's gates permit it. |
+
+## Separate authorities
+
+**Product Definition** owns product entitlement, customer and operator capability, business rules,
+eligibility, constraints, supported and denied outcomes, acceptance behaviour, non-goals, and
+product decisions.
+
+**Experience Definition** owns Experience Intent, discovery, information architecture, interaction
+model, information hierarchy, cognitive load, friction, customer mental model, content and
+language, recovery experience, emotional and trust intent, responsive interaction, design-system
+application, and experience measurement hypotheses. Standard: EXP-1. Template:
+[`experience-definition-template.md`](./product/templates/experience-definition-template.md).
+
+**Architecture Fit** owns how approved Product and Experience fit safely into technical authority.
+It must not invent missing product behaviour or silently weaken Experience.
+
+**Design Readiness** owns the final implementation-ready interaction and presentation
+specification. It comes after Architecture Fit and before implementation authorization.
+
+**Quality / Test Plan** owns how required behaviour and risk will be proven. TEST-1 remains the
+verification policy.
+
+**Measurement Plan** owns how the intended real-world outcome will be observed. It does not replace
+acceptance.
+
+Experience MUST NOT silently alter Product Definition. Architecture MUST NOT silently weaken
+Product or Experience. Implementation MUST NOT invent either. Material conflict: `STOP` /
+`DECISION_REQUIRED`.
+
+## Experience Criticality and Change Risk
+
+```text
+X0 = no meaningful human interaction
+X1 = simple internal / workforce interaction
+X2 = material human workflow
+X3 = customer, conversion, money, trust, identity, or critical human journey
+
+CR0 = STANDARD
+CR1 = ELEVATED
+CR2 = HIGH
+CR3 = CRITICAL
+CHANGE_RISK = CR
+CR_SCALE = CR0 | CR1 | CR2 | CR3
+AGENTS_EXECUTION_RISK_SCALE = R0 | R1 | R2 | R3
+CR_SCALE_ORTHOGONAL_TO_AGENTS_R0_R3 = YES
+X_SCALE_ORTHOGONAL_TO_CR_SCALE = YES
+X_SCALE_ORTHOGONAL_TO_AGENTS_R0_R3 = YES
+```
+
+Do not reuse AGENTS `R0`–`R3` as the feature or change delivery scale. Do not map a CR value onto
+an R value. Examples: an admin copy label may be X1/CR0; a menu filter may be X3/CR0 or CR1;
+scheduled ordering may be X3/CR2; promotions and pricing may be X3/CR2; checkout, payment, refund
+calculation, and auth/session may be X3/CR3; a background security fix may be X0/CR3.
+
+Change Risk considers money, payment, refunds, authentication, authorization, personal data,
+persistence and data loss, schema migration, concurrency, customer promise, operational
+disruption, security, irreversible consequence, and release or rollback complexity. X and CR
+together set rigor. Low experience criticality does not mean low technical or business risk.
+
+```text
+X2_X3_ARCHITECTURE_FIT_REQUIRES_EXPERIENCE_GATE_PASS = YES
+X3_EXPERIENCE_DEFINITION = REQUIRED
+X2_EXPERIENCE_DEFINITION = REQUIRED
+X0_EXPERIENCE_DEFINITION_MAY_BE_NA = YES
+X2_X3_IMPLEMENTATION_REQUIRES_DESIGN_READINESS_PASS = YES
+```
+
+For X2/X3, Architecture Fit must not finally `PASS`, lock, or be persisted without Experience Gate
+`PASS`. Implementation authorization additionally requires Design Readiness `PASS`, a finalized
+Quality/Test Plan, and, for X3, a finalized Measurement/Instrumentation Plan.
+
+## Outcome hierarchy
 
 ```text
 BUSINESS OUTCOME → PERSONA → JOURNEY → ACTIVITY → USER STORY → ACCEPTANCE SCENARIO
 → ARCHITECTURE FIT → IMPLEMENTATION → TEST EVIDENCE → FOUNDER UAT → ACCEPTANCE
 ```
 
-Begin with the business outcome and the person's job, context, and observable success. Describe
-the current journey from repository evidence and distinguish supported behaviour, planned intent,
-and unknowns. Define the desired journey before choosing technical mechanisms. Personas describe
-human/business responsibility; `PERSONA != ROLE`, `PERSONA != PERMISSION`, and
-`PERSONA != AUTHORIZATION`. Permission and resource context must cite existing authority.
-
-Map journeys into ordered activities, then stories under each activity. Slice vertically so the
-acceptance slice delivers a useful, observable outcome through the applicable UI, application,
-domain, and persistence boundaries. A technical component alone is not proof of a user outcome.
-Do not expand the authorized capability to complete unrelated journeys.
-
-## Delivery process
+Optional testable experience requirements use `XR-<IMP>-NNN`. `XR` is not a pull request.
 
 ```text
-ANCHOR → DISCOVER → STORY_MAP → PRODUCT_DEFINITION_GATE → ARCHITECTURE_FIT
-→ IMPLEMENT → PROVE → INDEPENDENT_REVIEW → FOUNDER_UAT (when required)
-→ ACCEPT → RECONCILE → ADVANCE
+OUTCOME → PERSONA → JOURNEY → US → BR / XR → AC
+→ ARCHITECTURE FIT → TEST / EVIDENCE → UAT → METRIC / EXPERIMENT
 ```
 
-These are **delivery process phases**, not new ROADMAP lifecycle states. Existing canonical
-lifecycle markers, authorization, independent technical acceptance, deployment, and Founder UAT
-gates remain authoritative. A phase transition never grants push, PR, merge, or deployment authority.
+`XR` is not mandatory for every sentence. Avoid identifier bureaucracy.
 
-| Phase | Required result |
-|---|---|
-| ANCHOR | Verify repository candidate, canonical versions, current slice, dependencies, and authorized scope. |
-| DISCOVER | Establish outcome, personas, current/desired journeys, evidence, and material questions with the product decision owner. |
-| STORY_MAP | Map activities and stories; identify the acceptance slice and classify every identified possibility. |
-| PRODUCT_DEFINITION_GATE | Record PASS or STOP on the versioned Product Definition; no material product decision remains unresolved. An ungated draft may exist before this phase with gate execution = NOT_PERFORMED. |
-| ARCHITECTURE_FIT | Check product behaviour against global/capability architecture and binding decisions; persist required capability architecture lock before implementation. |
-| IMPLEMENT | Implement only authorized stories that satisfy Definition of Ready. |
-| PROVE | Map each mandatory acceptance scenario to meaningful behavioural evidence under TEST-1. |
-| INDEPENDENT_REVIEW | Review the relevant slice for story completeness, architecture compliance, and evidence; resolve defects through revalidation. |
-| FOUNDER_UAT (when required) | After independent technical acceptance and authorized UAT deployment, the founder exercises the exact candidate under AGENTS provenance rules. |
-| ACCEPT | Obtain applicable independent acceptance and founder verdicts; coding-agent completion is not acceptance authority. |
-| RECONCILE | Separately update applicable canonical state/roadmap/acceptance records and run `npm run project:consistency`. |
-| ADVANCE | Proceed only when reconciliation and the next slice's authorization/dependency gates permit it. |
-
-Architecture remains authoritative for technical, security, and data invariants. It **must not
-invent missing product behaviour**. A Product Definition must not silently override global
-architecture, security, financial or persistence authority, concurrency semantics, accepted STATE,
-or binding decisions. Stop affected work for human resolution on conflict. Undefined material
-user/business behaviour that cannot be inferred produces `PRODUCT_DECISION_REQUIRED`; an architecture
-agent cannot resolve it by choosing product behaviour. Token savings never justify guessing.
+Begin with the business outcome and the person's job. Personas are not roles, permissions, or
+authorization. Map vertical slices that deliver an observable outcome. Do not expand the authorized
+capability to finish unrelated journeys.
 
 ## Product Definition and scenarios
 
-Persist the per-IMP Product Definition in the [product artifact index](./product/README.md), using
-all applicable template sections. Record its identity, version, author/reviewer evidence, source
-authorities, and gate outcome. An unfilled template is not an approved definition. Product approval
-does not itself authorize implementation or supersede architecture.
-
-Stories use stable IDs and this form:
-
-```text
-As a <persona>
-I want <goal>
-so that <business/user outcome>.
-```
-
-Acceptance scenarios use stable AC IDs linked to their story, preconditions, action, and observable
-result (Given / When / Then is preferred). Cover happy paths and applicable alternate, denial,
-empty, error, and recovery paths. State visible outcomes and business effects, not function names,
-table layouts, or component implementation. Link business rules and resource scope. Define data
-fixtures/context and pass/fail expectations precisely enough for independent verification.
-
-Maintain traceability from outcome → journey/activity → story → AC/business rule → architecture
-fit → evidence → required Golden Journey / UAT evidence. When product behaviour or the acceptance
-slice changes materially, version the definition, revisit the product gate and architecture fit,
-and revalidate affected scenarios before relying on prior evidence.
+Use the [product template](./product/templates/product-definition-template.md). Product approval
+does not authorize implementation or supersede architecture. Acceptance scenarios stay observable.
+When product behaviour changes materially, version the definition and revisit the product gate.
 
 ## Product Definition Gate
 
-Every applicable field needs a concrete answer or evidence link. `N/A` needs a brief reason.
-
-A Product Definition candidate may exist as a **pre-gate draft** before the Product Definition Gate
-phase executes. Pre-gate drafts are not approved and do not authorize architecture fit or
-implementation.
-
-```text
-PRE-GATE DRAFT:
-PRODUCT_DEFINITION_GATE_EXECUTION = NOT_PERFORMED
-Gate Result: NOT_PERFORMED
-
-ACTUAL PRODUCT_DEFINITION_GATE EXECUTION:
-Gate Result: PASS | STOP
-```
-
-`NOT_PERFORMED` is **not** a third gate verdict. It means no gate evaluation has occurred. Once the
-Product Definition Gate actually executes, `NOT_PERFORMED` is invalid and must be replaced by
-`PASS` or `STOP`.
+A pre-gate draft is not approved.
 
 ```text
 PRODUCT_DEFINITION_GATE
 Capability:
 Product Definition Version:
+Experience Criticality:
+Change Risk:
+Linked Experience Definition:
 Business Outcome:
 Primary Personas:
 Journeys Defined:
@@ -161,39 +247,131 @@ Authorization Variants Defined:
 Cross-Scope Scenarios Defined:
 Concurrency Considered:
 Destructive Actions Defined:
-UX State Matrix Complete:
-Accessibility Considered:
-Golden Journeys Identified:
-Explicit Deferrals Recorded:
+Service / operational impact:
+Quality Attribute Profile:
 Unresolved Product Decisions:
 Architecture Conflicts:
 PRODUCT_DEFINITION_GATE_EXECUTION: NOT_PERFORMED | PERFORMED
 Gate Result: NOT_PERFORMED | PASS | STOP
 ```
 
-PASS requires complete applicable product definition, no material unresolved product decision, and
-no unresolved architecture conflict. A required unanswered field is STOP. Record who approved the
-product definition and which version passed. Product-gate PASS precedes, and does not substitute
-for, architecture fit/lock or implementation authorization.
+`NOT_PERFORMED` means no evaluation has occurred. After execution the result is `PASS` or `STOP`.
+Product-gate PASS does not substitute for Experience Gate, Architecture Fit, or implementation
+authorization.
+
+## Experience Gate and Design Readiness
+
+The Experience Gate asks whether the intended experience is understood. Design Readiness asks
+whether the implementable design is complete enough to build. Do not conflate them. Rules and
+checklists are in [`EXPERIENCE.md`](./EXPERIENCE.md).
+
+## Quality Attribute Profile
+
+For substantial work, mark each attribute `REQUIRED` or `N/A` with a reason:
+
+performance, availability, reliability, resilience, security, privacy, accessibility,
+responsive/device support, scalability, concurrency, data integrity, observability,
+supportability, backward compatibility, localization/presentation.
+
+They are not separate gates. They feed Architecture Fit, the Quality Plan, QA, and Production
+Readiness.
+
+## Security, privacy, and abuse overlay
+
+For CR2/CR3 or abuse-sensitive work, review honest-user behaviour, malicious-user behaviour,
+unauthorized workforce behaviour, replay, enumeration, forgery, financial abuse, identity abuse,
+race or cap bypass, information leakage, and privacy/PII. This is a required risk review inside
+existing security authority. It does not create a new security architecture authority.
+
+## Quality and test plan
+
+Before implementation authorization, record expected proof for mandatory product acceptance
+scenarios, experience requirements, security and authorization, persistence, concurrency, recovery,
+accessibility, responsive behaviour, content, and performance where applicable. TEST-1 remains
+canonical. Acceptance-scenario proof outranks a raw coverage percentage.
+
+## Measurement, analytics, and experiments
+
+For X3, before implementation authorization record business intent, primary metric, secondary
+metrics, guardrails, required events or signals, baseline where available, observation window and
+interpretation rule, success and failure learning signal, and known causal limitations.
+
+A material analytics event defines event meaning, trigger, owner, required attributes, forbidden
+PII, identity semantics, deduplication, schema and version, source of truth, validation, and
+retention or privacy boundary. Do not collect data because it might be useful. No private
+eligibility, payment, or security facts in analytics unless explicitly authorized and necessary.
+
+A controlled experiment needs, before launch, a hypothesis, assignment unit, population, control,
+variant, primary metric, guardrails, observation rule, stop condition, and interpretation rule.
+Insufficient evidence is `INSUFFICIENT_EVIDENCE`, not a winner. Acceptance stays separate from
+measurement and from experiment outcome. Experiments cannot waive security, privacy, financial
+truth, authorization, legal requirements, or accessibility minimums.
+
+## QA evidence
+
+Distinguish functional QA, experience QA, content QA, accessibility/responsive QA, and, where
+applicable, performance QA and security/abuse QA. These are evidence dimensions. They are not
+automatically separate manual ceremonies.
+
+## Production Readiness Gate
+
+`PRODUCTION_READINESS_GATE` sits after Formal Acceptance and before Production Release. Where
+applicable assess accepted candidate identity, artifact or container identity, schema and migration
+readiness, configuration readiness, backward compatibility, rollback, feature flag or kill switch
+if available or required, monitoring, alerts, capacity and performance, support and runbook, known
+limitations, smoke procedure, analytics readiness, incident recovery, and release sequencing.
+
+This process does not implement release infrastructure. If a required control does not exist,
+record the blocker or dependency. Do not claim readiness that is absent.
+
+Target: promote the accepted staging candidate as the same immutable release artifact or digest
+where the authorized release architecture supports it. Do not silently rebuild a materially
+different artifact for production. Exact release mechanics stay with existing or future release
+authority.
+
+```text
+GITHUB_MAIN_BRANCH_PROTECTION = ABSENT
+BRANCH_PROTECTION_ENFORCEMENT = OPERATIONAL_PROCESS_CONTROL_GAP
+PD2_REQUIRES_CI_CODEQL_MACHINE_EVIDENCE_BEFORE_MERGE = YES
+```
+
+PD-2 requires CI, CodeQL, and other required machine evidence before merge as process authority.
+GitHub branch protection on `main` was absent on 2026-09-28 (`Branch not protected`). This document
+does not mutate repository administration. Do not claim GitHub enforces those checks while that gap
+remains.
+
+## Post-release verification
+
+After production release, perform bounded checks such as deployment health, migration result, core
+smoke journey, error rate, latency, payment and order health, analytics flow, and support signal,
+as applicable. Then enter observe / measure / experiment.
+
+## Deprecation and cleanup
+
+Temporary constructs should carry a removal condition where practical: feature flags, experiment
+variants, compatibility code, temporary APIs, deprecated fields, obsolete UI, analytics events, and
+migration shims. After the experiment or transition, persist the chosen behaviour, remove the
+obsolete path, remove the stale flag, remove unused analytics, and update docs and tests. Do not
+leave a permanent temporary branch by default.
+
+## Controlled exception path
+
+An emergency, security, or incident exception is governed. It is not permission to ignore
+authority. Record exception type, reason, risk, skipped gate(s), human authority where required,
+minimum proof, rollback or recovery, and mandatory reconciliation.
 
 ## Definition of Ready
 
-A story may enter implementation only when applicable fields are known and traceable:
+A story may enter implementation only when applicable fields are known: story identity, acceptance
+scenarios, business rules, experience requirements where X2/X3 applies, permissions, data and
+security implications, architecture fit, Design Readiness, quality plan, and measurement intent
+where required. Open material decisions = NONE. Otherwise the story is
+`NOT_READY_FOR_IMPLEMENTATION`, a readiness result, not a ROADMAP state.
 
-- Story ID, persona, business outcome, journey, and preconditions.
-- Acceptance scenarios, business rules, UX states, and error/recovery behaviour.
-- Permission/resource context, dependencies, and explicit non-goals.
-- Data implications, security implications, and architecture fit.
-- Open material decisions = NONE.
+## Journey completeness and UX states
 
-Explain inapplicable fields. A story failing readiness is `NOT_READY_FOR_IMPLEMENTATION` (a story
-readiness result, not an IMP lifecycle state). The Product Definition Gate, required architecture
-lock, and authorized implementation scope must also be satisfied.
-
-## Journey Completeness Matrix and UX states
-
-Every Product Definition must assess each row below and map it to stories/ACs, explicit deferrals,
-or `N/A` with a brief reason. No blank row silently means out of scope.
+Every Product Definition assesses each row below, mapped to stories, acceptance scenarios, explicit
+deferrals, or `N/A` with a reason.
 
 | Dimension | Required consideration |
 |---|---|
@@ -207,7 +385,7 @@ or `N/A` with a brief reason. No blank row silently means out of scope.
 | AUTHORIZATION | Material allow/deny and cross-scope variants. |
 | NOT FOUND / STALE REFERENCE | Missing, removed, or inaccessible context. |
 | SERVER / NETWORK ERROR | Clear failure without false success. |
-| RECOVERY | Retry/resume/reconciliation allowed by existing authority. |
+| RECOVERY | Retry, resume, or reconciliation allowed by existing authority. |
 | CONCURRENCY | Competing changes, stale state, and duplicate actions. |
 | DESTRUCTIVE ACTION | Confirmation, consequences, and cancellation of the action. |
 | SUCCESS FEEDBACK | Visible confirmation and next action. |
@@ -216,84 +394,58 @@ or `N/A` with a brief reason. No blank row silently means out of scope.
 | RESPONSIVE / MOBILE | Applicable screen sizes and input conditions. |
 | ACCESSIBILITY | Keyboard, focus, names, announcements, and usable feedback. |
 
-The separate UX state matrix maps each surface/action to loading, empty/first-use, ready, submitting,
-success, validation error, denied, not-found/stale, server/network error, and recovery states as
-applicable. Include destructive confirmation, focus behaviour, and responsive expectations. Each
-required state links to observable scenarios; unsupported states need an explicit reason.
+Interaction detail beyond observable behaviour belongs in the Experience Definition and Design
+Readiness, not as a silent rewrite of product rules.
 
 ## Slicing and explicit deferrals
 
-Use these slice classifications without creating roadmap lifecycle states:
-
 | Classification | Meaning |
 |---|---|
-| V1_ACCEPTANCE_SLICE | Mandatory stories/scenarios for this capability's acceptance. |
-| FOLLOW_UP | Identified later increment; requires its own authorized scope before implementation. |
-| DEFERRED | Outside this acceptance slice; no implicit schedule or authorization. |
-
-Every identified possibility must also have one disposition:
+| V1_ACCEPTANCE_SLICE | Mandatory stories and scenarios for this capability's acceptance. |
+| FOLLOW_UP | Later increment; needs its own authorized scope. |
+| DEFERRED | Outside this acceptance slice; no implicit schedule. |
 
 | Disposition | Required record |
 |---|---|
-| SUPPORTED_NOW | Defined support in the current acceptance slice; distinguish existing proven behaviour from implementation/proof pending and cite the relevant story/evidence. This classification is not an acceptance claim. |
-| EXPLICITLY_DEFERRED | What is excluded, why, user/journey impact, and revisit dependency or owner. |
-| NOT_SUPPORTED_BY_DESIGN | Explicit product rationale and relevant authority. |
-| UNRESOLVED_DECISION_REQUIRED | Question, impact, and human decision owner; material uncertainty blocks the affected gate/story. |
+| SUPPORTED_NOW | Defined support in the current slice, with story or evidence. Not an acceptance claim by itself. |
+| EXPLICITLY_DEFERRED | What is excluded, why, impact, and revisit owner. |
+| NOT_SUPPORTED_BY_DESIGN | Explicit product rationale and authority. |
+| UNRESOLVED_DECISION_REQUIRED | Question, impact, and human decision owner. |
 
-Slice classification and disposition answer different questions: what is mandatory for this
-acceptance, and what support is intended or excluded. Record implementation/evidence status
-separately so planned support cannot masquerade as accepted reality. A missing product decision
-remains `UNRESOLVED_DECISION_REQUIRED`. There is no silent deferral or invented accepted promise.
+## Definition of Done
 
-## Definition of Done and acceptance
+A story is complete only when applicable evidence shows implementation of every mandatory
+acceptance scenario, required experience and content proof, authorization, persistence, recovery,
+concurrency where relevant, accessibility and responsive proof, affected Golden Journeys, and
+updated traceability. `STORY_COMPLETE != IMP_ACCEPTED`.
 
-A story is complete only when applicable evidence shows:
+## Pre-GTM experience audit
 
-- Implementation complete and every mandatory AC proven; required UX states complete.
-- Authorization positive and negative proof; persistence proof where relevant.
-- Error/recovery proof and concurrency proof where relevant.
-- Accessibility and relevant browser E2E proof.
-- Affected required Golden Journeys and relevant regression pass.
-- Documentation and traceability updated; no undocumented deviation.
+Before public GTM / IMP-040 acceptance, perform
+`PRE_GTM_CUSTOMER_EXPERIENCE_PRODUCT_LANGUAGE_AND_INSTRUMENTATION_AUDIT` under EXP-1. Findings go
+to the Experience Debt Register. The audit does not reopen historical acceptance. PD-1's Journey
+Gap Audit requirement is expanded by this audit, not discarded. The audit is not performed by
+adopting PD-2.
 
-Use [`TESTING.md`](./TESTING.md) for layer selection, behavioural coverage, flake handling, and
-evidence. Explain any inapplicable proof. The Product Definition identifies mandatory journeys from
-the [Golden Journey registry](./product/golden-journeys.md); the registry alone does not add scope.
+## IMP-036J transition
 
-`STORY_COMPLETE != IMP_ACCEPTED`. IMP implementation complete requires every mandatory story in
-the acceptance slice plus affected required Golden Journeys. `COMPLETE_AND_ACCEPTED` continues to
-require independent acceptance, Founder UAT where mandated, and canonical reconciliation. Record
-`FOUNDER_UAT_REQUIRED = YES | NO` with rationale; only the founder supplies the interactive verdict.
-Exact-candidate and Podman staging requirements remain in AGENTS. A local green run is not UAT.
+IMP-036J is the first current X3 capability transitioning into PD-2. Its Product Definition
+`PD-IMP-036J-DRAFT-6` stays approved and its Product Definition Gate stays `PASS`. Experience
+Definition and Experience Gate were not performed under PD-1. Architecture Fit stays
+`NOT_PERFORMED` until Experience Gate `PASS`. An unmerged Architecture Fit candidate may exist as
+investigation. It is not persisted Fit authority. Implementation stays unauthorized. The next gate
+is `EXPERIENCE_GATE`. Change Risk is recorded in ROADMAP/STATE and is not an AGENTS risk level.
 
 ## AI execution and documentation efficiency
 
 **MINIMUM_SUFFICIENT_CONTEXT** means enough verified authority to perform and review the bounded
-task, with no repeated unrelated history. Prompts should carry task/story IDs, exact authority
-versions / SHA / tree (and working-tree fingerprint where required), acceptance criteria, affected
-invariants, allowed/forbidden scope, and expected evidence. Reference canonical repository paths
-instead of pasting whole documents.
+task, with no repeated unrelated history. Prompts should carry task and story IDs, exact authority
+versions, SHA, tree, and working-tree fingerprint where required, acceptance criteria, affected
+invariants, allowed and forbidden scope, and expected evidence.
 
-Do not repeatedly paste whole ROADMAP, STATE, ARCHITECTURE, governance history, prior accepted
-reports, or unrelated capability architecture. For large authorities, verify metadata/version,
-search targeted terms, and read relevant sections/ranges while still proving applicable authority.
-Preserve AGENTS' hard prompt-size ceiling and all safety/provenance requirements.
+First review covers the full relevant slice. Follow-up review covers previous approved SHA to new
+SHA, changed files, affected invariants, and new evidence. Reports return changed facts, evidence,
+exceptions, SHA or tree, and unresolved items.
 
-First review covers the full relevant slice. Follow-up review covers previous approved SHA → new
-SHA, changed files, affected invariants, and new evidence; include content fingerprints for
-uncommitted candidates. Widen review when the change affects previously approved assumptions.
-Reports return **changed facts, evidence, exceptions, SHA/tree, and unresolved items**, preserving
-required reporting fields without repeating unchanged history.
-
-Bundle authorized machine work until the next genuine human decision boundary:
-
-```text
-implement → focused tests → relevant regression → validation → commit → return once
-```
-
-When each applicable promotion action is authorized, continue through push → PR → wait for
-exact-head CI → return once. Push authorization alone does not authorize PR creation, merge, or
-deployment; independent promotion gates remain in force. Context efficiency never permits guessed
-product, security, or business decisions. Keep durable definitions and evidence links in their
-canonical artifacts; record material deviations explicitly and reconcile only through authorized
-governance gates.
+Bundle authorized machine work until the next genuine human decision boundary. Context efficiency
+never permits guessed product, security, payment, or business decisions.

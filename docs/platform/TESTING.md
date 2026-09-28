@@ -4,7 +4,7 @@
   "authority": "VERIFICATION_POLICY",
   "version": "TEST-1",
   "effectiveFrom": "IMP-036F for new story-based delivery",
-  "lastReviewed": "2026-09-23"
+  "lastReviewed": "2026-09-28"
 }
 -->
 
@@ -36,11 +36,12 @@ Definition `PD-IMP-036H-DRAFT-1` = `APPROVED`; Product Definition Gate
 `PASS`; Architecture Fit `PASS`; architecture `LOCKED`; implementation
 `AUTHORIZED` / `STARTED` / `COMPLETE`; `IMP036H_IMPLEMENTATION_COMPLETE: YES`;
 `IMP036H_ACCEPTED: YES`; `IMP036H_FOUNDER_UAT: PASS`; `IMP036H_FORMAL_ACCEPTANCE: ACCEPTED`
-(acceptance provenance GTM-R147 / STATE-R145); CURRENT tip GTM-R169 / STATE-R167 (prior tip GTM-R168 / STATE-R166; prior tip GTM-R167 / STATE-R165; prior tip GTM-R166 / STATE-R164; prior tip GTM-R165 / STATE-R163; prior tip GTM-R164 / STATE-R162; prior tip GTM-R162 / STATE-R160; prior tip GTM-R161 / STATE-R159; prior tip GTM-R156 / STATE-R154; prior tip GTM-R155 / STATE-R153; prior tip GTM-R154 / STATE-R152; prior tip GTM-R153 / STATE-R151; prior tip GTM-R152 / STATE-R150; prior tip GTM-R151 / STATE-R149; prior tip GTM-R150 / STATE-R148; prior tip GTM-R149 / STATE-R147);
+(acceptance provenance GTM-R147 / STATE-R145); CURRENT tip GTM-R170 / STATE-R168 (prior tip GTM-R169 / STATE-R167; prior tip GTM-R168 / STATE-R166; prior tip GTM-R167 / STATE-R165; prior tip GTM-R166 / STATE-R164; prior tip GTM-R165 / STATE-R163; prior tip GTM-R164 / STATE-R162; prior tip GTM-R162 / STATE-R160; prior tip GTM-R161 / STATE-R159; prior tip GTM-R156 / STATE-R154; prior tip GTM-R155 / STATE-R153; prior tip GTM-R154 / STATE-R152; prior tip GTM-R153 / STATE-R151; prior tip GTM-R152 / STATE-R150; prior tip GTM-R151 / STATE-R149; prior tip GTM-R150 / STATE-R148; prior tip GTM-R149 / STATE-R147);
 `acceptedThrough` = IMP-036I; `currentProductSlice` = IMP-036J;
 `pendingAcceptance` = NONE; `nextProductSlice` = IMP-037; `IMP036I_ACTIVATED: YES`;
 `IMP036J_ACTIVATED: YES`; `IMP036J_PRODUCT_DEFINITION: APPROVED`
-(`PD-IMP-036J-DRAFT-6`; Product Definition Gate `PASS`; Architecture Fit `NOT_PERFORMED`;
+(`PD-IMP-036J-DRAFT-6`; Product Definition Gate `PASS`; Experience Criticality `X3`;
+Experience Gate `NOT_PERFORMED`; next gate `EXPERIENCE_GATE`; Architecture Fit `NOT_PERFORMED`;
 implementation `NOT_AUTHORIZED`; implementation proof `NOT_EXECUTED`);
 `IMP036I_PRODUCT_DEFINITION: APPROVED` (`PD-IMP-036I-DRAFT-4`);
 `IMP036I_PRODUCT_DEFINITION_GATE: PASS` (independent review `5307761142`); Architecture Fit
@@ -180,6 +181,33 @@ Only the founder/user can provide `FOUNDER_UAT = PASS`; `COMPLETE_AND_ACCEPTED` 
 where mandated.
 
 A Journey Gap Audit of previously implemented product journeys is required before public GTM
-cutover / IMP-040 acceptance. **The audit is not performed in Session 1.** It must later identify
-missing journey behaviour and evidence for explicit disposition without retroactively rewriting
-accepted IMPs or silently authorizing deferred capabilities.
+cutover / IMP-040 acceptance. **The audit is not performed in Session 1.** PD-2 expands that
+requirement into `PRE_GTM_CUSTOMER_EXPERIENCE_PRODUCT_LANGUAGE_AND_INSTRUMENTATION_AUDIT` under
+EXP-1. It must later identify missing journey, language, and measurement evidence for explicit
+disposition without retroactively rewriting accepted IMPs or silently authorizing deferred
+capabilities.
+
+## Pre-implementation Quality Plan
+
+Before implementation authorization, the Quality Plan names expected proof for mandatory product
+acceptance scenarios, applicable experience requirements (`XR-<IMP>-NNN` when used), security and
+authorization, persistence, concurrency, recovery, accessibility, responsive behaviour, content,
+and performance where the Quality Attribute Profile says it is required. Planned proof is not
+executed proof. This section does not replace acceptance-scenario coverage with a universal
+percentage target. Existing meaningful-coverage rules in this document stay in force.
+
+## Experience, content, and CR-sensitive proof
+
+Where X2/X3 applies, evidence distinguishes:
+
+- Functional QA: approved behaviour works.
+- Experience QA: the approved interaction was delivered and the journey is coherent.
+- Content QA: language is intentional, correct, and free of raw backend leakage under LANG-1.
+- Accessibility and responsive proof: keyboard, focus, semantics, and supported viewports.
+- Performance proof where applicable.
+- Security and abuse proof where Change Risk is CR2/CR3 or the work is abuse-sensitive.
+
+Change Risk `CR0`–`CR3` selects verification rigor. It is not the AGENTS `R0`–`R3` execution
+scale. An analytics event that is part of the measurement plan needs validation of its trigger and
+forbidden attributes. Production smoke evidence, when a release occurs, references the post-release
+checks in PD-2. This policy does not weaken existing security or concurrency rules.

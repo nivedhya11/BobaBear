@@ -14,7 +14,9 @@ Read these first. They are the only CURRENT answers to their owned questions:
 | [`VISION.md`](./VISION.md) | WHY — product intent / GTM outcome / Non-Goals |
 | [`ROADMAP.md`](./ROADMAP.md) | WHEN — IMP identity / sequence / lifecycle / GTM boundary |
 | [`STATE.md`](./STATE.md) | Accepted/current reality |
-| [`PRODUCT-DELIVERY.md`](./PRODUCT-DELIVERY.md) | HOW product work is defined/delivered (PD-1) |
+| [`PRODUCT-DELIVERY.md`](./PRODUCT-DELIVERY.md) | HOW product work is defined/delivered (PD-2) |
+| [`EXPERIENCE.md`](./EXPERIENCE.md) | Experience intent, criticality, Experience Gate, Design Readiness (EXP-1) |
+| [`PRODUCT-LANGUAGE.md`](./PRODUCT-LANGUAGE.md) | Customer and operator presentation language (LANG-1) |
 | [`product/`](./product/README.md) | WHO / JOURNEYS / STORIES — personas, Golden Journeys, per-IMP Product Definitions |
 | [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Technical invariants / current durable global architecture |
 | [`decision-register.md`](./decision-register.md) | Binding decisions (+ ADR status) |
@@ -28,13 +30,10 @@ Read these first. They are the only CURRENT answers to their owned questions:
 compression. Agents and humans should read history only when historical acceptance, provenance, or
 revision evidence is materially required.
 
-Delivery process for new substantial product work from IMP-036F:
-
-```text
-ANCHOR → DISCOVER → STORY_MAP → PRODUCT_DEFINITION_GATE → ARCHITECTURE_FIT
-→ IMPLEMENT → PROVE → INDEPENDENT_REVIEW → FOUNDER_UAT (when required)
-→ ACCEPT → RECONCILE → ADVANCE
-```
+Delivery process for new substantial product work from IMP-036F is PD-2. The full lifecycle is in
+[`PRODUCT-DELIVERY.md`](./PRODUCT-DELIVERY.md). It includes Experience Strategy, Experience Gate,
+Design Readiness, Quality and Measurement plans, functional and experience QA, Founder functional
+and experience UAT, Production Readiness, post-release verification, and learning.
 
 These are process phases, not new ROADMAP lifecycle states. IMP-036E retains its existing lifecycle;
 historical acceptance is not rewritten. Product behaviour is defined before architecture fit;
@@ -48,16 +47,22 @@ PD1_DID_NOT_ACTIVATE_IMP036F_AT_ADOPTION = YES
 ```
 
 PD-1 did not itself activate IMP-036F when introduced; read current activation from
-[`ROADMAP.md`](./ROADMAP.md) / [`STATE.md`](./STATE.md). A per-IMP
+[`ROADMAP.md`](./ROADMAP.md) / [`STATE.md`](./STATE.md). PD-2 is prospective and does not rewrite
+accepted IMPs. A per-IMP
 [Product Definition](./product/templates/product-definition-template.md) is mandatory from
-IMP-036F. PD-1 requires a Journey Gap Audit before public GTM cutover / IMP-040 acceptance;
-that audit is not performed in Session 1. TEST-1's CI restructuring is TARGET until Session 3
-implements it; this index makes no claim of full current CI enforcement.
+IMP-036F. X2/X3 work also uses an
+[Experience Definition](./product/templates/experience-definition-template.md). A pre-GTM
+experience, product-language, and instrumentation audit is required before public GTM cutover /
+IMP-040 acceptance; adopting PD-2 does not perform that audit. TEST-1 remains the verification
+policy. TEST-1's CI restructuring is TARGET until Session 3 implements it; this index makes no
+claim of full current CI enforcement. GitHub branch protection on `main` is not currently
+enforced; PD-2 still requires CI and CodeQL evidence before merge as process authority.
 
 Machine check: `npm run project:consistency`.
 
 Governance fingerprint (`npm run governance:fingerprint`) covers CURRENT authorities including
-`PRODUCT-DELIVERY.md` (PD-1), `TESTING.md` (TEST-1), all tracked Markdown under
+`PRODUCT-DELIVERY.md` (PD-2), `EXPERIENCE.md` (EXP-1), `PRODUCT-LANGUAGE.md` (LANG-1),
+`TESTING.md` (TEST-1), all tracked Markdown under
 [`product/`](./product/) recursively, all tracked Markdown under [`history/`](./history/)
 recursively, plus the existing canonical/supporting governance set.
 AGENTS is the agent execution contract; CLOSED historical one-active-slice exception detail lives
@@ -78,12 +83,13 @@ For IMP-036F onward, matching AGENTS:
 4. [`STATE.md`](./STATE.md)
 5. [`PRODUCT-DELIVERY.md`](./PRODUCT-DELIVERY.md)
 6. Relevant per-IMP Product Definition under [`product/`](./product/README.md)
-7. [`ARCHITECTURE.md`](./ARCHITECTURE.md)
-8. [`decision-register.md`](./decision-register.md)
-9. Relevant capability architecture under [`capabilities/`](./capabilities/) / ADRs under [`decisions/`](./decisions/)
-10. [`TESTING.md`](./TESTING.md)
-11. Task specification / relevant code
-12. [`accepted-foundation-operating-rules.md`](./accepted-foundation-operating-rules.md) when touching accepted foundations; other supporting/historical documents as needed
+7. For X2/X3: [`EXPERIENCE.md`](./EXPERIENCE.md), the per-IMP Experience Definition, and [`PRODUCT-LANGUAGE.md`](./PRODUCT-LANGUAGE.md)
+8. [`ARCHITECTURE.md`](./ARCHITECTURE.md)
+9. [`decision-register.md`](./decision-register.md)
+10. Relevant capability architecture under [`capabilities/`](./capabilities/) / ADRs under [`decisions/`](./decisions/)
+11. [`TESTING.md`](./TESTING.md)
+12. Task specification / relevant code
+13. [`accepted-foundation-operating-rules.md`](./accepted-foundation-operating-rules.md) when touching accepted foundations; other supporting/historical documents as needed
 
 For IMP-036E and earlier, retain the prior authority order with new process/Product Definition/
 testing-policy steps omitted where `N/A — PRE-PD-1` applies. Large authorities can be verified
@@ -136,7 +142,7 @@ through metadata, targeted searches, and relevant ranges, as described in PD-1.
 | [`engineering/change-workflow.md`](./engineering/change-workflow.md) | SUPPORTING | Bounded task, evidence, review, and promotion workflow; does not alter product acceptance authority |
 | [`testing/`](./testing/README.md) | SUPPORTING ENGINEERING EVIDENCE | Repeatable test inventory, TEST-1 baseline, and CI gap analysis. Policy authority remains [`TESTING.md`](./TESTING.md). Does not activate IMP-036F or change acceptance. |
 | [`experience/enterprise-experience/`](./experience/enterprise-experience/) | SUPPORTING PROGRAMME CONTRACT | Enterprise Experience Programme and IMP-036A–G experience contracts. Per-slice lifecycle authority = ROADMAP / STATE / relevant capability artifact; this index does not independently restate slice status. |
-| [`experience/`](./experience/) | **SUPPORTING PRODUCT / EXPERIENCE MATERIAL** | BOBA Direct UX, brand, detailed [customer journey](./experience/customer-journey.md), gap map, and research. The [Food Direct planning lock](./experience/food-direct-product-architecture-lock.md) is supporting rationale. Per-slice lifecycle authority = ROADMAP / STATE / relevant capability artifact. Dated support/gap claims are historical observations, not current status. Binding decisions remain in decision-register; prospective product artifacts are indexed in [product/](./product/README.md). Index: [`experience/README.md`](./experience/README.md). |
+| [`experience/`](./experience/) | **SUPPORTING PRODUCT / EXPERIENCE MATERIAL** | BOBA Direct UX, brand, detailed [customer journey](./experience/customer-journey.md), gap map, and research. The [Food Direct planning lock](./experience/food-direct-product-architecture-lock.md) is supporting rationale. Canonical experience and language authorities are [`EXPERIENCE.md`](./EXPERIENCE.md) (EXP-1) and [`PRODUCT-LANGUAGE.md`](./PRODUCT-LANGUAGE.md) (LANG-1), outside this pack. Per-slice lifecycle authority = ROADMAP / STATE / relevant capability artifact. Dated support/gap claims are historical observations, not current status. Binding decisions remain in decision-register; prospective product artifacts are indexed in [product/](./product/README.md). Index: [`experience/README.md`](./experience/README.md). |
 
 ## Superseded sequencing authority
 

@@ -62,6 +62,8 @@ describe("governance fingerprint", () => {
 
     const manifest = parseManifest(stdout);
     assert.ok(manifest.includes("docs/platform/PRODUCT-DELIVERY.md"));
+    assert.ok(manifest.includes("docs/platform/EXPERIENCE.md"));
+    assert.ok(manifest.includes("docs/platform/PRODUCT-LANGUAGE.md"));
     assert.ok(manifest.includes("docs/platform/TESTING.md"));
 
     const productMd = trackedMarkdownUnder("docs/platform/product");

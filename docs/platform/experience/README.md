@@ -12,6 +12,16 @@ Source checkpoint: HEAD ddca0c319a5e80b2cfe38a2c32481b636277010e
 
 # BOBA Direct — Supporting Product / Experience Material
 
+Canonical experience and language authorities live outside this pack:
+
+- [`../EXPERIENCE.md`](../EXPERIENCE.md) — EXPERIENCE_DELIVERY_STANDARD, EXP-1
+- [`../PRODUCT-LANGUAGE.md`](../PRODUCT-LANGUAGE.md) — PRODUCT_LANGUAGE_STANDARD, LANG-1
+
+[`terminology.md`](./terminology.md), [`direct-ux-north-star.md`](./direct-ux-north-star.md), and
+[`customer-journey.md`](./customer-journey.md) remain source and reference material. This pack is
+not relabelled as those authorities. Historical documents here stay supporting unless a CURRENT
+authority explicitly promotes a specific statement.
+
 ## Current supporting plans
 
 - [`enterprise-experience/`](./enterprise-experience/) — Enterprise Experience Programme and seven

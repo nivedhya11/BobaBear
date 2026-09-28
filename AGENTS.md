@@ -12,28 +12,59 @@ This file is the **sole agent operating contract**. It points to canonical autho
 independent roadmap, state, vision, or architecture authority. Do not create a competing governance
 document or duplicate rule source. `CLAUDE.md` delegates here.
 
-Product delivery process for new substantial product work from IMP-036F onward:
+Product delivery process for new substantial product work from IMP-036F onward is PD-2. The
+canonical method is [`PRODUCT-DELIVERY.md`](docs/platform/PRODUCT-DELIVERY.md). Experience is
+[`EXPERIENCE.md`](docs/platform/EXPERIENCE.md) (EXP-1). Product language is
+[`PRODUCT-LANGUAGE.md`](docs/platform/PRODUCT-LANGUAGE.md) (LANG-1).
 
 ```text
-ANCHOR → DISCOVER → STORY_MAP → PRODUCT_DEFINITION_GATE → ARCHITECTURE_FIT
-→ IMPLEMENT → PROVE → INDEPENDENT_REVIEW → FOUNDER_UAT (when required)
-→ ACCEPT → RECONCILE → ADVANCE
+ANCHOR
+→ REQUIREMENT / OPPORTUNITY INTAKE
+→ DISCOVERY
+→ EXPERIENCE STRATEGY
+→ JOURNEY + STORY MAP
+→ PRODUCT DEFINITION + EXPERIENCE DEFINITION
+→ PRODUCT DEFINITION GATE + EXPERIENCE GATE
+→ ARCHITECTURE FIT
+→ ARCHITECTURE LOCK
+→ DESIGN READINESS
+→ IMPLEMENTATION PLAN
+→ IMPLEMENTATION AUTHORIZATION
+→ SMALL IMPLEMENTATION TRANCHES
+→ CONTINUOUS MACHINE PROOF
+→ FUNCTIONAL QA + EXPERIENCE QA + CONTENT QA
+→ INDEPENDENT IMPLEMENTATION REVIEW
+→ STAGING RELEASE CANDIDATE
+→ FOUNDER UAT
+→ FORMAL ACCEPTANCE
+→ PRODUCTION READINESS GATE
+→ PRODUCTION RELEASE
+→ POST-RELEASE VERIFICATION
+→ OBSERVE / MEASURE / EXPERIMENT
+→ LEARN / NEW DISCOVERY
+→ RECONCILE
+→ ADVANCE
 ```
 
-These are delivery process phases, not new ROADMAP lifecycle states. The canonical method is
-[`PRODUCT-DELIVERY.md`](docs/platform/PRODUCT-DELIVERY.md). IMP-036E and earlier retain their
-existing lifecycle (`ANCHOR → GATE → EXECUTE → PROVE → ACCEPT → RECONCILE → ADVANCE`).
+These are delivery process phases, not new ROADMAP lifecycle states. IMP-036E and earlier retain
+their existing lifecycle (`ANCHOR → GATE → EXECUTE → PROVE → ACCEPT → RECONCILE → ADVANCE`).
+Historical accepted IMPs are not rewritten.
 
 ```text
+PRODUCT_DELIVERY_PROCESS = PD-2
+EXPERIENCE_STANDARD = EXP-1
+PRODUCT_LANGUAGE_STANDARD = LANG-1
 PRODUCT_DELIVERY_PROCESS_EFFECTIVE_FROM = IMP-036F
 HISTORICAL_ACCEPTED_IMPS_REWRITTEN = NO
 IMP036E_LIFECYCLE_CHANGED = NO
 PD1_DID_NOT_ACTIVATE_IMP036F_AT_ADOPTION = YES
+CR_SCALE_ORTHOGONAL_TO_AGENTS_R0_R3 = YES
 ```
 
 PD-1 did not itself activate IMP-036F when introduced. IMP-036F activation is governed by CURRENT
 [`ROADMAP.md`](docs/platform/ROADMAP.md) / [`STATE.md`](docs/platform/STATE.md)
-(`IMP036F_ACTIVATED`). Read current lifecycle truth only from those authorities.
+(`IMP036F_ACTIVATED`). Read current lifecycle truth only from those authorities. PD-2 is
+prospective. IMP-036J is the first current slice transitioning into it.
 
 ## Canonical authorities
 
@@ -44,9 +75,11 @@ PD-1 did not itself activate IMP-036F when introduced. IMP-036F activation is go
 | Which decisions are binding | [`docs/platform/decision-register.md`](docs/platform/decision-register.md) |
 | IMP identity / sequence / GTM boundary | [`docs/platform/ROADMAP.md`](docs/platform/ROADMAP.md) |
 | Independently accepted reality | [`docs/platform/STATE.md`](docs/platform/STATE.md) |
-| How product work is defined/delivered | [`docs/platform/PRODUCT-DELIVERY.md`](docs/platform/PRODUCT-DELIVERY.md) |
+| How product work is defined/delivered | [`docs/platform/PRODUCT-DELIVERY.md`](docs/platform/PRODUCT-DELIVERY.md) (PD-2) |
+| Experience intent, criticality, and experience gates | [`docs/platform/EXPERIENCE.md`](docs/platform/EXPERIENCE.md) (EXP-1) |
+| Customer and operator language | [`docs/platform/PRODUCT-LANGUAGE.md`](docs/platform/PRODUCT-LANGUAGE.md) (LANG-1) |
 | Personas / journeys / per-IMP stories | [`docs/platform/product/README.md`](docs/platform/product/README.md) and relevant Product Definition |
-| How behaviour is proven | [`docs/platform/TESTING.md`](docs/platform/TESTING.md) |
+| How behaviour is proven | [`docs/platform/TESTING.md`](docs/platform/TESTING.md) (TEST-1) |
 | Agent rules (this file) | `AGENTS.md` |
 | Accepted foundation operating constraints | [`docs/platform/accepted-foundation-operating-rules.md`](docs/platform/accepted-foundation-operating-rules.md) (SUPPORTING) |
 
@@ -70,6 +103,18 @@ For IMP-036F onward:
 10. `docs/platform/TESTING.md`
 11. Current task specification and relevant implementation code
 12. Supporting foundation operating rules when touching accepted foundations
+
+For X2/X3 work, also read, in this order after lifecycle position is known:
+
+1. `docs/platform/PRODUCT-DELIVERY.md`
+2. The per-IMP Product Definition
+3. `docs/platform/EXPERIENCE.md`
+4. The per-IMP Experience Definition when it exists
+5. `docs/platform/PRODUCT-LANGUAGE.md`
+6. `docs/platform/ARCHITECTURE.md`
+7. `docs/platform/decision-register.md`
+8. Relevant capability architecture
+9. `docs/platform/TESTING.md`
 
 For IMP-036E and earlier, retain the existing authority order by omitting the new process,
 Product Definition, and testing-policy steps where `N/A — PRE-PD-1` applies. Engineering-only
@@ -130,6 +175,18 @@ work_continuing_elsewhere:
 | **R1** | `BOUNDED_ENGINEERING` | Implementation agent owns inspect → plan → edit → test → diagnose → same-scope repair → validate within authorized scope. Do not stop for every newly exposed same-class defect inside that scope. Use compact R1 alignment and completion reporting. |
 | **R2** | `CONTRACT_SENSITIVE` | Product behaviour, public/domain contracts, payment, auth/security, persistence authority / schema strategy, concurrency semantics, provider policy, architecture/topology. Investigate autonomously; implement only when intended binding semantics are explicitly defined by canonical authority and the current authorized task; stop before inventing undefined binding behaviour or resolving canonical conflicts by assumption. Independent ChatGPT review is for material milestones, RED decisions, and pre-acceptance / consequential promotion — not every conforming GREEN/AMBER implementation PR. Full alignment and session-close reporting. |
 | **R3** | `CONSEQUENTIAL` | Force push / history rewrite; production or destructive data operations; lifecycle or product acceptance; Founder UAT verdict; activating next IMPs; accepting IMPs; deployment/release that is not covered by an explicit Founder delivery authorization. Require explicit human authorization. Routine GREEN/AMBER PR merges may proceed autonomously when the task contract / Founder delivery authorization for an active locked slice explicitly permits them (after required quality gates). |
+
+`R0`–`R3` are agent execution and autonomy levels only. Feature and change delivery risk uses a
+separate scale in PD-2: `CR0` STANDARD, `CR1` ELEVATED, `CR2` HIGH, `CR3` CRITICAL. Experience
+Criticality `X0`–`X3` is a third scale. Do not map CR values onto R values, and do not treat a low
+X class as a low CR class.
+
+```text
+AGENTS_EXECUTION_RISK_SCALE = R0 | R1 | R2 | R3
+CR_SCALE = CR0 | CR1 | CR2 | CR3
+CR_SCALE_ORTHOGONAL_TO_AGENTS_R0_R3 = YES
+X_SCALE_ORTHOGONAL_TO_AGENTS_R0_R3 = YES
+```
 
 ### Risk escalation
 
@@ -409,9 +466,9 @@ acceptance remain R3 (human).
 
 For prospective story delivery, follow [`PRODUCT-DELIVERY.md`](docs/platform/PRODUCT-DELIVERY.md)
 and [`TESTING.md`](docs/platform/TESTING.md) for readiness, completion, and behavioural evidence.
-A Journey Gap Audit of previously implemented product journeys is required before public GTM
-cutover / IMP-040 acceptance. Session 1 establishes the requirement; it does not perform the audit
-or rewrite historical acceptance.
+A pre-GTM customer experience, product language, and instrumentation audit is required before
+public GTM cutover / IMP-040 acceptance. PD-2 expands the Journey Gap Audit requirement. Adoption
+does not perform the audit or rewrite historical acceptance.
 
 ### AI context and handoff efficiency
 
@@ -534,6 +591,23 @@ DEFAULT_DEVELOPMENT_BRANCH = main
 - Git history and merged pull requests are the historical archive. Never delete genuinely required
   unique unmerged work without first explicitly resolving it.
 
+### Post-merge local branch hygiene
+
+After a merged task and post-merge checks:
+
+```text
+git switch main
+git fetch origin --prune
+git pull --ff-only
+git branch -d <completed-task-branch>
+```
+
+If `git branch -d` refuses, do not immediately force-delete. Inspect PR lifecycle,
+`git cherry origin/main <branch>`, and unique commits. Only after the branch is proven merged,
+patch-equivalent, or deliberately superseded may `git branch -D <branch>` be used. Delete an
+obsolete remote task branch where repository policy permits. Do not blindly force-delete every
+branch. Do not delete an active unmerged branch that still holds required unique work.
+
 ## Working-tree fingerprint
 
 Canonical command: `npm run working-tree:fingerprint` (`scripts/working-tree-fingerprint.mjs`).
@@ -607,6 +681,10 @@ WORKING_TREE_FINGERPRINT
   deployed image ID does not match the running container image ID, founder UAT must not proceed.
 - Only the founder/user may provide the final interactive UAT verdict. Implementation agents must
   never self-declare `FOUNDER_UAT = PASS`.
+- Where Founder UAT is required under PD-2, `FOUNDER_UAT = FUNCTIONAL_UAT + EXPERIENCE_UAT`.
+  Experience UAT considers discoverability, first impression, hesitation, clarity, trust, friction,
+  recovery, content, mobile behaviour, brand coherence, and Experience Intent. This does not weaken
+  exact-candidate provenance.
 - Governance-only, documentation-only, architecture-definition, repository-maintenance, and internal
   tooling tasks with no interactive acceptance surface do not automatically require Podman/founder
   UAT. Record applicability explicitly as `FOUNDER_UAT_REQUIRED = YES | NO` in the relevant future

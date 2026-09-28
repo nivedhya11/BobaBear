@@ -48,9 +48,11 @@ IMP036F_ACTIVATED = NO
    new evidence. Widen review when changed authority requires it. Ask: “Identify the three most
    plausible defects or invariant violations in this diff.”
 10. Merge only when separately authorized.
-11. After merging an authorized task branch, verify its exact tip is contained in `main`, then delete
-    the completed task branch locally and remotely. Do not delete a branch that still contains
-    unique/unmerged commits; preserve it until that work is reconciled.
+11. After merging an authorized task branch and completing post-merge checks, switch to `main`,
+    `git fetch origin --prune`, `git pull --ff-only`, then `git branch -d <completed-task-branch>`.
+    If `-d` refuses, inspect PR lifecycle, `git cherry origin/main <branch>`, and unique commits
+    before any `git branch -D`. Force-delete only when the branch is proven merged, patch-equivalent,
+    or deliberately superseded. Do not delete a branch that still contains unique unmerged work.
 12. When applicable, prepare an immutable artifact under the existing provenance rules; obtain
     deployment authorization before deploying it. Required independent technical acceptance must
     precede UAT deployment.

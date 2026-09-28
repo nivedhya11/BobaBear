@@ -2,13 +2,13 @@
 {
   "status": "CURRENT",
   "authority": "IMPLEMENTATION_SEQUENCE",
-  "roadmapVersion": "GTM-R169",
+  "roadmapVersion": "GTM-R170",
   "acceptedThrough": "IMP-036I",
   "currentProductSlice": "IMP-036J",
   "nextProductSlice": "IMP-037",
   "gtmBoundary": "IMP-040",
   "lastReviewed": "2026-09-28",
-  "supersedes": "GTM-R168"
+  "supersedes": "GTM-R169"
 }
 -->
 
@@ -34,7 +34,7 @@
   change) before the next slice begins: **ACCEPT → RECONCILE → ADVANCE**.
 - The historical IMP-026 → IMP-028 controlled-continuation exception (GTM-R15 onward) is **CLOSED**.
   It does **not** generalize to future slices and is **not** reopened by GTM-R138 / GTM-R139 /
-  GTM-R140 / GTM-R141 / GTM-R142 / GTM-R143 / GTM-R144 / GTM-R145 / GTM-R146 / GTM-R147 / GTM-R148 / GTM-R149 / GTM-R150 / GTM-R151 / GTM-R152 / GTM-R153 / GTM-R154 / GTM-R155 / GTM-R156 / GTM-R157 / GTM-R158 / GTM-R159 / GTM-R160 / GTM-R161 / GTM-R162 / GTM-R163 / GTM-R164 / GTM-R165 / GTM-R166 / GTM-R167 / GTM-R168 / GTM-R169.
+  GTM-R140 / GTM-R141 / GTM-R142 / GTM-R143 / GTM-R144 / GTM-R145 / GTM-R146 / GTM-R147 / GTM-R148 / GTM-R149 / GTM-R150 / GTM-R151 / GTM-R152 / GTM-R153 / GTM-R154 / GTM-R155 / GTM-R156 / GTM-R157 / GTM-R158 / GTM-R159 / GTM-R160 / GTM-R161 / GTM-R162 / GTM-R163 / GTM-R164 / GTM-R165 / GTM-R166 / GTM-R167 / GTM-R168 / GTM-R169 / GTM-R170.
 - **GTM-R138** records a **NEW**, Founder-authorized one-off exception
   `CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038` (authority PR#179/5771367844) so
   IMP-038 may activate for PD-1 Product Definition work while IMP-037 remains an
@@ -74,6 +74,16 @@
   exact-head review findings `4115981679` and `4115981682` on unmerged pull request #312
   reopened the acceptance slice. Gate PASS was not persisted. Canonical main never recorded
   DRAFT-3 as APPROVED. DRAFT-4 supersedes DRAFT-3.
+- **GTM-R170** adopts Product Delivery PD-2, Experience standard EXP-1, and Product Language
+  standard LANG-1. It does not change IMP-036J product semantics. `PD-IMP-036J-DRAFT-6` stays
+  `APPROVED`. Product Definition Gate stays `PASS`. Experience Criticality is `X3`. Change Risk is
+  `CR2` because promotions, coupons, and offers change customer-payable outcomes and are not
+  payment capture, refund calculation, or authentication. Experience Definition is `REQUIRED` and
+  `NOT_PERFORMED`. Experience Gate is `NOT_PERFORMED`. Design Readiness is `NOT_PERFORMED`.
+  Architecture Fit stays `NOT_PERFORMED` and unlocked. Any unmerged Architecture Fit candidate is
+  investigation only and is not persisted Fit authority. Implementation stays unauthorized.
+  `nextGate` is `EXPERIENCE_GATE`. `acceptedThrough` stays IMP-036I. No D-383 is created. ARCH-R23
+  is unchanged. IMP-037 and IMP-038 stay held. Historical acceptance is not reopened.
 - **GTM-R169** records Founder approval and independent Product Definition Gate PASS for
   `PD-IMP-036J-DRAFT-6`. The version stays `PD-IMP-036J-DRAFT-6`. Status becomes `APPROVED`.
   `IMP036J_PRODUCT_DEFINITION` becomes `APPROVED`. `IMP036J_PRODUCT_DEFINITION_GATE` becomes
@@ -567,14 +577,43 @@ IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-6
 IMP036J_PRODUCT_DEFINITION_GATE: PASS
 IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED
 IMP036J_ARCHITECTURE_LOCKED: NO
+IMP036J_ARCHITECTURE_FIT_CANDIDATE_AUTHORITY: NOT_PERSISTED
 IMP036J_IMPLEMENTATION_AUTHORIZED: NO
 FD-036J-03: APPROVED 2026-09-28
 IMP036J_STARTED: NO
 IMP036J_IMPLEMENTATION_STARTED: NO
 IMP036J_IMPLEMENTATION_COMPLETE: NO
 IMP036J_ACCEPTED: NO
-nextGate: ARCHITECTURE_FIT
+PRODUCT_DELIVERY_PROCESS: PD-2
+EXPERIENCE_STANDARD: EXP-1
+PRODUCT_LANGUAGE_STANDARD: LANG-1
+IMP036J_EXPERIENCE_CRITICALITY: X3
+IMP036J_CHANGE_RISK: CR2
+IMP036J_EXPERIENCE_DEFINITION: REQUIRED / NOT_PERFORMED
+IMP036J_EXPERIENCE_GATE: NOT_PERFORMED
+IMP036J_DESIGN_READINESS: NOT_PERFORMED
+IMP036J_NEXT_GATE: EXPERIENCE_GATE
+nextGate: EXPERIENCE_GATE
 ```
+
+**GTM-R170** adopts PD-2, EXP-1, and LANG-1 and moves IMP-036J's next gate to `EXPERIENCE_GATE`.
+Formal lifecycle remains `PLANNED`. `IMP036J_PRODUCT_DEFINITION` remains `APPROVED`.
+`IMP036J_PRODUCT_DEFINITION_GATE` remains `PASS`. `IMP036J_EXPERIENCE_CRITICALITY` is `X3`.
+`IMP036J_CHANGE_RISK` is `CR2`: promotions, coupons, and offers change customer-payable commercial
+outcomes, including stacking, coupon selection, and complimentary items. They do not themselves
+own payment capture, refund calculation, or authentication. `CR2` is Change Risk, not AGENTS
+execution risk `R2`. `IMP036J_EXPERIENCE_DEFINITION` is `REQUIRED / NOT_PERFORMED`.
+`IMP036J_EXPERIENCE_GATE` is `NOT_PERFORMED`. `IMP036J_DESIGN_READINESS` is `NOT_PERFORMED`.
+`IMP036J_ARCHITECTURE_FIT` remains `NOT_PERFORMED`. `IMP036J_ARCHITECTURE_LOCKED` remains `NO`.
+An unmerged Architecture Fit candidate is not persisted Fit authority.
+`IMP036J_IMPLEMENTATION_AUTHORIZED` remains `NO`. `IMP036J_STARTED` remains `NO`.
+`IMP036J_ACCEPTED` remains `NO`. `acceptedThrough` remains IMP-036I. `currentProductSlice` remains
+IMP-036J. `pendingAcceptance` remains NONE. `nextProductSlice` remains IMP-037. `nextGate` is
+`EXPERIENCE_GATE`. `IMP037_HOLD` and `IMP038_HOLD` remain YES. Architecture remains ARCH-R23.
+Decision register remains DR-23. D-377 remains CURRENT. D-382 remains CURRENT. Next decision ID
+remains D-383. No D-383 is created. No FD-036J-04 is created. Deals, Campaigns, and Revenue
+Recommendations remain parked. `GAP-EXT-ASSESS-001` remains NOT_CLOSED. Historical accepted IMPs
+are not reopened. Gate PASS is not Architecture Fit and is not Experience Gate PASS.
 
 **GTM-R169** records Product Definition approval and Gate PASS for `PD-IMP-036J-DRAFT-6`. The
 version is unchanged. Formal lifecycle remains `PLANNED`. `IMP036J_PRODUCT_DEFINITION` is
@@ -1497,7 +1536,7 @@ Historical Food Direct insertion narration remains in
 | IMP-036G | Administration Console V2 | COMPLETE_AND_ACCEPTED |
 | IMP-036H | Customer Pickup / Takeaway | COMPLETE_AND_ACCEPTED |
 | IMP-036I | Scheduled Fulfilment | COMPLETE_AND_ACCEPTED (IMP036I_ACTIVATED: YES; APPROVED; Gate PASS; Fit PASS; locked YES; implementation AUTHORIZED / STARTED / COMPLETE; IMP036I_IMPLEMENTATION_COMPLETE: YES; IMP036I_INDEPENDENT_IMPLEMENTATION_REVIEW: PASS; IMP036I_ACCEPTED: YES; IMP036I_FOUNDER_UAT: PASS; IMP036I_FORMAL_ACCEPTANCE: ACCEPTED) |
-| IMP-036J | Promotions, Coupons & Offers | PLANNED (IMP036J_ACTIVATED: YES; PRODUCT_DEFINITION APPROVED; PD-IMP-036J-DRAFT-6; Gate PASS; Fit NOT_PERFORMED; implementation NOT_AUTHORIZED; IMP036J_ACCEPTED: NO) |
+| IMP-036J | Promotions, Coupons & Offers | PLANNED (IMP036J_ACTIVATED: YES; PRODUCT_DEFINITION APPROVED; PD-IMP-036J-DRAFT-6; Gate PASS; Experience X3; Experience Gate NOT_PERFORMED; nextGate EXPERIENCE_GATE; Fit NOT_PERFORMED; implementation NOT_AUTHORIZED; IMP036J_ACCEPTED: NO) |
 | IMP-037 | Backup, Restore & Migration Readiness | IMPLEMENTATION_IN_PROGRESS (IMP037_HOLD: YES; BLOCKED_PROVIDER_ACCESS) |
 | IMP-038 | Security & Privacy Hardening | IMPLEMENTATION_IN_PROGRESS (IMP038_HOLD: YES; IMPLEMENTATION_COMPLETE / NOT_ACCEPTED; external assessment deferred) |
 | IMP-039 | Production Infrastructure & Release Pipeline | PLANNED |
