@@ -1763,7 +1763,7 @@ export function isSupportedImp030GovernanceCheckpoint(roadmapVersion, stateVersi
   const imp036iImplementationComplete = roadmapVersion === "GTM-R161" && stateVersion === "STATE-R159";
   const imp036iAcceptance = roadmapVersion === "GTM-R162" && stateVersion === "STATE-R160";
   const imp036jProductDefinitionActivation = roadmapVersion === "GTM-R163" && stateVersion === "STATE-R161";
-  const imp036jProductDefinitionDraftReady = roadmapVersion === "GTM-R167" && stateVersion === "STATE-R165";
+  const imp036jProductDefinitionDraftReady = roadmapVersion === "GTM-R168" && stateVersion === "STATE-R166";
   if (kind === "activation") return activation;
   if (kind === "lock") return lock;
   if (kind === "authorization") return authorization;
@@ -25138,7 +25138,8 @@ function checkProductDeliveryProcessAuthorities() {
       (roadmapMeta?.roadmapVersion === "GTM-R164" && stateMeta?.stateVersion === "STATE-R162") ||
       (roadmapMeta?.roadmapVersion === "GTM-R165" && stateMeta?.stateVersion === "STATE-R163") ||
       (roadmapMeta?.roadmapVersion === "GTM-R166" && stateMeta?.stateVersion === "STATE-R164") ||
-      (roadmapMeta?.roadmapVersion === "GTM-R167" && stateMeta?.stateVersion === "STATE-R165")
+      (roadmapMeta?.roadmapVersion === "GTM-R167" && stateMeta?.stateVersion === "STATE-R165") ||
+      (roadmapMeta?.roadmapVersion === "GTM-R168" && stateMeta?.stateVersion === "STATE-R166")
     );
   const atImp036hProductDefinitionActivationCheckpoint =
     roadmapMeta?.roadmapVersion === "GTM-R141" &&
@@ -38331,7 +38332,7 @@ const IMP036J_DRAFT_READY_META = {
   status: "DRAFT",
   authority: "PRODUCT_DEFINITION",
   capability: "IMP-036J",
-  productDefinitionVersion: "PD-IMP-036J-DRAFT-5",
+  productDefinitionVersion: "PD-IMP-036J-DRAFT-6",
   productDefinitionStatus: "PRE_GATE_DRAFT",
   productDefinitionGate: "NOT_PERFORMED",
   architectureFit: "NOT_PERFORMED",
@@ -38339,7 +38340,7 @@ const IMP036J_DRAFT_READY_META = {
 };
 
 const IMP036J_DRAFT_READY_BODY = {
-  PRODUCT_DEFINITION_VERSION: "PD-IMP-036J-DRAFT-5",
+  PRODUCT_DEFINITION_VERSION: "PD-IMP-036J-DRAFT-6",
   STATUS: "DRAFT",
   PRE_GATE_DRAFT: "YES",
   PRODUCT_DEFINITION_IN_PROGRESS: "YES",
@@ -38360,7 +38361,7 @@ const IMP036J_DRAFT_READY_BODY = {
 };
 
 /**
- * Leading governance-meta plus the first status fence for the ungated IMP-036J DRAFT-5 candidate.
+ * Leading governance-meta plus the first status fence for the ungated IMP-036J DRAFT-6 candidate.
  * PRE_GATE_DRAFT does not mean approval. DRAFT_READY_FOR_GATE does not mean Gate PASS.
  * @param {string} productDefinitionText
  * @returns {{ ok: true } | { ok: false, code: string, message: string }}
@@ -38674,7 +38675,8 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
     !text.includes("AC-036J-013-03 —") ||
     !text.includes("AC-036J-013-04 —") ||
     !text.includes("AC-036J-012-04 —") ||
-    !text.includes("AC-036J-012-05 —")
+    !text.includes("AC-036J-012-05 —") ||
+    !text.includes("AC-036J-012-06 —")
   ) {
     return {
       ok: false,
@@ -38694,7 +38696,7 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
       .filter((line) => !/^[A-Z0-9_]+ = /.test(line.trim()))
       .join("\n");
   const authoring = proseOf(scenarioBetween("AC-036J-012-04 —", "AC-036J-012-05 —"));
-  const singleActive = proseOf(scenarioBetween("AC-036J-012-05 —", "AC-036J-013-01 —"));
+  const singleActive = proseOf(scenarioBetween("AC-036J-012-05 —", "AC-036J-012-06 —"));
   const applied = proseOf(scenarioBetween("AC-036J-013-01 —", "AC-036J-013-02 —"));
   const purchased = proseOf(scenarioBetween("AC-036J-013-02 —", "AC-036J-013-03 —"));
   const unavailable = proseOf(scenarioBetween("AC-036J-013-03 —", "AC-036J-013-04 —"));
@@ -38746,17 +38748,41 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
       .join("\n");
   const closedScenarios = [
     [
-      scenarioBetween("AC-036J-012-05 —", "AC-036J-013-01 —"),
+      scenarioBetween("AC-036J-012-05 —", "AC-036J-012-06 —"),
       [
         "AC-036J-012-05 — Second complimentary-item Offer cannot be activated",
         "Story: US-036J-012",
         "Product authority: FD-036J-03 APPROVED 2026-09-28",
+        "Classification: SEQUENTIAL_CONFLICT",
         "Given an authorized operator on the existing commercial Promotions and coupons surface",
         "And one complimentary-item Offer is already active",
         "When the operator attempts to activate a second complimentary-item Offer",
         "Then activation is rejected",
         "And the already active complimentary-item Offer remains the only active one",
         "COMPLIMENTARY_ITEM_SINGLE_ACTIVE = YES",
+        "Mandatory in acceptance slice: YES",
+      ].join("\n"),
+    ],
+    [
+      scenarioBetween("AC-036J-012-06 —", "AC-036J-013-01 —"),
+      [
+        "AC-036J-012-06 — Concurrent complimentary activations preserve single-active invariant",
+        "Story: US-036J-012",
+        "Product authority: FD-036J-03 APPROVED 2026-09-28",
+        "Classification: CONCURRENT_CONFLICT",
+        "Given no complimentary-item Offer is currently ACTIVE",
+        "And two distinct complimentary-item Offer configurations are individually valid",
+        "And both operators are authorized",
+        "And the two activation attempts overlap and execute concurrently",
+        "When both activation attempts settle",
+        "Then the resulting authoritative state contains at most one ACTIVE complimentary-item Offer",
+        "And there is never a settled state with two ACTIVE complimentary-item Offers",
+        "And an activation attempt that is not represented by the authoritative active Offer must not report a false successful activation",
+        "And any non-winning or non-applied attempt returns a truthful non-success, conflict, or retry outcome consistent with accepted operator UX",
+        "And no arbitrary customer gift is selected as a consequence of the race",
+        "COMPLIMENTARY_ITEM_CONCURRENT_ACTIVE_MAX = 1",
+        "COMPLIMENTARY_ITEM_CONCURRENT_WINNER = FIT_OWNED_WHERE_PRODUCT_OUTCOME_UNCHANGED",
+        "ACTIVE_COUNT <= 1",
         "Mandatory in acceptance slice: YES",
       ].join("\n"),
     ],
@@ -38919,7 +38945,8 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
   const authorityLine = "Product authority: FD-036J-03 APPROVED 2026-09-28";
   const authorityTargets = [
     ["AC-036J-012-04 —", "AC-036J-012-05 —"],
-    ["AC-036J-012-05 —", "AC-036J-013-01 —"],
+    ["AC-036J-012-05 —", "AC-036J-012-06 —"],
+    ["AC-036J-012-06 —", "AC-036J-013-01 —"],
     ["AC-036J-013-01 —", "AC-036J-013-02 —"],
     ["AC-036J-013-02 —", "AC-036J-013-03 —"],
     ["AC-036J-013-03 —", "AC-036J-013-04 —"],
@@ -38965,6 +38992,144 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
       ok: false,
       code: "IMP036J_FD03",
       message: "BR-036J-014 must keep the Founder Fit STOP boundary",
+    };
+  }
+  return { ok: true };
+}
+
+/**
+ * Concurrent complimentary-item activation must settle at ACTIVE_COUNT <= 1.
+ * Product Definition does not choose the winning attempt.
+ * @param {string} productDefinitionText
+ * @returns {{ ok: true } | { ok: false, code: string, message: string }}
+ */
+export function evaluateImp036jComplimentaryActivationConcurrency(productDefinitionText) {
+  const text = String(productDefinitionText);
+  const scenarioBetween = (startHeading, endHeading) => {
+    const start = text.indexOf(startHeading);
+    if (start < 0) return "";
+    const end = text.indexOf(endHeading, start + startHeading.length);
+    return text.slice(start, end < 0 ? text.length : end);
+  };
+  const sequential = scenarioBetween("AC-036J-012-05 —", "AC-036J-012-06 —");
+  const concurrent = scenarioBetween("AC-036J-012-06 —", "AC-036J-013-01 —");
+  if (!sequential.includes("Classification: SEQUENTIAL_CONFLICT") || !sequential.includes("one complimentary-item Offer is already active")) {
+    return {
+      ok: false,
+      code: "IMP036J_CONCURRENCY_SEQUENTIAL",
+      message: "AC-036J-012-05 must remain the sequential complimentary-item activation denial",
+    };
+  }
+  if (!concurrent.includes("AC-036J-012-06 — Concurrent complimentary activations preserve single-active invariant")) {
+    return {
+      ok: false,
+      code: "IMP036J_CONCURRENCY_AC",
+      message: "AC-036J-012-06 must remain a mandatory concurrent complimentary-item activation scenario",
+    };
+  }
+  const forbiddenWinner = [
+    /first request wins/i,
+    /last request wins/i,
+    /lower Offer ID wins/i,
+    /earlier timestamp wins/i,
+    /both attempts fail/i,
+    /both activation attempts fail/i,
+    /both attempts report successful activation/i,
+    /two ACTIVE complimentary-item Offers may/i,
+  ];
+  for (const pattern of forbiddenWinner) {
+    if (pattern.test(concurrent)) {
+      return {
+        ok: false,
+        code: "IMP036J_CONCURRENCY_WINNER",
+        message: "AC-036J-012-06 must not invent a concurrent winner or permit two settled ACTIVE Offers",
+      };
+    }
+  }
+  const required = [
+    "Classification: CONCURRENT_CONFLICT",
+    "no complimentary-item Offer is currently ACTIVE",
+    "two distinct complimentary-item Offer configurations are individually valid",
+    "both operators are authorized",
+    "two activation attempts overlap and execute concurrently",
+    "When both activation attempts settle",
+    "at most one ACTIVE complimentary-item Offer",
+    "never a settled state with two ACTIVE complimentary-item Offers",
+    "must not report a false successful activation",
+    "truthful non-success, conflict, or retry outcome",
+    "no arbitrary customer gift is selected as a consequence of the race",
+    "COMPLIMENTARY_ITEM_CONCURRENT_ACTIVE_MAX = 1",
+    "COMPLIMENTARY_ITEM_CONCURRENT_WINNER = FIT_OWNED_WHERE_PRODUCT_OUTCOME_UNCHANGED",
+    "ACTIVE_COUNT <= 1",
+    "Mandatory in acceptance slice: YES",
+  ];
+  for (const clause of required) {
+    if (!concurrent.includes(clause)) {
+      return {
+        ok: false,
+        code: "IMP036J_CONCURRENCY_AC",
+        message: `AC-036J-012-06 must state: ${clause}`,
+      };
+    }
+  }
+  const slice = text.split("## 8. Acceptance slice")[1]?.split("## 9.")[0] ?? "";
+  if (!slice.includes("`AC-036J-012-06`") || !slice.includes("US-036J-001") || !slice.includes("US-036J-013")) {
+    return {
+      ok: false,
+      code: "IMP036J_CONCURRENCY_SLICE",
+      message: "AC-036J-012-06 must stay in the mandatory V1 acceptance slice",
+    };
+  }
+  const matrix = text.split("## 12. Journey Completeness Matrix")[1]?.split("## 13.")[0] ?? "";
+  const concurrencyRow = matrix.split("\n").find((line) => line.includes("| CONCURRENCY |")) ?? "";
+  if (
+    !concurrencyRow.includes("`US-036J-005`") ||
+    !concurrencyRow.includes("`US-036J-007`") ||
+    !concurrencyRow.includes("`US-036J-012`") ||
+    !concurrencyRow.includes("`AC-036J-012-06`")
+  ) {
+    return {
+      ok: false,
+      code: "IMP036J_CONCURRENCY_MATRIX",
+      message: "Journey Completeness CONCURRENCY must map global-cap, first-order, and complimentary-item concurrent activation",
+    };
+  }
+  const recovery = text.split("## 17. Concurrency/recovery")[1]?.split("## 18.")[0] ?? "";
+  const recoveryClauses = [
+    "last global redemption",
+    "first-order",
+    "Duplicate coupon submission",
+    "at most one ACTIVE complimentary-item Offer",
+    "must not report a false successful activation",
+    "Architecture Fit",
+    "ACTIVE_COUNT <= 1",
+    "AC-036J-013-04 does not replace",
+    "COMPLIMENTARY_ITEM_COMPETING_OFFERS = NONE_CHOSEN",
+    "AT_MOST_ONE_ACTIVE",
+  ];
+  for (const clause of recoveryClauses) {
+    if (!recovery.includes(clause)) {
+      return {
+        ok: false,
+        code: "IMP036J_CONCURRENCY_RECOVERY",
+        message: `Concurrency/recovery must state: ${clause}`,
+      };
+    }
+  }
+  const proofRows = text.split("| Story / AC ID |")[1]?.split("## 11. Business rules")[0] ?? "";
+  const proofRow = proofRows.split("\n").find((line) => line.includes("`AC-036J-012-06`")) ?? "";
+  if (!/overlapping/i.test(proofRow) || !proofRow.includes("NOT_EXECUTED") || !/falsely report activation|false successful activation/i.test(proofRow)) {
+    return {
+      ok: false,
+      code: "IMP036J_CONCURRENCY_PROOF",
+      message: "Planned proof must name overlapping complimentary activation and must remain NOT_EXECUTED",
+    };
+  }
+  if (/^### FD-036J-04\b/m.test(text) || /FD-036J-04\s*=/.test(text)) {
+    return {
+      ok: false,
+      code: "IMP036J_FD04",
+      message: "FD-036J-04 must not be created for the concurrent activation invariant",
     };
   }
   return { ok: true };
@@ -39209,7 +39374,7 @@ function checkImp036jProductDefinitionActivation(roadmap, state, architecture, d
 }
 
 /**
- * CURRENT checkpoint: IMP-036J Product Definition draft ready for Gate (GTM-R167 / STATE-R165).
+ * CURRENT checkpoint: IMP-036J Product Definition draft ready for Gate (GTM-R168 / STATE-R166).
  * Ready for independent Gate review. The Gate is not performed. The definition is not approved.
  * @param {Record<string, any>} roadmap
  * @param {Record<string, any>} state
@@ -39223,17 +39388,17 @@ function checkImp036jProductDefinitionDraftReady(roadmap, state, architecture, d
   const roadmapText = roadmap?.text ?? "";
   const stateText = state?.text ?? "";
   const currentRoadmapSection = roadmapText.split("## 2. Current Position")[1]?.split("\n## ")[0] ?? "";
-  const currentMarker = currentRoadmapSection.split("**GTM-R166**")[0] || currentRoadmapSection;
+  const currentMarker = currentRoadmapSection.split("**GTM-R167**")[0] || currentRoadmapSection;
   const stateSection2 = stateText.split("## 2. Current Work Position")[1]?.split("\n## ")[0] ?? "";
   const futureSliceSection = roadmapText.split("## 5. Future GTM Slices")[1]?.split("\n## ")[0] ?? "";
   const acceptedSection = roadmapText.split("## 3. Accepted Slices")[1]?.split("\n## ")[0] ?? "";
   const productDefAbs = resolveExactRelativeFile("docs/platform/product/IMP-036J/product-definition.md");
   const productDefinitionText = productDefAbs ? readFileSync(productDefAbs, "utf8") : "";
-  if (roadmapVersion !== "GTM-R167" || stateVersion !== "STATE-R165") {
-    fail("IMP036J_DRAFT_READY_IDENTITY", "IMP-036J draft-ready must be the current GTM-R167 / STATE-R165 checkpoint");
+  if (roadmapVersion !== "GTM-R168" || stateVersion !== "STATE-R166") {
+    fail("IMP036J_DRAFT_READY_IDENTITY", "IMP-036J draft-ready must be the current GTM-R168 / STATE-R166 checkpoint");
   }
-  if (roadmap?.meta.supersedes !== "GTM-R166" || state?.meta.supersedes !== "STATE-R164") {
-    fail("IMP036J_DRAFT_READY_SUPERSEDES", "GTM-R167 must supersede GTM-R166 and STATE-R165 must supersede STATE-R164");
+  if (roadmap?.meta.supersedes !== "GTM-R167" || state?.meta.supersedes !== "STATE-R165") {
+    fail("IMP036J_DRAFT_READY_SUPERSEDES", "GTM-R168 must supersede GTM-R167 and STATE-R166 must supersede STATE-R165");
   }
   if (roadmap?.meta.acceptedThrough !== "IMP-036I" || state?.meta.acceptedThrough !== "IMP-036I") {
     fail("IMP036J_ACCEPTED_THROUGH", "IMP-036J draft-ready must keep acceptedThrough at IMP-036I");
@@ -39251,7 +39416,7 @@ function checkImp036jProductDefinitionDraftReady(roadmap, state, architecture, d
     "IMP-036J: PLANNED",
     "IMP036J_ACTIVATED: YES",
     "IMP036J_PRODUCT_DEFINITION: DRAFT_READY_FOR_GATE",
-    "IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-5",
+    "IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-6",
     "IMP036J_PRODUCT_DEFINITION_GATE: NOT_PERFORMED",
     "IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED",
     "IMP036J_IMPLEMENTATION_AUTHORIZED: NO",
@@ -39275,8 +39440,11 @@ function checkImp036jProductDefinitionDraftReady(roadmap, state, architecture, d
       fail("IMP036J_DRAFT_READY_TOKEN", `STATE current work position must record ${token}`);
     }
   }
+  if (!stateText.includes("STATE-R166 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY")) {
+    fail("IMP036J_DRAFT_READY_RECORD", "STATE must record STATE-R166 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY");
+  }
   if (!stateText.includes("STATE-R165 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY")) {
-    fail("IMP036J_DRAFT_READY_RECORD", "STATE must record STATE-R165 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY");
+    fail("IMP036J_DRAFT5_HISTORY", "STATE must preserve historical STATE-R165 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY");
   }
   if (!stateText.includes("STATE-R164 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY")) {
     fail("IMP036J_DRAFT4_HISTORY", "STATE must preserve historical STATE-R164 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY");
@@ -39321,6 +39489,13 @@ function checkImp036jProductDefinitionDraftReady(roadmap, state, architecture, d
   const complimentaryItem = evaluateImp036jComplimentaryItemContract(productDefinitionText);
   if (!complimentaryItem.ok) {
     fail(complimentaryItem.code || "IMP036J_FREE_ITEM", complimentaryItem.message || "IMP-036J complimentary-item contract is invalid");
+  }
+  const complimentaryConcurrency = evaluateImp036jComplimentaryActivationConcurrency(productDefinitionText);
+  if (!complimentaryConcurrency.ok) {
+    fail(
+      complimentaryConcurrency.code || "IMP036J_CONCURRENCY_AC",
+      complimentaryConcurrency.message || "IMP-036J complimentary activation concurrency contract is invalid",
+    );
   }
   const readiness = evaluateImp036jStoryReadiness(productDefinitionText);
   if (!readiness.ok) fail(readiness.code || "IMP036J_READINESS", readiness.message || "IMP-036J story readiness is invalid");
