@@ -7,6 +7,13 @@
   "productDefinition": "PD-IMP-036J-DRAFT-6",
   "productDefinitionStatus": "APPROVED",
   "productDefinitionGate": "PASS",
+  "experienceDefinition": "XD-IMP-036J-DRAFT-6",
+  "experienceDefinitionStatus": "APPROVED",
+  "experienceGate": "PASS",
+  "experienceCriticality": "X3",
+  "changeRisk": "CR2",
+  "designReadiness": "NOT_PERFORMED",
+  "candidateRevision": "IMP-036J-FIT-CANDIDATE-2",
   "architectureFit": "CANDIDATE_NOT_PERSISTED",
   "architectureLock": "NOT_LOCKED",
   "implementationAuthorized": false,
@@ -17,7 +24,7 @@
   "archR24Required": false,
   "founderUatRequired": true,
   "founderUat": "NOT_STARTED",
-  "lastReviewed": "2026-09-28",
+  "lastReviewed": "2026-09-29",
   "bindingDecisions": ["D-382", "ADR-007", "ADR-008"],
   "dependsOn": ["IMP-016", "IMP-021", "IMP-036F", "IMP-036H", "IMP-036I"]
 }
@@ -33,11 +40,18 @@ CAPABILITY = IMP-036J
 PRODUCT_DEFINITION = PD-IMP-036J-DRAFT-6
 PRODUCT_DEFINITION_STATUS = APPROVED
 PRODUCT_DEFINITION_GATE = PASS
+EXPERIENCE_DEFINITION = XD-IMP-036J-DRAFT-6
+EXPERIENCE_DEFINITION_STATUS = APPROVED
+EXPERIENCE_GATE = PASS
+EXPERIENCE_CRITICALITY = X3
+CHANGE_RISK = CR2
+CANDIDATE_REVISION = IMP-036J-FIT-CANDIDATE-2
 ARCHITECTURE_FIT = CANDIDATE_NOT_PERSISTED
 ARCHITECTURE_LOCK = NOT_LOCKED
 IMPLEMENTATION_AUTHORIZED = false
 IMP036J_ARCHITECTURE_FIT = NOT_PERFORMED
 IMP036J_ARCHITECTURE_LOCKED = NO
+IMP036J_DESIGN_READINESS = NOT_PERFORMED
 IMP036J_IMPLEMENTATION_AUTHORIZED = NO
 IMP036J_STARTED = NO
 GLOBAL_DECISION_REQUIRED = NO
@@ -51,9 +65,12 @@ FOUNDER_UAT_REQUIRED = YES
 FOUNDER_UAT = NOT_STARTED
 ```
 
-This document is an Architecture Fit **candidate**. Independent ChatGPT Architecture Fit review has
-not been performed. It does not persist Fit PASS, lock architecture, authorize implementation, or
-change `ROADMAP.md`, `STATE.md`, `decision-register.md`, or `ARCHITECTURE.md`.
+This document is an Architecture Fit **candidate**. It proves fit for approved
+`PD-IMP-036J-DRAFT-6` and approved `XD-IMP-036J-DRAFT-6`. Independent ChatGPT Architecture Fit
+review has not been performed. It does not persist Fit PASS, lock architecture, authorize
+implementation, or change `ROADMAP.md`, `STATE.md`, `decision-register.md`, or `ARCHITECTURE.md`.
+`CANDIDATE_REVISION` is local to this capability document. It is not an architecture version and
+it does not create ARCH-R24.
 
 An Offer remains customer and operator meaning over the accepted Promotion authority. It does not
 set money by itself.
@@ -88,13 +105,54 @@ IMP038_HOLD = YES
 GAP-EXT-ASSESS-001 = NOT_CLOSED
 ```
 
+That discovery predates Experience Gate PASS. It is historical origin only.
+
+Reconciliation provenance, after rebase onto canonical `main`. Identifiers in this candidate were
+re-read from this tree, not copied from the pre-Experience candidate.
+
+```text
+RECONCILED_AGAINST_BRANCH = main
+RECONCILED_HEAD = 2bef21b5ae82439f39ee7d4462f87bd6a9501aeb
+RECONCILED_TREE = cbc6acae764363252e37acdf40ca9ff902790464
+ROADMAP = GTM-R171
+STATE = STATE-R169
+ARCHITECTURE = ARCH-R23
+DECISION_REGISTER = DR-23
+PRODUCT_DELIVERY = PD-2
+EXPERIENCE = EXP-1
+PRODUCT_LANGUAGE = LANG-1
+TESTING = TEST-1
+PRODUCT_DEFINITION = PD-IMP-036J-DRAFT-6
+PRODUCT_DEFINITION_GATE = PASS
+EXPERIENCE_DEFINITION = XD-IMP-036J-DRAFT-6
+EXPERIENCE_DEFINITION_STATUS = APPROVED
+EXPERIENCE_GATE = PASS
+EXPERIENCE_CRITICALITY = X3
+CHANGE_RISK = CR2
+acceptedThrough = IMP-036I
+currentProductSlice = IMP-036J
+nextProductSlice = IMP-037
+pendingAcceptance = NONE
+nextGate = ARCHITECTURE_FIT
+NEXT_DECISION_ID = D-383
+D-383 = NOT_CREATED
+ARCH-R23 = CURRENT
+ARCH-R24 = NOT_CREATED
+```
+
 Identifiers below were read from current source, schema, and migrations. They are not inferred names.
 
 ---
 
-## 2. Product Definition reference
+## 2. Product and Experience authority
 
-Authority: [`../product/IMP-036J/product-definition.md`](../product/IMP-036J/product-definition.md).
+Product authority: [`../product/IMP-036J/product-definition.md`](../product/IMP-036J/product-definition.md).
+
+Experience authority: [`../product/IMP-036J/experience-definition.md`](../product/IMP-036J/experience-definition.md).
+Experience is binding for presentation fit and for the X3 measurement contract. It is not optional
+UI commentary, and it is not customer-copy authority. LANG-1 remains the projection-language
+authority. This candidate does not put final microcopy into architecture and does not expose raw
+backend enum or error language as the customer default.
 
 ```text
 PRODUCT_DEFINITION_VERSION = PD-IMP-036J-DRAFT-6
@@ -106,9 +164,14 @@ FD-036J-03 = APPROVED (2026-09-28)
 OPEN_FOUNDER_PRODUCT_DECISIONS = 0
 MANDATORY_STORIES = US-036J-001 .. US-036J-013
 COMPLIMENTARY_MENU_ITEM_V1_ACCEPTANCE = MANDATORY
+EXPERIENCE_DEFINITION_VERSION = XD-IMP-036J-DRAFT-6
+EXPERIENCE_DEFINITION_STATUS = APPROVED
+EXPERIENCE_GATE = PASS
+EXPERIENCE_CRITICALITY = X3
+CHANGE_RISK = CR2
 ```
 
-This candidate implements fit for that definition. It does not redesign approved customer behaviour,
+This candidate implements fit for both authorities. It does not redesign approved customer behaviour,
 weaken a mandatory acceptance scenario, move a V1 requirement to follow-up, or create FD-036J-04.
 
 Deals, Campaigns, and Revenue Recommendations stay parked. This candidate does not add a Deal
@@ -141,7 +204,7 @@ evaluator, a Campaign engine, or a browse hub.
 
 ## 4. Existing-engine inventory
 
-Evidence is the current tree named in section 1.
+Evidence is the reconciliation tree in section 1. The historical discovery SHA is not the source of these identifiers.
 
 ### 4.1 Promotion authority
 
@@ -416,7 +479,14 @@ After `calculateTax`, compare `grandTotalPaise`.
    then lexicographic promotion id set.
 ```
 
-Step 3 does not use `created_at`, insert order, or unordered row scan. `starts_at` is the existing effective-window column already used by `selectBestCandidate`. The id key is a total order so the result does not depend on candidate array position.
+Step 3 does not use `created_at`, insert order, or unordered row scan. `starts_at` is the existing effective-window column already used by `selectBestCandidate` in `src/shared/promotions/select.ts`. The id key is a total order so the result does not depend on candidate array position. Step 3 does not call an equal payable amount better, does not offer the customer a choice, and does not randomize. It cannot override step 2.
+
+```text
+GENERAL_EQUAL_PAYABLE_TIE = FIT_OWNED_DETERMINISTIC
+COMPLIMENTARY_EQUAL_PAYABLE_TIE = PRODUCT_OWNED_COMPLIMENTARY_SELECTED
+```
+
+The general tie applies only when the coupon-backed valid combination and a valid non-coupon alternative have the same payable, delivered merchandise is otherwise equivalent, and the complimentary product rule does not apply. Architecture owns that deterministic winner. Product owns the complimentary case.
 
 A complimentary candidate stays identifiable even when the waived merchandise amount is zero. Current `toApplied` drops `realized <= 0`. That drop must not erase the complimentary line identity used by step 2.
 
@@ -475,7 +545,7 @@ SECOND_CHECKOUT_COUPON_COLUMN = NO
 | Global exhaustion | Distinct reason. Read at evaluation; enforced again under the claim lock. |
 | Personal exhaustion | Distinct reason. Requires authenticated identity. |
 
-`buildCheckoutCommercialResult` must not throw `CHECKOUT_COUPON_INELIGIBLE` for `VALID_BUT_NOT_SELECTED`. The entered code stays on the cart, the winning combination does not depend on it, and the explanation says it did not improve the result. Invalid, expired, inapplicable, and exhausted codes likewise do not enter the sealed snapshot as applied benefits. The customer remains on Review and can correct the code.
+`buildCheckoutCommercialResult` must not throw `CHECKOUT_COUPON_INELIGIBLE` for `VALID_BUT_NOT_SELECTED` or for an equal-payable outcome. The entered code stays on the cart. When the winning combination does not depend on it, the presentation class is `COUPON_VALID_NOT_SELECTED` only if that winner's payable is strictly lower, and `COUPON_EQUAL_PAYABLE_NOT_SELECTED` when the payables are equal. Invalid, expired, inapplicable, and exhausted codes likewise do not enter the sealed snapshot as applied benefits. The customer remains on Review and can correct the code.
 
 A server failure before the cart revision write leaves the previous code and the previously returned quote on screen. The client does not paint `APPLIED` from its own input.
 
@@ -487,15 +557,24 @@ The sealed `checkout_snapshots.manual_coupon_code` is the applied code, or null 
 
 There is one candidate list and one winner.
 
+The comparison uses `grandTotalPaise` of complete combinations, including at most one compatible delivery incentive. It does not compare merchandise savings alone. An equal payable amount is not classified as a better total.
+
 ```text
-if the winning combination includes the coupon promotion:
-  explanation = APPLIED
-else if the coupon was eligible and a combination that excludes it has the lower or equal payable:
-  retain that winner
-  explanation = COUPON_DID_NOT_IMPROVE
+coupon combination payable < best valid non-coupon payable
+  winner includes the coupon
+  presentation class = COUPON_APPLIED
+best valid non-coupon payable < coupon combination payable
+  winner excludes the coupon
+  presentation class = COUPON_VALID_NOT_SELECTED
+payables equal, delivered merchandise otherwise equivalent, complimentary tie does not apply
+  winner = section 6 step 3
+  coupon selected → COUPON_EQUAL_PAYABLE_SELECTED
+  coupon not selected → COUPON_EQUAL_PAYABLE_NOT_SELECTED
+complimentary equal payable
+  winner = complimentary combination (FD-036J-03, section 21)
 ```
 
-The comparison uses `grandTotalPaise` of complete combinations, including at most one compatible delivery incentive. It does not compare merchandise savings alone.
+Those class names are experience states for projection. They are not customer sentences. `COUPON_VALID_NOT_SELECTED` is the strictly lower non-coupon outcome. The equal-payable classes must not reuse that "better amount" meaning. LANG-1 projects the class. Architecture does not store the sentence.
 
 Example held by the candidate generator, not by a second total:
 
@@ -510,7 +589,7 @@ Example held by the candidate generator, not by a second total:
 FIRST_ORDER_BOOLEAN_ON_CUSTOMER = NO
 ```
 
-`first_order_only` is a promotion qualifier column, section 23. Guests are ineligible.
+`first_order_only` is a promotion qualifier column, section 24. Guests are ineligible.
 
 ### Source of truth
 
@@ -537,43 +616,73 @@ Order status is not filtered. `CANCELLED` still counts, so a later cancellation 
 
 `listOrdersForCustomer` is a customer history projection. It is not the eligibility query, because it is shaped for history paging and must not become a monetary authority by accident. Eligibility uses the predicate above inside the commercial evaluation read and again inside the claim transaction.
 
-### Race control
-
-Two overlapping attempts must not both bind a first-order benefit. A non-offer purchase that is committing must also be visible, because `applySuccess` and zero-payable completion do not lock the customer today, and order materialization is too late to be the lock.
-
-Every transaction that commits a successful purchase, and every transaction that inserts a `first_order_guard` claim, takes the same row lock:
+### Purchase-level guard
 
 ```text
-SELECT customer_auth_users FOR UPDATE
+PER_PROMOTION_REDEMPTION_CLAIM = ONE_PER_APPLIED_PROMOTION
+FIRST_ORDER_PURCHASE_GUARD = AT_MOST_ONE_PER_LOGICAL_PURCHASE_BINDING
+FIRST_ORDER_GUARD_IS_PROMOTION_CLAIM = NO
 ```
 
-before it writes `payments.status = 'SUCCEEDED'`, `checkouts.status = 'COMPLETED'`, or the guarded claim. That includes a purchase that does **not** use a first-order Offer. `materializeOrderForCompletedCheckout` is not the serialization point.
+`promotion_redemption_claims` does not store `first_order_guard` and does not carry a customer-unique index over guarded claims. A winning combination of a first-order primary Offer and a compatible first-order delivery incentive writes two ordinary claims and exactly one purchase-level guard.
 
-Lock order inside a transaction that already follows today's cart-then-checkout locks (`startPayment`, `completeZeroPayableCheckout`):
+The guard is a new row in `app.first_order_purchase_guards`, owned by the existing Checkout / Payment commercial boundary. Shape, nullability, and indexes are in section 24. It is not a second Promotion authority.
 
 ```text
-cart → checkout → customer_auth_users → promotions / coupons
+PAYMENT-BEARING
+  winning combination contains one or more first-order-only Offers
+  lock customer_auth_users FOR UPDATE
+  re-read the predicate
+  insert exactly one guard status RESERVED
+  insert one ordinary claim per applied Promotion
+  both first-order Promotions share that one guard
+
+SUCCESS
+  that guard becomes CONSUMED inside applySuccess
+
+DEFINITIVE FAILED / CANCELLED
+  that guard becomes RELEASED inside applyDefinitiveNonSuccess
+
+RETRY
+  only after the prior attempt is resolved
+  the released guard leaves the active unique indexes
+  the new attempt inserts one new RESERVED guard
+  it does not insert a second active guard for the same payment
+
+ZERO-PAYABLE
+  completeZeroPayableCheckout inserts exactly one guard status CONSUMED
+  one guard for the logical completion, not one guard per Promotion
 ```
 
-`applySuccess` takes the customer lock and does not take the promotion locks. Claim insertion takes the customer lock before `lockPromotionsAndCoupons`, never after a promotion lock that another success path might wait on behind the customer lock.
+`RESERVED`, `CONSUMED`, and `RELEASED` match the claim lifecycle words already used by `promotion_redemption_claims`. The guard uses those words for the purchase, not for a Promotion unit.
 
-Then:
-
-1. Re-read the predicate, ignoring this attempt's own uncommitted payment.
-2. If a prior success exists, do not insert the claim and do not return a bound payment.
-3. Insert the claim with `first_order_guard = true`.
-
-Partial unique index, section 23:
+Active uniqueness:
 
 ```text
 UNIQUE (customer_auth_user_id)
-WHERE first_order_guard = true
-  AND status IN ('RESERVED', 'CONSUMED')
+  WHERE status IN ('RESERVED', 'CONSUMED')
+
+UNIQUE (payment_id)
+  WHERE payment_id IS NOT NULL
+    AND status IN ('RESERVED', 'CONSUMED')
+
+UNIQUE (checkout_snapshot_id)
+  WHERE payment_id IS NULL
 ```
 
-The second overlapping insert fails, the transaction rolls back, and the attempt is not reported as bound. `RELEASED` rows are outside the index. An unresolved attempt stays `RESERVED` until `applyDefinitiveNonSuccess` releases it; that hold blocks a second first-order bind and is not a consumed historical purchase. There is no customer-visible choice of which checkout wins. The committed reservation wins; the other is a conflict.
+Two concurrent first-order bindings for the same customer cannot both commit an active guard. The second insert fails, that transaction rolls back, and that attempt is not reported as bound. Application pre-checks and unordered application order are not the guarantee. `RELEASED` rows leave the customer and payment indexes, so a later resolved retry can reserve again. A consumed guard stays active in the customer index, which matches one successful first-order entitlement.
 
-A first-order reservation that already committed stays the bound benefit for that payment. Snapshot truth is not repriced after binding.
+Lock order, inside the transactions that already take cart then checkout (`startPayment`, `completeZeroPayableCheckout`):
+
+```text
+cart → checkout → customer_auth_users → promotions / coupons → claims and the one guard
+```
+
+`applySuccess` takes the customer lock and does not take the promotion locks. Guard and claim insertion take the customer lock before `lockPromotionsAndCoupons`. A purchase that commits success without a first-order Offer also takes the customer lock before `payments.status = 'SUCCEEDED'` or `checkouts.status = 'COMPLETED'`, so the predicate re-read sees that commit. That ordinary purchase does not insert a guard. `materializeOrderForCompletedCheckout` is not the serialization point.
+
+Re-read the predicate before inserting the guard, ignoring this attempt's own uncommitted payment. If a prior success already exists, do not insert the guard, do not insert the first-order claims, and do not return a bound payment.
+
+An already committed `RESERVED` guard belongs to a payment-bound snapshot. ADR-008 keeps that snapshot as commercial truth. A later successful ordinary purchase on another checkout does not rewrite it, and it does not get blocked merely because the first-order payment is still pending. Blocking that ordinary purchase, or removing the already-bound Offer, would be new customer-facing behaviour. The product assigns the query and the concurrency mechanism to Fit and does not ask for either of those outcomes. Failed or cancelled payment releases the guard and does not count as a successful purchase. A `RESERVED` guard is not itself a previous successful Order.
 
 ### Revalidation before payment binding
 
@@ -583,7 +692,7 @@ A first-order reservation that already committed stays the bound benefit for tha
 
 ## 11. Caps and redemption
 
-Extend `enforceCouponCapacity` into offer-capacity enforcement in the same functions. Do not add a second claim table.
+Extend `enforceCouponCapacity` into offer-capacity enforcement in the same functions. Do not add a second claim table. The purchase-level first-order guard in section 10 is not a claim table and does not count capacity.
 
 | Cap | Store | Count |
 |---|---|---|
@@ -611,7 +720,18 @@ already SUCCEEDED replay   applySuccess returns before a second consume
 
 Last-available race: the loser blocks on `FOR UPDATE`, recounts, and the payment transaction throws `PAYMENT_PROMOTION_CAPACITY_UNAVAILABLE` or hits the unique index. That transaction rolls back. No payment row remains. It does **not** invalidate the checkout: `prepareCheckoutForPayment` already committed in an earlier transaction (`startPayment` calls it before the payment transaction). The loser is still `READY_FOR_PAYMENT` on the snapshot that included the Offer. Recovery is the next prepare or evaluate, which now counts the winner's `RESERVED` claim, drops the exhausted Offer, and uses the existing mismatch path to return the checkout to Review. Purchased snapshot rows are not updated.
 
-`promotion_redemption_claims_attempt_promotion_uidx` remains the attempt idempotency key. A retry does not keep the failed attempt's units because those rows are `RELEASED`.
+`promotion_redemption_claims_attempt_promotion_uidx` remains the attempt idempotency key for claims. A retry does not keep the failed attempt's units because those rows are `RELEASED`. The first-order guard follows the same resolved-attempt rule and remains one row per binding, not one row per Promotion.
+
+### First-order guard proof
+
+| Case | Claims | Purchase guard |
+|---|---|---|
+| One first-order Offer applied | 1 | 1 |
+| First-order primary plus compatible first-order delivery | 2 | 1 |
+| No first-order Offer, even when other Promotions apply | one per applied Promotion | 0 |
+| Definitive failed or cancelled attempt | those claims `RELEASED` | that guard `RELEASED` |
+| Retry after that release | one new claim set | one new `RESERVED` guard, not two active |
+| Two concurrent first-order bindings, same customer | the loser rolls back | one active guard commits |
 
 ---
 
@@ -625,7 +745,7 @@ SUPPLIED_BY = buildCheckoutCommercialResult and evaluateCart when that checkout 
 NEW_SCHEDULE_DOMAIN = NO
 ```
 
-Qualifier columns, section 23, restrict `DELIVERY` / `PICKUP` and `ASAP` / `SCHEDULED`. Null means unrestricted. `setCheckoutFulfilment` and `setCheckoutFulfilmentTiming` already bump checkout revision; the following evaluate rebuilds the quote. Scheduled eligibility uses the window `sealEligibleScheduledWindow` already proved. This candidate does not reinterpret IMP-036I.
+Qualifier columns, section 24, restrict `DELIVERY` / `PICKUP` and `ASAP` / `SCHEDULED`. Null means unrestricted. `setCheckoutFulfilment` and `setCheckoutFulfilmentTiming` already bump checkout revision; the following evaluate rebuilds the quote. Scheduled eligibility uses the window `sealEligibleScheduledWindow` already proved. This candidate does not reinterpret IMP-036I.
 
 A `DELIVERY` Offer does not apply on `PICKUP`, and the reverse. A delivery incentive is a `DELIVERY` context benefit: Pickup has no delivery charge to waive.
 
@@ -680,13 +800,30 @@ One projection on the quote and, after binding, derived from sealed snapshot row
 | Delivery saving | Delivery-slot realized discount, included only when `> 0` |
 | Total saved | Sum of those components |
 | Final payable | `grandTotalPaise` |
-| Coupon did not improve | Reason code, no fake discount |
+| Coupon class | `COUPON_APPLIED`, `COUPON_VALID_NOT_SELECTED`, `COUPON_EQUAL_PAYABLE_SELECTED`, or `COUPON_EQUAL_PAYABLE_NOT_SELECTED`. Equal payable is not a better total and is not a fake discount |
 | Threshold | `remainingAmountPaise` when present |
 | Failures | Distinct codes: invalid, expired, inapplicable, globally exhausted, personal cap, identity required, complimentary unavailable |
 
 Copy strings are not domain authority. Customer responses do not include other customers' order ids, usage counts, or eligibility internals.
 
 Order detail reads sealed effects, sealed lines, and `moneySummaryFromSnapshot`. It does not call `evaluatePromotions`.
+
+### Presentation authority
+
+Architecture returns the facts Experience projects. It does not own the sentences.
+
+| Experience need | Architectural fact |
+|---|---|
+| Threshold gap | `remainingAmountPaise` or remaining quantity from section 14. The client does not subtract eligibility money. |
+| One commercial result | One quote `CommercialExplanation`: merchandise or order saving, delivery saving, total saved, final payable. Cart, Checkout Review, and the read-only Payment summary render that one result. |
+| Shared coupon state | `carts.manual_coupon_code` only. Cart and Checkout Review both call the existing coupon routes. |
+| Payment | `PaymentPanel` reads the sealed explanation. It does not accept a coupon mutation. |
+| Complimentary line | Snapshot or projection carries catalog variant identity, quantity 1, and zero extra merchandise charge. The included meaning is a projection of those facts. |
+| Coarse failures | The distinct reason classes in section 8 and section 16. Customer text is a LANG-1 projection of the class, not the raw code. |
+| Stale pre-payment recomputation | `prepareCheckoutForPayment` mismatch returns the checkout to Review. Payment is not offered on the stale total. |
+| Purchased savings | Insert-only snapshot effects and lines. Later Promotion edits do not rewrite them. |
+| Complimentary equal payable | Section 21. Product selects the complimentary combination. |
+| General equal payable | Section 6 step 3. Fit selects one deterministic winner. Experience can describe that winner without calling the tie better. |
 
 ---
 
@@ -707,7 +844,7 @@ Revalidated causes:
 
 Payment initiation still requires the active snapshot. It does not bind a stale one.
 
-After `SUCCEEDED` or zero-payable completion, `orders.checkout_snapshot_id` points at the insert-only snapshot. Later Offer edits, retirement, coupon expiry, price-book changes, and tariff changes do not update that snapshot. `source_cart_line_id` nullability changes in section 23 do not change snapshot ownership.
+After `SUCCEEDED` or zero-payable completion, `orders.checkout_snapshot_id` points at the insert-only snapshot. Later Offer edits, retirement, coupon expiry, price-book changes, and tariff changes do not update that snapshot. `source_cart_line_id` nullability changes in section 24 do not change snapshot ownership.
 
 Snapshot extensions are additional sealed columns and an allowed complimentary line origin. `commitReadySnapshot` remains insert-only.
 
@@ -739,7 +876,13 @@ Cart storage does not gain a customer-intent line. `cart_lines` remain what the 
 
 The snapshot seals it as a `checkout_snapshot_lines` row with `line_origin = complimentary_offer`, `source_cart_line_id` null, quantity 1, modifier and bundle amounts 0, and `line_promotion_discount_paise` equal to the resolved merchandise base.
 
-Current `checkout_snapshot_promotion_effects.line_id` is **not** a snapshot-line foreign key. `extractLineId` copies the cart-line UUID out of a component id (`base|mod|bundle|bundle-mod:<uuid>`). `applied_promotion` effects store `lineId: null`. Snapshot lines receive new ids at insert. Sealing must set a new `snapshot_line_id` after those ids exist, including the complimentary line, and that column references `checkout_snapshot_lines`. Existing `line_id` values stay cart-line provenance and are not retrofitted into a foreign key. Effect kinds stay `applied_promotion` and `monetary_allocation`. The effect also seals `promotion_revision`.
+Current `checkout_snapshot_promotion_effects.line_id` is **not** a snapshot-line foreign key. `extractLineId` copies the cart-line UUID out of a component id (`base|mod|bundle|bundle-mod:<uuid>`). `applied_promotion` effects store `lineId: null`. Snapshot lines receive new ids at insert. Sealing must set a new `snapshot_line_id` after those ids exist, including the complimentary line. Existing `line_id` values stay cart-line provenance and are not reinterpreted as snapshot ownership and are not retrofitted into a foreign key. Effect kinds stay `applied_promotion` and `monetary_allocation`. The effect also seals `promotion_revision`.
+
+```text
+EFFECT_SNAPSHOT_ID = REFERENCED_LINE_SNAPSHOT_ID
+```
+
+`checkout_snapshot_lines` gains a candidate key `(id, snapshot_id)`, the same ownership pattern as `checkout_snapshots_id_checkout_id_uidx`. `checkout_snapshot_promotion_effects` gains a composite foreign key `(snapshot_line_id, snapshot_id)` → `checkout_snapshot_lines (id, snapshot_id)`. `snapshot_line_id` stays nullable. Under PostgreSQL `MATCH SIMPLE`, a null `snapshot_line_id` does not require a line. When it is populated, the referenced line's `snapshot_id` must equal the effect's `snapshot_id`. A line from snapshot B cannot satisfy an effect on snapshot A. Writer correctness is not the enforcement. Complimentary association and monetary allocation association both use this foreign key. Historical immutable snapshot rows are not rewritten.
 
 The line adds no merchandise charge. It occupies the primary slot and may pair with one compatible delivery incentive.
 
@@ -773,7 +916,7 @@ SCOPE = one ACTIVE complimentary promotion per brand_id
 
 Promotions are brand-owned and a cart evaluates one brand. The index matches that aggregate. It is not a customer-facing winner rule.
 
-Mechanism: partial unique index in section 23, plus the existing `activatePromotion` transaction.
+Mechanism: partial unique index in section 24, plus the existing `activatePromotion` transaction.
 
 ```text
 SEQUENTIAL = the UPDATE that would create a second active row fails the index, or the command's pre-check rejects it. The first ACTIVE row remains.
@@ -874,17 +1017,68 @@ Owner of every new column is the existing aggregate named in the row. No new ser
 | `promotion_benefits` type check adds `delivery_fee_waiver` and `complimentary_item` | Checked list is only the three current types | Promotion benefit | Existing one-row unique on `promotion_id` stays | Draft CAS via promotion revision |
 | `promotion_benefits.complimentary_product_id` and `complimentary_variant_id` uuid null | No place to bind the operator item | Promotion benefit | Both null unless type is `complimentary_item`, then both not null. FK to `catalog_products` and `catalog_variants` `ON DELETE RESTRICT` | Sealed later onto the snapshot line, so catalog retirement does not rewrite history |
 | Shape checks for the new types | Percent, fixed, and BOGO columns must stay empty on waiver and complimentary rows | Promotion benefit | Extend the style of `promotion_benefits_bogo_shape_check` | — |
-| `promotion_redemption_claims.customer_auth_user_id` | The first-order unique index needs a customer column. Today the customer is only reached by join | Existing claim row | Backfill from snapshot → checkout, then not null. FK to `customer_auth_users` `ON DELETE RESTRICT` | Set on insert in the claim transaction |
-| `promotion_redemption_claims.first_order_guard boolean not null default false` | Index must express first-order claims only | Existing claim row | True only for a `first_order_only` promotion | — |
-| Partial unique index on `(customer_auth_user_id)` where `first_order_guard` and status in `RESERVED`, `CONSUMED` | Two checkouts can both pass a read of "no order yet" | Existing claim row | Second insert fails | Abandoned `RELEASED` claims leave the index |
+| `app.first_order_purchase_guards` | A flag on each claim cannot represent one guard shared by two applied first-order Offers | Checkout / Payment boundary | See the guard table below. Not a column on `promotion_redemption_claims` | One active guard per logical binding |
 | `checkout_snapshot_lines.source_cart_line_id` nullable | Column is `notNull`, so a non-cart complimentary line cannot be sealed | Checkout Snapshot | Existing cart lines remain not null | Insert-only, same as today |
 | `checkout_snapshot_lines.line_origin text not null default 'cart'` | Need to tell a customer line from a granted line | Checkout Snapshot | Check `cart` requires `source_cart_line_id`. Check `complimentary_offer` requires null source, quantity 1, zero modifier and bundle amounts | Purchased line identity |
 | `checkout_snapshot_promotion_effects.promotion_revision bigint null` | Effects store promotion id and display name, not the revision that was applied | Checkout Snapshot | New seals write the active revision. Historical rows stay null | Immutable after insert |
-| `checkout_snapshot_promotion_effects.snapshot_line_id uuid null` | Current `line_id` is a cart-line id from `extractLineId`, not the snapshot line primary key, and has no FK | Checkout Snapshot | FK to `checkout_snapshot_lines`. Written at seal for new effects, including complimentary. Historical `line_id` values are not rewritten | Immutable after insert |
+| `checkout_snapshot_lines` candidate key `(id, snapshot_id)` | A line primary key alone does not encode which snapshot owns the line | Checkout Snapshot | Unique index `checkout_snapshot_lines_id_snapshot_uidx` on `(id, snapshot_id)`. `id` remains the primary key | Immutable after insert |
+| `checkout_snapshot_promotion_effects.snapshot_line_id uuid null` | Current `line_id` is cart-line provenance and has no snapshot-line foreign key | Checkout Snapshot | Nullable. Composite FK `checkout_snapshot_promotion_effects_line_ownership_fk` `(snapshot_line_id, snapshot_id)` → `checkout_snapshot_lines (id, snapshot_id)`. `MATCH SIMPLE`: null `snapshot_line_id` is not a line reference. A populated value must name a line of this effect's snapshot | Immutable after insert. `line_id` is unchanged and is not this foreign key |
 
-Coupon limit columns stay. Claim status values stay. Promotion and coupon lifecycles stay.
+Coupon limit columns stay. Claim status values stay. Promotion and coupon lifecycles stay. Claims do not gain `first_order_guard` or a customer-unique active-claim index.
 
 No customer `first_order` column. No gift catalog table. No campaign table. No second snapshot header.
+
+### First-order purchase guard
+
+Table `app.first_order_purchase_guards`. Owner: existing Checkout / Payment commercial boundary, written only inside `customer-commerce`. No new service.
+
+| Column | Null | Constraints | Mutability | Privacy |
+|---|---|---|---|---|
+| `id` uuid | not null | Primary key | Immutable | Not PII |
+| `customer_auth_user_id` text | not null | FK `customer_auth_users` `ON DELETE RESTRICT` | Immutable | Eligibility identity for the guard. Not a measurement join |
+| `checkout_id` uuid | not null | FK `checkouts` `ON DELETE RESTRICT` | Immutable | Commerce row, not PII |
+| `checkout_snapshot_id` uuid | not null | FK `checkout_snapshots` `ON DELETE RESTRICT` | Immutable | The bound snapshot |
+| `payment_id` uuid | null | Pair check with `payment_attempt_id`, same shape as claims | Immutable | Null on zero-payable |
+| `payment_attempt_id` uuid | null | Same pair check. Unique when not null | Immutable | The attempt binding |
+| `status` text | not null | `RESERVED` \| `CONSUMED` \| `RELEASED` | Mutable across that lifecycle only | Not PII |
+| `created_at` timestamptz | not null | — | Immutable | — |
+| `consumed_at` timestamptz | null | Set only when `CONSUMED` | Written once | — |
+| `released_at` timestamptz | null | Set only when `RELEASED` | Written once | — |
+
+Timestamp checks match the existing claim checks: `RESERVED` has both timestamps null, `CONSUMED` has `consumed_at` and not `released_at`, `RELEASED` has `released_at` and not `consumed_at`. Zero-payable rows are inserted as `CONSUMED`.
+
+Write boundary: the payment-initiation transaction inserts `RESERVED`; `applySuccess` moves it to `CONSUMED`; `applyDefinitiveNonSuccess` moves `RESERVED` to `RELEASED`; zero-payable completion inserts `CONSUMED`. No other command writes the table.
+
+Concurrency: the customer partial unique index is the serialization guarantee, taken after `customer_auth_users FOR UPDATE`. Two active rows for one customer cannot commit. Two active rows for one `payment_id` cannot commit. One zero-payable snapshot has one guard. A `RELEASED` row is outside the active indexes.
+
+Purpose: one first-order entitlement for one logical purchase binding, shared by every first-order Offer in that binding.
+
+### Journey key and measurement rows
+
+`checkouts.id` is not `CHECKOUT_JOURNEY_KEY`. Section 27A proves why. The representation is an opaque uuid stored on the checkout and copied onto successor checkout rows of the same unpaid attempt.
+
+| Change | Owner | Purpose | Null | Constraints | Write | Concurrency | Mutability | Privacy |
+|---|---|---|---|---|---|---|---|---|
+| `checkouts.checkout_journey_key` uuid | Checkout | Opaque journey key for one unpaid attempt | Null on historical rows. Not null on every checkout `startCheckout` inserts after this capability | No FK to a customer. Not unique by itself: successor checkouts of one attempt share one value | `insertDraftCheckout` mints or copies. No later rewrite | Copied inside the same `startCheckout` transaction that supersedes the prior checkout | Immutable on the row | Not PII. Not a customer or guest identifier |
+| `app.checkout_journey_measurement_heads` | Checkout measurement projection inside existing PostgreSQL | Allocates `AUTHORITATIVE_JOURNEY_SEQUENCE` and records closure | — | `journey_key` uuid primary key. `next_sequence` bigint not null, check `> 0`. `created_at` timestamptz not null. `closed_at` timestamptz null | Insert when the first measurement event of a key is recorded. `SELECT … FOR UPDATE` before allocating a sequence. `closed_at` set once on successful completion | The row lock is the total order. Concurrent appends for one key serialize | `next_sequence` increments. `closed_at` write-once. No customer column | Journey key is not PII |
+| `app.checkout_journey_measurement_events` | Same projection | Append-only authoritative measurement facts | — | See the event table below | Insert only, in the commercial transaction that established the fact | Sequence comes from the locked head. Unique `(journey_key, journey_sequence)` | Immutable after insert. No update and no delete in application code | No customer id. No raw coupon text |
+
+Event columns:
+
+| Column | Null | Role |
+|---|---|---|
+| `id` uuid primary key | not null | Row identity. Not the journey key |
+| `journey_key` uuid | not null | FK to the head. The measurement join |
+| `journey_sequence` bigint | not null | Unique with `journey_key`. Check `> 0`. Strict total order |
+| `event_kind` text | not null | Check: `FIRST_AUTHORITATIVE_CHECKOUT_REVIEW`, `AUTHORITATIVE_REVIEW_COMMERCIAL_RESULT`, `COMMERCIAL_STATE_CHANGE`, `REVIEW_TO_PAYMENT_PROGRESSION`, `PAYMENT_ATTEMPT`, `SUCCESSFUL_DIRECT_ORDER_COMPLETION` |
+| `occurred_at` timestamptz | not null | Authoritative occurrence time from the command clock in that transaction. Not ingest time |
+| `checkout_id` uuid | null | FK `checkouts`. Commerce pointer so successor checkout rows stay traceable. Not the metric join |
+| `checkout_snapshot_id` uuid | null | Sealed commercial result when one exists |
+| `payment_attempt_id` uuid | null | Present on `PAYMENT_ATTEMPT` when an attempt exists |
+| `presentation_class` text | null | Allowlisted measurement class only: the section 9 coupon classes, complimentary applied, threshold short of minimum, recovery returned to Review, and no-offer. No coupon characters |
+| `recorded_at` timestamptz | not null | Insert time. Not authoritative for order, cohort, or cutoff |
+
+No migration is written by this candidate.
 
 ---
 
@@ -934,7 +1128,7 @@ Customer pages are the existing static export.
 | Surface | File | Behaviour |
 |---|---|---|
 | Cart | `src/app/(customer)/order/cart/page.tsx`, `CartClient` | Coupon field, apply, remove, replace, failure text, threshold text, applied saving, complimentary projection line. Data comes from `POST /api/v1/cart/evaluate`. |
-| Checkout Review | `CheckoutClient` on `/order/checkout` | Same cart coupon commands. Shows the shared code and the recomputed explanation, including did-not-improve and stale recovery. |
+| Checkout Review | `CheckoutClient` on `/order/checkout` | Same cart coupon commands. Shows the shared code and the recomputed explanation, including the equal-payable and strictly-lower coupon classes and stale recovery. |
 | Payment | `PaymentPanel` | Read-only `CommercialExplanation` from the active snapshot. No input. |
 | Payment return | `/order/payment` | Unchanged status return. It is not the commercial editor. |
 | Order detail | `OrderDetailClient` | Renders sealed savings and a complimentary snapshot line. Does not evaluate. |
@@ -954,11 +1148,140 @@ Narrow viewport and keyboard behaviour follow the Product Definition UX matrix. 
 | Operator mutation | Existing `promotion_audit_events` in the mutation transaction |
 | Revision provenance | `promotions.revision` / `promotion_coupons.revision` plus sealed `promotion_revision` on the snapshot effect |
 | Selected Offer on a purchased order | Snapshot effect `promotion_id`, `coupon_id`, `display_name`, `promotion_revision`, amounts |
-| Redemption | Existing claim row status, now with `customer_auth_user_id` for the guard. Operator inspect shows counts only |
+| Redemption | Existing claim row status. Operator inspect shows counts only. The first-order guard is not an operator customer list |
 | Diagnosable failure | Existing cart, checkout, and payment error codes plus the distinct explanation reason codes |
-| Privacy | Customer explanation omits other customers' ids and counts. Audit metadata continues to reject `canonicalCode` |
+| Privacy | Customer explanation omits other customers' ids and counts. Audit metadata continues to reject `canonicalCode`. Measurement rows do not store raw coupon text or customer identity |
 
-No new telemetry product and no campaign analytics.
+Campaign analytics stay out of scope. X3 measurement is section 27A. It is a projection inside the existing database, not a new telemetry product.
+
+---
+
+## 27A. X3 measurement architecture
+
+Experience Gate PASS makes this contract mandatory. It does not create a Product abandonment timeout, a cart expiry, a checkout expiry, or a payment-lifecycle change.
+
+### Journey key
+
+```text
+CHECKOUT_JOURNEY_KEY_REPRESENTATION = checkouts.checkout_journey_key
+EXISTING_CHECKOUT_ID_REUSED = NO
+CUSTOMER_IDENTITY_AS_JOURNEY_KEY = PROHIBITED
+CART_ID_AS_JOURNEY_KEY = NO
+```
+
+`checkouts.id` is stable for fulfilment changes, `invalidateReadyToDraft`, and payment retry on the same row. It is not stable for the Experience journey.
+
+`startCheckout` in `src/server/checkout/operations.ts` returns the existing non-terminal checkout when the owner matches and `sourceCartRevision` equals `carts.revision`. When status is `DRAFT` or `READY_FOR_PAYMENT` and those revisions differ, it calls `markCheckoutCancelled` and `insertDraftCheckout` with a new id. Coupon apply, coupon remove, and quantity edits all bump `carts.revision` (`applyCartCoupon`, `removeCartCoupon`, line mutations in `src/server/cart/operations.ts`). The next start therefore replaces the checkout id. Experience keeps one key across cart edits and coupon apply, change, and remove.
+
+`getCheckout` by cart returns null when the active checkout's `sourceCartRevision` is stale, so the client starts again and takes that replacement path.
+
+`setCheckoutFulfilment` and `setCheckoutFulfilmentTiming` update the same checkout row and bump `checkouts.revision`. `invalidateReadyToDraft` keeps the id and moves `READY_FOR_PAYMENT` back to `DRAFT`. `retryPayment` refuses an unresolved attempt and keeps the same checkout. Those flows do not save `checkouts.id` as a journey key, because the cart-revision path already changes it.
+
+`carts.id` survives those edits, `claimGuestCart` (same cart id, revision bump), and `finalizeCartAfterOrderMaterialization` (same cart id, lines cleared). The next unpaid attempt after a successful order reuses the cart. Experience closes the key on successful completion and starts a new key for the next attempt. A cart id would join those attempts.
+
+Mint and copy, inside `startCheckout`, before insert:
+
+```text
+predecessor = the non-terminal checkout this command is about to supersede or expire
+if predecessor exists and is not COMPLETED:
+  copy predecessor.checkout_journey_key
+else:
+  mint a new opaque uuid
+```
+
+The predecessor exists for the cart-revision cancel path and for the logical-expiry path in the same function. Both continue the same unpaid attempt. `PAYMENT_PENDING` is returned as-is: that branch does not cancel the row, so an in-flight payment keeps its key across later cart edits. A customer `cancelCheckout` leaves no non-terminal predecessor, so the next start mints a new key. After `COMPLETED`, `findActiveNonTerminalForCart` finds nothing, so the next start mints a new key on the same cart. `claimGuestCart` happens before a checkout exists, because a checkout requires `customer_auth_user_id`. The first Review after that claim mints the key. `reconcileGuestCartWithCustomer` bumps the surviving cart revision; the following start copies the key from the superseded checkout instead of minting.
+
+```text
+ONE_LOGICAL_CHECKOUT = ONE_CHECKOUT_JOURNEY_KEY
+CHECKOUT_JOURNEY_KEY_PII = NO
+```
+
+### Sequence
+
+`checkouts.revision` does not satisfy `AUTHORITATIVE_JOURNEY_SEQUENCE`. Read-only `evaluateCheckout` does not bump it. Two qualifying Reviews can share an `occurred_at` because of clock precision. Analytics arrival order is not an order.
+
+```text
+SCOPE = one CHECKOUT_JOURNEY_KEY
+STRICT_TOTAL_ORDER = YES
+UNIQUE_WITHIN_JOURNEY = YES
+REPRODUCIBLE = YES
+ANALYTICS_INGESTION_ORDER = NOT_AUTHORITY
+TELEMETRY_ARRIVAL_ORDER = NOT_AUTHORITY
+```
+
+Mechanism: append one `checkout_journey_measurement_events` row in the same transaction as the commercial fact, after locking that key's `checkout_journey_measurement_heads` row. `journey_sequence` is the head's `next_sequence`, then the head increments. The unique `(journey_key, journey_sequence)` constraint rejects a duplicate. Re-reading the same rows returns the same order. `recorded_at` is not consulted.
+
+| Fact | When the event is written |
+|---|---|
+| `FIRST_AUTHORITATIVE_CHECKOUT_REVIEW` | First qualifying `evaluateCheckout` that returns an authoritative commercial result for the key |
+| `AUTHORITATIVE_REVIEW_COMMERCIAL_RESULT` | Each later qualifying Review evaluation for that key |
+| `COMMERCIAL_STATE_CHANGE` | Coupon apply, remove, replace, fulfilment change, or stale recovery that changes the Review result |
+| `REVIEW_TO_PAYMENT_PROGRESSION` | `prepareCheckoutForPayment` commits `READY_FOR_PAYMENT` for that key |
+| `PAYMENT_ATTEMPT` | Payment initiation or `retryPayment` inserts the attempt |
+| `SUCCESSFUL_DIRECT_ORDER_COMPLETION` | The transaction that records payment success, or zero-payable checkout completion, after Order materialization has an authoritative success fact for that key |
+
+`occurred_at` is the clock `now` of that transaction. It is the authoritative occurrence time. A repaint that does not re-enter that command does not write an event.
+
+### Global cohort entry
+
+The calculation reads only the append-only event rows for one `journey_key`:
+
+1. Keep rows whose `event_kind` is `FIRST_AUTHORITATIVE_CHECKOUT_REVIEW` or `AUTHORITATIVE_REVIEW_COMMERCIAL_RESULT`.
+2. Choose the row with the lowest `journey_sequence`.
+3. That row is the one cohort-entry Review.
+4. `GLOBAL_COHORT_ENTRY_TIME` is that row's `occurred_at`.
+5. The journey is in a window when `WINDOW_START <= GLOBAL_COHORT_ENTRY_TIME < WINDOW_END`.
+6. No later Review is tested, even if its `occurred_at` falls in a later window.
+
+```text
+COHORT_ENTRY_SELECTED_PER_WINDOW = NO
+COHORT_MEMBERSHIP = ZERO_OR_ONE
+WINDOW = [START, END)
+```
+
+A Review revisit inserts a higher sequence. It does not update the entry row, so it cannot move the journey or add a denominator. Membership is not stored. It is recomputed from the immutable entry row, so the same records and the same window yield the same membership.
+
+### Calendar, window, and report cutoff
+
+```text
+MEASUREMENT_CALENDAR_TIMEZONE = Asia/Kolkata
+MEASUREMENT_CALENDAR_APPLIES_TO = THIS_MEASUREMENT_CONTRACT_ONLY
+```
+
+`PRODUCTION_RELEASE_ANCHOR` is a named instant supplied to the calculation. This candidate does not add a release table or a feature flag. The initial window is that instant through the same local clock time plus 28 civil days in `Asia/Kolkata`, half-open. An entry exactly at the start is inside. An entry exactly at the end is outside and belongs to the next window that starts at that instant, if that window is being reported. Adjacent windows do not overlap.
+
+`REPORT_AS_OF` is an input of one published calculation, not a checkout column. For the initial snapshot it equals the exclusive end of the initial window. A fact is included only when `occurred_at < REPORT_AS_OF`. An event exactly at the cutoff is excluded. The same cutoff applied to the same rows includes the same events. Checkout expiry, payment state, and cart lifetime do not read this cutoff.
+
+```text
+PRODUCT_ABANDONMENT_TIMEOUT_CREATED = NO
+```
+
+### Primary metric
+
+`CHECKOUT_REVIEW_TO_SUCCESSFUL_DIRECT_ORDER_COMPLETION_RATE` for a named cohort window and `REPORT_AS_OF`:
+
+| Membership | Source |
+|---|---|
+| Cohort member | Entry Review sequence and `occurred_at` above, tested against the half-open window |
+| Denominator | Those journey keys. A later Review does not add a key |
+| Numerator | Denominator keys that have `SUCCESSFUL_DIRECT_ORDER_COMPLETION` with `occurred_at < REPORT_AS_OF`. One completion per key |
+| Unfinished | Denominator key with no such completion. Class `NOT_COMPLETED_AS_OF_REPORT_CUTOFF` |
+| Completed segment | Greatest `journey_sequence` among Review commercial results that precede the completion's sequence |
+| Unfinished segment | Greatest `journey_sequence` among Review commercial results with `occurred_at < REPORT_AS_OF` |
+
+Equal `occurred_at` values still have different sequences, so segment selection stays a total order. The metric does not read page views, customer id, ingest order, unordered physical row order, or the live Promotion row.
+
+```text
+CHECKOUT_JOURNEY_KEY_PII = NO
+AUTHORITATIVE_JOURNEY_SEQUENCE_PII = NO
+CUSTOMER_IDENTITY_USED_AS_MEASUREMENT_JOIN = NO
+RAW_COUPON_TEXT_IN_MEASUREMENT = NO
+NEW_SERVICE_REQUIRED = NO
+NEW_QUEUE = NO
+SECOND_COMMERCE_AUTHORITY = NO
+```
+
+Customer identity remains on checkout and on the first-order guard for eligibility and auth. It is not a column on the measurement head or event, and the rate does not join through it.
 
 ---
 
@@ -971,7 +1294,7 @@ No new telemetry product and no campaign analytics.
 | Coupon retired mid-checkout | `promotion_coupons.status` plus fresh quote | `prepareCheckoutForPayment` | Fresh evaluation | Review, remove or replace, then prepare again | Explanation reason. Payment not bound |
 | Global last redemption | Claim counts under promotion `FOR UPDATE` | `acquireReservedClaimsForAttempt` | First committed `RESERVED` that still fits the cap | Payment transaction rolls back only itself. Next prepare/evaluate recounts and returns Review through the existing mismatch path | `PAYMENT_PROMOTION_CAPACITY_UNAVAILABLE`. No false consume |
 | Per-customer redemption | Same counts filtered by customer | Same | Same | Same | Personal-cap explanation. No foreign count |
-| First-order concurrent checkout | Order / succeeded-payment predicate plus unique guard index | Claim transaction after customer row lock | Committed reservation | Losing transaction rolls back | Conflict / revalidation. Not two benefits |
+| First-order concurrent checkout | Order / succeeded-payment predicate plus one purchase-level guard | Guard insert after customer row lock. Claims remain per Promotion | One committed active guard, including when the winner is a primary plus delivery pair | Losing transaction rolls back. A resolved failure releases the guard so a later retry can reserve one new guard | Conflict / revalidation. Not two entitlements |
 | Duplicate coupon submit | One `manual_coupon_code` | Cart CAS | One code | Same-code apply is a no-op | One evaluated coupon |
 | Complimentary concurrent activation | Partial unique index | `activatePromotion` | The committed update | The other transaction rolls back, including its audit row | Operator non-success. `ACTIVE_COUNT <= 1` |
 | Complimentary unavailable before pay | `resolveOutletVariantAvailability` | Prepare comparison | Recomputed combination with that Offer removed | Stay on Review | `COMPLIMENTARY_ITEM_UNAVAILABLE`. No substitute |
@@ -991,7 +1314,7 @@ FIT status `FIT_WITH_EXTENSION` means the mandatory story is satisfied only by t
 | US-036J-002 | 002-01 … 002-10 | `manual_coupon_code`, cart commands, checkout adapter | None for the mutable code | Existing coupon routes called from both pages | Cart and Review controls. Payment has none | Cart CAS; failed request does not paint success | HTTP plus browser: shared code, guest unrestricted path, sign-in retry, payment without controls | `FIT_WITH_EXTENSION` |
 | US-036J-003 | 003-01, 003-02 | Progress on the quote | Uses existing minimum columns | Evaluate responses | Cart / Review text | Re-evaluate after mutation | Domain: remaining paise equals the gap; drop-off removes the saving | `FIT_WITH_EXTENSION` |
 | US-036J-004 | 004-01 | Quote components and explanation | Sealed effects already store amounts; delivery saving uses them | Checkout evaluate | Review and Payment summary | Revalidation before pay | Domain plus browser: components sum; ₹0 standing delivery has no second saving line | `FIT_WITH_EXTENSION` |
-| US-036J-005 | 005-01, 005-02 | Section 10 predicate | `first_order_only`, claim guard columns and index | No new route. Prepare and payment enforce | Eligible / ineligible explanation | Customer lock + unique index | Domain predicate, plus a real overlapping reservation test | `FIT_WITH_EXTENSION` |
+| US-036J-005 | 005-01, 005-02 | Section 10 predicate and purchase guard | `first_order_only`, `first_order_purchase_guards` | No new route. Prepare and payment enforce | Eligible / ineligible explanation | Customer lock + one active guard per customer | Domain predicate, paired primary plus delivery, overlapping reservations | `FIT_WITH_EXTENSION` |
 | US-036J-006 | 006-01, 006-02 | Checkout mode and timing into the quote | Mode and timing arrays | Existing fulfilment routes then evaluate | Checkout mode controls already exist | Fulfilment commands bump revision | Domain: delivery Offer off on pickup; scheduled window consumed, not redefined | `FIT_WITH_EXTENSION` |
 | US-036J-007 | 007-01 | Coupon outcomes + cap reads | Promotion cap columns | Evaluate and payment errors | Distinct Review copy | Cap lock in section 11 | Domain table of the five reason classes | `FIT_WITH_EXTENSION` |
 | US-036J-008 | 008-01 | `prepareCheckoutForPayment` | None new for the gate | Existing prepare | Review recovery. Payment does not edit the code | Snapshot mismatch | Integration: retire the Offer, prepare fails closed, Review total matches the fresh quote | `FIT_WITH_EXTENSION` |
@@ -1005,6 +1328,31 @@ Uncovered mandatory ACs: none.
 
 Golden journeys `GJ-FIRST-ORDER` and `GJ-RETURNING-ORDER` are proof surfaces for the explanation and the ineligible returning customer once implementation is authorized. This candidate does not redefine their non-offer steps.
 
+### Experience-fit trace
+
+| Requirement | Fit |
+|---|---|
+| Authoritative threshold gap | Section 14. Client does not calculate the money |
+| One commercial explanation | Section 15. Merchandise saving, delivery saving, total saved, final payable |
+| Shared Cart and Review coupon state | Section 8 |
+| Payment read-only | Section 8 and section 26 |
+| Complimentary identity and no extra merchandise charge | Section 17 |
+| Coarse customer-visible failure classes | Sections 8, 15, and 16. Projection-owned language |
+| Stale recomputation returns to Review | Section 16 |
+| Sealed purchased savings | Section 16 and section 17 |
+| Complimentary equal-payable tie | Section 21. Product-owned |
+| General equal-payable tie | Section 6. `FIT_OWNED_DETERMINISTIC` |
+| One logical checkout, one journey key | Section 27A |
+| Review revisit does not add a denominator | Section 27A cohort steps 1–6 |
+| Successful completion joins on the same key | Section 27A primary metric |
+| Global cohort entry selected once | Lowest qualifying Review sequence |
+| Equal-time events still totally ordered | `journey_sequence`, not `occurred_at` |
+| Half-open window assignment | `[START, END)` in `Asia/Kolkata` |
+| Customer identity is not the journey join | No customer column on measurement rows |
+| Raw coupon text is not stored | `presentation_class` allowlist only |
+| Historical purchased savings stay immutable | Insert-only snapshot |
+| Customer-facing language stays projection-owned | LANG-1. No microcopy in this document |
+
 ---
 
 ## 30. Test / proof plan
@@ -1015,7 +1363,8 @@ Not executed by this candidate. Future implementation proof under TEST-1:
 |---|---|
 | Domain unit on `buildPromotionCandidates` / `selectBestCandidate` | Slot pairs, both-apply, BOGO non-stack, best payable, complimentary tie, `NONE_CHOSEN`, coupon did-not-improve, standing ₹0 waiver |
 | Domain unit on the first-order predicate | Failed payment absent; cancelled order still ineligible; no customer boolean |
-| Persistence concurrency | Two complimentary activations; two first-order reservations; last cap unit; payment retry after `RELEASED` |
+| Persistence concurrency | Two complimentary activations; two first-order reservations sharing one guard when the winner is a pair; last cap unit; payment retry after `RELEASED`; composite snapshot-line foreign key rejects a cross-snapshot `snapshot_line_id` |
+| Measurement | One key across a cart-revision checkout replacement; revisit does not add a denominator; equal timestamps order by sequence; half-open window; report cutoff uses `occurred_at` only |
 | HTTP | Cart and checkout share one code; payment body has no coupon mutation; admin 409 and unique-index non-success |
 | Browser | Cart, Review, read-only Payment, order detail, narrow viewport, focus rules in the Product Definition |
 
@@ -1049,8 +1398,9 @@ Checked against the escalation examples:
 | Second promotion evaluator | No. `evaluatePromotions` and `selectBestCandidate` |
 | Generic rules engine | No. Benefit class is a fixed derivation inside the promotion module |
 | Transport topology change | No |
-| Checkout Snapshot ownership change | No. Added sealed fields and a line origin. Insert-only snapshot remains the purchased truth |
-| New fields, migration, façade route extensions, benefit types, capability-specific unique indexes | Yes. These are the examples that do **not** by themselves require a global ARCH bump |
+| Checkout Snapshot ownership change | No. Added sealed fields, a line origin, and a snapshot-local composite foreign key. Insert-only snapshot remains the purchased truth |
+| New analytics platform, queue, broker, or generic rules engine | No. Measurement is an append-only projection in the existing PostgreSQL database, written by `customer-commerce`, joined on an opaque journey key |
+| New fields, migration, façade route extensions, benefit types, capability-specific tables and unique indexes | Yes. The guard table, the measurement head and event tables, and the snapshot candidate key are those examples. They do **not** by themselves require a global ARCH bump |
 
 D-382 remains the sequencing authority. FD-036J-01, FD-036J-02, and FD-036J-03 remain Product Definition decisions. They are not copied into the Decision Register by this candidate.
 
@@ -1063,16 +1413,18 @@ No D-383 is created. ARCH-R23 stays current.
 ```text
 ARCHITECTURE_FIT_CANDIDATE_RESULT = PASS
 MANDATORY_STORIES_FITTED = US-036J-001 .. US-036J-013
+EXPERIENCE_FITTED = XD-IMP-036J-DRAFT-6
 CONTRADICTIONS = NONE
 PRODUCT_DECISION_REQUIRED = NONE
 GLOBAL_DECISION_REQUIRED = NO
 ```
 
-Every mandatory story has a safe fit inside the accepted Promotion, Pricing, Cart, Checkout Snapshot, Order, Catalog, and Availability authorities.
+Every mandatory story has a safe fit inside the accepted Promotion, Pricing, Cart, Checkout Snapshot, Order, Catalog, and Availability authorities. The approved Experience Definition's presentation facts and X3 measurement contract fit inside the same authorities, using the purchase-level guard, the snapshot-local foreign key, and the checkout measurement projection in this candidate.
 
 ```text
 IMP036J_ARCHITECTURE_FIT = NOT_PERFORMED
 IMP036J_ARCHITECTURE_LOCKED = NO
+IMP036J_DESIGN_READINESS = NOT_PERFORMED
 IMP036J_IMPLEMENTATION_AUTHORIZED = NO
 IMP036J_STARTED = NO
 ```

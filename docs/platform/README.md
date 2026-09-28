@@ -129,7 +129,7 @@ Lifecycle truth stays in `ROADMAP.md` and `STATE.md`.
 
 | Document | State | Notes |
 |---|---|---|
-| [`capabilities/IMP-036J-promotions-coupons-offers.md`](./capabilities/IMP-036J-promotions-coupons-offers.md) | CANDIDATE / NOT_LOCKED | IMP-036J fit candidate against `PD-IMP-036J-DRAFT-6`. `IMP036J_ARCHITECTURE_FIT` remains `NOT_PERFORMED`. Architecture is not locked. Implementation is not authorized. |
+| [`capabilities/IMP-036J-promotions-coupons-offers.md`](./capabilities/IMP-036J-promotions-coupons-offers.md) | CANDIDATE / NOT_LOCKED | IMP-036J fit candidate against approved `PD-IMP-036J-DRAFT-6` and approved `XD-IMP-036J-DRAFT-6` (Experience Gate PASS, X3, CR2). `IMP036J_ARCHITECTURE_FIT` remains `NOT_PERFORMED`. Architecture is not locked. Implementation is not authorized. |
 
 ## Supporting documents
 
