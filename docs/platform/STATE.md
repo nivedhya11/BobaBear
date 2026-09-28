@@ -2,7 +2,7 @@
 {
   "status": "CURRENT",
   "authority": "ACCEPTED_STATE",
-  "stateVersion": "STATE-R167",
+  "stateVersion": "STATE-R168",
   "acceptedThrough": "IMP-036I",
   "currentProductSlice": "IMP-036J",
   "nextProductSlice": "IMP-037",
@@ -10,7 +10,7 @@
   "gtmBoundary": "IMP-040",
   "governanceHealth": "ALIGNED",
   "lastReviewed": "2026-09-28",
-  "supersedes": "STATE-R166"
+  "supersedes": "STATE-R167"
 }
 -->
 
@@ -41,8 +41,18 @@ Next Product Slice:             IMP-037 — Backup, Restore & Migration Readines
 Unresolved Predecessor:         IMP-037 — Backup, Restore & Migration Readiness
 Current Governance Activity:    IMP-036J PRODUCT_DEFINITION APPROVED / GATE PASS
                               (formal lifecycle PLANNED;
-                              nextGate: ARCHITECTURE_FIT;
-                              GTM-R169 / STATE-R167;
+                              nextGate: EXPERIENCE_GATE;
+                              PRODUCT_DELIVERY_PROCESS: PD-2;
+                              EXPERIENCE_STANDARD: EXP-1;
+                              PRODUCT_LANGUAGE_STANDARD: LANG-1;
+                              IMP036J_EXPERIENCE_CRITICALITY: X3;
+                              IMP036J_CHANGE_RISK: CR2;
+                              IMP036J_EXPERIENCE_DEFINITION: REQUIRED / NOT_PERFORMED;
+                              IMP036J_EXPERIENCE_GATE: NOT_PERFORMED;
+                              IMP036J_DESIGN_READINESS: NOT_PERFORMED;
+                              IMP036J_NEXT_GATE: EXPERIENCE_GATE;
+                              GTM-R170 / STATE-R168;
+                              prior tip GTM-R169 / STATE-R167;
                               prior tip GTM-R168 / STATE-R166;
                               prior tip GTM-R167 / STATE-R165;
                               prior tip GTM-R166 / STATE-R164;
@@ -950,7 +960,7 @@ Implementation/review provenance for IMP-036F is recorded in
 
 ## 8. Explicitly Not Yet Accepted
 
-- IMP-036J — Promotions, Coupons & Offers (`PLANNED`; `IMP036J_ACTIVATED: YES`; Product Definition `PD-IMP-036J-DRAFT-6` = `APPROVED`; Product Definition Gate `PASS`; Architecture Fit `NOT_PERFORMED`; `IMP036J_ARCHITECTURE_LOCKED: NO`; `IMP036J_IMPLEMENTATION_AUTHORIZED: NO`; `IMP036J_STARTED: NO`; `IMP036J_IMPLEMENTATION_COMPLETE: NO`; `IMP036J_ACCEPTED: NO`; nextGate `ARCHITECTURE_FIT`; activated for Product Definition under D-382; FD-036J-01 APPROVED 2026-09-27; FD-036J-02 APPROVED 2026-09-27; FD-036J-03 APPROVED 2026-09-28; historical DRAFT-5 Gate STOP was not persisted)
+- IMP-036J — Promotions, Coupons & Offers (`PLANNED`; `IMP036J_ACTIVATED: YES`; Product Definition `PD-IMP-036J-DRAFT-6` = `APPROVED`; Product Definition Gate `PASS`; Experience Criticality `X3`; Change Risk `CR2`; Experience Definition `REQUIRED / NOT_PERFORMED`; Experience Gate `NOT_PERFORMED`; Design Readiness `NOT_PERFORMED`; Architecture Fit `NOT_PERFORMED`; `IMP036J_ARCHITECTURE_LOCKED: NO`; `IMP036J_IMPLEMENTATION_AUTHORIZED: NO`; `IMP036J_STARTED: NO`; `IMP036J_IMPLEMENTATION_COMPLETE: NO`; `IMP036J_ACCEPTED: NO`; nextGate `EXPERIENCE_GATE`; activated for Product Definition under D-382; FD-036J-01 APPROVED 2026-09-27; FD-036J-02 APPROVED 2026-09-27; FD-036J-03 APPROVED 2026-09-28; historical DRAFT-5 Gate STOP was not persisted)
 - IMP-037 — Backup, Restore & Migration Readiness (`IMPLEMENTATION_IN_PROGRESS`; `IMP037_HOLD: YES`; `IMP037_ACTIVATED: YES`; Product Definition APPROVED / `PD-IMP-037-DRAFT-1`; Gate PASS; Architecture Fit PASS; architecture LOCKED; implementation AUTHORIZED / STARTED; `IMP037_IMPLEMENTATION_COMPLETE: NO`; `IMP037_ACCEPTED: NO`; independent Architecture Fit review PASS; authorization evidence PR#171/5743814105; start evidence PR#172/5744869269; `PHASE1_BLOCK_STATUS: BLOCKED_PROVIDER_ACCESS`; held under D-377 program pause)
 - IMP-038 — Security & Privacy Hardening (`IMPLEMENTATION_IN_PROGRESS (HOLD — IMPLEMENTATION_COMPLETE / NOT_ACCEPTED)`; `IMP038_HOLD: YES`; `IMP038_ACTIVATED: YES`; historical `CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038` preserved; Product Definition APPROVED / `PD-IMP-038-DRAFT-2`; Gate PASS; Architecture Fit PASS; architecture LOCKED; independent Architecture Fit review PASS (reviewed head `3b03164d6581c5a98a893c24e92eaddece004e90`); implementation AUTHORIZED / STARTED / COMPLETE (`FOUNDER_IMP038_IMPLEMENTATION_AUTHORIZATION: CURSOR_SESSION_MANDATE`); `IMP038_IMPLEMENTATION_COMPLETE: YES`; `IMP038_ACCEPTED: NO`; `IMP038_ACCEPTANCE_BLOCKED_BY_IMP037: YES`; `IMP038_EXTERNAL_ASSESSMENT: DEFERRED_UNTIL_PRE_GTM_APPLICATION_SCOPE_STABILIZES`; frozen runtime `dc6b19e6f88d4084e424d927e6467c374596fb0a` / tree `c3aefb57f3f6c941d7f14907b6c095c4aa7f0547` / fingerprint `2800fe11397ee2a01e9decf572f85adf5c3a8b244ca34b1f53d579e05feac589`; `GAP-EXT-ASSESS-001: NOT_CLOSED`; held under D-377 program pause; `D-375_CREATED: YES`; `ARCH_R21_CREATED: YES`)
 - IMP-039 — Production Infrastructure & Release Pipeline (`PLANNED` / `NOT_ACTIVATED`; `IMP039_ACTIVATED: NO`)
@@ -978,7 +988,44 @@ Implementation/review provenance for IMP-036F is recorded in
 Agents may propose a STATE delta in their report. Only independent acceptance updates this file's
 accepted position and may promote `governanceHealth` to `ALIGNED`.
 
-## 10. STATE-R167 record
+## 10. STATE-R168 record
+
+```text
+STATE-R168 = IMP036J_PD2_EXPERIENCE_TRANSITION
+supersedes: STATE-R167
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-037
+nextGate: EXPERIENCE_GATE
+PRODUCT_DELIVERY_PROCESS: PD-2
+EXPERIENCE_STANDARD: EXP-1
+PRODUCT_LANGUAGE_STANDARD: LANG-1
+IMP036J_EXPERIENCE_CRITICALITY: X3
+IMP036J_CHANGE_RISK: CR2
+IMP036J_EXPERIENCE_DEFINITION: REQUIRED / NOT_PERFORMED
+IMP036J_EXPERIENCE_GATE: NOT_PERFORMED
+IMP036J_DESIGN_READINESS: NOT_PERFORMED
+IMP036J_NEXT_GATE: EXPERIENCE_GATE
+IMP036J_PRODUCT_DEFINITION: APPROVED
+IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-6
+IMP036J_PRODUCT_DEFINITION_GATE: PASS
+IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036J_ARCHITECTURE_LOCKED: NO
+IMP036J_ARCHITECTURE_FIT_CANDIDATE_AUTHORITY: NOT_PERSISTED
+IMP036J_IMPLEMENTATION_AUTHORIZED: NO
+IMP036J_STARTED: NO
+IMP036J_ACCEPTED: NO
+IMP037_HOLD: YES
+IMP038_HOLD: YES
+```
+
+PD-2, EXP-1, and LANG-1 are process and experience authorities. They do not change IMP-036J product
+semantics, pass Architecture Fit, authorize implementation, create D-383, or change ARCH-R23.
+`CR2` is Change Risk for customer-payable promotion outcomes. It is not AGENTS execution risk.
+Historical STATE-R167 Gate PASS remains historical. Accepted IMPs stay accepted.
+
+## 11. STATE-R167 record (historical prior tip)
 
 ```text
 STATE-R167 = IMP036J_PRODUCT_DEFINITION_APPROVED

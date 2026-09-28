@@ -1,15 +1,16 @@
 # Product Definition Template
 
 Mandatory for per-IMP Product Definitions for new substantial product work from IMP-036F onward.
-Use with [`PRODUCT-DELIVERY.md`](../../PRODUCT-DELIVERY.md), [`TESTING.md`](../../TESTING.md), and
-the [product artifact index](../README.md). Replace placeholders with evidence-backed definitions;
+Use with [`PRODUCT-DELIVERY.md`](../../PRODUCT-DELIVERY.md) (PD-2), [`EXPERIENCE.md`](../../EXPERIENCE.md)
+(EXP-1), [`TESTING.md`](../../TESTING.md) (TEST-1), and the
+[product artifact index](../README.md). Replace placeholders with evidence-backed definitions;
 an empty field is not approval. Use `N/A` only with a brief reason.
 
-This template defines user/business behaviour within existing authority. It cannot override global
-architecture, security, financial or persistence authority, concurrency semantics, accepted STATE,
-or binding decisions. Undefined material behaviour is `PRODUCT_DECISION_REQUIRED`: stop for human
-resolution; architecture must not invent it. Approval of this artifact does not activate a slice or
-authorize implementation independently of ROADMAP and the existing gates.
+This template owns required observable behaviour. The Experience Definition owns presentation and
+interaction. Do not duplicate detailed experience content here. This template cannot override
+global architecture, security, financial or persistence authority, concurrency semantics, accepted
+STATE, or binding decisions. Undefined material behaviour is `PRODUCT_DECISION_REQUIRED`. Approval
+does not activate a slice or authorize implementation.
 
 ```text
 PRODUCT_DELIVERY_PROCESS_EFFECTIVE_FROM = IMP-036F
@@ -19,10 +20,11 @@ PD1_DID_NOT_ACTIVATE_IMP036F_AT_ADOPTION = YES
 ```
 
 Those markers describe adoption of the operating model. PD-1 did not itself activate IMP-036F when
-introduced; current activation and lifecycle truth must be read from ROADMAP/STATE. This template
-is not an IMP-036F lifecycle authority. IMP-036E remains on its existing lifecycle. A historical
-Journey Gap Audit is required before public GTM cutover / IMP-040 acceptance and is not performed
-in Session 1.
+introduced. PD-2 is prospective and does not rewrite accepted IMPs. Current activation and
+lifecycle truth must be read from ROADMAP/STATE. This template is not an IMP-036F lifecycle
+authority. IMP-036E remains on its existing lifecycle. A pre-GTM experience, product-language, and
+instrumentation audit is required before public GTM cutover / IMP-040 acceptance and is not
+performed by this template.
 
 ## 1. Identity / version / status
 
@@ -31,8 +33,12 @@ in Session 1.
 | Capability / title | `<IMP and existing ROADMAP identity>` |
 | Product Definition version / document status | `<version; draft or approved with approval evidence>` |
 | Product owner / approval evidence | `<human decision authority and record>` |
-| Process / verification policy | `PD-1 / TEST-1` (verify applicable versions) |
-| Canonical anchors | `<VISION / ROADMAP / STATE / ARCHITECTURE / decision-register versions>` |
+| Process / verification policy | `PD-2 / EXP-1 / LANG-1 / TEST-1` (verify applicable versions) |
+| Experience Criticality | `X0` / `X1` / `X2` / `X3` with reason |
+| Change Risk | `CR0` / `CR1` / `CR2` / `CR3` with evidence. Not an AGENTS `R0`–`R3` level |
+| Linked Experience Definition | `<path and status, or N/A with criticality reason>` |
+| Experience Gate | `NOT_PERFORMED` / `PASS` / `STOP` / `N/A` |
+| Canonical anchors | `<VISION / ROADMAP / STATE / ARCHITECTURE / decision-register / EXP-1 / LANG-1 versions>` |
 | Repository candidate | `<canonical path / branch / HEAD / tree / content-sensitive fingerprint>` |
 | Capability lifecycle / authorization | `<reference ROADMAP / STATE / capability artifact; do not create new states>` |
 | Relevant capability architecture / ADRs | `<paths and applicable versions / invariants>` |
@@ -267,6 +273,30 @@ committed to this acceptance slice. Proposed behaviour is not accepted until the
 Record architecture/decision conflicts explicitly. Material undefined product behaviour is
 `PRODUCT_DECISION_REQUIRED`; material open decisions cannot be treated as assumptions or silently
 deferred to implementation.
+
+Classify material assumptions as `FACT`, `SUPPORTED_EVIDENCE`, `ASSUMPTION`, `HYPOTHESIS`, or
+`PRODUCT_DECISION`. Record evidence, risk, and validation path. Experience assumptions live in the
+Experience Definition.
+
+## 25a. Service and operational impact
+
+`<Customer promise that depends on operations, or N/A. Align customer promise, system truth, workforce action, and operational capability.>`
+
+## 25b. Quality Attribute Profile
+
+Mark each `REQUIRED` or `N/A` with a reason: performance, availability, reliability, resilience,
+security, privacy, accessibility, responsive/device support, scalability, concurrency, data
+integrity, observability, supportability, backward compatibility, localization/presentation.
+
+## 25c. Quality, measurement, Design Readiness, and Production Readiness
+
+| Expectation | Status |
+|---|---|
+| Quality / Test Plan | `<required proof under TEST-1; not a coverage-percentage substitute>` |
+| Measurement intent | `<required for X3 before implementation authorization, or N/A>` |
+| Design Readiness dependency | `<required for X2/X3 after Architecture Fit and before implementation authorization>` |
+| Production Readiness applicability | `<which release checks will matter, or N/A>` |
+| Experience requirement IDs | `<XR-<IMP>-NNN where a testable experience requirement exists, or none>` |
 
 ## 26. Definition of Ready
 
