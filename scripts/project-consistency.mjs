@@ -1766,6 +1766,7 @@ export function isSupportedImp030GovernanceCheckpoint(roadmapVersion, stateVersi
   const imp036jProductDefinitionDraftReady = roadmapVersion === "GTM-R168" && stateVersion === "STATE-R166";
   const imp036jProductDefinitionGatePass = roadmapVersion === "GTM-R169" && stateVersion === "STATE-R167";
   const imp036jPd2ExperienceTransition = roadmapVersion === "GTM-R170" && stateVersion === "STATE-R168";
+  const imp036jExperienceGatePass = roadmapVersion === "GTM-R171" && stateVersion === "STATE-R169";
   if (kind === "activation") return activation;
   if (kind === "lock") return lock;
   if (kind === "authorization") return authorization;
@@ -1864,7 +1865,8 @@ export function isSupportedImp030GovernanceCheckpoint(roadmapVersion, stateVersi
   if (kind === "imp036jProductDefinitionDraftReady") return imp036jProductDefinitionDraftReady;
   if (kind === "imp036jProductDefinitionGatePass") return imp036jProductDefinitionGatePass;
   if (kind === "imp036jPd2ExperienceTransition") return imp036jPd2ExperienceTransition;
-  return activation || lock || authorization || start || routeAmendment || consistencyRepair || acceptance || imp031Activation || imp031Draft || imp031Lock || imp031Authorization || imp031Start || imp031Completion || imp031Acceptance || imp032Activation || imp032Draft || imp032Lock || imp032Authorization || imp032Start || imp032BoundaryClarification || imp032Completion || imp032Acceptance || imp033Activation || imp033Completion || imp033Acceptance || imp034Completion || imp034Acceptance || imp035Completion || imp035Acceptance || imp036Completion || imp036Acceptance || enterpriseExperiencePlan || imp036aCompletion || imp036aAcceptance || imp036bCompletion || imp036bAcceptance || imp036cCompletion || imp036cAcceptance || imp036dActivation || imp036dLock || imp036dAuthorization || imp036dStart || imp036dCompletion || imp036dAcceptance || imp036eActivation || imp036eLock || imp036eAuthorization || imp036eStart || imp036eCompletion || authorityCompression || imp036eAcceptance || imp036fActivation || imp036fProductDefinitionDraftAuthorized || imp036fProductDefinitionGatePass || imp036fArchitectureLock || imp036fImplementationAuthorization || imp036fImplementationStart || imp036fAcceptance || imp036gActivation || imp036gProductDefinitionDraft || imp036gProductDefinitionGatePass || imp036gArchitectureLock || imp036gImplementationStart || imp036gCompletion || imp036gAcceptance || imp037Activation || imp037ProductDefinitionGatePass || d374CostOptimizedPilotInfrastructure || imp037ArchitectureLock || imp037ImplementationAuthorization || imp037ImplementationStart || imp037PostMergeReconciliation || imp038ControlledContinuationActivation || imp038ArchitectureLock || imp038ImplementationAuthorizeStart || imp036hProductDefinitionActivation || imp036hProductDefinitionGatePass || imp036hArchitectureLock || imp036hImplementationAuthorization || imp036hImplementationStart || imp036hImplementationComplete || imp036hAcceptance || imp036iProductDefinitionActivation || imp036iProductDefinitionDraftReady || imp036iProductDefinitionGatePass || imp036iArchitectureLock || imp036iImplementationAuthorization || imp036iImplementationStart || imp036iTranche2 || imp036iTranche3 || imp036iTranche4 || imp036iTranche5 || imp036iImplementationComplete || imp036iAcceptance || imp036jProductDefinitionActivation || imp036jProductDefinitionDraftReady || imp036jProductDefinitionGatePass || imp036jPd2ExperienceTransition;
+  if (kind === "imp036jExperienceGatePass") return imp036jExperienceGatePass;
+  return activation || lock || authorization || start || routeAmendment || consistencyRepair || acceptance || imp031Activation || imp031Draft || imp031Lock || imp031Authorization || imp031Start || imp031Completion || imp031Acceptance || imp032Activation || imp032Draft || imp032Lock || imp032Authorization || imp032Start || imp032BoundaryClarification || imp032Completion || imp032Acceptance || imp033Activation || imp033Completion || imp033Acceptance || imp034Completion || imp034Acceptance || imp035Completion || imp035Acceptance || imp036Completion || imp036Acceptance || enterpriseExperiencePlan || imp036aCompletion || imp036aAcceptance || imp036bCompletion || imp036bAcceptance || imp036cCompletion || imp036cAcceptance || imp036dActivation || imp036dLock || imp036dAuthorization || imp036dStart || imp036dCompletion || imp036dAcceptance || imp036eActivation || imp036eLock || imp036eAuthorization || imp036eStart || imp036eCompletion || authorityCompression || imp036eAcceptance || imp036fActivation || imp036fProductDefinitionDraftAuthorized || imp036fProductDefinitionGatePass || imp036fArchitectureLock || imp036fImplementationAuthorization || imp036fImplementationStart || imp036fAcceptance || imp036gActivation || imp036gProductDefinitionDraft || imp036gProductDefinitionGatePass || imp036gArchitectureLock || imp036gImplementationStart || imp036gCompletion || imp036gAcceptance || imp037Activation || imp037ProductDefinitionGatePass || d374CostOptimizedPilotInfrastructure || imp037ArchitectureLock || imp037ImplementationAuthorization || imp037ImplementationStart || imp037PostMergeReconciliation || imp038ControlledContinuationActivation || imp038ArchitectureLock || imp038ImplementationAuthorizeStart || imp036hProductDefinitionActivation || imp036hProductDefinitionGatePass || imp036hArchitectureLock || imp036hImplementationAuthorization || imp036hImplementationStart || imp036hImplementationComplete || imp036hAcceptance || imp036iProductDefinitionActivation || imp036iProductDefinitionDraftReady || imp036iProductDefinitionGatePass || imp036iArchitectureLock || imp036iImplementationAuthorization || imp036iImplementationStart || imp036iTranche2 || imp036iTranche3 || imp036iTranche4 || imp036iTranche5 || imp036iImplementationComplete || imp036iAcceptance || imp036jProductDefinitionActivation || imp036jProductDefinitionDraftReady || imp036jProductDefinitionGatePass || imp036jPd2ExperienceTransition || imp036jExperienceGatePass;
 }
 
 function isImp032ArchitectureActivationCheckpoint(roadmap, state) {
@@ -2389,6 +2391,14 @@ function isImp036jPd2ExperienceTransitionCheckpoint(roadmap, state) {
   );
 }
 
+function isImp036jExperienceGatePassCheckpoint(roadmap, state) {
+  return isSupportedImp030GovernanceCheckpoint(
+    roadmap?.meta.roadmapVersion,
+    state?.meta.stateVersion,
+    "imp036jExperienceGatePass",
+  );
+}
+
 function isImp030ArchitectureCheckpoint(roadmap, state) {
   return isImp030ArchitectureActivationCheckpoint(roadmap, state) || isImp030ArchitectureLockCheckpoint(roadmap, state);
 }
@@ -2492,7 +2502,8 @@ function isImp030GovernanceCheckpoint(roadmap, state) {
     isImp036jProductDefinitionActivationCheckpoint(roadmap, state) ||
     isImp036jProductDefinitionDraftReadyCheckpoint(roadmap, state) ||
     isImp036jProductDefinitionGatePassCheckpoint(roadmap, state) ||
-    isImp036jPd2ExperienceTransitionCheckpoint(roadmap, state)
+    isImp036jPd2ExperienceTransitionCheckpoint(roadmap, state) ||
+    isImp036jExperienceGatePassCheckpoint(roadmap, state)
   );
 }
 
@@ -17931,7 +17942,8 @@ function checkImp028ArchitectureLock(roadmap, state, architecture, decision) {
     } else {
       note("ARCHITECTURE.md records ARCH-G16 / ARCH-G17 / ARCH-G18 / D-365 / D-366 / D-367");
     }
-    const expectedArchitectureVersion = isImp036jPd2ExperienceTransitionCheckpoint(roadmap, state) ||
+    const expectedArchitectureVersion = isImp036jExperienceGatePassCheckpoint(roadmap, state) ||
+      isImp036jPd2ExperienceTransitionCheckpoint(roadmap, state) ||
       isImp036jProductDefinitionGatePassCheckpoint(roadmap, state) ||
       isImp036jProductDefinitionDraftReadyCheckpoint(roadmap, state) ||
       isImp036jProductDefinitionActivationCheckpoint(roadmap, state) ||
@@ -18107,7 +18119,8 @@ function checkImp028ArchitectureLock(roadmap, state, architecture, decision) {
   }
 
   if (decision) {
-    const expectedDecisionRegisterVersion = isImp036jPd2ExperienceTransitionCheckpoint(roadmap, state) ||
+    const expectedDecisionRegisterVersion = isImp036jExperienceGatePassCheckpoint(roadmap, state) ||
+      isImp036jPd2ExperienceTransitionCheckpoint(roadmap, state) ||
       isImp036jProductDefinitionGatePassCheckpoint(roadmap, state) ||
       isImp036jProductDefinitionDraftReadyCheckpoint(roadmap, state) ||
       isImp036jProductDefinitionActivationCheckpoint(roadmap, state)
@@ -25173,7 +25186,8 @@ function checkProductDeliveryProcessAuthorities() {
       (roadmapMeta?.roadmapVersion === "GTM-R167" && stateMeta?.stateVersion === "STATE-R165") ||
       (roadmapMeta?.roadmapVersion === "GTM-R168" && stateMeta?.stateVersion === "STATE-R166") ||
       (roadmapMeta?.roadmapVersion === "GTM-R169" && stateMeta?.stateVersion === "STATE-R167") ||
-      (roadmapMeta?.roadmapVersion === "GTM-R170" && stateMeta?.stateVersion === "STATE-R168")
+      (roadmapMeta?.roadmapVersion === "GTM-R170" && stateMeta?.stateVersion === "STATE-R168") ||
+      (roadmapMeta?.roadmapVersion === "GTM-R171" && stateMeta?.stateVersion === "STATE-R169")
     );
   const atImp036hProductDefinitionActivationCheckpoint =
     roadmapMeta?.roadmapVersion === "GTM-R141" &&
@@ -25791,7 +25805,8 @@ export function runProjectConsistency() {
       !isImp036jProductDefinitionActivationCheckpoint(roadmap, state) &&
       !isImp036jProductDefinitionDraftReadyCheckpoint(roadmap, state) &&
       !isImp036jProductDefinitionGatePassCheckpoint(roadmap, state) &&
-      !isImp036jPd2ExperienceTransitionCheckpoint(roadmap, state)
+      !isImp036jPd2ExperienceTransitionCheckpoint(roadmap, state) &&
+      !isImp036jExperienceGatePassCheckpoint(roadmap, state)
     ) {
       fail("UNSUPPORTED_GOVERNANCE_CHECKPOINT", "Governance revisions at or beyond GTM-R66 / STATE-R64 require an exact supported canonical checkpoint");
     }
@@ -25940,6 +25955,7 @@ export function runProjectConsistency() {
   checkImp036jProductDefinitionDraftReady(roadmap, state, architecture, decision);
   checkImp036jProductDefinitionGatePass(roadmap, state, architecture, decision);
   checkImp036jPd2ExperienceTransition(roadmap, state, architecture, decision);
+  checkImp036jExperienceGatePass(roadmap, state, architecture, decision);
   checkImp038CurrentImplementationCompleteMarkerConsistency(roadmap, state);
   checkTechnicalInventory();
   checkStaticWeb();
@@ -40031,6 +40047,101 @@ export function evaluateImp036jPd2ExperienceTransition(snapshot) {
 }
 
 /**
+ * CURRENT checkpoint snapshot: IMP-036J Experience Gate PASS (GTM-R171 / STATE-R169).
+ * Experience Gate PASS is not Architecture Fit, Design Readiness, or implementation authorization.
+ * @param {Record<string, string>} snapshot
+ * @returns {{ ok: true } | { ok: false, code: string, message: string }}
+ */
+export function evaluateImp036jExperienceGatePass(snapshot) {
+  if (snapshot.experienceGate !== "PASS" && snapshot.architectureFit === "PASS") {
+    return {
+      ok: false,
+      code: "IMP036J_FIT_BEFORE_EXPERIENCE_GATE",
+      message: "X3 Architecture Fit must not be PASS before Experience Gate PASS",
+    };
+  }
+  if (snapshot.designReadiness !== "PASS" && snapshot.implementationAuthorized === "YES") {
+    return {
+      ok: false,
+      code: "IMP036J_IMPLEMENTATION_WITHOUT_DESIGN_READINESS",
+      message: "X3 implementation must not be authorized before Design Readiness PASS",
+    };
+  }
+  if (snapshot.experienceGate === "NOT_PERFORMED" || snapshot.nextGate === "EXPERIENCE_GATE") {
+    return {
+      ok: false,
+      code: "IMP036J_EXPERIENCE_GATE_REGRESSION",
+      message: "Experience Gate PASS must not regress to NOT_PERFORMED or nextGate EXPERIENCE_GATE",
+    };
+  }
+  if (snapshot.architectureFit === "PASS" || snapshot.architectureLocked === "YES") {
+    return {
+      ok: false,
+      code: "IMP036J_FIT_PREMATURE",
+      message: "Experience Gate PASS must not persist Architecture Fit or lock architecture",
+    };
+  }
+  if (snapshot.designReadiness === "PASS") {
+    return {
+      ok: false,
+      code: "IMP036J_DESIGN_READINESS_PREMATURE",
+      message: "Experience Gate PASS must not persist Design Readiness",
+    };
+  }
+  if (snapshot.hold037 !== "YES" || snapshot.hold038 !== "YES") {
+    return { ok: false, code: "IMP036J_HOLD", message: "IMP-037 and IMP-038 holds must remain YES" };
+  }
+  if (snapshot.d383Created === "YES") {
+    return { ok: false, code: "IMP036J_D383", message: "D-383 must not be created" };
+  }
+  if (snapshot.architectureVersion !== "ARCH-R23") {
+    return { ok: false, code: "IMP036J_ARCH_R23", message: "ARCHITECTURE must remain ARCH-R23" };
+  }
+  if (snapshot.historicalRewritten === "YES") {
+    return { ok: false, code: "PD2_HISTORICAL_ACCEPTANCE", message: "Historical accepted IMPs must not be reopened" };
+  }
+  const expected = {
+    roadmapVersion: "GTM-R171",
+    stateVersion: "STATE-R169",
+    acceptedThrough: "IMP-036I",
+    currentProductSlice: "IMP-036J",
+    nextProductSlice: "IMP-037",
+    pendingAcceptance: "NONE",
+    criticality: "X3",
+    changeRisk: "CR2",
+    experienceDefinition: "APPROVED",
+    experienceDefinitionVersion: "XD-IMP-036J-DRAFT-6",
+    experienceGate: "PASS",
+    independentReviewId: "5342581233",
+    evaluatedHead: "1fbabd2fb80851912815efe4e0ebe331a1318557",
+    architectureFit: "NOT_PERFORMED",
+    architectureLocked: "NO",
+    designReadiness: "NOT_PERFORMED",
+    implementationAuthorized: "NO",
+    nextGate: "ARCHITECTURE_FIT",
+    hold037: "YES",
+    hold038: "YES",
+    architectureVersion: "ARCH-R23",
+    decisionRegisterVersion: "DR-23",
+    d383Created: "NO",
+    historicalRewritten: "NO",
+    productDefinition: "APPROVED",
+    productDefinitionVersion: "PD-IMP-036J-DRAFT-6",
+    productDefinitionGate: "PASS",
+  };
+  for (const [key, value] of Object.entries(expected)) {
+    if (snapshot[key] !== value) {
+      return {
+        ok: false,
+        code: "IMP036J_EXPERIENCE_GATE_PASS",
+        message: `${key} must be ${value} (got ${snapshot[key]})`,
+      };
+    }
+  }
+  return { ok: true };
+}
+
+/**
  * CURRENT checkpoint: IMP-036J Product Definition Gate PASS (GTM-R169 / STATE-R167).
  * PD-IMP-036J-DRAFT-6 is APPROVED. Architecture Fit and implementation stay unperformed.
  * @param {Record<string, any>} roadmap
@@ -40338,6 +40449,217 @@ function checkImp036jPd2ExperienceTransition(roadmap, state, architecture, decis
     fail("IMP036J_GAP", "GAP-EXT-ASSESS-001 must remain NOT_CLOSED");
   }
   note("PD-2 / EXP-1 / LANG-1 are CURRENT; IMP-036J next gate is EXPERIENCE_GATE; Architecture Fit and implementation remain unauthorized");
+}
+
+/**
+ * CURRENT checkpoint: IMP-036J Experience Gate PASS (GTM-R171 / STATE-R169).
+ * Does not pass Architecture Fit, lock architecture, perform Design Readiness, or authorize implementation.
+ * @param {Record<string, any>} roadmap
+ * @param {Record<string, any>} state
+ * @param {Record<string, any>} architecture
+ * @param {Record<string, any>} decision
+ */
+function checkImp036jExperienceGatePass(roadmap, state, architecture, decision) {
+  if (!isImp036jExperienceGatePassCheckpoint(roadmap, state)) return;
+  const roadmapText = roadmap?.text ?? "";
+  const stateText = state?.text ?? "";
+  const currentRoadmapSection = roadmapText.split("## 2. Current Position")[1]?.split("\n## ")[0] ?? "";
+  const currentMarker = currentRoadmapSection.split("**GTM-R170**")[0] || currentRoadmapSection;
+  const stateSection2 = stateText.split("## 2. Current Work Position")[1]?.split("\n## ")[0] ?? "";
+  const futureSliceSection = roadmapText.split("## 5. Future GTM Slices")[1]?.split("\n## ")[0] ?? "";
+  const acceptedSection = roadmapText.split("## 3. Accepted Slices")[1]?.split("\n## ")[0] ?? "";
+  const currentSliceSection = roadmapText.split("## 4. Current Product Slice")[1]?.split("\n## ")[0] ?? "";
+  const productDefAbs = resolveExactRelativeFile("docs/platform/product/IMP-036J/product-definition.md");
+  const productDefinitionText = productDefAbs ? readFileSync(productDefAbs, "utf8") : "";
+  const experienceAbs = resolveExactRelativeFile("docs/platform/product/IMP-036J/experience-definition.md");
+  const experienceText = experienceAbs ? readFileSync(experienceAbs, "utf8") : "";
+  const productReadmeAbs = resolveExactRelativeFile("docs/platform/product/README.md");
+  const productReadmeText = productReadmeAbs ? readFileSync(productReadmeAbs, "utf8") : "";
+  if (roadmap?.meta.roadmapVersion !== "GTM-R171" || state?.meta.stateVersion !== "STATE-R169") {
+    fail("IMP036J_EXPERIENCE_GATE_IDENTITY", "IMP-036J Experience Gate PASS must be the current GTM-R171 / STATE-R169 checkpoint");
+  }
+  if (roadmap?.meta.supersedes !== "GTM-R170" || state?.meta.supersedes !== "STATE-R168") {
+    fail("IMP036J_EXPERIENCE_GATE_SUPERSEDES", "GTM-R171 must supersede GTM-R170 and STATE-R169 must supersede STATE-R168");
+  }
+  const tokens = [
+    "IMP-036J: PLANNED",
+    "IMP036J_ACTIVATED: YES",
+    "IMP036J_PRODUCT_DEFINITION: APPROVED",
+    "IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-6",
+    "IMP036J_PRODUCT_DEFINITION_GATE: PASS",
+    "IMP036J_EXPERIENCE_CRITICALITY: X3",
+    "IMP036J_CHANGE_RISK: CR2",
+    "IMP036J_EXPERIENCE_DEFINITION: APPROVED",
+    "IMP036J_EXPERIENCE_DEFINITION_VERSION: XD-IMP-036J-DRAFT-6",
+    "IMP036J_EXPERIENCE_GATE: PASS",
+    "INDEPENDENT_EXPERIENCE_GATE_REVIEW_ID: 5342581233",
+    "EXPERIENCE_GATE_EVALUATED_HEAD: 1fbabd2fb80851912815efe4e0ebe331a1318557",
+    "IMP036J_DESIGN_READINESS: NOT_PERFORMED",
+    "IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED",
+    "IMP036J_ARCHITECTURE_LOCKED: NO",
+    "IMP036J_IMPLEMENTATION_AUTHORIZED: NO",
+    "IMP036J_STARTED: NO",
+    "IMP036J_ACCEPTED: NO",
+    "nextGate: ARCHITECTURE_FIT",
+    "PRODUCT_DELIVERY_PROCESS: PD-2",
+    "EXPERIENCE_STANDARD: EXP-1",
+    "PRODUCT_LANGUAGE_STANDARD: LANG-1",
+    "IMP037_HOLD: YES",
+    "IMP038_HOLD: YES",
+    "IMP-036I: COMPLETE_AND_ACCEPTED",
+  ];
+  for (const token of tokens) {
+    if (!currentMarker.includes(token)) fail("IMP036J_EXPERIENCE_GATE_TOKEN", `ROADMAP current marker must record ${token}`);
+    if (!stateSection2.includes(token)) fail("IMP036J_EXPERIENCE_GATE_TOKEN", `STATE current work position must record ${token}`);
+  }
+  const regressions = [
+    "IMP036J_EXPERIENCE_DEFINITION: REQUIRED / NOT_PERFORMED",
+    "IMP036J_EXPERIENCE_GATE: NOT_PERFORMED",
+    "IMP036J_NEXT_GATE: EXPERIENCE_GATE",
+    "nextGate: EXPERIENCE_GATE",
+    "IMP036J_ARCHITECTURE_FIT: PASS",
+    "IMP036J_ARCHITECTURE_LOCKED: YES",
+    "IMP036J_DESIGN_READINESS: PASS",
+    "IMP036J_IMPLEMENTATION_AUTHORIZED: YES",
+  ];
+  for (const token of regressions) {
+    if (currentMarker.includes(token) || stateSection2.includes(token)) {
+      fail("IMP036J_EXPERIENCE_GATE_REGRESSION", `CURRENT IMP-036J position must not record ${token}`);
+    }
+  }
+  if (!stateText.includes("STATE-R169 = IMP036J_EXPERIENCE_GATE_PASS")) {
+    fail("IMP036J_EXPERIENCE_GATE_RECORD", "STATE must record STATE-R169 = IMP036J_EXPERIENCE_GATE_PASS");
+  }
+  if (!stateText.includes("STATE-R168 = IMP036J_PD2_EXPERIENCE_TRANSITION")) {
+    fail("IMP036J_PD2_RECORD", "STATE must preserve historical STATE-R168 = IMP036J_PD2_EXPERIENCE_TRANSITION");
+  }
+  if (!stateText.includes("STATE-R167 = IMP036J_PRODUCT_DEFINITION_APPROVED")) {
+    fail("IMP036J_GATE_PASS_HISTORY", "STATE must preserve historical STATE-R167 = IMP036J_PRODUCT_DEFINITION_APPROVED");
+  }
+  if (acceptedSection.includes("| IMP-036J |")) {
+    fail("IMP036J_NOT_ACCEPTED_LEDGER", "Accepted slice ledger must not include IMP-036J");
+  }
+  const futureRow = futureSliceSection.split("\n").find((line) => line.includes("| IMP-036J |")) ?? "";
+  if (
+    !futureRow.includes("PLANNED") ||
+    !futureRow.includes("Experience Gate PASS") ||
+    !futureRow.includes("nextGate ARCHITECTURE_FIT") ||
+    !futureRow.includes("Fit NOT_PERFORMED") ||
+    futureRow.includes("Experience Gate NOT_PERFORMED") ||
+    futureRow.includes("nextGate EXPERIENCE_GATE")
+  ) {
+    fail("IMP036J_FUTURE_LEDGER", "Future GTM slice ledger must keep IMP-036J PLANNED with Experience Gate PASS, nextGate ARCHITECTURE_FIT, and Fit NOT_PERFORMED");
+  }
+  if (!currentSliceSection.includes("Experience Gate `PASS`") || !currentSliceSection.includes("ARCHITECTURE_FIT") || !currentSliceSection.includes("`NOT_PERFORMED`")) {
+    fail("IMP036J_CURRENT_SLICE", "ROADMAP current product slice must record Experience Gate PASS, next gate ARCHITECTURE_FIT, and Architecture Fit NOT_PERFORMED");
+  }
+  const transition = evaluateImp036jExperienceGatePass({
+    roadmapVersion: roadmap?.meta.roadmapVersion,
+    stateVersion: state?.meta.stateVersion,
+    acceptedThrough: roadmap?.meta.acceptedThrough,
+    currentProductSlice: roadmap?.meta.currentProductSlice,
+    nextProductSlice: roadmap?.meta.nextProductSlice,
+    pendingAcceptance: state?.meta.pendingAcceptance,
+    criticality: "X3",
+    changeRisk: "CR2",
+    experienceDefinition: "APPROVED",
+    experienceDefinitionVersion: "XD-IMP-036J-DRAFT-6",
+    experienceGate: "PASS",
+    independentReviewId: "5342581233",
+    evaluatedHead: "1fbabd2fb80851912815efe4e0ebe331a1318557",
+    architectureFit: "NOT_PERFORMED",
+    architectureLocked: "NO",
+    designReadiness: "NOT_PERFORMED",
+    implementationAuthorized: "NO",
+    nextGate: "ARCHITECTURE_FIT",
+    hold037: "YES",
+    hold038: "YES",
+    architectureVersion: architecture?.meta.architectureVersion,
+    decisionRegisterVersion: decision?.meta.decisionRegisterVersion,
+    d383Created: /\| D-383 \|/.test(decision?.text ?? "") ? "YES" : "NO",
+    historicalRewritten: "NO",
+    productDefinition: "APPROVED",
+    productDefinitionVersion: "PD-IMP-036J-DRAFT-6",
+    productDefinitionGate: "PASS",
+  });
+  if (!transition.ok) fail(transition.code || "IMP036J_EXPERIENCE_GATE_PASS", transition.message || "IMP-036J Experience Gate PASS is invalid");
+  if (roadmap?.meta.acceptedThrough !== "IMP-036I" || state?.meta.acceptedThrough !== "IMP-036I") {
+    fail("IMP036J_ACCEPTED_THROUGH", "acceptedThrough must stay IMP-036I");
+  }
+  const decisionText = decision?.text ?? "";
+  if (!/next ID \*\*D-383\*\*/.test(decisionText) || /\| D-383 \|/.test(decisionText)) {
+    fail("IMP036J_D383", "next free ID must remain D-383 and D-383 must not be created");
+  }
+  const d382Row = evaluateD382Current(decisionText);
+  if (!d382Row.ok) fail(d382Row.code, d382Row.message);
+  const readmeProductRow = productReadmeText.split("\n").find((line) => line.includes("IMP-036J Product Definition")) ?? "";
+  if (
+    !readmeProductRow.includes("**APPROVED**") ||
+    !readmeProductRow.includes("Experience Gate = **PASS**") ||
+    !readmeProductRow.includes("next gate = **ARCHITECTURE_FIT**") ||
+    !readmeProductRow.includes("**NOT_PERFORMED**") ||
+    !readmeProductRow.includes("NOT_AUTHORIZED") ||
+    readmeProductRow.includes("Experience Gate = **NOT_PERFORMED**") ||
+    readmeProductRow.includes("next gate = **EXPERIENCE_GATE**")
+  ) {
+    fail("IMP036J_PRODUCT_README", "product/README.md IMP-036J Product Definition row must record APPROVED, Experience Gate PASS, next gate ARCHITECTURE_FIT, Fit NOT_PERFORMED, and implementation NOT_AUTHORIZED");
+  }
+  const readmeExperienceRow = productReadmeText.split("\n").find((line) => line.includes("IMP-036J Experience Definition")) ?? "";
+  if (
+    !readmeExperienceRow.includes("XD-IMP-036J-DRAFT-6") ||
+    !readmeExperienceRow.includes("**APPROVED**") ||
+    !readmeExperienceRow.includes("Experience Gate = **PASS**") ||
+    !readmeExperienceRow.includes("5342581233") ||
+    !readmeExperienceRow.includes("1fbabd2fb80851912815efe4e0ebe331a1318557") ||
+    !readmeExperienceRow.includes("next gate = **ARCHITECTURE_FIT**") ||
+    !readmeExperienceRow.includes("NOT_AUTHORIZED") ||
+    readmeExperienceRow.includes("Experience Gate = **NOT_PERFORMED**") ||
+    readmeExperienceRow.includes("EXPERIENCE_DEFINITION_CANDIDATE")
+  ) {
+    fail("IMP036J_EXPERIENCE_README", "product/README.md IMP-036J Experience Definition row must record APPROVED DRAFT-6, Experience Gate PASS, review 5342581233, and next gate ARCHITECTURE_FIT");
+  }
+  if (
+    !experienceText.includes('"experienceDefinitionVersion": "XD-IMP-036J-DRAFT-6"') ||
+    !experienceText.includes('"status": "APPROVED"') ||
+    !experienceText.includes('"authority": "EXPERIENCE_DEFINITION"') ||
+    !experienceText.includes('"experienceGate": "PASS"') ||
+    !experienceText.includes("INDEPENDENT_EXPERIENCE_GATE_REVIEW_ID = 5342581233") ||
+    !experienceText.includes("EXPERIENCE_GATE_EVALUATED_HEAD = 1fbabd2fb80851912815efe4e0ebe331a1318557") ||
+    !experienceText.includes("EXPERIENCE_GATE = PASS") ||
+    /(^|\n)EXPERIENCE_GATE = NOT_PERFORMED(\n|$)/.test(experienceText) ||
+    experienceText.includes("AUTHORITY = EXPERIENCE_DEFINITION_CANDIDATE") ||
+    experienceText.includes("CANDIDATE_RESULT = READY_FOR_INDEPENDENT_EXPERIENCE_GATE")
+  ) {
+    fail("IMP036J_EXPERIENCE_DEFINITION", "Experience Definition must stay XD-IMP-036J-DRAFT-6 APPROVED with Experience Gate PASS");
+  }
+  if (!experienceText.includes("ARCHITECTURE_FIT = NOT_PERFORMED") || !experienceText.includes("IMPLEMENTATION_AUTHORIZED = NO") || !experienceText.includes("DESIGN_READINESS = NOT_PERFORMED")) {
+    fail("IMP036J_EXPERIENCE_BOUNDARY", "Experience Gate PASS must leave Architecture Fit, Design Readiness, and implementation unauthorized");
+  }
+  const pd = evaluateImp036jApprovedProductDefinition(productDefinitionText);
+  if (!pd.ok) fail(pd.code || "IMP036J_PD_META", pd.message || "IMP-036J approved Product Definition metadata is invalid");
+  const stacking = evaluateImp036jStackingContract(productDefinitionText);
+  if (!stacking.ok) fail(stacking.code || "IMP036J_STACK", stacking.message || "IMP-036J stacking contract is invalid");
+  const guestCoupon = evaluateImp036jGuestCouponContract(productDefinitionText);
+  if (!guestCoupon.ok) fail(guestCoupon.code || "IMP036J_GUEST_COUPON", guestCoupon.message || "IMP-036J guest coupon contract is invalid");
+  const complimentaryItem = evaluateImp036jComplimentaryItemContract(productDefinitionText);
+  if (!complimentaryItem.ok) {
+    fail(complimentaryItem.code || "IMP036J_FREE_ITEM", complimentaryItem.message || "IMP-036J complimentary-item contract is invalid");
+  }
+  const complimentaryConcurrency = evaluateImp036jComplimentaryActivationConcurrency(productDefinitionText);
+  if (!complimentaryConcurrency.ok) {
+    fail(complimentaryConcurrency.code || "IMP036J_CONCURRENCY_AC", complimentaryConcurrency.message || "IMP-036J complimentary activation concurrency contract is invalid");
+  }
+  const fd036j03 = evaluateImp036jFd036j03Authority(productDefinitionText);
+  if (!fd036j03.ok) fail(fd036j03.code || "IMP036J_FD03_AUTHORITY", fd036j03.message || "FD-036J-03 authority is invalid");
+  const readiness = evaluateImp036jStoryReadiness(productDefinitionText);
+  if (!readiness.ok) fail(readiness.code || "IMP036J_READINESS", readiness.message || "IMP-036J story readiness is invalid");
+  if (!/remain parked/.test(currentMarker)) {
+    fail("IMP036J_PARKED", "Deals, Campaigns, and Revenue Recommendations must remain parked discovery");
+  }
+  if (!/GAP-EXT-ASSESS-001:\s*NOT_CLOSED/.test(stateSection2)) {
+    fail("IMP036J_GAP", "GAP-EXT-ASSESS-001 must remain NOT_CLOSED");
+  }
+  note("IMP-036J Experience Gate PASS is CURRENT; next gate is ARCHITECTURE_FIT; Architecture Fit and implementation remain unauthorized");
 }
 
 /**

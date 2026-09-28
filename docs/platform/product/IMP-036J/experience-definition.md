@@ -1,14 +1,14 @@
 <!-- governance-meta
 {
-  "status": "CANDIDATE",
-  "authority": "EXPERIENCE_DEFINITION_CANDIDATE",
+  "status": "APPROVED",
+  "authority": "EXPERIENCE_DEFINITION",
   "capability": "IMP-036J",
   "experienceDefinitionVersion": "XD-IMP-036J-DRAFT-6",
   "productDefinition": "PD-IMP-036J-DRAFT-6",
   "productDefinitionGate": "PASS",
   "experienceCriticality": "X3",
   "changeRisk": "CR2",
-  "experienceGate": "NOT_PERFORMED",
+  "experienceGate": "PASS",
   "architectureFit": "NOT_PERFORMED",
   "architectureLocked": "NO",
   "designReadiness": "NOT_PERFORMED",
@@ -16,24 +16,33 @@
 }
 -->
 
-# IMP-036J — Experience Definition candidate
+# IMP-036J — Experience Definition
 
 ```text
 EXPERIENCE_DEFINITION_VERSION = XD-IMP-036J-DRAFT-6
-AUTHORITY = EXPERIENCE_DEFINITION_CANDIDATE
+STATUS = APPROVED
+AUTHORITY = EXPERIENCE_DEFINITION
 CAPABILITY = IMP-036J
 PRODUCT_DEFINITION = PD-IMP-036J-DRAFT-6
 PRODUCT_DEFINITION_STATUS = APPROVED
 PRODUCT_DEFINITION_GATE = PASS
 EXPERIENCE_CRITICALITY = X3
 CHANGE_RISK = CR2
-EXPERIENCE_GATE = NOT_PERFORMED
+EXPERIENCE_DEFINITION_STATUS = APPROVED
+EXPERIENCE_GATE_EXECUTION = PERFORMED
+EXPERIENCE_GATE = PASS
+INDEPENDENT_EXPERIENCE_GATE_REVIEW = PASS
+INDEPENDENT_EXPERIENCE_GATE_REVIEW_ID = 5342581233
+EXPERIENCE_GATE_EVALUATED_HEAD = 1fbabd2fb80851912815efe4e0ebe331a1318557
+EXPERIENCE_GATE_EVALUATED_TREE = 4eb6aa5e5a1588ef64527d7f38f7c5f07339d701
+EXPERIENCE_GATE_EVALUATED_WORKING_TREE_FINGERPRINT = 060269654ee36f130f8f8e4cc47fc6b3116466c6a56e2a29e061af1da725632d
+EXPERIENCE_GATE_EVALUATED_GOVERNANCE_FINGERPRINT = f7288bc395a2c46ef754bcc344eae5721fb5beef8c2e6b0fcf58860bbc421e21
 ARCHITECTURE_FIT = NOT_PERFORMED
 ARCHITECTURE_LOCKED = NO
 DESIGN_READINESS = NOT_PERFORMED
 IMPLEMENTATION_AUTHORIZED = NO
 PRODUCT_DECISION_REQUIRED = NO
-CANDIDATE_RESULT = READY_FOR_INDEPENDENT_EXPERIENCE_GATE
+EXPERIENCE_GATE_RESULT = PASS
 
 HISTORICAL_ACCEPTED_IMPS_REWRITTEN = NO
 X_SCALE_ORTHOGONAL_TO_CR_SCALE = YES
@@ -43,15 +52,16 @@ FOUNDER_UAT_REQUIRED = YES
 FOUNDER_EXPERIENCE_UAT = NOT_PERFORMED
 ```
 
-This document is an Experience Definition **candidate** for independent Experience Gate review.
-It does not persist Experience Gate PASS, does not approve final copy, does not perform
-Architecture Fit, does not lock architecture, does not authorize implementation, and does not
-change [`product-definition.md`](./product-definition.md). Lifecycle truth remains
-[`ROADMAP.md`](../../ROADMAP.md) and [`STATE.md`](../../STATE.md). `IMP036J_EXPERIENCE_DEFINITION`
-stays `REQUIRED / NOT_PERFORMED` until an Experience Gate is actually performed.
+This document is the approved Experience Definition for IMP-036J. Independent Experience Gate
+review `5342581233` returned PASS for `XD-IMP-036J-DRAFT-6`. The version stays
+`XD-IMP-036J-DRAFT-6`. This record does not perform Architecture Fit, does not lock architecture,
+does not perform Design Readiness, does not authorize implementation, and does not change
+[`product-definition.md`](./product-definition.md). Lifecycle truth remains
+[`ROADMAP.md`](../../ROADMAP.md) and [`STATE.md`](../../STATE.md).
 
-EXP-1 does not yet record a prior IMP Experience Definition version pattern. This candidate uses
-`XD-IMP-036J-DRAFT-N`, parallel to `PD-IMP-036J-DRAFT-N`, and remains a draft candidate.
+EXP-1 does not yet record a prior IMP Experience Definition version pattern. This definition uses
+`XD-IMP-036J-DRAFT-N`, parallel to `PD-IMP-036J-DRAFT-N`. Experience Gate PASS does not mint a new
+draft version.
 
 `XD-IMP-036J-DRAFT-1` was the initial Experience candidate. It was superseded after EG-036J-001
 and EG-036J-002.
@@ -77,7 +87,7 @@ for DRAFT-3.
 ```text
 XD-IMP-036J-DRAFT-3 = SUPERSEDED_AFTER_GATE_STOP_EG_036J_004
 EXPERIENCE_GATE_PASS_PERSISTED_FOR_DRAFT_3 = NO
-CURRENT_EXPERIENCE_GATE = NOT_PERFORMED
+EXPERIENCE_GATE_AT_SUPERSESSION = NOT_PERFORMED
 ```
 
 `XD-IMP-036J-DRAFT-4` remediates EG-036J-004: cohort entry, `REPORT_AS_OF`, unfinished-at-cutoff
@@ -88,7 +98,7 @@ independent Experience Gate verdict, and no Gate PASS was persisted for it.
 ```text
 XD-IMP-036J-DRAFT-4 = SUPERSEDED_AFTER_EXACT_HEAD_REVIEW_BLOCKERS
 DRAFT4_INDEPENDENT_EXPERIENCE_GATE = NOT_PERFORMED
-CURRENT_EXPERIENCE_GATE = NOT_PERFORMED
+EXPERIENCE_GATE_AT_SUPERSESSION = NOT_PERFORMED
 ```
 
 `XD-IMP-036J-DRAFT-5` kept that cutoff model and locked the measurement calendar, the production
@@ -101,12 +111,13 @@ on DRAFT-5. No Gate PASS was persisted for it.
 ```text
 XD-IMP-036J-DRAFT-5 = SUPERSEDED_AFTER_EXACT_HEAD_REVIEW_BLOCKER
 DRAFT5_INDEPENDENT_EXPERIENCE_GATE = NOT_PERFORMED
-CURRENT_EXPERIENCE_GATE = NOT_PERFORMED
+EXPERIENCE_GATE_AT_SUPERSESSION = NOT_PERFORMED
 ```
 
 `XD-IMP-036J-DRAFT-6` keeps every prior fix and defines cohort entry once for the lifetime of one
 `CHECKOUT_JOURNEY_KEY`. Window assignment tests only that one entry's authoritative occurrence
-time. It does not persist Experience Gate PASS.
+time. Independent Experience Gate review `5342581233` returned PASS on evaluated head
+`1fbabd2fb80851912815efe4e0ebe331a1318557`. That PASS is persisted on this same version.
 
 Supporting material under [`../../experience/`](../../experience/README.md) is source only
 (`Authority: NONE`). It is not used here as higher authority than EXP-1 or LANG-1.
@@ -118,7 +129,7 @@ Supporting material under [`../../experience/`](../../experience/README.md) is s
 | Field | Definition |
 |---|---|
 | Capability | IMP-036J — Promotions, Coupons & Offers |
-| Experience Definition version / status | `XD-IMP-036J-DRAFT-6`; **EXPERIENCE_DEFINITION_CANDIDATE**; not approved; Experience Gate `NOT_PERFORMED`. `XD-IMP-036J-DRAFT-2` is `SUPERSEDED_AFTER_GATE_REOPEN`; its Experience Gate PASS was not persisted. `XD-IMP-036J-DRAFT-3` is `SUPERSEDED_AFTER_GATE_STOP_EG_036J_004`; its Experience Gate PASS was not persisted. `XD-IMP-036J-DRAFT-4` is `SUPERSEDED_AFTER_EXACT_HEAD_REVIEW_BLOCKERS`; its independent Experience Gate was `NOT_PERFORMED`. `XD-IMP-036J-DRAFT-5` is `SUPERSEDED_AFTER_EXACT_HEAD_REVIEW_BLOCKER`; its independent Experience Gate was `NOT_PERFORMED`. |
+| Experience Definition version / status | `XD-IMP-036J-DRAFT-6`; **APPROVED**; authority `EXPERIENCE_DEFINITION`; Experience Gate `PASS`; independent review `5342581233`; evaluated head `1fbabd2fb80851912815efe4e0ebe331a1318557`. `XD-IMP-036J-DRAFT-2` is `SUPERSEDED_AFTER_GATE_REOPEN`; its Experience Gate PASS was not persisted. `XD-IMP-036J-DRAFT-3` is `SUPERSEDED_AFTER_GATE_STOP_EG_036J_004`; its Experience Gate PASS was not persisted. `XD-IMP-036J-DRAFT-4` is `SUPERSEDED_AFTER_EXACT_HEAD_REVIEW_BLOCKERS`; its independent Experience Gate was `NOT_PERFORMED`. `XD-IMP-036J-DRAFT-5` is `SUPERSEDED_AFTER_EXACT_HEAD_REVIEW_BLOCKER`; its independent Experience Gate was `NOT_PERFORMED`. |
 | Product Definition reference | `PD-IMP-036J-DRAFT-6`; status `APPROVED`; Product Definition Gate `PASS`; FD-036J-01, FD-036J-02, FD-036J-03 `APPROVED` |
 | Experience Criticality | `X3`. Customer money, conversion, trust, and identity meet on Cart, Checkout Review, Payment, and purchased history. |
 | Change Risk | `CR2`. Recorded in ROADMAP/STATE. Not an AGENTS `R` level. Money, caps, identity, and purchased truth are in scope; this candidate does not recalibrate that risk. |
@@ -673,7 +684,7 @@ One logical direct-order checkout is one unpaid attempt to place one direct orde
 
 A new key starts when the logical checkout changes. Successful completion closes the key, and the next direct-order attempt uses a new key. A later direct-order attempt for a different unpaid order uses a new key.
 
-This candidate does not choose a token format, column, table, cookie, timeout, or API field. A later Measurement Plan must keep this correlation. Experience Gate and Architecture Fit have not been performed. That plan must leave commerce identity as who is present, and leave the key opaque, non-customer-facing, and free of name, email, phone, coupon text, and customer or guest identifiers.
+This candidate does not choose a token format, column, table, cookie, timeout, or API field. A later Measurement Plan must keep this correlation. Architecture Fit has not been performed. That plan must leave commerce identity as who is present, and leave the key opaque, non-customer-facing, and free of name, email, phone, coupon text, and customer or guest identifiers.
 
 Denominator grain is one count per `CHECKOUT_JOURNEY_KEY` that reaches Checkout Review with an authoritative commercial evaluation. Numerator grain is one successful direct-order completion for that key. The primary rate joins those two events on `CHECKOUT_JOURNEY_KEY` alone.
 
@@ -1103,17 +1114,18 @@ Measurement intent defined: YES (candidate)
 Equal-payable Coupon experience defined: YES
 Research / evidence level disclosed: YES
 Unresolved experience decisions: NONE
-Result: NOT_PERFORMED
+Result: PASS
 ```
 
-`Unresolved experience decisions: NONE` means this candidate does not leave a presentation choice that changes product behaviour. Equal-payable coupon presentation covers both Architecture Fit outcomes and does not choose the general winner. The complimentary equal-payable rule stays the approved Product rule. Section 17 defines `CHECKOUT_JOURNEY_KEY` as the measurement join for one logical checkout, and it defines one global cohort entry per key, window assignment from that entry time only, the locked measurement calendar, the half-open cohort interval, `REPORT_AS_OF`, unfinished-at-cutoff membership, `AUTHORITATIVE_JOURNEY_SEQUENCE`, and published-snapshot immutability as measurement semantics. Those rules do not add a Product abandonment timeout and do not choose a schema, API, storage mechanism, or analytics encoding. Hypotheses in section 4 stay hypotheses. They are not open product decisions and they are not a Gate verdict. Experience Gate remains `NOT_PERFORMED`. Readiness for independent review is not that Gate verdict.
+`Unresolved experience decisions: NONE` means this definition does not leave a presentation choice that changes product behaviour. Equal-payable coupon presentation covers both Architecture Fit outcomes and does not choose the general winner. The complimentary equal-payable rule stays the approved Product rule. Section 17 defines `CHECKOUT_JOURNEY_KEY` as the measurement join for one logical checkout, and it defines one global cohort entry per key, window assignment from that entry time only, the locked measurement calendar, the half-open cohort interval, `REPORT_AS_OF`, unfinished-at-cutoff membership, `AUTHORITATIVE_JOURNEY_SEQUENCE`, and published-snapshot immutability as measurement semantics. Those rules do not add a Product abandonment timeout and do not choose a schema, API, storage mechanism, or analytics encoding. Hypotheses in section 4 stay hypotheses. They are not open product decisions. Independent Experience Gate review `5342581233` returned PASS for these semantics. Experience Gate PASS is not Architecture Fit, Architecture Lock, Design Readiness, or implementation authorization.
 
 ```text
-EXPERIENCE_GATE_EXECUTION = NOT_PERFORMED
-EXPERIENCE_GATE = NOT_PERFORMED
+EXPERIENCE_GATE_EXECUTION = PERFORMED
+EXPERIENCE_GATE = PASS
+EXPERIENCE_GATE_RESULT = PASS
+INDEPENDENT_EXPERIENCE_GATE_REVIEW_ID = 5342581233
+EXPERIENCE_GATE_EVALUATED_HEAD = 1fbabd2fb80851912815efe4e0ebe331a1318557
 OPEN_EXPERIENCE_DECISIONS = NONE
-CANDIDATE_READY_FOR_INDEPENDENT_REVIEW = YES
-CANDIDATE_READY_FOR_INDEPENDENT_EXPERIENCE_GATE = YES
 ```
 
 ---
@@ -1163,7 +1175,7 @@ An experience requirement that Fit cannot support safely remains a Fit STOP unde
 DESIGN_READINESS = NOT_PERFORMED
 ```
 
-Not started. It waits on viable Architecture Fit, which itself waits on Experience Gate PASS. When it is time, Design Readiness owes: final flows; every state in section 13; desktop and mobile; final microcopy; keyboard and focus behaviour; accessibility semantics; interaction rules for apply, remove, change, sign-in return, and recovery; perceived-performance layout; reuse of the components in section 15; and analytics hooks that match section 17. Pixel dimensions and a new visual language are not decided here.
+Not started. It waits on viable Architecture Fit. Experience Gate PASS is already persisted and is not Design Readiness. When it is time, Design Readiness owes: final flows; every state in section 13; desktop and mobile; final microcopy; keyboard and focus behaviour; accessibility semantics; interaction rules for apply, remove, change, sign-in return, and recovery; perceived-performance layout; reuse of the components in section 15; and analytics hooks that match section 17. Pixel dimensions and a new visual language are not decided here.
 
 ---
 
@@ -1421,9 +1433,14 @@ SNAPSHOT_IMMUTABILITY_DEFINED = YES
 ARCHITECTURE_MECHANISM_CHOSEN = NO
 PRODUCT_BEHAVIOUR_CHANGED = NO
 OPEN_EXPERIENCE_DECISIONS = NONE
-CANDIDATE_READY_FOR_INDEPENDENT_EXPERIENCE_GATE = YES
-EXPERIENCE_GATE = NOT_PERFORMED
-CANDIDATE_RESULT = READY_FOR_INDEPENDENT_EXPERIENCE_GATE
+EXPERIENCE_GATE_EXECUTION = PERFORMED
+EXPERIENCE_GATE = PASS
+EXPERIENCE_GATE_RESULT = PASS
+INDEPENDENT_EXPERIENCE_GATE_REVIEW_ID = 5342581233
+EXPERIENCE_GATE_EVALUATED_HEAD = 1fbabd2fb80851912815efe4e0ebe331a1318557
+ARCHITECTURE_FIT = NOT_PERFORMED
+DESIGN_READINESS = NOT_PERFORMED
+IMPLEMENTATION_AUTHORIZED = NO
 ```
 
-Independent ChatGPT Experience Gate re-review is the next gate. This document does not record PASS. It stops there.
+Independent Experience Gate PASS is persisted. The next gate is Architecture Fit. This document does not perform that gate.
