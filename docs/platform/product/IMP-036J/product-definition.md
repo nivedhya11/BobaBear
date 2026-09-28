@@ -3,7 +3,7 @@
   "status": "DRAFT",
   "authority": "PRODUCT_DEFINITION",
   "capability": "IMP-036J",
-  "productDefinitionVersion": "PD-IMP-036J-DRAFT-5",
+  "productDefinitionVersion": "PD-IMP-036J-DRAFT-6",
   "productDefinitionStatus": "PRE_GATE_DRAFT",
   "productDefinitionGate": "NOT_PERFORMED",
   "architectureFit": "NOT_PERFORMED",
@@ -14,7 +14,7 @@
 # IMP-036J — Promotions, Coupons & Offers
 
 ```text
-PRODUCT_DEFINITION_VERSION = PD-IMP-036J-DRAFT-5
+PRODUCT_DEFINITION_VERSION = PD-IMP-036J-DRAFT-6
 STATUS = DRAFT
 PRE_GATE_DRAFT = YES
 PRODUCT_DEFINITION_IN_PROGRESS = YES
@@ -43,9 +43,21 @@ PD1_DID_NOT_ACTIVATE_IMP036F_AT_ADOPTION = YES
 This artifact is a **pre-gate draft** that is ready for an independent Product Definition Gate.
 `DRAFT_READY_FOR_GATE` is not Gate PASS and is not approval. This revision does not execute the
 Gate, perform Architecture Fit, or authorize implementation. Lifecycle truth remains
-[`ROADMAP.md`](../../ROADMAP.md) and [`STATE.md`](../../STATE.md). DRAFT-5 records Founder
-approval of FD-036J-03 on 2026-09-28. It does not redesign the DRAFT-4 guest-coupon or
-complimentary-item outcomes and does not create a Decision Register entry.
+[`ROADMAP.md`](../../ROADMAP.md) and [`STATE.md`](../../STATE.md). DRAFT-6 closes the DRAFT-5
+acceptance-slice concurrency gap for complimentary-item activation. It does not create a new
+Founder product decision, does not create FD-036J-04, and does not create a Decision Register
+entry.
+
+### Historical candidate — `PD-IMP-036J-DRAFT-5`
+
+DRAFT-5 remains historical. It was ready for Gate (`DRAFT_READY_FOR_GATE = YES`). Founder
+decisions FD-036J-01, FD-036J-02, and FD-036J-03 were all approved. An independent Product
+Definition Gate was executed against DRAFT-5. The Gate result was `STOP`. The blocker was
+acceptance and concurrency completeness: FD-036J-03 already required at most one ACTIVE
+complimentary-item Offer, and AC-036J-012-05 proved only the sequential second-activation denial.
+It did not prove two overlapping activations when none was yet ACTIVE. No new Founder decision
+was required. Gate PASS was not persisted. Architecture Fit was not performed. Implementation was
+not authorized. DRAFT-6 supersedes DRAFT-5. DRAFT-5 history is not rewritten as Gate PASS.
 
 ### Historical candidate — `PD-IMP-036J-DRAFT-4`
 
@@ -91,8 +103,8 @@ is not the current candidate.
 ### Program context (CURRENT tip — verify against ROADMAP/STATE)
 
 ```text
-ROADMAP = GTM-R167
-STATE = STATE-R165
+ROADMAP = GTM-R168
+STATE = STATE-R166
 ARCHITECTURE = ARCH-R23
 decision-register = DR-23
 acceptedThrough = IMP-036I
@@ -104,7 +116,7 @@ PROGRAM_PAUSE_AUTHORITY = D-377
 ADDITIONAL_SEQUENCING_AUTHORITY = D-382
 IMP036J_ACTIVATED = YES
 IMP036J_PRODUCT_DEFINITION = DRAFT_READY_FOR_GATE
-IMP036J_PRODUCT_DEFINITION_VERSION = PD-IMP-036J-DRAFT-5
+IMP036J_PRODUCT_DEFINITION_VERSION = PD-IMP-036J-DRAFT-6
 IMP036J_PRODUCT_DEFINITION_GATE = NOT_PERFORMED
 IMP036J_ARCHITECTURE_FIT = NOT_PERFORMED
 IMP036J_IMPLEMENTATION_AUTHORIZED = NO
@@ -128,10 +140,10 @@ Revenue Recommendations.
 | Field | Definition |
 |---|---|
 | Capability / title | IMP-036J — Promotions, Coupons & Offers |
-| Product Definition version / document status | `PD-IMP-036J-DRAFT-5`; **Document status: DRAFT**; `PRE_GATE_DRAFT`; `PRODUCT_DEFINITION_IN_PROGRESS`; `DRAFT_READY_FOR_GATE = YES`. Not `APPROVED`. |
+| Product Definition version / document status | `PD-IMP-036J-DRAFT-6`; **Document status: DRAFT**; `PRE_GATE_DRAFT`; `PRODUCT_DEFINITION_IN_PROGRESS`; `DRAFT_READY_FOR_GATE = YES`. Not `APPROVED`. |
 | Product owner / approval evidence | Founder sequencing authorization 2026-09-27 (Promotions first) recorded as **D-382**. FD-036J-01 and FD-036J-02 approved by the Founder on 2026-09-27. FD-036J-03 approved by the Founder on 2026-09-28. Product Definition approval is not claimed. |
 | Process / verification policy | PD-1 / TEST-1 |
-| Canonical anchors | VISION-1; ROADMAP GTM-R167; STATE STATE-R165; ARCH-R23; DR-23 (D-377 CURRENT; D-382 CURRENT; next decision ID D-383; no D-383 created); accepted IMP-016 Promotions; accepted IMP-036F commercial management; ADR-007 CURRENT; accepted IMP-036H fulfilment mode; accepted IMP-036I scheduled timing |
+| Canonical anchors | VISION-1; ROADMAP GTM-R168; STATE STATE-R166; ARCH-R23; DR-23 (D-377 CURRENT; D-382 CURRENT; next decision ID D-383; no D-383 created); accepted IMP-016 Promotions; accepted IMP-036F commercial management; ADR-007 CURRENT; accepted IMP-036H fulfilment mode; accepted IMP-036I scheduled timing |
 | Repository candidate | `/home/ajoshi/repos/boba-bear-platform`; branch recorded at publication; HEAD / tree / fingerprint recorded by the activating change. This draft is not an acceptance candidate. |
 | Capability lifecycle / authorization | ROADMAP/STATE: formal lifecycle `PLANNED`; `IMP036J_ACTIVATED: YES`; Gate `NOT_PERFORMED`; Fit `NOT_PERFORMED`; implementation `NOT_AUTHORIZED`; `IMP036J_ACCEPTED: NO` |
 | Relevant capability architecture / ADRs | No IMP-036J capability architecture exists. Fit has not been performed. Binding money authority remains accepted Promotion / Coupon / Pricing / Checkout Snapshot (ADR-007; IMP-016; IMP-036F). Fulfilment mode remains D-378 / IMP-036H. Scheduled timing remains D-379 / IMP-036I. |
@@ -245,7 +257,7 @@ Discovery story IDs `ODC-US-*` are discovery examples, not these formal story ID
 
 | Slice | Mandatory story IDs | Mandatory AC IDs | Required Golden Journeys | Observable acceptance boundary |
 |---|---|---|---|---|
-| `V1_ACCEPTANCE_SLICE` | `US-036J-001` … `US-036J-013` | `AC-036J-001-01` … `AC-036J-013-04`, including `AC-036J-002-05`, `AC-036J-012-04`, `AC-036J-012-05`, `AC-036J-013-01`, `AC-036J-013-02`, `AC-036J-013-03`, and `AC-036J-013-04` | `GJ-FIRST-ORDER`, `GJ-RETURNING-ORDER` for explainable savings on an otherwise accepted purchase path. This slice does not redefine those journeys' non-offer steps. | A customer can receive an automatic or coupon-backed Offer, understand the saving, receive a qualifying complimentary menu item when that Offer is selected, and pay a revalidated total. An authorized operator can operate the accepted Promotion/Coupon surface for the V1 benefit and eligibility rules this definition includes. `MANDATORY_STORIES = US-036J-001..US-036J-013`. `COMPLIMENTARY_MENU_ITEM_V1_ACCEPTANCE = MANDATORY`. |
+| `V1_ACCEPTANCE_SLICE` | `US-036J-001` … `US-036J-013` | `AC-036J-001-01` … `AC-036J-013-04`, including `AC-036J-002-05`, `AC-036J-012-04`, `AC-036J-012-05`, `AC-036J-012-06`, `AC-036J-013-01`, `AC-036J-013-02`, `AC-036J-013-03`, and `AC-036J-013-04` | `GJ-FIRST-ORDER`, `GJ-RETURNING-ORDER` for explainable savings on an otherwise accepted purchase path. This slice does not redefine those journeys' non-offer steps. | A customer can receive an automatic or coupon-backed Offer, understand the saving, receive a qualifying complimentary menu item when that Offer is selected, and pay a revalidated total. An authorized operator can operate the accepted Promotion/Coupon surface for the V1 benefit and eligibility rules this definition includes. `MANDATORY_STORIES = US-036J-001..US-036J-013`. `COMPLIMENTARY_MENU_ITEM_V1_ACCEPTANCE = MANDATORY`. |
 | `FOLLOW_UP` | Items already classified as follow-up inside the commercial / Offer domain. See section 23 `FOLLOW_UP_NOT_V1`. | Not defined | Not added | Requires later authorization. Not a rejection and not a cut from an approved IMP-036J V1. |
 | `PARKED_SEQUENCED_FUTURE_CAPABILITIES` | Deals, Campaigns, and Revenue Recommendations. See section 23. | Not defined | Not added | Parked discovery. Not rejected. No IMP identity is assigned here. |
 | `EXPLICIT_NON_GOALS_AND_PROHIBITED_DIRECTIONS` | Second money engine, second Promotion evaluator, second Pricing engine, generic platform-wide rules engine, arbitrary marketing-automation platform. | Not defined | Not added | Intentionally not part of the desired architecture or product. Not deferred. |
@@ -502,12 +514,12 @@ so that I can create, limit, activate, inspect, and retire them without a second
 
 Journey / activity: JOURNEY-036J-OPERATOR / authoring and operations
 Preconditions: The operator already holds the existing promotions and coupons authorization for the applicable scope.
-Acceptance scenarios: AC-036J-012-01, AC-036J-012-02, AC-036J-012-03, AC-036J-012-04, AC-036J-012-05
+Acceptance scenarios: AC-036J-012-01, AC-036J-012-02, AC-036J-012-03, AC-036J-012-04, AC-036J-012-05, AC-036J-012-06
 Business rules: BR-036J-001, BR-036J-011
-Founder product authority: FD-036J-03 APPROVED 2026-09-28 for complimentary-item authoring, the single-active V1 rule, and rejected second activation. FD-036J-02 remains the general stacking policy.
-UX states: draft, active, validation failure, retired, redemption visibility, complimentary-item configuration rejected when incomplete
+Founder product authority: FD-036J-03 APPROVED 2026-09-28 for complimentary-item authoring, the single-active V1 rule, sequential second-activation denial, and the concurrent activation invariant. FD-036J-02 remains the general stacking policy. Product Definition does not choose which overlapping activation wins.
+UX states: draft, active, validation failure, retired, redemption visibility, complimentary-item configuration rejected when incomplete, truthful non-success when a complimentary activation does not become the authoritative active Offer
 Permission / resource context: Existing `promotions` and `coupons` authorization and commercial scope. No new role. Exact permission keys are Fit, not a new model.
-Error / recovery: Invalid configuration is rejected with a reason the operator can correct. Unauthorized activation or retirement is denied and does not change the Offer. Confirmed retirement stops future application and leaves purchased orders unchanged. Cancelling the retire confirmation leaves the Offer active.
+Error / recovery: Invalid configuration is rejected with a reason the operator can correct. Unauthorized activation or retirement is denied and does not change the Offer. A second activation while one complimentary-item Offer is already active is rejected. Overlapping activations when none is yet active settle with at most one ACTIVE complimentary-item Offer, and an attempt that is not authoritative must not report a false successful activation. Confirmed retirement stops future application and leaves purchased orders unchanged. Cancelling the retire confirmation leaves the Offer active.
 Dependencies: Accepted IMP-036F commercial workspace. This story makes that surface operable for V1; it does not replace it.
 Explicit non-goals: Campaign screens, Deal composition, new permissions, schema design in this document.
 Data implications: Authoring writes accepted Promotion/Coupon authority or the minimum Fit-owned extension required for V1 eligibility and caps. Purchased orders are not rewritten.
@@ -843,12 +855,32 @@ Mandatory in acceptance slice: YES
 AC-036J-012-05 — Second complimentary-item Offer cannot be activated
 Story: US-036J-012
 Product authority: FD-036J-03 APPROVED 2026-09-28
+Classification: SEQUENTIAL_CONFLICT
 Given an authorized operator on the existing commercial Promotions and coupons surface
 And one complimentary-item Offer is already active
 When the operator attempts to activate a second complimentary-item Offer
 Then activation is rejected
 And the already active complimentary-item Offer remains the only active one
 COMPLIMENTARY_ITEM_SINGLE_ACTIVE = YES
+Mandatory in acceptance slice: YES
+
+AC-036J-012-06 — Concurrent complimentary activations preserve single-active invariant
+Story: US-036J-012
+Product authority: FD-036J-03 APPROVED 2026-09-28
+Classification: CONCURRENT_CONFLICT
+Given no complimentary-item Offer is currently ACTIVE
+And two distinct complimentary-item Offer configurations are individually valid
+And both operators are authorized
+And the two activation attempts overlap and execute concurrently
+When both activation attempts settle
+Then the resulting authoritative state contains at most one ACTIVE complimentary-item Offer
+And there is never a settled state with two ACTIVE complimentary-item Offers
+And an activation attempt that is not represented by the authoritative active Offer must not report a false successful activation
+And any non-winning or non-applied attempt returns a truthful non-success, conflict, or retry outcome consistent with accepted operator UX
+And no arbitrary customer gift is selected as a consequence of the race
+COMPLIMENTARY_ITEM_CONCURRENT_ACTIVE_MAX = 1
+COMPLIMENTARY_ITEM_CONCURRENT_WINNER = FIT_OWNED_WHERE_PRODUCT_OUTCOME_UNCHANGED
+ACTIVE_COUNT <= 1
 Mandatory in acceptance slice: YES
 
 AC-036J-013-01 — Complimentary item applies
@@ -910,6 +942,8 @@ COMPLIMENTARY_ITEM_COMPETING_OFFERS = NONE_CHOSEN
 Mandatory in acceptance slice: YES
 ```
 
+AC-036J-012-05 is the ordinary sequential denial: one complimentary-item Offer is already ACTIVE, and a later activation attempt is rejected. AC-036J-012-06 is the overlapping activation race when none is yet ACTIVE. They are not the same scenario. AC-036J-013-04 remains the customer and commercial safety fallback if inconsistent or racing state nevertheless causes more than one complimentary-item Offer to qualify. It does not replace the operator activation invariant that settled activation state contains at most one ACTIVE complimentary-item Offer (`ACTIVE_COUNT <= 1`). The operator invariant is `AT_MOST_ONE_ACTIVE`. The customer fallback is `NONE_CHOSEN` when inconsistent competing qualifiers nevertheless exist.
+
 | Story / AC ID | Required behaviour / risk | Applicable test layers | Planned proof | Actual evidence |
 |---|---|---|---|---|
 | `US-036J-001` … `US-036J-013` | Customer benefit truth, including a qualifying complimentary item | Unit, domain, HTTP, browser journey, accessibility | Later implementation evidence under TEST-1 | NOT_EXECUTED |
@@ -921,6 +955,8 @@ Mandatory in acceptance slice: YES
 | `US-036J-011`, `US-036J-013` / `AC-036J-013-02` | Purchased Order and history keep complimentary-item and savings snapshot truth | Domain, HTTP, browser journey | Later implementation evidence under TEST-1 | NOT_EXECUTED |
 | `US-036J-012` | Operator allow/deny | Authorization positive and negative, integration | Existing commercial scope | NOT_EXECUTED |
 | `US-036J-012` / `AC-036J-012-04` | Operator can activate only a complete exact complimentary-item configuration | Authorization, integration | Later implementation evidence under TEST-1 | NOT_EXECUTED |
+| `US-036J-012` / `AC-036J-012-05` | Sequential second complimentary-item activation is rejected while one remains ACTIVE | Authorization, integration | Later implementation evidence under TEST-1 | NOT_EXECUTED |
+| `US-036J-012` / `AC-036J-012-06` | Overlapping complimentary-item activations settle with at most one ACTIVE Offer, and a non-authoritative attempt cannot falsely report activation | Domain or integration concurrency; persistence, revision, or transaction proof where Architecture Fit places the invariant; operator HTTP or integration result | Planned future proof of real overlapping activation attempts. Exact layers remain Architecture Fit-owned. Actual evidence is not claimed. | NOT_EXECUTED |
 | `US-036J-013` / `AC-036J-013-01` | Exact operator-specified complementary item, no extra merchandise charge, no gift catalogue | Domain, HTTP, Cart/Checkout browser journey | Later implementation evidence under TEST-1 | NOT_EXECUTED |
 | `US-036J-013` / `AC-036J-013-03` | Unavailable complimentary item is not substituted; the Offer leaves the payable result | Domain, Cart/Checkout browser journey, recovery | Later implementation evidence under TEST-1 | NOT_EXECUTED |
 | `US-036J-013` / `AC-036J-013-04` | Competing complimentary items are not chosen | Domain, Cart/Checkout browser journey | Later implementation evidence under TEST-1 | NOT_EXECUTED |
@@ -936,7 +972,7 @@ Mandatory in acceptance slice: YES
 | `BR-036J-005` | Before payment, a stale or invalid Offer is removed from the payable total. After payment, purchased savings stay on the snapshot and are not live-evaluated. | Checkout Snapshot authority | `US-036J-004`, `US-036J-008`, `US-036J-011` |
 | `BR-036J-006` | First-order eligible means no previous successfully purchased direct BOBA Bear Order for that authenticated customer. Failed or abandoned payments do not consume it. Later cancellation or refund of a successful Order does not restore it. | ODC-06 | `US-036J-005` |
 | `BR-036J-007` | Eligibility may distinguish DELIVERY and PICKUP. Scheduled eligibility consumes accepted IMP-036I timing and does not redefine it. Standing free delivery in the delivery tariff is not the same thing as a temporary free-delivery Offer. The customer sees one delivery-charge result. A standing-free outcome does not create a second delivery credit or a fabricated delivery saving. | ODC-05, ODC-06; IMP-036H; IMP-036I; FD-036J-02 | `US-036J-006`, `US-036J-004`, `US-036J-010` |
-| `BR-036J-008` | V1 stacking is at most one primary merchandise or order Offer plus one compatible delivery incentive. A complimentary-menu-item Offer is a merchandise or order Offer benefit and occupies that existing primary merchandise or order position. It does not create a new stacking slot. It may pair with at most one compatible delivery incentive. It does not stack with a second merchandise or order Offer. An entered Coupon follows the Coupon-backed Offer's actual benefit class. When the selected pair both qualify, are compatible, and each produces a real monetary benefit, both apply (`COMPATIBLE_STACK_RESULT = BOTH_APPLY`). Valid compatible combinations compete on the best customer monetary outcome (`MULTIPLE_CANDIDATE_SELECTION = BEST_VALID_MONETARY_COMBINATION`). Two merchandise discounts do not stack. Multiple delivery incentives do not stack with each other. BOGO does not stack with another merchandise discount. A delivery incentive with zero incremental monetary benefit is not an additional saving. Standing free delivery does not create a duplicate or fabricated delivery saving (`STANDING_FREE_DELIVERY_DUPLICATE_SAVING = PROHIBITED`). A valid complimentary-item combination is selected when its payable amount equals the combination with no primary merchandise or order Offer (`COMPLIMENTARY_ITEM_EQUAL_PAYABLE_TIE = COMPLIMENTARY_COMBINATION_SELECTED`). That choice delivers the promised item and is not a technical tie-break. At most one complimentary-item Offer is active. A second one cannot be activated while another remains active. If more than one would still qualify, neither competing complimentary item is chosen or presented. Exact evaluator representation, search, persistence, and remaining deterministic non-monetary tie-breaks that do not change delivered merchandise belong to Architecture Fit. `COMPLIMENTARY_MENU_ITEM_STACKING_SLOT = PRIMARY_MERCHANDISE_OR_ORDER_OFFER`. `COMPLIMENTARY_MENU_ITEM_NEW_STACKING_SLOT = NO`. | FD-036J-02 APPROVED 2026-09-27 for general merchandise or order plus compatible delivery stacking; FD-036J-03 APPROVED 2026-09-28 for the complimentary-item V1 configuration, equal-payable tie, single-active rule, competing qualifiers, and recovery; ODC-07..ODC-10. Deal compatibility is moot while Deals are out of this slice. | `US-036J-009`, `US-036J-010`, `US-036J-013` |
+| `BR-036J-008` | V1 stacking is at most one primary merchandise or order Offer plus one compatible delivery incentive. A complimentary-menu-item Offer is a merchandise or order Offer benefit and occupies that existing primary merchandise or order position. It does not create a new stacking slot. It may pair with at most one compatible delivery incentive. It does not stack with a second merchandise or order Offer. An entered Coupon follows the Coupon-backed Offer's actual benefit class. When the selected pair both qualify, are compatible, and each produces a real monetary benefit, both apply (`COMPATIBLE_STACK_RESULT = BOTH_APPLY`). Valid compatible combinations compete on the best customer monetary outcome (`MULTIPLE_CANDIDATE_SELECTION = BEST_VALID_MONETARY_COMBINATION`). Two merchandise discounts do not stack. Multiple delivery incentives do not stack with each other. BOGO does not stack with another merchandise discount. A delivery incentive with zero incremental monetary benefit is not an additional saving. Standing free delivery does not create a duplicate or fabricated delivery saving (`STANDING_FREE_DELIVERY_DUPLICATE_SAVING = PROHIBITED`). A valid complimentary-item combination is selected when its payable amount equals the combination with no primary merchandise or order Offer (`COMPLIMENTARY_ITEM_EQUAL_PAYABLE_TIE = COMPLIMENTARY_COMBINATION_SELECTED`). That choice delivers the promised item and is not a technical tie-break. At most one complimentary-item Offer is active. A second one cannot be activated while another remains active. Two overlapping activations when none is yet active settle with at most one ACTIVE complimentary-item Offer, and an attempt that does not become authoritative must not report a false successful activation. Product Definition does not choose which overlapping attempt wins. If more than one would still qualify, neither competing complimentary item is chosen or presented. That customer fallback does not replace the operator activation invariant. Exact evaluator representation, search, persistence, and remaining deterministic non-monetary tie-breaks that do not change delivered merchandise belong to Architecture Fit. `COMPLIMENTARY_MENU_ITEM_STACKING_SLOT = PRIMARY_MERCHANDISE_OR_ORDER_OFFER`. `COMPLIMENTARY_MENU_ITEM_NEW_STACKING_SLOT = NO`. | FD-036J-02 APPROVED 2026-09-27 for general merchandise or order plus compatible delivery stacking; FD-036J-03 APPROVED 2026-09-28 for the complimentary-item V1 configuration, equal-payable tie, single-active rule, competing qualifiers, and recovery; ODC-07..ODC-10. Deal compatibility is moot while Deals are out of this slice. | `US-036J-009`, `US-036J-010`, `US-036J-013` |
 | `BR-036J-009` | An entered coupon participates in the same commercial candidate evaluation. The comparison is the final payable amount of each valid compatible combination, including at most one delivery incentive, not the merchandise saving alone. Entering the coupon must not make the customer worse off. The coupon-backed Offer uses its actual benefit class and does not create another stacking slot. If the selected combination places it in the merchandise or order slot, one compatible delivery incentive that produces a real monetary benefit applies with it. If the coupon-backed Offer is a delivery incentive, it competes only in the delivery-incentive position. Incompatible benefits do not stack. One entered coupon state exists at a time. There is no second monetary engine. | ODC-10; FD-036J-02 APPROVED 2026-09-27; Founder coupon policy already approved in discovery | `US-036J-002`, `US-036J-009` |
 | `BR-036J-013` | Coupon entry exists on Cart and on Checkout Review. Both surfaces operate one shared coupon / commercial state. Checkout Review is not a second coupon store. The customer may enter, apply, replace, remove, and retry on either surface before Payment. After the customer crosses from Review into Payment, coupon state is read-only: no new entry, replacement, or removal. If commercial truth is stale, recovery returns through the normal pre-payment Review path. | FD-036J-01 APPROVED 2026-09-27 | `US-036J-002`, `US-036J-008` |
 | `BR-036J-010` | V1 controls are max discount where applicable, per-customer redemption cap, and global Offer redemption cap. Reuse coupon claims where they fit. Campaign budgets and pacing are follow-up. | ODC-11 | `US-036J-007`, `US-036J-012` |
@@ -981,7 +1017,7 @@ Percentage, flat amount, and BOGO are product-intended because the accepted engi
 | NOT FOUND / STALE REFERENCE | Unknown code; Offer retired before payment; purchased order does not use live Offers. | `US-036J-008`, `US-036J-011` |
 | SERVER / NETWORK ERROR | A coupon apply, replace, or remove that does not complete leaves the previous shared state. Failure must not show a false applied state or a false paid total. | `AC-036J-002-10`, `US-036J-008` |
 | RECOVERY | Remove, replace, retry after sign-in, adjust cart, or continue without the Offer on Cart or Checkout Review. Stale payment recovery returns to Review. | `US-036J-002`, `US-036J-008` |
-| CONCURRENCY | Last global redemption and first-order qualification must not both succeed incorrectly. Mechanism is Fit. | `US-036J-005`, `US-036J-007` |
+| CONCURRENCY | Last global redemption and first-order qualification must not both succeed incorrectly. Duplicate coupon submission stays one applied result. Two overlapping complimentary-item activation attempts settle with at most one ACTIVE complimentary-item Offer, and a non-authoritative attempt must not report a false successful activation. Exact lock, CAS, transaction, and winner selection are Architecture Fit. | `US-036J-002`, `US-036J-005`, `US-036J-007`, `US-036J-012` / `AC-036J-012-06` |
 | DESTRUCTIVE ACTION | Removing or replacing a coupon, on Cart or Checkout Review, is explicit and recomputes totals. Retiring a Promotion requires confirmation, stops future application, and does not rewrite purchased orders. Cancelling that confirmation leaves the Offer active. Payment cannot remove the coupon. | `AC-036J-002-03`, `AC-036J-002-08`, `AC-036J-012-03` |
 | SUCCESS FEEDBACK | Applied state, saving, complimentary-item explanation, and operator activation/inspection. | `US-036J-001`, `US-036J-012`, `US-036J-013` |
 | DOWNSTREAM EFFECT | Payable total and snapshot change only through accepted evaluation. | `BR-036J-005` |
@@ -1022,6 +1058,7 @@ Percentage, flat amount, and BOGO are product-intended because the accepted engi
 | Order detail / purchased complimentary item | The purchased snapshot includes the complimentary item | The exact purchased item remains, with no extra merchandise charge according to the purchased snapshot. Live Offer evaluation does not rewrite it. | Readable text | N/A live evaluation | `AC-036J-013-02` |
 | Cart / complimentary item unavailable | The shown complimentary item is no longer eligible | The item is not substituted. The Offer leaves the payable result. The customer is told it is no longer available. | Status is text | Recomputed combination on Review | `AC-036J-013-03` |
 | Operator / validation | Bad configuration | Reason; not activated | Error on the field | Correct and retry | `AC-036J-012-02` |
+| Operator / complimentary activation conflict | A second complimentary-item Offer is already blocked because one is ACTIVE, or a concurrent activation did not become the authoritative ACTIVE Offer | The attempt is not shown as a successful activation. The operator sees a truthful non-success, conflict, or retry outcome. Settled state has at most one ACTIVE complimentary-item Offer. | Denial is text, not colour alone | Correct and retry, or leave the authoritative Offer active | `AC-036J-012-05`, `AC-036J-012-06` |
 | Operator / denied | Operator is outside commercial scope | Activation and retirement are denied. The Offer is unchanged. | Denial is text, not colour alone | No change | `AC-036J-012-02` |
 | Operator / retire | Explicit retire | Confirmation first. Confirmed retirement stops future application and leaves purchased history. Cancelled confirmation leaves the Offer active. | Confirmation and cancel are keyboard operable | Retired, or still active if cancelled | `AC-036J-012-03` |
 
@@ -1052,12 +1089,38 @@ commercial scope. No new trust boundary is created by calling a benefit an Offer
 
 ## 17. Concurrency/recovery
 
-Overlapping payment attempts must not both consume the last global redemption or both receive
-a single-use first-order benefit. The exact lock or claim is Architecture Fit, using existing
-coupon claims where they already fit. A failed payment does not consume first-order
-eligibility. Interruption before snapshot seal must not leave a payable total that still
-includes an invalid Offer. Duplicate coupon submit is safe: one applied result, not two
-merchandise discounts.
+Commercial races that must stay truthful:
+
+- Overlapping payment attempts must not both consume the last global redemption.
+- Overlapping payment attempts must not both receive a single-use first-order benefit.
+- Duplicate coupon submission is safe: one applied result, not two merchandise discounts.
+
+The exact lock or claim for those commercial races is Architecture Fit, using existing coupon
+claims where they already fit. A failed payment does not consume first-order eligibility.
+Interruption before snapshot seal must not leave a payable total that still includes an invalid
+Offer.
+
+Complimentary-item activation race:
+
+- Two overlapping authorized attempts to activate different valid complimentary-item Offers,
+  when none is yet ACTIVE, must settle with at most one ACTIVE complimentary-item Offer
+  (`COMPLIMENTARY_ITEM_CONCURRENT_ACTIVE_MAX = 1`).
+- There is never a settled state with two ACTIVE complimentary-item Offers.
+- An activation attempt that is not represented by the authoritative active Offer must not report a false successful activation. A non-winning or non-applied attempt returns a truthful non-success, conflict, or retry outcome.
+- Product Definition does not choose which attempt wins. Zero or one ACTIVE after settlement
+  satisfies the invariant. The binding product result is `ACTIVE_COUNT <= 1`.
+- Exact lock, transaction isolation, CAS or revision check, serialization, technical winner
+  selection, and retry mechanics are Architecture Fit
+  (`COMPLIMENTARY_ITEM_CONCURRENT_WINNER = FIT_OWNED_WHERE_PRODUCT_OUTCOME_UNCHANGED`).
+  That marker is not permission for two ACTIVE Offers.
+- AC-036J-013-04 does not replace this operator activation invariant. If inconsistent or racing
+  state nevertheless causes more than one complimentary-item Offer to qualify for the same cart,
+  neither competing complimentary item is chosen or presented
+  (`COMPLIMENTARY_ITEM_COMPETING_OFFERS = NONE_CHOSEN`). The two safeguards sit on different
+  boundaries: operator activation is `AT_MOST_ONE_ACTIVE`; the customer commercial fallback is
+  `NONE_CHOSEN` when inconsistent competing qualifiers nevertheless exist.
+
+This section does not specify database mechanics.
 
 ## 18. Accessibility/responsive expectations
 
@@ -1207,6 +1270,10 @@ Decision:
 - The customer does not select a gift from a catalogue.
 - At most one complimentary-item Offer may be ACTIVE at a time in V1 (`COMPLIMENTARY_ITEM_SINGLE_ACTIVE = YES`).
 - Activating a second complimentary-item Offer while another remains active is rejected.
+- When no complimentary-item Offer is ACTIVE and two authorized activation attempts overlap, the settled authoritative state still contains at most one ACTIVE complimentary-item Offer (`COMPLIMENTARY_ITEM_CONCURRENT_ACTIVE_MAX = 1`; `ACTIVE_COUNT <= 1`). Zero or one ACTIVE after that race satisfies the invariant.
+- Product Definition does not choose which overlapping attempt wins. Architecture Fit owns locking, isolation, CAS or revision checks, serialization, technical winner selection, and retry mechanics where the product outcome stays `ACTIVE_COUNT <= 1` (`COMPLIMENTARY_ITEM_CONCURRENT_WINNER = FIT_OWNED_WHERE_PRODUCT_OUTCOME_UNCHANGED`). That marker is not permission for two ACTIVE Offers.
+- An activation attempt that is not represented by the authoritative active Offer must not report a false successful activation.
+- The customer fallback in AC-036J-013-04 does not replace this operator activation invariant. AC-036J-013-04 remains `NONE_CHOSEN` if inconsistent competing qualifiers nevertheless exist.
 - If an inconsistent or racing state nevertheless results in more than one complimentary-item Offer qualifying for the same cart, neither competing complimentary item is silently chosen and neither is presented as the selected gift (`COMPLIMENTARY_ITEM_COMPETING_OFFERS = NONE_CHOSEN`). The payable commercial result remains coherent through the single accepted commercial evaluation. Neither competing offer is selected by created timestamp, Offer ID, coupon presence, database order, or technical ordering. A later richer priority model would require separate product authority.
 - When a valid complimentary-item combination has the same payable amount as the otherwise-equivalent result with no primary merchandise or order Offer, the complimentary-item combination wins and the promised item is delivered (`COMPLIMENTARY_ITEM_EQUAL_PAYABLE_TIE = COMPLIMENTARY_COMBINATION_SELECTED`). This customer-visible choice is not delegated to Architecture Fit as a technical tie-break. Other exact-payable ties that do not change delivered merchandise may remain Architecture Fit-owned.
 - If the promised complimentary item becomes unavailable before payment, there is no silent substitute. The complimentary Offer leaves the payable result. The best valid commercial result is recomputed through the single accepted commercial evaluation. The customer is told the item is no longer available. Payment does not continue on the stale complimentary-item line. Recovery remains on Checkout Review (`COMPLIMENTARY_ITEM_UNAVAILABLE_RECOVERY = RECOMPUTE_WITHOUT_SUBSTITUTE`).
@@ -1235,6 +1302,9 @@ COMPLIMENTARY_MENU_ITEM_FOLLOW_UP = PROHIBITED
 COMPLIMENTARY_MENU_ITEM_STACKING_SLOT = PRIMARY_MERCHANDISE_OR_ORDER_OFFER
 COMPLIMENTARY_MENU_ITEM_NEW_STACKING_SLOT = NO
 COMPLIMENTARY_ITEM_EQUAL_PAYABLE_TIE = COMPLIMENTARY_COMBINATION_SELECTED
+COMPLIMENTARY_ITEM_SINGLE_ACTIVE = YES
+COMPLIMENTARY_ITEM_CONCURRENT_ACTIVE_MAX = 1
+COMPLIMENTARY_ITEM_CONCURRENT_WINNER = FIT_OWNED_WHERE_PRODUCT_OUTCOME_UNCHANGED
 FIT_COMPLIMENTARY_ITEM_UNSAFE = STOP_CONTRADICTION_DECISION_REQUIRED
 ```
 
@@ -1279,7 +1349,7 @@ Fit and implementation authorization remain outstanding. This draft does not per
 ```text
 PRODUCT_DEFINITION_GATE
 Capability: IMP-036J — Promotions, Coupons & Offers
-Product Definition Version: PD-IMP-036J-DRAFT-5
+Product Definition Version: PD-IMP-036J-DRAFT-6
 Business Outcome: stated
 Primary Personas: stated
 Journeys Defined: stated
@@ -1291,7 +1361,7 @@ Empty / First-Use States Defined: stated
 Error / Recovery Paths Defined: stated
 Authorization Variants Defined: stated at product level; exact permission keys are Fit
 Cross-Scope Scenarios Defined: stated
-Concurrency Considered: outcome stated; mechanism is Fit
+Concurrency Considered: stated, including last-global-redemption, first-order, duplicate coupon submission, and complimentary-item concurrent activation; mechanism is Fit
 Destructive Actions Defined: coupon removal and replacement on Cart and Checkout Review; promotion retirement; Payment cannot remove a coupon
 UX State Matrix Complete: stated for Cart, Checkout Review, Payment, and purchased complimentary-item history
 Accessibility Considered: stated
