@@ -122,6 +122,15 @@ through metadata, targeted searches, and relevant ranges, as described in PD-1.
 | [`capabilities/IMP-037-backup-restore-migration-readiness.md`](./capabilities/IMP-037-backup-restore-migration-readiness.md) | CURRENT / ARCHITECTURE_LOCKED | IMP-037 Backup, Restore & Migration Readiness; Architecture Fit PASS against ARCH-R20 / D-374; implementation AUTHORIZED / STARTED / IMPLEMENTATION_IN_PROGRESS; independent Architecture Fit review PASS |
 | [`capabilities/IMP-038-security-privacy-hardening.md`](./capabilities/IMP-038-security-privacy-hardening.md) | CURRENT / ARCHITECTURE_LOCKED | IMP-038 Security & Privacy Hardening; Architecture Fit PASS against ARCH-R21 / D-375 / ADR-017; implementation AUTHORIZED / STARTED (`IMPLEMENTATION_IN_PROGRESS`); independent Architecture Fit review PASS |
 
+## Architecture-fit candidates
+
+These documents are not locked architecture and do not authorize implementation.
+Lifecycle truth stays in `ROADMAP.md` and `STATE.md`.
+
+| Document | State | Notes |
+|---|---|---|
+| [`capabilities/IMP-036J-promotions-coupons-offers.md`](./capabilities/IMP-036J-promotions-coupons-offers.md) | CANDIDATE / NOT_LOCKED | IMP-036J fit candidate against `PD-IMP-036J-DRAFT-6`. `IMP036J_ARCHITECTURE_FIT` remains `NOT_PERFORMED`. Architecture is not locked. Implementation is not authorized. |
+
 ## Supporting documents
 
 | Document | State | Notes |
