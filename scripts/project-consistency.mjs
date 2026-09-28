@@ -1763,7 +1763,7 @@ export function isSupportedImp030GovernanceCheckpoint(roadmapVersion, stateVersi
   const imp036iImplementationComplete = roadmapVersion === "GTM-R161" && stateVersion === "STATE-R159";
   const imp036iAcceptance = roadmapVersion === "GTM-R162" && stateVersion === "STATE-R160";
   const imp036jProductDefinitionActivation = roadmapVersion === "GTM-R163" && stateVersion === "STATE-R161";
-  const imp036jProductDefinitionDraftReady = roadmapVersion === "GTM-R166" && stateVersion === "STATE-R164";
+  const imp036jProductDefinitionDraftReady = roadmapVersion === "GTM-R167" && stateVersion === "STATE-R165";
   if (kind === "activation") return activation;
   if (kind === "lock") return lock;
   if (kind === "authorization") return authorization;
@@ -25137,7 +25137,8 @@ function checkProductDeliveryProcessAuthorities() {
       (roadmapMeta?.roadmapVersion === "GTM-R163" && stateMeta?.stateVersion === "STATE-R161") ||
       (roadmapMeta?.roadmapVersion === "GTM-R164" && stateMeta?.stateVersion === "STATE-R162") ||
       (roadmapMeta?.roadmapVersion === "GTM-R165" && stateMeta?.stateVersion === "STATE-R163") ||
-      (roadmapMeta?.roadmapVersion === "GTM-R166" && stateMeta?.stateVersion === "STATE-R164")
+      (roadmapMeta?.roadmapVersion === "GTM-R166" && stateMeta?.stateVersion === "STATE-R164") ||
+      (roadmapMeta?.roadmapVersion === "GTM-R167" && stateMeta?.stateVersion === "STATE-R165")
     );
   const atImp036hProductDefinitionActivationCheckpoint =
     roadmapMeta?.roadmapVersion === "GTM-R141" &&
@@ -38330,7 +38331,7 @@ const IMP036J_DRAFT_READY_META = {
   status: "DRAFT",
   authority: "PRODUCT_DEFINITION",
   capability: "IMP-036J",
-  productDefinitionVersion: "PD-IMP-036J-DRAFT-4",
+  productDefinitionVersion: "PD-IMP-036J-DRAFT-5",
   productDefinitionStatus: "PRE_GATE_DRAFT",
   productDefinitionGate: "NOT_PERFORMED",
   architectureFit: "NOT_PERFORMED",
@@ -38338,7 +38339,7 @@ const IMP036J_DRAFT_READY_META = {
 };
 
 const IMP036J_DRAFT_READY_BODY = {
-  PRODUCT_DEFINITION_VERSION: "PD-IMP-036J-DRAFT-4",
+  PRODUCT_DEFINITION_VERSION: "PD-IMP-036J-DRAFT-5",
   STATUS: "DRAFT",
   PRE_GATE_DRAFT: "YES",
   PRODUCT_DEFINITION_IN_PROGRESS: "YES",
@@ -38350,10 +38351,16 @@ const IMP036J_DRAFT_READY_BODY = {
   IMPLEMENTATION_AUTHORIZED: "NO",
   OPEN_FOUNDER_PRODUCT_DECISIONS: "0",
   UNRESOLVED_MATERIAL_PRODUCT_DECISIONS: "0",
+  "FD-036J-01": "APPROVED",
+  "FD-036J-01_DECISION_DATE": "2026-09-27",
+  "FD-036J-02": "APPROVED",
+  "FD-036J-02_DECISION_DATE": "2026-09-27",
+  "FD-036J-03": "APPROVED",
+  "FD-036J-03_DECISION_DATE": "2026-09-28",
 };
 
 /**
- * Leading governance-meta plus the first status fence for the ungated IMP-036J DRAFT-4 candidate.
+ * Leading governance-meta plus the first status fence for the ungated IMP-036J DRAFT-5 candidate.
  * PRE_GATE_DRAFT does not mean approval. DRAFT_READY_FOR_GATE does not mean Gate PASS.
  * @param {string} productDefinitionText
  * @returns {{ ok: true } | { ok: false, code: string, message: string }}
@@ -38425,7 +38432,7 @@ export function evaluateImp036jDraftReadyProductDefinition(productDefinitionText
   const fence = text.match(/```text\n([\s\S]*?)```/);
   const body = fence?.[1] ?? "";
   const markers = Object.fromEntries(
-    [...body.matchAll(/^([A-Z0-9_]+) = (.+)$/gm)].map((match) => [match[1], match[2].trim()]),
+    [...body.matchAll(/^([A-Z0-9_-]+) = (.+)$/gm)].map((match) => [match[1], match[2].trim()]),
   );
   if (markers.STATUS === "APPROVED" || markers.APPROVED === "YES") {
     return {
@@ -38743,6 +38750,7 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
       [
         "AC-036J-012-05 — Second complimentary-item Offer cannot be activated",
         "Story: US-036J-012",
+        "Product authority: FD-036J-03 APPROVED 2026-09-28",
         "Given an authorized operator on the existing commercial Promotions and coupons surface",
         "And one complimentary-item Offer is already active",
         "When the operator attempts to activate a second complimentary-item Offer",
@@ -38757,6 +38765,7 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
       [
         "AC-036J-013-01 — Complimentary item applies",
         "Story: US-036J-013",
+        "Product authority: FD-036J-03 APPROVED 2026-09-28",
         "Given an active V1 Offer specifies exactly one operator-selected complementary menu item",
         "And the customer and cart satisfy the Offer qualification",
         "And the complimentary item is eligible under accepted commerce and availability truth",
@@ -38782,6 +38791,7 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
       [
         "AC-036J-013-03 — Complimentary item unavailable before payment",
         "Story: US-036J-013",
+        "Product authority: FD-036J-03 APPROVED 2026-09-28",
         "Given a qualifying complimentary item is already shown as the exact operator-specified line",
         "When that item is no longer eligible under accepted availability or commerce truth before payment",
         "Then no silent substitute is introduced",
@@ -38799,6 +38809,7 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
       [
         "AC-036J-013-04 — Competing complimentary items are not chosen",
         "Story: US-036J-013",
+        "Product authority: FD-036J-03 APPROVED 2026-09-28",
         "Given more than one complimentary-item Offer would qualify for the same cart",
         "When the commercial result is presented before payment",
         "Then neither competing complimentary item is chosen or presented",
@@ -38846,6 +38857,116 @@ export function evaluateImp036jComplimentaryItemContract(productDefinitionText) 
       message: "US-036J-013 must not be moved into FOLLOW_UP_NOT_V1",
     };
   }
+  const founderStart = text.indexOf("### FD-036J-03 —");
+  const founderEnd = text.indexOf("\n```text\nCOUPON_ENTRY_SURFACE", founderStart);
+  const founder = founderStart < 0 || founderEnd < 0 ? "" : text.slice(founderStart, founderEnd);
+  if (!founder.includes("Status: APPROVED") || !founder.includes("Date: 2026-09-28") || !founder.includes("Authority: Founder")) {
+    return {
+      ok: false,
+      code: "IMP036J_FD03",
+      message: "FD-036J-03 must record Founder approval on 2026-09-28",
+    };
+  }
+  if (!/FD-036J-03 = APPROVED/.test(founder) || !/FD-036J-03_DECISION_DATE = 2026-09-28/.test(founder)) {
+    return {
+      ok: false,
+      code: "IMP036J_FD03",
+      message: "FD-036J-03 dedicated section must record APPROVED and 2026-09-28",
+    };
+  }
+  const founderClauses = [
+    "exactly one complete menu-item line",
+    "customer variant choice",
+    "required modifier choice",
+    "positive-price / paid modifier choice",
+    "cannot be activated in V1",
+    "does not select a gift from a catalogue",
+    "COMPLIMENTARY_ITEM_SINGLE_ACTIVE = YES",
+    "Activating a second complimentary-item Offer while another remains active is rejected.",
+    "COMPLIMENTARY_ITEM_COMPETING_OFFERS = NONE_CHOSEN",
+    "created timestamp",
+    "Offer ID",
+    "coupon presence",
+    "database order",
+    "technical ordering",
+    "COMPLIMENTARY_ITEM_EQUAL_PAYABLE_TIE = COMPLIMENTARY_COMBINATION_SELECTED",
+    "not delegated to Architecture Fit as a technical tie-break",
+    "Other exact-payable ties that do not change delivered merchandise may remain Architecture Fit-owned.",
+    "no silent substitute",
+    "COMPLIMENTARY_ITEM_UNAVAILABLE_RECOVERY = RECOMPUTE_WITHOUT_SUBSTITUTE",
+    "PRIMARY_MERCHANDISE_OR_ORDER_OFFER",
+    "no new stacking slot",
+    "at most one compatible delivery incentive under FD-036J-02",
+    "does not stack with another merchandise or order Offer",
+    "COMPLIMENTARY_ITEM_PURCHASED_TRUTH = CHECKOUT_SNAPSHOT",
+    "second money engine",
+    "second Promotion evaluator",
+    "second Pricing engine",
+    "breaking Checkout Snapshot truth",
+    "Catalog, Customization, or Availability",
+    "FIT_COMPLIMENTARY_ITEM_UNSAFE = STOP_CONTRADICTION_DECISION_REQUIRED",
+    "must not silently remove or downgrade the V1 requirement",
+  ];
+  for (const clause of founderClauses) {
+    if (!founder.includes(clause)) {
+      return {
+        ok: false,
+        code: "IMP036J_FD03",
+        message: `FD-036J-03 decision body must state: ${clause}`,
+      };
+    }
+  }
+  const authorityLine = "Product authority: FD-036J-03 APPROVED 2026-09-28";
+  const authorityTargets = [
+    ["AC-036J-012-04 —", "AC-036J-012-05 —"],
+    ["AC-036J-012-05 —", "AC-036J-013-01 —"],
+    ["AC-036J-013-01 —", "AC-036J-013-02 —"],
+    ["AC-036J-013-02 —", "AC-036J-013-03 —"],
+    ["AC-036J-013-03 —", "AC-036J-013-04 —"],
+    ["AC-036J-013-04 —", "\n```"],
+  ];
+  for (const [startHeading, endHeading] of authorityTargets) {
+    if (!scenarioBetween(startHeading, endHeading).includes(authorityLine)) {
+      return {
+        ok: false,
+        code: "IMP036J_FD03",
+        message: `${startHeading} must cite FD-036J-03 as product authority`,
+      };
+    }
+  }
+  const story012 = text.split("Story ID: US-036J-012")[1]?.split("Story ID: US-036J-013")[0] ?? "";
+  const story013 = text.split("Story ID: US-036J-013")[1]?.split("## 10. Acceptance scenarios")[0] ?? "";
+  if (!story012.includes("Founder product authority: FD-036J-03 APPROVED 2026-09-28") || !story013.includes("Founder product authority: FD-036J-03 APPROVED 2026-09-28")) {
+    return {
+      ok: false,
+      code: "IMP036J_FD03",
+      message: "US-036J-012 and US-036J-013 must cite FD-036J-03",
+    };
+  }
+  const br008 = text.split("| `BR-036J-008` |")[1]?.split("| `BR-036J-009` |")[0] ?? "";
+  const br011 = text.split("| `BR-036J-011` |")[1]?.split("| `BR-036J-012` |")[0] ?? "";
+  const br014 = text.split("| `BR-036J-014` |")[1]?.split("### V1 benefit")[0] ?? "";
+  if (!br008.includes("FD-036J-02 APPROVED 2026-09-27") || !br008.includes("FD-036J-03 APPROVED 2026-09-28")) {
+    return {
+      ok: false,
+      code: "IMP036J_FD03",
+      message: "BR-036J-008 must keep FD-036J-02 stacking authority and cite FD-036J-03 for the complimentary-item model",
+    };
+  }
+  if (!br011.includes("FD-036J-03 APPROVED 2026-09-28") || !br014.includes("FD-036J-03 APPROVED 2026-09-28")) {
+    return {
+      ok: false,
+      code: "IMP036J_FD03",
+      message: "BR-036J-011 and BR-036J-014 must cite FD-036J-03",
+    };
+  }
+  if (!br014.includes("second Pricing engine") || !br014.includes("Catalog, Customization, or Availability")) {
+    return {
+      ok: false,
+      code: "IMP036J_FD03",
+      message: "BR-036J-014 must keep the Founder Fit STOP boundary",
+    };
+  }
   return { ok: true };
 }
 
@@ -38870,7 +38991,7 @@ export function evaluateImp036jStoryReadiness(productDefinitionText) {
   const text = String(productDefinitionText);
   const fence = text.match(/```text\n([\s\S]*?)```/);
   const markers = Object.fromEntries(
-    [...(fence?.[1] ?? "").matchAll(/^([A-Z0-9_]+) = (.+)$/gm)].map((match) => [match[1], match[2].trim()]),
+    [...(fence?.[1] ?? "").matchAll(/^([A-Z0-9_-]+) = (.+)$/gm)].map((match) => [match[1], match[2].trim()]),
   );
   const stories = text.split("## 9. User stories")[1]?.split("## 10. Acceptance scenarios")[0] ?? "";
   const readiness = [...stories.matchAll(/Story ID: (US-036J-\d+)\n[\s\S]*?^Readiness: (.+)$/gm)];
@@ -39088,7 +39209,7 @@ function checkImp036jProductDefinitionActivation(roadmap, state, architecture, d
 }
 
 /**
- * CURRENT checkpoint: IMP-036J Product Definition draft ready for Gate (GTM-R166 / STATE-R164).
+ * CURRENT checkpoint: IMP-036J Product Definition draft ready for Gate (GTM-R167 / STATE-R165).
  * Ready for independent Gate review. The Gate is not performed. The definition is not approved.
  * @param {Record<string, any>} roadmap
  * @param {Record<string, any>} state
@@ -39102,17 +39223,17 @@ function checkImp036jProductDefinitionDraftReady(roadmap, state, architecture, d
   const roadmapText = roadmap?.text ?? "";
   const stateText = state?.text ?? "";
   const currentRoadmapSection = roadmapText.split("## 2. Current Position")[1]?.split("\n## ")[0] ?? "";
-  const currentMarker = currentRoadmapSection.split("**GTM-R165**")[0] || currentRoadmapSection;
+  const currentMarker = currentRoadmapSection.split("**GTM-R166**")[0] || currentRoadmapSection;
   const stateSection2 = stateText.split("## 2. Current Work Position")[1]?.split("\n## ")[0] ?? "";
   const futureSliceSection = roadmapText.split("## 5. Future GTM Slices")[1]?.split("\n## ")[0] ?? "";
   const acceptedSection = roadmapText.split("## 3. Accepted Slices")[1]?.split("\n## ")[0] ?? "";
   const productDefAbs = resolveExactRelativeFile("docs/platform/product/IMP-036J/product-definition.md");
   const productDefinitionText = productDefAbs ? readFileSync(productDefAbs, "utf8") : "";
-  if (roadmapVersion !== "GTM-R166" || stateVersion !== "STATE-R164") {
-    fail("IMP036J_DRAFT_READY_IDENTITY", "IMP-036J draft-ready must be the current GTM-R166 / STATE-R164 checkpoint");
+  if (roadmapVersion !== "GTM-R167" || stateVersion !== "STATE-R165") {
+    fail("IMP036J_DRAFT_READY_IDENTITY", "IMP-036J draft-ready must be the current GTM-R167 / STATE-R165 checkpoint");
   }
-  if (roadmap?.meta.supersedes !== "GTM-R165" || state?.meta.supersedes !== "STATE-R163") {
-    fail("IMP036J_DRAFT_READY_SUPERSEDES", "GTM-R166 must supersede GTM-R165 and STATE-R164 must supersede STATE-R163");
+  if (roadmap?.meta.supersedes !== "GTM-R166" || state?.meta.supersedes !== "STATE-R164") {
+    fail("IMP036J_DRAFT_READY_SUPERSEDES", "GTM-R167 must supersede GTM-R166 and STATE-R165 must supersede STATE-R164");
   }
   if (roadmap?.meta.acceptedThrough !== "IMP-036I" || state?.meta.acceptedThrough !== "IMP-036I") {
     fail("IMP036J_ACCEPTED_THROUGH", "IMP-036J draft-ready must keep acceptedThrough at IMP-036I");
@@ -39130,7 +39251,7 @@ function checkImp036jProductDefinitionDraftReady(roadmap, state, architecture, d
     "IMP-036J: PLANNED",
     "IMP036J_ACTIVATED: YES",
     "IMP036J_PRODUCT_DEFINITION: DRAFT_READY_FOR_GATE",
-    "IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-4",
+    "IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-5",
     "IMP036J_PRODUCT_DEFINITION_GATE: NOT_PERFORMED",
     "IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED",
     "IMP036J_IMPLEMENTATION_AUTHORIZED: NO",
@@ -39144,6 +39265,7 @@ function checkImp036jProductDefinitionDraftReady(roadmap, state, architecture, d
     "ADDITIONAL_SEQUENCING_AUTHORITY: D-382",
     "IMP037_HOLD: YES",
     "IMP038_HOLD: YES",
+    "FD-036J-03: APPROVED 2026-09-28",
   ];
   for (const token of tokens) {
     if (!currentMarker.includes(token)) {
@@ -39153,8 +39275,11 @@ function checkImp036jProductDefinitionDraftReady(roadmap, state, architecture, d
       fail("IMP036J_DRAFT_READY_TOKEN", `STATE current work position must record ${token}`);
     }
   }
+  if (!stateText.includes("STATE-R165 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY")) {
+    fail("IMP036J_DRAFT_READY_RECORD", "STATE must record STATE-R165 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY");
+  }
   if (!stateText.includes("STATE-R164 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY")) {
-    fail("IMP036J_DRAFT_READY_RECORD", "STATE must record STATE-R164 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY");
+    fail("IMP036J_DRAFT4_HISTORY", "STATE must preserve historical STATE-R164 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY");
   }
   if (!stateText.includes("STATE-R163 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY")) {
     fail("IMP036J_DRAFT3_HISTORY", "STATE must preserve historical STATE-R163 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY");
