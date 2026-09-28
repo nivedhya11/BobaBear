@@ -3,7 +3,7 @@
   "status": "CANDIDATE",
   "authority": "EXPERIENCE_DEFINITION_CANDIDATE",
   "capability": "IMP-036J",
-  "experienceDefinitionVersion": "XD-IMP-036J-DRAFT-2",
+  "experienceDefinitionVersion": "XD-IMP-036J-DRAFT-3",
   "productDefinition": "PD-IMP-036J-DRAFT-6",
   "productDefinitionGate": "PASS",
   "experienceCriticality": "X3",
@@ -19,7 +19,7 @@
 # IMP-036J — Experience Definition candidate
 
 ```text
-EXPERIENCE_DEFINITION_VERSION = XD-IMP-036J-DRAFT-2
+EXPERIENCE_DEFINITION_VERSION = XD-IMP-036J-DRAFT-3
 AUTHORITY = EXPERIENCE_DEFINITION_CANDIDATE
 CAPABILITY = IMP-036J
 PRODUCT_DEFINITION = PD-IMP-036J-DRAFT-6
@@ -52,8 +52,22 @@ stays `REQUIRED / NOT_PERFORMED` until an Experience Gate is actually performed.
 
 EXP-1 does not yet record a prior IMP Experience Definition version pattern. This candidate uses
 `XD-IMP-036J-DRAFT-N`, parallel to `PD-IMP-036J-DRAFT-N`, and remains a draft candidate.
-`XD-IMP-036J-DRAFT-2` remediates equal-payable coupon presentation and X3 measurement intent on
-`XD-IMP-036J-DRAFT-1`. It does not record Experience Gate PASS.
+
+`XD-IMP-036J-DRAFT-2` remediated EG-036J-001 and EG-036J-002 on `XD-IMP-036J-DRAFT-1`. An
+independent ChatGPT Experience Gate PASS was given on DRAFT-2. That PASS was not persisted.
+Fresh exact-head review `5339375514` then found material P2 comment `4122739497`. The candidate
+was reopened before merge and before persistence of that PASS.
+
+```text
+XD-IMP-036J-DRAFT-2 = SUPERSEDED_AFTER_GATE_REOPEN
+EXPERIENCE_GATE_PASS_PERSISTED_FOR_DRAFT_2 = NO
+DRAFT_2_HISTORICAL_GATE_REVIEW = PASS_NOT_PERSISTED
+CURRENT_EXPERIENCE_GATE = NOT_PERFORMED
+```
+
+The historical PASS stays in the review record. It is not the current gate result.
+`XD-IMP-036J-DRAFT-3` remediates EG-036J-003, the joinable checkout-journey measurement contract.
+It does not persist Experience Gate PASS.
 
 Supporting material under [`../../experience/`](../../experience/README.md) is source only
 (`Authority: NONE`). It is not used here as higher authority than EXP-1 or LANG-1.
@@ -65,7 +79,7 @@ Supporting material under [`../../experience/`](../../experience/README.md) is s
 | Field | Definition |
 |---|---|
 | Capability | IMP-036J — Promotions, Coupons & Offers |
-| Experience Definition version / status | `XD-IMP-036J-DRAFT-2`; **EXPERIENCE_DEFINITION_CANDIDATE**; not approved; Experience Gate `NOT_PERFORMED` |
+| Experience Definition version / status | `XD-IMP-036J-DRAFT-3`; **EXPERIENCE_DEFINITION_CANDIDATE**; not approved; Experience Gate `NOT_PERFORMED`. `XD-IMP-036J-DRAFT-2` is `SUPERSEDED_AFTER_GATE_REOPEN`; its Experience Gate PASS was not persisted. |
 | Product Definition reference | `PD-IMP-036J-DRAFT-6`; status `APPROVED`; Product Definition Gate `PASS`; FD-036J-01, FD-036J-02, FD-036J-03 `APPROVED` |
 | Experience Criticality | `X3`. Customer money, conversion, trust, and identity meet on Cart, Checkout Review, Payment, and purchased history. |
 | Change Risk | `CR2`. Recorded in ROADMAP/STATE. Not an AGENTS `R` level. Money, caps, identity, and purchased truth are in scope; this candidate does not recalibrate that risk. |
@@ -585,9 +599,46 @@ PRIMARY_METRIC_COUNT = 1
 
 The primary metric is the Checkout Review → successful direct-order completion rate.
 
-Denominator: eligible direct-order checkout journeys that reach Checkout Review with an authoritative commercial evaluation. Eligible here means a customer direct-order journey that can check out. Menu browsing, a cart that never reaches Review, workforce actions, and non-direct channels are outside the denominator. Count one journey per Review arrival that presents that evaluation, not once per repaint.
+Denominator: eligible direct-order checkout journeys that reach Checkout Review with an authoritative commercial evaluation. Eligible here means a customer direct-order journey that can check out. Menu browsing, a cart that never reaches Review, workforce actions, and non-direct channels are outside the denominator. Count one journey once per `CHECKOUT_JOURNEY_KEY`, once that key reaches Review with an authoritative evaluation. Another Review arrival on the same key is the same denominator journey. A repaint is not an event.
 
-Numerator: those denominator journeys that complete the direct order successfully. Successful completion means the direct order is placed and payment for that order succeeds under accepted payment truth. A stopped stale pay attempt, a failed payment, and an abandoned Review are not numerator events.
+Numerator: those same denominator journeys that complete the direct order successfully. Successful completion means the direct order is placed and payment for that order succeeds under accepted payment truth. A stopped stale pay attempt, a failed payment, and an abandoned Review are not numerator events. One completion counts once, on the same `CHECKOUT_JOURNEY_KEY` as its denominator journey. Customer or guest identity does not attach that completion to several Review arrivals.
+
+### Checkout journey correlation
+
+`CHECKOUT_JOURNEY_KEY` is the measurement correlation for one logical direct-order checkout journey. Customer or guest commerce identity answers who is present. It does not identify which checkout an event belongs to. `CUSTOMER_IDENTITY` and `CHECKOUT_JOURNEY_KEY` are different concepts.
+
+```text
+CHECKOUT_JOURNEY_KEY:
+  MEASUREMENT_SEMANTIC = YES
+  OPAQUE = YES
+  CUSTOMER_FACING = NO
+  PII = NO
+  PRODUCT_ENTITLEMENT = NO
+  AUTHENTICATION_IDENTITY = NO
+  DISTINCT_FROM_CUSTOMER_OR_GUEST_IDENTITY = YES
+  STABLE_FOR_ONE_LOGICAL_DIRECT_ORDER_CHECKOUT = YES
+  SCHEMA_DECISION = NO
+  API_DECISION = NO
+  STORAGE_MECHANISM = NO
+  TELEMETRY_IMPLEMENTATION = NO
+```
+
+One logical direct-order checkout is one unpaid attempt to place one direct order. The key stays the same for every measurement event inside that attempt. It stays the same when the customer reaches Checkout Review again after:
+
+- editing the cart
+- changing fulfilment
+- applying, changing, or removing a Coupon
+- stale-total recovery
+- payment retry or payment recovery
+- signing in, or continuing as the other of guest and authenticated customer, while that same unpaid attempt continues
+
+A new key starts when the logical checkout changes. Successful completion closes the key, and the next direct-order attempt uses a new key. A later direct-order attempt for a different unpaid order uses a new key.
+
+This candidate does not choose a token format, column, table, cookie, timeout, or API field. A later Measurement Plan must keep this correlation. Experience Gate and Architecture Fit have not been performed. That plan must leave commerce identity as who is present, and leave the key opaque, non-customer-facing, and free of name, email, phone, coupon text, and customer or guest identifiers.
+
+Denominator grain is one count per `CHECKOUT_JOURNEY_KEY` that reaches Checkout Review with an authoritative commercial evaluation. Numerator grain is one successful direct-order completion for that key. The primary rate joins those two events on `CHECKOUT_JOURNEY_KEY` alone.
+
+The descriptive offer segment for that rate is the last authoritative commercial evaluation shown on Review for that key before the journey completes or ends unpaid. Earlier Review evaluations on the same key may feed secondary continuation and recovery metrics. They do not add a denominator journey, and they do not take a share of the completion. A completion that has no matching `CHECKOUT_JOURNEY_KEY` on a denominator Review is not assigned to any Review arrival through customer or guest identity.
 
 Current authority has no analytics policy that names a different primary metric for this slice, and it has no trustworthy pre-release series. This rate matches the business intent without inventing a revenue target.
 
@@ -664,7 +715,7 @@ Known causal limitations: there is no pre-release baseline; the first window can
 
 ### Analytics data-contract requirements
 
-Do not implement collection. Do not add attributes because they might be useful. Do not add raw coupon text. Do not add private eligibility facts.
+Do not implement collection. Do not choose a schema, API, or storage mechanism for `CHECKOUT_JOURNEY_KEY`. Do not add attributes because they might be useful. Do not add raw coupon text. Do not add private eligibility facts.
 
 Event ownership is not assigned in this candidate. It is finalized later in the Measurement Plan. A placeholder name here would pretend that assignment already exists.
 
@@ -672,12 +723,12 @@ The events below are sufficient, once implemented under that plan, to calculate 
 
 | Event meaning | Trigger | Owner | Required attributes | Forbidden | Identity | Dedup | Schema | Source of truth | Validation | Retention |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Offer result viewed | Cart or Review shows an authoritative result | Finalized later in the Measurement Plan. Not assigned here. | Surface; saving present; progress present; whether displayed parts match the evaluated saving; coarse descriptive shape: none, automatic saving, order saving, delivery saving, both, complimentary line, coupon selected, coupon valid but not selected, equal-payable selected, equal-payable not selected, threshold progress | Raw coupon text, private eligibility facts, item-level free text that is not already on the order, another customer's id | Existing customer or guest commerce identity. No new identity. | One view per presented evaluation result, not per repaint | Versioned when implemented | The evaluation result the screen rendered | The recorded shape matches the rendered rows, and the match flag is true only when the explained parts equal the evaluated saving | Follow existing commerce analytics retention. Do not extend it here. |
-| Coupon attempt finished | Apply, replace, or remove completes or fails | Same later plan. Not assigned here. | Surface; coarse outcome class: selected, equal-payable selected, valid not selected, equal-payable not selected, invalid, expired, inapplicable, globally exhausted, personally exhausted, identity required, removed, replaced, failed; whether the payable total changed relative to the valid alternative | Raw coupon text, cap sizes, private eligibility facts, other customer ids | Same | One outcome per completed attempt | Versioned when implemented | Server result of that attempt | Class matches the sentence family shown | Same |
-| Step progression | Cart continue, Review reached with an authoritative evaluation, Review continue to Payment, pay attempt, successful direct-order completion, confirmation view | Same later plan. Not assigned here. | Step name; for Review reached, that an authoritative evaluation was shown; for completion, that the direct order completed successfully | Payment instrument details, raw coupon text, private eligibility facts | Same existing commerce identity, used as the journey join. No new identity. | One denominator event per Review arrival with an authoritative evaluation. One numerator event when that journey completes the direct order successfully. Re-renders do not add events. | Versioned when implemented | The navigation or payment result the customer hit | A stale or failed pay attempt is not successful completion | Same |
-| Recovery shown | Revalidation changes the amount, or a complimentary line is removed | Same later plan. Not assigned here. | Recovery kind: changed total, or complimentary unavailable; whether they later continue | The discarded benefit's internal id in customer analytics, raw coupon text, private eligibility facts, unless a later plan explicitly needs an operator-safe id outside customer analytics | Same | One recovery per changed result | Versioned when implemented | Revalidation result | The event exists only when the customer-facing recovery exists | Same |
+| Offer result viewed | Cart or Review shows an authoritative result | Finalized later in the Measurement Plan. Not assigned here. | Surface; saving present; progress present; whether displayed parts match the evaluated saving; coarse descriptive shape: none, automatic saving, order saving, delivery saving, both, complimentary line, coupon selected, coupon valid but not selected, equal-payable selected, equal-payable not selected, threshold progress; `CHECKOUT_JOURNEY_KEY` when the event is inside one logical direct-order checkout | Raw coupon text, private eligibility facts, item-level free text that is not already on the order, another customer's id, a journey key that contains or is a customer id, guest id, name, email, phone, or coupon text | Existing customer or guest commerce identity records who is present. `CHECKOUT_JOURNEY_KEY` is the checkout correlation and is a different concept. No new authentication identity. | One view per presented evaluation result, not per repaint. Repeated views on one key stay one checkout. | Versioned when implemented | The evaluation result the screen rendered | The recorded shape matches the rendered rows, and the match flag is true only when the explained parts equal the evaluated saving. A Review view used in the primary segment carries the same `CHECKOUT_JOURNEY_KEY` as the journey. | Follow existing commerce analytics retention. Do not extend it here. |
+| Coupon attempt finished | Apply, replace, or remove completes or fails | Same later plan. Not assigned here. | Surface; coarse outcome class: selected, equal-payable selected, valid not selected, equal-payable not selected, invalid, expired, inapplicable, globally exhausted, personally exhausted, identity required, removed, replaced, failed; whether the payable total changed relative to the valid alternative; `CHECKOUT_JOURNEY_KEY` when the attempt is inside one logical direct-order checkout | Raw coupon text, cap sizes, private eligibility facts, other customer ids, a journey key that contains or is a customer id, guest id, name, email, phone, or coupon text | Same who-is-present identity, distinct from `CHECKOUT_JOURNEY_KEY` | One outcome per completed attempt. The attempt does not mint a new key for the same unpaid checkout. | Versioned when implemented | Server result of that attempt | Class matches the sentence family shown. The key matches the checkout attempt that showed the sentence. | Same |
+| Step progression | Cart continue, Review reached with an authoritative evaluation, Review continue to Payment, pay attempt, successful direct-order completion, confirmation view | Same later plan. Not assigned here. | Step name; for Review reached, that an authoritative evaluation was shown; for completion, that the direct order completed successfully; `CHECKOUT_JOURNEY_KEY` | Payment instrument details, raw coupon text, private eligibility facts, using customer or guest identity as the join between Review and completion | Who-is-present customer or guest commerce identity. The join between Review and completion is `CHECKOUT_JOURNEY_KEY`. No new authentication identity. | One denominator count per `CHECKOUT_JOURNEY_KEY` that reaches Review with an authoritative evaluation. Further Review arrivals on that key are not extra denominator counts. One numerator count when that same key completes the direct order successfully. Re-renders do not add events. | Versioned when implemented | The navigation or payment result the customer hit | A stale or failed pay attempt is not successful completion. A completion joins exactly one denominator key. | Same |
+| Recovery shown | Revalidation changes the amount, or a complimentary line is removed | Same later plan. Not assigned here. | Recovery kind: changed total, or complimentary unavailable; whether they later continue; `CHECKOUT_JOURNEY_KEY` | The discarded benefit's internal id in customer analytics, raw coupon text, private eligibility facts, unless a later plan explicitly needs an operator-safe id outside customer analytics; a journey key that contains or is a customer id, guest id, name, email, phone, or coupon text | Same who-is-present identity, distinct from `CHECKOUT_JOURNEY_KEY` | One recovery per changed result on that key. Recovery does not start a new denominator journey. | Versioned when implemented | Revalidation result | The event exists only when the customer-facing recovery exists, and it carries the key of the unpaid attempt being recovered. | Same |
 
-The denominator is Review-reached step progression joined to the offer result on that Review. The numerator is successful direct-order completion for the same journey. Secondary continuation, coupon-class, recovery, and savings-integrity metrics use the other events. Descriptive segments use the coarse shape. They are not an experiment assignment.
+The denominator is the Review-reached step for one `CHECKOUT_JOURNEY_KEY`. The numerator is successful direct-order completion carrying that same key. The descriptive segment is the last authoritative offer result shown on Review for that key. Customer or guest identity stays who is present and is not the join. Secondary continuation, coupon-class, recovery, and savings-integrity metrics use the other events on that key when they happen inside the journey. Those segments are not an experiment assignment.
 
 Operator application and redemption visibility required by the Product Definition is operational, on the commercial surface, and is not this customer analytics contract. It is not campaign lift.
 
@@ -766,7 +817,7 @@ Unresolved experience decisions: NONE
 Result: NOT_PERFORMED
 ```
 
-`Unresolved experience decisions: NONE` means this candidate does not leave a presentation choice that changes product behaviour. Equal-payable coupon presentation covers both Architecture Fit outcomes and does not choose the general winner. The complimentary equal-payable rule stays the approved Product rule. Hypotheses in section 4 stay hypotheses. They are not open product decisions and they are not a Gate verdict. Experience Gate remains `NOT_PERFORMED`.
+`Unresolved experience decisions: NONE` means this candidate does not leave a presentation choice that changes product behaviour. Equal-payable coupon presentation covers both Architecture Fit outcomes and does not choose the general winner. The complimentary equal-payable rule stays the approved Product rule. Section 17 defines `CHECKOUT_JOURNEY_KEY` as the measurement join for one logical checkout. Hypotheses in section 4 stay hypotheses. They are not open product decisions and they are not a Gate verdict. Experience Gate remains `NOT_PERFORMED`.
 
 ```text
 EXPERIENCE_GATE_EXECUTION = NOT_PERFORMED
@@ -789,6 +840,7 @@ Experience requirements that Architecture Fit must later prove. These are not sc
 - Customer-visible failures can be the coarse classes in section 12.
 - When a valid coupon combination and the valid non-coupon alternative have the same payable amount, Fit can return either selected outcome. The experience renders the matching sentence in section 12. Fit is not asked to invent customer copy, and this candidate does not choose that winner. The complimentary equal-payable selection remains the Product rule, not a Fit tie-break.
 - Pre-payment change can return the customer to Review with an explanation of the new result.
+- The section 17 primary rate can treat one logical direct-order checkout as one journey across Review revisits. Customer or guest identity remains who is present. This candidate does not choose a schema, API, or stored identifier for that correlation.
 - Operator activation can return truthful non-success when a complimentary activation is not authoritative.
 
 ```text
@@ -1046,7 +1098,7 @@ This is not the Experience Gate verdict.
 | Accessibility | Defined |
 | Service / operational alignment | Defined |
 | Evidence / assumptions | Classified |
-| Measurement intent | Defined. One primary metric, secondary metrics, guardrails, baseline, 28-day window, and interpretation rule. |
+| Measurement intent | Defined. One primary metric, secondary metrics, guardrails, baseline, 28-day window, interpretation rule, and `CHECKOUT_JOURNEY_KEY` so one logical checkout is one denominator and one completion. |
 | Equal-payable coupon experience | Defined for both Fit outcomes. Complimentary equal-payable rule preserved. |
 | Analytics contract requirements | Defined |
 | Experiment / validation | Defined, with insufficient-evidence limits |
