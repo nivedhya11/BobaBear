@@ -3,7 +3,7 @@
   "status": "CANDIDATE",
   "authority": "EXPERIENCE_DEFINITION_CANDIDATE",
   "capability": "IMP-036J",
-  "experienceDefinitionVersion": "XD-IMP-036J-DRAFT-5",
+  "experienceDefinitionVersion": "XD-IMP-036J-DRAFT-6",
   "productDefinition": "PD-IMP-036J-DRAFT-6",
   "productDefinitionGate": "PASS",
   "experienceCriticality": "X3",
@@ -19,7 +19,7 @@
 # IMP-036J — Experience Definition candidate
 
 ```text
-EXPERIENCE_DEFINITION_VERSION = XD-IMP-036J-DRAFT-5
+EXPERIENCE_DEFINITION_VERSION = XD-IMP-036J-DRAFT-6
 AUTHORITY = EXPERIENCE_DEFINITION_CANDIDATE
 CAPABILITY = IMP-036J
 PRODUCT_DEFINITION = PD-IMP-036J-DRAFT-6
@@ -91,10 +91,22 @@ DRAFT4_INDEPENDENT_EXPERIENCE_GATE = NOT_PERFORMED
 CURRENT_EXPERIENCE_GATE = NOT_PERFORMED
 ```
 
-`XD-IMP-036J-DRAFT-5` keeps that cutoff model and locks the measurement calendar, the production
-release anchor, the half-open initial interval, and `AUTHORITATIVE_JOURNEY_SEQUENCE` so the same
-source events reproduce the same cohort, numerator, and segment. It does not persist Experience
-Gate PASS.
+`XD-IMP-036J-DRAFT-5` kept that cutoff model and locked the measurement calendar, the production
+release anchor, the half-open initial interval, and `AUTHORITATIVE_JOURNEY_SEQUENCE`. Fresh
+exact-head review `5340925519` then found material P2 comment `4123995560`: cohort entry was
+selectable both once for the whole journey and again inside each window. DRAFT-5 did not reach
+independent ChatGPT Experience Gate re-review. No STOP verdict and no PASS verdict were executed
+on DRAFT-5. No Gate PASS was persisted for it.
+
+```text
+XD-IMP-036J-DRAFT-5 = SUPERSEDED_AFTER_EXACT_HEAD_REVIEW_BLOCKER
+DRAFT5_INDEPENDENT_EXPERIENCE_GATE = NOT_PERFORMED
+CURRENT_EXPERIENCE_GATE = NOT_PERFORMED
+```
+
+`XD-IMP-036J-DRAFT-6` keeps every prior fix and defines cohort entry once for the lifetime of one
+`CHECKOUT_JOURNEY_KEY`. Window assignment tests only that one entry's authoritative occurrence
+time. It does not persist Experience Gate PASS.
 
 Supporting material under [`../../experience/`](../../experience/README.md) is source only
 (`Authority: NONE`). It is not used here as higher authority than EXP-1 or LANG-1.
@@ -106,7 +118,7 @@ Supporting material under [`../../experience/`](../../experience/README.md) is s
 | Field | Definition |
 |---|---|
 | Capability | IMP-036J — Promotions, Coupons & Offers |
-| Experience Definition version / status | `XD-IMP-036J-DRAFT-5`; **EXPERIENCE_DEFINITION_CANDIDATE**; not approved; Experience Gate `NOT_PERFORMED`. `XD-IMP-036J-DRAFT-2` is `SUPERSEDED_AFTER_GATE_REOPEN`; its Experience Gate PASS was not persisted. `XD-IMP-036J-DRAFT-3` is `SUPERSEDED_AFTER_GATE_STOP_EG_036J_004`; its Experience Gate PASS was not persisted. `XD-IMP-036J-DRAFT-4` is `SUPERSEDED_AFTER_EXACT_HEAD_REVIEW_BLOCKERS`; its independent Experience Gate was `NOT_PERFORMED`. |
+| Experience Definition version / status | `XD-IMP-036J-DRAFT-6`; **EXPERIENCE_DEFINITION_CANDIDATE**; not approved; Experience Gate `NOT_PERFORMED`. `XD-IMP-036J-DRAFT-2` is `SUPERSEDED_AFTER_GATE_REOPEN`; its Experience Gate PASS was not persisted. `XD-IMP-036J-DRAFT-3` is `SUPERSEDED_AFTER_GATE_STOP_EG_036J_004`; its Experience Gate PASS was not persisted. `XD-IMP-036J-DRAFT-4` is `SUPERSEDED_AFTER_EXACT_HEAD_REVIEW_BLOCKERS`; its independent Experience Gate was `NOT_PERFORMED`. `XD-IMP-036J-DRAFT-5` is `SUPERSEDED_AFTER_EXACT_HEAD_REVIEW_BLOCKER`; its independent Experience Gate was `NOT_PERFORMED`. |
 | Product Definition reference | `PD-IMP-036J-DRAFT-6`; status `APPROVED`; Product Definition Gate `PASS`; FD-036J-01, FD-036J-02, FD-036J-03 `APPROVED` |
 | Experience Criticality | `X3`. Customer money, conversion, trust, and identity meet on Cart, Checkout Review, Payment, and purchased history. |
 | Change Risk | `CR2`. Recorded in ROADMAP/STATE. Not an AGENTS `R` level. Money, caps, identity, and purchased truth are in scope; this candidate does not recalibrate that risk. |
@@ -626,9 +638,9 @@ PRIMARY_METRIC_COUNT = 1
 
 The primary metric is the Checkout Review → successful direct-order completion rate.
 
-Denominator: eligible direct-order checkout journeys that reach Checkout Review with an authoritative commercial evaluation. Eligible here means a customer direct-order journey that can check out. Menu browsing, a cart that never reaches Review, workforce actions, and non-direct channels are outside the denominator. Count one journey once per `CHECKOUT_JOURNEY_KEY`, once that key reaches Review with an authoritative evaluation. Another Review arrival on the same key is the same denominator journey. A repaint is not an event. Cohort entry is the first such Review, defined under cohort entry below.
+Denominator: eligible direct-order checkout journeys that reach Checkout Review with an authoritative commercial evaluation. Eligible here means a customer direct-order journey that can check out. Menu browsing, a cart that never reaches Review, workforce actions, and non-direct channels are outside the denominator. Count one journey once per `CHECKOUT_JOURNEY_KEY`. Another Review arrival on the same key is the same denominator journey. A repaint is not an event. Cohort entry is one global Review for that key: the qualifying Review with the lowest `AUTHORITATIVE_JOURNEY_SEQUENCE` across the whole journey, defined under cohort entry below. A named window includes that key only when that one entry's occurrence time falls inside the window.
 
-Numerator: those same denominator journeys whose successful direct-order completion has an authoritative occurrence time strictly before the published snapshot's `REPORT_AS_OF`. Successful completion means the direct order is placed and payment for that order succeeds under accepted payment truth. A stopped stale pay attempt and a failed payment are not numerator events. A journey with no successful completion strictly before that cutoff stays in the denominator and contributes `numerator = 0` for that snapshot, recorded as `NOT_COMPLETED_AS_OF_REPORT_CUTOFF`. One completion counts once, on the same `CHECKOUT_JOURNEY_KEY` as its denominator journey. Customer or guest identity does not attach that completion to several Review arrivals.
+Numerator: those same denominator journeys whose successful direct-order completion has an authoritative occurrence time strictly before the published snapshot's `REPORT_AS_OF`. Successful completion means the direct order is placed and payment for that order succeeds under accepted payment truth. A stopped stale pay attempt and a failed payment are not numerator events. A journey with no successful completion strictly before that cutoff stays in the denominator and contributes `numerator = 0` for that snapshot, recorded as `NOT_COMPLETED_AS_OF_REPORT_CUTOFF`. One completion counts once, on the same `CHECKOUT_JOURNEY_KEY` as its denominator journey. A later Review on that key does not create a numerator opportunity in a different cohort. Customer or guest identity does not attach that completion to several Review arrivals.
 
 ### Checkout journey correlation
 
@@ -690,7 +702,7 @@ The sequence represents authoritative journey progression. If event A authoritat
 
 The ordering is not inferred from analytics ingestion order, batch processing order, array order returned by a query, database physical row order, or customer identity.
 
-Occurrence timestamp remains the event-time semantic used for cohort and report-cutoff membership. Sequence provides the total order inside the journey, including when timestamps are equal.
+The occurrence timestamp of the one global cohort-entry Review is the time tested against cohort windows. Each event's occurrence timestamp remains the semantic used for report-cutoff membership. Sequence provides the total order inside the journey, including when timestamps are equal. Sequence also identifies that one global cohort-entry Review: the qualifying Review with the lowest sequence for the key, across every qualifying Review, not inside one window.
 
 This definition does not select whether the sequence is an integer, a UUID, a revision column, a version number, a database sequence, or an event-stream offset. Those are later Architecture Fit and Measurement Plan decisions.
 
@@ -729,24 +741,66 @@ The initial interval is half-open:
 INITIAL_COHORT_INTERVAL = [INITIAL_COHORT_START, INITIAL_COHORT_END)
 ```
 
-The start is inclusive. The end is exclusive. An event whose authoritative occurrence time is exactly `INITIAL_COHORT_START` is eligible. An event whose authoritative occurrence time is exactly `INITIAL_COHORT_END` is not eligible and is not in the initial cohort.
+The start is inclusive. The end is exclusive. Window membership uses `GLOBAL_COHORT_ENTRY_TIME`, defined below. A journey whose `GLOBAL_COHORT_ENTRY_TIME` is exactly `INITIAL_COHORT_START` is in the initial cohort. A journey whose `GLOBAL_COHORT_ENTRY_TIME` is exactly `INITIAL_COHORT_END` is not in the initial cohort.
+
+### Global cohort entry
+
+Cohort entry is selected once for the lifetime of one `CHECKOUT_JOURNEY_KEY`.
 
 ```text
-CHECKOUT_JOURNEY_COHORT_ENTRY = FIRST_QUALIFYING_CHECKOUT_REVIEW_OBSERVATION
-FIRST_QUALIFYING_REVIEW = LOWEST_AUTHORITATIVE_JOURNEY_SEQUENCE_AMONG_QUALIFYING_REVIEWS
+GLOBAL_COHORT_ENTRY_REVIEW(JOURNEY_KEY) = QUALIFYING_CHECKOUT_REVIEW_WITH_LOWEST_AUTHORITATIVE_JOURNEY_SEQUENCE_AMONG_ALL_QUALIFYING_REVIEWS_FOR_THAT_KEY
+CHECKOUT_JOURNEY_GLOBAL_COHORT_ENTRY = LOWEST_AUTHORITATIVE_JOURNEY_SEQUENCE_AMONG_ALL_QUALIFYING_REVIEWS_FOR_KEY
+COHORT_ENTRY_SELECTED_PER_WINDOW = NO
+COHORT_ENTRY_CAN_MOVE_AFTER_REVISIT = NO
 ```
 
-Among qualifying Review observations for one `CHECKOUT_JOURNEY_KEY`, the cohort-entry Review is the one with the lowest `AUTHORITATIVE_JOURNEY_SEQUENCE`. Its authoritative occurrence time must fall inside the cohort interval for that journey to enter the cohort. A later Review cannot move cohort entry.
+The search for `GLOBAL_COHORT_ENTRY_REVIEW` considers every qualifying Checkout Review observation for that `CHECKOUT_JOURNEY_KEY`. It is not restricted by the initial cohort window, a later cohort window, `REPORT_AS_OF`, or the analytics query window. Window assignment happens only after that one global event is selected.
+
+`GLOBAL_COHORT_ENTRY_TIME` is the authoritative occurrence time of that one Review. No other Review's occurrence time is tested for cohort membership.
+
+A checkout journey belongs to a named cohort window only when:
 
 ```text
-PRIMARY_DENOMINATOR = UNIQUE_CHECKOUT_JOURNEY_KEYS_WHOSE_COHORT_ENTRY_REVIEW_OCCURRENCE_TIME_FALLS_INSIDE_THE_HALF_OPEN_WINDOW
+WINDOW_START <= GLOBAL_COHORT_ENTRY_TIME < WINDOW_END
 ```
 
-For the initial baseline, the primary denominator is the unique `CHECKOUT_JOURNEY_KEY` values whose cohort-entry Review has an authoritative occurrence time in `[PRODUCTION_RELEASE_ANCHOR, PRODUCTION_RELEASE_ANCHOR + 28 CALENDAR DAYS)`.
+Do not search inside that window for another qualifying Review. Do not replace the global entry with a later Review whose occurrence time falls in the window.
+
+One `CHECKOUT_JOURNEY_KEY` belongs to exactly one cohort window, or to no cohort window in the measurement series being reported. It does not belong to multiple cohort windows.
+
+```text
+COHORT_MEMBERSHIP_PER_CHECKOUT_JOURNEY_KEY = ZERO_OR_ONE
+LATER_REVIEW_CREATES_NEW_COHORT_MEMBERSHIP = NO
+```
+
+Example. A journey first reaches a qualifying Review in window 1, returns to Cart, and reaches Review again in window 2. The journey stays in window 1. The Review in window 2 may contribute a later journey-state or recovery observation when the snapshot rules already allow that. It does not create a denominator in window 2, does not change cohort entry, and does not move the journey.
+
+### Pre-window journey
+
+If `GLOBAL_COHORT_ENTRY_TIME` is before `INITIAL_COHORT_START`, and the same `CHECKOUT_JOURNEY_KEY` revisits Review inside the initial 28-day window, the journey is not in the initial cohort. The later Review does not become a replacement cohort entry. There is no catch-up rule.
+
+The same rule applies to any later measured window. If the global cohort-entry Review occurred in an earlier measured window, a revisit in a later measured window does not enter the later cohort.
+
+### Initial cohort
+
+```text
+PRIMARY_DENOMINATOR = UNIQUE_CHECKOUT_JOURNEY_KEYS_WHOSE_GLOBAL_COHORT_ENTRY_TIME_FALLS_INSIDE_THE_HALF_OPEN_WINDOW
+```
+
+For the initial baseline, the primary denominator is the unique `CHECKOUT_JOURNEY_KEY` values whose `GLOBAL_COHORT_ENTRY_TIME` falls in `[PRODUCTION_RELEASE_ANCHOR, PRODUCTION_RELEASE_ANCHOR + 28 CALENDAR DAYS)`. It is not every qualifying Review whose occurrence time falls in that interval.
 
 A journey enters that cohort once. A later Review on the same key does not create another denominator, does not move cohort entry, and does not place that journey into another initial cohort.
 
-Subsequent comparable 28-day windows are new cohorts. Each uses the same half-open convention in the same measurement timezone: `[WINDOW_START, WINDOW_START + 28 CALENDAR DAYS)`. Adjacent windows share a boundary instant and do not overlap. An event exactly at one window's exclusive end belongs to the window that starts at that instant, and to no earlier window.
+### Subsequent cohorts
+
+Subsequent comparable 28-day windows remain new cohorts. Each uses the same half-open convention in the same measurement timezone: `[WINDOW_START, WINDOW_START + 28 CALENDAR DAYS)`. Adjacent windows share a boundary instant and do not overlap. A `GLOBAL_COHORT_ENTRY_TIME` exactly at one window's exclusive end belongs to the window that starts at that instant, and to no earlier window.
+
+Each later window reuses the `GLOBAL_COHORT_ENTRY_TIME` already defined for that journey. It does not select a new entry Review. The journey enters that later window only when that one time falls inside it. Adjacent half-open windows therefore stay disjoint.
+
+```text
+SUBSEQUENT_WINDOW_MEMBERSHIP = TEST_GLOBAL_COHORT_ENTRY_TIME_AGAINST_WINDOW
+RESELECT_ENTRY_REVIEW_FOR_SUBSEQUENT_WINDOW = NO
+```
 
 ### Report as of
 
@@ -807,11 +861,13 @@ For a denominator journey that has not successfully completed strictly before `R
 
 That evaluation is the unfinished-journey segment for that snapshot.
 
-If only the cohort-entry Review exists, that Review is the segment.
+If only the global cohort-entry Review exists, that Review is the segment.
 
 A Review evaluation may influence the purchased or completion segment only when it precedes completion in authoritative journey order.
 
 Earlier Review evaluations on the same key may feed secondary continuation and recovery metrics. They do not add a denominator journey, and they do not take a share of the completion. A completion that has no matching `CHECKOUT_JOURNEY_KEY` on a denominator Review is not assigned to any Review arrival through customer or guest identity.
+
+Cohort assignment and segment attribution are separate. A later Review evaluation may update the descriptive segment of a later maturation snapshot for the same original cohort, when the snapshot rules above permit that. It does not move cohort membership, does not establish a new cohort entry, and does not create another denominator.
 
 Events after `REPORT_AS_OF` do not mutate the segment of an already-issued snapshot.
 
@@ -833,19 +889,29 @@ A Review evaluation and a successful completion may also share an occurrence tim
 FOLLOW_UP_WINDOW = SUBSEQUENT_COMPARABLE_28_DAY_WINDOWS_WHERE_USEFUL
 ```
 
-A cohort window chooses which journey keys enter the denominator. `REPORT_AS_OF` chooses which events may contribute to that published snapshot, and that choice is authoritative occurrence time strictly before the cutoff.
+A named window includes a journey only when that journey's `GLOBAL_COHORT_ENTRY_TIME` falls inside the window. The window does not select another Review. `REPORT_AS_OF` chooses which events may contribute to that published snapshot, and that choice is authoritative occurrence time strictly before the cutoff.
 
-Subsequent comparable 28-day windows are new cohorts and use the same half-open convention. A journey is assigned by its cohort-entry Review — the qualifying Review with the lowest `AUTHORITATIVE_JOURNEY_SEQUENCE` whose occurrence time falls in a window — and remains in that cohort. The same journey is not entered again in a later window.
+Subsequent comparable 28-day windows are new cohorts and use the same half-open convention. A journey has exactly one global cohort-entry Review: the qualifying Review with the lowest `AUTHORITATIVE_JOURNEY_SEQUENCE` for that `CHECKOUT_JOURNEY_KEY` across the journey. Its authoritative occurrence time is then tested against the half-open cohort windows. A later Review never replaces cohort entry and never moves the journey into a later cohort.
 
-If the Measurement Plan later reports maturation of an existing cohort, that report is a new snapshot with its own later `REPORT_AS_OF` and the same reproducibility rules below. It is not a new cohort. It leaves the earlier snapshot unchanged.
+```text
+SUBSEQUENT_WINDOW_MEMBERSHIP = TEST_GLOBAL_COHORT_ENTRY_TIME_AGAINST_WINDOW
+RESELECT_ENTRY_REVIEW_FOR_SUBSEQUENT_WINDOW = NO
+```
+
+A maturation report for an existing cohort is a later snapshot, not a new cohort. It retains the original cohort membership and the original `GLOBAL_COHORT_ENTRY_REVIEW`. It may advance `REPORT_AS_OF`. It may observe a later successful completion, and it may observe a later Review or recovery state, only under the cutoff rules already defined. It does not recalculate which cohort the journey belongs to. It leaves the earlier snapshot unchanged.
 
 One published number keeps one cohort definition and one `REPORT_AS_OF`. It does not combine rolling page views, a journey cohort, and completions from at or after that cutoff.
 
 ### Snapshot reproducibility
 
 ```text
+GLOBAL_COHORT_ENTRY_SELECTION = ONCE_PER_CHECKOUT_JOURNEY_KEY
+GLOBAL_COHORT_ENTRY_SOURCE = LOWEST_AUTHORITATIVE_JOURNEY_SEQUENCE_AMONG_ALL_QUALIFYING_REVIEWS
+COHORT_WINDOW_ASSIGNMENT = GLOBAL_COHORT_ENTRY_TIME_ONLY
+COHORT_ASSIGNMENT_RECALCULATED_PER_WINDOW = NO
+COHORT_MEMBERSHIP = ZERO_OR_ONE
+REVIEW_REVISIT_MOVES_COHORT = NO
 PRIMARY_METRIC_GRAIN = ONE_PER_CHECKOUT_JOURNEY_KEY
-COHORT_ASSIGNMENT = FIRST_QUALIFYING_REVIEW_BY_AUTHORITATIVE_JOURNEY_SEQUENCE
 MEASUREMENT_CALENDAR_TIMEZONE = LOCKED
 COHORT_INTERVAL_BOUNDARY = START_INCLUSIVE_END_EXCLUSIVE
 REPORT_AS_OF_REQUIRED = YES
@@ -858,7 +924,7 @@ UNFINISHED_AT_CUTOFF_NUMERATOR = NO
 PRODUCT_ABANDONMENT_TIMEOUT_CREATED = NO
 ```
 
-The same source events, the same cohort interval, the same `REPORT_AS_OF`, the same `CHECKOUT_JOURNEY_KEY`, the same authoritative occurrence times, and the same `AUTHORITATIVE_JOURNEY_SEQUENCE` values produce identical cohort membership, identical numerator membership, and identical segment attribution on repeated calculation.
+Repeated calculation against the same authoritative source events produces the same global cohort entry, the same cohort membership, the same denominator membership, the same numerator membership for a fixed `REPORT_AS_OF`, and the same descriptive segment for a fixed `REPORT_AS_OF`. That calculation uses the same cohort windows, the same `CHECKOUT_JOURNEY_KEY`, the same authoritative occurrence times, and the same `AUTHORITATIVE_JOURNEY_SEQUENCE` values.
 
 Current authority has no analytics policy that names a different primary metric for this slice, and it has no trustworthy pre-release series. This rate matches the business intent without inventing a revenue target.
 
@@ -936,22 +1002,22 @@ Known causal limitations: there is no pre-release baseline; the first window can
 
 ### Analytics data-contract requirements
 
-Do not implement collection. Do not choose a schema, API, or storage mechanism for `CHECKOUT_JOURNEY_KEY` or `AUTHORITATIVE_JOURNEY_SEQUENCE`. Do not add attributes because they might be useful. Do not add raw coupon text. Do not add private eligibility facts. Do not use customer identity as the journey key. Do not use analytics arrival order as journey order.
+Do not implement collection. Do not choose a schema, API, or storage mechanism for `CHECKOUT_JOURNEY_KEY`, authoritative occurrence time, or `AUTHORITATIVE_JOURNEY_SEQUENCE`. Do not add attributes because they might be useful. Do not add raw coupon text. Do not add private eligibility facts. Do not use customer identity as the journey key. Do not use analytics arrival order as journey order. Do not select a database window function, a storage table, an analytics vendor, or an event-stream technology.
 
 Event ownership is not assigned in this candidate. It is finalized later in the Measurement Plan. A placeholder name here would pretend that assignment already exists.
 
 The events below are sufficient, once implemented under that plan, to calculate the primary metric and the telemetry secondary metrics. Support-contact counts stay an operational guardrail from existing support handling. This candidate does not define a support-ticket schema.
 
-A qualifying Review observation, an authoritative Review commercial result, a successful direct-order completion, and a recovery or change result that can alter the Review state each carry `CHECKOUT_JOURNEY_KEY`, an authoritative occurrence time, and `AUTHORITATIVE_JOURNEY_SEQUENCE`. The occurrence time is compared with the cohort interval and with `REPORT_AS_OF` by a strict less-than cutoff. The sequence is the total order inside that key. The later Measurement Plan owns encoding and implementation. This candidate does not decide a database timestamp column, an event bus, an API field, a token format, a cookie or local store, a persistence table, identifier generation, a sequence encoding, or an analytics vendor.
+A qualifying Review observation, an authoritative Review commercial result, a successful direct-order completion, and a recovery or change result that can alter the Review state each carry `CHECKOUT_JOURNEY_KEY`, an authoritative occurrence time, and `AUTHORITATIVE_JOURNEY_SEQUENCE`. Those three fields are sufficient, once captured, to identify every qualifying Review for one key, select the globally lowest `AUTHORITATIVE_JOURNEY_SEQUENCE` once, take that event's occurrence time as `GLOBAL_COHORT_ENTRY_TIME`, assign the journey to zero or one half-open cohort window, and keep a later Review revisit from adding another denominator. Report-cutoff membership still compares each included event's occurrence time with `REPORT_AS_OF` by a strict less-than cutoff. Cohort membership does not compare any later Review's occurrence time with the window. The sequence is the total order inside that key. The later Measurement Plan owns encoding and implementation. This candidate does not decide a database timestamp column, an event bus, an API field, a token format, a cookie or local store, a persistence table, identifier generation, a sequence encoding, or an analytics vendor.
 
 | Event meaning | Trigger | Owner | Required attributes | Forbidden | Identity | Dedup | Schema | Source of truth | Validation | Retention |
 |---|---|---|---|---|---|---|---|---|---|---|
 | Offer result viewed | Cart or Review shows an authoritative result | Finalized later in the Measurement Plan. Not assigned here. | Surface; saving present; progress present; whether displayed parts match the evaluated saving; coarse descriptive shape: none, automatic saving, order saving, delivery saving, both, complimentary line, coupon selected, coupon valid but not selected, equal-payable selected, equal-payable not selected, threshold progress; `CHECKOUT_JOURNEY_KEY` when the event is inside one logical direct-order checkout; authoritative occurrence time comparable with `REPORT_AS_OF`; `AUTHORITATIVE_JOURNEY_SEQUENCE` when this view is an authoritative Review commercial evaluation or another material journey event used for ordering | Raw coupon text, private eligibility facts, item-level free text that is not already on the order, another customer's id, a journey key that contains or is a customer id, guest id, name, email, phone, or coupon text, analytics arrival order used as journey order, an implementation-specific sequence or storage decision | Existing customer or guest commerce identity records who is present. `CHECKOUT_JOURNEY_KEY` is the checkout correlation and is a different concept. No new authentication identity. | One view per presented evaluation result, not per repaint. Repeated views on one key stay one checkout. | Versioned when implemented | The evaluation result the screen rendered | The recorded shape matches the rendered rows, and the match flag is true only when the explained parts equal the evaluated saving. A Review view used in the primary segment carries the same `CHECKOUT_JOURNEY_KEY` as the journey. Its occurrence time is strictly before the snapshot cutoff, and its place in the journey is its `AUTHORITATIVE_JOURNEY_SEQUENCE`. | Follow existing commerce analytics retention. Do not extend it here. |
 | Coupon attempt finished | Apply, replace, or remove completes or fails | Same later plan. Not assigned here. | Surface; coarse outcome class: selected, equal-payable selected, valid not selected, equal-payable not selected, invalid, expired, inapplicable, globally exhausted, personally exhausted, identity required, removed, replaced, failed; whether the payable total changed relative to the valid alternative; `CHECKOUT_JOURNEY_KEY` when the attempt is inside one logical direct-order checkout; authoritative occurrence time comparable with `REPORT_AS_OF`; `AUTHORITATIVE_JOURNEY_SEQUENCE` when the attempt can alter the Review state | Raw coupon text, cap sizes, private eligibility facts, other customer ids, a journey key that contains or is a customer id, guest id, name, email, phone, or coupon text, analytics arrival order used as journey order, an implementation-specific sequence or storage decision | Same who-is-present identity, distinct from `CHECKOUT_JOURNEY_KEY` | One outcome per completed attempt. The attempt does not mint a new key for the same unpaid checkout. | Versioned when implemented | Server result of that attempt | Class matches the sentence family shown. The key matches the checkout attempt that showed the sentence. | Same |
-| Step progression | Cart continue, Review reached with an authoritative evaluation, Review continue to Payment, pay attempt, successful direct-order completion, confirmation view | Same later plan. Not assigned here. | Step name; for Review reached, that an authoritative evaluation was shown; for completion, that the direct order completed successfully; `CHECKOUT_JOURNEY_KEY`; authoritative occurrence time comparable with `REPORT_AS_OF`; `AUTHORITATIVE_JOURNEY_SEQUENCE` for the qualifying Review and for successful completion | Payment instrument details, raw coupon text, private eligibility facts, using customer or guest identity as the join between Review and completion, analytics arrival order used as journey order, an implementation-specific sequence or storage decision | Who-is-present customer or guest commerce identity. The join between Review and completion is `CHECKOUT_JOURNEY_KEY`. No new authentication identity. | One denominator count per `CHECKOUT_JOURNEY_KEY` that reaches Review with an authoritative evaluation. Further Review arrivals on that key are not extra denominator counts. One numerator count when that same key completes the direct order successfully. Re-renders do not add events. | Versioned when implemented | The navigation or payment result the customer hit | A stale or failed pay attempt is not successful completion. A completion joins exactly one denominator key. A snapshot includes that completion only when its occurrence time is strictly before that snapshot's `REPORT_AS_OF`. When that completion shares a timestamp with a Review evaluation, sequence decides which is earlier. | Same |
+| Step progression | Cart continue, Review reached with an authoritative evaluation, Review continue to Payment, pay attempt, successful direct-order completion, confirmation view | Same later plan. Not assigned here. | Step name; for Review reached, that an authoritative evaluation was shown; for completion, that the direct order completed successfully; `CHECKOUT_JOURNEY_KEY`; authoritative occurrence time comparable with `REPORT_AS_OF`; `AUTHORITATIVE_JOURNEY_SEQUENCE` for the qualifying Review and for successful completion | Payment instrument details, raw coupon text, private eligibility facts, using customer or guest identity as the join between Review and completion, analytics arrival order used as journey order, an implementation-specific sequence or storage decision | Who-is-present customer or guest commerce identity. The join between Review and completion is `CHECKOUT_JOURNEY_KEY`. No new authentication identity. | One denominator count per `CHECKOUT_JOURNEY_KEY` whose one global cohort-entry Review has an occurrence time inside the named half-open window. Further Review arrivals on that key are not extra denominator counts and do not assign a later window. One numerator count when that same key completes the direct order successfully. Re-renders do not add events. | Versioned when implemented | The navigation or payment result the customer hit | A stale or failed pay attempt is not successful completion. A completion joins exactly one denominator key. A snapshot includes that completion only when its occurrence time is strictly before that snapshot's `REPORT_AS_OF`. When that completion shares a timestamp with a Review evaluation, sequence decides which is earlier. | Same |
 | Recovery shown | Revalidation changes the amount, or a complimentary line is removed | Same later plan. Not assigned here. | Recovery kind: changed total, or complimentary unavailable; whether they later continue; `CHECKOUT_JOURNEY_KEY`; authoritative occurrence time comparable with `REPORT_AS_OF`; `AUTHORITATIVE_JOURNEY_SEQUENCE` when the recovery can alter the Review state | The discarded benefit's internal id in customer analytics, raw coupon text, private eligibility facts, unless a later plan explicitly needs an operator-safe id outside customer analytics; a journey key that contains or is a customer id, guest id, name, email, phone, or coupon text, analytics arrival order used as journey order, an implementation-specific sequence or storage decision | Same who-is-present identity, distinct from `CHECKOUT_JOURNEY_KEY` | One recovery per changed result on that key. Recovery does not start a new denominator journey. | Versioned when implemented | Revalidation result | The event exists only when the customer-facing recovery exists, and it carries the key of the unpaid attempt being recovered. Continuation counted on a published snapshot is continuation whose occurrence time is strictly before that snapshot's `REPORT_AS_OF`. | Same |
 
-The denominator is the qualifying Review with the lowest `AUTHORITATIVE_JOURNEY_SEQUENCE` for one `CHECKOUT_JOURNEY_KEY` inside the half-open cohort window. The numerator for a published snapshot is successful direct-order completion of that same key with an occurrence time strictly before that snapshot's `REPORT_AS_OF`. The descriptive segment follows the completed and unfinished sequence rules above, and events at or after that cutoff leave the issued snapshot unchanged. Customer or guest identity stays who is present and is not the join. Analytics arrival order is not the journey order. Secondary continuation, coupon-class, recovery, and savings-integrity metrics use the other events on that key when they happen inside the journey and their occurrence time is strictly before the same cutoff. Those segments are not an experiment assignment.
+The denominator for a named cohort is the unique `CHECKOUT_JOURNEY_KEY` whose one global cohort-entry Review — the qualifying Review with the lowest `AUTHORITATIVE_JOURNEY_SEQUENCE` across that whole journey — has a `GLOBAL_COHORT_ENTRY_TIME` inside that half-open window. The numerator for a published snapshot of that cohort is successful direct-order completion of those same keys with an occurrence time strictly before that snapshot's `REPORT_AS_OF`. A Review revisit does not open a new numerator in another cohort. The descriptive segment follows the completed and unfinished sequence rules above, and events at or after that cutoff leave the issued snapshot unchanged. Customer or guest identity stays who is present and is not the join. Analytics arrival order is not the journey order. Secondary continuation, coupon-class, recovery, and savings-integrity metrics use the other events on that key when they happen inside the journey and their occurrence time is strictly before the same cutoff. Those segments are not an experiment assignment.
 
 Operator application and redemption visibility required by the Product Definition is operational, on the commercial surface, and is not this customer analytics contract. It is not campaign lift.
 
@@ -1040,7 +1106,7 @@ Unresolved experience decisions: NONE
 Result: NOT_PERFORMED
 ```
 
-`Unresolved experience decisions: NONE` means this candidate does not leave a presentation choice that changes product behaviour. Equal-payable coupon presentation covers both Architecture Fit outcomes and does not choose the general winner. The complimentary equal-payable rule stays the approved Product rule. Section 17 defines `CHECKOUT_JOURNEY_KEY` as the measurement join for one logical checkout, and it defines cohort entry, the locked measurement calendar, the half-open cohort interval, `REPORT_AS_OF`, unfinished-at-cutoff membership, `AUTHORITATIVE_JOURNEY_SEQUENCE`, and published-snapshot immutability as measurement semantics. Those rules do not add a Product abandonment timeout and do not choose a schema, API, storage mechanism, or analytics encoding. Hypotheses in section 4 stay hypotheses. They are not open product decisions and they are not a Gate verdict. Experience Gate remains `NOT_PERFORMED`. Readiness for independent review is not that Gate verdict.
+`Unresolved experience decisions: NONE` means this candidate does not leave a presentation choice that changes product behaviour. Equal-payable coupon presentation covers both Architecture Fit outcomes and does not choose the general winner. The complimentary equal-payable rule stays the approved Product rule. Section 17 defines `CHECKOUT_JOURNEY_KEY` as the measurement join for one logical checkout, and it defines one global cohort entry per key, window assignment from that entry time only, the locked measurement calendar, the half-open cohort interval, `REPORT_AS_OF`, unfinished-at-cutoff membership, `AUTHORITATIVE_JOURNEY_SEQUENCE`, and published-snapshot immutability as measurement semantics. Those rules do not add a Product abandonment timeout and do not choose a schema, API, storage mechanism, or analytics encoding. Hypotheses in section 4 stay hypotheses. They are not open product decisions and they are not a Gate verdict. Experience Gate remains `NOT_PERFORMED`. Readiness for independent review is not that Gate verdict.
 
 ```text
 EXPERIENCE_GATE_EXECUTION = NOT_PERFORMED
@@ -1066,11 +1132,13 @@ Experience requirements that Architecture Fit must later prove. These are not sc
 - When a valid coupon combination and the valid non-coupon alternative have the same payable amount, Fit can return either selected outcome. The experience renders the matching sentence in section 12. Fit is not asked to invent customer copy, and this candidate does not choose that winner. The complimentary equal-payable selection remains the Product rule, not a Fit tie-break.
 - Pre-payment change can return the customer to Review with an explanation of the new result.
 - The section 17 primary rate can treat one logical direct-order checkout as one journey across Review revisits. Customer or guest identity remains who is present. This candidate does not choose a schema, API, or stored identifier for that correlation.
-- Architecture Fit must demonstrate that an implementation can provide a stable `CHECKOUT_JOURNEY_KEY`, authoritative event occurrence semantics, deterministic authoritative journey ordering, and exact measurement-window boundary semantics, without using customer identity as the checkout correlation, without relying on telemetry ingestion order, without inventing a Product abandonment timeout, and without changing the approved Product behaviour. This is an Experience requirement. This candidate does not solve the storage, API, or schema design.
+- Architecture Fit must demonstrate that an implementation can provide a stable `CHECKOUT_JOURNEY_KEY`, authoritative event occurrence semantics, deterministic authoritative journey ordering, one global cohort-entry Review per key, and exact assignment of that one entry time to half-open measurement windows, without using customer identity as the checkout correlation, without relying on telemetry ingestion order, without inventing a Product abandonment timeout, without reselecting cohort entry inside each window, and without changing the approved Product behaviour. This is an Experience requirement. This candidate does not solve the storage, API, or schema design.
 
 ```text
-MEASUREMENT_IMPLEMENTATION_REQUIRED_LATER = DETERMINISTIC_RATE_FOR_HALF_OPEN_COHORT_WINDOW_REPORT_AS_OF_AND_JOURNEY_SEQUENCE
+MEASUREMENT_IMPLEMENTATION_REQUIRED_LATER = ONE_GLOBAL_COHORT_ENTRY_THEN_HALF_OPEN_WINDOW_ASSIGNMENT
 MEASUREMENT_IMPLEMENTATION_CHOSEN = NO
+ONE_GLOBAL_COHORT_ENTRY_REVIEW_PER_CHECKOUT_JOURNEY_KEY = REQUIRED_LATER
+PER_WINDOW_RESELECTION_OF_COHORT_ENTRY = PROHIBITED
 ARCHITECTURE_FIT_MUST_SHOW_STABLE_CHECKOUT_JOURNEY_KEY = YES
 ARCHITECTURE_FIT_MUST_SHOW_AUTHORITATIVE_OCCURRENCE_TIME = YES
 ARCHITECTURE_FIT_MUST_SHOW_DETERMINISTIC_JOURNEY_ORDER = YES
@@ -1333,7 +1401,7 @@ This is not the Experience Gate verdict.
 | Accessibility | Defined |
 | Service / operational alignment | Defined |
 | Evidence / assumptions | Classified |
-| Measurement intent | Defined. One primary metric, secondary metrics, guardrails, baseline, a half-open 28-calendar-day cohort window in `Asia/Kolkata`, interpretation rule, `CHECKOUT_JOURNEY_KEY` so one logical checkout is one denominator and one completion, `AUTHORITATIVE_JOURNEY_SEQUENCE` so equal timestamps still have one order, and a named `REPORT_AS_OF` so an unfinished journey stays in that snapshot's denominator until a later labelled snapshot. |
+| Measurement intent | Defined. One primary metric, secondary metrics, guardrails, baseline, a half-open 28-calendar-day cohort window in `Asia/Kolkata`, interpretation rule, `CHECKOUT_JOURNEY_KEY` so one logical checkout is one denominator and one completion, one global cohort-entry Review per key whose occurrence time alone assigns zero or one window, `AUTHORITATIVE_JOURNEY_SEQUENCE` so equal timestamps still have one order, and a named `REPORT_AS_OF` so an unfinished journey stays in that snapshot's denominator until a later labelled snapshot. |
 | Equal-payable coupon experience | Defined for both Fit outcomes. Complimentary equal-payable rule preserved. |
 | Analytics contract requirements | Defined |
 | Experiment / validation | Defined, with insufficient-evidence limits |
