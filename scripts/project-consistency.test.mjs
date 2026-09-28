@@ -108,6 +108,7 @@ import {
   evaluateD382Current,
   evaluateImp036jApprovedProductDefinition,
   evaluateImp036jFd036j03Authority,
+  evaluateImp036jGatePassNarrative,
   evaluateImp036jStackingContract,
   evaluateImp036jGuestCouponContract,
   evaluateImp036jComplimentaryItemContract,
@@ -17437,6 +17438,22 @@ describe("IMP-036I implementation authorization persistence", () => {
     const stale = evaluateImp036jStoryReadiness(staleGate);
     assert.equal(stale.ok, false);
     assert.equal(stale.code, "IMP036J_READINESS_POST_GATE");
+  });
+
+  it("rejects stale current ROADMAP narrative and a pre-Gate dependency row after Gate PASS", () => {
+    const roadmap = readFileSync("docs/platform/ROADMAP.md", "utf8");
+    const product = readFileSync("docs/platform/product/IMP-036J/product-definition.md", "utf8");
+    assert.deepEqual(evaluateImp036jGatePassNarrative(roadmap, product), { ok: true });
+    const staleSection4 = roadmap.replace(
+      "Product Definition Gate `PASS`",
+      "Product Definition Gate `NOT_PERFORMED`",
+    );
+    assert.equal(evaluateImp036jGatePassNarrative(staleSection4, product).code, "IMP036J_NARRATIVE_SECTION4");
+    const staleDependency = product.replace(
+      "| Product Definition Gate | PASS | Architecture Fit | None. Gate PASS is not Architecture Fit. |",
+      "| Product Definition Gate and Architecture Fit | NOT_PERFORMED | Implementation | Blocks implementation |",
+    );
+    assert.equal(evaluateImp036jGatePassNarrative(roadmap, staleDependency).code, "IMP036J_DEPENDENCY_GATE");
   });
 
   it("fails when only the FD-036J-03 decision block contradicts approved complimentary-item semantics", () => {

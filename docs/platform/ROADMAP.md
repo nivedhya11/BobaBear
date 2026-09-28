@@ -1354,9 +1354,8 @@ Under `PROGRAM_PAUSE: PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED` (**D-377**) an
 sequencing authority **D-382**, the active product slice is **IMP-036J — Promotions, Coupons &
 Offers** (`currentProductSlice = IMP-036J`; `pendingAcceptance = NONE`;
 `IMP036J_ACTIVATED: YES`; formal lifecycle `PLANNED`; Product Definition
-`PD-IMP-036J-DRAFT-6` is `DRAFT` / `PRE_GATE_DRAFT` / `DRAFT_READY_FOR_GATE`;
-Product Definition Gate `NOT_PERFORMED`; Architecture Fit `NOT_PERFORMED`; implementation
-`NOT_AUTHORIZED`). IMP-036I — Scheduled
+`PD-IMP-036J-DRAFT-6` is `APPROVED`; Product Definition Gate `PASS`; Architecture Fit
+`NOT_PERFORMED`; implementation `NOT_AUTHORIZED`). IMP-036I — Scheduled
 Fulfilment is `COMPLETE_AND_ACCEPTED` (`IMP036I_ACCEPTED: YES`; `IMP036I_FOUNDER_UAT: PASS`;
 `IMP036I_FORMAL_ACCEPTANCE: ACCEPTED`; Product Definition `PD-IMP-036I-DRAFT-4` APPROVED; Gate
 PASS; Architecture Fit PASS; architecture LOCKED). Accepted UAT runtime candidate remains
@@ -1479,7 +1478,8 @@ Historical acceptance evidence remains in the pre-compression ROADMAP snapshot.
 Remaining numeric GTM range IMP-037 → IMP-040: **4** IMP numbers. Enterprise Experience suffix
 slices IMP-036A–I are accepted. Founder-authorized pre-GTM product suffix slices IMP-036H
 (COMPLETE_AND_ACCEPTED), IMP-036I (COMPLETE_AND_ACCEPTED), and IMP-036J (PLANNED; Product
-Definition `PD-IMP-036J-DRAFT-6` `DRAFT_READY_FOR_GATE` under D-382) are inserted after IMP-036G and before IMP-037 without
+Definition `PD-IMP-036J-DRAFT-6` `APPROVED`; Product Definition Gate `PASS`; Architecture Fit
+`NOT_PERFORMED` under D-382) are inserted after IMP-036G and before IMP-037 without
 consuming or renaming existing numeric identities. Deals, Campaigns, and Revenue
 Recommendations remain parked discovery and have no ledger identity. Accepted inserted
 slices IMP-026C and IMP-028A–D remain in the accepted ledger and are not future identities.

@@ -39770,6 +39770,52 @@ function checkImp036jProductDefinitionDraftReady(roadmap, state, architecture, d
 }
 
 /**
+ * Current ROADMAP narrative and the Product Definition dependency row must agree with Gate PASS.
+ * Historical GTM revision paragraphs are outside these slices.
+ * @param {string} roadmapText
+ * @param {string} productDefinitionText
+ * @returns {{ ok: true } | { ok: false, code: string, message: string }}
+ */
+export function evaluateImp036jGatePassNarrative(roadmapText, productDefinitionText) {
+  const roadmap = String(roadmapText);
+  const product = String(productDefinitionText);
+  const section4 = roadmap.split("## 4. Current Product Slice")[1]?.split("\n## ")[0] ?? "";
+  const section5 = roadmap.split("## 5. Future GTM Slices")[1]?.split("\n| IMP |")[0] ?? "";
+  const dependencies = product.split("## 21. Dependencies")[1]?.split("\n## ")[0] ?? "";
+  if (!section4.includes("`APPROVED`") || !section4.includes("Product Definition Gate `PASS`") || !section4.includes("Architecture Fit") || !section4.includes("`NOT_PERFORMED`")) {
+    return {
+      ok: false,
+      code: "IMP036J_NARRATIVE_SECTION4",
+      message: "ROADMAP current product slice must record IMP-036J APPROVED, Gate PASS, and Architecture Fit NOT_PERFORMED",
+    };
+  }
+  if (/DRAFT_READY_FOR_GATE|Gate `NOT_PERFORMED`/.test(section4)) {
+    return {
+      ok: false,
+      code: "IMP036J_NARRATIVE_SECTION4",
+      message: "ROADMAP current product slice must not leave IMP-036J pre-Gate",
+    };
+  }
+  if (!section5.includes("`APPROVED`") || !section5.includes("Product Definition Gate `PASS`") || !section5.includes("Architecture Fit") || /DRAFT_READY_FOR_GATE/.test(section5)) {
+    return {
+      ok: false,
+      code: "IMP036J_NARRATIVE_SECTION5",
+      message: "ROADMAP future-slice introduction must record IMP-036J APPROVED and Gate PASS",
+    };
+  }
+  const gateRow = dependencies.split("\n").find((line) => line.startsWith("| Product Definition Gate |")) ?? "";
+  const fitRow = dependencies.split("\n").find((line) => line.startsWith("| Architecture Fit |")) ?? "";
+  if (!gateRow.includes("| PASS |") || /NOT_PERFORMED/.test(gateRow) || !fitRow.includes("NOT_PERFORMED")) {
+    return {
+      ok: false,
+      code: "IMP036J_DEPENDENCY_GATE",
+      message: "IMP-036J dependency table must record Product Definition Gate PASS and Architecture Fit NOT_PERFORMED",
+    };
+  }
+  return { ok: true };
+}
+
+/**
  * CURRENT checkpoint: IMP-036J Product Definition Gate PASS (GTM-R169 / STATE-R167).
  * PD-IMP-036J-DRAFT-6 is APPROVED. Architecture Fit and implementation stay unperformed.
  * @param {Record<string, any>} roadmap
@@ -39901,6 +39947,8 @@ function checkImp036jProductDefinitionGatePass(roadmap, state, architecture, dec
   if (!readmeRow.includes("**APPROVED**") || !readmeRow.includes("**PASS**") || !readmeRow.includes("**NOT_PERFORMED**") || !readmeRow.includes("NOT_AUTHORIZED") || readmeRow.includes("DRAFT_READY_FOR_GATE")) {
     fail("IMP036J_PRODUCT_README", "product/README.md IMP-036J row must record APPROVED / Gate PASS / Fit NOT_PERFORMED / implementation NOT_AUTHORIZED");
   }
+  const narrative = evaluateImp036jGatePassNarrative(roadmapText, productDefinitionText);
+  if (!narrative.ok) fail(narrative.code || "IMP036J_NARRATIVE", narrative.message || "IMP-036J current narrative disagrees with Gate PASS");
   const pd = evaluateImp036jApprovedProductDefinition(productDefinitionText);
   if (!pd.ok) fail(pd.code || "IMP036J_PD_META", pd.message || "IMP-036J approved Product Definition metadata is invalid");
   const stacking = evaluateImp036jStackingContract(productDefinitionText);
