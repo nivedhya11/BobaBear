@@ -48,11 +48,14 @@ IMP036F_ACTIVATED = NO
    new evidence. Widen review when changed authority requires it. Ask: “Identify the three most
    plausible defects or invariant violations in this diff.”
 10. Merge only when separately authorized.
-11. After merging an authorized task branch and completing post-merge checks, switch to `main`,
-    `git fetch origin --prune`, `git pull --ff-only`, then `git branch -d <completed-task-branch>`.
-    If `-d` refuses, inspect PR lifecycle, `git cherry origin/main <branch>`, and unique commits
-    before any `git branch -D`. Force-delete only when the branch is proven merged, patch-equivalent,
-    or deliberately superseded. Do not delete a branch that still contains unique unmerged work.
+11. After a task pull request is merged and required post-merge CI and CodeQL evidence has passed,
+    follow the local closeout in [`AGENTS.md`](../../../AGENTS.md) “Post-merge local branch hygiene”:
+    switch to `main`, `git fetch origin --prune`, `git pull --ff-only`, then
+    `git branch -d <completed-task-branch>`. If `-d` refuses, do not force-delete until the pull
+    request is merged or deliberately superseded and the branch is proven to contain no unique work
+    worth preserving. `git cherry origin/main <completed-task-branch>` is one signal and is not
+    sufficient proof under squash or rebase merge histories. Do not delete another task’s open,
+    unmerged, uncertain, or active candidate branch. This step is local workspace hygiene.
 12. When applicable, prepare an immutable artifact under the existing provenance rules; obtain
     deployment authorization before deploying it. Required independent technical acceptance must
     precede UAT deployment.

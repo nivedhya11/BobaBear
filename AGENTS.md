@@ -593,7 +593,11 @@ DEFAULT_DEVELOPMENT_BRANCH = main
 
 ### Post-merge local branch hygiene
 
-After a merged task and post-merge checks:
+This is local workspace hygiene for the completed task branch. It does not authorize deleting
+unrelated remote branches. Remote head deletion after merge remains the separate Branch lifecycle
+rule above, including GitHub automatic head-branch deletion.
+
+After a task pull request is merged and the required post-merge CI and CodeQL evidence has passed:
 
 ```text
 git switch main
@@ -602,11 +606,32 @@ git pull --ff-only
 git branch -d <completed-task-branch>
 ```
 
-If `git branch -d` refuses, do not immediately force-delete. Inspect PR lifecycle,
-`git cherry origin/main <branch>`, and unique commits. Only after the branch is proven merged,
-patch-equivalent, or deliberately superseded may `git branch -D <branch>` be used. Delete an
-obsolete remote task branch where repository policy permits. Do not blindly force-delete every
-branch. Do not delete an active unmerged branch that still holds required unique work.
+If `git branch -d` refuses:
+
+1. Do not immediately force-delete.
+2. First verify the pull request is merged or deliberately superseded, and inspect whether the
+   local branch contains unique work.
+3. `git cherry origin/main <completed-task-branch>` may be used as one signal. It must not be
+   treated as sufficient proof by itself under squash or rebase merge histories.
+4. Inspect commit and content equivalence as necessary.
+5. Only after proving there is no unique work worth preserving:
+
+```text
+git branch -D <completed-task-branch>
+```
+
+Additional mandatory safety:
+
+- Never delete an open or unmerged task branch merely because another task finished.
+- Never delete a branch with known or uncertain unique work.
+- Never delete an active investigation or candidate branch that belongs to another gate or task.
+
+Final desired local state after successful closeout:
+
+- checked out on `main`
+- clean working tree
+- local `main` current with `origin/main`
+- the completed task branch absent
 
 ## Working-tree fingerprint
 
