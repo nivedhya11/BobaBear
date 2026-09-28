@@ -431,10 +431,13 @@ adopting PD-2.
 
 IMP-036J is the first current X3 capability transitioning into PD-2. Its Product Definition
 `PD-IMP-036J-DRAFT-6` stays approved and its Product Definition Gate stays `PASS`. Experience
-Definition and Experience Gate were not performed under PD-1. Architecture Fit stays
-`NOT_PERFORMED` until Experience Gate `PASS`. An unmerged Architecture Fit candidate may exist as
-investigation. It is not persisted Fit authority. Implementation stays unauthorized. The next gate
-is `EXPERIENCE_GATE`. Change Risk is recorded in ROADMAP/STATE and is not an AGENTS risk level.
+Definition and Experience Gate were not performed under PD-1. `XD-IMP-036J-DRAFT-6` is now
+`APPROVED` and Experience Gate is `PASS`. Architecture Fit stays `NOT_PERFORMED` and unlocked.
+An unmerged Architecture Fit candidate may exist as investigation. It is not persisted Fit
+authority. Design Readiness stays `NOT_PERFORMED`. Implementation stays unauthorized. The next
+gate is `ARCHITECTURE_FIT`. Experience Gate PASS is not Architecture Fit, not Design Readiness,
+and not implementation authorization. Change Risk is recorded in ROADMAP/STATE and is not an
+AGENTS risk level.
 
 ## AI execution and documentation efficiency
 
