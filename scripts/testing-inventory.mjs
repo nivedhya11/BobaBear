@@ -490,7 +490,10 @@ export function selectPackageVerificationCommands(scripts) {
       name === "lint" ||
       name === "env:hygiene" ||
       name === "project:consistency" ||
-      name === "governance:fingerprint"
+      name === "governance:fingerprint" ||
+      name === "governance:context" ||
+      name === "governance:context:check" ||
+      name === "validation:summary"
     ) {
       groups.check.push(name);
       continue;

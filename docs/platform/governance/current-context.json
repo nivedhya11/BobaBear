@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "authority": "NON_AUTHORITATIVE",
+  "notice": "Generated projection of canonical governance documents. ROADMAP.md, STATE.md, ARCHITECTURE.md, and decision-register.md remain the authority. This file must not change lifecycle, product, experience, architecture, or delivery-policy semantics.",
+  "generatedBy": "scripts/governance-context.mjs",
+  "sources": [
+    "docs/platform/ROADMAP.md",
+    "docs/platform/STATE.md",
+    "docs/platform/ARCHITECTURE.md",
+    "docs/platform/decision-register.md"
+  ],
+  "versions": {
+    "roadmapVersion": "GTM-R172",
+    "stateVersion": "STATE-R170",
+    "architectureVersion": "ARCH-R23",
+    "decisionRegisterVersion": "DR-23"
+  },
+  "slices": {
+    "acceptedThrough": "IMP-036I",
+    "currentProductSlice": "IMP-036J",
+    "nextProductSlice": "IMP-037",
+    "pendingAcceptance": "NONE",
+    "gtmBoundary": "IMP-040"
+  },
+  "lifecycle": "ARCHITECTURE_LOCKED",
+  "nextGate": "DESIGN_READINESS",
+  "currentSliceGates": {
+    "slice": "IMP-036J",
+    "lifecycle": "ARCHITECTURE_LOCKED",
+    "nextGate": "DESIGN_READINESS",
+    "activated": "YES",
+    "productDefinition": "APPROVED",
+    "productDefinitionVersion": "PD-IMP-036J-DRAFT-6",
+    "productDefinitionGate": "PASS",
+    "experienceDefinition": "APPROVED",
+    "experienceDefinitionVersion": "XD-IMP-036J-DRAFT-6",
+    "experienceGate": "PASS",
+    "architectureFit": "PASS",
+    "architectureLocked": "YES",
+    "designReadiness": "NOT_PERFORMED",
+    "implementationAuthorized": "NO",
+    "started": "NO",
+    "implementationStarted": "NO",
+    "implementationComplete": "NO",
+    "accepted": "NO"
+  },
+  "singleSourceGates": []
+}

@@ -11,6 +11,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import { evaluateGovernanceContextDrift } from "./governance-context.mjs";
 import { computeWorkingTreeFingerprint } from "./working-tree-fingerprint.mjs";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -25973,6 +25974,7 @@ export function runProjectConsistency() {
   checkAgentsPointer();
   checkProductDeliveryProcessAuthorities();
   checkSupersededRoadmap();
+  checkGovernanceContextDrift();
   checkWorkingTreeFingerprint();
 
   return findings;
@@ -44879,6 +44881,22 @@ function checkCurrentAuthorityAntiStale(roadmap, state) {
   }
 
   note("CURRENT authority anti-stale checks OK");
+}
+
+function checkGovernanceContextDrift() {
+  try {
+    const result = evaluateGovernanceContextDrift(projectRoot);
+    if (!result.ok) {
+      fail("GOVERNANCE_CONTEXT_DRIFT", result.message);
+      return;
+    }
+    note(result.message);
+  } catch (err) {
+    fail(
+      "GOVERNANCE_CONTEXT_DRIFT",
+      `governance context drift check failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
 }
 
 function checkWorkingTreeFingerprint() {
