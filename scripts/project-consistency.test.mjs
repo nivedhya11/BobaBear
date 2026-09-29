@@ -18336,17 +18336,20 @@ describe("IMP-036J Experience Gate PASS persistence", () => {
 
 
 
-describe("IMP-036J Architecture Fit PASS / lock persistence", () => {
+describe("IMP-036J architecture fit remediation candidate 6", () => {
   const live = readFileSync("docs/platform/capabilities/IMP-036J-promotions-coupons-offers.md", "utf8");
-  it("binds Candidate 5 provenance and keeps Design Readiness pending", () => {
+  it("binds Candidate 6 as unreviewed and preserves Candidate 5 provenance", () => {
     assert.deepEqual(evaluateImp036jArchitectureLock(live), { ok: true });
   });
   for (const [key, value] of Object.entries({
-    architectureFit: "NOT_PERFORMED", architectureLock: "NOT_LOCKED",
+    architectureFit: "PASS", architectureLock: "LOCKED",
+    candidateRevision: "IMP-036J-FIT-CANDIDATE-5",
+    architectureFitReviewForCandidate6: "PASS",
+    architectureFitPassClaimedForCandidate6: true,
     designReadiness: "PASS", implementationAuthorized: true, implementationStarted: true,
-    architectureBase: "ARCH-R24", independentArchitectureFitReviewId: "wrong-review",
-    architectureFitEvaluatedHead: "wrong-head", architectureFitEvaluatedTree: "wrong-tree",
-    architectureFitEvaluatedGovernanceFingerprint: "wrong-fingerprint",
+    architectureBase: "ARCH-R24", historicalCandidate5IndependentReviewId: "wrong-review",
+    historicalCandidate5EvaluatedHead: "wrong-head", historicalCandidate5EvaluatedTree: "wrong-tree",
+    historicalCandidate5GovernanceFingerprint: "wrong-fingerprint",
   })) {
     it(`rejects metadata mutation ${key}=${value}`, () => {
       const mutated = live.replace(new RegExp(`("${key}":\\s*)(?:"[^"]*"|true|false)`), `$1${JSON.stringify(value)}`);
@@ -18355,8 +18358,10 @@ describe("IMP-036J Architecture Fit PASS / lock persistence", () => {
     });
   }
   for (const [key, from, to] of [
-    ["IMP036J_ARCHITECTURE_FIT", "PASS", "NOT_PERFORMED"],
-    ["IMP036J_ARCHITECTURE_LOCKED", "YES", "NO"],
+    ["IMP036J_ARCHITECTURE_FIT", "NOT_PERFORMED", "PASS"],
+    ["IMP036J_ARCHITECTURE_LOCKED", "NO", "YES"],
+    ["ARCHITECTURE_FIT_REVIEW_FOR_CANDIDATE_6", "NOT_PERFORMED", "PASS"],
+    ["ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_6", "NO", "YES"],
     ["IMP036J_NEXT_GATE", "DESIGN_READINESS", "ARCHITECTURE_FIT"],
     ["IMP036J_DESIGN_READINESS", "NOT_PERFORMED", "PASS"],
     ["IMP036J_IMPLEMENTATION_AUTHORIZED", "NO", "YES"],

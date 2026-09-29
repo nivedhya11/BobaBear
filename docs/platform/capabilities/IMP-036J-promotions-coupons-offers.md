@@ -13,16 +13,20 @@
   "experienceCriticality": "X3",
   "changeRisk": "CR2",
   "designReadiness": "NOT_PERFORMED",
-  "candidateRevision": "IMP-036J-FIT-CANDIDATE-5",
+  "candidateRevision": "IMP-036J-FIT-CANDIDATE-6",
   "architectureFitSourceCandidate": "IMP-036J-FIT-CANDIDATE-5",
   "architectureBase": "ARCH-R23",
-  "architectureFit": "PASS",
-  "architectureLock": "LOCKED",
-  "independentArchitectureFitReview": "PASS",
-  "independentArchitectureFitReviewId": "5347761109",
-  "architectureFitEvaluatedHead": "49912f35f2871ff77b9af267589d49666fc975ec",
-  "architectureFitEvaluatedTree": "7046d5bb78012524972505f555226205199a58d0",
-  "architectureFitEvaluatedGovernanceFingerprint": "ac6510d315148763069f06374a243a75a312a7693cf3e7c1d0eac71bc1026870",
+  "architectureFit": "NOT_PERFORMED",
+  "architectureLock": "NOT_LOCKED",
+  "architectureFitReviewForCandidate6": "NOT_PERFORMED",
+  "architectureFitPassClaimedForCandidate6": false,
+  "historicalCandidate5ArchitectureFit": "PASS",
+  "historicalCandidate5ArchitectureLock": "LOCKED",
+  "historicalCandidate5IndependentReview": "PASS",
+  "historicalCandidate5IndependentReviewId": "5347761109",
+  "historicalCandidate5EvaluatedHead": "49912f35f2871ff77b9af267589d49666fc975ec",
+  "historicalCandidate5EvaluatedTree": "7046d5bb78012524972505f555226205199a58d0",
+  "historicalCandidate5GovernanceFingerprint": "ac6510d315148763069f06374a243a75a312a7693cf3e7c1d0eac71bc1026870",
   "implementationAuthorized": false,
   "implementationStarted": false,
   "schemaChangeRequired": true,
@@ -39,7 +43,7 @@
 
 # IMP-036J — Promotions, Coupons & Offers
 
-## Capability architecture — ARCHITECTURE_LOCKED
+## Capability architecture — FIT candidate 6, review not performed
 
 ```text
 STATUS = CURRENT
@@ -53,21 +57,17 @@ EXPERIENCE_DEFINITION_STATUS = APPROVED
 EXPERIENCE_GATE = PASS
 EXPERIENCE_CRITICALITY = X3
 CHANGE_RISK = CR2
+CANDIDATE_REVISION = IMP-036J-FIT-CANDIDATE-6
 ARCHITECTURE_FIT_SOURCE_CANDIDATE = IMP-036J-FIT-CANDIDATE-5
-CANDIDATE_REVISION = IMP-036J-FIT-CANDIDATE-5
 ARCHITECTURE_BASE = ARCH-R23
-ARCHITECTURE_FIT = PASS
-ARCHITECTURE_LOCK = LOCKED
-IMP036J_ARCHITECTURE_FIT = PASS
-IMP036J_ARCHITECTURE_LOCKED = YES
-INDEPENDENT_ARCHITECTURE_FIT_REVIEW = PASS
-INDEPENDENT_ARCHITECTURE_FIT_REVIEW_ID = 5347761109
-ARCHITECTURE_FIT_EVALUATED_HEAD = 49912f35f2871ff77b9af267589d49666fc975ec
-ARCHITECTURE_FIT_EVALUATED_TREE = 7046d5bb78012524972505f555226205199a58d0
-ARCHITECTURE_FIT_EVALUATED_GOVERNANCE_FINGERPRINT = ac6510d315148763069f06374a243a75a312a7693cf3e7c1d0eac71bc1026870
-ARCHITECTURE_FIT_EVALUATED_CODEX_REVIEW = 5883601198
-ARCHITECTURE_FIT_EVALUATED_CI_RUN = 36521141717
-ARCHITECTURE_FIT_EVALUATED_CODEQL_RUN = 36521141714
+ARCHITECTURE_FIT = NOT_PERFORMED
+ARCHITECTURE_LOCK = NOT_LOCKED
+ARCHITECTURE_FIT_REVIEW_FOR_CANDIDATE_6 = NOT_PERFORMED
+ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_6 = NO
+HISTORICAL_CANDIDATE_5_ARCHITECTURE_FIT = PASS
+HISTORICAL_CANDIDATE_5_ARCHITECTURE_LOCK = LOCKED
+IMP036J_ARCHITECTURE_FIT = NOT_PERFORMED
+IMP036J_ARCHITECTURE_LOCKED = NO
 IMP036J_DESIGN_READINESS = NOT_PERFORMED
 IMP036J_NEXT_GATE = DESIGN_READINESS
 QUALITY_TEST_PLAN_FINALIZED = NO
@@ -84,26 +84,35 @@ NEW_ADR_REQUIRED = NO
 SCHEMA_CHANGE_REQUIRED = YES
 NEW_SERVICE_REQUIRED = NO
 NEW_CUSTOMER_FACADE_ROUTE = POST /api/v1/checkouts/{checkoutId}/review-presented
+NEW_CUSTOMER_FACADE_ROUTE_CART_CONTINUATION = POST /api/v1/cart/review-continuation
 NEW_AUTH_MODEL_REQUIRED = NO
 NEW_PERMISSION_REQUIRED = NO
 FOUNDER_UAT_REQUIRED = YES
 FOUNDER_UAT = NOT_STARTED
 ```
 
-This document is the locked capability architecture for IMP-036J. It preserves the reviewed
-semantics of `IMP-036J-FIT-CANDIDATE-5`. Independent ChatGPT Architecture Fit review `5347761109`
-returned PASS for that candidate at head `49912f35f2871ff77b9af267589d49666fc975ec`, tree
+This document is `IMP-036J-FIT-CANDIDATE-6`. It is a remediation candidate prepared after Design
+Readiness review of PR #329 exposed measurement and presentation-fit gaps. It does not claim
+Architecture Fit PASS. `ARCHITECTURE_FIT_REVIEW_FOR_CANDIDATE_6 = NOT_PERFORMED`.
+
+`IMP-036J-FIT-CANDIDATE-5` remains the previously reviewed and canonically locked architecture.
+Independent ChatGPT Architecture Fit review `5347761109` returned PASS for that candidate at head
+`49912f35f2871ff77b9af267589d49666fc975ec`, tree
 `7046d5bb78012524972505f555226205199a58d0`, and governance fingerprint
 `ac6510d315148763069f06374a243a75a312a7693cf3e7c1d0eac71bc1026870`. Fresh Codex review
 `5883601198` on that same head was clean. CI run `36521141717` and CodeQL run `36521141714`
-passed on that same head. This lock checkpoint is a later commit. It is not that evaluated head.
-No working-tree fingerprint is recorded for the evaluated head because one was not part of the
-independent review evidence. The lock does not authorize implementation, perform Design
-Readiness, finalize the Quality/Test Plan, or finalize the Measurement/Instrumentation Plan.
-Section 30 remains a future implementation proof plan. Global architecture stays ARCH-R23.
-The decision register stays DR-23. D-383 is not created. No ADR is created.
-`CANDIDATE_REVISION` records the source candidate. It is not an architecture version and it does
-not create ARCH-R24.
+passed on that same head. The later lock checkpoint is not that evaluated head. No working-tree
+fingerprint is recorded for the evaluated head because one was not part of the independent review
+evidence. Later Design Readiness incompleteness does not rewrite that PASS as a failure. It
+requires a new Fit evaluation of Candidate 6. Canonical ROADMAP and STATE still record the
+Candidate 5 lock. This candidate does not update those lifecycle documents, does not persist a
+new lock, and does not authorize implementation.
+
+Candidate 6 does not perform Design Readiness, finalize the Quality/Test Plan, or finalize the
+Measurement/Instrumentation Plan. Section 30 remains a future implementation proof plan. Global
+architecture stays ARCH-R23. The decision register stays DR-23. D-383 is not created. No ADR is
+created. `CANDIDATE_REVISION` records this remediation candidate. It is not an architecture
+version and it does not create ARCH-R24.
 
 ```text
 IMP-036J-FIT-CANDIDATE-1 = original pre-Experience candidate
@@ -125,7 +134,7 @@ IMP-036J-FIT-CANDIDATE-4 = remediates those two open exact-head findings
   ARCHITECTURE_FIT_REVIEW = NOT_PERFORMED
   ARCHITECTURE_FIT_PASS = NO
   ARCHITECTURE_FIT_STOP = NO
-IMP-036J-FIT-CANDIDATE-5 = source semantics of this locked architecture
+IMP-036J-FIT-CANDIDATE-5 = previously reviewed and canonically locked architecture
   remediates 4129513169
   preserves the Candidate 2, Candidate 3, and Candidate 4 remediations
   independent Architecture Fit review = PASS
@@ -133,9 +142,21 @@ IMP-036J-FIT-CANDIDATE-5 = source semantics of this locked architecture
   ARCHITECTURE_FIT_EVALUATED_HEAD = 49912f35f2871ff77b9af267589d49666fc975ec
   ARCHITECTURE_FIT_EVALUATED_TREE = 7046d5bb78012524972505f555226205199a58d0
   ARCHITECTURE_FIT_EVALUATED_GOVERNANCE_FINGERPRINT = ac6510d315148763069f06374a243a75a312a7693cf3e7c1d0eac71bc1026870
-  Fit PASS subsequently persisted by this lock checkpoint
+  ARCHITECTURE_FIT_EVALUATED_CODEX_REVIEW = 5883601198
+  ARCHITECTURE_FIT_EVALUATED_CI_RUN = 36521141717
+  ARCHITECTURE_FIT_EVALUATED_CODEQL_RUN = 36521141714
+  Fit PASS subsequently persisted by the Candidate 5 lock checkpoint
   ARCHITECTURE_FIT_REVIEW = PASS
   ARCHITECTURE_FIT_PASS = YES
+  CANDIDATE_5_REWRITTEN_AS_FAILED = NO
+IMP-036J-FIT-CANDIDATE-6 = remediation candidate after Design Readiness review
+  review threads 4134472848, 4134472863, 4134472881, and 4134472894
+  blocked Design Readiness candidate head bd348f64c48d6e8db41b80ac585bb97d70692d95
+  blocked Design Readiness candidate tree 10b0acbd5777f68df36d316d4acbe49d9091e7ae
+  PR 329 remains open, unmerged, and unmodified by this candidate
+  ARCHITECTURE_FIT_REVIEW_FOR_CANDIDATE_6 = NOT_PERFORMED
+  ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_6 = NO
+  ARCHITECTURE_FIT_STOP = NO
 ```
 
 Candidate 2 did not receive an independent Architecture Fit verdict. Candidate 3 did not either:
@@ -143,8 +164,9 @@ its exact-head review opened 4129243690 and 4129243701 and stopped before ChatGP
 review. Candidate 4 remediated those two findings. Its exact-head review then opened 4129513169 and
 stopped before ChatGPT Architecture Fit review. `IMP036J_ARCHITECTURE_FIT` stayed `NOT_PERFORMED`
 through Candidate 4. Candidate 5 received independent Architecture Fit review PASS
-`5347761109`. This lock checkpoint persists that PASS. Candidates 1–4 are not rewritten as a
-Gate verdict.
+`5347761109`. That PASS remains historical provenance. Candidates 1–4 are not rewritten as a Gate
+verdict, and Candidate 5 is not rewritten as a failed review. Candidate 6 is the remediation text
+under review. It has not received an independent Architecture Fit verdict.
 
 An Offer remains customer and operator meaning over the accepted Promotion authority. It does not
 set money by itself.
@@ -481,6 +503,13 @@ scheduled window = checkout window columns when timing is SCHEDULED
 Before any checkout exists, `carts` has no mode column. Mode-restricted and timing-restricted Offers are not applied on that cart, and no delivery charge is invented. Merchandise Offers that do not restrict mode still evaluate. When an open checkout exists (`checkouts.cart_id`), cart evaluation reads that checkout's mode and timing so the cart and Checkout Review cannot disagree.
 
 `PICKUP` does not receive a delivery charge, matching current `buildCheckoutCommercialResult`.
+
+```text
+CART_COMMERCIAL_RESULT = AUTHORITATIVE_FOR_CART_SCOPE_ONLY
+CART_FINAL_PAYABLE = NO_UNLESS_CHECKOUT_CONTEXT_PROVIDES_ALL_REQUIRED_CHARGES
+```
+
+Cart evaluation does not include packaging or delivery charges unless an open checkout already supplies the fulfilment context those charges require. A pre-checkout Cart result is authoritative for that Cart scope: merchandise, modifiers, bundles, promotions that do not need missing mode or timing, and tax on that scope. It is not a final payable while packaging or delivery is absent. When an open checkout supplies mode, timing, and every charge `buildCheckoutCommercialResult` would include, the Cart quote reads that same checkout context and can match Checkout Review. It still does not become a second pricing authority. Exact customer wording for the Cart amount is Design Readiness and LANG-1. This candidate does not prescribe that copy. Design Readiness must not specify the pre-checkout Cart amount as a final authoritative total payable.
 
 ### Candidate representation
 
@@ -963,7 +992,7 @@ Architecture returns the facts Experience projects. It does not own the sentence
 | Experience need | Architectural fact |
 |---|---|
 | Threshold gap | `remainingAmountPaise` or remaining quantity from section 14. The client does not subtract eligibility money. |
-| One commercial result | One quote `CommercialExplanation`: merchandise or order saving, delivery saving, total saved, final payable. Cart, Checkout Review, and the read-only Payment summary render that one result. |
+| One commercial result | One quote `CommercialExplanation`: merchandise or order saving, delivery saving, total saved, final payable. Cart, Checkout Review, and the read-only Payment summary render that one result. Pre-checkout Cart payable is authoritative for Cart scope only, section 6. |
 | Shared coupon state | `carts.manual_coupon_code` only. Cart and Checkout Review both call the existing coupon routes. |
 | Payment | `PaymentPanel` reads the sealed explanation. It does not accept a coupon mutation. |
 | Complimentary line | Snapshot or projection carries catalog variant identity, quantity 1, and zero extra merchandise charge. The included meaning is a projection of those facts. |
@@ -1210,7 +1239,7 @@ Purpose: one first-order entitlement for one logical purchase binding, shared by
 | `checkouts.checkout_journey_key` uuid | Checkout | Opaque journey key for one unpaid attempt | Null on historical rows that have not been adopted. Not null on every checkout `startCheckout` inserts after this capability, and not null once adoption assigns it | No FK to a customer. Not unique by itself: successor checkouts of one attempt share one value | `insertDraftCheckout` mints or copies. Adoption in section 27A may set a null key once. No later rewrite | Copied inside the same `startCheckout` transaction under section 27A | Immutable once non-null | Not PII. Not a customer or guest identifier |
 | `checkouts.cart_checkout_ordinal` bigint | Checkout | Strict causal creation order among Checkout rows for one Cart. Not `AUTHORITATIVE_JOURNEY_SEQUENCE`, not `checkouts.revision`, and not a customer-facing attempt number | Null only for historical rows that predate this column and have not been adopted. Not null on every checkout created or adopted after activation | Check `> 0` when non-null. Unique index `checkouts_cart_checkout_ordinal_uidx` on `(cart_id, cart_checkout_ordinal)` where `cart_checkout_ordinal` is not null. PostgreSQL unique indexes allow many nulls, so historical rows do not collide | Assigned once under the Cart lock during `insertDraftCheckout` or during the adoption write in section 27A | The Cart lock serializes allocation for that Cart. The unique index is the backstop | Immutable once non-null. Gaps are harmless and are not ordered by filling them | Not PII. Not returned on a customer or operator API |
 | `app.checkout_review_evaluation_receipts` | Same measurement projection | Immutable server record of one evaluation so a later acknowledgement can name what was shown | — | See the receipt table below | Inserted by `evaluateCheckout` when the authoritative result is new. A repeated evaluation of the same result returns the existing id | No journey sequence. Not a denominator row | Immutable. No update and no delete in application code | No customer id. No raw coupon text. No customer-facing copy |
-| `app.checkout_journey_measurement_heads` | Same projection | Allocates `AUTHORITATIVE_JOURNEY_SEQUENCE` and records closure | — | `journey_key` uuid primary key. `next_sequence` bigint not null, check `> 0`. `created_at` timestamptz not null. `closed_at` timestamptz null | Conflict-safe insert in section 27A, then `SELECT … FOR UPDATE`. `next_sequence` changes only while that row is locked. `closed_at` is set only in the Order-materialization transaction that inserts `SUCCESSFUL_DIRECT_ORDER_COMPLETION` | `INSERT … ON CONFLICT DO NOTHING` then the row lock. The first event and later events serialize on that row. A missing head is not initialized by `SELECT … FOR UPDATE` alone | `next_sequence` increments only under the row lock. `closed_at` write-once. No customer column. Payment `SUCCEEDED` does not set `closed_at`. Payment-driven `EXPIRED` does not set `closed_at` | Journey key is not PII |
+| `app.checkout_journey_measurement_heads` | Same projection | Allocates `AUTHORITATIVE_JOURNEY_SEQUENCE`, records the latest review receipt for comparison, and records closure | — | `journey_key` uuid primary key. `next_sequence` bigint not null, check `> 0`. `created_at` timestamptz not null. `closed_at` timestamptz null. `latest_review_receipt_id` uuid null, FK to `checkout_review_evaluation_receipts` | Conflict-safe insert in section 27A, then `SELECT … FOR UPDATE`. `next_sequence` and `latest_review_receipt_id` change only while that row is locked. `closed_at` is set only in the Order-materialization transaction that inserts `SUCCESSFUL_DIRECT_ORDER_COMPLETION` | `INSERT … ON CONFLICT DO NOTHING` then the row lock. The first event and later events serialize on that row. A missing head is not initialized by `SELECT … FOR UPDATE` alone | `next_sequence` increments only under the row lock. `latest_review_receipt_id` advances only when a new receipt commits under that lock. `closed_at` write-once. No customer column. Payment `SUCCEEDED` does not set `closed_at`. Payment-driven `EXPIRED` does not set `closed_at` | Journey key is not PII |
 | `app.checkout_journey_measurement_events` | Same projection | Append-only authoritative measurement facts | — | See the event table below | Insert only in the transaction that establishes that fact. A receipt insert is not an event | Sequence comes from the locked head only after the event-specific re-read returns no row and the new fact passes the closed-head check. Unique `(journey_key, journey_sequence)`. Partial unique indexes below | Immutable after insert. No update and no delete in application code. The locked re-read of this event's idempotency identity precedes any closed-head rejection. An existing row is returned and allocates nothing, including when `closed_at` is set. A new fact on a closed head is rejected and allocates no sequence | No customer id. No raw coupon text |
 
 `cart_checkout_ordinal` is a Checkout column for this capability's predecessor selection. It is not a global checkout-ordering service and it is not exposed to customers.
@@ -1253,7 +1282,7 @@ Event columns:
 | `occurred_at` timestamptz | not null | Authoritative occurrence time from the command clock in that transaction. Not ingest time. For completion, the Order-materialization transaction clock |
 | `checkout_id` uuid | null | FK `checkouts`. Commerce pointer so successor checkout rows stay traceable. Not the metric join |
 | `checkout_snapshot_id` uuid | null | Sealed commercial result when one exists |
-| `review_evaluation_receipt_id` uuid | null | Not null on `CHECKOUT_REVIEW_PRESENTED`. FK to `checkout_review_evaluation_receipts`. Null on every other kind |
+| `review_evaluation_receipt_id` uuid | null | Not null on `CHECKOUT_REVIEW_PRESENTED` and on `COMMERCIAL_STATE_CHANGE`. FK to `checkout_review_evaluation_receipts`. Null on `REVIEW_TO_PAYMENT_PROGRESSION`, `PAYMENT_ATTEMPT`, and `SUCCESSFUL_DIRECT_ORDER_COMPLETION` |
 | `payment_attempt_id` uuid | null | Present on `PAYMENT_ATTEMPT` when an attempt exists |
 | `presentation_class` text | null | Server copy of the receipt's allowlisted class on `CHECKOUT_REVIEW_PRESENTED`. Null is allowed on other kinds. No coupon characters |
 | `recorded_at` timestamptz | not null | Insert time. Not authoritative for order, cohort, or cutoff |
@@ -1263,6 +1292,9 @@ Partial unique indexes:
 ```text
 UNIQUE (review_evaluation_receipt_id)
   WHERE event_kind = 'CHECKOUT_REVIEW_PRESENTED'
+
+UNIQUE (review_evaluation_receipt_id)
+  WHERE event_kind = 'COMMERCIAL_STATE_CHANGE'
 
 UNIQUE (journey_key)
   WHERE event_kind = 'SUCCESSFUL_DIRECT_ORDER_COMPLETION'
@@ -1282,11 +1314,59 @@ Table `app.checkout_review_evaluation_receipts`. Owner: the existing measurement
 | `checkout_revision` bigint | not null | The checkout revision observed by that evaluation. Check `> 0` | Immutable | Not money |
 | `evaluated_at` timestamptz | not null | Server clock of that evaluation | Immutable | — |
 | `presentation_class` text | not null | Allowlist: section 9 coupon classes, complimentary applied, threshold short of minimum, recovery returned to Review, no-offer | Immutable | No coupon characters |
-| `commercial_result_fingerprint` text | not null | Non-empty opaque digest computed by the server from the authoritative commercial result of that evaluation. The client cannot supply it | Immutable | Not customer-facing copy. Not raw coupon text |
+| `commercial_result_fingerprint` text | not null | Non-empty opaque digest computed by the server from the authoritative commercial result of that evaluation. The client cannot supply it. The digest does not include `displayed_savings_integrity_ok` | Immutable | Not customer-facing copy. Not raw coupon text |
+| `displayed_savings_integrity_ok` boolean | not null | Server comparison, defined in section 27A, of the explanation built from that same result with the evaluated saving. The client cannot supply it | Immutable | Not money, not customer copy, not a coupon, not eligibility data |
+| `previous_receipt_id` uuid | null | The head's `latest_review_receipt_id` at insert time. Null on the first receipt for that journey. FK to this table. Not a journey sequence | Immutable | Not PII |
 
-A repeat `evaluateCheckout` of the same checkout revision and the same server fingerprint returns the existing receipt id. A meaningful new authoritative result inserts a new receipt. A repaint does not. The receipt stores no customer id, so the metric never joins through one. Ownership at acknowledgement is `checkouts.customer_auth_user_id` compared with the authenticated session.
+```text
+UNIQUE (checkout_id, checkout_revision, commercial_result_fingerprint)
+```
+
+A repeat `evaluateCheckout` of the same checkout revision and the same server fingerprint returns the existing receipt id. The unique index is the backstop when two evaluations of that same identity race. The loser re-reads the committed receipt and does not insert a second one. A meaningful new authoritative result, including the same fingerprint at a new checkout revision, inserts a new receipt. A repaint does not. The receipt stores no customer id, so the metric never joins through one. Ownership at acknowledgement is `checkouts.customer_auth_user_id` compared with the authenticated session. The acknowledgement body accepts only the opaque receipt id. It rejects `displayed_savings_integrity_ok`, explained amounts, evaluated saving, coupon text, and eligibility fields.
 
 No migration is written by this candidate.
+
+#### Review commercial change origins
+
+Table `app.review_commercial_change_origins`. Owner: the same measurement projection, written inside the existing `customer-commerce` transaction that commits one of the source mutations below. It is not a second price, not a journey sequence, and not an event.
+
+| Column | Null | Constraints | Mutability | Privacy |
+|---|---|---|---|---|
+| `id` uuid | not null | Primary key | Immutable | Not PII |
+| `journey_key` uuid | not null | The checkout's existing `checkout_journey_key`. This table does not mint a key | Immutable | Not a customer id |
+| `origin_kind` text | not null | `COUPON_APPLY`, `COUPON_REPLACE`, `COUPON_REMOVE`, `FULFILMENT_CHANGE`, `STALE_RECOVERY` | Immutable | No coupon characters |
+| `cart_id` uuid | null | Not null when `source_scope` is `CART_REVISION`. FK `carts` `ON DELETE RESTRICT` | Immutable | Commerce pointer. Not the metric join |
+| `checkout_id` uuid | not null | FK `checkouts` `ON DELETE RESTRICT` | Immutable | Commerce pointer |
+| `source_scope` text | not null | `CART_REVISION` or `CHECKOUT_REVISION` | Immutable | Not money |
+| `source_revision` bigint | not null | Check `> 0`. The revision the source transaction committed | Immutable | Not money |
+| `created_at` timestamptz | not null | Command clock of that transaction | Immutable | — |
+| `resolved_receipt_id` uuid | null | FK to `checkout_review_evaluation_receipts`. Set once, section 27A | Write-once | Not PII |
+| `resolution` text | null | Null until resolved. Then `CHANGED_RESULT` or `UNCHANGED_RESULT` | Write-once with `resolved_receipt_id` | Not copy |
+
+```text
+UNIQUE (cart_id, source_revision) WHERE source_scope = 'CART_REVISION'
+UNIQUE (checkout_id, source_revision) WHERE source_scope = 'CHECKOUT_REVISION'
+```
+
+A committed revision value is issued once, so one source mutation has one origin row. A no-op that does not bump a revision writes no origin.
+
+#### Cart to Review continuations
+
+Table `app.cart_review_continuations`. Owner: the same measurement projection. Written only by the Cart Checkout action in section 27A. It is the grain of Cart → Checkout Review continuation. It is not a checkout row and not a journey sequence.
+
+| Column | Null | Constraints | Mutability | Privacy |
+|---|---|---|---|---|
+| `id` uuid | not null | Primary key. Opaque `cart_continuation_id` returned to the owning cart client | Immutable | Not PII. Not a customer, guest, or coupon identifier |
+| `cart_id` uuid | not null | FK `carts` `ON DELETE RESTRICT`. Ownership and retry identity under the cart lock | Immutable | Commerce pointer. The metric does not join through customer identity |
+| `journey_key` uuid | null | Set once to the `checkout_journey_key` `startCheckout` mints or copies. Unique when not null | Write-once | Not PII |
+| `created_at` timestamptz | not null | Server clock of the Cart Checkout action. Report cutoff compares this instant | Immutable | — |
+
+```text
+UNIQUE (cart_id) WHERE journey_key IS NULL
+UNIQUE (journey_key) WHERE journey_key IS NOT NULL
+```
+
+One cart has at most one unassigned continuation. One journey key has at most one continuation. No customer column. No coupon text. No money.
 
 ---
 
@@ -1297,28 +1377,32 @@ FAÇADES = EXISTING /api/v1/* AND /api/admin/v1/*
 NEW_SERVICE = NO
 NEW_ROUTE = YES_EXISTING_FACADE_EXTENSION
 NEW_CUSTOMER_FACADE_ROUTE = POST /api/v1/checkouts/{checkoutId}/review-presented
+NEW_CUSTOMER_FACADE_ROUTE_CART_CONTINUATION = POST /api/v1/cart/review-continuation
 NEXT_ROUTE_HANDLER = NO
 SERVER_ACTION = NO
 SECOND_BACKEND = NO
 ANALYTICS_SERVICE = NO
 ```
 
-The new route is measurement acknowledgement only. It extends the existing `customer-commerce` `/api/v1/*` façade, the same process that already serves `POST /api/v1/checkouts/{checkoutId}/evaluate`. It does not by itself require D-383 or ARCH-R24. Section 31 records the full re-evaluation.
+The two new routes are measurement only. They extend the existing `customer-commerce` `/api/v1/*` façade, the same process that already serves `POST /api/v1/checkouts/{checkoutId}/evaluate`. They do not by themselves require D-383 or ARCH-R24. Section 31 records the full re-evaluation.
 
 ### Customer modifications
 
 | Route | Owner | Auth | Intent | Response | Concurrency | Errors |
 |---|---|---|---|---|---|---|
+| `POST /api/v1/cart/review-continuation` | Cart Checkout action in the existing measurement projection | Existing cart credential | Record one Cart → Review continuation marker, or return the open one | Opaque `cartContinuationId` only. No price, revision bump, coupon, or journey mint | Cart lock. One unassigned marker per cart. A second call returns that marker | Does not bump `carts.revision`. Body money, coupon text, and customer identity are rejected |
 | `POST /api/v1/cart/coupon` | Cart `applyCartCoupon` | Existing cart credential | Store one canonical code | Cart revision plus, after the following evaluate, `CommercialExplanation` | `expectedRevision` | `CART_COUPON_UNKNOWN` writes nothing. Stale revision writes nothing. |
 | `POST /api/v1/cart/coupon/remove` | Cart `removeCartCoupon` | Existing cart credential | Clear the code | Same | `expectedRevision` | Stale revision writes nothing |
 | `POST /api/v1/cart/evaluate` | `evaluateCart` | Existing cart credential | Read-only quote | Quote plus explanation, progress, complimentary projection, coupon outcome | Does not bump revision | Existing indeterminate errors |
 | `POST /api/v1/checkouts/{checkoutId}/evaluate` | `evaluateCheckout` | Customer session | Recompute from the cart code and checkout fulfilment. Persist or reuse one review evaluation receipt. Return its opaque id with the commercial result | Commercial result plus explanation plus `reviewEvaluationReceiptId`. `VALID_BUT_NOT_SELECTED` does not throw `CHECKOUT_COUPON_INELIGIBLE`. The receipt is not cohort entry | Does not bump cart or checkout revision merely to record the receipt. `expectedCheckoutRevision` still gates the commercial read | Existing repricing and merchandise errors |
-| `POST /api/v1/checkouts/{checkoutId}/review-presented` | Measurement acknowledgement in `customer-commerce` | Existing owning customer session | Idempotently record that this server-issued receipt was presented | Empty commercial body. No price, revision, or explanation rewrite | One `CHECKOUT_REVIEW_PRESENTED` per receipt. After the head lock, the procedure re-reads that receipt before it consults `closed_at`. A duplicate acknowledgement returns the existing event, including when the head is closed, and consumes no sequence. A receipt with no presented event on a closed head is rejected | Unknown receipt, receipt for another checkout or journey, or a caller who does not own the checkout. The body accepts only the opaque receipt id. Money, coupon text, and eligibility fields are rejected |
+| `POST /api/v1/checkouts/{checkoutId}/review-presented` | Measurement acknowledgement in `customer-commerce` | Existing owning customer session | Idempotently record that this server-issued receipt was presented | Empty commercial body. No price, revision, or explanation rewrite | One `CHECKOUT_REVIEW_PRESENTED` per receipt. After the head lock, the procedure re-reads that receipt before it consults `closed_at`. A duplicate acknowledgement returns the existing event, including when the head is closed, and consumes no sequence. A receipt with no presented event on a closed head is rejected | Unknown receipt, receipt for another checkout or journey, or a caller who does not own the checkout. The body accepts only the opaque receipt id. Money, coupon text, eligibility fields, explained amounts, and `displayed_savings_integrity_ok` are rejected |
 | `prepareCheckoutForPayment`, called inside `startPayment`, `retryPayment`, and `completeZeroPayableCheckout` before those commands bind | Checkout | Customer session | Revalidate before bind. There is no separate payment-prepare route. An optional opaque receipt id is measurement context only | Ready snapshot or `CHECKOUT_REPRICED` with explanation reason | `expectedCheckoutRevision`. Section 27A ensures the presentation event before a later journey event when that receipt id is present | Stale benefit, unavailable complimentary, exhausted cap, first-order lost. A missing or unknown receipt id does not change the price |
 | `POST /api/v1/payments` and retry | Payment | Customer session | Reserve claims for the active snapshot. The same optional receipt id may be carried so Pay can establish presentation before the attempt event | Unchanged commercial payment body | Existing payment idempotency key. Presentation ensure is idempotent | `PAYMENT_PROMOTION_CAPACITY_UNAVAILABLE`, first-order conflict. No coupon field is accepted. The receipt id is not money |
 | Existing order read routes | Order | Owning customer | Read sealed snapshot | Historical savings and complimentary line from the snapshot | None | No live promotion call |
 
 Checkout Review calls the cart coupon routes and then checkout evaluate. After the Review UI has committed that result to the presented Review state, it acknowledges the receipt. Pay does not wait on that acknowledgement. The Pay request may carry the same opaque receipt id so the server can record the presentation inside the payment-progression transaction. That is still one commercial state.
+
+`startCheckout` may carry the opaque `cartContinuationId` from the Cart Checkout action. That field is measurement association only. It is not money, not a coupon, and not eligibility. Section 27A states when it assigns `journey_key`. An unknown, already assigned, or other-cart id does not fail checkout and does not create a continuation.
 
 ### Admin modifications
 
@@ -1606,12 +1690,16 @@ Step 2 is that event's own idempotency identity. It is not a query for whether a
 CHECKOUT_REVIEW_PRESENTED =
   event_kind = CHECKOUT_REVIEW_PRESENTED
   AND review_evaluation_receipt_id = receipt.id
+COMMERCIAL_STATE_CHANGE =
+  event_kind = COMMERCIAL_STATE_CHANGE
+  AND review_evaluation_receipt_id = changed receipt.id
 SUCCESSFUL_DIRECT_ORDER_COMPLETION =
   event_kind = SUCCESSFUL_DIRECT_ORDER_COMPLETION
   AND journey_key = current journey
-OTHER_APPENDABLE_KINDS = their existing originating idempotency or provenance, where one already exists
 CUSTOMER_IDENTITY_AS_EVENT_IDEMPOTENCY_KEY = NO
 TELEMETRY_ARRIVAL_ORDER = NOT_AUTHORITY
+OCCURRED_AT_AS_EVENT_IDEMPOTENCY_KEY = NO
+GENERATED_EVENT_UUID_AS_ITS_OWN_DEDUP_KEY = NO
 ```
 
 `ensureAndLockJourneyMeasurementHead` runs in that same transaction, before any sequence is read:
@@ -1621,16 +1709,18 @@ INSERT INTO app.checkout_journey_measurement_heads (
   journey_key,
   next_sequence,
   created_at,
-  closed_at
+  closed_at,
+  latest_review_receipt_id
 ) VALUES (
   :journey_key,
   1,
   :now,
+  NULL,
   NULL
 )
 ON CONFLICT (journey_key) DO NOTHING;
 
-SELECT journey_key, next_sequence, created_at, closed_at
+SELECT journey_key, next_sequence, created_at, closed_at, latest_review_receipt_id
 FROM app.checkout_journey_measurement_heads
 WHERE journey_key = :journey_key
 FOR UPDATE;
@@ -1683,12 +1773,12 @@ The Order-materialization completion path below is that replay when the completi
 | Fact | When the event is written | Denominator |
 |---|---|---|
 | `CHECKOUT_REVIEW_PRESENTED` | The presentation acknowledgement commits, or the payment-progression transaction ensures that same receipt before it allocates a later event | Yes. This is the qualifying Review observation |
-| `COMMERCIAL_STATE_CHANGE` | Coupon apply, remove, replace, fulfilment change, or stale recovery that changes the Review result | No. It does not select a segment |
+| `COMMERCIAL_STATE_CHANGE` | The evaluateCheckout commit that inserts a new review receipt whose fingerprint differs from that journey's previous receipt and that resolves at least one review commercial change origin. Section 27A is the identity | No. It does not select a segment |
 | `REVIEW_TO_PAYMENT_PROGRESSION` | `prepareCheckoutForPayment` commits `READY_FOR_PAYMENT` for that key, after any ensured presentation | No |
 | `PAYMENT_ATTEMPT` | Payment initiation or `retryPayment` inserts the attempt, after any ensured presentation | No |
 | `SUCCESSFUL_DIRECT_ORDER_COMPLETION` | The Order-materialization transaction, after direct-order placement and accepted payment truth are both true | Numerator only |
 
-`occurred_at` is the clock `now` of the transaction that writes the event. A repaint does not create a receipt and does not write an event. Server `evaluateCheckout` writes a receipt, not this table.
+`occurred_at` is the clock `now` of the transaction that writes the event. A repaint does not create a receipt and does not write an event. `evaluateCheckout` writes a receipt. It writes a `COMMERCIAL_STATE_CHANGE` only in that same receipt transaction when the predicate in the next subsection matches. It does not write `CHECKOUT_REVIEW_PRESENTED`.
 
 ```text
 PAYMENT_PROGRESS_WITH_REVIEW_RECEIPT =
@@ -1706,6 +1796,157 @@ REVIEW_TO_PAYMENT_PROGRESSION.sequence
 ```
 
 whenever that Pay operation is using the receipt as proof that Review was presented. A first-head race cannot reverse that order. A later acknowledgement of the same receipt consumes no further sequence and does not add a denominator. Pay is not held for a separate analytics request, and no customer-visible wait is added.
+
+### Displayed savings integrity
+
+Approved Experience requires a measurable fact: the explained parts equal the evaluated saving. Candidate 5 stored `presentation_class` and `commercial_result_fingerprint` and did not store a fact from which that comparison can be derived. Design Readiness must not invent the field. Candidate 6 places the comparison on the review evaluation receipt.
+
+`evaluateCheckout` builds one `CommercialExplanation` from the same `buildDirectPricingQuote` result that is the authoritative commercial result of that evaluation. There is no second pricing pass and no second promotion pass. Before the receipt insert, in that same server evaluation, the comparison is:
+
+```text
+merchandise_or_order_saving_paise =
+  sum of primary-slot allocations that changed payable merchandise
+delivery_saving_paise =
+  delivery-slot realized discount included only when > 0, else 0
+explained_parts_paise =
+  merchandise_or_order_saving_paise + delivery_saving_paise
+evaluated_saving_paise =
+  those same allocation sums taken from that quote
+displayed_savings_integrity_ok =
+  explanation.total_saved_paise = explained_parts_paise
+  AND explained_parts_paise = evaluated_saving_paise
+```
+
+`explanation.total_saved_paise` is the total the server explanation will present. A consistent builder sets it to `explained_parts_paise`. The boolean is false when that total disagrees with the parts, or when the parts disagree with the quote's allocations, including a standing ₹0 delivery amount counted as a saving. The inputs are server integers from that one result. They are not formatted strings, not client amounts, and not a browser assertion.
+
+The boolean is written only by that evaluation, onto the immutable receipt. No customer or operator request body is its source. `review-presented`, cart continuation, Pay, and coupon commands reject the field. A client that echoes a value does not change the stored boolean. Reporting does not trust the browser.
+
+The presented event joins the receipt through the existing `review_evaluation_receipt_id`. A later report, for one `REPORT_AS_OF`, reads `CHECKOUT_REVIEW_PRESENTED` rows with `occurred_at < REPORT_AS_OF`, joins each to its receipt, and counts `displayed_savings_integrity_ok`. An unpresented receipt was not displayed and is not in that ratio. The same rows always yield the same boolean. The report does not re-sum money and does not need the explanation copy stored again.
+
+```text
+DISPLAYED_SAVINGS_INTEGRITY_AUTHORITY = SERVER_EVALUATION_OF_THE_SAME_QUOTE
+PERSISTED_ON = checkout_review_evaluation_receipts.displayed_savings_integrity_ok
+CLIENT_CAN_FORGE = NO
+SECOND_PRICING_AUTHORITY = NO
+SECOND_PROMOTION_AUTHORITY = NO
+RAW_COUPON_OR_ELIGIBILITY_STORED = NO
+IMMUTABLE = YES
+REPORT_DERIVATION = PRESENTED_EVENT_JOIN_RECEIPT
+```
+
+A true evaluation persists true. A deliberately mismatched explanation or allocation fixture persists false and can still be presented, so the negative case remains visible. The acknowledgement route cannot flip false to true.
+
+### Commercial state change
+
+Candidate 5 named `COMMERCIAL_STATE_CHANGE` for a coupon apply, coupon replace, coupon remove, fulfilment change, or stale recovery when the Review commercial result changes, and it required `review_evaluation_receipt_id` to be null for that kind. "One append per changed result" does not identify a row that the locked re-read can find before it allocates `journey_sequence`.
+
+The originating fact is a newly inserted review evaluation receipt that differs from the previous receipt on the same journey and that consumes at least one source origin. The persisted provenance identity is that new receipt's id. The locked re-read is the predicate above. The unique backstop is the partial unique index on `(review_evaluation_receipt_id)` where `event_kind = 'COMMERCIAL_STATE_CHANGE'`. Customer identity, telemetry arrival, the event row's own uuid, `occurred_at`, and an in-memory token are not that identity.
+
+#### Source origins
+
+Each origin is written in the transaction that commits the source mutation, and only when that transaction actually bumps the revision. A no-op writes nothing.
+
+| Kind | Transaction boundary in current source | Revision recorded |
+|---|---|---|
+| `COUPON_APPLY` | `applyCartCoupon` when `manual_coupon_code` changes from null to a canonical code and `carts.revision` increments | That new cart revision. `source_scope = CART_REVISION` |
+| `COUPON_REPLACE` | `applyCartCoupon` when one canonical code replaces a different stored code and the revision increments | That new cart revision |
+| `COUPON_REMOVE` | `removeCartCoupon` when a stored code becomes null and the revision increments | That new cart revision |
+| `FULFILMENT_CHANGE` | `setCheckoutFulfilment` or `setCheckoutFulfilmentTiming` when `bumpCheckoutRevisionAfterFulfilmentChange` commits | That new checkout revision. `source_scope = CHECKOUT_REVISION` |
+| `STALE_RECOVERY` | `invalidateReady` inside `prepareCheckoutForPayment`, the short transaction that locks the checkout and calls `invalidateReadyToDraft` only while status is `READY_FOR_PAYMENT` | The checkout revision `invalidateReadyToDraft` returns |
+
+Same-code apply, remove of an already empty code, and fulfilment that returns without a bump are no-ops. They have no origin.
+
+The origin stores `journey_key` only when that checkout already has `checkout_journey_key`. These writes do not mint a key and do not adopt a null key. Coupon and fulfilment commands must not invert the Cart-then-Checkout adoption rule in section 27A to manufacture one. A coupon change before any checkout, or a change on a checkout that still has a null key, has no origin. The later first Review receipt is the initial result, not a change from a previous Review result.
+
+The coupon transaction already holds the cart lock. It reads the active checkout for that cart only to copy an existing journey key and checkout id. The fulfilment and `invalidateReady` transactions already hold the checkout lock. They do not take the cart lock afterward.
+
+#### When the event is appended
+
+Inside the `evaluateCheckout` commit transaction, after the quote and explanation exist, and while the measurement head for that journey is locked:
+
+1. If a receipt already exists for `(checkout_id, checkout_revision, commercial_result_fingerprint)`, re-read it. Do not insert another.
+2. Otherwise insert one receipt. Set `displayed_savings_integrity_ok` from the comparison above. Set `previous_receipt_id` from `head.latest_review_receipt_id`. Then set `head.latest_review_receipt_id` to the new id. The digest does not include the boolean.
+3. Lock every origin for this `journey_key` whose `resolved_receipt_id` is null.
+4. If step 1 found an existing receipt, set those origins' `resolved_receipt_id` to that receipt and `resolution` to `UNCHANGED_RESULT`. Do not append `COMMERCIAL_STATE_CHANGE`.
+5. If step 2 inserted a receipt, resolve those origins onto it. `resolution` is `CHANGED_RESULT` only when `previous_receipt_id` is not null, the previous receipt's fingerprint differs, and at least one origin was unresolved. Otherwise `resolution` is `UNCHANGED_RESULT`.
+6. Append `COMMERCIAL_STATE_CHANGE` only for a new receipt whose resolved origins include `CHANGED_RESULT`. The append uses the procedure in this section. Its re-read key is `event_kind = COMMERCIAL_STATE_CHANGE` and `review_evaluation_receipt_id =` the new receipt id. The receipt insert, origin resolution, head pointer, and event insert commit together or roll back together.
+
+A quantity edit or other cart mutation that bumps `carts.revision` but is not one of the five kinds writes no origin. A later receipt whose fingerprint changes, with no unresolved origin, is not a `COMMERCIAL_STATE_CHANGE`.
+
+A retry of the same evaluation finds the existing receipt at step 1. If the event was committed with that receipt, a later acknowledgement of the change is the locked re-read of that receipt id. It returns the existing event, including when `closed_at` is set, and allocates no sequence. A concurrent duplicate of the same `(checkout_id, checkout_revision, fingerprint)` loses the unique index, re-reads the winner's receipt, and does not append a second event. Two different fingerprints are two receipts. The checkout row lock and then the head lock serialize them. Each resolves only the origins still unresolved at its turn.
+
+One source revision creates one origin. One origin is resolved onto one receipt. One changed receipt creates at most one `COMMERCIAL_STATE_CHANGE`. One origin therefore does not produce a second state-change event. Several origins that commit before one changed evaluation resolve onto that one receipt and that one event. That is one changed Review result, not one event per click.
+
+A new receipt on a closed head is a new fact. The append rejects it and the receipt insert rolls back with it. A retry that finds the receipt already committed is a replay: step 1 returns it, step 4 does not append, and a re-read of an existing change event returns that event without opening the head. Customer identity is not the key. The event uuid is not the key. `occurred_at` is not the key.
+
+```text
+COMMERCIAL_STATE_CHANGE_ORIGINATING_FACT = NEW_REVIEW_RECEIPT_WITH_A_DIFFERENT_FINGERPRINT_AND_AT_LEAST_ONE_SOURCE_ORIGIN
+PROVENANCE_IDENTITY = review_evaluation_receipt_id
+REREAD_PREDICATE = event_kind = COMMERCIAL_STATE_CHANGE AND review_evaluation_receipt_id = new receipt id
+UNIQUE_BACKSTOP = UNIQUE (review_evaluation_receipt_id) WHERE event_kind = 'COMMERCIAL_STATE_CHANGE'
+SAME_OPERATION_RETRY = RETURN_EXISTING_EVENT
+CONCURRENT_DUPLICATE = ONE_RECEIPT_AND_ONE_EVENT
+CLOSED_HEAD_NEW_RECEIPT = REJECT_AND_ROLL_BACK
+CLOSED_HEAD_REPLAY = RETURN_EXISTING_EVENT
+ONE_ORIGIN_MULTIPLE_EVENTS = NO
+ONE_RESULT_MULTIPLE_ORIGINS = ONE_EVENT
+```
+
+### Cart to Review continuation
+
+Approved Experience lists Cart → Checkout Review continuation as a secondary metric. The step-progression contract names Cart continue and Review reached as distinct steps. `CHECKOUT_JOURNEY_KEY` is required when the event is inside one logical checkout. Experience does not authorize leaving this metric uninstrumented, and it does not authorize renaming a checkout-row ratio as this metric.
+
+The ratio of journey keys that reach Review over checkout rows created with a journey key is rejected. Carts that never start checkout have no checkout row and disappear. Several checkout rows can share one `CHECKOUT_JOURNEY_KEY`. The two counts are different grains. Checkout is also entered by routes other than the Cart surface: `CheckoutClient` calls `startCheckout` for a direct visit, a refresh, a login return that does not present a Cart continuation id, and an in-checkout restart. `Sticky` navigation that is not the Cart Checkout action is the same exclusion.
+
+The grain is one `cart_review_continuations` row.
+
+```text
+ORIGINATING_CART_ACTION = activation of a Cart-surface Checkout control
+ROUTE = POST /api/v1/cart/review-continuation
+CART_EVALUATION_IS_NOT_THIS_ACTION = YES
+CART_REPAINT_IS_NOT_THIS_ACTION = YES
+CHECKOUT_CLIENT_MUST_NOT_CALL_THIS_ROUTE = YES
+```
+
+The Cart controls are the Checkout actions on the Cart surface, including `CartClient` and a Cart sticky or summary control whose only job is that same navigation. They call the route before navigation. Menu, payment return, and `CheckoutClient` do not call it. The route holds the cart lock, does not bump `carts.revision`, and does not mint `checkout_journey_key`.
+
+Under that lock:
+
+- If this cart has an unassigned continuation (`journey_key` null), return its id.
+- Else if this cart's current unpaid checkout already has a journey key and a continuation row for that key, return that id.
+- Else insert one row and return its id.
+
+A double submit or a second click before Review returns the same row. A repaint never calls the route. After successful completion or explicit cancel, the next Cart Checkout action inserts a new row because the previous row already holds the closed or cancelled journey key and the cart has no unassigned continuation. That is the next logical journey, not a second denominator for the old one.
+
+`checkout_journey_key` exists when `startCheckout` mints or copies it under the existing cart lock, by the rules already in this section. The Cart action does not create that key. `startCheckout` assigns it to a continuation only when the request presents `cartContinuationId` and all of these hold: the row exists, `cart_id` is the cart being started, `journey_key` on that row is null, and this command is minting or copying the checkout journey key in this transaction. The assignment writes that key before commit. A key that already existed on the checkout before this call is not attached. That keeps a checkout opened by another path outside the Cart metric. A missing, unknown, already assigned, or other-cart id is ignored. Checkout still proceeds. No continuation is created to repair it.
+
+```text
+DIRECT_CHECKOUT_ENTRY_WITHOUT_A_MATCHING_ID = EXCLUDED
+LOGIN_RETURN_COUNTS_ONLY_WHEN_THE_ID_IS_PRESENTED = YES
+LOST_HANDOFF_DOES_NOT_RECLASSIFY_A_NON_CART_START = YES
+UNASSIGNED_MARKER_STAYS_IN_THE_DENOMINATOR = YES
+```
+
+An unassigned row is a Cart continuation that never started checkout. It stays in the denominator and cannot enter the numerator. A direct checkout that starts without the id is outside both counts. The report must not join those two by `cart_id` alone.
+
+Numerator and denominator are both counts of continuation rows. For one `REPORT_AS_OF`:
+
+```text
+DENOMINATOR = continuation rows with created_at < REPORT_AS_OF
+NUMERATOR = those rows whose journey_key has a CHECKOUT_REVIEW_PRESENTED event with occurred_at < REPORT_AS_OF
+CHECKOUT_ROW_COUNT = NOT_USED
+ONE_LOGICAL_JOURNEY = ONE_CONTINUATION when a journey key is assigned
+NULL_JOURNEY_KEY = DENOMINATOR_ONLY
+```
+
+`UNIQUE (journey_key)` keeps one assigned journey at one denominator even when successor checkout rows share that key. The metric does not store a customer id, raw coupon text, or private eligibility. `cart_id` is the commerce pointer the cart lock and the ownership check already require. The rate does not join through customer identity.
+
+```text
+CART_REVIEW_CONTINUATION_SUPPORTED = YES
+CART_REVIEW_PROXY_FROM_CHECKOUT_ROWS = REJECTED
+SECONDARY_METRIC_RENAMED = NO
+SECONDARY_METRIC_LEFT_UNAVAILABLE = NO
+```
 
 ### Global cohort entry
 
@@ -1826,6 +2067,12 @@ Customer identity remains on checkout and on the first-order guard for eligibili
 | Payment-driven expired row, then a later completed checkout | Highest ordinal is the completion | Next `startCheckout` reads that one latest row | New journey key | It does not recover the older expired key | Boundary stands |
 | Historical active checkout after release | Null ordinal on the one non-terminal row | First Cart-then-Checkout adoption command | That row receives ordinal and journey key once | Historical terminal rows stay null and unordered | No `created_at` or UUID backfill |
 | Guest-cart reconciliation races payment binding | Both lock `customer_auth_users` before any cart | Separate transactions | Customer row serializes them | Existing revision conflict is allowed | No PostgreSQL deadlock. Measurement head is not locked before the customer or the cart |
+| Same commercial change retried | One origin at the committed revision, one receipt for that fingerprint | Evaluate re-reads the receipt, then the locked head re-reads the change event | The first commit | The retry allocates no second `journey_sequence` | One `COMMERCIAL_STATE_CHANGE` |
+| Concurrent duplicate evaluation of one changed result | Unique `(checkout_id, checkout_revision, commercial_result_fingerprint)` | Evaluate commit | One receipt and one event | The loser re-reads both | No second sequence |
+| New changed receipt after closure | Closed head and no change event for that receipt | Receipt insert and append are one transaction | The append rejects the new fact | The receipt does not commit | Head stays closed |
+| Replay of an existing change after closure | Existing change event for that receipt | Locked re-read before `closed_at` | Returns that event | No new sequence. Head is not reopened | One event |
+| Cart Checkout double submit | One unassigned continuation for the cart | Cart lock | The existing row | No second denominator | One continuation id |
+| Direct checkout without a continuation id | No matching marker | `startCheckout` | Checkout proceeds. No marker is created or consumed | Not counted in the Cart metric | Cart entries stay distinct |
 
 ---
 
@@ -1879,6 +2126,10 @@ Golden journeys `GJ-FIRST-ORDER` and `GJ-RETURNING-ORDER` are proof surfaces for
 | Pay before acknowledgement | Presentation is ensured before the later payment measurement event |
 | Customer identity is not the journey join | No customer column on measurement head, events, or receipts |
 | Raw coupon text is not stored | `presentation_class` allowlist only. Receipt fingerprint is a server digest |
+| Displayed savings integrity | Section 27A. Server boolean on the receipt. Presented event joins it. The browser cannot set it |
+| Commercial state-change identity | Section 27A. One changed receipt, one event. Source origin is the revision the command committed |
+| Cart → Review continuation | Section 27A. One Cart continuation row. Checkout-row ratio is rejected |
+| Cart amount before checkout context | Section 6. Authoritative for Cart scope only. Not a final payable |
 | Customer before cart | Section 10A |
 | Historical purchased savings stay immutable | Insert-only snapshot. Composite snapshot-line foreign key remains |
 | Customer-facing language stays projection-owned | LANG-1. No microcopy in this document |
@@ -1907,6 +2158,9 @@ and is not IMP-036J implementation evidence. Future implementation proof under T
 | Domain unit on `buildPromotionCandidates` / `selectBestCandidate` | Slot pairs, both-apply, BOGO non-stack, best payable, complimentary tie, `NONE_CHOSEN`, coupon did-not-improve, standing ₹0 waiver |
 | Domain unit on the first-order predicate | Failed payment absent; cancelled order still ineligible; no customer boolean |
 | Measurement | One key across a cart-revision checkout replacement; payment-driven latest `EXPIRED` copies that key onto the next checkout; a later explicit cancel or completion does not; unacknowledged evaluate does not enter the denominator; duplicate acknowledgement writes one presented event and consumes no second sequence; a duplicate acknowledgement after `closed_at` is set returns that existing presented event and adds no sequence or denominator; a new receipt with no presented event on a closed head is rejected; completion replay after closure returns the existing completion and inserts no second event; a closed head with no completion event is an invariant violation and is not repaired by a late append; Pay-before-ack keeps the presented sequence first; segment reads presented Reviews only; one completion event per journey on both normal and recovery materialization; revisit does not add a denominator; equal event timestamps order by journey sequence; half-open window; report cutoff uses `occurred_at` only |
+| Savings integrity | A true quote persists `displayed_savings_integrity_ok`; a deliberately mismatched explanation or allocation persists false; `review-presented` cannot set the boolean; the report reads the presented event's receipt and does not re-sum client amounts |
+| State-change dedup | The same coupon, fulfilment, or stale-recovery operation retried after commit allocates no second `journey_sequence`; a concurrent duplicate of that same receipt inserts one event; a closed-head replay returns that event; one origin does not produce a second state-change event |
+| Cart continuation | A Cart Checkout action is one continuation; a direct Checkout entry without that id is excluded; a second click or repaint does not add a row; an unassigned continuation stays in the denominator; one assigned journey key is one denominator; the row stores no customer id and no coupon text |
 | Persistence concurrency | Two complimentary activations; two first-order reservations sharing one guard when the winner is a pair; last cap unit; payment retry after `RELEASED`; composite snapshot-line foreign key rejects a cross-snapshot `snapshot_line_id`; payment binding racing `reconcileGuestCartWithCustomer` finishes without a deadlock; two transactions initialize one missing measurement head without a unique-violation abort; one acknowledgement and one Pay fallback race, leave exactly one presentation event, both complete, and keep a deterministic unique sequence; equal checkout timestamps and random UUID order cannot change predecessor selection; per-cart ordinals strictly increase; a latest `CANCELLED` or `COMPLETED` boundary blocks an older `EXPIRED` continuation; a latest payment-driven `EXPIRED` predecessor keeps the journey key; an active pre-extension checkout is adopted once under the Cart-then-Checkout rule; historical terminal rows are not ordered from UUID or `created_at` |
 | HTTP | Cart and checkout share one code; payment body has no coupon mutation; admin 409 and unique-index non-success |
 | Browser | Cart, Review, read-only Payment, order detail, narrow viewport, focus rules in the Product Definition |
@@ -1943,36 +2197,46 @@ Checked against the escalation examples:
 | Transport topology change | No |
 | Checkout Snapshot ownership change | No. Added sealed fields, a line origin, and a snapshot-local composite foreign key. Insert-only snapshot remains the purchased truth |
 | New analytics platform, queue, broker, or generic rules engine | No. Measurement is an append-only projection in the existing PostgreSQL database, written in the existing `customer-commerce` process and in the existing Order-materialization transaction, joined on an opaque journey key |
-| New façade route | One measurement route, `POST /api/v1/checkouts/{checkoutId}/review-presented`, on the existing `/api/v1/*` façade. It accepts an opaque server-issued receipt id, checks the owning customer session, and writes no price. It does not add a Server Action, a Next route handler, a second backend, or an analytics service |
-| New fields, migration, façade route extensions, benefit types, capability-specific tables and unique indexes | Yes. The guard table, the review evaluation receipt table, the measurement head and event tables, the snapshot candidate key, and `checkouts.cart_checkout_ordinal` are those examples. The ordinal is read only to choose this capability's latest Checkout predecessor. It does not redefine checkout identity, revision, status, payment, or Order materialization for the rest of the platform. They do **not** by themselves require a global ARCH bump |
+| New façade route | Two measurement routes on the existing `/api/v1/*` façade: `POST /api/v1/checkouts/{checkoutId}/review-presented` and `POST /api/v1/cart/review-continuation`. Each accepts an opaque server-issued id or writes one, checks the existing cart credential or owning customer session, and writes no price. They do not add a Server Action, a Next route handler, a second backend, or an analytics service |
+| New fields, migration, façade route extensions, benefit types, capability-specific tables and unique indexes | Yes. The guard table, the review evaluation receipt table, the measurement head and event tables, the review commercial change origin table, the cart continuation table, the snapshot candidate key, and `checkouts.cart_checkout_ordinal` are those examples. The ordinal is read only to choose this capability's latest Checkout predecessor. It does not redefine checkout identity, revision, status, payment, or Order materialization for the rest of the platform. They do **not** by themselves require a global ARCH bump |
 | Repository-wide checkout creation order | No. Causal order is allocated under the existing per-cart lock inside `startCheckout` and is consumed by IMP-036J journey continuity. It is not a new global ordering service |
 
-D-382 remains the sequencing authority. FD-036J-01, FD-036J-02, and FD-036J-03 remain Product Definition decisions. They are not copied into the Decision Register by this candidate. Candidate 4 re-checked the two new mechanisms against the same escalation examples. Conflict-safe head initialization is PostgreSQL concurrency inside the existing measurement projection. The per-cart ordinal is a Checkout column for this capability. Candidate 5 corrects only the locked append order: the event-specific idempotency re-read precedes closed-head rejection of a new fact. That ordering stays inside the same PostgreSQL measurement projection. None of these adds a service, a queue, a broker, an auth model, or a second Pricing or Promotion authority.
+D-382 remains the sequencing authority. FD-036J-01, FD-036J-02, and FD-036J-03 remain Product Definition decisions. They are not copied into the Decision Register by this candidate. Candidate 4 re-checked the two new mechanisms against the same escalation examples. Conflict-safe head initialization is PostgreSQL concurrency inside the existing measurement projection. The per-cart ordinal is a Checkout column for this capability. Candidate 5 corrects only the locked append order: the event-specific idempotency re-read precedes closed-head rejection of a new fact. Candidate 6 adds a server integrity boolean on the existing receipt, a revision-backed origin consumed by one changed receipt, and one Cart continuation row on the same projection. That work stays inside the existing PostgreSQL measurement projection and the existing `customer-commerce` process. None of these adds a service, a queue, a broker, an auth model, a permission, or a second Pricing or Promotion authority.
+
+```text
+GLOBAL_ARCHITECTURE_CHANGE_REQUIRED = NO
+NEW_SERVICE_REQUIRED = NO
+NEW_AUTH_MODEL_REQUIRED = NO
+NEW_PERMISSION_REQUIRED = NO
+SECOND_PRICING_AUTHORITY_CREATED = NO
+SECOND_PROMOTION_AUTHORITY_CREATED = NO
+```
 
 No D-383 is created. ARCH-R23 stays current.
 
 ---
 
-## 32. Fit result persisted by this lock
+## 32. Candidate 6 result, not a Fit PASS
 
-Candidate 5 recorded this fit result. Independent review `5347761109` accepted it. This lock
-persists that result without changing the fit semantics above.
+Candidate 5 recorded a fit result. Independent review `5347761109` accepted it. That PASS remains
+historical provenance. Candidate 6 does not claim it again and does not rewrite it as a failure.
+Independent Architecture Fit review of Candidate 6 has not been performed.
 
 ```text
-ARCHITECTURE_FIT_CANDIDATE_RESULT = PASS
+CANDIDATE_6_ARCHITECTURE_FIT_REVIEW = NOT_PERFORMED
+ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_6 = NO
+HISTORICAL_CANDIDATE_5_FIT_RESULT = PASS
 ARCHITECTURE_FIT_SOURCE_CANDIDATE = IMP-036J-FIT-CANDIDATE-5
-MANDATORY_STORIES_FITTED = US-036J-001 .. US-036J-013
-EXPERIENCE_FITTED = XD-IMP-036J-DRAFT-6
+MANDATORY_STORIES_RECHECKED = US-036J-001 .. US-036J-013
+EXPERIENCE_RECHECKED = XD-IMP-036J-DRAFT-6
 CONTRADICTIONS = NONE
 PRODUCT_DECISION_REQUIRED = NONE
 GLOBAL_DECISION_REQUIRED = NO
 ```
 
-Every mandatory story has a safe fit inside the accepted Promotion, Pricing, Cart, Checkout Snapshot, Order, Catalog, and Availability authorities. The approved Experience Definition's presentation facts and X3 measurement contract fit inside the same authorities, using the purchase-level guard, the snapshot-local foreign key, presented-Review measurement, Order-materialization completion, the customer-before-cart lock order, conflict-safe measurement-head initialization, per-cart checkout causal order, and closed-head replay that returns an existing fact before it rejects a new fact. Product and Experience semantics are unchanged. `PD-IMP-036J-DRAFT-6` and `XD-IMP-036J-DRAFT-6` are not modified.
+Every mandatory story still has a safe fit inside the accepted Promotion, Pricing, Cart, Checkout Snapshot, Order, Catalog, and Availability authorities. The approved Experience Definition's presentation facts and X3 measurement contract, including displayed-savings integrity, commercial state-change identity, and Cart → Review continuation, are specified inside the same authorities. Product and Experience semantics are unchanged. `PD-IMP-036J-DRAFT-6` and `XD-IMP-036J-DRAFT-6` are not modified.
 
 ```text
-IMP036J_ARCHITECTURE_FIT = PASS
-IMP036J_ARCHITECTURE_LOCKED = YES
 IMP036J_DESIGN_READINESS = NOT_PERFORMED
 QUALITY_TEST_PLAN_FINALIZED = NO
 MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = NO
@@ -1985,7 +2249,8 @@ IMP036J_NEXT_GATE = DESIGN_READINESS
 
 The architecture-fit proof plan in section 30 does not finalize the Quality/Test Plan. The X3
 measurement architecture in section 27A does not finalize the Measurement/Instrumentation Plan.
-Those plans remain part of Design Readiness. This lock does not authorize or start implementation.
+Those plans remain part of Design Readiness. This candidate does not authorize or start
+implementation and does not mark Architecture Fit PASS.
 
 ```text
 CANONICAL_GLOBAL_ARCHITECTURE_CHANGED = NO
@@ -1993,5 +2258,7 @@ ARCHITECTURE = ARCH-R23
 DECISION_REGISTER = DR-23
 D-383 = NOT_CREATED
 NEW_ADR = NO
+ROADMAP_CHANGED = NO
+STATE_CHANGED = NO
 IMPLEMENTATION_STARTED = NO
 ```

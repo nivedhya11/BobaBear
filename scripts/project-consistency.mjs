@@ -40469,24 +40469,34 @@ function checkImp036jPd2ExperienceTransition(roadmap, state, architecture, decis
 }
 
 /** Validate the locked artifact's metadata and current status fence, not historical candidates. */
+/**
+ * Candidate 6 is an unreviewed remediation of the locked Candidate 5 architecture.
+ * ROADMAP/STATE still record the Candidate 5 Fit PASS and lock. This file must not
+ * claim that Candidate 6 has passed, and it must keep the Candidate 5 provenance.
+ */
 export function evaluateImp036jArchitectureLock(text) {
   let meta;
   try {
     meta = JSON.parse(text.match(/^<!-- governance-meta\s*([\s\S]*?)-->/)?.[1] ?? "");
   } catch {
-    return { ok: false, code: "IMP036J_LOCK_META", message: "Locked capability metadata is missing or malformed" };
+    return { ok: false, code: "IMP036J_LOCK_META", message: "Capability metadata is missing or malformed" };
   }
   const expected = {
     status: "CURRENT", authority: "CAPABILITY_ARCHITECTURE", capability: "IMP-036J",
     productDefinition: "PD-IMP-036J-DRAFT-6", productDefinitionGate: "PASS",
     experienceDefinition: "XD-IMP-036J-DRAFT-6", experienceGate: "PASS",
-    architectureBase: "ARCH-R23", architectureFit: "PASS", architectureLock: "LOCKED",
-    candidateRevision: "IMP-036J-FIT-CANDIDATE-5",
+    architectureBase: "ARCH-R23", architectureFit: "NOT_PERFORMED", architectureLock: "NOT_LOCKED",
+    candidateRevision: "IMP-036J-FIT-CANDIDATE-6",
     architectureFitSourceCandidate: "IMP-036J-FIT-CANDIDATE-5",
-    independentArchitectureFitReview: "PASS", independentArchitectureFitReviewId: "5347761109",
-    architectureFitEvaluatedHead: "49912f35f2871ff77b9af267589d49666fc975ec",
-    architectureFitEvaluatedTree: "7046d5bb78012524972505f555226205199a58d0",
-    architectureFitEvaluatedGovernanceFingerprint: "ac6510d315148763069f06374a243a75a312a7693cf3e7c1d0eac71bc1026870",
+    architectureFitReviewForCandidate6: "NOT_PERFORMED",
+    architectureFitPassClaimedForCandidate6: false,
+    historicalCandidate5ArchitectureFit: "PASS",
+    historicalCandidate5ArchitectureLock: "LOCKED",
+    historicalCandidate5IndependentReview: "PASS",
+    historicalCandidate5IndependentReviewId: "5347761109",
+    historicalCandidate5EvaluatedHead: "49912f35f2871ff77b9af267589d49666fc975ec",
+    historicalCandidate5EvaluatedTree: "7046d5bb78012524972505f555226205199a58d0",
+    historicalCandidate5GovernanceFingerprint: "ac6510d315148763069f06374a243a75a312a7693cf3e7c1d0eac71bc1026870",
     designReadiness: "NOT_PERFORMED", implementationAuthorized: false, implementationStarted: false,
   };
   for (const [key, value] of Object.entries(expected)) {
@@ -40495,8 +40505,13 @@ export function evaluateImp036jArchitectureLock(text) {
   const fence = text.match(/```text\n([\s\S]*?)```/)?.[1] ?? "";
   const expectedMarkers = {
     STATUS: "CURRENT", AUTHORITY: "CAPABILITY_ARCHITECTURE", ARCHITECTURE_BASE: "ARCH-R23",
-    ARCHITECTURE_FIT: "PASS", ARCHITECTURE_LOCK: "LOCKED",
-    IMP036J_ARCHITECTURE_FIT: "PASS", IMP036J_ARCHITECTURE_LOCKED: "YES",
+    CANDIDATE_REVISION: "IMP-036J-FIT-CANDIDATE-6",
+    ARCHITECTURE_FIT: "NOT_PERFORMED", ARCHITECTURE_LOCK: "NOT_LOCKED",
+    ARCHITECTURE_FIT_REVIEW_FOR_CANDIDATE_6: "NOT_PERFORMED",
+    ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_6: "NO",
+    HISTORICAL_CANDIDATE_5_ARCHITECTURE_FIT: "PASS",
+    HISTORICAL_CANDIDATE_5_ARCHITECTURE_LOCK: "LOCKED",
+    IMP036J_ARCHITECTURE_FIT: "NOT_PERFORMED", IMP036J_ARCHITECTURE_LOCKED: "NO",
     IMP036J_NEXT_GATE: "DESIGN_READINESS", IMP036J_DESIGN_READINESS: "NOT_PERFORMED",
     IMPLEMENTATION_AUTHORIZED: "false", IMP036J_IMPLEMENTATION_AUTHORIZED: "NO",
     IMP036J_STARTED: "NO", IMP036J_IMPLEMENTATION_STARTED: "NO",
@@ -40504,16 +40519,26 @@ export function evaluateImp036jArchitectureLock(text) {
     IMPLEMENTATION_PLAN: "NOT_PERFORMED", GLOBAL_DECISION_REQUIRED: "NO",
     D383_REQUIRED: "NO", ARCH_R24_REQUIRED: "NO", NEW_ADR_REQUIRED: "NO",
     ARCHITECTURE_FIT_SOURCE_CANDIDATE: expected.architectureFitSourceCandidate,
-    INDEPENDENT_ARCHITECTURE_FIT_REVIEW: "PASS", INDEPENDENT_ARCHITECTURE_FIT_REVIEW_ID: "5347761109",
-    ARCHITECTURE_FIT_EVALUATED_HEAD: expected.architectureFitEvaluatedHead,
-    ARCHITECTURE_FIT_EVALUATED_TREE: expected.architectureFitEvaluatedTree,
-    ARCHITECTURE_FIT_EVALUATED_GOVERNANCE_FINGERPRINT: expected.architectureFitEvaluatedGovernanceFingerprint,
-    ARCHITECTURE_FIT_EVALUATED_CODEX_REVIEW: "5883601198",
-    ARCHITECTURE_FIT_EVALUATED_CI_RUN: "36521141717", ARCHITECTURE_FIT_EVALUATED_CODEQL_RUN: "36521141714",
   };
   for (const [key, value] of Object.entries(expectedMarkers)) {
     const values = [...fence.matchAll(new RegExp(`^${key} = (.+)$`, "gm"))].map((match) => match[1]);
     if (values.length !== 1 || values[0] !== value) return { ok: false, code: "IMP036J_LOCK_STATUS", message: `${key} must occur once with value ${value}` };
+  }
+  for (const token of [
+    "INDEPENDENT_ARCHITECTURE_FIT_REVIEW_ID = 5347761109",
+    "ARCHITECTURE_FIT_EVALUATED_HEAD = 49912f35f2871ff77b9af267589d49666fc975ec",
+    "ARCHITECTURE_FIT_EVALUATED_TREE = 7046d5bb78012524972505f555226205199a58d0",
+    "ARCHITECTURE_FIT_EVALUATED_GOVERNANCE_FINGERPRINT = ac6510d315148763069f06374a243a75a312a7693cf3e7c1d0eac71bc1026870",
+    "ARCHITECTURE_FIT_EVALUATED_CODEX_REVIEW = 5883601198",
+    "ARCHITECTURE_FIT_EVALUATED_CI_RUN = 36521141717",
+    "ARCHITECTURE_FIT_EVALUATED_CODEQL_RUN = 36521141714",
+    "CANDIDATE_5_REWRITTEN_AS_FAILED = NO",
+    "ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_6 = NO",
+  ]) {
+    if (!text.includes(token)) return { ok: false, code: "IMP036J_LOCK_STATUS", message: `Candidate 6 must preserve ${token}` };
+  }
+  if (text.includes("ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_6 = YES")) {
+    return { ok: false, code: "IMP036J_LOCK_STATUS", message: "Candidate 6 must not claim Architecture Fit PASS" };
   }
   return { ok: true };
 }
