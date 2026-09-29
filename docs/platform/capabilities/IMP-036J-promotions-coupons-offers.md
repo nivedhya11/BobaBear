@@ -13,7 +13,7 @@
   "experienceCriticality": "X3",
   "changeRisk": "CR2",
   "designReadiness": "NOT_PERFORMED",
-  "candidateRevision": "IMP-036J-FIT-CANDIDATE-4",
+  "candidateRevision": "IMP-036J-FIT-CANDIDATE-5",
   "architectureFit": "CANDIDATE_NOT_PERSISTED",
   "architectureLock": "NOT_LOCKED",
   "implementationAuthorized": false,
@@ -45,7 +45,7 @@ EXPERIENCE_DEFINITION_STATUS = APPROVED
 EXPERIENCE_GATE = PASS
 EXPERIENCE_CRITICALITY = X3
 CHANGE_RISK = CR2
-CANDIDATE_REVISION = IMP-036J-FIT-CANDIDATE-4
+CANDIDATE_REVISION = IMP-036J-FIT-CANDIDATE-5
 ARCHITECTURE_FIT = CANDIDATE_NOT_PERSISTED
 ARCHITECTURE_LOCK = NOT_LOCKED
 IMPLEMENTATION_AUTHORIZED = false
@@ -87,16 +87,24 @@ IMP-036J-FIT-CANDIDATE-3 = remediated those four open exact-head findings
   ARCHITECTURE_FIT_REVIEW = NOT_PERFORMED
   ARCHITECTURE_FIT_PASS = NO
   ARCHITECTURE_FIT_STOP = NO
-IMP-036J-FIT-CANDIDATE-4 = this document
-  remediates those two open exact-head findings
-  preserves the Candidate 2 and Candidate 3 remediations
+IMP-036J-FIT-CANDIDATE-4 = remediates those two open exact-head findings
+  exact-head review then found 4129513169
+  did not reach independent ChatGPT Architecture Fit review
+  ARCHITECTURE_FIT_REVIEW = NOT_PERFORMED
+  ARCHITECTURE_FIT_PASS = NO
+  ARCHITECTURE_FIT_STOP = NO
+IMP-036J-FIT-CANDIDATE-5 = this document
+  remediates 4129513169
+  preserves the Candidate 2, Candidate 3, and Candidate 4 remediations
   ARCHITECTURE_FIT_REVIEW = NOT_PERFORMED
 ```
 
 Candidate 2 did not receive an independent Architecture Fit verdict. Candidate 3 did not either:
 its exact-head review opened 4129243690 and 4129243701 and stopped before ChatGPT Architecture Fit
-review. `IMP036J_ARCHITECTURE_FIT` stayed `NOT_PERFORMED` through Candidate 3 and stays
-`NOT_PERFORMED` in Candidate 4. Candidate 3 is not rewritten as a Gate verdict.
+review. Candidate 4 remediated those two findings. Its exact-head review then opened 4129513169 and
+stopped before ChatGPT Architecture Fit review. `IMP036J_ARCHITECTURE_FIT` stayed `NOT_PERFORMED`
+through Candidate 4 and stays `NOT_PERFORMED` in Candidate 5. Earlier candidates are not rewritten
+as a Gate verdict.
 
 An Offer remains customer and operator meaning over the accepted Promotion authority. It does not
 set money by itself.
@@ -1163,7 +1171,7 @@ Purpose: one first-order entitlement for one logical purchase binding, shared by
 | `checkouts.cart_checkout_ordinal` bigint | Checkout | Strict causal creation order among Checkout rows for one Cart. Not `AUTHORITATIVE_JOURNEY_SEQUENCE`, not `checkouts.revision`, and not a customer-facing attempt number | Null only for historical rows that predate this column and have not been adopted. Not null on every checkout created or adopted after activation | Check `> 0` when non-null. Unique index `checkouts_cart_checkout_ordinal_uidx` on `(cart_id, cart_checkout_ordinal)` where `cart_checkout_ordinal` is not null. PostgreSQL unique indexes allow many nulls, so historical rows do not collide | Assigned once under the Cart lock during `insertDraftCheckout` or during the adoption write in section 27A | The Cart lock serializes allocation for that Cart. The unique index is the backstop | Immutable once non-null. Gaps are harmless and are not ordered by filling them | Not PII. Not returned on a customer or operator API |
 | `app.checkout_review_evaluation_receipts` | Same measurement projection | Immutable server record of one evaluation so a later acknowledgement can name what was shown | — | See the receipt table below | Inserted by `evaluateCheckout` when the authoritative result is new. A repeated evaluation of the same result returns the existing id | No journey sequence. Not a denominator row | Immutable. No update and no delete in application code | No customer id. No raw coupon text. No customer-facing copy |
 | `app.checkout_journey_measurement_heads` | Same projection | Allocates `AUTHORITATIVE_JOURNEY_SEQUENCE` and records closure | — | `journey_key` uuid primary key. `next_sequence` bigint not null, check `> 0`. `created_at` timestamptz not null. `closed_at` timestamptz null | Conflict-safe insert in section 27A, then `SELECT … FOR UPDATE`. `next_sequence` changes only while that row is locked. `closed_at` is set only in the Order-materialization transaction that inserts `SUCCESSFUL_DIRECT_ORDER_COMPLETION` | `INSERT … ON CONFLICT DO NOTHING` then the row lock. The first event and later events serialize on that row. A missing head is not initialized by `SELECT … FOR UPDATE` alone | `next_sequence` increments only under the row lock. `closed_at` write-once. No customer column. Payment `SUCCEEDED` does not set `closed_at`. Payment-driven `EXPIRED` does not set `closed_at` | Journey key is not PII |
-| `app.checkout_journey_measurement_events` | Same projection | Append-only authoritative measurement facts | — | See the event table below | Insert only in the transaction that establishes that fact. A receipt insert is not an event | Sequence comes from the locked head, after the event-specific re-read. Unique `(journey_key, journey_sequence)`. Partial unique indexes below | Immutable after insert. No update and no delete in application code. After `closed_at` is set, a new sequence is rejected. Re-reading an existing event returns that row and allocates nothing | No customer id. No raw coupon text |
+| `app.checkout_journey_measurement_events` | Same projection | Append-only authoritative measurement facts | — | See the event table below | Insert only in the transaction that establishes that fact. A receipt insert is not an event | Sequence comes from the locked head only after the event-specific re-read returns no row and the new fact passes the closed-head check. Unique `(journey_key, journey_sequence)`. Partial unique indexes below | Immutable after insert. No update and no delete in application code. The locked re-read of this event's idempotency identity precedes any closed-head rejection. An existing row is returned and allocates nothing, including when `closed_at` is set. A new fact on a closed head is rejected and allocates no sequence | No customer id. No raw coupon text |
 
 `cart_checkout_ordinal` is a Checkout column for this capability's predecessor selection. It is not a global checkout-ordering service and it is not exposed to customers.
 
@@ -1265,7 +1273,7 @@ The new route is measurement acknowledgement only. It extends the existing `cust
 | `POST /api/v1/cart/coupon/remove` | Cart `removeCartCoupon` | Existing cart credential | Clear the code | Same | `expectedRevision` | Stale revision writes nothing |
 | `POST /api/v1/cart/evaluate` | `evaluateCart` | Existing cart credential | Read-only quote | Quote plus explanation, progress, complimentary projection, coupon outcome | Does not bump revision | Existing indeterminate errors |
 | `POST /api/v1/checkouts/{checkoutId}/evaluate` | `evaluateCheckout` | Customer session | Recompute from the cart code and checkout fulfilment. Persist or reuse one review evaluation receipt. Return its opaque id with the commercial result | Commercial result plus explanation plus `reviewEvaluationReceiptId`. `VALID_BUT_NOT_SELECTED` does not throw `CHECKOUT_COUPON_INELIGIBLE`. The receipt is not cohort entry | Does not bump cart or checkout revision merely to record the receipt. `expectedCheckoutRevision` still gates the commercial read | Existing repricing and merchandise errors |
-| `POST /api/v1/checkouts/{checkoutId}/review-presented` | Measurement acknowledgement in `customer-commerce` | Existing owning customer session | Idempotently record that this server-issued receipt was presented | Empty commercial body. No price, revision, or explanation rewrite | One `CHECKOUT_REVIEW_PRESENTED` per receipt. After the head lock, a duplicate acknowledgement returns the existing event and consumes no sequence | Unknown receipt, receipt for another checkout or journey, or a caller who does not own the checkout. The body accepts only the opaque receipt id. Money, coupon text, and eligibility fields are rejected |
+| `POST /api/v1/checkouts/{checkoutId}/review-presented` | Measurement acknowledgement in `customer-commerce` | Existing owning customer session | Idempotently record that this server-issued receipt was presented | Empty commercial body. No price, revision, or explanation rewrite | One `CHECKOUT_REVIEW_PRESENTED` per receipt. After the head lock, the procedure re-reads that receipt before it consults `closed_at`. A duplicate acknowledgement returns the existing event, including when the head is closed, and consumes no sequence. A receipt with no presented event on a closed head is rejected | Unknown receipt, receipt for another checkout or journey, or a caller who does not own the checkout. The body accepts only the opaque receipt id. Money, coupon text, and eligibility fields are rejected |
 | `prepareCheckoutForPayment`, called inside `startPayment`, `retryPayment`, and `completeZeroPayableCheckout` before those commands bind | Checkout | Customer session | Revalidate before bind. There is no separate payment-prepare route. An optional opaque receipt id is measurement context only | Ready snapshot or `CHECKOUT_REPRICED` with explanation reason | `expectedCheckoutRevision`. Section 27A ensures the presentation event before a later journey event when that receipt id is present | Stale benefit, unavailable complimentary, exhausted cap, first-order lost. A missing or unknown receipt id does not change the price |
 | `POST /api/v1/payments` and retry | Payment | Customer session | Reserve claims for the active snapshot. The same optional receipt id may be carried so Pay can establish presentation before the attempt event | Unchanged commercial payment body | Existing payment idempotency key. Presentation ensure is idempotent | `PAYMENT_PROMOTION_CAPACITY_UNAVAILABLE`, first-order conflict. No coupon field is accepted. The receipt id is not money |
 | Existing order read routes | Order | Owning customer | Read sealed snapshot | Historical savings and complimentary line from the snapshot | None | No live promotion call |
@@ -1517,13 +1525,53 @@ One append procedure writes every measurement event. Presentation acknowledgemen
 ```text
 appendJourneyMeasurementEvent(tx, journeyKey, event, now):
   1. head = ensureAndLockJourneyMeasurementHead(tx, journeyKey, now)
-  2. enforce closed versus open
-  3. re-read this event's idempotency row
-  4. if that authoritative row already exists, return it and stop
+  2. existing = re-read this event's authoritative idempotency identity while the head is locked
+  3. if existing exists:
+       return existing
+       allocate no sequence
+       mutate no head state
+       stop
+  4. if head.closed_at IS NOT NULL:
+       reject the request as an attempt to establish a NEW fact on a closed journey
+       allocate no sequence
+       stop
   5. sequence = head.next_sequence
   6. increment head.next_sequence
-  7. insert the event at that sequence
-  8. commit with the originating commercial or measurement transaction
+  7. insert the new event at that sequence
+  8. if this newly inserted event is SUCCESSFUL_DIRECT_ORDER_COMPLETION:
+       set head.closed_at in this same Order-materialization transaction
+  9. commit with the originating commercial or measurement transaction
+```
+
+```text
+HEAD_LOCK
+→ IDEMPOTENCY_RE_READ
+→ EXISTING_EVENT_RETURN
+→ CLOSED_HEAD_CHECK_FOR_NEW_FACT
+→ SEQUENCE_ALLOCATION
+→ EVENT_INSERT
+
+IDEMPOTENT_REPLAY_LOOKUP_PRECEDES_CLOSED_HEAD_REJECTION = YES
+EXISTING_FACT_ON_CLOSED_HEAD = RETURN_EXISTING_AUTHORITATIVE_EVENT
+NEW_FACT_ON_CLOSED_HEAD = REJECT
+NEW_SEQUENCE_ON_CLOSED_HEAD = NO
+CLOSED_HEAD_REPLAY_MUTATES_HEAD = NO
+CLOSED_HEAD_REPLAY_ALLOCATES_SEQUENCE = NO
+CLOSED_HEAD_REPLAY_APPENDS_EVENT = NO
+```
+
+Step 2 is that event's own idempotency identity. It is not a query for whether any event of the kind has occurred, and it is not telemetry arrival order. Customer identity is not an event idempotency key.
+
+```text
+CHECKOUT_REVIEW_PRESENTED =
+  event_kind = CHECKOUT_REVIEW_PRESENTED
+  AND review_evaluation_receipt_id = receipt.id
+SUCCESSFUL_DIRECT_ORDER_COMPLETION =
+  event_kind = SUCCESSFUL_DIRECT_ORDER_COMPLETION
+  AND journey_key = current journey
+OTHER_APPENDABLE_KINDS = their existing originating idempotency or provenance, where one already exists
+CUSTOMER_IDENTITY_AS_EVENT_IDEMPOTENCY_KEY = NO
+TELEMETRY_ARRIVAL_ORDER = NOT_AUTHORITY
 ```
 
 `ensureAndLockJourneyMeasurementHead` runs in that same transaction, before any sequence is read:
@@ -1548,7 +1596,7 @@ WHERE journey_key = :journey_key
 FOR UPDATE;
 ```
 
-The select must return exactly one row. Closure, the event-specific re-read, and sequence allocation happen only after that row is locked. `next_sequence` starts at `1` and changes only while the lock is held. `recorded_at` is not an order. The unique `(journey_key, journey_sequence)` constraint remains a backstop for a writer that skips the lock.
+The select must return exactly one row. The Candidate 5 correction happens only after that row is locked. While the lock is held, the procedure re-reads this event's idempotency identity, returns the existing event when one is found, and only then uses `closed_at` to reject a new fact. Sequence allocation follows that closed-head check. `next_sequence` starts at `1` and changes only while the lock is held, and a replay does not change it. `recorded_at` is not an order. The unique `(journey_key, journey_sequence)` constraint remains a backstop for a writer that skips the lock.
 
 ```text
 MEASUREMENT_HEAD_INITIALIZATION =
@@ -1564,18 +1612,33 @@ Two transactions for a missing head may both reach the insert. `INSERT ... ON CO
 UNIQUE_PRESENTED_EVENT_PER_RECEIPT = YES
 ```
 
-`ensureReviewPresented` uses the same procedure. After the head is locked it looks up `CHECKOUT_REVIEW_PRESENTED` for that evaluation receipt. When the row exists, it returns that event and does not consume a sequence. Otherwise it takes `head.next_sequence`, increments the head, and inserts the presented event. The partial unique index on the receipt stays a database backstop. The expected duplicate acknowledgement is the locked re-read, which is a semantic no-op, not a failed transaction.
+`ensureReviewPresented` uses the same procedure. Its identity is `event_kind = CHECKOUT_REVIEW_PRESENTED` and `review_evaluation_receipt_id = receipt.id`. After the head is locked it re-reads that identity before it consults `closed_at`. When the row exists, it returns that event, including when `closed_at` is already set, and it does not consume a sequence, insert another event, mutate the head, or reopen the journey. When the row does not exist and `closed_at` is set, the procedure rejects the new presentation and allocates no sequence. When the row does not exist and the head is open, it takes `head.next_sequence`, increments the head, and inserts the presented event. The partial unique index on the receipt stays a database backstop. The expected duplicate acknowledgement is the locked re-read, which is a semantic no-op, not a failed transaction.
 
-When `closed_at` is already set, a new ordinary Review or payment event is rejected and the journey is not reopened. An idempotent replay of a fact that already exists still returns that authoritative row.
+A delayed duplicate acknowledgement after successful completion is that replay. The sequence is Review presented, then payment, then Order materialization, then `SUCCESSFUL_DIRECT_ORDER_COMPLETION`, then the head closes, then the delayed acknowledgement of the same receipt. The final acknowledgement returns the existing presented event. It adds no new event, no new denominator, and no new sequence, and it does not reopen the journey. A receipt that has never produced a `CHECKOUT_REVIEW_PRESENTED` event is a new fact. After closure that request is rejected and does not create a denominator.
 
 ```text
 NEW_EVENT_AFTER_SUCCESSFUL_COMPLETION = REJECTED
 IDEMPOTENT_REPLAY_OF_EXISTING_EVENT = ALLOWED
+NEW_PRESENTATION_AFTER_CLOSED_JOURNEY = REJECT
+DUPLICATE_ACK_AFTER_COMPLETION = IDEMPOTENT_SUCCESS
 ```
 
-Only the Order-materialization transaction sets `closed_at`, and only while it still holds that head lock, after the completion event insert. Payment success does not set it. Payment-driven expiry does not set it.
+Only the Order-materialization transaction sets `closed_at`, and only while it still holds that head lock, after the completion event insert. Payment success does not set it. Payment-driven expiry does not set it. A replay of an existing event does not clear `closed_at` and does not reopen the head.
 
-The Order-materialization completion path below is that replay when the completion event is already present. When completion is the first event for the key, the same conflict-safe head procedure creates the head. A numerator is still counted only for a journey that has the qualifying presented Review. Payment `SUCCEEDED` does not close the head.
+`SUCCESSFUL_DIRECT_ORDER_COMPLETION` has at most one event per journey. Its idempotency identity is the partial unique index: `journey_key` where `event_kind = 'SUCCESSFUL_DIRECT_ORDER_COMPLETION'`. Order-materialization replay or recovery locks the head, re-reads that identity, and returns the existing event when it is present, including when `closed_at` is already set. That replay allocates no sequence and inserts no second completion event.
+
+```text
+COMPLETION_REPLAY_AFTER_CLOSURE = RETURN_EXISTING_COMPLETION_EVENT
+```
+
+A head whose `closed_at` is set and whose `SUCCESSFUL_DIRECT_ORDER_COMPLETION` event is absent is not a normal replay case. Closure is written only in the same Order-materialization transaction that inserts that event, so the combination is an invariant violation. The procedure does not repair it by appending a completion after closure, by allocating a sequence, or by clearing `closed_at`. Implementation proof must show that state cannot commit under that transaction boundary.
+
+```text
+CLOSED_HEAD_WITHOUT_COMPLETION_EVENT = INVARIANT_VIOLATION
+AUTO_REOPEN_OR_APPEND = NO
+```
+
+The Order-materialization completion path below is that replay when the completion event is already present. When completion is the first event for the key, the same conflict-safe head procedure creates the head, then the append procedure inserts the event and sets `closed_at`. A numerator is still counted only for a journey that has the qualifying presented Review. Payment `SUCCEEDED` does not close the head.
 
 | Fact | When the event is written | Denominator |
 |---|---|---|
@@ -1669,7 +1732,7 @@ In that same transaction, after those checks, and before commit:
 
 - If this checkout has no `checkout_journey_key`, this measurement contract does not invent one. Historical orders stay outside the metric.
 - If there is no Order yet, the function inserts the Order and calls `appendJourneyMeasurementEvent` for exactly one `SUCCESSFUL_DIRECT_ORDER_COMPLETION`. That procedure creates the head when this unusual flow has no prior measurement event, then inserts the event and sets `closed_at`. `occurred_at` is that transaction's clock. A failure of the event insert rolls back the Order. The numerator is still counted only when the journey has a qualifying presented Review.
-- If the Order already exists, the function does not insert another Order. Before it treats measurement completion as satisfied, it ensures the completion event exists through the same procedure. When the event is already present, that ensure is a locked re-read and writes nothing. When it is absent, this transaction inserts it and sets `closed_at` if unset. The partial unique index still permits only one such event per journey key.
+- If the Order already exists, the function does not insert another Order. Before it treats measurement completion as satisfied, it ensures the completion event through the same procedure. When the event is already present, that ensure is a locked re-read and returns the existing event even if `closed_at` is already set. It writes nothing and allocates no sequence. When the event is absent and the head is open, this transaction inserts it and sets `closed_at`. When the event is absent and `closed_at` is already set, that is the invariant violation above: the procedure rejects the append and does not reopen the head. The partial unique index still permits only one such event per journey key.
 - A unique-violation race on `orders.checkout_id` follows the same ensure. The winning transaction commits the Order and the event together. The loser sees the committed Order and does not allocate a second completion sequence.
 
 Zero-payable completion also reaches this function through `tryMaterializeOrderAfterPaymentCompletion` after `completeZeroPayableCheckout`. The completion event is still written here, not in the zero-payable transaction and not because a payment row succeeded.
@@ -1709,7 +1772,11 @@ Customer identity remains on checkout and on the first-order guard for eligibili
 | Payment definitive non-success after checkout validity | `applyDefinitiveNonSuccess` writes payment `EXPIRED` and checkout `EXPIRED` together | Payment transaction, then a later `startCheckout` | The continuable predecessor's journey key is copied. No second denominator from the recovery itself | Next Review uses the same key | Not a new journey. Explicit cancel and completed checkout stay new-key boundaries |
 | Payment succeeded, Order hook failed | Payment success is committed. No completion event yet | Later `materializeOrderForCompletedCheckout`, including `recoverMissingOrdersBatch` | The Order and the one completion event commit together, or the existing-Order path ensures the event once | Recovery retries materialization | Payment success alone stays out of the numerator |
 | Evaluate response never presented | Server receipt may exist | `evaluateCheckout` | No presentation event | Acknowledgement, if it later happens, is the first denominator observation | `DENOMINATOR_EFFECT = NONE` until then |
-| Duplicate presentation acknowledgement | One receipt id | Presentation transaction re-reads under the locked head | The first event commits | The second returns that event and consumes no sequence. The unique index is only a backstop | One `CHECKOUT_REVIEW_PRESENTED`. No second denominator |
+| Duplicate presentation acknowledgement | One receipt id | Presentation transaction re-reads under the locked head before it consults `closed_at` | The first event commits | The second returns that event and consumes no sequence. The unique index is only a backstop | One `CHECKOUT_REVIEW_PRESENTED`. No second denominator |
+| Duplicate Review acknowledgement after successful completion | Existing presented event for that receipt, completion event present, `closed_at` set | Acknowledgement locks the head, then re-reads that receipt | Returns the existing presented event | No closure error. No new sequence. No new denominator. `closed_at` stays set | One denominator. Journey stays closed |
+| Completion replay after closure | Existing `SUCCESSFUL_DIRECT_ORDER_COMPLETION`, `closed_at` set | Materialization or recovery locks the head, then re-reads that completion identity | Returns the existing completion event | No second completion. No new sequence. Head is not reopened | Existing numerator fact |
+| New Review fact after closure | Closed head. That receipt has no presented event | Locked re-read finds no event, then the closed-head check rejects | No event is inserted | No sequence. No new denominator. Head stays closed | `NEW_PRESENTATION_AFTER_CLOSED_JOURNEY = REJECT` |
+| Closed head without a completion event | `closed_at` set and no `SUCCESSFUL_DIRECT_ORDER_COMPLETION` row | Completion ensure re-reads that journey identity under the head lock and finds nothing | Invariant violation. Not a replay | No completion append. No sequence. No reopen. `closed_at` is not cleared | Not repaired by a late completion insert |
 | Pay before the async acknowledgement commits | Same server-issued receipt id carried as measurement context | Payment-progression transaction | Presentation event is inserted first, then the progression or attempt event | A later ack of that receipt returns the existing event | Journey order stays causal. Pay is not delayed |
 | First measurement event, no head yet | Acknowledgement and Pay fallback both start | Each uses `INSERT … ON CONFLICT DO NOTHING` then `SELECT … FOR UPDATE` | One head row. The presented receipt is written once. Pay continues | The waiter re-reads and does not abort on a unique violation | Review sequence is strictly before the payment sequence when Pay relies on that receipt |
 | Duplicate acknowledgement after Pay already ensured the receipt | Existing presented event | Acknowledgement after the head lock | Returns the existing event | No new sequence for that receipt | One denominator |
@@ -1798,7 +1865,7 @@ Not executed by this candidate. Future implementation proof under TEST-1:
 |---|---|
 | Domain unit on `buildPromotionCandidates` / `selectBestCandidate` | Slot pairs, both-apply, BOGO non-stack, best payable, complimentary tie, `NONE_CHOSEN`, coupon did-not-improve, standing ₹0 waiver |
 | Domain unit on the first-order predicate | Failed payment absent; cancelled order still ineligible; no customer boolean |
-| Measurement | One key across a cart-revision checkout replacement; payment-driven latest `EXPIRED` copies that key onto the next checkout; a later explicit cancel or completion does not; unacknowledged evaluate does not enter the denominator; duplicate acknowledgement writes one presented event and consumes no second sequence; Pay-before-ack keeps the presented sequence first; segment reads presented Reviews only; one completion event per journey on both normal and recovery materialization; revisit does not add a denominator; equal event timestamps order by journey sequence; half-open window; report cutoff uses `occurred_at` only |
+| Measurement | One key across a cart-revision checkout replacement; payment-driven latest `EXPIRED` copies that key onto the next checkout; a later explicit cancel or completion does not; unacknowledged evaluate does not enter the denominator; duplicate acknowledgement writes one presented event and consumes no second sequence; a duplicate acknowledgement after `closed_at` is set returns that existing presented event and adds no sequence or denominator; a new receipt with no presented event on a closed head is rejected; completion replay after closure returns the existing completion and inserts no second event; a closed head with no completion event is an invariant violation and is not repaired by a late append; Pay-before-ack keeps the presented sequence first; segment reads presented Reviews only; one completion event per journey on both normal and recovery materialization; revisit does not add a denominator; equal event timestamps order by journey sequence; half-open window; report cutoff uses `occurred_at` only |
 | Persistence concurrency | Two complimentary activations; two first-order reservations sharing one guard when the winner is a pair; last cap unit; payment retry after `RELEASED`; composite snapshot-line foreign key rejects a cross-snapshot `snapshot_line_id`; payment binding racing `reconcileGuestCartWithCustomer` finishes without a deadlock; two transactions initialize one missing measurement head without a unique-violation abort; one acknowledgement and one Pay fallback race, leave exactly one presentation event, both complete, and keep a deterministic unique sequence; equal checkout timestamps and random UUID order cannot change predecessor selection; per-cart ordinals strictly increase; a latest `CANCELLED` or `COMPLETED` boundary blocks an older `EXPIRED` continuation; a latest payment-driven `EXPIRED` predecessor keeps the journey key; an active pre-extension checkout is adopted once under the Cart-then-Checkout rule; historical terminal rows are not ordered from UUID or `created_at` |
 | HTTP | Cart and checkout share one code; payment body has no coupon mutation; admin 409 and unique-index non-success |
 | Browser | Cart, Review, read-only Payment, order detail, narrow viewport, focus rules in the Product Definition |
@@ -1839,7 +1906,7 @@ Checked against the escalation examples:
 | New fields, migration, façade route extensions, benefit types, capability-specific tables and unique indexes | Yes. The guard table, the review evaluation receipt table, the measurement head and event tables, the snapshot candidate key, and `checkouts.cart_checkout_ordinal` are those examples. The ordinal is read only to choose this capability's latest Checkout predecessor. It does not redefine checkout identity, revision, status, payment, or Order materialization for the rest of the platform. They do **not** by themselves require a global ARCH bump |
 | Repository-wide checkout creation order | No. Causal order is allocated under the existing per-cart lock inside `startCheckout` and is consumed by IMP-036J journey continuity. It is not a new global ordering service |
 
-D-382 remains the sequencing authority. FD-036J-01, FD-036J-02, and FD-036J-03 remain Product Definition decisions. They are not copied into the Decision Register by this candidate. Candidate 4 re-checked the two new mechanisms against the same escalation examples. Conflict-safe head initialization is PostgreSQL concurrency inside the existing measurement projection. The per-cart ordinal is a Checkout column for this capability. Neither adds a service, a queue, a broker, an auth model, or a second Pricing or Promotion authority.
+D-382 remains the sequencing authority. FD-036J-01, FD-036J-02, and FD-036J-03 remain Product Definition decisions. They are not copied into the Decision Register by this candidate. Candidate 4 re-checked the two new mechanisms against the same escalation examples. Conflict-safe head initialization is PostgreSQL concurrency inside the existing measurement projection. The per-cart ordinal is a Checkout column for this capability. Candidate 5 corrects only the locked append order: the event-specific idempotency re-read precedes closed-head rejection of a new fact. That ordering stays inside the same PostgreSQL measurement projection. None of these adds a service, a queue, a broker, an auth model, or a second Pricing or Promotion authority.
 
 No D-383 is created. ARCH-R23 stays current.
 
@@ -1856,7 +1923,7 @@ PRODUCT_DECISION_REQUIRED = NONE
 GLOBAL_DECISION_REQUIRED = NO
 ```
 
-Every mandatory story has a safe fit inside the accepted Promotion, Pricing, Cart, Checkout Snapshot, Order, Catalog, and Availability authorities. The approved Experience Definition's presentation facts and X3 measurement contract fit inside the same authorities, using the purchase-level guard, the snapshot-local foreign key, presented-Review measurement, Order-materialization completion, the customer-before-cart lock order, conflict-safe measurement-head initialization, and per-cart checkout causal order in this candidate. Product and Experience semantics are unchanged. `PD-IMP-036J-DRAFT-6` and `XD-IMP-036J-DRAFT-6` are not modified.
+Every mandatory story has a safe fit inside the accepted Promotion, Pricing, Cart, Checkout Snapshot, Order, Catalog, and Availability authorities. The approved Experience Definition's presentation facts and X3 measurement contract fit inside the same authorities, using the purchase-level guard, the snapshot-local foreign key, presented-Review measurement, Order-materialization completion, the customer-before-cart lock order, conflict-safe measurement-head initialization, per-cart checkout causal order, and closed-head replay that returns an existing fact before it rejects a new fact. Product and Experience semantics are unchanged. `PD-IMP-036J-DRAFT-6` and `XD-IMP-036J-DRAFT-6` are not modified.
 
 ```text
 IMP036J_ARCHITECTURE_FIT = NOT_PERFORMED
