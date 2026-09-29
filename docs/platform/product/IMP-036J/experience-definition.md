@@ -54,8 +54,10 @@ FOUNDER_EXPERIENCE_UAT = NOT_PERFORMED
 
 This document is the approved Experience Definition for IMP-036J. Independent Experience Gate
 review `5342581233` returned PASS for `XD-IMP-036J-DRAFT-6`. The version stays
-`XD-IMP-036J-DRAFT-6`. This record does not perform Architecture Fit, does not lock architecture,
-does not perform Design Readiness, does not authorize implementation, and does not change
+`XD-IMP-036J-DRAFT-6`. This Experience Definition itself did not perform Architecture Fit.
+Independent Architecture Fit later returned PASS for Candidate 5. The capability architecture
+is now locked. The next gate is Design Readiness, which remains NOT_PERFORMED. Implementation
+remains unauthorized. This record does not change
 [`product-definition.md`](./product-definition.md). Lifecycle truth remains
 [`ROADMAP.md`](../../ROADMAP.md) and [`STATE.md`](../../STATE.md).
 
@@ -715,7 +717,7 @@ The ordering is not inferred from analytics ingestion order, batch processing or
 
 The occurrence timestamp of the one global cohort-entry Review is the time tested against cohort windows. Each event's occurrence timestamp remains the semantic used for report-cutoff membership. Sequence provides the total order inside the journey, including when timestamps are equal. Sequence also identifies that one global cohort-entry Review: the qualifying Review with the lowest sequence for the key, across every qualifying Review, not inside one window.
 
-This definition does not select whether the sequence is an integer, a UUID, a revision column, a version number, a database sequence, or an event-stream offset. Those are later Architecture Fit and Measurement Plan decisions.
+This definition does not select whether the sequence is an integer, a UUID, a revision column, a version number, a database sequence, or an event-stream offset. Locked Architecture Fit has selected that representation and mechanism. The Measurement Plan may operationalize and validate instrumentation. It does not reselect architecture.
 
 ### Cohort entry and measurement interval
 
@@ -1430,7 +1432,7 @@ REPORT_AS_OF_DEFINED = YES
 UNFINISHED_AT_CUTOFF_DEFINED = YES
 SEGMENT_ATTRIBUTION_REPRODUCIBLE = YES
 SNAPSHOT_IMMUTABILITY_DEFINED = YES
-ARCHITECTURE_MECHANISM_CHOSEN = NO
+ARCHITECTURE_MECHANISM_CHOSEN = YES
 PRODUCT_BEHAVIOUR_CHANGED = NO
 OPEN_EXPERIENCE_DECISIONS = NONE
 EXPERIENCE_GATE_EXECUTION = PERFORMED
@@ -1444,7 +1446,8 @@ IMPLEMENTATION_AUTHORIZED = NO
 ```
 
 Independent Experience Gate PASS is persisted. Independent Architecture Fit review `5347761109`
-passed Candidate 5; the capability architecture is locked. The next gate is Design Readiness,
-still NOT_PERFORMED. Quality/Test Plan and Measurement/Instrumentation Plan finalization and
-the Implementation Plan remain pending. Implementation remains unauthorized. Experience
-semantics and Experience Gate provenance are unchanged.
+passed Candidate 5; the capability architecture is locked. `ARCHITECTURE_MECHANISM_CHOSEN = YES`
+records that choice by locked Architecture Fit, not by this Experience Definition. The next gate
+is Design Readiness, still NOT_PERFORMED. Quality/Test Plan and Measurement/Instrumentation Plan
+finalization and the Implementation Plan remain pending. Implementation remains unauthorized.
+Experience semantics and Experience Gate provenance are unchanged.
