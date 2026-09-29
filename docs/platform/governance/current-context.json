@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "authority": "NON_AUTHORITATIVE",
-  "notice": "Generated projection of canonical governance documents. ROADMAP.md, STATE.md, ARCHITECTURE.md, and decision-register.md remain the authority. This file must not change lifecycle, product, experience, architecture, or delivery-policy semantics.",
+  "notice": "Generated current-position projection from ROADMAP.md, STATE.md, ARCHITECTURE.md, and decision-register.md. These are extraction sources for this projection, not the complete canonical authority set. Applicable canonical authority and mandatory read requirements remain defined by AGENTS.md and the authorities it references. This projection must not substitute for applicable Product, Experience, Product Language, Architecture, Testing, or per-IMP authority.",
   "generatedBy": "scripts/governance-context.mjs",
   "sources": [
     "docs/platform/ROADMAP.md",

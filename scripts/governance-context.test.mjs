@@ -4,6 +4,8 @@ import path from "node:path";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 import {
+  EXTRACTION_SOURCES,
+  GOVERNANCE_CONTEXT_NOTICE,
   SNAPSHOT_REL,
   buildGovernanceContext,
   evaluateGovernanceContextDrift,
@@ -92,7 +94,8 @@ describe("governance context snapshot", () => {
     const parsed = JSON.parse(first);
     assert.equal(parsed.authority, "NON_AUTHORITATIVE");
     assert.equal(parsed.schemaVersion, 1);
-    assert.match(parsed.notice, /remain the authority/);
+    assert.equal(parsed.notice, GOVERNANCE_CONTEXT_NOTICE);
+    assert.deepEqual(parsed.sources, [...EXTRACTION_SOURCES]);
     const roadmap = JSON.parse(
       readFileSync(path.join(projectRoot, "docs/platform/ROADMAP.md"), "utf8").match(
         /<!--\s*governance-meta\s*([\s\S]*?)-->/,
@@ -111,6 +114,24 @@ describe("governance context snapshot", () => {
     assert.equal(parsed.nextGate, parsed.currentSliceGates.nextGate);
     assert.ok(parsed.currentSliceGates.productDefinition);
     assert.ok(parsed.currentSliceGates.architectureLocked);
+  });
+
+  it("does not treat extraction sources as the complete canonical authority set", () => {
+    const parsed = JSON.parse(serializeGovernanceContext(buildGovernanceContext(projectRoot)));
+    assert.equal(parsed.authority, "NON_AUTHORITATIVE");
+    assert.deepEqual(parsed.sources, [
+      "docs/platform/ROADMAP.md",
+      "docs/platform/STATE.md",
+      "docs/platform/ARCHITECTURE.md",
+      "docs/platform/decision-register.md",
+    ]);
+    assert.match(parsed.notice, /not the complete canonical authority set/);
+    assert.match(
+      parsed.notice,
+      /must not substitute for applicable Product, Experience, Product Language, Architecture, Testing, or per-IMP authority/,
+    );
+    assert.match(parsed.notice, /AGENTS\.md and the authorities it references/);
+    assert.doesNotMatch(parsed.notice, /remain the authority/);
   });
 
   it("check passes when the committed snapshot matches canonical sources", () => {

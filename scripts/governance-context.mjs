@@ -1,10 +1,18 @@
 #!/usr/bin/env node
 /**
- * Compact NON-AUTHORITATIVE projection of current governance.
+ * Compact NON-AUTHORITATIVE current-position projection.
  *
- * Canonical lifecycle, product, experience, architecture, and delivery-policy
- * truth remain ROADMAP.md, STATE.md, ARCHITECTURE.md, and decision-register.md.
- * This manifest is a generated lookup. It must not be treated as authority.
+ * PROJECTION_EXTRACTION_SOURCES != COMPLETE_CANONICAL_AUTHORITY_SET
+ * CURRENT_CONTEXT_AUTHORITY = NON_AUTHORITATIVE
+ * CURRENT_CONTEXT_IS_SHORTCUT_FOR_CURRENT_POSITION = YES
+ * CURRENT_CONTEXT_MAY_REPLACE_APPLICABLE_CANONICAL_AUTHORITY_READS = NO
+ * CURRENT_CONTEXT_EXTRACTION_SOURCES = ROADMAP + STATE + ARCHITECTURE + DECISION_REGISTER
+ * CANONICAL_AUTHORITY_MODEL_SOURCE = AGENTS.md + REFERENCED_AUTHORITIES
+ *
+ * ROADMAP.md, STATE.md, ARCHITECTURE.md, and decision-register.md are extraction
+ * sources for this projection. They are not the complete canonical authority set.
+ * Applicable canonical authority and mandatory reads remain defined by AGENTS.md
+ * and the authorities it references. This file must not substitute for those reads.
  *
  * Usage:
  *   node scripts/governance-context.mjs --write
@@ -69,6 +77,17 @@ const ROADMAP_REL = "docs/platform/ROADMAP.md";
 const STATE_REL = "docs/platform/STATE.md";
 const ARCHITECTURE_REL = "docs/platform/ARCHITECTURE.md";
 const DECISION_REGISTER_REL = "docs/platform/decision-register.md";
+
+/** Extraction sources for this projection. Not the complete canonical authority set. */
+export const EXTRACTION_SOURCES = Object.freeze([
+  ROADMAP_REL,
+  STATE_REL,
+  ARCHITECTURE_REL,
+  DECISION_REGISTER_REL,
+]);
+
+export const GOVERNANCE_CONTEXT_NOTICE =
+  "Generated current-position projection from ROADMAP.md, STATE.md, ARCHITECTURE.md, and decision-register.md. These are extraction sources for this projection, not the complete canonical authority set. Applicable canonical authority and mandatory read requirements remain defined by AGENTS.md and the authorities it references. This projection must not substitute for applicable Product, Experience, Product Language, Architecture, Testing, or per-IMP authority.";
 
 export class GovernanceContextError extends Error {
   /**
@@ -338,10 +357,9 @@ export function buildGovernanceContext(root = DEFAULT_ROOT) {
   return {
     schemaVersion: 1,
     authority: "NON_AUTHORITATIVE",
-    notice:
-      "Generated projection of canonical governance documents. ROADMAP.md, STATE.md, ARCHITECTURE.md, and decision-register.md remain the authority. This file must not change lifecycle, product, experience, architecture, or delivery-policy semantics.",
+    notice: GOVERNANCE_CONTEXT_NOTICE,
     generatedBy: "scripts/governance-context.mjs",
-    sources: [ROADMAP_REL, STATE_REL, ARCHITECTURE_REL, DECISION_REGISTER_REL],
+    sources: [...EXTRACTION_SOURCES],
     versions: {
       roadmapVersion: roadmapMeta.roadmapVersion,
       stateVersion: stateMeta.stateVersion,
@@ -403,13 +421,13 @@ export function evaluateGovernanceContextDrift(root = DEFAULT_ROOT) {
     return {
       ok: false,
       bytes: Buffer.byteLength(generated),
-      message: `GOVERNANCE_CONTEXT_DRIFT ${SNAPSHOT_REL} differs from canonical sources (${difference})`,
+      message: `GOVERNANCE_CONTEXT_DRIFT ${SNAPSHOT_REL} differs from extraction sources (${difference})`,
     };
   }
   return {
     ok: true,
     bytes: Buffer.byteLength(generated),
-    message: `governance context snapshot matches canonical sources (${Buffer.byteLength(generated)} bytes; NON_AUTHORITATIVE)`,
+    message: `governance context snapshot matches extraction sources (${Buffer.byteLength(generated)} bytes; NON_AUTHORITATIVE)`,
   };
 }
 
