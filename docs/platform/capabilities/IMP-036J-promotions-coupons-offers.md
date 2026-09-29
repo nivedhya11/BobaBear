@@ -14,12 +14,18 @@
   "changeRisk": "CR2",
   "designReadiness": "NOT_PERFORMED",
   "candidateRevision": "IMP-036J-FIT-CANDIDATE-9",
-  "architectureFitSourceCandidate": "IMP-036J-FIT-CANDIDATE-5",
+  "architectureFitSourceCandidate": "IMP-036J-FIT-CANDIDATE-9",
   "architectureBase": "ARCH-R23",
-  "architectureFit": "NOT_PERFORMED",
-  "architectureLock": "NOT_LOCKED",
-  "architectureFitReviewForCandidate9": "NOT_PERFORMED",
-  "architectureFitPassClaimedForCandidate9": false,
+  "architectureFit": "PASS",
+  "architectureLock": "LOCKED",
+  "architectureFitReviewForCandidate9": "PASS",
+  "architectureFitPassClaimedForCandidate9": true,
+  "architectureFitEvaluatedHead": "052289471cfc2424879932e16fd88d6c16696de8",
+  "architectureFitEvaluatedTree": "ed6d0b4c7e82eef4fd764c0fe3f73539f8e1858b",
+  "architectureFitEvaluatedGovernanceFingerprint": "5be074e0736c097b6d68f18a3b71cd26cc69c03600eac0cf956bf74d0b6834b0",
+  "architectureFitEvaluatedCiRun": "36611527090",
+  "architectureFitEvaluatedCodeqlRun": "36611527053",
+  "architectureFitEvaluatedCodexEvidence": "5896150834",
   "historicalCandidate8ArchitectureFitReview": "STOP",
   "historicalCandidate8NeverMerged": true,
   "historicalCandidate8NeverLocked": true,
@@ -50,7 +56,7 @@
   "archR24Required": false,
   "founderUatRequired": true,
   "founderUat": "NOT_STARTED",
-  "lastReviewed": "2026-09-29",
+  "lastReviewed": "2026-09-30",
   "bindingDecisions": ["D-382", "ADR-007", "ADR-008"],
   "dependsOn": ["IMP-016", "IMP-021", "IMP-036F", "IMP-036H", "IMP-036I"]
 }
@@ -58,7 +64,7 @@
 
 # IMP-036J — Promotions, Coupons & Offers
 
-## Capability architecture — FIT candidate 9, review not performed
+## Capability architecture — FIT candidate 9, Architecture Fit PASS, LOCKED
 
 ```text
 STATUS = CURRENT
@@ -73,12 +79,20 @@ EXPERIENCE_GATE = PASS
 EXPERIENCE_CRITICALITY = X3
 CHANGE_RISK = CR2
 CANDIDATE_REVISION = IMP-036J-FIT-CANDIDATE-9
-ARCHITECTURE_FIT_SOURCE_CANDIDATE = IMP-036J-FIT-CANDIDATE-5
+ARCHITECTURE_FIT_SOURCE_CANDIDATE = IMP-036J-FIT-CANDIDATE-9
 ARCHITECTURE_BASE = ARCH-R23
-ARCHITECTURE_FIT = NOT_PERFORMED
-ARCHITECTURE_LOCK = NOT_LOCKED
-ARCHITECTURE_FIT_REVIEW_FOR_CANDIDATE_9 = NOT_PERFORMED
-ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_9 = NO
+ARCHITECTURE_FIT = PASS
+ARCHITECTURE_LOCK = LOCKED
+ARCHITECTURE_FIT_REVIEW_FOR_CANDIDATE_9 = PASS
+ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_9 = YES
+INDEPENDENT_ARCHITECTURE_FIT_REVIEW = PASS
+ARCHITECTURE_FIT_EVALUATED_HEAD = 052289471cfc2424879932e16fd88d6c16696de8
+ARCHITECTURE_FIT_EVALUATED_TREE = ed6d0b4c7e82eef4fd764c0fe3f73539f8e1858b
+ARCHITECTURE_FIT_EVALUATED_GOVERNANCE_FINGERPRINT = 5be074e0736c097b6d68f18a3b71cd26cc69c03600eac0cf956bf74d0b6834b0
+ARCHITECTURE_FIT_EVALUATED_CI_RUN = 36611527090
+ARCHITECTURE_FIT_EVALUATED_CI_ATTEMPT = 2
+ARCHITECTURE_FIT_EVALUATED_CODEQL_RUN = 36611527053
+ARCHITECTURE_FIT_EVALUATED_CODEX_EVIDENCE = 5896150834
 HISTORICAL_CANDIDATE_8_ARCHITECTURE_FIT_REVIEW = STOP
 HISTORICAL_CANDIDATE_8_NEVER_MERGED = YES
 HISTORICAL_CANDIDATE_8_NEVER_LOCKED = YES
@@ -90,8 +104,8 @@ HISTORICAL_CANDIDATE_6_NEVER_MERGED = YES
 HISTORICAL_CANDIDATE_6_NEVER_LOCKED = YES
 HISTORICAL_CANDIDATE_5_ARCHITECTURE_FIT = PASS
 HISTORICAL_CANDIDATE_5_ARCHITECTURE_LOCK = LOCKED
-IMP036J_ARCHITECTURE_FIT = NOT_PERFORMED
-IMP036J_ARCHITECTURE_LOCKED = NO
+IMP036J_ARCHITECTURE_FIT = PASS
+IMP036J_ARCHITECTURE_LOCKED = YES
 IMP036J_DESIGN_READINESS = NOT_PERFORMED
 IMP036J_NEXT_GATE = DESIGN_READINESS
 QUALITY_TEST_PLAN_FINALIZED = NO
@@ -125,22 +139,26 @@ FOUNDER_UAT = NOT_STARTED
 ```
 
 This document is `IMP-036J-FIT-CANDIDATE-9`. It remediates the two exact-head Architecture Fit
-findings on Candidate 8. It does not claim Architecture Fit PASS.
-`ARCHITECTURE_FIT_REVIEW_FOR_CANDIDATE_9 = NOT_PERFORMED`.
-`ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_9 = NO`.
+findings on Candidate 8. Independent Architecture Fit review returned PASS.
+`ARCHITECTURE_FIT_REVIEW_FOR_CANDIDATE_9 = PASS`.
+`ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_9 = YES`.
+No numeric independent ChatGPT review identifier was available with that verdict, so none is
+recorded.
 
-`IMP-036J-FIT-CANDIDATE-5` remains the previously reviewed and canonically locked architecture.
+`IMP-036J-FIT-CANDIDATE-5` remains the previously reviewed architecture and the prior lock.
 Independent ChatGPT Architecture Fit review `5347761109` returned PASS for that candidate at head
 `49912f35f2871ff77b9af267589d49666fc975ec`, tree
 `7046d5bb78012524972505f555226205199a58d0`, and governance fingerprint
 `ac6510d315148763069f06374a243a75a312a7693cf3e7c1d0eac71bc1026870`. Fresh Codex review
 `5883601198` on that same head was clean. CI run `36521141717` and CodeQL run `36521141714`
-passed on that same head. The later lock checkpoint is not that evaluated head. No working-tree
-fingerprint is recorded for the evaluated head because one was not part of the independent review
-evidence. Later Design Readiness incompleteness does not rewrite that PASS as a failure. It
-requires this new Fit evaluation of Candidate 9. Canonical ROADMAP and STATE still record the
-Candidate 5 lock. This candidate does not update those lifecycle documents, does not persist a
-new lock, and does not authorize implementation.
+passed on that same head. That PASS is not rewritten as a failure. Candidate 9 supersedes it as
+the current lock. Evaluated head `052289471cfc2424879932e16fd88d6c16696de8`, tree
+`ed6d0b4c7e82eef4fd764c0fe3f73539f8e1858b`, and governance fingerprint
+`5be074e0736c097b6d68f18a3b71cd26cc69c03600eac0cf956bf74d0b6834b0`. Exact-head CI run
+`36611527090` attempt 2 succeeded on that head. Attempt 1 of the same run remains historical
+evidence of an unrelated IMP-036I reminder timeout and is not erased. Exact-head CodeQL run
+`36611527053` succeeded. Fresh Codex issue comment `5896150834` on that head reported no major
+issues. This persistence locks Candidate 9. It does not authorize implementation.
 
 Candidate 9 does not perform Design Readiness, finalize the Quality/Test Plan, or finalize the
 Measurement/Instrumentation Plan. Section 30 remains a future implementation proof plan. Global
@@ -168,7 +186,7 @@ IMP-036J-FIT-CANDIDATE-4 = remediates those two open exact-head findings
   ARCHITECTURE_FIT_REVIEW = NOT_PERFORMED
   ARCHITECTURE_FIT_PASS = NO
   ARCHITECTURE_FIT_STOP = NO
-IMP-036J-FIT-CANDIDATE-5 = previously reviewed and canonically locked architecture
+IMP-036J-FIT-CANDIDATE-5 = previously reviewed architecture and prior lock, superseded by Candidate 9
   remediates 4129513169
   preserves the Candidate 2, Candidate 3, and Candidate 4 remediations
   independent Architecture Fit review = PASS
@@ -221,9 +239,18 @@ IMP-036J-FIT-CANDIDATE-8 = remediated 4135593837, 4135593847, and 4135593861
   ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_8 = NO
   CANDIDATE_8_REWRITTEN_AS_PASSED = NO
 IMP-036J-FIT-CANDIDATE-9 = remediates 4136530636 and 4136530647
-  ARCHITECTURE_FIT_REVIEW = NOT_PERFORMED
-  ARCHITECTURE_FIT_PASS_CLAIMED = NO
-  ARCHITECTURE_LOCK = NOT_LOCKED
+  independent Architecture Fit review = PASS
+  ARCHITECTURE_FIT_EVALUATED_HEAD = 052289471cfc2424879932e16fd88d6c16696de8
+  ARCHITECTURE_FIT_EVALUATED_TREE = ed6d0b4c7e82eef4fd764c0fe3f73539f8e1858b
+  ARCHITECTURE_FIT_EVALUATED_GOVERNANCE_FINGERPRINT = 5be074e0736c097b6d68f18a3b71cd26cc69c03600eac0cf956bf74d0b6834b0
+  ARCHITECTURE_FIT_EVALUATED_CI_RUN = 36611527090
+  ARCHITECTURE_FIT_EVALUATED_CI_ATTEMPT = 2
+  ARCHITECTURE_FIT_EVALUATED_CODEQL_RUN = 36611527053
+  ARCHITECTURE_FIT_EVALUATED_CODEX_EVIDENCE = 5896150834
+  ARCHITECTURE_FIT_REVIEW = PASS
+  ARCHITECTURE_FIT_PASS_CLAIMED = YES
+  ARCHITECTURE_LOCK = LOCKED
+  current architecture lock source
 ```
 
 Candidate 2 did not receive an independent Architecture Fit verdict. Candidate 3 did not either:
@@ -248,8 +275,10 @@ required an observed committed UI presentation. Its exact-head review `535627941
 `dc21091ba33d05b0122dfbfe0a0f489a22da1cb8`, then found `4136530636`
 (`AF-036J-C8-01`) and `4136530647` (`AF-036J-C8-02`). Independent Architecture Fit review of
 Candidate 8 is `STOP`. That candidate was never merged and never locked. It is not rewritten as
-a pass. Candidate 9 is the remediation text under review. Independent Architecture Fit review
-of Candidate 9 has not been performed, and this document does not claim that pass.
+a pass. Candidate 9 remediates those two findings. Independent Architecture Fit review of
+Candidate 9 is `PASS`. That PASS is the current architecture lock. Candidates 6, 7, and 8 stay
+historical STOP candidates and are not rewritten as passes. Candidate 5 stays the prior PASS
+and prior lock and is not rewritten as a failure.
 
 An Offer remains customer and operator meaning over the accepted Promotion authority. It does not
 set money by itself.
@@ -2221,10 +2250,11 @@ No D-383 is created. ARCH-R23 stays current.
 
 ---
 
-## 32. Candidate 9 result, not a Fit PASS
+## 32. Candidate 9 Architecture Fit PASS
 
 Candidate 5 recorded a fit result. Independent review `5347761109` accepted it. That PASS remains
-historical provenance and is not rewritten as a failure. Candidate 6 fixed the Cart money
+historical provenance and is not rewritten as a failure. Candidate 9 supersedes it as the current
+lock. Candidate 6 fixed the Cart money
 boundary, Review integrity persistence, `COMMERCIAL_STATE_CHANGE` provenance, and the initial
 Cart to Review grain. Exact-head review findings `4135054894` and `4135054908` stopped that
 candidate. Independent Architecture Fit review of Candidate 6 is `STOP`. Candidate 6 was never
@@ -2237,12 +2267,17 @@ reused active checkout, and required an observed committed UI presentation. Exac
 findings `4136530636` and `4136530647` stopped that candidate. Independent Architecture Fit
 review of Candidate 8 is `STOP`. Candidate 8 was never merged and never locked, and it is not
 rewritten as a pass. Candidate 9 remediates those two findings. Independent Architecture Fit
-review of Candidate 9 has not been performed.
+review of Candidate 9 is `PASS` at head `052289471cfc2424879932e16fd88d6c16696de8`, tree
+`ed6d0b4c7e82eef4fd764c0fe3f73539f8e1858b`, and governance fingerprint
+`5be074e0736c097b6d68f18a3b71cd26cc69c03600eac0cf956bf74d0b6834b0`. CI run `36611527090`
+attempt 2 and CodeQL run `36611527053` passed on that head. Fresh Codex issue comment
+`5896150834` reported no major issues. No numeric independent ChatGPT review identifier was
+available.
 
 ```text
-CANDIDATE_9_ARCHITECTURE_FIT_REVIEW = NOT_PERFORMED
-ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_9 = NO
-ARCHITECTURE_LOCK = NOT_LOCKED
+CANDIDATE_9_ARCHITECTURE_FIT_REVIEW = PASS
+ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_9 = YES
+ARCHITECTURE_LOCK = LOCKED
 HISTORICAL_CANDIDATE_8_ARCHITECTURE_FIT_REVIEW = STOP
 CANDIDATE_8_REWRITTEN_AS_PASSED = NO
 ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_8 = NO
@@ -2254,7 +2289,7 @@ ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_7 = NO
 ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_6 = NO
 HISTORICAL_CANDIDATE_5_FIT_RESULT = PASS
 CANDIDATE_5_REWRITTEN_AS_FAILED = NO
-ARCHITECTURE_FIT_SOURCE_CANDIDATE = IMP-036J-FIT-CANDIDATE-5
+ARCHITECTURE_FIT_SOURCE_CANDIDATE = IMP-036J-FIT-CANDIDATE-9
 MANDATORY_STORIES_RECHECKED = US-036J-001 .. US-036J-013
 EXPERIENCE_RECHECKED = XD-IMP-036J-DRAFT-6
 CONTRADICTIONS = NONE
@@ -2277,8 +2312,9 @@ IMP036J_NEXT_GATE = DESIGN_READINESS
 
 The architecture-fit proof plan in section 30 does not finalize the Quality/Test Plan. The X3
 measurement architecture in section 27A does not finalize the Measurement/Instrumentation Plan.
-Those plans remain part of Design Readiness. This candidate does not authorize or start
-implementation and does not mark Architecture Fit PASS.
+Those plans remain part of Design Readiness. This PASS does not authorize or start
+implementation. Architecture Fit PASS is not Design Readiness and is not a finalized
+Measurement/Instrumentation Plan.
 
 ```text
 CANONICAL_GLOBAL_ARCHITECTURE_CHANGED = NO
@@ -2286,7 +2322,7 @@ ARCHITECTURE = ARCH-R23
 DECISION_REGISTER = DR-23
 D-383 = NOT_CREATED
 NEW_ADR = NO
-ROADMAP_CHANGED = NO
-STATE_CHANGED = NO
+ROADMAP_CHANGED = YES
+STATE_CHANGED = YES
 IMPLEMENTATION_STARTED = NO
 ```
