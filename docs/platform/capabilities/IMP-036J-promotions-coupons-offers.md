@@ -13,13 +13,20 @@
   "experienceCriticality": "X3",
   "changeRisk": "CR2",
   "designReadiness": "NOT_PERFORMED",
-  "candidateRevision": "IMP-036J-FIT-CANDIDATE-8",
+  "candidateRevision": "IMP-036J-FIT-CANDIDATE-9",
   "architectureFitSourceCandidate": "IMP-036J-FIT-CANDIDATE-5",
   "architectureBase": "ARCH-R23",
   "architectureFit": "NOT_PERFORMED",
   "architectureLock": "NOT_LOCKED",
-  "architectureFitReviewForCandidate8": "NOT_PERFORMED",
-  "architectureFitPassClaimedForCandidate8": false,
+  "architectureFitReviewForCandidate9": "NOT_PERFORMED",
+  "architectureFitPassClaimedForCandidate9": false,
+  "historicalCandidate8ArchitectureFitReview": "STOP",
+  "historicalCandidate8NeverMerged": true,
+  "historicalCandidate8NeverLocked": true,
+  "historicalCandidate8ExactHeadReviewIds": "4136530636,4136530647",
+  "historicalCandidate8FreshReview": "5356279418",
+  "historicalCandidate8EvaluatedHead": "8a8b34971f2b27f5ce32d4f472b57de423e06583",
+  "historicalCandidate8EvaluatedTree": "dc21091ba33d05b0122dfbfe0a0f489a22da1cb8",
   "historicalCandidate7ArchitectureFitReview": "STOP",
   "historicalCandidate7NeverMerged": true,
   "historicalCandidate7NeverLocked": true,
@@ -51,7 +58,7 @@
 
 # IMP-036J — Promotions, Coupons & Offers
 
-## Capability architecture — FIT candidate 8, review not performed
+## Capability architecture — FIT candidate 9, review not performed
 
 ```text
 STATUS = CURRENT
@@ -65,13 +72,16 @@ EXPERIENCE_DEFINITION_STATUS = APPROVED
 EXPERIENCE_GATE = PASS
 EXPERIENCE_CRITICALITY = X3
 CHANGE_RISK = CR2
-CANDIDATE_REVISION = IMP-036J-FIT-CANDIDATE-8
+CANDIDATE_REVISION = IMP-036J-FIT-CANDIDATE-9
 ARCHITECTURE_FIT_SOURCE_CANDIDATE = IMP-036J-FIT-CANDIDATE-5
 ARCHITECTURE_BASE = ARCH-R23
 ARCHITECTURE_FIT = NOT_PERFORMED
 ARCHITECTURE_LOCK = NOT_LOCKED
-ARCHITECTURE_FIT_REVIEW_FOR_CANDIDATE_8 = NOT_PERFORMED
-ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_8 = NO
+ARCHITECTURE_FIT_REVIEW_FOR_CANDIDATE_9 = NOT_PERFORMED
+ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_9 = NO
+HISTORICAL_CANDIDATE_8_ARCHITECTURE_FIT_REVIEW = STOP
+HISTORICAL_CANDIDATE_8_NEVER_MERGED = YES
+HISTORICAL_CANDIDATE_8_NEVER_LOCKED = YES
 HISTORICAL_CANDIDATE_7_ARCHITECTURE_FIT_REVIEW = STOP
 HISTORICAL_CANDIDATE_7_NEVER_MERGED = YES
 HISTORICAL_CANDIDATE_7_NEVER_LOCKED = YES
@@ -114,10 +124,10 @@ FOUNDER_UAT_REQUIRED = YES
 FOUNDER_UAT = NOT_STARTED
 ```
 
-This document is `IMP-036J-FIT-CANDIDATE-8`. It remediates the three exact-head Architecture Fit
-findings on Candidate 7. It does not claim Architecture Fit PASS.
-`ARCHITECTURE_FIT_REVIEW_FOR_CANDIDATE_8 = NOT_PERFORMED`.
-`ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_8 = NO`.
+This document is `IMP-036J-FIT-CANDIDATE-9`. It remediates the two exact-head Architecture Fit
+findings on Candidate 8. It does not claim Architecture Fit PASS.
+`ARCHITECTURE_FIT_REVIEW_FOR_CANDIDATE_9 = NOT_PERFORMED`.
+`ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_9 = NO`.
 
 `IMP-036J-FIT-CANDIDATE-5` remains the previously reviewed and canonically locked architecture.
 Independent ChatGPT Architecture Fit review `5347761109` returned PASS for that candidate at head
@@ -128,11 +138,11 @@ Independent ChatGPT Architecture Fit review `5347761109` returned PASS for that 
 passed on that same head. The later lock checkpoint is not that evaluated head. No working-tree
 fingerprint is recorded for the evaluated head because one was not part of the independent review
 evidence. Later Design Readiness incompleteness does not rewrite that PASS as a failure. It
-requires this new Fit evaluation of Candidate 8. Canonical ROADMAP and STATE still record the
+requires this new Fit evaluation of Candidate 9. Canonical ROADMAP and STATE still record the
 Candidate 5 lock. This candidate does not update those lifecycle documents, does not persist a
 new lock, and does not authorize implementation.
 
-Candidate 8 does not perform Design Readiness, finalize the Quality/Test Plan, or finalize the
+Candidate 9 does not perform Design Readiness, finalize the Quality/Test Plan, or finalize the
 Measurement/Instrumentation Plan. Section 30 remains a future implementation proof plan. Global
 architecture stays ARCH-R23. The decision register stays DR-23. D-383 is not created. No ADR is
 created. `CANDIDATE_REVISION` records this remediation candidate. It is not an architecture
@@ -197,7 +207,20 @@ IMP-036J-FIT-CANDIDATE-7 = remediated AF-036J-C6-01 and AF-036J-C6-02
   never locked
   ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_7 = NO
   CANDIDATE_7_REWRITTEN_AS_PASSED = NO
-IMP-036J-FIT-CANDIDATE-8 = remediates 4135593837, 4135593847, and 4135593861
+IMP-036J-FIT-CANDIDATE-8 = remediated 4135593837, 4135593847, and 4135593861
+  fixed the Measurement Plan ownership boundary, reused-active-checkout Cart association, and the requirement for an observed committed UI presentation
+  exact-head review findings 4136530636 and 4136530647
+  fresh exact-head review 5356279418
+  evaluated head 8a8b34971f2b27f5ce32d4f472b57de423e06583
+  evaluated tree dc21091ba33d05b0122dfbfe0a0f489a22da1cb8
+  AF-036J-C8-01 = RENDERED_AMOUNT_MISMATCH_NOT_OBSERVABLE
+  AF-036J-C8-02 = LATER_CART_ACTIVATION_CAN_INHERIT_AN_EARLIER_REVIEW
+  independent Architecture Fit review = STOP
+  never merged
+  never locked
+  ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_8 = NO
+  CANDIDATE_8_REWRITTEN_AS_PASSED = NO
+IMP-036J-FIT-CANDIDATE-9 = remediates 4136530636 and 4136530647
   ARCHITECTURE_FIT_REVIEW = NOT_PERFORMED
   ARCHITECTURE_FIT_PASS_CLAIMED = NO
   ARCHITECTURE_LOCK = NOT_LOCKED
@@ -218,9 +241,15 @@ added cross-surface Cart integrity feasibility and distinguished a retry of one 
 from a later activation. Its exact-head review then found `4135593837`
 (`AF-036J-C7-01`), `4135593847` (`AF-036J-C7-02`), and `4135593861` (`AF-036J-C7-03`).
 Independent Architecture Fit review of Candidate 7 is `STOP`. That candidate was never merged
-and never locked. It is not rewritten as a pass. Candidate 8 is the remediation text under
-review. Independent Architecture Fit review of Candidate 8 has not been performed, and this
-document does not claim that pass.
+and never locked. It is not rewritten as a pass. Candidate 8 kept the Measurement Plan as the
+owner of concrete encoding, associated a Cart activation with a reused active checkout, and
+required an observed committed UI presentation. Its exact-head review `5356279418`, on head
+`8a8b34971f2b27f5ce32d4f472b57de423e06583` and tree
+`dc21091ba33d05b0122dfbfe0a0f489a22da1cb8`, then found `4136530636`
+(`AF-036J-C8-01`) and `4136530647` (`AF-036J-C8-02`). Independent Architecture Fit review of
+Candidate 8 is `STOP`. That candidate was never merged and never locked. It is not rewritten as
+a pass. Candidate 9 is the remediation text under review. Independent Architecture Fit review
+of Candidate 9 has not been performed, and this document does not claim that pass.
 
 An Offer remains customer and operator meaning over the accepted Promotion authority. It does not
 set money by itself.
@@ -344,7 +373,7 @@ evaluator, a Campaign engine, or a browse hub.
 | ADR-007 | Pricing owns money. INR paise. Promotion lifecycle stays `draft \| active \| retired`. Coupon lifecycle stays `draft \| active \| disabled \| retired`. |
 | ADR-008 / ARCH-G05 | Checkout Snapshot remains payment-bound commercial truth. Purchased Order reads that snapshot and does not reprice. |
 | ARCH-G09 | Material commercial writes keep expected-revision CAS. No silent last-write-wins. Presentation acknowledgement does not bump a commercial revision. |
-| ARCH-G11 | Browser is not monetary or eligibility authority. The browser may report a coarse observation of the presentation it committed. It cannot declare the integrity verdict, the price, or eligibility. |
+| ARCH-G11 | Browser is not monetary, eligibility, or integrity authority. The browser may report non-authoritative evidence of the presentation it actually committed, including enough of that committed presentation to detect an amount-level mismatch. That evidence is not the price, not eligibility, and not the integrity verdict. |
 | ARCH-G13 | PostgreSQL remains the store. |
 | D-368 | Menu remains a read projection. The complimentary binding is a Catalog variant, not a Menu row and not a gift catalogue. |
 | D-369 | A positive-price modifier is not copied onto the complimentary line from a catalog default. |
@@ -1338,9 +1367,7 @@ For one authoritative Cart evaluation result and one actual presentation observa
 - an opaque correlation to that exact authoritative Cart evaluation
 - a Cart identity and ownership boundary sufficient for access validation
 - the authoritative commercial-result identity, or an equivalent server fingerprint of that same result
-- the server-expected coarse presentation descriptor
-- the server saving-present expectation
-- the server progress-present expectation
+- the authoritative expected presentation of that result, at the fidelity defined below
 - server-computed savings and explanation correctness from that same quote
 - the evaluation occurrence context required by the approved measurement semantics
 - an optional relation to an already-existing logical checkout journey only when the Cart view is already inside that journey
@@ -1350,43 +1377,100 @@ ONE_SERVER_EVALUATION_PER_DISTINCT_AUTHORITATIVE_RESULT = YES
 ONE_SERVER_EVALUATION_PRESENTED_AT_MOST_ONCE_FOR_VIEW_COUNT = YES
 REPAINT_OR_RETRY_IS_NOT_ANOTHER_VIEW = YES
 BROWSER_IS_MONEY_AUTHORITY = NO
+BROWSER_MONEY_AUTHORITY = NO
+BROWSER_PRESENTATION_OBSERVER = YES
 BROWSER_IS_ELIGIBILITY_AUTHORITY = NO
 BROWSER_DECLARES_FINAL_INTEGRITY_VERDICT = NO
+BROWSER_INTEGRITY_AUTHORITY = NO
+SERVER_EXPECTED_TRUTH = YES
 RAW_COUPON_TEXT_PROHIBITED = YES
 CUSTOMER_IDENTITY_AS_JOURNEY_JOIN = PROHIBITED
 UNNECESSARY_MONEY_VALUES_PERSISTED_FOR_TELEMETRY = NO
+TELEMETRY_IS_SECOND_MONEY_LEDGER = NO
 CART_VIEW_MINTS_CHECKOUT_JOURNEY_KEY = NO
 ```
 
+`UNNECESSARY_MONEY_VALUES_PERSISTED_FOR_TELEMETRY = NO` means measurement does not keep a second commercial ledger. The minimum presentation evidence required below is necessary for the approved financial-truth guardrail. It is not that ledger.
+
 A pre-checkout Cart evaluation is still a valid evaluation when no journey key exists. Relating it to a journey copies an already-existing key. It does not mint one, adopt a missing key, or read a terminal checkout to invent one.
 
-#### Expected presentation and observed rendered presentation
+#### Expected presentation and observed committed presentation
 
-An acknowledgement that a server-issued evaluation id was received is not proof that the committed UI presented that result. The later Measurement Plan must distinguish:
+An acknowledgement that a server-issued evaluation id was received is not proof that the committed UI presented that result. Surface, coarse shape, saving-present, and progress-present are also not enough. Those four facts still match when the authoritative saving is ₹80 and the committed UI renders ₹8.
+
+For every measured presented commercial result, the finalized Measurement Plan must be able to compare:
 
 ```text
-EXPECTED_PRESENTATION = server descriptor derived from the authoritative evaluation
-OBSERVED_PRESENTATION = coarse descriptor derived from the UI projection actually committed and rendered
+AUTHORITATIVE_EXPECTED_PRESENTATION = presentation implied by the server commercial evaluation
+OBSERVED_COMMITTED_PRESENTATION = presentation evidence derived from the UI projection actually committed
 ```
 
-The observed descriptor may include only the minimum non-sensitive facts approved Experience needs: surface, coarse shape, saving-present, and progress-present. It must not contain authoritative money, raw coupon text, private eligibility, customer PII, or a client-computed integrity boolean.
+That comparison must be fine enough to detect each of these on Cart and on Checkout Review:
 
-The browser may report an observation of the presentation it committed. That report is not pricing authority and is not the integrity verdict.
+- an omitted saving row
+- an extra saving row
+- a wrong saving component
+- an incorrect rendered saving value
+- an incorrect rendered total-saved value
+- a wrong positive-versus-zero presentation
+- a wrong coarse shape
+- a wrong progress presence, and a wrong progress value where the approved metric requires that value
+
+The comparison does not make telemetry a second money ledger. An observed rendered amount is not the payable and is not the saving.
 
 ```text
-DISPLAYED_PRESENTATION_MATCH = server_expected_descriptor == observed_committed_ui_descriptor
-SERVER_SAVINGS_EXPLANATION_INTEGRITY = server explanation parts == authoritative evaluated saving
+AUTHORITATIVE_MONEY = SERVER_COMMERCIAL_EVALUATION
+OBSERVED_RENDERED_MONEY = NON_AUTHORITATIVE_PRESENTATION_EVIDENCE
+OBSERVED_RENDERED_AMOUNT_SETS_PAYABLE = NO
+AMOUNT_LEVEL_RENDER_MISMATCH_DETECTABLE = YES
+OMITTED_SAVING_ROW_DETECTABLE = YES
+EXTRA_SAVING_ROW_DETECTABLE = YES
+WRONG_SAVING_COMPONENT_DETECTABLE = YES
+WRONG_TOTAL_SAVED_DETECTABLE = YES
+```
+
+An observed ₹8 means only that the UI presented ₹8. It does not mean the order costs ₹8. The integrity decision is the server comparison of that observation with server truth.
+
+```text
+BROWSER_MONEY_AUTHORITY = NO
+BROWSER_PRESENTATION_OBSERVER = YES
+BROWSER_INTEGRITY_AUTHORITY = NO
+SERVER_EXPECTED_TRUTH = YES
 FINAL_INTEGRITY_COMPARISON_TRUSTED_FROM_BROWSER = NO
-DESIGN_READINESS_DEFINES_OBSERVED_DESCRIPTOR_EXPOSURE = YES
-QUALITY_PLAN_PROVES_INCORRECT_UI_MAPPING_DETECTABLE = YES
-CONCRETE_COLLECTION_MECHANISM = DEFERRED_TO_MEASUREMENT_PLAN
 ```
 
-Design Readiness later defines exactly how the committed UI projection exposes the observed descriptor. The Quality Plan later proves a deliberately incorrect UI mapping is detectable. This candidate does not choose the transport, persistence, identifier, or event representation of either descriptor.
+The browser may report or expose that non-authoritative evidence so server or measurement logic can compare it with the authoritative expected presentation. The browser must not calculate the authoritative payable, calculate the authoritative saving, decide eligibility, declare integrity pass or fail, or override server truth. A browser-submitted integrity assertion cannot turn a mismatch into a match.
+
+#### Observation source
+
+The observation is a function of the UI projection that was actually committed for presentation. It is not a copy of the server response object, the expected server descriptor, or the evaluation fingerprint that never passed through that final projection. Otherwise a mapping or formatting defect cannot be observed.
+
+```text
+OBSERVED_PRESENTATION_EVIDENCE = FUNCTION_OF_ACTUAL_COMMITTED_PRESENTATION
+OBSERVATION_COPIED_FROM_SERVER_RESULT_ONLY = PROHIBITED
+OBSERVATION_COPIED_FROM_EXPECTED_DESCRIPTOR_ONLY = PROHIBITED
+OBSERVATION_COPIED_FROM_EVALUATION_FINGERPRINT_ONLY = PROHIBITED
+```
+
+The observation may be non-authoritative rendered component-value observations, a presentation-projection digest derived from the actual committed rendering, or another privacy-safe representation of that same committed projection. This candidate does not select which encoding. The later Measurement Plan owns that choice.
+
+```text
+PRESENTATION_ENCODING_SELECTED = NO
+CONCRETE_COLLECTION_MECHANISM = DEFERRED_TO_MEASUREMENT_PLAN
+QUALITY_PLAN_PROVES_VALUE_LEVEL_RENDER_MISMATCH_DETECTABLE = YES
+```
+
+Design Readiness later defines the customer-facing projection that is committed. It does not select the measurement encoding of the observation. The Quality Plan later proves the mismatches listed above, including expected ₹80 rendered as ₹80 and expected ₹80 rendered as ₹8. This candidate does not choose the transport, persistence, identifier, event ownership, or sequence representation.
+
+#### Privacy of presentation evidence
+
+The observation contains only the minimum presentation evidence needed to verify the approved financial-truth guardrail. It must not contain raw coupon text, a private eligibility reason, a payment secret, customer PII, or another customer's data. It must not contain a client-computed integrity boolean. This candidate does not invent retention beyond the existing approved commerce-analytics retention rule.
+
+#### Review presentation
+
+Checkout Review uses the same separation. One authoritative Review evaluation has the server-owned expected presentation. An observed committed Review presentation is separate, and it is still a function of the Review projection that was actually committed. The browser does not set either integrity fact. Server explanation integrity remains an independent server comparison of the explanation parts with the authoritative evaluated saving. A browser observation cannot hide a server explanation mismatch, and a server explanation match cannot hide a rendered-amount mismatch.
 
 #### Review evaluation and commercial-change provenance
-
-Checkout Review keeps the same separation. One authoritative Review evaluation has server-owned expected presentation facts and a server comparison of the explanation against that same quote. An observed committed Review descriptor is separate. The browser does not set either integrity fact.
 
 `COMMERCIAL_STATE_CHANGE` remains a Review-side provenance fact, not a new price. Its originating fact is one newly established authoritative Review result that differs from the previous Review result on the same journey and that consumed at least one source origin. The source origins are coupon apply, coupon replace, coupon remove, fulfilment change, and stale recovery, and only when that command actually changes the commercial revision. A no-op writes no origin. Replay of the same changed result returns the existing observation and does not create another. One changed result is one change observation even when several origins resolve onto it. A quantity edit that is not one of those origins is not this fact. Customer identity, telemetry arrival, and occurrence time are not the provenance identity.
 
@@ -1453,6 +1537,64 @@ ASSOCIATION_REPRESENTATION_SELECTED = NO
 
 A start that does insert a new checkout and establishes a journey key under valid Cart-origin context associates that same activation with the key established for that start. The activation still does not mint the key itself. An unassociated activation remains in the continuation denominator and cannot enter the numerator. The report does not join a direct checkout to an unassociated activation by cart id, customer id, or guest id.
 
+Association with a journey is not itself a numerator. A Review that already exists on that journey does not satisfy a later activation.
+
+#### Subsequent Review reach for one activation
+
+Offer result viewed and step progression are different Experience facts. Cart continue, Review reached with an authoritative evaluation, and Review continue to Payment are step-progression facts. This candidate does not force a new Offer-result-view observation solely so a later Cart activation can be counted. A reused active checkout may already hold the same authoritative evaluation. The deduplicated Offer-result-view observation does not need to be duplicated when that evaluation is still the one already viewed.
+
+The Cart → Review numerator is still a step-progression fact. For a Cart activation `A`, `A` enters the numerator only when there is a qualifying Review-reached fact `R` such that:
+
+- `R` belongs to the checkout journey associated with `A`
+- `R` represents Review reached with an authoritative evaluation
+- `R` is causally after `A`
+- `R` occurs before `REPORT_AS_OF`
+- `R` is not a historical Review presentation from before `A`
+
+```text
+OLD_REVIEW_SATISFIES_NEW_ACTIVATION = NO
+ACTIVATION_REQUIRES_SUBSEQUENT_REVIEW_REACH = YES
+ACTIVATION_SCOPED_REVIEW_REACH_REQUIRED = YES
+REPEATED_OFFER_RESULT_VIEW_REQUIRED_FOR_LATER_ACTIVATION = NO
+MULTIPLE_CART_ACTIVATIONS_ONE_JOURNEY = YES
+REUSED_ACTIVE_CHECKOUT_ASSOCIATION = YES
+```
+
+When the customer genuinely navigates from Cart and reaches Review again, the Measurement Plan must be able to establish that activation-scoped Review-reached-after-`A` fact even when the same checkout is reused, the same commercial evaluation remains valid, and the Offer-result-view observation is not duplicated.
+
+The required relation is:
+
+```text
+ACTIVATION A → associated checkout journey J → subsequent REVIEW_REACHED R on J → A may enter the numerator
+```
+
+The rejected relation is:
+
+```text
+Review R1 on J → later activation A2 on J → no later Review → A2 counted because R1 exists
+```
+
+`A2` stays denominator-only in that rejected case.
+
+| Sequence | Numerator |
+|---|---|
+| `A1`, then `R1`, then back to Cart, then `A2`, then `R2` | `A1` and `A2` |
+| `A1`, then `R1`, then back to Cart, then `A2`, then abandonment | `A1` only. `A2` stays denominator-only |
+| `A1`, then a transport retry of `A1`, then `R1` | One denominator and one numerator |
+| Direct Checkout entry, then Review | Not part of this metric |
+
+Ordering for that relation does not use analytics ingestion order, customer identity, cart identity alone, or the existence of any Review on the journey. When an authoritative causal order is available, arbitrary wall-clock order is not the authority. The later Measurement Plan selects an ordering and correlation representation consistent with authoritative occurrence time, with `AUTHORITATIVE_JOURNEY_SEQUENCE` where that sequence applies, and with activation-specific provenance. This candidate only requires the relation to be representable. It does not choose the encoding.
+
+Cart activation itself need not be a member of `AUTHORITATIVE_JOURNEY_SEQUENCE`. If it is not, the Measurement Plan must still establish an unambiguous causal-before relation between that activation and its qualifying Review-reached fact.
+
+```text
+ANALYTICS_INGESTION_ORDER_AUTHORIZES_ACTIVATION_NUMERATOR = NO
+CART_IDENTITY_ALONE_AUTHORIZES_ACTIVATION_NUMERATOR = NO
+ANY_REVIEW_ON_JOURNEY_AUTHORIZES_ACTIVATION_NUMERATOR = NO
+ACTIVATION_TO_REVIEW_CAUSAL_ORDER_REQUIRED = YES
+ACTIVATION_REVIEW_ORDER_ENCODING_SELECTED = NO
+```
+
 No migration is written by this candidate.
 
 ---
@@ -1511,8 +1653,8 @@ Customer pages are the existing static export.
 
 | Surface | File | Behaviour |
 |---|---|---|
-| Cart | `src/app/(customer)/order/cart/page.tsx`, `CartClient` | Coupon field, apply, remove, replace, failure text, threshold text, applied saving, complimentary projection line. Data comes from `POST /api/v1/cart/evaluate`. After that result is committed to the presented Cart state, the committed UI can expose the coarse observed descriptor in section 24. A repaint of the same result is not another view. The Cart Checkout control is one activation. A transport retry of that activation is the same activation. A later activation is distinct. A repaint is not an activation. |
-| Checkout Review | `CheckoutClient` on `/order/checkout` | Same cart coupon commands. Shows the shared code and the recomputed explanation, including the equal-payable and strictly-lower coupon classes and stale recovery. After that result is committed to the presented Review state, the committed UI can expose the coarse observed descriptor. A repaint is not another view. Pay is not blocked on measurement. |
+| Cart | `src/app/(customer)/order/cart/page.tsx`, `CartClient` | Coupon field, apply, remove, replace, failure text, threshold text, applied saving, complimentary projection line. Data comes from `POST /api/v1/cart/evaluate`. After that result is committed to the presented Cart state, observation evidence is a function of that committed projection, at the fidelity in section 24. A repaint of the same result is not another view. The Cart Checkout control is one activation. A transport retry of that activation is the same activation. A later activation is distinct and does not inherit an earlier Review. A repaint is not an activation. |
+| Checkout Review | `CheckoutClient` on `/order/checkout` | Same cart coupon commands. Shows the shared code and the recomputed explanation, including the equal-payable and strictly-lower coupon classes and stale recovery. After that result is committed to the presented Review state, observation evidence is a function of that committed projection. A later Cart activation counts as Review-reached only when this reach is causally after that activation. A repaint is not another Offer-result view and is not, by itself, a new activation-scoped Review reach. Pay is not blocked on measurement. |
 | Payment | `PaymentPanel` | Read-only `CommercialExplanation` from the active snapshot. No input. |
 | Payment return | `/order/payment` | Unchanged status return. It is not the commercial editor. |
 | Order detail | `OrderDetailClient` | Renders sealed savings and a complimentary snapshot line. Does not evaluate. |
@@ -1717,20 +1859,25 @@ SERVER_SAVINGS_EXPLANATION_INTEGRITY =
 
 The inputs are server values from that one quote. They are not client amounts and not a browser assertion. A consistent explanation matches the parts of that quote. The comparison is false when the explanation disagrees with those parts, including a standing ₹0 delivery amount counted as a saving. The Measurement Plan decides where that server comparison is stored. No customer or operator request body is its source.
 
-Separately, the plan must be able to evaluate the committed screen:
+Separately, the plan must be able to evaluate the committed screen at the fidelity in section 24. Surface, coarse shape, saving-present, and progress-present can all match while the rendered saving value is wrong. Expected ₹80 rendered as ₹8 is a mismatch.
 
 ```text
 DISPLAYED_PRESENTATION_MATCH =
-  server_expected_descriptor == observed_committed_ui_descriptor
+  AUTHORITATIVE_EXPECTED_PRESENTATION matches OBSERVED_COMMITTED_PRESENTATION
+  at amount-level and component-level fidelity
+OBSERVED_PRESENTATION_EVIDENCE = FUNCTION_OF_ACTUAL_COMMITTED_PRESENTATION
 ```
 
-The observed descriptor is the coarse projection the UI actually committed: surface, coarse shape, saving-present, and progress-present. It is not money, not a raw coupon, not private eligibility, not customer PII, and not a client integrity boolean. An opaque acknowledgement of a server id, with no observed descriptor, does not prove that match.
+The observed evidence is non-authoritative presentation evidence. It is not authoritative money, not a raw coupon, not private eligibility, not customer PII, and not a client integrity boolean. An opaque acknowledgement of a server id, or a copy of the expected result that never passed through the committed projection, does not prove that match. The observation is not a second money ledger. This candidate does not select its encoding.
 
 ```text
 DISPLAYED_SAVINGS_INTEGRITY_AUTHORITY = SERVER_EVALUATION_OF_THE_SAME_QUOTE
-PRESENTATION_MATCH_AUTHORITY = SERVER_COMPARISON_OF_EXPECTED_AND_OBSERVED_DESCRIPTORS
+PRESENTATION_MATCH_AUTHORITY = SERVER_COMPARISON_OF_EXPECTED_AND_OBSERVED_PRESENTATIONS
 BROWSER_MONEY_AUTHORITY = NO
+BROWSER_PRESENTATION_OBSERVER = YES
 BROWSER_INTEGRITY_AUTHORITY = NO
+SERVER_EXPECTED_TRUTH = YES
+AMOUNT_LEVEL_RENDER_MISMATCH_DETECTABLE = YES
 SECOND_PRICING_AUTHORITY = NO
 SECOND_PROMOTION_AUTHORITY = NO
 RAW_COUPON_OR_ELIGIBILITY_STORED = NO
@@ -1740,11 +1887,12 @@ REPORT_INCLUDES_BOTH_SURFACES = YES
 UNPRESENTED_EVALUATION_COUNTED = NO
 REPAINT_CREATES_ANOTHER_VIEW = NO
 CONCRETE_COLLECTION_DEFERRED = YES
+PRESENTATION_ENCODING_SELECTED = NO
 ```
 
-For each presented evaluation the plan can calculate: the authoritative evaluation exists; the expected server descriptor exists; the observed committed UI descriptor exists; server explanation integrity can be evaluated; expected-versus-observed match can be evaluated; and the surface is distinguishable. `REPORT_AS_OF` includes a presented evaluation only when its authoritative occurrence time is strictly before that cutoff. One evaluation counts at most once. The report does not re-sum money and does not invent a second price. A Cart presentation does not consume `AUTHORITATIVE_JOURNEY_SEQUENCE` and does not become a primary-cohort entry. Copying an already-existing journey key onto a Cart view does not mint or rewrite that key.
+For each presented evaluation the plan can calculate: the authoritative evaluation exists; the authoritative expected presentation exists; the observed committed presentation exists and was derived from the committed UI; server explanation integrity can be evaluated independently; expected-versus-observed match can be evaluated at the fidelity above; and the surface is distinguishable. `REPORT_AS_OF` includes a presented evaluation only when its authoritative occurrence time is strictly before that cutoff. One evaluation counts at most once for the Offer-result view. The report does not re-sum money and does not invent a second price. A Cart presentation does not consume `AUTHORITATIVE_JOURNEY_SEQUENCE` and does not become a primary-cohort entry. Copying an already-existing journey key onto a Cart view does not mint or rewrite that key.
 
-A true evaluation keeps integrity true. A deliberately incorrect UI mapping stays detectable. The client cannot flip a false server comparison to true. Design Readiness defines how the committed UI exposes the observed descriptor. The Quality Plan proves the incorrect mapping.
+A true evaluation with a matching committed presentation keeps the presentation comparison true. A rendered ₹8 against an expected ₹80 keeps it false. An omitted saving row, an extra saving row, and a wrong component split with the same total keep it false when displayed parts must match the evaluated saving. A browser-submitted integrity assertion cannot turn any of those false. A server explanation mismatch stays independently detectable. The Quality Plan proves those cases. Design Readiness defines the customer-facing projection. It does not select the observation encoding.
 
 ### Commercial state change
 
@@ -1762,13 +1910,16 @@ The ratio of journey keys that reach Review over checkout rows created with a jo
 SECONDARY_METRIC = CART_TO_CHECKOUT_REVIEW_CONTINUATION
 SEMANTIC_GRAIN = ONE_GENUINE_CART_SURFACE_CHECKOUT_ACTIVATION
 DENOMINATOR = Cart activations in the Measurement Plan's finalized cohort and cutoff
-NUMERATOR = those same activations associated with a checkout journey that reaches or presents authoritative Checkout Review
+NUMERATOR = those same activations that have a qualifying Review-reached fact causally after that exact activation
 ABANDONED_ACTIVATION = DENOMINATOR_ONLY
 TRANSPORT_RETRY = NOT_ANOTHER_DENOMINATOR
 REPAINT = NOT_ANOTHER_DENOMINATOR
 LATER_GENUINE_ACTIVATION = ANOTHER_DENOMINATOR
 DIRECT_CHECKOUT_START = EXCLUDED
 REUSED_ACTIVE_CHECKOUT_MAY_ENTER_NUMERATOR = YES
+OLD_REVIEW_SATISFIES_NEW_ACTIVATION = NO
+ACTIVATION_REQUIRES_SUBSEQUENT_REVIEW_REACH = YES
+REPEATED_OFFER_RESULT_VIEW_REQUIRED_FOR_LATER_ACTIVATION = NO
 MULTIPLE_ACTIVATIONS_ONE_JOURNEY_DO_NOT_COLLAPSE = YES
 CART_COUNT = NOT_THIS_METRIC
 CHECKOUT_ROW_COUNT = NOT_THIS_METRIC
@@ -1780,7 +1931,7 @@ REPORT_AS_OF = AUTHORITATIVE_OCCURRENCE_TIME_STRICTLY_BEFORE_CUTOFF
 CONCRETE_REPRESENTATION_DEFERRED = YES
 ```
 
-An abandoned activation stays in the denominator. No timeout removes it. Checkout expiry and cart lifetime do not change Product behaviour. A direct start with no valid Cart-origin context is excluded. Unknown, stale, or other-cart context does not attach an unrelated activation. A retry of an activation that is already associated returns that same association. Several distinct Cart activations may enter one still-active checkout and may each resolve to that same journey reaching Review. They remain separate denominator activations when this secondary grain is Cart activation.
+An abandoned activation stays in the denominator. No timeout removes it. Checkout expiry and cart lifetime do not change Product behaviour. A direct start with no valid Cart-origin context is excluded. Unknown, stale, or other-cart context does not attach an unrelated activation. A retry of an activation that is already associated returns that same association. Several distinct Cart activations may share one still-active checkout. They remain separate denominator activations. Each one enters the numerator only through its own later Review-reached fact, as section 24 requires. An earlier Review on that journey does not count for a later activation. Reaching Review again does not require a second Offer-result-view observation when the same evaluation was already viewed.
 
 The activation stores no customer id, guest id, coupon, money, or eligibility data.
 
@@ -1921,7 +2072,10 @@ Customer identity remains on checkout and on the first-order guard for eligibili
 | Later distinct Cart activation | A new genuine Cart-surface Checkout activation | Cart lock | A distinct activation observation | The older unassociated activation is not returned | The new activation is its own denominator. The abandoned activation stays denominator-only |
 | Direct checkout without Cart-origin context | No valid Cart-origin context | `startCheckout` | Checkout proceeds. No activation is created or consumed | Not counted in the Cart metric | Direct entry stays excluded |
 | Unknown, stale, or other-cart context | The presented context does not belong to this cart's activation | `startCheckout` | Checkout proceeds. That context is not attached | No unrelated activation is reclassified | That activation stays unassociated |
-| Reused active checkout with a valid journey key | Existing `DRAFT`, `READY_FOR_PAYMENT`, or `PAYMENT_PENDING` checkout for that cart, plus valid same-cart Cart-origin context | `startCheckout` returns the existing checkout and does not insert one | The activation associates with that existing journey key | The key is not rewritten and a second key is not minted | That activation may enter the numerator. Other activations of the same checkout stay distinct |
+| Reused active checkout with a valid journey key | Existing `DRAFT`, `READY_FOR_PAYMENT`, or `PAYMENT_PENDING` checkout for that cart, plus valid same-cart Cart-origin context | `startCheckout` returns the existing checkout and does not insert one | The activation associates with that existing journey key | The key is not rewritten and a second key is not minted | Association alone is not the numerator. A Review reached after this activation may enter it. An earlier Review does not. Other activations stay distinct |
+| Later activation after an earlier Review only | Journey already has Review `R1`, then a new Cart activation `A2`, and no Review after `A2` | Existing checkout is reused | `A2` is its own denominator | `A2` is not counted from `R1` | `A2` stays denominator-only |
+| Later activation then a later Review | `A1`, `R1`, then `A2`, then Review reached `R2` after `A2` | Same journey | `A1` and `A2` may both enter the numerator | The Offer-result view of an unchanged evaluation is not forced to duplicate | Both activations are numerator when each has its own subsequent Review reach |
+| Same activation then one Review | `A1` and a transport retry of `A1`, then one Review reached after that activation | Cart lock | One denominator | The retry is not a second activation | One numerator |
 | Associated activation replay | The activation is already associated | Same activation identity | Return the same association | No second association and no second denominator | One activation |
 | New Cart activation after completion or cancel | Previous activation holds the closed or cancelled journey | New activation identity | A new activation observation | The old journey is not reopened by the new activation | One new denominator |
 
@@ -1976,10 +2130,10 @@ Golden journeys `GJ-FIRST-ORDER` and `GJ-RETURNING-ORDER` are proof surfaces for
 | Report-as-of | Authoritative occurrence time strictly before `REPORT_AS_OF`. Segment uses presented Reviews only |
 | Pay before acknowledgement | Presentation is recorded before the later payment measurement fact |
 | Customer identity is not the journey join | Measurement facts do not use customer identity as the join |
-| Raw coupon text is not stored | Coarse presentation class only. Any fingerprint is a server digest, not coupon text |
-| Displayed savings integrity | Section 27A. Server explanation integrity and expected-versus-observed presentation match, on Cart and Checkout Review. The browser cannot set either verdict |
+| Raw coupon text is not stored | No raw coupon text, private eligibility reason, payment secret, customer PII, or another customer's data. Presentation evidence is the minimum needed for the financial-truth guardrail, not a second money ledger. Retention stays the existing approved rule |
+| Displayed savings integrity | Sections 24 and 27A. Server explanation integrity stays independent. Expected-versus-observed presentation match uses the committed UI at amount-level fidelity, on Cart and Checkout Review. A browser integrity assertion cannot override a mismatch |
 | Commercial state-change identity | Section 27A. One changed Review result, one change observation. Source origin is the revision the command committed |
-| Cart → Review continuation | Section 27A. One observation per Cart activation. A later activation is distinct. A reused active checkout may associate. Checkout-row ratio is rejected |
+| Cart → Review continuation | Sections 24 and 27A. One observation per Cart activation. A later activation is distinct. A reused active checkout may associate. Numerator entry requires a Review reached after that exact activation. An earlier Review does not satisfy it. A new Offer-result view is not required. Checkout-row ratio is rejected |
 | Cart amount before checkout context | Section 6. Authoritative for Cart scope only. Not a final payable |
 | Customer before cart | Section 10A |
 | Historical purchased savings stay immutable | Insert-only snapshot. Composite snapshot-line foreign key remains |
@@ -2009,9 +2163,9 @@ and is not IMP-036J implementation evidence. Future implementation proof under T
 | Domain unit on `buildPromotionCandidates` / `selectBestCandidate` | Slot pairs, both-apply, BOGO non-stack, best payable, complimentary tie, `NONE_CHOSEN`, coupon did-not-improve, standing ₹0 waiver |
 | Domain unit on the first-order predicate | Failed payment absent; cancelled order still ineligible; no customer boolean |
 | Measurement | One key across a cart-revision checkout replacement; payment-driven latest `EXPIRED` copies that key onto the next checkout; a later explicit cancel or completion does not; an evaluation that was not presented does not enter the denominator; a duplicate observation of one presented Review consumes no second sequence; a replay after journey closure returns the existing fact and adds no sequence; a new presented fact on a closed journey is rejected; completion replay after closure returns the existing completion; a closed journey with no completion fact is an invariant violation and is not repaired by reopening; Pay-before-observation keeps the presented sequence first; segment reads presented Reviews only; one completion per journey on both normal and recovery materialization; revisit does not add a denominator; equal occurrence times still have one total order; half-open window; report cutoff uses authoritative occurrence time only |
-| Savings integrity | A true Cart quote and a true Review quote keep server explanation integrity true; a deliberately mismatched server explanation keeps it false; a deliberately incorrect committed UI mapping is detectable as a presentation mismatch; the browser cannot set either verdict; an unpresented evaluation is absent from the ratio; the report includes `CART` and `CHECKOUT_REVIEW` and does not relabel one as the other; measurement stores no raw coupon text and no customer id; copying an existing journey key does not mint or rewrite it |
+| Savings integrity | Expected rendered ₹80 against authoritative ₹80 matches on Cart and on Checkout Review; expected ₹80 rendered as ₹8 mismatches; an omitted saving row mismatches; an unexpected rendered saving row mismatches; an incorrect component split with the same total is detectable where displayed parts must match; a browser-submitted integrity assertion cannot override a mismatch; a server explanation mismatch stays independently detectable; the report includes `CART` and `CHECKOUT_REVIEW` and does not relabel one as the other; measurement stores no raw coupon text, no private eligibility reason, no payment secret, and no customer PII; the observation is derived from the committed presentation and is not a second money ledger; copying an existing journey key does not mint or rewrite it |
 | State-change dedup | The same coupon, fulfilment, or stale-recovery operation retried after commit allocates no second sequence; a concurrent duplicate of that same result records one change observation; a closed-journey replay returns that observation; one origin does not produce a second state-change observation |
-| Cart continuation | The same activation retried, including after a lost response and including two rapid requests, is one observation; a later distinct Cart activation is another denominator and the abandoned activation does not capture it; a direct Checkout entry is excluded; unknown, stale, and other-cart context are not attached; a reused active checkout with a valid journey key associates that activation without rewriting the key; several activations may share that journey without collapsing; replay of an associated activation returns the same association; the activation stores no customer id, guest id, coupon, money, or eligibility |
+| Cart continuation | The same activation retried, including after a lost response and including two rapid requests, is one denominator and, with one subsequent Review reach, one numerator; a later distinct Cart activation is another denominator; that later activation stays denominator-only when the only Review is earlier; both activations enter the numerator when each is followed by its own Review reach; abandonment after a later activation leaves that activation denominator-only; a direct Checkout entry is excluded; unknown, stale, and other-cart context are not attached; a reused active checkout with a valid journey key associates that activation without rewriting the key; the same evaluation need not duplicate the Offer-result view; several activations may share that journey without collapsing; replay of an associated activation returns the same association; ordering does not use ingestion order, cart identity alone, or any earlier Review; the activation stores no customer id, guest id, coupon, money, or eligibility |
 | Persistence concurrency | Two complimentary activations; two first-order reservations sharing one guard when the winner is a pair; last cap unit; payment retry after `RELEASED`; composite snapshot-line foreign key rejects a cross-snapshot `snapshot_line_id`; payment binding racing `reconcileGuestCartWithCustomer` finishes without a deadlock; two transactions establish one journey ordering record without aborting the commercial transaction; one presentation and one Pay fallback race, leave exactly one presented fact, both complete, and keep a deterministic unique sequence; equal checkout timestamps and random UUID order cannot change predecessor selection; causal order is strict for one cart; a latest `CANCELLED` or `COMPLETED` boundary blocks an older `EXPIRED` continuation; a latest payment-driven `EXPIRED` predecessor keeps the journey key; an active pre-extension checkout is adopted once under the Cart-then-Checkout rule; historical terminal rows are not ordered from UUID or `created_at` |
 | HTTP | Cart and checkout share one code; payment body has no coupon mutation; admin 409 and unique-index non-success |
 | Browser | Cart, Review, read-only Payment, order detail, narrow viewport, focus rules in the Product Definition |
@@ -2052,7 +2206,7 @@ Checked against the escalation examples:
 | New fields, migration, façade route extensions, benefit types, capability-specific tables and unique indexes | Yes for commerce: the guard table, complimentary benefit shape, and the snapshot candidate key. Those do not by themselves require a global ARCH bump. Measurement persistence is not selected here |
 | Repository-wide checkout creation order | No. Journey continuity uses strict causal order under the existing per-cart lock inside `startCheckout`. It is not a new global ordering service |
 
-D-382 remains the sequencing authority. FD-036J-01, FD-036J-02, and FD-036J-03 remain Product Definition decisions. They are not copied into the Decision Register by this candidate. Candidate 5's independent Fit PASS and the concrete measurement representation it locked stay historical provenance. That representation is a `NON_BINDING_MEASUREMENT_PLAN_OPTION`. It is not a Candidate 8 Fit PASS criterion, and Candidate 5 is not rewritten as a failure. Candidate 6 keeps the server savings-explanation comparison, revision-backed change provenance, and the Cart-activation grain. Candidate 7 keeps cross-surface integrity feasibility and the distinction between one activation retry and a later activation. Its exact-head review stopped. Candidate 8 keeps those semantics, requires an observed committed UI descriptor, associates a Cart activation with an already-active checkout that already has a journey key, and leaves schema, transport, storage, identifier encoding, event ownership, and sequence encoding to the Measurement Plan. None of this adds a service, a queue, a broker, an auth model, a permission, or a second Pricing or Promotion authority.
+D-382 remains the sequencing authority. FD-036J-01, FD-036J-02, and FD-036J-03 remain Product Definition decisions. They are not copied into the Decision Register by this candidate. Candidate 5's independent Fit PASS and the concrete measurement representation it locked stay historical provenance. That representation is a `NON_BINDING_MEASUREMENT_PLAN_OPTION`. It is not a Candidate 9 Fit PASS criterion, and Candidate 5 is not rewritten as a failure. Candidate 6 keeps the server savings-explanation comparison, revision-backed change provenance, and the Cart-activation grain. Candidate 7 keeps cross-surface integrity feasibility and the distinction between one activation retry and a later activation. Its exact-head review stopped. Candidate 8 keeps the Measurement Plan ownership boundary and reused-active-checkout association. Its exact-head review stopped. Candidate 9 keeps those semantics, requires amount-level observation of the actually committed presentation, and requires a Review reached after the exact Cart activation. Schema, transport, storage, identifier encoding, event ownership, sequence encoding, and the presentation-observation encoding stay with the Measurement Plan. None of this adds a service, a queue, a broker, an auth model, a permission, or a second Pricing or Promotion authority.
 
 ```text
 GLOBAL_ARCHITECTURE_CHANGE_REQUIRED = NO
@@ -2067,7 +2221,7 @@ No D-383 is created. ARCH-R23 stays current.
 
 ---
 
-## 32. Candidate 8 result, not a Fit PASS
+## 32. Candidate 9 result, not a Fit PASS
 
 Candidate 5 recorded a fit result. Independent review `5347761109` accepted it. That PASS remains
 historical provenance and is not rewritten as a failure. Candidate 6 fixed the Cart money
@@ -2078,13 +2232,20 @@ merged and never locked, and it is not rewritten as a pass. Candidate 7 added cr
 Cart integrity feasibility and per-activation distinction. Exact-head review findings
 `4135593837`, `4135593847`, and `4135593861` stopped that candidate. Independent Architecture
 Fit review of Candidate 7 is `STOP`. Candidate 7 was never merged and never locked, and it is
-not rewritten as a pass. Candidate 8 remediates those three findings. Independent Architecture
-Fit review of Candidate 8 has not been performed.
+not rewritten as a pass. Candidate 8 kept the Measurement Plan ownership boundary, associated a
+reused active checkout, and required an observed committed UI presentation. Exact-head review
+findings `4136530636` and `4136530647` stopped that candidate. Independent Architecture Fit
+review of Candidate 8 is `STOP`. Candidate 8 was never merged and never locked, and it is not
+rewritten as a pass. Candidate 9 remediates those two findings. Independent Architecture Fit
+review of Candidate 9 has not been performed.
 
 ```text
-CANDIDATE_8_ARCHITECTURE_FIT_REVIEW = NOT_PERFORMED
-ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_8 = NO
+CANDIDATE_9_ARCHITECTURE_FIT_REVIEW = NOT_PERFORMED
+ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_9 = NO
 ARCHITECTURE_LOCK = NOT_LOCKED
+HISTORICAL_CANDIDATE_8_ARCHITECTURE_FIT_REVIEW = STOP
+CANDIDATE_8_REWRITTEN_AS_PASSED = NO
+ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_8 = NO
 HISTORICAL_CANDIDATE_7_ARCHITECTURE_FIT_REVIEW = STOP
 CANDIDATE_7_REWRITTEN_AS_PASSED = NO
 HISTORICAL_CANDIDATE_6_ARCHITECTURE_FIT_REVIEW = STOP
@@ -2101,7 +2262,7 @@ PRODUCT_DECISION_REQUIRED = NONE
 GLOBAL_DECISION_REQUIRED = NO
 ```
 
-Every mandatory story still has a safe fit inside the accepted Promotion, Pricing, Cart, Checkout Snapshot, Order, Catalog, and Availability authorities. The approved Experience Definition's presentation facts and X3 measurement contract are specified as semantic constraints: displayed-savings integrity on Cart and Checkout Review, an observed committed UI descriptor, commercial state-change identity, and Cart → Review continuation by activation, including association with a reused active checkout. Concrete measurement encoding is not a Fit PASS criterion. Product and Experience semantics are unchanged. `PD-IMP-036J-DRAFT-6` and `XD-IMP-036J-DRAFT-6` are not modified.
+Every mandatory story still has a safe fit inside the accepted Promotion, Pricing, Cart, Checkout Snapshot, Order, Catalog, and Availability authorities. The approved Experience Definition's presentation facts and X3 measurement contract are specified as semantic constraints: displayed-savings integrity on Cart and Checkout Review, amount-level observation of the actually committed presentation, commercial state-change identity, and Cart → Review continuation by activation, including a reused active checkout whose numerator requires a later Review reach. Concrete measurement encoding is not a Fit PASS criterion. Product and Experience semantics are unchanged. `PD-IMP-036J-DRAFT-6` and `XD-IMP-036J-DRAFT-6` are not modified.
 
 ```text
 IMP036J_DESIGN_READINESS = NOT_PERFORMED

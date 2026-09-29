@@ -18336,16 +18336,19 @@ describe("IMP-036J Experience Gate PASS persistence", () => {
 
 
 
-describe("IMP-036J architecture fit remediation candidate 8", () => {
+describe("IMP-036J architecture fit remediation candidate 9", () => {
   const live = readFileSync("docs/platform/capabilities/IMP-036J-promotions-coupons-offers.md", "utf8");
-  it("binds Candidate 8 as unreviewed, preserves Candidate 6 and 7 STOP, and preserves Candidate 5 provenance", () => {
+  it("binds Candidate 9 as unreviewed, preserves Candidate 6, 7, and 8 STOP, and preserves Candidate 5 provenance", () => {
     assert.deepEqual(evaluateImp036jArchitectureLock(live), { ok: true });
   });
   for (const [key, value] of Object.entries({
     architectureFit: "PASS", architectureLock: "LOCKED",
-    candidateRevision: "IMP-036J-FIT-CANDIDATE-7",
-    architectureFitReviewForCandidate8: "PASS",
-    architectureFitPassClaimedForCandidate8: true,
+    candidateRevision: "IMP-036J-FIT-CANDIDATE-8",
+    architectureFitReviewForCandidate9: "PASS",
+    architectureFitPassClaimedForCandidate9: true,
+    historicalCandidate8ArchitectureFitReview: "PASS",
+    historicalCandidate8NeverMerged: false,
+    historicalCandidate8NeverLocked: false,
     historicalCandidate7ArchitectureFitReview: "PASS",
     historicalCandidate7NeverMerged: false,
     historicalCandidate7NeverLocked: false,
@@ -18367,8 +18370,10 @@ describe("IMP-036J architecture fit remediation candidate 8", () => {
   for (const [key, from, to] of [
     ["IMP036J_ARCHITECTURE_FIT", "NOT_PERFORMED", "PASS"],
     ["IMP036J_ARCHITECTURE_LOCKED", "NO", "YES"],
-    ["ARCHITECTURE_FIT_REVIEW_FOR_CANDIDATE_8", "NOT_PERFORMED", "PASS"],
-    ["ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_8", "NO", "YES"],
+    ["ARCHITECTURE_FIT_REVIEW_FOR_CANDIDATE_9", "NOT_PERFORMED", "PASS"],
+    ["ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_9", "NO", "YES"],
+    ["HISTORICAL_CANDIDATE_8_ARCHITECTURE_FIT_REVIEW", "STOP", "PASS"],
+    ["CANDIDATE_8_REWRITTEN_AS_PASSED", "NO", "YES"],
     ["HISTORICAL_CANDIDATE_7_ARCHITECTURE_FIT_REVIEW", "STOP", "PASS"],
     ["CANDIDATE_7_REWRITTEN_AS_PASSED", "NO", "YES"],
     ["HISTORICAL_CANDIDATE_6_ARCHITECTURE_FIT_REVIEW", "STOP", "PASS"],
@@ -18389,6 +18394,10 @@ describe("IMP-036J architecture fit remediation candidate 8", () => {
       assert.equal(evaluateImp036jArchitectureLock(mutated).ok, false);
     });
   }
+  it("rejects dropping a Candidate 8 exact-head finding id", () => {
+    const mutated = live.replace("4136530636", "0000000000");
+    assert.equal(evaluateImp036jArchitectureLock(mutated).ok, false);
+  });
   it("rejects dropping a Candidate 7 exact-head finding id", () => {
     const mutated = live.replace("4135593837", "0000000000");
     assert.equal(evaluateImp036jArchitectureLock(mutated).ok, false);

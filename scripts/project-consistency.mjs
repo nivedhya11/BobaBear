@@ -40487,10 +40487,17 @@ export function evaluateImp036jArchitectureLock(text) {
     productDefinition: "PD-IMP-036J-DRAFT-6", productDefinitionGate: "PASS",
     experienceDefinition: "XD-IMP-036J-DRAFT-6", experienceGate: "PASS",
     architectureBase: "ARCH-R23", architectureFit: "NOT_PERFORMED", architectureLock: "NOT_LOCKED",
-    candidateRevision: "IMP-036J-FIT-CANDIDATE-8",
+    candidateRevision: "IMP-036J-FIT-CANDIDATE-9",
     architectureFitSourceCandidate: "IMP-036J-FIT-CANDIDATE-5",
-    architectureFitReviewForCandidate8: "NOT_PERFORMED",
-    architectureFitPassClaimedForCandidate8: false,
+    architectureFitReviewForCandidate9: "NOT_PERFORMED",
+    architectureFitPassClaimedForCandidate9: false,
+    historicalCandidate8ArchitectureFitReview: "STOP",
+    historicalCandidate8NeverMerged: true,
+    historicalCandidate8NeverLocked: true,
+    historicalCandidate8ExactHeadReviewIds: "4136530636,4136530647",
+    historicalCandidate8FreshReview: "5356279418",
+    historicalCandidate8EvaluatedHead: "8a8b34971f2b27f5ce32d4f472b57de423e06583",
+    historicalCandidate8EvaluatedTree: "dc21091ba33d05b0122dfbfe0a0f489a22da1cb8",
     historicalCandidate7ArchitectureFitReview: "STOP",
     historicalCandidate7NeverMerged: true,
     historicalCandidate7NeverLocked: true,
@@ -40514,10 +40521,13 @@ export function evaluateImp036jArchitectureLock(text) {
   const fence = text.match(/```text\n([\s\S]*?)```/)?.[1] ?? "";
   const expectedMarkers = {
     STATUS: "CURRENT", AUTHORITY: "CAPABILITY_ARCHITECTURE", ARCHITECTURE_BASE: "ARCH-R23",
-    CANDIDATE_REVISION: "IMP-036J-FIT-CANDIDATE-8",
+    CANDIDATE_REVISION: "IMP-036J-FIT-CANDIDATE-9",
     ARCHITECTURE_FIT: "NOT_PERFORMED", ARCHITECTURE_LOCK: "NOT_LOCKED",
-    ARCHITECTURE_FIT_REVIEW_FOR_CANDIDATE_8: "NOT_PERFORMED",
-    ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_8: "NO",
+    ARCHITECTURE_FIT_REVIEW_FOR_CANDIDATE_9: "NOT_PERFORMED",
+    ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_9: "NO",
+    HISTORICAL_CANDIDATE_8_ARCHITECTURE_FIT_REVIEW: "STOP",
+    HISTORICAL_CANDIDATE_8_NEVER_MERGED: "YES",
+    HISTORICAL_CANDIDATE_8_NEVER_LOCKED: "YES",
     HISTORICAL_CANDIDATE_7_ARCHITECTURE_FIT_REVIEW: "STOP",
     HISTORICAL_CANDIDATE_7_NEVER_MERGED: "YES",
     HISTORICAL_CANDIDATE_7_NEVER_LOCKED: "YES",
@@ -40571,23 +40581,41 @@ export function evaluateImp036jArchitectureLock(text) {
     "CANDIDATE_7_REWRITTEN_AS_PASSED = NO",
     "ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_7 = NO",
     "ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_8 = NO",
-    "OBSERVED_PRESENTATION",
+    "CANDIDATE_8_REWRITTEN_AS_PASSED = NO",
+    "AF-036J-C8-01",
+    "AF-036J-C8-02",
+    "4136530636",
+    "4136530647",
+    "5356279418",
+    "OBSERVED_PRESENTATION_EVIDENCE = FUNCTION_OF_ACTUAL_COMMITTED_PRESENTATION",
+    "AMOUNT_LEVEL_RENDER_MISMATCH_DETECTABLE = YES",
+    "BROWSER_MONEY_AUTHORITY = NO",
+    "BROWSER_PRESENTATION_OBSERVER = YES",
+    "BROWSER_INTEGRITY_AUTHORITY = NO",
+    "OLD_REVIEW_SATISFIES_NEW_ACTIVATION = NO",
+    "ACTIVATION_REQUIRES_SUBSEQUENT_REVIEW_REACH = YES",
+    "REPEATED_OFFER_RESULT_VIEW_REQUIRED_FOR_LATER_ACTIVATION = NO",
+    "PRESENTATION_ENCODING_SELECTED = NO",
     "REUSED_ACTIVE_CHECKOUT_RETURNS_EXISTING_ROW = YES",
     "NON_BINDING_MEASUREMENT_PLAN_OPTION",
   ]) {
-    if (!text.includes(token)) return { ok: false, code: "IMP036J_LOCK_STATUS", message: `Candidate 8 must preserve ${token}` };
+    if (!text.includes(token)) return { ok: false, code: "IMP036J_LOCK_STATUS", message: `Candidate 9 must preserve ${token}` };
   }
   if (
+    text.includes("ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_9 = YES") ||
     text.includes("ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_8 = YES") ||
     text.includes("ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_7 = YES") ||
     text.includes("ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_6 = YES") ||
+    text.includes("CANDIDATE_8_REWRITTEN_AS_PASSED = YES") ||
     text.includes("CANDIDATE_7_REWRITTEN_AS_PASSED = YES") ||
     text.includes("CANDIDATE_6_REWRITTEN_AS_PASSED = YES") ||
+    text.includes("HISTORICAL_CANDIDATE_8_ARCHITECTURE_FIT_REVIEW = PASS") ||
+    text.includes("HISTORICAL_CANDIDATE_8_ARCHITECTURE_FIT_REVIEW = NOT_PERFORMED") ||
     text.includes("HISTORICAL_CANDIDATE_7_ARCHITECTURE_FIT_REVIEW = PASS") ||
     text.includes("HISTORICAL_CANDIDATE_6_ARCHITECTURE_FIT_REVIEW = PASS") ||
     text.includes("CANDIDATE_5_REWRITTEN_AS_FAILED = YES")
   ) {
-    return { ok: false, code: "IMP036J_LOCK_STATUS", message: "Candidate 8 must not claim Architecture Fit PASS or rewrite Candidate 5, 6, or 7" };
+    return { ok: false, code: "IMP036J_LOCK_STATUS", message: "Candidate 9 must not claim Architecture Fit PASS or rewrite Candidate 5, 6, 7, or 8" };
   }
   return { ok: true };
 }
