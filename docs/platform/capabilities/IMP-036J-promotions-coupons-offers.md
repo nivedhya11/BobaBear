@@ -1,7 +1,7 @@
 <!-- governance-meta
 {
-  "status": "CANDIDATE",
-  "authority": "CAPABILITY_ARCHITECTURE_CANDIDATE",
+  "status": "CURRENT",
+  "authority": "CAPABILITY_ARCHITECTURE",
   "capability": "IMP-036J",
   "title": "Promotions, Coupons and Offers",
   "productDefinition": "PD-IMP-036J-DRAFT-6",
@@ -14,8 +14,15 @@
   "changeRisk": "CR2",
   "designReadiness": "NOT_PERFORMED",
   "candidateRevision": "IMP-036J-FIT-CANDIDATE-5",
-  "architectureFit": "CANDIDATE_NOT_PERSISTED",
-  "architectureLock": "NOT_LOCKED",
+  "architectureFitSourceCandidate": "IMP-036J-FIT-CANDIDATE-5",
+  "architectureBase": "ARCH-R23",
+  "architectureFit": "PASS",
+  "architectureLock": "LOCKED",
+  "independentArchitectureFitReview": "PASS",
+  "independentArchitectureFitReviewId": "5347761109",
+  "architectureFitEvaluatedHead": "49912f35f2871ff77b9af267589d49666fc975ec",
+  "architectureFitEvaluatedTree": "7046d5bb78012524972505f555226205199a58d0",
+  "architectureFitEvaluatedGovernanceFingerprint": "ac6510d315148763069f06374a243a75a312a7693cf3e7c1d0eac71bc1026870",
   "implementationAuthorized": false,
   "implementationStarted": false,
   "schemaChangeRequired": true,
@@ -32,10 +39,11 @@
 
 # IMP-036J — Promotions, Coupons & Offers
 
-## Capability architecture candidate
+## Capability architecture — ARCHITECTURE_LOCKED
 
 ```text
-AUTHORITY = CAPABILITY_ARCHITECTURE_CANDIDATE
+STATUS = CURRENT
+AUTHORITY = CAPABILITY_ARCHITECTURE
 CAPABILITY = IMP-036J
 PRODUCT_DEFINITION = PD-IMP-036J-DRAFT-6
 PRODUCT_DEFINITION_STATUS = APPROVED
@@ -45,18 +53,34 @@ EXPERIENCE_DEFINITION_STATUS = APPROVED
 EXPERIENCE_GATE = PASS
 EXPERIENCE_CRITICALITY = X3
 CHANGE_RISK = CR2
+ARCHITECTURE_FIT_SOURCE_CANDIDATE = IMP-036J-FIT-CANDIDATE-5
 CANDIDATE_REVISION = IMP-036J-FIT-CANDIDATE-5
-ARCHITECTURE_FIT = CANDIDATE_NOT_PERSISTED
-ARCHITECTURE_LOCK = NOT_LOCKED
-IMPLEMENTATION_AUTHORIZED = false
-IMP036J_ARCHITECTURE_FIT = NOT_PERFORMED
-IMP036J_ARCHITECTURE_LOCKED = NO
+ARCHITECTURE_BASE = ARCH-R23
+ARCHITECTURE_FIT = PASS
+ARCHITECTURE_LOCK = LOCKED
+IMP036J_ARCHITECTURE_FIT = PASS
+IMP036J_ARCHITECTURE_LOCKED = YES
+INDEPENDENT_ARCHITECTURE_FIT_REVIEW = PASS
+INDEPENDENT_ARCHITECTURE_FIT_REVIEW_ID = 5347761109
+ARCHITECTURE_FIT_EVALUATED_HEAD = 49912f35f2871ff77b9af267589d49666fc975ec
+ARCHITECTURE_FIT_EVALUATED_TREE = 7046d5bb78012524972505f555226205199a58d0
+ARCHITECTURE_FIT_EVALUATED_GOVERNANCE_FINGERPRINT = ac6510d315148763069f06374a243a75a312a7693cf3e7c1d0eac71bc1026870
+ARCHITECTURE_FIT_EVALUATED_CODEX_REVIEW = 5883601198
+ARCHITECTURE_FIT_EVALUATED_CI_RUN = 36521141717
+ARCHITECTURE_FIT_EVALUATED_CODEQL_RUN = 36521141714
 IMP036J_DESIGN_READINESS = NOT_PERFORMED
+IMP036J_NEXT_GATE = DESIGN_READINESS
+QUALITY_TEST_PLAN_FINALIZED = NO
+MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = NO
+IMPLEMENTATION_PLAN = NOT_PERFORMED
+IMPLEMENTATION_AUTHORIZED = false
 IMP036J_IMPLEMENTATION_AUTHORIZED = NO
 IMP036J_STARTED = NO
+IMP036J_IMPLEMENTATION_STARTED = NO
 GLOBAL_DECISION_REQUIRED = NO
 D383_REQUIRED = NO
 ARCH_R24_REQUIRED = NO
+NEW_ADR_REQUIRED = NO
 SCHEMA_CHANGE_REQUIRED = YES
 NEW_SERVICE_REQUIRED = NO
 NEW_CUSTOMER_FACADE_ROUTE = POST /api/v1/checkouts/{checkoutId}/review-presented
@@ -66,12 +90,20 @@ FOUNDER_UAT_REQUIRED = YES
 FOUNDER_UAT = NOT_STARTED
 ```
 
-This document is an Architecture Fit **candidate**. It proves fit for approved
-`PD-IMP-036J-DRAFT-6` and approved `XD-IMP-036J-DRAFT-6`. Independent ChatGPT Architecture Fit
-review has not been performed. It does not persist Fit PASS, lock architecture, authorize
-implementation, or change `ROADMAP.md`, `STATE.md`, `decision-register.md`, or `ARCHITECTURE.md`.
-`CANDIDATE_REVISION` is local to this capability document. It is not an architecture version and
-it does not create ARCH-R24.
+This document is the locked capability architecture for IMP-036J. It preserves the reviewed
+semantics of `IMP-036J-FIT-CANDIDATE-5`. Independent ChatGPT Architecture Fit review `5347761109`
+returned PASS for that candidate at head `49912f35f2871ff77b9af267589d49666fc975ec`, tree
+`7046d5bb78012524972505f555226205199a58d0`, and governance fingerprint
+`ac6510d315148763069f06374a243a75a312a7693cf3e7c1d0eac71bc1026870`. Fresh Codex review
+`5883601198` on that same head was clean. CI run `36521141717` and CodeQL run `36521141714`
+passed on that same head. This lock checkpoint is a later commit. It is not that evaluated head.
+No working-tree fingerprint is recorded for the evaluated head because one was not part of the
+independent review evidence. The lock does not authorize implementation, perform Design
+Readiness, finalize the Quality/Test Plan, or finalize the Measurement/Instrumentation Plan.
+Section 30 remains a future implementation proof plan. Global architecture stays ARCH-R23.
+The decision register stays DR-23. D-383 is not created. No ADR is created.
+`CANDIDATE_REVISION` records the source candidate. It is not an architecture version and it does
+not create ARCH-R24.
 
 ```text
 IMP-036J-FIT-CANDIDATE-1 = original pre-Experience candidate
@@ -93,18 +125,26 @@ IMP-036J-FIT-CANDIDATE-4 = remediates those two open exact-head findings
   ARCHITECTURE_FIT_REVIEW = NOT_PERFORMED
   ARCHITECTURE_FIT_PASS = NO
   ARCHITECTURE_FIT_STOP = NO
-IMP-036J-FIT-CANDIDATE-5 = this document
+IMP-036J-FIT-CANDIDATE-5 = source semantics of this locked architecture
   remediates 4129513169
   preserves the Candidate 2, Candidate 3, and Candidate 4 remediations
-  ARCHITECTURE_FIT_REVIEW = NOT_PERFORMED
+  independent Architecture Fit review = PASS
+  INDEPENDENT_ARCHITECTURE_FIT_REVIEW_ID = 5347761109
+  ARCHITECTURE_FIT_EVALUATED_HEAD = 49912f35f2871ff77b9af267589d49666fc975ec
+  ARCHITECTURE_FIT_EVALUATED_TREE = 7046d5bb78012524972505f555226205199a58d0
+  ARCHITECTURE_FIT_EVALUATED_GOVERNANCE_FINGERPRINT = ac6510d315148763069f06374a243a75a312a7693cf3e7c1d0eac71bc1026870
+  Fit PASS subsequently persisted by this lock checkpoint
+  ARCHITECTURE_FIT_REVIEW = PASS
+  ARCHITECTURE_FIT_PASS = YES
 ```
 
 Candidate 2 did not receive an independent Architecture Fit verdict. Candidate 3 did not either:
 its exact-head review opened 4129243690 and 4129243701 and stopped before ChatGPT Architecture Fit
 review. Candidate 4 remediated those two findings. Its exact-head review then opened 4129513169 and
 stopped before ChatGPT Architecture Fit review. `IMP036J_ARCHITECTURE_FIT` stayed `NOT_PERFORMED`
-through Candidate 4 and stays `NOT_PERFORMED` in Candidate 5. Earlier candidates are not rewritten
-as a Gate verdict.
+through Candidate 4. Candidate 5 received independent Architecture Fit review PASS
+`5347761109`. This lock checkpoint persists that PASS. Candidates 1–4 are not rewritten as a
+Gate verdict.
 
 An Offer remains customer and operator meaning over the accepted Promotion authority. It does not
 set money by itself.
@@ -1859,7 +1899,8 @@ CUSTOMER_BEFORE_CART_LOCK_ORDER = YES
 
 ## 30. Test / proof plan
 
-Not executed by this candidate. Future implementation proof under TEST-1:
+Not executed. This future implementation proof plan is not PD-2 Quality/Test Plan finalization
+and is not IMP-036J implementation evidence. Future implementation proof under TEST-1:
 
 | Layer | Proves |
 |---|---|
@@ -1870,7 +1911,7 @@ Not executed by this candidate. Future implementation proof under TEST-1:
 | HTTP | Cart and checkout share one code; payment body has no coupon mutation; admin 409 and unique-index non-success |
 | Browser | Cart, Review, read-only Payment, order detail, narrow viewport, focus rules in the Product Definition |
 
-Current `npm run test:promotions`, `test:promotion-coupons`, and `test:promotion-pricing-parity` remain evidence of the accepted engine this candidate reuses. They are not IMP-036J acceptance evidence.
+Current `npm run test:promotions`, `test:promotion-coupons`, and `test:promotion-pricing-parity` remain evidence of the accepted engine this capability reuses. They are not IMP-036J acceptance evidence.
 
 ```text
 FOUNDER_UAT_REQUIRED = YES
@@ -1912,10 +1953,14 @@ No D-383 is created. ARCH-R23 stays current.
 
 ---
 
-## 32. Fit candidate verdict
+## 32. Fit result persisted by this lock
+
+Candidate 5 recorded this fit result. Independent review `5347761109` accepted it. This lock
+persists that result without changing the fit semantics above.
 
 ```text
 ARCHITECTURE_FIT_CANDIDATE_RESULT = PASS
+ARCHITECTURE_FIT_SOURCE_CANDIDATE = IMP-036J-FIT-CANDIDATE-5
 MANDATORY_STORIES_FITTED = US-036J-001 .. US-036J-013
 EXPERIENCE_FITTED = XD-IMP-036J-DRAFT-6
 CONTRADICTIONS = NONE
@@ -1926,16 +1971,27 @@ GLOBAL_DECISION_REQUIRED = NO
 Every mandatory story has a safe fit inside the accepted Promotion, Pricing, Cart, Checkout Snapshot, Order, Catalog, and Availability authorities. The approved Experience Definition's presentation facts and X3 measurement contract fit inside the same authorities, using the purchase-level guard, the snapshot-local foreign key, presented-Review measurement, Order-materialization completion, the customer-before-cart lock order, conflict-safe measurement-head initialization, per-cart checkout causal order, and closed-head replay that returns an existing fact before it rejects a new fact. Product and Experience semantics are unchanged. `PD-IMP-036J-DRAFT-6` and `XD-IMP-036J-DRAFT-6` are not modified.
 
 ```text
-IMP036J_ARCHITECTURE_FIT = NOT_PERFORMED
-IMP036J_ARCHITECTURE_LOCKED = NO
+IMP036J_ARCHITECTURE_FIT = PASS
+IMP036J_ARCHITECTURE_LOCKED = YES
 IMP036J_DESIGN_READINESS = NOT_PERFORMED
+QUALITY_TEST_PLAN_FINALIZED = NO
+MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = NO
+IMPLEMENTATION_PLAN = NOT_PERFORMED
 IMP036J_IMPLEMENTATION_AUTHORIZED = NO
 IMP036J_STARTED = NO
+IMP036J_IMPLEMENTATION_STARTED = NO
+IMP036J_NEXT_GATE = DESIGN_READINESS
 ```
 
-Those lifecycle flags stay in ROADMAP and STATE until an independent Architecture Fit review persists a result. This candidate is not that persistence.
+The architecture-fit proof plan in section 30 does not finalize the Quality/Test Plan. The X3
+measurement architecture in section 27A does not finalize the Measurement/Instrumentation Plan.
+Those plans remain part of Design Readiness. This lock does not authorize or start implementation.
 
 ```text
-CANONICAL_GOVERNANCE_CHANGED = NO
+CANONICAL_GLOBAL_ARCHITECTURE_CHANGED = NO
+ARCHITECTURE = ARCH-R23
+DECISION_REGISTER = DR-23
+D-383 = NOT_CREATED
+NEW_ADR = NO
 IMPLEMENTATION_STARTED = NO
 ```

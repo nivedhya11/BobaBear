@@ -6,7 +6,7 @@
   "productDefinitionVersion": "PD-IMP-036J-DRAFT-6",
   "productDefinitionStatus": "APPROVED",
   "productDefinitionGate": "PASS",
-  "architectureFit": "NOT_PERFORMED",
+  "architectureFit": "PASS",
   "implementationAuthorized": false
 }
 -->
@@ -24,9 +24,11 @@ PRODUCT_DEFINITION_GATE_EXECUTION = PERFORMED
 PRODUCT_DEFINITION_GATE = PASS
 IMP036J_PRODUCT_DEFINITION = APPROVED
 IMP036J_PRODUCT_DEFINITION_GATE = PASS
-ARCHITECTURE_FIT = NOT_PERFORMED
-IMP036J_ARCHITECTURE_FIT = NOT_PERFORMED
-IMP036J_ARCHITECTURE_LOCKED = NO
+ARCHITECTURE_FIT = PASS
+IMP036J_ARCHITECTURE_FIT = PASS
+IMP036J_ARCHITECTURE_LOCKED = YES
+IMP036J_DESIGN_READINESS = NOT_PERFORMED
+IMP036J_NEXT_GATE = DESIGN_READINESS
 IMPLEMENTATION_AUTHORIZED = NO
 IMP036J_IMPLEMENTATION_AUTHORIZED = NO
 IMP036J_ACCEPTED = NO
@@ -59,6 +61,10 @@ does not perform Architecture Fit, lock architecture, authorize implementation, 
 Founder product decision, FD-036J-04, or a Decision Register entry. Lifecycle truth remains
 [`ROADMAP.md`](../../ROADMAP.md) and [`STATE.md`](../../STATE.md). DRAFT-6 closes the DRAFT-5
 acceptance-slice concurrency gap for complimentary-item activation.
+
+Current lifecycle pointer: independent Architecture Fit review `5347761109` passed Candidate 5.
+The [capability architecture](../../capabilities/IMP-036J-promotions-coupons-offers.md) is locked.
+Next gate: Design Readiness, still NOT_PERFORMED. Product semantics and Gate provenance are unchanged.
 
 ### Historical candidate — `PD-IMP-036J-DRAFT-5`
 
@@ -115,8 +121,8 @@ is not the current candidate.
 ### Program context (CURRENT tip — verify against ROADMAP/STATE)
 
 ```text
-ROADMAP = GTM-R171
-STATE = STATE-R169
+ROADMAP = GTM-R172
+STATE = STATE-R170
 ARCHITECTURE = ARCH-R23
 decision-register = DR-23
 acceptedThrough = IMP-036I
@@ -130,8 +136,8 @@ IMP036J_ACTIVATED = YES
 IMP036J_PRODUCT_DEFINITION = APPROVED
 IMP036J_PRODUCT_DEFINITION_VERSION = PD-IMP-036J-DRAFT-6
 IMP036J_PRODUCT_DEFINITION_GATE = PASS
-IMP036J_ARCHITECTURE_FIT = NOT_PERFORMED
-IMP036J_ARCHITECTURE_LOCKED = NO
+IMP036J_ARCHITECTURE_FIT = PASS
+IMP036J_ARCHITECTURE_LOCKED = YES
 IMP036J_IMPLEMENTATION_AUTHORIZED = NO
 IMP036J_STARTED = NO
 IMP036J_ACCEPTED = NO
@@ -140,7 +146,7 @@ IMP036J_CHANGE_RISK = CR2
 IMP036J_EXPERIENCE_DEFINITION = APPROVED
 IMP036J_EXPERIENCE_DEFINITION_VERSION = XD-IMP-036J-DRAFT-6
 IMP036J_EXPERIENCE_GATE = PASS
-IMP036J_NEXT_GATE = ARCHITECTURE_FIT
+IMP036J_NEXT_GATE = DESIGN_READINESS
 ```
 
 Discovery history in
@@ -302,7 +308,7 @@ Data implications: Application facts come from accepted evaluation. Purchased tr
 Security implications: Do not disclose another customer's eligibility.
 Architecture fit / applicable invariants: NO_SECOND_MONEY_ENGINE. Exact evaluator representation is Fit.
 Open material decisions: NONE for this story.
-Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate PASS; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED.
+Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate PASS; Architecture Fit PASS / LOCKED; Design Readiness NOT_PERFORMED; implementation NOT_AUTHORIZED.
 ```
 
 ```text
@@ -324,7 +330,7 @@ Data implications: The entered code is an activation attempt against one shared 
 Security implications: Do not reveal whether a code belongs to another customer beyond the allowed reason class. Do not expose another customer's private eligibility.
 Architecture fit / applicable invariants: Coupon remains activation/redemption authority. NO_SECOND_MONEY_ENGINE.
 Open material decisions: NONE
-Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate PASS; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED.
+Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate PASS; Architecture Fit PASS / LOCKED; Design Readiness NOT_PERFORMED; implementation NOT_AUTHORIZED.
 ```
 
 ```text
@@ -346,7 +352,7 @@ Data implications: Display is a projection of eligibility.
 Security implications: N/A beyond ordinary cart privacy.
 Architecture fit / applicable invariants: No fabricated commercial numbers.
 Open material decisions: NONE
-Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate PASS; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED.
+Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate PASS; Architecture Fit PASS / LOCKED; Design Readiness NOT_PERFORMED; implementation NOT_AUTHORIZED.
 ```
 
 ```text
@@ -368,7 +374,7 @@ Data implications: Components must sum to the explained saving. Payable amount i
 Security implications: Do not show another customer's commercial facts.
 Architecture fit / applicable invariants: One coherent delivery-charge result.
 Open material decisions: NONE
-Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate PASS; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED.
+Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate PASS; Architecture Fit PASS / LOCKED; Design Readiness NOT_PERFORMED; implementation NOT_AUTHORIZED.
 ```
 
 ```text
@@ -390,7 +396,7 @@ Data implications: Eligibility reads purchased-order history. It does not write 
 Security implications: Do not expose another customer's order history.
 Architecture fit / applicable invariants: Exact query and concurrency are Fit-owned.
 Open material decisions: NONE — definition is the approved ODC-06 direction.
-Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate PASS; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED.
+Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate PASS; Architecture Fit PASS / LOCKED; Design Readiness NOT_PERFORMED; implementation NOT_AUTHORIZED.
 ```
 
 ```text
@@ -412,7 +418,7 @@ Data implications: Eligibility consumes accepted mode and timing facts.
 Security implications: N/A.
 Architecture fit / applicable invariants: No duplicate scheduling authority.
 Open material decisions: NONE
-Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate PASS; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED.
+Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate PASS; Architecture Fit PASS / LOCKED; Design Readiness NOT_PERFORMED; implementation NOT_AUTHORIZED.
 ```
 
 ```text
@@ -434,7 +440,7 @@ Data implications: Caps are consumption facts, not a second price.
 Security implications: Personal-cap messaging must not leak another customer's usage count.
 Architecture fit / applicable invariants: Concurrency-safe consumption is Fit-owned.
 Open material decisions: NONE for the customer-visible distinction.
-Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate PASS; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED.
+Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate PASS; Architecture Fit PASS / LOCKED; Design Readiness NOT_PERFORMED; implementation NOT_AUTHORIZED.
 ```
 
 ```text
@@ -456,7 +462,7 @@ Data implications: Payable total is recomputed. No snapshot is sealed with the s
 Security implications: N/A.
 Architecture fit / applicable invariants: Checkout Snapshot remains the purchased commercial truth.
 Open material decisions: NONE
-Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate PASS; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED.
+Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate PASS; Architecture Fit PASS / LOCKED; Design Readiness NOT_PERFORMED; implementation NOT_AUTHORIZED.
 ```
 
 ```text
@@ -478,7 +484,7 @@ Data implications: One entered coupon state. Coupon and automatic candidates are
 Security implications: N/A.
 Architecture fit / applicable invariants: Deterministic non-monetary tie-break is Fit-owned. Customer-visible rule is the best monetary outcome.
 Open material decisions: NONE
-Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate PASS; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED.
+Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate PASS; Architecture Fit PASS / LOCKED; Design Readiness NOT_PERFORMED; implementation NOT_AUTHORIZED.
 ```
 
 ```text
@@ -500,7 +506,7 @@ Data implications: Applied benefits remain inside the single commercial evaluati
 Security implications: N/A.
 Architecture fit / applicable invariants: Existing exclusive/combinable mechanics are reconciled at Fit and are not rewritten by this draft. Exact evaluator representation belongs to Fit.
 Open material decisions: NONE
-Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate PASS; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED.
+Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate PASS; Architecture Fit PASS / LOCKED; Design Readiness NOT_PERFORMED; implementation NOT_AUTHORIZED.
 ```
 
 ```text
@@ -522,7 +528,7 @@ Data implications: Order detail reads purchased facts.
 Security implications: Order commercial facts stay with the owning customer and authorized workforce scope.
 Architecture fit / applicable invariants: No new snapshot authority.
 Open material decisions: NONE
-Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate PASS; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED.
+Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate PASS; Architecture Fit PASS / LOCKED; Design Readiness NOT_PERFORMED; implementation NOT_AUTHORIZED.
 ```
 
 ```text
@@ -545,7 +551,7 @@ Data implications: Authoring writes accepted Promotion/Coupon authority or the m
 Security implications: Cross-scope denial is mandatory. Client-supplied role or scope is not authority.
 Architecture fit / applicable invariants: No new service, role, or permission is decided here.
 Open material decisions: NONE for the operator outcomes. Mechanism is Fit.
-Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate PASS; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED.
+Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate PASS; Architecture Fit PASS / LOCKED; Design Readiness NOT_PERFORMED; implementation NOT_AUTHORIZED.
 ```
 
 ```text
@@ -570,7 +576,7 @@ Data implications: The presented line and the purchased snapshot come from the s
 Security implications: Do not expose another customer's eligibility or purchased lines.
 Architecture fit / applicable invariants: COMPLIMENTARY_MENU_ITEM_STACKING_SLOT = PRIMARY_MERCHANDISE_OR_ORDER_OFFER. COMPLIMENTARY_MENU_ITEM_NEW_STACKING_SLOT = NO. FIT_COMPLIMENTARY_ITEM_UNSAFE = STOP_CONTRADICTION_DECISION_REQUIRED.
 Open material decisions: NONE
-Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate PASS; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED.
+Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate PASS; Architecture Fit PASS / LOCKED; Design Readiness NOT_PERFORMED; implementation NOT_AUTHORIZED.
 ```
 
 ## 10. Acceptance scenarios
@@ -1177,7 +1183,7 @@ are in V1. Deal views, campaign aggregates, and incremental-revenue claims are n
 | Fulfilment mode | IMP-036H COMPLETE_AND_ACCEPTED | `US-036J-006` | None for product meaning |
 | Scheduled timing | IMP-036I COMPLETE_AND_ACCEPTED | `US-036J-006` | Do not redefine Scheduled |
 | Product Definition Gate | PASS | Architecture Fit | None. Gate PASS is not Architecture Fit. |
-| Architecture Fit | NOT_PERFORMED | Implementation | Blocks implementation |
+| Architecture Fit | PASS / LOCKED | Design Readiness | Design Readiness NOT_PERFORMED; implementation NOT_AUTHORIZED |
 | FD-036J-01 | APPROVED 2026-09-27: Cart and Checkout Review share one coupon state; Payment does not mutate it | None for Gate readiness | Does not itself pass the Gate |
 | FD-036J-02 | APPROVED 2026-09-27: one primary merchandise or order Offer plus one compatible delivery incentive; a qualifying compatible pair with real monetary benefit both apply; best valid monetary combination wins; standing free delivery creates no duplicate saving | None for Gate readiness | Product Definition decision. Not a Decision Register entry. Does not itself pass the Gate |
 | FD-036J-03 | APPROVED 2026-09-28: complimentary-item V1 operating model in the dedicated section below | None for Gate readiness | Product Definition decision. Not a Decision Register entry. Does not itself pass the Gate |
@@ -1261,7 +1267,7 @@ is required. This boundary is not ordinary commercial follow-up.
 
 | `UNRESOLVED_DECISION_REQUIRED` item | Material user/business impact | Decision owner / evidence needed | Affected stories / gate |
 |---|---|---|---|
-| None | `OPEN_FOUNDER_PRODUCT_DECISIONS = 0`; `UNRESOLVED_MATERIAL_PRODUCT_DECISIONS = 0` | FD-036J-01, FD-036J-02, and FD-036J-03 are APPROVED | Product Definition Gate PASS is persisted. Architecture Fit is not performed. |
+| None | `OPEN_FOUNDER_PRODUCT_DECISIONS = 0`; `UNRESOLVED_MATERIAL_PRODUCT_DECISIONS = 0` | FD-036J-01, FD-036J-02, and FD-036J-03 are APPROVED | Product Definition Gate PASS is persisted. Architecture Fit PASS and architecture lock are persisted; Design Readiness is NOT_PERFORMED. |
 
 `FD-036J-01` = `APPROVED` on 2026-09-27.
 `FD-036J-02` = `APPROVED` on 2026-09-27.
@@ -1353,22 +1359,22 @@ application and redemption visibility, not campaign analytics.
 
 | Story ID | Applicable fields complete / evidence | Open material decisions | Readiness / blocker |
 |---|---|---|---|
-| `US-036J-001` … `US-036J-013` | Sections 9–18 state the outcome. Fit and permissions binding are not done. | None. | `NOT_READY_FOR_IMPLEMENTATION`. Reason: Product Definition Gate PASS; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED. |
+| `US-036J-001` … `US-036J-013` | Sections 9–18 state the outcome. Architecture Fit PASS and permissions binding are recorded in the locked capability architecture. | None. | `NOT_READY_FOR_IMPLEMENTATION`. Reason: Product Definition Gate PASS; Architecture Fit PASS / LOCKED; Design Readiness NOT_PERFORMED; implementation NOT_AUTHORIZED. |
 
 ```text
 READINESS = NOT_READY_FOR_IMPLEMENTATION
 PRODUCT_DEFINITION_GATE = PASS
-ARCHITECTURE_FIT = NOT_PERFORMED
+ARCHITECTURE_FIT = PASS
 IMPLEMENTATION_AUTHORIZED = NO
 READINESS_WHILE_GATE_NOT_PERFORMED = NOT_READY_FOR_IMPLEMENTATION
 AFTER_GATE_PASS_READINESS_MUST_DROP_GATE_BLOCKER = YES
 ```
 
 Stories stay `NOT_READY_FOR_IMPLEMENTATION`. Product Definition Gate PASS removes the Gate as a
-readiness blocker. Remaining blockers are Architecture Fit, the required architecture lock, and
-implementation authorization. Stories are not `READY_FOR_IMPLEMENTATION`. No Sprint is assigned.
+readiness blocker. Remaining blockers are Design Readiness, Quality/Test Plan and Measurement/Instrumentation Plan
+finalization, the Implementation Plan, and explicit implementation authorization. Stories are not `READY_FOR_IMPLEMENTATION`. No Sprint is assigned.
 
-## 27. Product Definition Gate
+## 27. Product Definition Gate (historical evaluation)
 
 ```text
 PRODUCT_DEFINITION_GATE
@@ -1405,7 +1411,7 @@ GATE_EVALUATED_TREE: e7fd72f2af3b0267f438bf9b65e7f7f23bf43f27
 GATE_EVALUATED_FINGERPRINT: 9f9c708306a76e140ea4143feaf8e007ca975f03c3dc418f65e30aaf8bbbd1e1
 ```
 
-`Architecture Conflicts: NONE IDENTIFIED` is not Architecture Fit PASS. Architecture Fit remains
+At that Product Definition Gate checkpoint, `Architecture Conflicts: NONE IDENTIFIED` was not Architecture Fit PASS. Architecture Fit was
 `NOT_PERFORMED`. Implementation remains unauthorized. Exact permission keys remain an Architecture
 Fit binding. Authorization variants were sufficient for the Product Definition Gate. Concurrency,
 including last-global-redemption, first-order, duplicate coupon submission, and complimentary-item
