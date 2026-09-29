@@ -11,6 +11,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import { evaluateAgentContextPackaging } from "./agent-context-check.mjs";
 import { evaluateGovernanceContextDrift } from "./governance-context.mjs";
 import { computeWorkingTreeFingerprint } from "./working-tree-fingerprint.mjs";
 
@@ -25975,6 +25976,7 @@ export function runProjectConsistency() {
   checkProductDeliveryProcessAuthorities();
   checkSupersededRoadmap();
   checkGovernanceContextDrift();
+  checkAgentContextPackaging();
   checkWorkingTreeFingerprint();
 
   return findings;
@@ -44881,6 +44883,22 @@ function checkCurrentAuthorityAntiStale(roadmap, state) {
   }
 
   note("CURRENT authority anti-stale checks OK");
+}
+
+function checkAgentContextPackaging() {
+  try {
+    const result = evaluateAgentContextPackaging(projectRoot);
+    if (!result.ok) {
+      fail("AGENT_CONTEXT_PACKAGING", result.message);
+      return;
+    }
+    note(result.message);
+  } catch (err) {
+    fail(
+      "AGENT_CONTEXT_PACKAGING",
+      `agent context packaging check failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
 }
 
 function checkGovernanceContextDrift() {

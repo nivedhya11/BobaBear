@@ -12,43 +12,44 @@ This file is the **sole agent operating contract**. It points to canonical autho
 independent roadmap, state, vision, or architecture authority. Do not create a competing governance
 document or duplicate rule source. `CLAUDE.md` delegates here.
 
+```text
+SOLE_AGENT_OPERATING_CONTRACT = YES
+COMPETING_GOVERNANCE_AUTHORITY = NO
+```
+
+Canonical documents named below remain authoritative over this contract, over project skills, and
+over conversational restatement. Skills under `.cursor/skills/` are subordinate procedures, not
+authorities. There is one canonical body for each procedure. Do not add `.cursor/rules`. Do not
+duplicate these skills under `.agents/skills/`.
+
+```text
+SKILLS_ARE_SUBORDINATE_PROCEDURES = YES
+SKILLS_ARE_NOT_AUTHORITIES = YES
+ONE_CANONICAL_BODY_PER_PROCEDURE = YES
+NO_CURSOR_RULES_LAYER = YES
+NO_AGENTS_SKILLS_DUPLICATE = YES
+DETERMINISTIC_DISCOVERY = explicit paths in the procedure index below
+CURSOR_AUTOMATIC_SKILL_SELECTION = CONVENIENCE_ONLY
+BEFORE_DEPENDENT_ACTION_READ_NAMED_SKILL = REQUIRED
+SKILL_UNREADABLE = STOP_AFFECTED_ACTION
+```
+
+Generated `docs/platform/governance/current-context.json` remains non-authoritative. It is not an
+authority registry and must not substitute for required canonical reads.
+
+```text
+GENERATED_CURRENT_CONTEXT_AUTHORITY = NON_AUTHORITATIVE
+```
+
 Product delivery process for new substantial product work from IMP-036F onward is PD-2. The
 canonical method is [`PRODUCT-DELIVERY.md`](docs/platform/PRODUCT-DELIVERY.md). Experience is
 [`EXPERIENCE.md`](docs/platform/EXPERIENCE.md) (EXP-1). Product language is
 [`PRODUCT-LANGUAGE.md`](docs/platform/PRODUCT-LANGUAGE.md) (LANG-1).
 
-```text
-ANCHOR
-→ REQUIREMENT / OPPORTUNITY INTAKE
-→ DISCOVERY
-→ EXPERIENCE STRATEGY
-→ JOURNEY + STORY MAP
-→ PRODUCT DEFINITION + EXPERIENCE DEFINITION
-→ PRODUCT DEFINITION GATE + EXPERIENCE GATE
-→ ARCHITECTURE FIT
-→ ARCHITECTURE LOCK
-→ DESIGN READINESS
-→ IMPLEMENTATION PLAN
-→ IMPLEMENTATION AUTHORIZATION
-→ SMALL IMPLEMENTATION TRANCHES
-→ CONTINUOUS MACHINE PROOF
-→ FUNCTIONAL QA + EXPERIENCE QA + CONTENT QA
-→ INDEPENDENT IMPLEMENTATION REVIEW
-→ STAGING RELEASE CANDIDATE
-→ FOUNDER UAT
-→ FORMAL ACCEPTANCE
-→ PRODUCTION READINESS GATE
-→ PRODUCTION RELEASE
-→ POST-RELEASE VERIFICATION
-→ OBSERVE / MEASURE / EXPERIMENT
-→ LEARN / NEW DISCOVERY
-→ RECONCILE
-→ ADVANCE
-```
-
-These are delivery process phases, not new ROADMAP lifecycle states. IMP-036E and earlier retain
-their existing lifecycle (`ANCHOR → GATE → EXECUTE → PROVE → ACCEPT → RECONCILE → ADVANCE`).
-Historical accepted IMPs are not rewritten.
+The authoritative PD-2 phase sequence lives only in `PRODUCT-DELIVERY.md`. These are delivery
+process phases, not new ROADMAP lifecycle states. IMP-036E and earlier retain their existing lifecycle
+(`ANCHOR → GATE → EXECUTE → PROVE → ACCEPT → RECONCILE → ADVANCE`). Historical accepted IMPs are
+not rewritten.
 
 ```text
 PRODUCT_DELIVERY_PROCESS = PD-2
@@ -79,6 +80,7 @@ prospective. IMP-036J is the first current slice transitioning into it.
 | Experience intent, criticality, and experience gates | [`docs/platform/EXPERIENCE.md`](docs/platform/EXPERIENCE.md) (EXP-1) |
 | Customer and operator language | [`docs/platform/PRODUCT-LANGUAGE.md`](docs/platform/PRODUCT-LANGUAGE.md) (LANG-1) |
 | Personas / journeys / per-IMP stories | [`docs/platform/product/README.md`](docs/platform/product/README.md) and relevant Product Definition |
+| Locked capability architecture / ADRs | Relevant capability architecture and `docs/platform/decisions/` |
 | How behaviour is proven | [`docs/platform/TESTING.md`](docs/platform/TESTING.md) (TEST-1) |
 | Agent rules (this file) | `AGENTS.md` |
 | Accepted foundation operating constraints | [`docs/platform/accepted-foundation-operating-rules.md`](docs/platform/accepted-foundation-operating-rules.md) (SUPPORTING) |
@@ -87,40 +89,26 @@ Historical / supporting platform docs are indexed in [`docs/platform/README.md`]
 Older planning folders (wireframes, design-system drafts) are reference-only unless a CURRENT
 authority says otherwise. Canonical docs remain authoritative over conversational restatement.
 
-## Mandatory read order
+## Mandatory read-order bootstrap
 
-For IMP-036F onward:
+For governed product, architecture, lifecycle, payment, security, persistence, or current-slice
+work, read [`.cursor/skills/boba-read-order/SKILL.md`](.cursor/skills/boba-read-order/SKILL.md)
+before that work proceeds. If that skill cannot be read, STOP affected governed work. The skill
+does not replace the canonical authorities.
 
-1. `AGENTS.md` (this file)
-2. `docs/platform/VISION.md`
-3. `docs/platform/ROADMAP.md`
-4. `docs/platform/STATE.md`
-5. `docs/platform/PRODUCT-DELIVERY.md`
-6. Relevant per-IMP Product Definition under `docs/platform/product/`
-7. `docs/platform/ARCHITECTURE.md`
-8. `docs/platform/decision-register.md`
-9. Relevant capability architecture / ADRs
-10. `docs/platform/TESTING.md`
-11. Current task specification and relevant implementation code
-12. Supporting foundation operating rules when touching accepted foundations
+## Scoped procedure index
 
-For X2/X3 work, also read, in this order after lifecycle position is known:
+Read the named skill before the dependent action. Automatic skill selection is additional
+convenience only. If the named skill cannot be read, STOP the affected action.
 
-1. `docs/platform/PRODUCT-DELIVERY.md`
-2. The per-IMP Product Definition
-3. `docs/platform/EXPERIENCE.md`
-4. The per-IMP Experience Definition when it exists
-5. `docs/platform/PRODUCT-LANGUAGE.md`
-6. `docs/platform/ARCHITECTURE.md`
-7. `docs/platform/decision-register.md`
-8. Relevant capability architecture
-9. `docs/platform/TESTING.md`
-
-For IMP-036E and earlier, retain the existing authority order by omitting the new process,
-Product Definition, and testing-policy steps where `N/A — PRE-PD-1` applies. Engineering-only
-changes without product behaviour changes may remain specification-driven. For large authorities,
-metadata/version verification, targeted search, and relevant section/range reads satisfy this
-order when they prove applicable authority; whole-document repasting is not required.
+| When | Skill |
+|---|---|
+| Governed product, architecture, lifecycle, payment, security, persistence, or current-slice work | [`.cursor/skills/boba-read-order/SKILL.md`](.cursor/skills/boba-read-order/SKILL.md) |
+| RED tier or an unresolved material decision | [`.cursor/skills/boba-decision-required/SKILL.md`](.cursor/skills/boba-decision-required/SKILL.md) |
+| Before source mutation, and at required session close | [`.cursor/skills/boba-delivery-reporting/SKILL.md`](.cursor/skills/boba-delivery-reporting/SKILL.md) |
+| Implementation-prompt construction, historical-context selection, or review-evidence packaging | [`.cursor/skills/boba-context-efficiency/SKILL.md`](.cursor/skills/boba-context-efficiency/SKILL.md) |
+| Founder UAT deployment or Founder-UAT acceptance evidence | [`.cursor/skills/boba-founder-uat/SKILL.md`](.cursor/skills/boba-founder-uat/SKILL.md) |
+| Governed working-tree fingerprint or post-merge branch hygiene | [`.cursor/skills/boba-branch-and-fingerprint/SKILL.md`](.cursor/skills/boba-branch-and-fingerprint/SKILL.md) |
 
 ## Operating planes
 
@@ -146,26 +134,12 @@ RED aligns with `DECISION_REQUIRED` / human R3 gates.
 |---|---|---|
 | **GREEN** | Routine implementation, tests, refactors, fixes, documentation, deterministic governance reconciliation, CI/review fixes, normal PRs/merges | Cursor autonomous |
 | **AMBER** | Security/auth/payment/persistence/infrastructure implementation already covered by locked Product Definition + architecture | Cursor autonomous while contract/invariant unchanged |
-| **RED** | New/changed product behavior; architecture invariant; authority/service/role/permission/data-ownership/provider/material security policy; legal interpretation; controlled continuation; major risk acceptance; launch/acceptance; destructive production | Escalate with `DECISION_REQUIRED` template |
+| **RED** | New/changed product behavior; architecture invariant; authority/service/role/permission/data-ownership/provider/material security policy; legal interpretation; controlled continuation; major risk acceptance; launch/acceptance; destructive production | Escalate with the `DECISION_REQUIRED` procedure. Read `.cursor/skills/boba-decision-required/SKILL.md` before that escalation. The skill does not grant the decision. |
 
 For an active locked slice with explicit Founder delivery authorization (example: IMP-038 under locked
 `PD-IMP-038-DRAFT-2` + ARCH-R21 / D-375 / ADR-017), Cursor may merge routine conforming GREEN/AMBER
 implementation PRs after required quality gates (CI green + self-review) when the task contract /
 Founder delivery authorization explicitly permits it.
-
-### Escalation template (RED / unresolved material decision)
-
-```text
-DECISION_REQUIRED
-question:
-why_current_authority_is_insufficient:
-option_a:
-option_b:
-cursor_recommendation:
-decision_owner:
-blocked_scope:
-work_continuing_elsewhere:
-```
 
 ## Risk-bounded autonomy
 
@@ -186,6 +160,8 @@ AGENTS_EXECUTION_RISK_SCALE = R0 | R1 | R2 | R3
 CR_SCALE = CR0 | CR1 | CR2 | CR3
 CR_SCALE_ORTHOGONAL_TO_AGENTS_R0_R3 = YES
 X_SCALE_ORTHOGONAL_TO_AGENTS_R0_R3 = YES
+NO_INVENTED_BINDING_SEMANTICS = YES
+CANONICAL_CONFLICT_STOPS_AFFECTED_WORK = YES
 ```
 
 ### Risk escalation
@@ -254,73 +230,24 @@ Aligned with [`TESTING.md`](docs/platform/TESTING.md) (TEST-1):
 
 ## Alignment gate
 
+```text
+NO_SOURCE_MUTATION_BEFORE_ALIGNMENT = YES
+```
+
 Before any source mutation, every implementation agent must verify alignment against canonical
-authorities.
+authorities and report it with the `ALIGNMENT_GATE` templates.
 
 A passing alignment gate is **not** a human approval checkpoint. The agent verifies it before
-mutation and continues autonomously. Return/control handoff is required only if the gate fails or
-another escalation boundary is reached.
+mutation and continues autonomously. If alignment fails, **STOP**. Return/control handoff is
+required only if the gate fails or another escalation boundary is reached.
 
-### Compact R1 alignment
-
-For ordinary R1 bounded engineering, report only:
-
-```text
-ALIGNMENT_GATE (R1 compact)
-
-Repository / Branch / HEAD: ...
-Task: ...
-Risk Level: R1
-DELIVERY_MODE: LOCAL_ONLY | PUBLISH_PR | UNSET
-Applicable Authorities Checked: ...
-Semantic Scope: ...
-Conflicts / Unverified Material Facts: ...
-Gate Result: PASS / STOP
-```
-
-### Full alignment (R2 / R3 / elevated)
-
-Use the full template for R2, R3, product-visible delivery, architecture-sensitive work, or when
-material conflict risk requires it:
-
-```text
-ALIGNMENT_GATE
-
-Repository Authority: VERIFIED / CONFLICT
-Repository / Branch / HEAD: ...
-Vision Version: ...
-Roadmap Version: ...
-State Version: ...
-Architecture Version: ...
-Decision Register Version: ...
-Product Delivery Version: ...
-Product Definition: ...
-Stories: ...
-Acceptance Scenarios: ...
-Golden Journeys: ...
-Testing Policy: ...
-Accepted Through: ...
-Current Product Slice: ...
-Task Slice: ...
-Task Capability: ...
-Relevant Non-Goals: ...
-Relevant ARCH-G Invariants: ...
-Relevant Binding Decisions: ...
-Task Assumptions: ...
-Deferred Capabilities Touched: ...
-Semantic Scope: ...
-Conflicts: ...
-Unverified Material Facts: ...
-Risk Level: R0 | R1 | R2 | R3
-DELIVERY_MODE: LOCAL_ONLY | PUBLISH_PR | UNSET
-Gate Result: PASS / STOP
-```
-
-Prompt values must be verified against canonical documents rather than repeated from memory.
-The six product-delivery fields apply prospectively; `N/A — PRE-PD-1` is valid where appropriate
-for IMP-036E and earlier. Product-visible implementation from IMP-036F requires a passed
-Product Definition Gate, story Definition of Ready, architecture fit/lock, and implementation
-authorization. Story completion does not constitute IMP acceptance.
+Before source mutation and at required session close, read
+[`.cursor/skills/boba-delivery-reporting/SKILL.md`](.cursor/skills/boba-delivery-reporting/SKILL.md)
+and use its templates. Prompt values must be verified against canonical documents rather than
+repeated from memory. The six product-delivery fields apply prospectively; `N/A — PRE-PD-1` is
+valid where appropriate for IMP-036E and earlier. Product-visible implementation from IMP-036F
+requires a passed Product Definition Gate, story Definition of Ready, architecture fit/lock, and
+implementation authorization. Story completion does not constitute IMP acceptance.
 
 ## Stop statuses
 
@@ -409,75 +336,21 @@ COMPLETE | PARTIAL | BLOCKED
 
 Agents must never self-report `COMPLETE_AND_ACCEPTED`.
 
-## Session-close / completion reporting
-
-Prefer compact deltas, paths, SHAs, CI URLs, and fingerprints over restating capability history or
-independently observable GitHub facts.
-
-### Compact R1 completion report
-
-For ordinary R1 bounded engineering:
-
 ```text
-STATUS: COMPLETE | PARTIAL | BLOCKED
-Repository / Branch / Final HEAD: ...
-Scope / Files Changed: ...
-Validation / CI: ...
-Deviations: ... | PROMPT DEVIATIONS: NONE
-Out-of-Scope Observations: ...
-Unresolved Items: ...
-Delivery Artifact: local commit(s) | PR URL | NONE (NO_COMMIT) | ...
-Risk Level / DELIVERY_MODE: ...
-```
-
-### Full session-close report
-
-Use for R2, R3, and substantial product / lifecycle / architecture-sensitive work:
-
-```text
-A. Agent Status
-B. Alignment Gate
-C. Repository Provenance
-D. Scope Implemented
-E. Files Changed
-F. Architecture / Decision Compliance
-G. Tests / Evidence
-H. Security / Concurrency / Recovery Evidence as applicable
-I. Prompt Deviations
-J. Out-of-Scope Observations
-K. Unverified Items
-L. Proposed State Delta
-M. Recommended Acceptance Gates
-N. Risk Level / DELIVERY_MODE
-O. Delivery Artifact (local commit(s) / PR)
+FORMAL_ACCEPTANCE_NOT_SELF_GRANTED = YES
 ```
 
 When true, state explicitly: `PROMPT DEVIATIONS: NONE`.
 
-## Acceptance contract
+Completion and session-close templates live in
+[`.cursor/skills/boba-delivery-reporting/SKILL.md`](.cursor/skills/boba-delivery-reporting/SKILL.md).
+Prefer compact deltas, paths, SHAs, CI URLs, and fingerprints over restating capability history or
+independently observable GitHub facts.
 
-Coding agent outcomes: `COMPLETE` | `PARTIAL` | `BLOCKED`.
-
-Independent acceptance outcomes: `COMPLETE_AND_ACCEPTED` | `PARTIAL` | `DEFECT_FOUND` |
-`ARCHITECTURE_MISMATCH` | `ACCEPTANCE_EVIDENCE_INSUFFICIENT`.
-
-Implementation reports are evidence input, not acceptance authority. Lifecycle and product
-acceptance remain R3 (human).
-
-For prospective story delivery, follow [`PRODUCT-DELIVERY.md`](docs/platform/PRODUCT-DELIVERY.md)
-and [`TESTING.md`](docs/platform/TESTING.md) for readiness, completion, and behavioural evidence.
-A pre-GTM customer experience, product language, and instrumentation audit is required before
-public GTM cutover / IMP-040 acceptance. PD-2 expands the Journey Gap Audit requirement. Adoption
-does not perform the audit or rewrite historical acceptance.
-
-### AI context and handoff efficiency
+## Context bootstrap
 
 Apply **MINIMUM_SUFFICIENT_CONTEXT** from
 [`PRODUCT-DELIVERY.md`](docs/platform/PRODUCT-DELIVERY.md#ai-execution-and-documentation-efficiency).
-Prompts should include task/story IDs, risk level, `DELIVERY_MODE`, any `NO_COMMIT` narrowing,
-exact authority versions / SHA / tree, acceptance criteria, affected invariants,
-allowed/forbidden scope, and expected evidence; include the working-tree fingerprint wherever
-existing provenance rules require it. Prefer canonical paths to pasted docs.
 
 **CURRENT FIRST:** read [`docs/platform/ROADMAP.md`](docs/platform/ROADMAP.md) and
 [`docs/platform/STATE.md`](docs/platform/STATE.md) for lifecycle authority.
@@ -487,43 +360,42 @@ materially requires historical revision, acceptance, or provenance detail. Agent
 complete historical snapshots during ordinary current product work. Historical snapshots do not
 override CURRENT metadata.
 
-Do not repeatedly paste whole ROADMAP, STATE, ARCHITECTURE, governance history, prior accepted
-reports, or unrelated capability architecture. Verify metadata/versions, search, and read relevant
-sections/ranges without guessing applicable authority. Coding-agent implementation prompts must
-remain below 50,000 characters; split slices if needed.
-
-First review covers the full relevant slice. Follow-up review covers previous approved SHA → new
-SHA, changed files, affected invariants, and new evidence (including required content fingerprints).
-Widen review if the delta changes earlier assumptions. Reports return changed facts, evidence,
-exceptions, SHA/tree, and unresolved items; retain required report fields without repeating history.
-
-Bundle authorized machine work until the next genuine human decision boundary:
-
-- `LOCAL_ONLY`: inspect → implement → test → diagnose/self-correct → validate → local commit(s)
-  (unless `NO_COMMIT`) → return once.
-- `PUBLISH_PR`: inspect → implement → test → diagnose/self-correct → validate → commit(s) →
-  short-lived task branch (create from verified base if needed) → normal push → PR → wait for
-  exact-head PR CI terminal state → report final outcome → return once.
-  `NO_COMMIT` + `PUBLISH_PR` is a task-contract conflict (STOP).
-- Deploy, acceptance, and Founder UAT remain separate R3 human gates. Routine GREEN/AMBER PR
-  merges may be autonomous when an explicit Founder delivery authorization for an active locked
-  slice permits them.
-
+Coding-agent implementation prompts must remain below 50,000 characters; split slices if needed.
 Efficiency must never permit guessed product, security, payment, or business decisions.
 
-### Acceptance principles
+For implementation-prompt construction, historical-context selection, or review-evidence packaging,
+read [`.cursor/skills/boba-context-efficiency/SKILL.md`](.cursor/skills/boba-context-efficiency/SKILL.md)
+before that work. Delivery-mode rules remain in this contract.
 
-- provenance first
-- architecture before tests
-- evidence over claims (prefer GitHub/CI artifacts; no silent-retry “passes”)
-- negative security evidence where relevant
-- real concurrency where race correctness matters
-- crash/recovery evidence where relevant
-- full regression where justified
-- fingerprint / multi-round validation based on risk
-- surgical corrections preferred over needless rebuilds
+## Acceptance and human gates
 
-Gates need not be identical for every future slice.
+Coding agent outcomes: `COMPLETE` | `PARTIAL` | `BLOCKED`.
+
+Independent acceptance outcomes: `COMPLETE_AND_ACCEPTED` | `PARTIAL` | `DEFECT_FOUND` |
+`ARCHITECTURE_MISMATCH` | `ACCEPTANCE_EVIDENCE_INSUFFICIENT`.
+
+Implementation reports and generated handoffs are evidence input, not acceptance authority.
+Lifecycle and product acceptance remain R3 (human). Formal acceptance cannot be self-granted.
+Coding-agent completion is not formal acceptance.
+
+```text
+FOUNDER_UAT_VERDICT_OWNER = HUMAN_FOUNDER
+AGENT_MAY_NOT_SELF_GRANT_FOUNDER_UAT_PASS = YES
+```
+
+Founder UAT verdict and acceptance reconciliation are consequential human gates. Only the
+founder/user may provide the final interactive Founder UAT verdict. Implementation agents must
+never self-declare `FOUNDER_UAT = PASS`. Where Founder UAT is required under PD-2,
+`FOUNDER_UAT = FUNCTIONAL_UAT + EXPERIENCE_UAT`.
+
+`COMPLETE_AND_ACCEPTED` must not be claimed, and `acceptedThrough` must not advance through a
+capability that requires Founder UAT, until that gate has passed and reconciliation records it.
+Exact-candidate identity includes at minimum canonical repository path, branch, `HEAD`, and
+`WORKING_TREE_FINGERPRINT`. `HEAD` alone is insufficient.
+
+Before Founder UAT deployment or Founder-UAT acceptance evidence, read
+[`.cursor/skills/boba-founder-uat/SKILL.md`](.cursor/skills/boba-founder-uat/SKILL.md). If that
+skill cannot be read, STOP the affected UAT action. This kernel remains the authority boundary.
 
 ## Canonical reconciliation rule
 
@@ -544,21 +416,31 @@ pre-governance accepted slices are historical gaps — they do not downgrade acc
 PLATFORM_NAME = BOBA Bear Platform
 CANONICAL_REPOSITORY_PATH = /home/ajoshi/repos/boba-bear-platform
 DEFAULT_DEVELOPMENT_BRANCH = main
+FORCE_PUSH_OR_HISTORY_REWRITE_REQUIRES_R3 = YES
+NO_UNREVIEWED_DIRECT_MAIN_MUTATION = YES
+BRANCH_CLEANUP_ONLY_AFTER_REQUIRED_MACHINE_PROOF = YES
+DO_NOT_DELETE_UNIQUE_OR_UNCERTAIN_BRANCH_WORK = YES
+WORKING_TREE_FINGERPRINT_COMMAND = npm run working-tree:fingerprint
+PORCELAIN_STATUS_HASH_IS_NOT_FINGERPRINT = YES
 ```
 
 - `/home/ajoshi/repos/boba-bear-platform` is the sole BOBA Bear Platform development authority.
 - Default integration branch is `main`. Read/analyze and verified-base checkout may use `main`.
-  Ordinary task commits must not be published directly to `main`.
+  Ordinary task commits must not be published directly to `main`. Remote publication (push/PR)
+  requires an authorized delivery mode. When `DELIVERY_MODE` is unset, remote publication is
+  unauthorized.
 - For `PUBLISH_PR`, create or use a short-lived task branch from the verified base when a suitable
   task branch is not already specified. An explicit task/user branch authorization still controls
   when already provided.
 - Do not create additional Git worktrees or duplicate BOBA development clones.
 - Do not use `/mnt/c` as development repository authority; keep development under
   `/home/ajoshi/repos` on the WSL Linux filesystem (Turbopack/Podman reliability).
-- Preserve intentional dirty-tree work. Never reset, stash, or clean unrelated work.
+- Preserve intentional dirty-tree work. Never reset, stash, or clean unrelated work. Do not
+  discard unique or uncertain local work.
 - Do not run destructive Git operations (`reset`, `restore`, `clean`, `stash`, force checkout,
   force push, history rewrite) unless explicitly authorized (R3).
-- Never destroy `boba-bear_postgres-data` or run `docker compose down --volumes`.
+- Never destroy `boba-bear_postgres-data` or run `docker compose down --volumes`. Destructive
+  volume and data actions are consequential.
 - Prefer Podman for local DB/container runtime when Compose/container work is required.
 - Preserve protected evidence directories (including `test-results-customer-ordering/**`).
 - Local commits are authorized under R1/R2 `LOCAL_ONLY` and under `PUBLISH_PR`. `NO_COMMIT` may
@@ -578,149 +460,28 @@ DEFAULT_DEVELOPMENT_BRANCH = main
   `nextProductSlice`) is authoritative only in ROADMAP/STATE. `pendingAcceptance` identifies the
   oldest unresolved formal acceptance gate and does not by itself authorize starting another
   product slice.
+- `main` is permanent. Explicitly required deployment branches may remain only while actively used.
+  Normal task branches are short-lived. Their remote head is deleted after merge, and GitHub
+  automatic head-branch deletion must remain enabled. Git history and merged pull requests are the
+  historical archive. Never delete genuinely required unique unmerged work without first explicitly
+  resolving it.
+- Never delete an open or unmerged task branch merely because another task finished. Never delete a
+  branch with known or uncertain unique work. Never delete an active investigation or candidate
+  branch that belongs to another gate or task.
+- Branch cleanup runs only after the required post-merge CI and CodeQL evidence has passed. Read
+  [`.cursor/skills/boba-branch-and-fingerprint/SKILL.md`](.cursor/skills/boba-branch-and-fingerprint/SKILL.md)
+  before post-merge local branch hygiene. If `git branch -d` refuses, do not force-delete. Any
+  `git cherry` line beginning with `+` means preserve the branch and STOP. Absence of `+` is not
+  sufficient proof under squash or rebase histories.
+- Governed milestones that require provenance use `npm run working-tree:fingerprint`
+  (`scripts/working-tree-fingerprint.mjs`). `WORKING_TREE_FINGERPRINT` is content-sensitive across
+  tracked working-tree files and non-ignored untracked repository files. Do not substitute
+  `git status --porcelain | sha256sum` (or hashing porcelain paths only). Default porcelain reports
+  an already-untracked directory as one entry, so edits underneath that directory do not change a
+  porcelain-only hash. `npm run governance:fingerprint` is a separate canonical-document manifest
+  hash. Detailed fingerprint and post-merge procedure live in the branch-and-fingerprint skill.
 - Platform docs under `docs/platform/` are canonical for product/architecture; treat older wireframe
   folders as historical unless CURRENT authority says otherwise.
-
-## Branch lifecycle
-
-- `main` is permanent. Explicitly required deployment branches may remain only while actively used.
-- Normal task, feature, fix, chore, and governance branches are short-lived and their remote head
-  must be deleted after merge; GitHub automatic head-branch deletion must remain enabled.
-- Close and delete stale, abandoned, or superseded unmerged branches after verifying their unique
-  work is not required. Retain a non-main branch only for a concrete active or future purpose.
-- Git history and merged pull requests are the historical archive. Never delete genuinely required
-  unique unmerged work without first explicitly resolving it.
-
-### Post-merge local branch hygiene
-
-This is local workspace hygiene for the completed task branch. It does not authorize deleting
-unrelated remote branches. Remote head deletion after merge remains the separate Branch lifecycle
-rule above, including GitHub automatic head-branch deletion.
-
-After a task pull request is merged and the required post-merge CI and CodeQL evidence has passed:
-
-```text
-git switch main
-git fetch origin --prune
-git pull --ff-only
-git branch -d <completed-task-branch>
-```
-
-If `git branch -d` refuses:
-
-1. Do not immediately force-delete.
-2. First verify the pull request is merged or deliberately superseded, and inspect whether the
-   local branch contains unique work.
-3. `git cherry origin/main <completed-task-branch>` may be used as one signal. It must not be
-   treated as sufficient proof by itself under squash or rebase merge histories.
-4. Inspect commit and content equivalence as necessary.
-5. Only after proving there is no unique work worth preserving:
-
-```text
-git branch -D <completed-task-branch>
-```
-
-Additional mandatory safety:
-
-- Never delete an open or unmerged task branch merely because another task finished.
-- Never delete a branch with known or uncertain unique work.
-- Never delete an active investigation or candidate branch that belongs to another gate or task.
-
-Final desired local state after successful closeout:
-
-- checked out on `main`
-- clean working tree
-- local `main` current with `origin/main`
-- the completed task branch absent
-
-## Working-tree fingerprint
-
-Canonical command: `npm run working-tree:fingerprint` (`scripts/working-tree-fingerprint.mjs`).
-
-`WORKING_TREE_FINGERPRINT` is **content-sensitive** across tracked working-tree files and
-non-ignored untracked repository files (paths and contents). It is deterministic, path-sensitive,
-and order-independent with respect to filesystem enumeration. It respects `.gitignore`. It does
-not hash `.git` object-database bytes, `.git` logs, the `.git/index` file, `node_modules`, or
-other ignored/build outputs.
-
-Do not substitute `git status --porcelain | sha256sum` (or hashing porcelain paths only when they
-are files). Default porcelain reports an already-untracked directory as one entry, so edits or
-additions underneath that directory do not change a porcelain-only hash and are not exact-content
-authority.
-
-`npm run project:consistency` emits the current content-sensitive fingerprint as an informational
-finding. `npm run governance:fingerprint` remains a separate canonical-document manifest hash.
-
-## Founder UAT and exact-candidate acceptance gate
-
-This section is an **operational / agent** rule. It does not itself change product acceptance
-status in `ROADMAP.md` or `STATE.md`; it governs how future acceptance evidence must be produced
-when founder UAT is required. Founder UAT verdict and acceptance reconciliation are R3.
-
-- For any capability that materially changes customer-visible behavior, materially changes
-  operator-visible behavior needing interactive validation, is explicitly marked `FOUNDER_UAT_REQUIRED
-  = YES`, or is requested by the founder for UAT, final canonical acceptance requires a separate
-  founder UAT gate in addition to independent technical acceptance.
-- Required lifecycle for those capabilities:
-
-```text
-IMPLEMENTATION_COMPLETE
-→ INDEPENDENT_TECHNICAL_ACCEPTANCE
-→ UAT_DEPLOYMENT
-→ FOUNDER_UAT
-→ ACCEPTANCE_RECONCILIATION
-```
-
-- `COMPLETE_AND_ACCEPTED` must not be claimed, and `acceptedThrough` must not advance through that
-  capability, until the required founder UAT gate has passed and reconciliation records it.
-- Founder UAT must exercise the **exact** implementation candidate that passed independent technical
-  acceptance. Candidate identity must include at minimum:
-
-```text
-CANONICAL_REPOSITORY_PATH
-BRANCH
-HEAD
-WORKING_TREE_FINGERPRINT
-```
-
-- `WORKING_TREE_FINGERPRINT` is mandatory provenance because BOBA development may intentionally
-  validate uncommitted but authorized working-tree content. `HEAD` alone is insufficient proof of
-  UAT provenance.
-- Before any UAT deployment, verify canonical repository path, branch, `HEAD`, and content-sensitive
-  working-tree fingerprint, and confirm they exactly match the independently accepted candidate. If
-  any of those differ, UAT deployment must stop and the modified candidate must return through the
-  applicable validation and technical-acceptance gates before founder UAT.
-- Founder UAT runtime is rootless **PODMAN_WSL**. The sole persistent Founder project is
-  `boba-staging`. Founder staging must be built from an exact merged-main candidate: canonical
-  repository, `branch=main`, `HEAD=origin/main`, and clean tracked source. Its artifact build
-  context must be materialized from that exact merged Git tree, not the live worktree. Untracked
-  evidence may remain outside that isolated build context. Do not deploy an unmerged branch, dirty tracked
-  source, an older clone, `/mnt/c`, or a stale image as Founder-UAT evidence.
-- UAT deployment evidence must identify the source candidate and the deployed artifact as far as
-  current tooling allows, including source repository, branch, `HEAD`, fingerprint, image name,
-  image ID/digest when available, container identity, deployment health, and the exact UAT URL.
-- The UAT image used for founder validation must be freshly built by repository-owned Podman WSL
-  tooling and record the merged SHA (for example `BOBA_BUILD_SHA` and OCI revision metadata).
-  A stale pre-existing image is not sufficient UAT evidence.
-- After deployment, verify the running service is actually using the newly built image. If the
-  deployed image ID does not match the running container image ID, founder UAT must not proceed.
-- Only the founder/user may provide the final interactive UAT verdict. Implementation agents must
-  never self-declare `FOUNDER_UAT = PASS`.
-- Where Founder UAT is required under PD-2, `FOUNDER_UAT = FUNCTIONAL_UAT + EXPERIENCE_UAT`.
-  Experience UAT considers discoverability, first impression, hesitation, clarity, trust, friction,
-  recovery, content, mobile behaviour, brand coherence, and Experience Intent. This does not weaken
-  exact-candidate provenance.
-- Governance-only, documentation-only, architecture-definition, repository-maintenance, and internal
-  tooling tasks with no interactive acceptance surface do not automatically require Podman/founder
-  UAT. Record applicability explicitly as `FOUNDER_UAT_REQUIRED = YES | NO` in the relevant future
-  acceptance evidence.
-- Current applicability: **IMP-028B — Customer Menu Projection + Discovery** is
-  `FOUNDER_UAT_REQUIRED = YES` before `COMPLETE_AND_ACCEPTED` because it materially changes customer
-  `/order`, Menu serving, category navigation, product-card/display-price presentation, and the Add
-  / Cart customer flow. Independent technical acceptance alone is insufficient for final acceptance
-  of IMP-028B. **IMP-035 — Initial Administration Capabilities** is likewise
-  `FOUNDER_UAT_REQUIRED = YES` before `COMPLETE_AND_ACCEPTED` because it creates operator-visible
-  administration behavior.
 
 ## Foundation operating constraints
 

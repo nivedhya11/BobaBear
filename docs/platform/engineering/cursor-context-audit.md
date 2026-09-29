@@ -1,133 +1,172 @@
 # Cursor context audit
 
-Non-authoritative measurement. This audit does not slim `AGENTS.md`, change PD-2, or add a rule
-authority. Phase 2 below is a proposal only and is not applied in this change.
+Non-authoritative measurement and Phase-2 implementation record. This file is not an agent
+contract, not a product authority, and not a lifecycle authority.
 
-Measured on canonical `main` `ab3db331af5050e0ce6a653e743993cabc368259` before this tooling
-change. `AGENTS.md` was not edited here, so its size is unchanged.
+## Source baseline
+
+```text
+repository: nivedhya11/BobaBear
+canonical_path: /home/ajoshi/repos/boba-bear-platform
+base_head: 54fb4005b02ad5395092f39d0535be5bf8a475ca
+base_tree: dc21f55846a367f01e2565efcc4a516a8a4e60e9
+phase_1: ACCEPTED / MERGED / PR #327 / POST-MERGE PROOF PASS
+implementation_branch: chore/agent-token-efficiency-phase2
+implementation_head: the HEAD of this branch that contains this record
+implementation_tree: that HEAD's tree
+```
+
+`implementation_head` and `implementation_tree` are Git identity. They are not copied into this
+file before the commit that creates the record, because that commit would invalidate an in-file SHA.
 
 ## What is always loaded
 
-| Surface | Bytes | Evidence |
-|---|---:|---|
-| `AGENTS.md` | 35945 | `wc -c AGENTS.md` |
-| `CLAUDE.md` | 11 | file bytes are `@AGENTS.md\n` |
-| `.cursor/rules` | 0 | directory absent (`ls .cursor/rules` failed; no tracked files) |
-| Repo always-loaded total | 35956 | sum of the rows above |
+Measured with `wc -c` and reproduced by `npm run agent:context:check`.
 
-`CLAUDE.md` is an always-applied workspace rule whose body is the literal `@AGENTS.md` pointer.
-In the Cursor session that performed this audit, the injected rule text for `CLAUDE.md` was that
-11-byte pointer, and `AGENTS.md` was injected separately in full. A second copy of the 35945-byte
-contract was not present in that injection. Do not treat `@AGENTS.md` as proven expansion.
-
-## Duplication
-
-No duplicate always-loaded rule body was evidenced.
-
-- `CLAUDE.md` does not contain the `AGENTS.md` text. It references it in 11 bytes.
-- `.cursor/rules` does not exist, so it cannot repeat `AGENTS.md`.
-- `AGENTS.md` restates the PD-2 phase list that also lives in `docs/platform/PRODUCT-DELIVERY.md`.
-  That document is not an always-applied rule. The overlap is documentary, not double inclusion.
-
-## Phase-2 design (proposal only)
-
-Phase 2 is not implemented here. No `.cursor/rules` files are added by this change, and
-`AGENTS.md` is not slimmed here.
-
-Detailed procedure may move out of the always-loaded contract. The move is unsafe if the only
-copy of “load this rule” lives in a rule that is never loaded. A rule with `alwaysApply: false`
-and neither a `description` nor `globs` is an explicit manual/`@` rule. It cannot be the sole
-instruction that tells an agent to load it.
-
-Cursor frontmatter used below:
-
-- `alwaysApply: true` — always included.
-- `alwaysApply: false` plus `description` — intelligent / relevance-selected.
-- `alwaysApply: false` plus `globs` — file-scoped.
-- `alwaysApply: false` with neither `description` nor `globs` — explicit manual/`@` rule.
-
-None of the four proposed rules is manual-only.
-
-### Always-loaded kernel
-
-Phase 2 must preserve an always-loaded kernel. Minimum contents:
+| Surface | Bytes before | Bytes after | Evidence |
+|---|---:|---:|---|
+| `AGENTS.md` | 35945 | 28134 | `wc -c AGENTS.md` |
+| `CLAUDE.md` | 11 | 11 | file bytes remain `@AGENTS.md\n` |
+| `.cursor/rules` | 0 | 0 | directory absent |
+| Repo always-loaded total | 35956 | 28145 | sum of the rows above |
 
 ```text
-SOLE_AGENT_CONTRACT / NO_COMPETING_AUTHORITY
-COMPACT_CANONICAL_AUTHORITY_INDEX
-MANDATORY_READ_ORDER_BOOTSTRAP
-RISK_BOUNDED_AUTONOMY
-STOP / DECISION_REQUIRED BOUNDARIES
-ANTI_HALLUCINATION / NO_INVENTED_BINDING_SEMANTICS
-ESSENTIAL_REPOSITORY_SAFETY
-SCOPED_RULE_TRIGGER_INDEX
+reduction_bytes: 7811
+reduction_percent: 21.72
 ```
 
-These already stay in `AGENTS.md` if the measured detail sections move and nothing else is cut:
-the sole-contract preamble, the canonical authority table, risk-bounded autonomy, stop statuses,
-the decision boundary (including no invented binding semantics), anti-hallucination vocabulary,
-and the foundation-constraints pointer.
+21.72% is `7811 / 35956`. Byte reduction is not token reduction. This record does not claim a
+runtime token saving.
 
-The items below are not in that remainder, because an earlier estimate removed their parent
-sections with no replacement. Phase 2 adds this compact text back into the always-loaded kernel.
-The read-order bootstrap explicitly tells the agent to load `boba-read-order.mdc` and the
-applicable canonical authorities for governed work.
+`CLAUDE.md` remains the 11-byte `@AGENTS.md` delegation pointer. In the Phase-1 measurement
+session, Cursor injected that pointer and injected `AGENTS.md` separately in full. A second copy
+of the contract was not evidenced. Do not treat `@AGENTS.md` as proven expansion.
+
+## Discovery metadata, separate from always-loaded bytes
+
+Cursor may use skill `name` and `description` for automatic selection. That selection is
+convenience only. The deterministic discovery mechanism is the procedure index in `AGENTS.md`.
 
 ```text
-For governed product, architecture, lifecycle, or current-slice work, load `.cursor/rules/boba-read-order.mdc` and the applicable canonical authorities named by the compact authority index. This bootstrap stays always loaded. The read-order rule is not manual-only, and neither that rule nor this kernel replaces those authorities.
-FORCE_PUSH_OR_HISTORY_REWRITE_REQUIRES_R3
-NO_UNREVIEWED_DIRECT_MAIN_MUTATION
-REQUIRED_PROVENANCE/FINGERPRINT_AT_GOVERNED_MILESTONES
-POST_MERGE_BRANCH_CLEANUP_ONLY_AFTER_REQUIRED_MACHINE_PROOF
-Founder UAT and formal acceptance are consequential human gates and cannot be self-granted.
-Scoped rule trigger index: boba-read-order.mdc (intelligent; alwaysApply false + description; governance, product, architecture, or current-slice work); boba-alignment-reporting.mdc (intelligent; alwaysApply false + description; alignment or session-close reporting); boba-acceptance-uat.mdc (file-scoped; alwaysApply false + globs; acceptance, Founder UAT, and reconciliation evidence); boba-branch-and-fingerprint.mdc (intelligent; alwaysApply false + description; branch, publish, fingerprint, or post-merge hygiene).
+discovery_metadata_bytes: 1315
 ```
 
-Essential repository safety that must remain always loaded, in compact form:
+1315 is the UTF-8 length of the six skill `description` values only. It is an estimate of
+discovery text. It is not included in the always-loaded total, and it is not a token count.
+
+## On-demand procedure corpus
+
+| Corpus | Bytes |
+|---|---:|
+| Six `SKILL.md` files | 15729 |
+| Reference files | 6794 |
+| On-demand total | 22523 |
+
+Project skills: 6. Paths:
+
+- `.cursor/skills/boba-read-order/SKILL.md`
+- `.cursor/skills/boba-decision-required/SKILL.md`
+- `.cursor/skills/boba-delivery-reporting/SKILL.md`
+- `.cursor/skills/boba-delivery-reporting/references/templates.md`
+- `.cursor/skills/boba-context-efficiency/SKILL.md`
+- `.cursor/skills/boba-founder-uat/SKILL.md`
+- `.cursor/skills/boba-branch-and-fingerprint/SKILL.md`
+- `.cursor/skills/boba-branch-and-fingerprint/references/fingerprint.md`
+- `.cursor/skills/boba-branch-and-fingerprint/references/post-merge.md`
+
+`.cursor/rules` is absent. `.agents/skills/` is absent. This repository uses `.cursor/skills/`
+and does not duplicate the skills under `.agents/skills/`.
+
+The on-demand total includes short subordination headers. It is the procedure corpus, not a
+1:1 extract of the 7811-byte always-loaded reduction. Safety invariants stayed in `AGENTS.md`,
+so the kernel is larger than the withdrawn Phase-1 remainder estimate.
+
+## Phase-1 statements corrected
+
+Phase 1 recorded a proposal. That proposal is superseded by implemented Option C.
+
+- Cursor skills support a `paths` field. These task-typed skills omit `paths` because they are
+  repo-wide procedures, not file-scoped rules.
+- `.cursor/skills/` and `.agents/skills/` are both supported project skill locations. This
+  repository deliberately uses `.cursor/skills/` only.
+- `disable-model-invocation` is omitted so ordinary skill discovery remains available.
+- The earlier four-rule `.cursor/rules` proposal (`boba-read-order.mdc`,
+  `boba-alignment-reporting.mdc`, `boba-acceptance-uat.mdc`, `boba-branch-and-fingerprint.mdc`)
+  is not implemented. No `alwaysApply`, intelligent, glob, or manual rule was added.
+- The Phase-1 figures `detail_sections_moved_bytes: 22877`, `kernel_retainer_addend_bytes: 1136`,
+  and `proposed_phase2_always_loaded_bytes: 14215` were estimates. They are withdrawn. The
+  measured always-loaded size is 28145 bytes.
+
+## Semantics preserved
+
+Packaging only. No Product, Experience, Product Language, Architecture, ROADMAP lifecycle, STATE
+accepted reality, PD-2, or TEST-1 semantic change.
+
+The long PD-2 arrow diagram was removed from `AGENTS.md` after confirming
+`docs/platform/PRODUCT-DELIVERY.md` contains the authoritative phase sequence, including the
+phases that diagram summarized. `PRODUCT-DELIVERY.md` remains the owner of that sequence. The
+phases remain process phases, not ROADMAP lifecycle states. Prospective PD-2 constants remain in
+`AGENTS.md`.
+
+`docs/platform/governance/current-context.json` remains `authority = NON_AUTHORITATIVE`.
+
+IMP-036J is unchanged:
 
 ```text
-FORCE_PUSH_OR_HISTORY_REWRITE_REQUIRES_R3
-NO_UNREVIEWED_DIRECT_MAIN_MUTATION
-REQUIRED_PROVENANCE/FINGERPRINT_AT_GOVERNED_MILESTONES
-POST_MERGE_BRANCH_CLEANUP_ONLY_AFTER_REQUIRED_MACHINE_PROOF
+PRODUCT_DEFINITION_GATE = PASS
+EXPERIENCE_GATE = PASS
+ARCHITECTURE_FIT = PASS
+ARCHITECTURE_LOCKED = YES
+NEXT_GATE = DESIGN_READINESS
+DESIGN_READINESS = NOT_PERFORMED
+IMPLEMENTATION_AUTHORIZED = NO
+IMPLEMENTATION_STARTED = NO
 ```
 
-### Proposed rule modes
+This change does not enter Design Readiness and does not authorize implementation.
 
-Section sizes are UTF-8 bytes of current `AGENTS.md` heading ranges. They are the detail that may
-move. Meaning of moved text must not change. The canonical authority model remains `AGENTS.md`
-and the authorities it references.
+## Removed-section coverage
 
-| Rule | Mode | Frontmatter | Detail that may move | Bytes | Kernel trigger |
-|---|---|---|---|---:|---|
-| `.cursor/rules/boba-read-order.mdc` | intelligent | `alwaysApply: false` + strong `description` | Mandatory read order; Operating planes | 3645 | Description selects governance, product, architecture, or current-slice work. The always-loaded bootstrap instructs the agent to load this rule and the applicable canonical authorities for that work. |
-| `.cursor/rules/boba-alignment-reporting.mdc` | intelligent | `alwaysApply: false` + `description` | Alignment gate; Session-close reporting; Scope rules; Status vocabulary | 3750 | Description selects alignment and session-close reporting. Detailed templates may move. |
-| `.cursor/rules/boba-acceptance-uat.mdc` | file-scoped | `alwaysApply: false` + `globs` | Acceptance contract; Founder UAT procedure; Canonical reconciliation; Capability architecture persistence | 9174 | Globs cover acceptance and Founder UAT evidence. The kernel keeps the invariant that Founder UAT and formal acceptance are consequential human gates and cannot be self-granted. |
-| `.cursor/rules/boba-branch-and-fingerprint.mdc` | intelligent | `alwaysApply: false` + `description` | Repository safety procedure; Branch lifecycle; Working-tree fingerprint procedure | 6308 | Description selects branch, publish, fingerprint, and post-merge hygiene. The four essential safety invariants stay in the kernel. |
+Each former `AGENTS.md` section is one of: A retained in the kernel, B moved to a named skill or
+reference, C removed as verified duplication of a canonical authority, D redundant wording whose
+binding invariant remains.
 
-Detail-section total: 22877 bytes. None of these files sets `alwaysApply: true`. Setting them
-always-on would remove the savings. Do not describe them as manual rules.
+| Former section | Class | Surviving location |
+|---|---|---|
+| Next.js current-version notice | A | `AGENTS.md` |
+| Sole-contract preamble | A | `AGENTS.md` |
+| PD-2 constants, prospective boundary, IMP-036E lifecycle | A | `AGENTS.md` |
+| PD-2 arrow diagram | C | `docs/platform/PRODUCT-DELIVERY.md` |
+| Canonical authority index | A | `AGENTS.md` (capability-architecture row kept in the index) |
+| Mandatory read order and pre-PD-1 / range-read rule | B | `.cursor/skills/boba-read-order/SKILL.md` |
+| Operating planes | A | `AGENTS.md` |
+| GREEN / AMBER / RED overlay | A | `AGENTS.md` |
+| `DECISION_REQUIRED` template | B | `.cursor/skills/boba-decision-required/SKILL.md` |
+| R0–R3, delivery modes, `NO_COMMIT` conflict, ownership, failure evidence | A | `AGENTS.md` |
+| Alignment obligation | A | `AGENTS.md` |
+| Alignment and session-close templates | B | `.cursor/skills/boba-delivery-reporting/references/templates.md` |
+| Stop statuses and decision boundary | A | `AGENTS.md` |
+| Anti-hallucination vocabulary and scope headings | A | `AGENTS.md` |
+| Status vocabulary and no self-acceptance | A | `AGENTS.md` |
+| Acceptance-evidence checklist | B | `.cursor/skills/boba-delivery-reporting/SKILL.md` |
+| Current-first / history non-authority / 50,000-character limit | A | `AGENTS.md` |
+| Prompt, history-selection, and review-delta procedure | B | `.cursor/skills/boba-context-efficiency/SKILL.md` |
+| Repeated delivery-mode sequence inside the efficiency section | D | Delivery mode section of `AGENTS.md` |
+| Canonical reconciliation and capability-architecture persistence | A | `AGENTS.md` |
+| Repository safety, slice-start limits, dirty-tree and volume protections | A | `AGENTS.md` |
+| Fingerprint command and porcelain-hash prohibition | A | `AGENTS.md` |
+| Fingerprint definition detail | B | `.cursor/skills/boba-branch-and-fingerprint/references/fingerprint.md` |
+| Post-merge hygiene and deletion refusal path | B | `.cursor/skills/boba-branch-and-fingerprint/references/post-merge.md` |
+| Founder UAT authority boundary | A | `AGENTS.md` |
+| Founder UAT exact-candidate workflow and current applicability | B | `.cursor/skills/boba-founder-uat/SKILL.md` |
+| Foundation operating constraints pointer | A | `AGENTS.md` |
 
-## Phase-2 estimate
+The post-merge reference keeps the existing refusal path and states the accepted Phase-2
+clarification: a `git cherry` line beginning with `+` preserves the branch and stops deletion.
+A result with no `+` remains insufficient under squash or rebase histories.
 
-The earlier figure 13079 assumed those 22877 bytes left the always-loaded contract with no
-replacement. That figure is withdrawn. The revised estimate adds the compact kernel retainer
-back.
+## Machine proof
 
-`kernel_retainer_addend_bytes` is the UTF-8 length of the fenced retainer above, excluding the
-newline that closes the fence (1136). It is an estimate of text Phase 2 would add to `AGENTS.md`.
-It is not a measurement of a slimmed `AGENTS.md`, because this change does not edit `AGENTS.md`.
-Proposed rule files are excluded: `alwaysApply: false` means they are not always included.
-
-```text
-current_always_loaded_bytes: 35956
-agents_bytes_now: 35945
-detail_sections_moved_bytes: 22877
-agents_remainder_with_no_replacement: 13068
-kernel_retainer_addend_bytes: 1136
-proposed_phase2_always_loaded_bytes: 14215
-```
-
-14215 = (35945 − 22877 + 1136) + unchanged `CLAUDE.md` (11).
-Phase 2 must not change rule meaning while moving text, and must not treat extraction sources of
-`docs/platform/governance/current-context.json` as the complete canonical authority set.
+`npm run agent:context:check` validates this packaging structurally. It does not re-validate
+product, experience, architecture, or lifecycle semantics, and it is not a second authority
+registry. `npm run project:consistency` invokes the same check.
