@@ -40470,9 +40470,10 @@ function checkImp036jPd2ExperienceTransition(roadmap, state, architecture, decis
 
 /** Validate the locked artifact's metadata and current status fence, not historical candidates. */
 /**
- * Candidate 6 is an unreviewed remediation of the locked Candidate 5 architecture.
+ * Candidate 7 is an unreviewed remediation of Candidate 6's exact-head STOP.
  * ROADMAP/STATE still record the Candidate 5 Fit PASS and lock. This file must not
- * claim that Candidate 6 has passed, and it must keep the Candidate 5 provenance.
+ * claim that Candidate 7 has passed or locked, must keep Candidate 6 as STOP, and
+ * must keep the Candidate 5 provenance.
  */
 export function evaluateImp036jArchitectureLock(text) {
   let meta;
@@ -40486,10 +40487,14 @@ export function evaluateImp036jArchitectureLock(text) {
     productDefinition: "PD-IMP-036J-DRAFT-6", productDefinitionGate: "PASS",
     experienceDefinition: "XD-IMP-036J-DRAFT-6", experienceGate: "PASS",
     architectureBase: "ARCH-R23", architectureFit: "NOT_PERFORMED", architectureLock: "NOT_LOCKED",
-    candidateRevision: "IMP-036J-FIT-CANDIDATE-6",
+    candidateRevision: "IMP-036J-FIT-CANDIDATE-7",
     architectureFitSourceCandidate: "IMP-036J-FIT-CANDIDATE-5",
-    architectureFitReviewForCandidate6: "NOT_PERFORMED",
-    architectureFitPassClaimedForCandidate6: false,
+    architectureFitReviewForCandidate7: "NOT_PERFORMED",
+    architectureFitPassClaimedForCandidate7: false,
+    historicalCandidate6ArchitectureFitReview: "STOP",
+    historicalCandidate6NeverMerged: true,
+    historicalCandidate6NeverLocked: true,
+    historicalCandidate6ExactHeadReviewIds: "4135054894,4135054908",
     historicalCandidate5ArchitectureFit: "PASS",
     historicalCandidate5ArchitectureLock: "LOCKED",
     historicalCandidate5IndependentReview: "PASS",
@@ -40505,10 +40510,13 @@ export function evaluateImp036jArchitectureLock(text) {
   const fence = text.match(/```text\n([\s\S]*?)```/)?.[1] ?? "";
   const expectedMarkers = {
     STATUS: "CURRENT", AUTHORITY: "CAPABILITY_ARCHITECTURE", ARCHITECTURE_BASE: "ARCH-R23",
-    CANDIDATE_REVISION: "IMP-036J-FIT-CANDIDATE-6",
+    CANDIDATE_REVISION: "IMP-036J-FIT-CANDIDATE-7",
     ARCHITECTURE_FIT: "NOT_PERFORMED", ARCHITECTURE_LOCK: "NOT_LOCKED",
-    ARCHITECTURE_FIT_REVIEW_FOR_CANDIDATE_6: "NOT_PERFORMED",
-    ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_6: "NO",
+    ARCHITECTURE_FIT_REVIEW_FOR_CANDIDATE_7: "NOT_PERFORMED",
+    ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_7: "NO",
+    HISTORICAL_CANDIDATE_6_ARCHITECTURE_FIT_REVIEW: "STOP",
+    HISTORICAL_CANDIDATE_6_NEVER_MERGED: "YES",
+    HISTORICAL_CANDIDATE_6_NEVER_LOCKED: "YES",
     HISTORICAL_CANDIDATE_5_ARCHITECTURE_FIT: "PASS",
     HISTORICAL_CANDIDATE_5_ARCHITECTURE_LOCK: "LOCKED",
     IMP036J_ARCHITECTURE_FIT: "NOT_PERFORMED", IMP036J_ARCHITECTURE_LOCKED: "NO",
@@ -40533,12 +40541,24 @@ export function evaluateImp036jArchitectureLock(text) {
     "ARCHITECTURE_FIT_EVALUATED_CI_RUN = 36521141717",
     "ARCHITECTURE_FIT_EVALUATED_CODEQL_RUN = 36521141714",
     "CANDIDATE_5_REWRITTEN_AS_FAILED = NO",
+    "AF-036J-C6-01",
+    "AF-036J-C6-02",
+    "4135054894",
+    "4135054908",
+    "CANDIDATE_6_REWRITTEN_AS_PASSED = NO",
     "ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_6 = NO",
+    "ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_7 = NO",
   ]) {
-    if (!text.includes(token)) return { ok: false, code: "IMP036J_LOCK_STATUS", message: `Candidate 6 must preserve ${token}` };
+    if (!text.includes(token)) return { ok: false, code: "IMP036J_LOCK_STATUS", message: `Candidate 7 must preserve ${token}` };
   }
-  if (text.includes("ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_6 = YES")) {
-    return { ok: false, code: "IMP036J_LOCK_STATUS", message: "Candidate 6 must not claim Architecture Fit PASS" };
+  if (
+    text.includes("ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_7 = YES") ||
+    text.includes("ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_6 = YES") ||
+    text.includes("CANDIDATE_6_REWRITTEN_AS_PASSED = YES") ||
+    text.includes("HISTORICAL_CANDIDATE_6_ARCHITECTURE_FIT_REVIEW = PASS") ||
+    text.includes("CANDIDATE_5_REWRITTEN_AS_FAILED = YES")
+  ) {
+    return { ok: false, code: "IMP036J_LOCK_STATUS", message: "Candidate 7 must not claim Architecture Fit PASS or rewrite Candidate 5 or Candidate 6" };
   }
   return { ok: true };
 }

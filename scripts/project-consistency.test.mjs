@@ -18336,20 +18336,24 @@ describe("IMP-036J Experience Gate PASS persistence", () => {
 
 
 
-describe("IMP-036J architecture fit remediation candidate 6", () => {
+describe("IMP-036J architecture fit remediation candidate 7", () => {
   const live = readFileSync("docs/platform/capabilities/IMP-036J-promotions-coupons-offers.md", "utf8");
-  it("binds Candidate 6 as unreviewed and preserves Candidate 5 provenance", () => {
+  it("binds Candidate 7 as unreviewed, preserves Candidate 6 STOP, and preserves Candidate 5 provenance", () => {
     assert.deepEqual(evaluateImp036jArchitectureLock(live), { ok: true });
   });
   for (const [key, value] of Object.entries({
     architectureFit: "PASS", architectureLock: "LOCKED",
-    candidateRevision: "IMP-036J-FIT-CANDIDATE-5",
-    architectureFitReviewForCandidate6: "PASS",
-    architectureFitPassClaimedForCandidate6: true,
+    candidateRevision: "IMP-036J-FIT-CANDIDATE-6",
+    architectureFitReviewForCandidate7: "PASS",
+    architectureFitPassClaimedForCandidate7: true,
+    historicalCandidate6ArchitectureFitReview: "PASS",
+    historicalCandidate6NeverMerged: false,
+    historicalCandidate6NeverLocked: false,
     designReadiness: "PASS", implementationAuthorized: true, implementationStarted: true,
     architectureBase: "ARCH-R24", historicalCandidate5IndependentReviewId: "wrong-review",
     historicalCandidate5EvaluatedHead: "wrong-head", historicalCandidate5EvaluatedTree: "wrong-tree",
     historicalCandidate5GovernanceFingerprint: "wrong-fingerprint",
+    historicalCandidate5ArchitectureFit: "STOP",
   })) {
     it(`rejects metadata mutation ${key}=${value}`, () => {
       const mutated = live.replace(new RegExp(`("${key}":\\s*)(?:"[^"]*"|true|false)`), `$1${JSON.stringify(value)}`);
@@ -18360,8 +18364,11 @@ describe("IMP-036J architecture fit remediation candidate 6", () => {
   for (const [key, from, to] of [
     ["IMP036J_ARCHITECTURE_FIT", "NOT_PERFORMED", "PASS"],
     ["IMP036J_ARCHITECTURE_LOCKED", "NO", "YES"],
-    ["ARCHITECTURE_FIT_REVIEW_FOR_CANDIDATE_6", "NOT_PERFORMED", "PASS"],
-    ["ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_6", "NO", "YES"],
+    ["ARCHITECTURE_FIT_REVIEW_FOR_CANDIDATE_7", "NOT_PERFORMED", "PASS"],
+    ["ARCHITECTURE_FIT_PASS_CLAIMED_FOR_CANDIDATE_7", "NO", "YES"],
+    ["HISTORICAL_CANDIDATE_6_ARCHITECTURE_FIT_REVIEW", "STOP", "PASS"],
+    ["CANDIDATE_6_REWRITTEN_AS_PASSED", "NO", "YES"],
+    ["CANDIDATE_5_REWRITTEN_AS_FAILED", "NO", "YES"],
     ["IMP036J_NEXT_GATE", "DESIGN_READINESS", "ARCHITECTURE_FIT"],
     ["IMP036J_DESIGN_READINESS", "NOT_PERFORMED", "PASS"],
     ["IMP036J_IMPLEMENTATION_AUTHORIZED", "NO", "YES"],
@@ -18375,6 +18382,10 @@ describe("IMP-036J architecture fit remediation candidate 6", () => {
       assert.equal(evaluateImp036jArchitectureLock(mutated).ok, false);
     });
   }
+  it("rejects dropping a Candidate 6 exact-head finding id", () => {
+    const mutated = live.replace("4135054894", "0000000000");
+    assert.equal(evaluateImp036jArchitectureLock(mutated).ok, false);
+  });
   const roadmap = readFileSync("docs/platform/ROADMAP.md", "utf8");
   const product = readFileSync("docs/platform/product/IMP-036J/product-definition.md", "utf8");
   const experience = readFileSync("docs/platform/product/IMP-036J/experience-definition.md", "utf8");
