@@ -65,6 +65,15 @@ Governance fingerprint (`npm run governance:fingerprint`) covers CURRENT authori
 `TESTING.md` (TEST-1), all tracked Markdown under
 [`product/`](./product/) recursively, all tracked Markdown under [`history/`](./history/)
 recursively, plus the existing canonical/supporting governance set.
+`npm run governance:context` writes a compact NON-AUTHORITATIVE current-position projection
+([`governance/current-context.json`](./governance/current-context.json)) extracted from
+ROADMAP.md, STATE.md, ARCHITECTURE.md, and decision-register.md. Those four files are
+extraction sources for that projection, not the complete canonical authority set.
+`npm run governance:context:check` fails when the projection drifts from those extraction sources.
+Applicable canonical authority remains defined by AGENTS.md and the authorities it references.
+The projection must not substitute for those reads. `npm run validation:summary` wraps the governance
+validation set and leaves full command output in ignored `.validation-logs/`.
+Evidence handoffs under [`handoffs/`](./handoffs/) are checklists, not gates.
 AGENTS is the agent execution contract; CLOSED historical one-active-slice exception detail lives
 in ROADMAP/STATE history snapshots and is not restated in AGENTS.
 

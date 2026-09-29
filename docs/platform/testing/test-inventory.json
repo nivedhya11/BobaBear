@@ -31,11 +31,11 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2202,
-    "executableTestFiles": 479,
+    "trackedPathsConsidered": 2211,
+    "executableTestFiles": 481,
     "sourceTestFiles": 142,
     "testsTreeExecutableFiles": 265,
-    "scriptTestFiles": 72,
+    "scriptTestFiles": 74,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
     "playwrightConfigs": 7,
@@ -43,7 +43,7 @@
     "packageTestCommands": 85,
     "packageAuditCommands": 27,
     "packageE2eCommands": 9,
-    "packageCheckCommands": 13,
+    "packageCheckCommands": 16,
     "packageCoverageCommands": 1,
     "packageInventoryCommands": 2,
     "ciWorkflowFiles": 4,
@@ -495,6 +495,7 @@
     "scripts/environment/podman-compose.test.mjs",
     "scripts/environment/staging.test.mjs",
     "scripts/generate-nginx-security-headers.test.mjs",
+    "scripts/governance-context.test.mjs",
     "scripts/governance-fingerprint.test.mjs",
     "scripts/lib/vitest-result-validation.test.mjs",
     "scripts/nginx-origin-redirect.test.mjs",
@@ -533,6 +534,7 @@
     "scripts/run-trivy.test.mjs",
     "scripts/serve-static-export.test.mjs",
     "scripts/testing-inventory.test.mjs",
+    "scripts/validation-summary.test.mjs",
     "scripts/workforce/cli-support.test.mjs",
     "scripts/working-tree-fingerprint.test.mjs"
   ],
@@ -753,11 +755,14 @@
       "db:schema:check",
       "docker:db:check",
       "env:hygiene",
+      "governance:context",
+      "governance:context:check",
       "governance:fingerprint",
       "lint",
       "project:consistency",
       "recovery:target:check",
-      "typecheck"
+      "typecheck",
+      "validation:summary"
     ],
     "coverage": [
       "test:coverage"
@@ -804,6 +809,8 @@
     "db:schema:check": "node scripts/database/check-schema-drift.mjs",
     "docker:db:check": "docker compose run --rm db-check",
     "env:hygiene": "node scripts/environment/hygiene.mjs",
+    "governance:context": "node scripts/governance-context.mjs --write",
+    "governance:context:check": "node scripts/governance-context.mjs --check",
     "governance:fingerprint": "node scripts/governance-fingerprint.mjs",
     "lint": "eslint",
     "project:consistency": "node scripts/project-consistency.mjs",
@@ -905,7 +912,8 @@
     "test:workforce-auth:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/workforce-auth/http.integration.test.ts",
     "testing:inventory": "node scripts/testing-inventory.mjs --write",
     "testing:inventory:check": "node scripts/testing-inventory.mjs --check",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "validation:summary": "node scripts/validation-summary.mjs"
   },
   "ciWorkflows": [
     {
@@ -1977,6 +1985,23 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "scripts/governance-context.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "scripts/governance-fingerprint.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
@@ -2645,6 +2670,23 @@
     },
     {
       "path": "scripts/testing-inventory.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/validation-summary.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
       "testType": "script-unit",

@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "authority": "NON_AUTHORITATIVE",
+  "notice": "Generated current-position projection from ROADMAP.md, STATE.md, ARCHITECTURE.md, and decision-register.md. These are extraction sources for this projection, not the complete canonical authority set. Applicable canonical authority and mandatory read requirements remain defined by AGENTS.md and the authorities it references. This projection must not substitute for applicable Product, Experience, Product Language, Architecture, Testing, or per-IMP authority.",
+  "generatedBy": "scripts/governance-context.mjs",
+  "sources": [
+    "docs/platform/ROADMAP.md",
+    "docs/platform/STATE.md",
+    "docs/platform/ARCHITECTURE.md",
+    "docs/platform/decision-register.md"
+  ],
+  "versions": {
+    "roadmapVersion": "GTM-R172",
+    "stateVersion": "STATE-R170",
+    "architectureVersion": "ARCH-R23",
+    "decisionRegisterVersion": "DR-23"
+  },
+  "slices": {
+    "acceptedThrough": "IMP-036I",
+    "currentProductSlice": "IMP-036J",
+    "nextProductSlice": "IMP-037",
+    "pendingAcceptance": "NONE",
+    "gtmBoundary": "IMP-040"
+  },
+  "lifecycle": "ARCHITECTURE_LOCKED",
+  "nextGate": "DESIGN_READINESS",
+  "currentSliceGates": {
+    "slice": "IMP-036J",
+    "lifecycle": "ARCHITECTURE_LOCKED",
+    "nextGate": "DESIGN_READINESS",
+    "activated": "YES",
+    "productDefinition": "APPROVED",
+    "productDefinitionVersion": "PD-IMP-036J-DRAFT-6",
+    "productDefinitionGate": "PASS",
+    "experienceDefinition": "APPROVED",
+    "experienceDefinitionVersion": "XD-IMP-036J-DRAFT-6",
+    "experienceGate": "PASS",
+    "architectureFit": "PASS",
+    "architectureLocked": "YES",
+    "designReadiness": "NOT_PERFORMED",
+    "implementationAuthorized": "NO",
+    "started": "NO",
+    "implementationStarted": "NO",
+    "implementationComplete": "NO",
+    "accepted": "NO"
+  },
+  "singleSourceGates": []
+}

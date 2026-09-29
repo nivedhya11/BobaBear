@@ -40,6 +40,8 @@
 
 # debug
 npm-debug.log*
+# validation:summary full command logs (stdout stays concise; logs are ignored)
+.validation-logs/
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
