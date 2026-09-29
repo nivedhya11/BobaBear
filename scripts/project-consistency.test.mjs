@@ -110,6 +110,9 @@ import {
   evaluateImp036jPd2ExperienceTransition,
   evaluateImp036jExperienceGatePass,
   evaluateImp036jArchitectureLock,
+  evaluateImp036jProgrammeLifecycle,
+  evaluateImp036jProductIdentity,
+  evaluateImp036jExperienceFitPointer,
   evaluatePd2ProcessContract,
   evaluateImp036jFd036j03Authority,
   evaluateImp036jGatePassNarrative,
@@ -18367,4 +18370,29 @@ describe("IMP-036J Architecture Fit PASS / lock persistence", () => {
       assert.equal(evaluateImp036jArchitectureLock(mutated).ok, false);
     });
   }
+  const roadmap = readFileSync("docs/platform/ROADMAP.md", "utf8");
+  const product = readFileSync("docs/platform/product/IMP-036J/product-definition.md", "utf8");
+  const experience = readFileSync("docs/platform/product/IMP-036J/experience-definition.md", "utf8");
+  it("keeps the programme summary, product identity, and experience pointer at the lock", () => {
+    assert.deepEqual(evaluateImp036jProgrammeLifecycle(roadmap), { ok: true });
+    assert.deepEqual(evaluateImp036jProductIdentity(product), { ok: true });
+    assert.deepEqual(evaluateImp036jExperienceFitPointer(experience), { ok: true });
+  });
+  it("rejects restoring the pre-lock programme summary", () => {
+    const mutated = roadmap
+      .replace("IMP-036J (ARCHITECTURE_LOCKED;", "IMP-036J (PLANNED;")
+      .replace("IMP-036J: ARCHITECTURE_LOCKED (", "IMP-036J: PLANNED (");
+    assert.equal(evaluateImp036jProgrammeLifecycle(mutated).ok, false);
+  });
+  it("rejects a product identity table that still points at the pre-lock tip", () => {
+    const mutated = product
+      .replace("ROADMAP GTM-R172", "ROADMAP GTM-R171")
+      .replace("formal lifecycle `ARCHITECTURE_LOCKED`", "formal lifecycle `PLANNED`")
+      .replace("Architecture Fit `PASS`", "Fit has not been performed");
+    assert.equal(evaluateImp036jProductIdentity(mutated).ok, false);
+  });
+  it("rejects an experience statement that Fit is still unperformed", () => {
+    const mutated = experience.replace("Architecture Fit is `PASS`.", "Fit is `NOT_PERFORMED`.");
+    assert.equal(evaluateImp036jExperienceFitPointer(mutated).ok, false);
+  });
 });

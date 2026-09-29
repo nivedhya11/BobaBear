@@ -1132,7 +1132,7 @@ OPEN_EXPERIENCE_DECISIONS = NONE
 
 ## 20. Architecture Fit reconciliation
 
-Experience requirements that Architecture Fit must later prove. These are not schemas, keys, locks, topology, or API ownership.
+Experience requirements that Architecture Fit had to satisfy. These requirements remain Experience semantics. They are not schemas, keys, locks, topology, or API ownership. Architecture Fit PASS for `IMP-036J-FIT-CANDIDATE-5` is persisted; this section does not change the requirements.
 
 - A threshold sentence can be driven by an authoritative gap. Independent eligibility maths on the client is prohibited.
 - One commercial result can explain order saving, delivery saving, total saved, and payable amount without a second calculator.
@@ -1163,7 +1163,7 @@ SOURCE_VALUE = authoritative commercial evaluation or purchased truth
 FRONTEND_INDEPENDENT_ELIGIBILITY_CALCULATION = PROHIBITED
 ```
 
-Fit is `NOT_PERFORMED`. This candidate does not use the unmerged architecture candidate as a constraint. Pull request #323 is untouched.
+Architecture Fit is `PASS`. The locked capability architecture preserves `IMP-036J-FIT-CANDIDATE-5`. This Experience Definition does not change experience semantics to follow that architecture. Design Readiness remains `NOT_PERFORMED`.
 
 An experience requirement that Fit cannot support safely remains a Fit STOP under the Product Definition. This document does not downgrade the complimentary item, the breakdown, or the shared coupon state to avoid that question.
 

@@ -40514,6 +40514,91 @@ export function evaluateImp036jArchitectureLock(text) {
   return { ok: true };
 }
 
+/** Current Enterprise Experience programme summary must match the lock, not the pre-lock tip. */
+export function evaluateImp036jProgrammeLifecycle(roadmapText) {
+  const programme = roadmapText.split("### 5.0E Enterprise Experience Programme")[1]?.split("\n## ")[0] ?? "";
+  const narrative = programme.split("```text")[0];
+  const fence = programme.match(/```text\n([\s\S]*?)```/)?.[1] ?? "";
+  const impLine = fence.split("\n").find((line) => line.startsWith("IMP-036J:")) ?? "";
+  if (!narrative.includes("IMP-036J (ARCHITECTURE_LOCKED;")) {
+    return { ok: false, code: "IMP036J_PROGRAMME", message: "Programme narrative must record IMP-036J ARCHITECTURE_LOCKED" };
+  }
+  if (
+    /IMP-036J \(PLANNED;/.test(narrative) ||
+    /next gate ARCHITECTURE_FIT/.test(narrative) ||
+    /Architecture Fit NOT_PERFORMED/.test(narrative)
+  ) {
+    return { ok: false, code: "IMP036J_PROGRAMME_REGRESSION", message: "Programme narrative must not restore the pre-lock IMP-036J lifecycle" };
+  }
+  for (const token of [
+    "ARCHITECTURE_LOCKED",
+    "Experience Gate PASS",
+    "Fit PASS",
+    "architecture LOCKED",
+    "nextGate DESIGN_READINESS",
+    "Design Readiness NOT_PERFORMED",
+    "IMP036J_IMPLEMENTATION_AUTHORIZED: NO",
+  ]) {
+    if (!impLine.includes(token)) {
+      return { ok: false, code: "IMP036J_PROGRAMME", message: `Programme IMP-036J line must record ${token}` };
+    }
+  }
+  if (/^IMP-036J:\s*PLANNED\b/.test(impLine) || /Fit NOT_PERFORMED/.test(impLine) || /Design Readiness PASS/.test(impLine) || /IMPLEMENTATION_AUTHORIZED:\s*YES/.test(impLine)) {
+    return { ok: false, code: "IMP036J_PROGRAMME_REGRESSION", message: "Programme IMP-036J line must stay locked, with Design Readiness unperformed and implementation unauthorized" };
+  }
+  return { ok: true };
+}
+
+/** Current Product Definition identity table must match the lock. */
+export function evaluateImp036jProductIdentity(productText) {
+  const anchors = productText.split("\n").find((line) => line.startsWith("| Canonical anchors |")) ?? "";
+  const lifecycle = productText.split("\n").find((line) => line.startsWith("| Capability lifecycle / authorization |")) ?? "";
+  const architecture = productText.split("\n").find((line) => line.startsWith("| Relevant capability architecture")) ?? "";
+  if (!anchors.includes("ROADMAP GTM-R172") || !anchors.includes("STATE STATE-R170") || anchors.includes("GTM-R171") || anchors.includes("STATE-R169")) {
+    return { ok: false, code: "IMP036J_PRODUCT_IDENTITY", message: "Product identity anchors must be GTM-R172 / STATE-R170" };
+  }
+  for (const token of [
+    "formal lifecycle `ARCHITECTURE_LOCKED`",
+    "next gate `DESIGN_READINESS`",
+    "Fit `PASS`",
+    "architecture `LOCKED`",
+    "Design Readiness `NOT_PERFORMED`",
+    "implementation `NOT_AUTHORIZED`",
+  ]) {
+    if (!lifecycle.includes(token)) return { ok: false, code: "IMP036J_PRODUCT_IDENTITY", message: `Product lifecycle row must record ${token}` };
+  }
+  if (/formal lifecycle `PLANNED`|next gate `ARCHITECTURE_FIT`|Fit `NOT_PERFORMED`|architecture not locked/.test(lifecycle)) {
+    return { ok: false, code: "IMP036J_PRODUCT_IDENTITY_REGRESSION", message: "Product lifecycle row must not restore the pre-lock state" };
+  }
+  if (
+    !architecture.includes("capabilities/IMP-036J-promotions-coupons-offers.md") ||
+    !architecture.includes("Architecture Fit `PASS`") ||
+    !architecture.includes("5347761109") ||
+    architecture.includes("No IMP-036J capability architecture exists") ||
+    architecture.includes("Fit has not been performed")
+  ) {
+    return { ok: false, code: "IMP036J_PRODUCT_IDENTITY", message: "Product architecture row must point at the locked capability and must not say Fit is unperformed" };
+  }
+  return { ok: true };
+}
+
+/** Current Experience Fit section must record PASS without rewriting Experience requirements. */
+export function evaluateImp036jExperienceFitPointer(experienceText) {
+  const section = experienceText.split("## 20. Architecture Fit reconciliation")[1]?.split("\n## ")[0] ?? "";
+  if (
+    !section.includes("Architecture Fit is `PASS`") ||
+    !section.includes("IMP-036J-FIT-CANDIDATE-5") ||
+    !section.includes("Design Readiness remains `NOT_PERFORMED`") ||
+    section.includes("Fit is `NOT_PERFORMED`") ||
+    section.includes("must later prove") ||
+    section.includes("unmerged architecture candidate") ||
+    section.includes("Pull request #323 is untouched")
+  ) {
+    return { ok: false, code: "IMP036J_EXPERIENCE_FIT", message: "Experience Fit section must record persisted PASS and must not keep the unperformed-Fit statement" };
+  }
+  return { ok: true };
+}
+
 /**
  * CURRENT checkpoint: IMP-036J Architecture Fit PASS / lock (GTM-R172 / STATE-R170).
  * Preserves reviewed Candidate 5; does not perform Design Readiness or authorize implementation.
@@ -40706,6 +40791,12 @@ function checkImp036jArchitectureLock(roadmap, state, architecture, decision) {
   if (!experienceText.includes("ARCHITECTURE_FIT = PASS") || !experienceText.includes("ARCHITECTURE_LOCKED = YES") || !experienceText.includes("IMPLEMENTATION_AUTHORIZED = NO") || !experienceText.includes("DESIGN_READINESS = NOT_PERFORMED")) {
     fail("IMP036J_EXPERIENCE_BOUNDARY", "Locked Experience pointer must retain Fit PASS / lock and leave Design Readiness unperformed and implementation unauthorized");
   }
+  const programme = evaluateImp036jProgrammeLifecycle(roadmapText);
+  if (!programme.ok) fail(programme.code, programme.message);
+  const productIdentity = evaluateImp036jProductIdentity(productDefinitionText);
+  if (!productIdentity.ok) fail(productIdentity.code, productIdentity.message);
+  const experienceFit = evaluateImp036jExperienceFitPointer(experienceText);
+  if (!experienceFit.ok) fail(experienceFit.code, experienceFit.message);
   let experienceMeta;
   try { experienceMeta = JSON.parse(experienceText.match(/^<!-- governance-meta\s*([\s\S]*?)-->/)?.[1] ?? ""); } catch { experienceMeta = {}; }
   for (const [key, expected] of Object.entries({ architectureFit: "PASS", architectureLocked: "YES", designReadiness: "NOT_PERFORMED", implementationAuthorized: false })) {
