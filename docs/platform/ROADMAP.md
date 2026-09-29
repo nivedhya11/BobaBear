@@ -2,13 +2,13 @@
 {
   "status": "CURRENT",
   "authority": "IMPLEMENTATION_SEQUENCE",
-  "roadmapVersion": "GTM-R171",
+  "roadmapVersion": "GTM-R172",
   "acceptedThrough": "IMP-036I",
   "currentProductSlice": "IMP-036J",
   "nextProductSlice": "IMP-037",
   "gtmBoundary": "IMP-040",
-  "lastReviewed": "2026-09-28",
-  "supersedes": "GTM-R170"
+  "lastReviewed": "2026-09-29",
+  "supersedes": "GTM-R171"
 }
 -->
 
@@ -34,7 +34,7 @@
   change) before the next slice begins: **ACCEPT → RECONCILE → ADVANCE**.
 - The historical IMP-026 → IMP-028 controlled-continuation exception (GTM-R15 onward) is **CLOSED**.
   It does **not** generalize to future slices and is **not** reopened by GTM-R138 / GTM-R139 /
-  GTM-R140 / GTM-R141 / GTM-R142 / GTM-R143 / GTM-R144 / GTM-R145 / GTM-R146 / GTM-R147 / GTM-R148 / GTM-R149 / GTM-R150 / GTM-R151 / GTM-R152 / GTM-R153 / GTM-R154 / GTM-R155 / GTM-R156 / GTM-R157 / GTM-R158 / GTM-R159 / GTM-R160 / GTM-R161 / GTM-R162 / GTM-R163 / GTM-R164 / GTM-R165 / GTM-R166 / GTM-R167 / GTM-R168 / GTM-R169 / GTM-R170 / GTM-R171.
+  GTM-R140 / GTM-R141 / GTM-R142 / GTM-R143 / GTM-R144 / GTM-R145 / GTM-R146 / GTM-R147 / GTM-R148 / GTM-R149 / GTM-R150 / GTM-R151 / GTM-R152 / GTM-R153 / GTM-R154 / GTM-R155 / GTM-R156 / GTM-R157 / GTM-R158 / GTM-R159 / GTM-R160 / GTM-R161 / GTM-R162 / GTM-R163 / GTM-R164 / GTM-R165 / GTM-R166 / GTM-R167 / GTM-R168 / GTM-R169 / GTM-R170 / GTM-R171 / GTM-R172.
 - **GTM-R138** records a **NEW**, Founder-authorized one-off exception
   `CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038` (authority PR#179/5771367844) so
   IMP-038 may activate for PD-1 Product Definition work while IMP-037 remains an
@@ -74,6 +74,22 @@
   exact-head review findings `4115981679` and `4115981682` on unmerged pull request #312
   reopened the acceptance slice. Gate PASS was not persisted. Canonical main never recorded
   DRAFT-3 as APPROVED. DRAFT-4 supersedes DRAFT-3.
+- **GTM-R172** records independent Architecture Fit PASS for `IMP-036J-FIT-CANDIDATE-5` and
+  locks the IMP-036J capability architecture. Independent review `5347761109` evaluated head
+  `49912f35f2871ff77b9af267589d49666fc975ec`, tree
+  `7046d5bb78012524972505f555226205199a58d0`, and governance fingerprint
+  `ac6510d315148763069f06374a243a75a312a7693cf3e7c1d0eac71bc1026870`. Product Definition stays
+  `PD-IMP-036J-DRAFT-6` / `APPROVED` / `PASS`. Experience Definition stays
+  `XD-IMP-036J-DRAFT-6` / `APPROVED` / `PASS`. Experience Criticality stays `X3`. Change Risk
+  stays `CR2`. `IMP036J_ARCHITECTURE_FIT` is `PASS`. `IMP036J_ARCHITECTURE_LOCKED` is `YES`.
+  Formal lifecycle is `ARCHITECTURE_LOCKED`. Design Readiness stays `NOT_PERFORMED`.
+  Quality/Test Plan finalization and Measurement/Instrumentation Plan finalization stay
+  unperformed. Implementation stays unauthorized and unstarted. `nextGate` is
+  `DESIGN_READINESS`. `acceptedThrough` stays IMP-036I. `currentProductSlice` stays IMP-036J.
+  `nextProductSlice` stays held IMP-037. D-377 and D-382 remain current. No D-383 is created.
+  ARCH-R23 is unchanged. DR-23 is unchanged. No ADR is created. IMP-037 and IMP-038 holds stay
+  unchanged. Historical accepted capabilities are not reopened. Architecture Fit PASS is not
+  Design Readiness, implementation authorization, or acceptance.
 - **GTM-R171** records independent Experience Gate PASS for `XD-IMP-036J-DRAFT-6`.
   The version stays `XD-IMP-036J-DRAFT-6`. The Experience Definition is `APPROVED`.
   `IMP036J_EXPERIENCE_GATE` is `PASS`. Independent review `5342581233` evaluated head
@@ -582,14 +598,26 @@ IMP-036D: COMPLETE_AND_ACCEPTED
 IMP-036D_ARCHITECTURE_LOCKED: YES
 IMP-036D_ACCEPTED: YES
 IMP-036D_FOUNDER_UAT: PASS
-IMP-036J: PLANNED
+IMP-036J: ARCHITECTURE_LOCKED
 IMP036J_ACTIVATED: YES
 IMP036J_PRODUCT_DEFINITION: APPROVED
 IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-6
 IMP036J_PRODUCT_DEFINITION_GATE: PASS
-IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED
-IMP036J_ARCHITECTURE_LOCKED: NO
-IMP036J_ARCHITECTURE_FIT_CANDIDATE_AUTHORITY: NOT_PERSISTED
+IMP036J_EXPERIENCE_DEFINITION: APPROVED
+IMP036J_EXPERIENCE_DEFINITION_VERSION: XD-IMP-036J-DRAFT-6
+IMP036J_EXPERIENCE_GATE: PASS
+IMP036J_ARCHITECTURE_FIT: PASS
+IMP036J_ARCHITECTURE_LOCKED: YES
+ARCHITECTURE_FIT_SOURCE_CANDIDATE: IMP-036J-FIT-CANDIDATE-5
+INDEPENDENT_ARCHITECTURE_FIT_REVIEW: PASS
+INDEPENDENT_ARCHITECTURE_FIT_REVIEW_ID: 5347761109
+ARCHITECTURE_FIT_EVALUATED_HEAD: 49912f35f2871ff77b9af267589d49666fc975ec
+ARCHITECTURE_FIT_EVALUATED_TREE: 7046d5bb78012524972505f555226205199a58d0
+ARCHITECTURE_FIT_EVALUATED_GOVERNANCE_FINGERPRINT: ac6510d315148763069f06374a243a75a312a7693cf3e7c1d0eac71bc1026870
+ARCHITECTURE_FIT_EVALUATED_CODEX_REVIEW: 5883601198
+ARCHITECTURE_FIT_EVALUATED_CI_RUN: 36521141717
+ARCHITECTURE_FIT_EVALUATED_CODEQL_RUN: 36521141714
+IMP036J_DESIGN_READINESS: NOT_PERFORMED
 IMP036J_IMPLEMENTATION_AUTHORIZED: NO
 FD-036J-03: APPROVED 2026-09-28
 IMP036J_STARTED: NO
@@ -601,17 +629,38 @@ EXPERIENCE_STANDARD: EXP-1
 PRODUCT_LANGUAGE_STANDARD: LANG-1
 IMP036J_EXPERIENCE_CRITICALITY: X3
 IMP036J_CHANGE_RISK: CR2
-IMP036J_EXPERIENCE_DEFINITION: APPROVED
-IMP036J_EXPERIENCE_DEFINITION_VERSION: XD-IMP-036J-DRAFT-6
-IMP036J_EXPERIENCE_GATE: PASS
 INDEPENDENT_EXPERIENCE_GATE_REVIEW_ID: 5342581233
 EXPERIENCE_GATE_EVALUATED_HEAD: 1fbabd2fb80851912815efe4e0ebe331a1318557
 EXPERIENCE_GATE_EVALUATED_TREE: 4eb6aa5e5a1588ef64527d7f38f7c5f07339d701
 EXPERIENCE_GATE_EVALUATED_WORKING_TREE_FINGERPRINT: 060269654ee36f130f8f8e4cc47fc6b3116466c6a56e2a29e061af1da725632d
-IMP036J_DESIGN_READINESS: NOT_PERFORMED
-IMP036J_NEXT_GATE: ARCHITECTURE_FIT
-nextGate: ARCHITECTURE_FIT
+IMP036J_NEXT_GATE: DESIGN_READINESS
+nextGate: DESIGN_READINESS
 ```
+
+**GTM-R172** records independent Architecture Fit PASS for `IMP-036J-FIT-CANDIDATE-5` and locks
+the IMP-036J capability architecture. Independent review `5347761109` evaluated HEAD
+`49912f35f2871ff77b9af267589d49666fc975ec`, tree
+`7046d5bb78012524972505f555226205199a58d0`, and governance fingerprint
+`ac6510d315148763069f06374a243a75a312a7693cf3e7c1d0eac71bc1026870`. Fresh Codex review
+`5883601198`, CI run `36521141717`, and CodeQL run `36521141714` passed on that evaluated head.
+Formal lifecycle is `ARCHITECTURE_LOCKED`. `IMP036J_PRODUCT_DEFINITION` remains `APPROVED`.
+`IMP036J_PRODUCT_DEFINITION_VERSION` remains `PD-IMP-036J-DRAFT-6`.
+`IMP036J_PRODUCT_DEFINITION_GATE` remains `PASS`. `IMP036J_EXPERIENCE_DEFINITION` remains
+`APPROVED`. `IMP036J_EXPERIENCE_DEFINITION_VERSION` remains `XD-IMP-036J-DRAFT-6`.
+`IMP036J_EXPERIENCE_GATE` remains `PASS`. `IMP036J_EXPERIENCE_CRITICALITY` remains `X3`.
+`IMP036J_CHANGE_RISK` remains `CR2`. `IMP036J_ARCHITECTURE_FIT` is `PASS`.
+`IMP036J_ARCHITECTURE_LOCKED` is `YES`. `IMP036J_DESIGN_READINESS` remains `NOT_PERFORMED`.
+The Quality/Test Plan is not finalized. The Measurement/Instrumentation Plan is not finalized.
+`IMP036J_IMPLEMENTATION_AUTHORIZED` remains `NO`. `IMP036J_STARTED` remains `NO`.
+`IMP036J_IMPLEMENTATION_STARTED` remains `NO`. `IMP036J_IMPLEMENTATION_COMPLETE` remains `NO`.
+`IMP036J_ACCEPTED` remains `NO`. `acceptedThrough` remains IMP-036I. `currentProductSlice` remains
+IMP-036J. `pendingAcceptance` remains NONE. `nextProductSlice` remains IMP-037. `nextGate` is
+`DESIGN_READINESS`. `IMP037_HOLD` and `IMP038_HOLD` remain YES. Architecture remains ARCH-R23.
+Decision register remains DR-23. D-377 remains CURRENT. D-382 remains CURRENT. Next decision ID
+remains D-383. No D-383 is created. No ADR is created. No FD-036J-04 is created. Deals,
+Campaigns, and Revenue Recommendations remain parked. `GAP-EXT-ASSESS-001` remains NOT_CLOSED.
+Historical accepted IMPs are not reopened. Architecture lock is not Design Readiness, not
+implementation authorization, and not acceptance.
 
 **GTM-R171** records independent Experience Gate PASS for `XD-IMP-036J-DRAFT-6`. The version is
 unchanged. `IMP036J_EXPERIENCE_DEFINITION` is `APPROVED`. `IMP036J_EXPERIENCE_GATE` is `PASS`.
@@ -1432,10 +1481,11 @@ IMP-036D remains `COMPLETE_AND_ACCEPTED`. Concise acceptance identity: UAT candi
 Under `PROGRAM_PAUSE: PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED` (**D-377**) and additional
 sequencing authority **D-382**, the active product slice is **IMP-036J — Promotions, Coupons &
 Offers** (`currentProductSlice = IMP-036J`; `pendingAcceptance = NONE`;
-`IMP036J_ACTIVATED: YES`; formal lifecycle `PLANNED`; Product Definition
+`IMP036J_ACTIVATED: YES`; formal lifecycle `ARCHITECTURE_LOCKED`; Product Definition
 `PD-IMP-036J-DRAFT-6` is `APPROVED`; Product Definition Gate `PASS`; Experience Definition
-`XD-IMP-036J-DRAFT-6` is `APPROVED`; Experience Gate `PASS`; next gate `ARCHITECTURE_FIT`;
-Architecture Fit `NOT_PERFORMED`; architecture unlocked; Design Readiness `NOT_PERFORMED`;
+`XD-IMP-036J-DRAFT-6` is `APPROVED`; Experience Gate `PASS`; Architecture Fit `PASS`
+(independent review `5347761109`; source candidate `IMP-036J-FIT-CANDIDATE-5`); architecture
+`LOCKED`; next gate `DESIGN_READINESS`; Design Readiness `NOT_PERFORMED`;
 implementation `NOT_AUTHORIZED`). IMP-036I — Scheduled
 Fulfilment is `COMPLETE_AND_ACCEPTED` (`IMP036I_ACCEPTED: YES`; `IMP036I_FOUNDER_UAT: PASS`;
 `IMP036I_FORMAL_ACCEPTANCE: ACCEPTED`; Product Definition `PD-IMP-036I-DRAFT-4` APPROVED; Gate
@@ -1558,10 +1608,11 @@ Historical acceptance evidence remains in the pre-compression ROADMAP snapshot.
 
 Remaining numeric GTM range IMP-037 → IMP-040: **4** IMP numbers. Enterprise Experience suffix
 slices IMP-036A–I are accepted. Founder-authorized pre-GTM product suffix slices IMP-036H
-(COMPLETE_AND_ACCEPTED), IMP-036I (COMPLETE_AND_ACCEPTED), and IMP-036J (PLANNED; Product
+(COMPLETE_AND_ACCEPTED), IMP-036I (COMPLETE_AND_ACCEPTED), and IMP-036J (ARCHITECTURE_LOCKED; Product
 Definition `PD-IMP-036J-DRAFT-6` `APPROVED`; Product Definition Gate `PASS`; Experience Definition
-`XD-IMP-036J-DRAFT-6` `APPROVED`; Experience Gate `PASS`; next gate `ARCHITECTURE_FIT`;
-Architecture Fit `NOT_PERFORMED` under D-382) are inserted after IMP-036G and before IMP-037 without
+`XD-IMP-036J-DRAFT-6` `APPROVED`; Experience Gate `PASS`; Architecture Fit `PASS`; architecture
+`LOCKED`; next gate `DESIGN_READINESS`; Design Readiness `NOT_PERFORMED`; implementation
+`NOT_AUTHORIZED` under D-382) are inserted after IMP-036G and before IMP-037 without
 consuming or renaming existing numeric identities. Deals, Campaigns, and Revenue
 Recommendations remain parked discovery and have no ledger identity. Accepted inserted
 slices IMP-026C and IMP-028A–D remain in the accepted ledger and are not future identities.
@@ -1579,7 +1630,7 @@ Historical Food Direct insertion narration remains in
 | IMP-036G | Administration Console V2 | COMPLETE_AND_ACCEPTED |
 | IMP-036H | Customer Pickup / Takeaway | COMPLETE_AND_ACCEPTED |
 | IMP-036I | Scheduled Fulfilment | COMPLETE_AND_ACCEPTED (IMP036I_ACTIVATED: YES; APPROVED; Gate PASS; Fit PASS; locked YES; implementation AUTHORIZED / STARTED / COMPLETE; IMP036I_IMPLEMENTATION_COMPLETE: YES; IMP036I_INDEPENDENT_IMPLEMENTATION_REVIEW: PASS; IMP036I_ACCEPTED: YES; IMP036I_FOUNDER_UAT: PASS; IMP036I_FORMAL_ACCEPTANCE: ACCEPTED) |
-| IMP-036J | Promotions, Coupons & Offers | PLANNED (IMP036J_ACTIVATED: YES; PRODUCT_DEFINITION APPROVED; PD-IMP-036J-DRAFT-6; Gate PASS; Experience X3; EXPERIENCE_DEFINITION APPROVED; XD-IMP-036J-DRAFT-6; Experience Gate PASS; nextGate ARCHITECTURE_FIT; Fit NOT_PERFORMED; implementation NOT_AUTHORIZED; IMP036J_ACCEPTED: NO) |
+| IMP-036J | Promotions, Coupons & Offers | ARCHITECTURE_LOCKED (IMP036J_ACTIVATED: YES; PRODUCT_DEFINITION APPROVED; PD-IMP-036J-DRAFT-6; Gate PASS; Experience X3; EXPERIENCE_DEFINITION APPROVED; XD-IMP-036J-DRAFT-6; Experience Gate PASS; Fit PASS; locked YES; nextGate DESIGN_READINESS; Design Readiness NOT_PERFORMED; implementation NOT_AUTHORIZED; IMP036J_ACCEPTED: NO) |
 | IMP-037 | Backup, Restore & Migration Readiness | IMPLEMENTATION_IN_PROGRESS (IMP037_HOLD: YES; BLOCKED_PROVIDER_ACCESS) |
 | IMP-038 | Security & Privacy Hardening | IMPLEMENTATION_IN_PROGRESS (IMP038_HOLD: YES; IMPLEMENTATION_COMPLETE / NOT_ACCEPTED; external assessment deferred) |
 | IMP-039 | Production Infrastructure & Release Pipeline | PLANNED |
@@ -1590,13 +1641,13 @@ Historical Food Direct insertion narration remains in
 The [Enterprise Experience Programme](./experience/enterprise-experience/README.md) defines supporting
 UX/workflow contracts (not locked capability architecture). Accepted Enterprise Experience order
 remains IMP-036A → B → C → D → E → F → G. Founder-authorized pre-GTM product insertions continue
-IMP-036G → IMP-036H → IMP-036I (COMPLETE_AND_ACCEPTED; APPROVED / Gate PASS / Architecture Fit PASS) → IMP-036J (PLANNED; Product Definition APPROVED; Gate PASS; Experience Definition APPROVED; Experience Gate PASS; next gate ARCHITECTURE_FIT; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED; D-382) → IMP-037 (held; not advanced) without reopening accepted EE slices.
+IMP-036G → IMP-036H → IMP-036I (COMPLETE_AND_ACCEPTED; APPROVED / Gate PASS / Architecture Fit PASS) → IMP-036J (ARCHITECTURE_LOCKED; Product Definition APPROVED; Gate PASS; Experience Definition APPROVED; Experience Gate PASS; next gate DESIGN_READINESS; Architecture Fit PASS; architecture LOCKED; Design Readiness NOT_PERFORMED; implementation NOT_AUTHORIZED; D-382) → IMP-037 (held; not advanced) without reopening accepted EE slices.
 
 ```text
 FIGMA_REQUIRED_FOR_INITIAL_IMPLEMENTATION: NO
 IMP-036A → IMP-036I: COMPLETE_AND_ACCEPTED
 IMP-036I: COMPLETE_AND_ACCEPTED (IMP036I_ACTIVATED: YES; APPROVED; Gate PASS; Fit PASS; implementation AUTHORIZED / STARTED / COMPLETE; IMP036I_IMPLEMENTATION_COMPLETE: YES; IMP036I_ACCEPTED: YES; IMP036I_FOUNDER_UAT: PASS)
-IMP-036J: PLANNED (IMP036J_ACTIVATED: YES; PRODUCT_DEFINITION APPROVED; Gate PASS; Fit NOT_PERFORMED; IMP036J_IMPLEMENTATION_AUTHORIZED: NO; IMP036J_ACCEPTED: NO; currentProductSlice IMP-036J)
+IMP-036J: ARCHITECTURE_LOCKED (IMP036J_ACTIVATED: YES; PRODUCT_DEFINITION APPROVED; Gate PASS; Experience Definition APPROVED; Experience Gate PASS; Fit PASS; architecture LOCKED; nextGate DESIGN_READINESS; Design Readiness NOT_PERFORMED; IMP036J_IMPLEMENTATION_AUTHORIZED: NO; IMP036J_ACCEPTED: NO; currentProductSlice IMP-036J)
 IMP-037: IMPLEMENTATION_IN_PROGRESS (IMP037_HOLD: YES; IMP037_ACTIVATED: YES; provider-blocked)
 IMP-038: IMPLEMENTATION_IN_PROGRESS (IMP038_HOLD: YES; IMP038_ACTIVATED: YES; IMPLEMENTATION_COMPLETE / NOT_ACCEPTED; external assessment deferred)
 IMP-039: PLANNED / NOT_ACTIVATED (IMP039_ACTIVATED: NO)

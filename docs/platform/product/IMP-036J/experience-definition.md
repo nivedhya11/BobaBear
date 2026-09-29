@@ -9,8 +9,8 @@
   "experienceCriticality": "X3",
   "changeRisk": "CR2",
   "experienceGate": "PASS",
-  "architectureFit": "NOT_PERFORMED",
-  "architectureLocked": "NO",
+  "architectureFit": "PASS",
+  "architectureLocked": "YES",
   "designReadiness": "NOT_PERFORMED",
   "implementationAuthorized": false
 }
@@ -37,8 +37,8 @@ EXPERIENCE_GATE_EVALUATED_HEAD = 1fbabd2fb80851912815efe4e0ebe331a1318557
 EXPERIENCE_GATE_EVALUATED_TREE = 4eb6aa5e5a1588ef64527d7f38f7c5f07339d701
 EXPERIENCE_GATE_EVALUATED_WORKING_TREE_FINGERPRINT = 060269654ee36f130f8f8e4cc47fc6b3116466c6a56e2a29e061af1da725632d
 EXPERIENCE_GATE_EVALUATED_GOVERNANCE_FINGERPRINT = f7288bc395a2c46ef754bcc344eae5721fb5beef8c2e6b0fcf58860bbc421e21
-ARCHITECTURE_FIT = NOT_PERFORMED
-ARCHITECTURE_LOCKED = NO
+ARCHITECTURE_FIT = PASS
+ARCHITECTURE_LOCKED = YES
 DESIGN_READINESS = NOT_PERFORMED
 IMPLEMENTATION_AUTHORIZED = NO
 PRODUCT_DECISION_REQUIRED = NO
@@ -54,8 +54,10 @@ FOUNDER_EXPERIENCE_UAT = NOT_PERFORMED
 
 This document is the approved Experience Definition for IMP-036J. Independent Experience Gate
 review `5342581233` returned PASS for `XD-IMP-036J-DRAFT-6`. The version stays
-`XD-IMP-036J-DRAFT-6`. This record does not perform Architecture Fit, does not lock architecture,
-does not perform Design Readiness, does not authorize implementation, and does not change
+`XD-IMP-036J-DRAFT-6`. This Experience Definition itself did not perform Architecture Fit.
+Independent Architecture Fit later returned PASS for Candidate 5. The capability architecture
+is now locked. The next gate is Design Readiness, which remains NOT_PERFORMED. Implementation
+remains unauthorized. This record does not change
 [`product-definition.md`](./product-definition.md). Lifecycle truth remains
 [`ROADMAP.md`](../../ROADMAP.md) and [`STATE.md`](../../STATE.md).
 
@@ -684,7 +686,7 @@ One logical direct-order checkout is one unpaid attempt to place one direct orde
 
 A new key starts when the logical checkout changes. Successful completion closes the key, and the next direct-order attempt uses a new key. A later direct-order attempt for a different unpaid order uses a new key.
 
-This candidate does not choose a token format, column, table, cookie, timeout, or API field. A later Measurement Plan must keep this correlation. Architecture Fit has not been performed. That plan must leave commerce identity as who is present, and leave the key opaque, non-customer-facing, and free of name, email, phone, coupon text, and customer or guest identifiers.
+This candidate does not choose a token format, column, table, cookie, timeout, or API field. A later Measurement Plan must keep this correlation. Architecture Fit PASS is now recorded in the locked capability architecture; Measurement Plan finalization remains pending. That plan must leave commerce identity as who is present, and leave the key opaque, non-customer-facing, and free of name, email, phone, coupon text, and customer or guest identifiers.
 
 Denominator grain is one count per `CHECKOUT_JOURNEY_KEY` that reaches Checkout Review with an authoritative commercial evaluation. Numerator grain is one successful direct-order completion for that key. The primary rate joins those two events on `CHECKOUT_JOURNEY_KEY` alone.
 
@@ -715,7 +717,7 @@ The ordering is not inferred from analytics ingestion order, batch processing or
 
 The occurrence timestamp of the one global cohort-entry Review is the time tested against cohort windows. Each event's occurrence timestamp remains the semantic used for report-cutoff membership. Sequence provides the total order inside the journey, including when timestamps are equal. Sequence also identifies that one global cohort-entry Review: the qualifying Review with the lowest sequence for the key, across every qualifying Review, not inside one window.
 
-This definition does not select whether the sequence is an integer, a UUID, a revision column, a version number, a database sequence, or an event-stream offset. Those are later Architecture Fit and Measurement Plan decisions.
+This definition does not select whether the sequence is an integer, a UUID, a revision column, a version number, a database sequence, or an event-stream offset. Locked Architecture Fit has selected that representation and mechanism. The Measurement Plan may operationalize and validate instrumentation. It does not reselect architecture.
 
 ### Cohort entry and measurement interval
 
@@ -1132,7 +1134,7 @@ OPEN_EXPERIENCE_DECISIONS = NONE
 
 ## 20. Architecture Fit reconciliation
 
-Experience requirements that Architecture Fit must later prove. These are not schemas, keys, locks, topology, or API ownership.
+Experience requirements that Architecture Fit had to satisfy. These requirements remain Experience semantics. They are not schemas, keys, locks, topology, or API ownership. Architecture Fit PASS for `IMP-036J-FIT-CANDIDATE-5` is persisted; this section does not change the requirements.
 
 - A threshold sentence can be driven by an authoritative gap. Independent eligibility maths on the client is prohibited.
 - One commercial result can explain order saving, delivery saving, total saved, and payable amount without a second calculator.
@@ -1163,7 +1165,7 @@ SOURCE_VALUE = authoritative commercial evaluation or purchased truth
 FRONTEND_INDEPENDENT_ELIGIBILITY_CALCULATION = PROHIBITED
 ```
 
-Fit is `NOT_PERFORMED`. This candidate does not use the unmerged architecture candidate as a constraint. Pull request #323 is untouched.
+Architecture Fit is `PASS`. The locked capability architecture preserves `IMP-036J-FIT-CANDIDATE-5`. This Experience Definition does not change experience semantics to follow that architecture. Design Readiness remains `NOT_PERFORMED`.
 
 An experience requirement that Fit cannot support safely remains a Fit STOP under the Product Definition. This document does not downgrade the complimentary item, the breakdown, or the shared coupon state to avoid that question.
 
@@ -1175,7 +1177,7 @@ An experience requirement that Fit cannot support safely remains a Fit STOP unde
 DESIGN_READINESS = NOT_PERFORMED
 ```
 
-Not started. It waits on viable Architecture Fit. Experience Gate PASS is already persisted and is not Design Readiness. When it is time, Design Readiness owes: final flows; every state in section 13; desktop and mobile; final microcopy; keyboard and focus behaviour; accessibility semantics; interaction rules for apply, remove, change, sign-in return, and recovery; perceived-performance layout; reuse of the components in section 15; and analytics hooks that match section 17. Pixel dimensions and a new visual language are not decided here.
+Not started. Architecture Fit PASS and architecture lock are now recorded; Design Readiness is the next gate. Experience Gate PASS is already persisted and is not Design Readiness. When it is time, Design Readiness owes: final flows; every state in section 13; desktop and mobile; final microcopy; keyboard and focus behaviour; accessibility semantics; interaction rules for apply, remove, change, sign-in return, and recovery; perceived-performance layout; reuse of the components in section 15; and analytics hooks that match section 17. Pixel dimensions and a new visual language are not decided here.
 
 ---
 
@@ -1430,7 +1432,7 @@ REPORT_AS_OF_DEFINED = YES
 UNFINISHED_AT_CUTOFF_DEFINED = YES
 SEGMENT_ATTRIBUTION_REPRODUCIBLE = YES
 SNAPSHOT_IMMUTABILITY_DEFINED = YES
-ARCHITECTURE_MECHANISM_CHOSEN = NO
+ARCHITECTURE_MECHANISM_CHOSEN = YES
 PRODUCT_BEHAVIOUR_CHANGED = NO
 OPEN_EXPERIENCE_DECISIONS = NONE
 EXPERIENCE_GATE_EXECUTION = PERFORMED
@@ -1438,9 +1440,14 @@ EXPERIENCE_GATE = PASS
 EXPERIENCE_GATE_RESULT = PASS
 INDEPENDENT_EXPERIENCE_GATE_REVIEW_ID = 5342581233
 EXPERIENCE_GATE_EVALUATED_HEAD = 1fbabd2fb80851912815efe4e0ebe331a1318557
-ARCHITECTURE_FIT = NOT_PERFORMED
+ARCHITECTURE_FIT = PASS
 DESIGN_READINESS = NOT_PERFORMED
 IMPLEMENTATION_AUTHORIZED = NO
 ```
 
-Independent Experience Gate PASS is persisted. The next gate is Architecture Fit. This document does not perform that gate.
+Independent Experience Gate PASS is persisted. Independent Architecture Fit review `5347761109`
+passed Candidate 5; the capability architecture is locked. `ARCHITECTURE_MECHANISM_CHOSEN = YES`
+records that choice by locked Architecture Fit, not by this Experience Definition. The next gate
+is Design Readiness, still NOT_PERFORMED. Quality/Test Plan and Measurement/Instrumentation Plan
+finalization and the Implementation Plan remain pending. Implementation remains unauthorized.
+Experience semantics and Experience Gate provenance are unchanged.
