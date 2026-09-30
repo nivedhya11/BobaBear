@@ -167,13 +167,21 @@ Showing the reused checkout evaluation on Cart does not create a second calculat
 
 Reading order, and the DOM order, and the tab order, are the same sequence. Do not visually place a control in one place and tab to it in another.
 
-Cart:
+Cart at `lg` and up. The items stay in the left column. The aside order is:
+
+1. Real saving lines, only when that server money exists.
+2. The non-final amount from the table above.
+3. Coupon field, then Apply, Change, and Remove.
+4. Checkout, then Keep browsing.
+
+Cart below `lg`. The aside is not rendered. The amount is not repeated in the column. Order is:
 
 1. Items, including one complimentary line when the selected result has one.
 2. Real saving lines, only when that server money exists.
-3. The non-final amount from the table above.
-4. Coupon field, then Apply, Change, and Remove.
-5. Checkout.
+3. Coupon field, then Apply, Change, and Remove.
+4. The sticky bar: the one non-final amount, then Checkout.
+
+The amount label exists once. At `lg` and up it is only in the aside. Below `lg` it is only in the bar.
 
 Checkout Review:
 
@@ -204,11 +212,11 @@ A complimentary ₹0 merchandise line is an item row, not a second saving row. D
 
 ### Desktop cart (`lg` and up)
 
-Left column: heading, items, complimentary line, non-money alerts already on the cart. Right aside (`cart-order-summary`, `lg:sticky lg:top-20`): saving stack, the non-final amount, threshold line, coupon region, primary Checkout, secondary "Keep browsing". That is the same Cart sequence as the numbered order above and as the tab order in section 8: saving lines, then the amount. The aside is the money and the action. Coupon sits under the amount and above Checkout.
+Left column: heading, items, complimentary line, non-money alerts already on the cart. Right aside (`cart-order-summary`, `hidden` below `lg`, `lg:sticky lg:top-20`): saving stack, the non-final amount, threshold line, coupon region, primary Checkout, secondary "Keep browsing". That is the `lg` sequence above and the `lg` tab order in section 8. The aside is the only Cart amount at this width. The mobile bar is hidden.
 
 ### Narrow cart (below `lg`)
 
-One column. Items, then the same stack, threshold, and coupon. The existing `cart-mobile-checkout` bar stays `lg:hidden` and stays the always-visible amount plus Checkout. The bar repeats the Cart label from the money-truth table, `COPY-ESTIMATED-SUBTOTAL` or `COPY-CURRENT-CHECKOUT-TOTAL`, and the Checkout button. It does not say Total payable. It does not contain the coupon. Page bottom padding already clears the bar. While the amount is updating, the bar uses the waiting treatment in section 8 and Checkout is disabled. Menu `StickyCartBar` keeps "Estimated subtotal" and gains no offer treatment.
+One column. Items, saving lines, threshold, and coupon. The column does not render the amount. The existing `cart-mobile-checkout` bar stays `lg:hidden` and is the only amount plus Checkout. The bar repeats the Cart label from the money-truth table, `COPY-ESTIMATED-SUBTOTAL` or `COPY-CURRENT-CHECKOUT-TOTAL`, and the Checkout button. It does not say Total payable. It does not contain the coupon. Page bottom padding already clears the bar. While the amount is updating, the bar uses the waiting treatment in section 8 and Checkout is disabled. Menu `StickyCartBar` keeps "Estimated subtotal" and gains no offer treatment.
 
 ### Checkout Review, all widths
 
@@ -420,7 +428,7 @@ Reuse the patterns already in the named components. Do not add a second focus ri
 - The status node is `role="status"` and `aria-live="polite"` for applied, equal-payable, threshold, dropped, and checking text.
 - Invalid, expired, inapplicable, exhaustion, identity, stale, unavailable, and network failures use `role="alert"`.
 - Money remains a `dl` with `dt` and `dd`, `aria-label="Order total"`, as `OrderMoneySummaryPanel` already does. Extend that group. Do not replace it with a color cue.
-- Tab order follows the visual order in section 3. On Cart: items and their existing controls, complimentary line is not a control, saving text, amount, coupon field, Apply, Change, Remove, Checkout, Keep browsing. On Review: fulfilment, items, saving text, Total payable, Continue to payment, coupon field, Apply, Change, Remove. The coupon is not placed before Continue to payment in either the layout or the tab sequence.
+- Tab order follows the visual order in section 3. At `lg` and up, Cart tab order is items and their existing controls, the complimentary line is not a control, saving text, the aside amount, coupon field, Apply, Change, Remove, Checkout, Keep browsing. Below `lg`, Cart tab order is items and their existing controls, saving text, coupon field, Apply, Change, Remove, then the bar amount and Checkout. On Review: fulfilment, items, saving text, Total payable, Continue to payment, coupon field, Apply, Change, Remove. The coupon is not placed before Continue to payment in either the Review layout or the Review tab sequence.
 - Apply, Change, Remove, Sign in, Try again, Retire offer, and Cancel are keyboard operable.
 - After a validation failure, focus the coupon field.
 - After a successful apply or a non-error coupon result, focus the status.
@@ -437,7 +445,7 @@ Reuse the patterns already in the named components. Do not add a second focus ri
 
 | Width | Cart | Review | Payment | Operator |
 |---|---|---|---|---|
-| Below `lg`, including `sm` and `md` | One column. Stack and coupon scroll above the existing sticky bar. Sticky bar is Estimated subtotal or Current total, plus Checkout. It does not say Total payable | Single `max-w-[640px]` column. Stack then Continue to payment then coupon. No second sticky bar | Existing payment column. Summary above pay | List, then form. Create grid stacks until `sm`, then `sm:grid-cols-4` |
+| Below `lg`, including `sm` and `md` | One column. Saving lines and the coupon scroll above the existing sticky bar. The amount is only in that bar: Estimated subtotal or Current total, plus Checkout. The column does not repeat the amount. The bar does not say Total payable | Single `max-w-[640px]` column. Stack then Continue to payment then coupon. No second sticky bar | Existing payment column. Summary above pay | List, then form. Create grid stacks until `sm`, then `sm:grid-cols-4` |
 | `lg` and up | Two columns. Aside sticky at `top-20`. Mobile bar hidden | Same single column. Do not split a new dashboard | Same | Same stacked editor. Do not invent a wide table |
 | Menu `xl` | Unchanged. `StickyCartBar` still hides at `xl` and still has no offer content | n/a | n/a | n/a |
 
