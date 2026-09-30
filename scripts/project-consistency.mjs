@@ -40804,6 +40804,32 @@ export function evaluateImp036jProductReadmePointers(readmeText) {
   return { ok: true };
 }
 
+/**
+ * TEST-1 current lifecycle pointer for the IMP-036J Candidate 9 lock.
+ * The live CURRENT tip must be GTM-R173 / STATE-R171. GTM-R172 / STATE-R170
+ * remains the immediately prior tip and stays legitimate historical provenance.
+ * @param {string} testingText
+ */
+export function evaluateImp036jTestingPointer(testingText) {
+  const paragraphs = String(testingText ?? "").split(/\n\n/);
+  const block = paragraphs.find((paragraph) => paragraph.includes("CURRENT tip GTM-")) ?? "";
+  const currentTips = [...block.matchAll(/CURRENT tip GTM-R\d+ \/ STATE-R\d+/g)].map((match) => match[0]);
+  const chain = /CURRENT tip GTM-R173 \/ STATE-R171 \(prior tip GTM-R172 \/ STATE-R170;/;
+  if (
+    currentTips.length !== 1 ||
+    currentTips[0] !== "CURRENT tip GTM-R173 / STATE-R171" ||
+    !chain.test(block) ||
+    /CURRENT tip GTM-R172 \/ STATE-R170/.test(testingText)
+  ) {
+    return {
+      ok: false,
+      code: "IMP036J_TESTING_TIP",
+      message: "TESTING.md current tip must be GTM-R173 / STATE-R171 and must retain prior tip GTM-R172 / STATE-R170",
+    };
+  }
+  return { ok: true };
+}
+
 /** Current platform capability index IMP-036J row must name Candidate 9. */
 export function evaluateImp036jPlatformIndexPointer(indexText) {
   const rows = indexText.split("\n").filter((line) => line.includes("capabilities/IMP-036J-promotions-coupons-offers.md"));
@@ -41038,6 +41064,10 @@ function checkImp036jArchitectureLock(roadmap, state, architecture, decision) {
   if (!productIdentity.ok) fail(productIdentity.code, productIdentity.message);
   const experienceFit = evaluateImp036jExperienceFitPointer(experienceText);
   if (!experienceFit.ok) fail(experienceFit.code, experienceFit.message);
+  const testingAbs = resolveExactRelativeFile("docs/platform/TESTING.md");
+  const testingText = testingAbs ? readFileSync(testingAbs, "utf8") : "";
+  const testingPointer = evaluateImp036jTestingPointer(testingText);
+  if (!testingPointer.ok) fail(testingPointer.code, testingPointer.message);
   let experienceMeta;
   try { experienceMeta = JSON.parse(experienceText.match(/^<!-- governance-meta\s*([\s\S]*?)-->/)?.[1] ?? ""); } catch { experienceMeta = {}; }
   for (const [key, expected] of Object.entries({ architectureFit: "PASS", architectureLocked: "YES", designReadiness: "NOT_PERFORMED", implementationAuthorized: false })) {

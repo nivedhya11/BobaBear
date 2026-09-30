@@ -113,6 +113,7 @@ import {
   evaluateImp036jProgrammeLifecycle,
   evaluateImp036jProductIdentity,
   evaluateImp036jExperienceFitPointer,
+  evaluateImp036jTestingPointer,
   evaluateImp036jProductReadmePointers,
   evaluateImp036jPlatformIndexPointer,
   evaluatePd2ProcessContract,
@@ -18536,5 +18537,31 @@ describe("IMP-036J architecture fit remediation candidate 9", () => {
     assert.equal(evaluateImp036jExperienceFitPointer(experienceWithoutHistory).ok, false);
     assert.equal(evaluateImp036jProductReadmePointers(productReadmeWithoutHistory).ok, false);
     assert.equal(evaluateImp036jPlatformIndexPointer(platformWithoutHistory).ok, false);
+  });
+  const testing = readFileSync("docs/platform/TESTING.md", "utf8");
+  it("accepts the live TESTING.md current tip GTM-R173 / STATE-R171", () => {
+    assert.deepEqual(evaluateImp036jTestingPointer(testing), { ok: true });
+  });
+  it("rejects reverting only the TESTING.md current tip to GTM-R172 / STATE-R170", () => {
+    const mutated = testing.replace(
+      "CURRENT tip GTM-R173 / STATE-R171",
+      "CURRENT tip GTM-R172 / STATE-R170",
+    );
+    assert.notEqual(mutated, testing);
+    const result = evaluateImp036jTestingPointer(mutated);
+    assert.equal(result.ok, false);
+    assert.equal(result.code, "IMP036J_TESTING_TIP");
+  });
+  it("rejects removing the immediately prior TESTING.md tip GTM-R172 / STATE-R170", () => {
+    const mutated = testing.replace("(prior tip GTM-R172 / STATE-R170; ", "(");
+    assert.notEqual(mutated, testing);
+    const result = evaluateImp036jTestingPointer(mutated);
+    assert.equal(result.ok, false);
+    assert.equal(result.code, "IMP036J_TESTING_TIP");
+  });
+  it("allows historical GTM-R172 / STATE-R170 references outside the current tip", () => {
+    const withHistory = `${testing}\n\nHistorical Candidate-5 lock checkpoint remains GTM-R172 / STATE-R170.\n`;
+    assert.notEqual(withHistory, testing);
+    assert.equal(evaluateImp036jTestingPointer(withHistory).ok, true);
   });
 });
