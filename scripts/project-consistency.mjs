@@ -40677,8 +40677,21 @@ export function evaluateImp036jProductIdentity(productText) {
   const anchors = productText.split("\n").find((line) => line.startsWith("| Canonical anchors |")) ?? "";
   const lifecycle = productText.split("\n").find((line) => line.startsWith("| Capability lifecycle / authorization |")) ?? "";
   const architecture = productText.split("\n").find((line) => line.startsWith("| Relevant capability architecture")) ?? "";
-  if (!anchors.includes("ROADMAP GTM-R172") || !anchors.includes("STATE STATE-R170") || anchors.includes("GTM-R171") || anchors.includes("STATE-R169")) {
-    return { ok: false, code: "IMP036J_PRODUCT_IDENTITY", message: "Product identity anchors must be GTM-R172 / STATE-R170" };
+  const currentPointer = productText.split("\n").find((line) => line.startsWith("Current lifecycle pointer:")) ?? "";
+  const priorLock = productText.split("\n").find((line) => line.startsWith("Prior lock history:")) ?? "";
+  const tipStart = productText.indexOf("### Program context (CURRENT tip");
+  const tipFenceStart = tipStart < 0 ? -1 : productText.indexOf("```text", tipStart);
+  const tipFenceEnd = tipFenceStart < 0 ? -1 : productText.indexOf("```", tipFenceStart + "```text".length);
+  const tipFence = tipFenceStart < 0 || tipFenceEnd < 0 ? "" : productText.slice(tipFenceStart, tipFenceEnd);
+  if (
+    !anchors.includes("ROADMAP GTM-R173") ||
+    !anchors.includes("STATE STATE-R171") ||
+    anchors.includes("GTM-R172") ||
+    anchors.includes("GTM-R171") ||
+    anchors.includes("STATE-R170") ||
+    anchors.includes("STATE-R169")
+  ) {
+    return { ok: false, code: "IMP036J_PRODUCT_IDENTITY", message: "Product identity anchors must be GTM-R173 / STATE-R171" };
   }
   for (const token of [
     "formal lifecycle `ARCHITECTURE_LOCKED`",
@@ -40696,11 +40709,33 @@ export function evaluateImp036jProductIdentity(productText) {
   if (
     !architecture.includes("capabilities/IMP-036J-promotions-coupons-offers.md") ||
     !architecture.includes("Architecture Fit `PASS`") ||
-    !architecture.includes("5347761109") ||
+    !architecture.includes("current source `IMP-036J-FIT-CANDIDATE-9`") ||
+    !architecture.includes("Architecture is `LOCKED`") ||
+    architecture.includes("Architecture Fit `PASS` for `IMP-036J-FIT-CANDIDATE-5`") ||
     architecture.includes("No IMP-036J capability architecture exists") ||
     architecture.includes("Fit has not been performed")
   ) {
-    return { ok: false, code: "IMP036J_PRODUCT_IDENTITY", message: "Product architecture row must point at the locked capability and must not say Fit is unperformed" };
+    return { ok: false, code: "IMP036J_PRODUCT_IDENTITY", message: "Product architecture row must name Candidate 9 as the current locked source" };
+  }
+  if (!architecture.includes("`IMP-036J-FIT-CANDIDATE-5`") || !architecture.includes("5347761109")) {
+    return { ok: false, code: "IMP036J_PRODUCT_IDENTITY", message: "Product architecture row must preserve Candidate 5 prior-lock review 5347761109" };
+  }
+  if (
+    !currentPointer.includes("Architecture Fit current source is `IMP-036J-FIT-CANDIDATE-9`") ||
+    currentPointer.includes("IMP-036J-FIT-CANDIDATE-5")
+  ) {
+    return { ok: false, code: "IMP036J_PRODUCT_IDENTITY", message: "Product Definition current lifecycle pointer must name Candidate 9 and must not name Candidate 5" };
+  }
+  if (!priorLock.includes("5347761109") || !priorLock.includes("IMP-036J-FIT-CANDIDATE-5")) {
+    return { ok: false, code: "IMP036J_PRODUCT_IDENTITY", message: "Product Definition must preserve Candidate 5 prior-lock review 5347761109" };
+  }
+  if (
+    !tipFence.includes("ROADMAP = GTM-R173") ||
+    !tipFence.includes("STATE = STATE-R171") ||
+    /ROADMAP = GTM-R172/.test(tipFence) ||
+    /STATE = STATE-R170/.test(tipFence)
+  ) {
+    return { ok: false, code: "IMP036J_PRODUCT_TIP", message: "Product Definition current tip must be GTM-R173 / STATE-R171" };
   }
   return { ok: true };
 }
@@ -40708,16 +40743,87 @@ export function evaluateImp036jProductIdentity(productText) {
 /** Current Experience Fit section must record PASS without rewriting Experience requirements. */
 export function evaluateImp036jExperienceFitPointer(experienceText) {
   const section = experienceText.split("## 20. Architecture Fit reconciliation")[1]?.split("\n## ")[0] ?? "";
+  const currentSourceLines = experienceText.split("\n").filter((line) => line.includes("Architecture Fit current source is"));
   if (
     !section.includes("Architecture Fit is `PASS`") ||
-    !section.includes("IMP-036J-FIT-CANDIDATE-5") ||
+    !section.includes("The locked capability architecture current source is `IMP-036J-FIT-CANDIDATE-9`.") ||
+    !section.includes("Prior lock history preserves `IMP-036J-FIT-CANDIDATE-5`.") ||
     !section.includes("Design Readiness remains `NOT_PERFORMED`") ||
+    section.includes("The locked capability architecture preserves `IMP-036J-FIT-CANDIDATE-5`.") ||
+    section.includes("The locked capability architecture current source is `IMP-036J-FIT-CANDIDATE-5`.") ||
     section.includes("Fit is `NOT_PERFORMED`") ||
     section.includes("must later prove") ||
     section.includes("unmerged architecture candidate") ||
-    section.includes("Pull request #323 is untouched")
+    section.includes("Pull request #323 is untouched") ||
+    currentSourceLines.length < 2 ||
+    currentSourceLines.some((line) => !line.includes("Architecture Fit current source is `IMP-036J-FIT-CANDIDATE-9`")) ||
+    !experienceText.includes("5347761109")
   ) {
-    return { ok: false, code: "IMP036J_EXPERIENCE_FIT", message: "Experience Fit section must record persisted PASS and must not keep the unperformed-Fit statement" };
+    return { ok: false, code: "IMP036J_EXPERIENCE_FIT", message: "Experience current lock source must be Candidate 9, with Candidate 5 kept as prior-lock history" };
+  }
+  return { ok: true };
+}
+
+/** Current product index IMP-036J rows must name Candidate 9 and the current tip. */
+export function evaluateImp036jProductReadmePointers(readmeText) {
+  const productRow = readmeText.split("\n").find((line) => line.includes("IMP-036J Product Definition")) ?? "";
+  const experienceRow = readmeText.split("\n").find((line) => line.includes("IMP-036J Experience Definition")) ?? "";
+  if (
+    !productRow.includes("current lock source `IMP-036J-FIT-CANDIDATE-9`") ||
+    !productRow.includes("Architecture Fit = **PASS**") ||
+    !productRow.includes("Architecture = **LOCKED**") ||
+    !productRow.includes("Design Readiness = **NOT_PERFORMED**") ||
+    !productRow.includes("NOT_AUTHORIZED") ||
+    !productRow.includes("NOT_STARTED") ||
+    !productRow.includes("tip GTM-R173 / STATE-R171") ||
+    productRow.includes("current lock source `IMP-036J-FIT-CANDIDATE-5`") ||
+    productRow.includes("tip GTM-R172 / STATE-R170") ||
+    productRow.includes("(review `5347761109`)")
+  ) {
+    return { ok: false, code: "IMP036J_PRODUCT_README", message: "product/README.md IMP-036J Product Definition row must name Candidate 9 and tip GTM-R173 / STATE-R171" };
+  }
+  if (!productRow.includes("`IMP-036J-FIT-CANDIDATE-5`") || !productRow.includes("5347761109")) {
+    return { ok: false, code: "IMP036J_PRODUCT_README", message: "product/README.md IMP-036J Product Definition row must preserve Candidate 5 prior-lock review 5347761109" };
+  }
+  if (
+    !experienceRow.includes("current lock source `IMP-036J-FIT-CANDIDATE-9`") ||
+    !experienceRow.includes("Architecture Fit = **PASS**") ||
+    !experienceRow.includes("Design Readiness = **NOT_PERFORMED**") ||
+    !experienceRow.includes("NOT_AUTHORIZED") ||
+    experienceRow.includes("current lock source `IMP-036J-FIT-CANDIDATE-5`") ||
+    experienceRow.includes("(review `5347761109`)")
+  ) {
+    return { ok: false, code: "IMP036J_EXPERIENCE_README", message: "product/README.md IMP-036J Experience Definition row must name Candidate 9 as the current lock source" };
+  }
+  if (!experienceRow.includes("`IMP-036J-FIT-CANDIDATE-5`") || !experienceRow.includes("5347761109")) {
+    return { ok: false, code: "IMP036J_EXPERIENCE_README", message: "product/README.md IMP-036J Experience Definition row must preserve Candidate 5 prior-lock review 5347761109" };
+  }
+  if (readmeText.includes("tip GTM-R172 / STATE-R170") || readmeText.includes("CURRENT tip GTM-R172 / STATE-R170")) {
+    return { ok: false, code: "IMP036J_PRODUCT_README", message: "product/README.md must not describe the live current tip as GTM-R172 / STATE-R170" };
+  }
+  return { ok: true };
+}
+
+/** Current platform capability index IMP-036J row must name Candidate 9. */
+export function evaluateImp036jPlatformIndexPointer(indexText) {
+  const rows = indexText.split("\n").filter((line) => line.includes("capabilities/IMP-036J-promotions-coupons-offers.md"));
+  if (rows.length !== 1) {
+    return { ok: false, code: "IMP036J_LOCK_INDEX", message: "Platform index must list IMP-036J once" };
+  }
+  const row = rows[0];
+  if (
+    !row.includes("CURRENT / ARCHITECTURE_LOCKED") ||
+    !row.includes("Architecture Fit PASS") ||
+    !row.includes("source `IMP-036J-FIT-CANDIDATE-9`") ||
+    row.includes("source `IMP-036J-FIT-CANDIDATE-5`") ||
+    !row.includes("ARCH-R23 unchanged") ||
+    !row.includes("Design Readiness NOT_PERFORMED") ||
+    !row.includes("implementation NOT_AUTHORIZED / NOT_STARTED")
+  ) {
+    return { ok: false, code: "IMP036J_LOCK_INDEX", message: "Platform index IMP-036J row must name Candidate 9 as the current Architecture Fit source" };
+  }
+  if (!row.includes("prior lock history `IMP-036J-FIT-CANDIDATE-5`") || !row.includes("5347761109")) {
+    return { ok: false, code: "IMP036J_LOCK_INDEX", message: "Platform index IMP-036J row must preserve Candidate 5 prior-lock review 5347761109" };
   }
   return { ok: true };
 }
@@ -40868,10 +40974,8 @@ function checkImp036jArchitectureLock(roadmap, state, architecture, decision) {
   if (!stateText.includes("STATE-R170 = IMP036J_ARCHITECTURE_FIT_PASS_AND_LOCK")) fail("IMP036J_LOCK_RECORD", "STATE-R170 prior lock record missing");
   const indexAbs = resolveExactRelativeFile("docs/platform/README.md");
   const indexText = indexAbs ? readFileSync(indexAbs, "utf8") : "";
-  const indexRows = indexText.split("\n").filter((line) => line.includes("capabilities/IMP-036J-promotions-coupons-offers.md"));
-  if (indexRows.length !== 1 || !indexRows[0].includes("CURRENT / ARCHITECTURE_LOCKED") || !indexRows[0].includes("Design Readiness NOT_PERFORMED")) {
-    fail("IMP036J_LOCK_INDEX", "Platform index must list IMP-036J once as CURRENT / ARCHITECTURE_LOCKED with Design Readiness NOT_PERFORMED");
-  }
+  const platformIndex = evaluateImp036jPlatformIndexPointer(indexText);
+  if (!platformIndex.ok) fail(platformIndex.code, platformIndex.message);
   if (roadmap?.meta.acceptedThrough !== "IMP-036I" || state?.meta.acceptedThrough !== "IMP-036I") {
     fail("IMP036J_ACCEPTED_THROUGH", "acceptedThrough must stay IMP-036I");
   }
@@ -40909,6 +41013,8 @@ function checkImp036jArchitectureLock(roadmap, state, architecture, decision) {
   ) {
     fail("IMP036J_EXPERIENCE_README", "product/README.md IMP-036J Experience Definition row must record APPROVED DRAFT-6, Experience Gate PASS, review 5342581233, and next gate DESIGN_READINESS");
   }
+  const productReadmePointers = evaluateImp036jProductReadmePointers(productReadmeText);
+  if (!productReadmePointers.ok) fail(productReadmePointers.code, productReadmePointers.message);
   if (
     !experienceText.includes('"experienceDefinitionVersion": "XD-IMP-036J-DRAFT-6"') ||
     !experienceText.includes('"status": "APPROVED"') ||
@@ -40937,8 +41043,12 @@ function checkImp036jArchitectureLock(roadmap, state, architecture, decision) {
   for (const [key, expected] of Object.entries({ architectureFit: "PASS", architectureLocked: "YES", designReadiness: "NOT_PERFORMED", implementationAuthorized: false })) {
     if (experienceMeta[key] !== expected) fail("IMP036J_EXPERIENCE_BOUNDARY", `Experience metadata ${key} must remain ${JSON.stringify(expected)}`);
   }
-  if (!productDefinitionText.includes("ROADMAP = GTM-R172\nSTATE = STATE-R170") || productDefinitionText.includes("IMP036J_NEXT_GATE = ARCHITECTURE_FIT")) {
-    fail("IMP036J_PRODUCT_TIP", "Product Definition current pointer must match GTM-R172 / STATE-R170 and DESIGN_READINESS");
+  if (
+    !productDefinitionText.includes("ROADMAP = GTM-R173\nSTATE = STATE-R171") ||
+    productDefinitionText.includes("ROADMAP = GTM-R172\nSTATE = STATE-R170") ||
+    productDefinitionText.includes("IMP036J_NEXT_GATE = ARCHITECTURE_FIT")
+  ) {
+    fail("IMP036J_PRODUCT_TIP", "Product Definition current pointer must match GTM-R173 / STATE-R171 and DESIGN_READINESS");
   }
   const pd = evaluateImp036jApprovedProductDefinition(productDefinitionText);
   if (!pd.ok) fail(pd.code || "IMP036J_PD_META", pd.message || "IMP-036J approved Product Definition metadata is invalid");

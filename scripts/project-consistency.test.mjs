@@ -113,6 +113,8 @@ import {
   evaluateImp036jProgrammeLifecycle,
   evaluateImp036jProductIdentity,
   evaluateImp036jExperienceFitPointer,
+  evaluateImp036jProductReadmePointers,
+  evaluateImp036jPlatformIndexPointer,
   evaluatePd2ProcessContract,
   evaluateImp036jFd036j03Authority,
   evaluateImp036jGatePassNarrative,
@@ -18452,13 +18454,87 @@ describe("IMP-036J architecture fit remediation candidate 9", () => {
   });
   it("rejects a product identity table that still points at the pre-lock tip", () => {
     const mutated = product
-      .replace("ROADMAP GTM-R172", "ROADMAP GTM-R171")
+      .replace("ROADMAP GTM-R173", "ROADMAP GTM-R171")
       .replace("formal lifecycle `ARCHITECTURE_LOCKED`", "formal lifecycle `PLANNED`")
       .replace("Architecture Fit `PASS`", "Fit has not been performed");
+    assert.notEqual(mutated, product);
     assert.equal(evaluateImp036jProductIdentity(mutated).ok, false);
   });
   it("rejects an experience statement that Fit is still unperformed", () => {
     const mutated = experience.replace("Architecture Fit is `PASS`.", "Fit is `NOT_PERFORMED`.");
+    assert.notEqual(mutated, experience);
     assert.equal(evaluateImp036jExperienceFitPointer(mutated).ok, false);
+  });
+  it("rejects a Product Definition current pointer reverted to Candidate 5", () => {
+    const mutated = product.replace(
+      "Current lifecycle pointer: Architecture Fit current source is `IMP-036J-FIT-CANDIDATE-9`.",
+      "Current lifecycle pointer: Architecture Fit current source is `IMP-036J-FIT-CANDIDATE-5`.",
+    );
+    assert.notEqual(mutated, product);
+    assert.equal(evaluateImp036jProductIdentity(mutated).ok, false);
+    assert.equal(evaluateImp036jProductIdentity(product).ok, true);
+  });
+  it("rejects a Product Definition current tip reverted to GTM-R172 / STATE-R170", () => {
+    const mutated = product.replace(
+      "ROADMAP = GTM-R173\nSTATE = STATE-R171",
+      "ROADMAP = GTM-R172\nSTATE = STATE-R170",
+    );
+    assert.notEqual(mutated, product);
+    assert.equal(evaluateImp036jProductIdentity(mutated).code, "IMP036J_PRODUCT_TIP");
+  });
+  it("rejects an Experience Definition current locked source reverted to Candidate 5", () => {
+    const mutated = experience.replace(
+      "The locked capability architecture current source is `IMP-036J-FIT-CANDIDATE-9`.",
+      "The locked capability architecture current source is `IMP-036J-FIT-CANDIDATE-5`.",
+    );
+    assert.notEqual(mutated, experience);
+    assert.equal(evaluateImp036jExperienceFitPointer(mutated).ok, false);
+    assert.equal(evaluateImp036jExperienceFitPointer(experience).ok, true);
+  });
+  const productReadme = readFileSync("docs/platform/product/README.md", "utf8");
+  const platformReadme = readFileSync("docs/platform/README.md", "utf8");
+  it("rejects a product index IMP-036J row reverted to Candidate 5", () => {
+    const mutated = productReadme.replace(
+      "current lock source `IMP-036J-FIT-CANDIDATE-9`",
+      "current lock source `IMP-036J-FIT-CANDIDATE-5`",
+    );
+    assert.notEqual(mutated, productReadme);
+    assert.equal(evaluateImp036jProductReadmePointers(mutated).ok, false);
+    assert.equal(evaluateImp036jProductReadmePointers(productReadme).ok, true);
+  });
+  it("rejects a platform index IMP-036J row reverted to Candidate 5", () => {
+    const mutated = platformReadme.replace(
+      "source `IMP-036J-FIT-CANDIDATE-9`",
+      "source `IMP-036J-FIT-CANDIDATE-5`",
+    );
+    assert.notEqual(mutated, platformReadme);
+    assert.equal(evaluateImp036jPlatformIndexPointer(mutated).ok, false);
+    assert.equal(evaluateImp036jPlatformIndexPointer(platformReadme).ok, true);
+  });
+  it("rejects removal of required historical Candidate 5 provenance", () => {
+    const productWithoutHistory = product.replace(
+      "Prior lock history: independent Architecture Fit review `5347761109` passed `IMP-036J-FIT-CANDIDATE-5`. Candidate 5 is historical prior-lock provenance and is not the current Architecture Fit source.\n",
+      "",
+    );
+    const experienceWithoutHistory = experience.replaceAll(
+      "Prior lock history preserves `IMP-036J-FIT-CANDIDATE-5`. ",
+      "",
+    );
+    const productReadmeWithoutHistory = productReadme.replace(
+      "prior lock history review `5347761109` for `IMP-036J-FIT-CANDIDATE-5`",
+      "prior lock history omitted",
+    );
+    const platformWithoutHistory = platformReadme.replace(
+      "prior lock history `IMP-036J-FIT-CANDIDATE-5` review `5347761109`",
+      "prior lock history omitted",
+    );
+    assert.notEqual(productWithoutHistory, product);
+    assert.notEqual(experienceWithoutHistory, experience);
+    assert.notEqual(productReadmeWithoutHistory, productReadme);
+    assert.notEqual(platformWithoutHistory, platformReadme);
+    assert.equal(evaluateImp036jProductIdentity(productWithoutHistory).ok, false);
+    assert.equal(evaluateImp036jExperienceFitPointer(experienceWithoutHistory).ok, false);
+    assert.equal(evaluateImp036jProductReadmePointers(productReadmeWithoutHistory).ok, false);
+    assert.equal(evaluateImp036jPlatformIndexPointer(platformWithoutHistory).ok, false);
   });
 });
