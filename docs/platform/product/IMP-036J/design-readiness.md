@@ -195,7 +195,7 @@ The coupon stays secondary on Review. It is after the total and the primary acti
 
 The stack is one result. An automatic Offer and a coupon are not two competing totals.
 
-Money row order inside the existing `dl` in `OrderMoneySummaryPanel` on Review, Payment, and purchased detail:
+Money row order inside the existing `dl` in `OrderMoneySummaryPanel` on Review, Payment, and purchased detail. The previous-checkout panel in `PreviousPaymentRecoveryView` is not one of those surfaces. It keeps the previous snapshot and the title "Previous checkout total". It does not gain the new Offer saving rows, and it is not labeled Total payable.
 
 | Row | Show when |
 |---|---|
@@ -250,8 +250,8 @@ Sentence case. Money inside a sentence is the `formatPaise` string of the server
 | `COPY-CHANGE` | Change | Button |
 | `COPY-REMOVE` | Remove | Button |
 | `COPY-INVALID` | That code isn't valid. Check it and try again. | Not a real code |
-| `COPY-EXPIRED` | This coupon has expired. | Expired window. No operator schedule and no date |
-| `COPY-INAPPLICABLE` | This coupon doesn't apply to this order. | Coarse inapplicable |
+| `COPY-EXPIRED` | This coupon has expired. | Expired window. No operator schedule and no date. The only customer sentence for this condition. `COUPON_EXPIRED` uses this sentence and is not shown beside an older one |
+| `COPY-INAPPLICABLE` | This coupon doesn't apply to this order. | Coarse inapplicable. The only customer sentence for this condition. `COUPON_CURRENTLY_INELIGIBLE` and `CHECKOUT_COUPON_INELIGIBLE` use this sentence and are not shown beside it |
 | `COPY-INAPPLICABLE-DELIVERY` | This coupon doesn't apply to this order. It applies to delivery orders. | Only when the server says the code is delivery-only and the selected mode is pickup |
 | `COPY-INAPPLICABLE-PICKUP` | This coupon doesn't apply to this order. It applies to pickup orders. | Only when the server says the code is pickup-only and the selected mode is delivery |
 | `COPY-SIGN-IN` | Sign in to use this coupon. | Identity required |
