@@ -187,7 +187,7 @@ Real overlapping transactions, not sequential calls:
 | Duplicate coupon submit | One `manual_coupon_code` |
 | Payment retry after `RELEASED` | One new reserved set, not a second consumption of the released attempt |
 | Complimentary unavailable at prepare | Recompute without a substitute |
-| Journey head first insert | One head. `REVIEW_PRESENTED` sequence stays before `PAYMENT_ATTEMPT` when pay relies on that Review. Concurrent duplicate of the same result fingerprint leaves one fact |
+| Journey head first insert | One head. Continue or pay that relies on the Review allocates `REVIEW_PRESENTED` before `PAYMENT_ATTEMPT` when the observation has not already written it. The evaluation response does not write that fact. A later observation returns it after close. Concurrent duplicate of the same result fingerprint leaves one fact |
 
 `CONCURRENCY_PROOF_PLANNED = YES`.
 
@@ -312,7 +312,7 @@ Database and HTTP proof, plus a browser check that one press sends one id and a 
 
 Implementation tests, not this candidate's runs, must show:
 
-- A presented Review writes one `REVIEW_PRESENTED` for one `evaluation_id`.
+- A presented Review writes one `REVIEW_PRESENTED` for one `evaluation_id`. The evaluation response does not write it. Continue or pay that relies on that Review allocates it before the payment fact when the observation has not already written it. A later observation returns that fact after the journey closes and does not allocate another.
 - A repaint does not write a second Offer-result view.
 - The same checkout evaluation committed on Cart and then on Review writes one counted Offer-result view and two surface-faithful integrity observations. The counted view stays on the first surface.
 - That later Review still records `REVIEW_PRESENTED`, and it records `CART_REVIEW_REACH` when the body carries a new activation id. Neither fact is dropped because the view was already counted on Cart.
