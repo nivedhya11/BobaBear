@@ -119,7 +119,7 @@ Approved Experience says to follow existing commerce analytics retention and not
 | Cart activation | `activation_id` UUID v4 minted in the Cart Checkout control's activation handler and held in memory for that gesture. Server stores it only after UUID validation. | Customer id, guest id, cart id, coupon text, money, eligibility, a repaint |
 | Review-result fingerprint | SHA-256 of the canonical server commercial result defined in section 8. Hex stored as `bytea`. | Raw coupon text, a client-supplied hash, occurrence time |
 | Commercial-change provenance | SHA-256 of `checkout_journey_key` bytes, a single `0x00` separator, then the new result fingerprint. Unique per journey. | Customer id, telemetry arrival, occurrence timestamp |
-| Command origin | Server-minted UUID `source_command_id` for the commercial command that actually changed the commercial revision. | Customer id, click timestamp |
+| Command origin | Caller-minted UUID `source_command_id`, created before the mutation request and retried with the lost response. The server stores that id. | Customer id, guest id, a server id that the caller learns only from the response, occurrence timestamp |
 
 `checkout_journey_key` is assigned only inside the checkout flows Candidate 9 already names: adopt-or-copy-or-mint in `startCheckout` under the Cart lock, one-time adoption in `evaluateCheckout` and in the payment-binding transaction when those flows already hold the Cart-then-Checkout lock, and copy onto an inserted successor. Cart evaluation does not mint or rewrite the key. A Cart view may copy an already-existing key. It does not invent one from a missing or terminal checkout.
 
@@ -141,7 +141,7 @@ MIGRATION_WRITTEN_BY_THIS_CANDIDATE = NO
 | `checkout_journey_heads` | One row per journey key. Columns: `checkout_journey_key` primary key, `next_sequence bigint not null`, `closed_at timestamptz null` | One allocator |
 | `checkout_journey_facts` | Authoritative journey facts. Columns below | Unique `(checkout_journey_key, journey_sequence)`. Partial unique indexes for each idempotency identity in section 6 |
 | `commercial_evaluations` | Server expected presentation for one authoritative result | `evaluation_id uuid` primary key. Unique `(cart_id, result_fingerprint)` where `surface_scope = CART`. Unique `(checkout_id, result_fingerprint)` where `surface_scope = CHECKOUT` |
-| `commercial_presentation_observations` | Non-authoritative observed committed presentation | Unique `(evaluation_id, surface)` |
+| `commercial_presentation_observations` | Non-authoritative observed committed presentation | Unique `evaluation_id`. The submitted surface must equal that evaluation's `surface_scope` mapping. A second surface for the same id is rejected |
 | `cart_checkout_activations` | One genuine Cart-surface Checkout activation | `activation_id uuid` primary key |
 | `commercial_command_origins` | Origin written in the commercial mutation transaction, before evaluation | Unique `source_command_id`. `resolved_change_fact_id` is null until a later Review evaluation resolves it |
 | `measurement_report_snapshots` | Immutable published calculations | Insert only. Same `(metric, window_start, window_end, report_as_of)` returns the existing row and does not update it |
@@ -283,7 +283,7 @@ The server compares expected and observed:
 
 ### Dedup, retention, failure
 
-One observation per `(evaluation_id, surface)`. A repaint or transport retry returns that row and does not count a second Offer-result view. The first committed observation is the evidence for that evaluation. Offer-result view count is one per presented evaluation, not per repaint.
+One observation per `evaluation_id`. `surface_scope = CART` accepts observation surface `CART` only. `surface_scope = CHECKOUT` accepts observation surface `CHECKOUT_REVIEW` only. Any other surface is rejected and writes nothing. A repaint or transport retry returns that row and does not count a second Offer-result view. The first committed observation is the evidence for that evaluation. Offer-result view count is one per presented evaluation, not per repaint and not per surface label.
 
 Measurement failure, a rejected observation, a mismatch, or a dropped POST does not change the commercial evaluation, the cart, the checkout revision, eligibility, or payment. Checkout and payment do not wait on the POST. Mismatch is reported in the integrity ratio. It is not a second money authority.
 
@@ -305,17 +305,19 @@ CLOSED_JOURNEY_NEW_CHANGE = REJECT
 CLOSED_JOURNEY_REPLAY = RETURN_EXISTING_OBSERVATION
 ```
 
-The fingerprint is SHA-256 over canonical UTF-8 JSON with sorted keys and these server fields only: component kind and paise for each positive saving, total saved paise, payable paise, coarse outcome class, complimentary-present boolean. The raw coupon code is not an input.
+The fingerprint is SHA-256 over canonical UTF-8 JSON with sorted keys of the full authoritative expected presentation. That object includes every component in the closed set, present or absent, with its paise amount: `ORDER_SAVING`, `DELIVERY_SAVING`, `TOTAL_SAVED`, `ESTIMATED_SUBTOTAL`, `TOTAL_PAYABLE`, `DELIVERY_CHARGE`, and `PROGRESS`. It also includes `progressPresent`, `progressRemainingPaise`, `expected_coarse_shape`, `explanation_reason_class`, and complimentary-present. The raw coupon code is not an input. Two results that differ in delivery charge, estimated subtotal, payable, progress, or any other expected field are different fingerprints and different `evaluation_id` values.
 
 Allowed `origin_kind` values: `COUPON_APPLY`, `COUPON_REPLACE`, `COUPON_REMOVE`, `FULFILMENT_CHANGE`, `STALE_RECOVERY`. A quantity edit is not an origin. An origin is written only when that command changes the commercial revision. A no-op writes no origin row and no change fact.
 
-The origin row is inserted in the same transaction as the commercial mutation, before any Review evaluation runs. Columns: `source_command_id`, `origin_kind`, `cart_id`, `checkout_id`, `checkout_journey_key` when one already exists, `commercial_revision_after`, `resolved_change_fact_id null`, `resolution` null. Unique `source_command_id`. If evaluation then fails, the origin remains. The retry of that command sends the same `source_command_id` and returns the existing row. It does not insert another origin.
+The caller mints `source_command_id` as a UUID before the request is sent and keeps it for that gesture. The request body carries it. The server does not mint the id in the response. A lost response is retried with the same caller-known id. The id is not a customer id, guest id, coupon, or timestamp.
+
+The origin row is inserted in the same transaction as the commercial mutation, before any Review evaluation runs. Columns: `source_command_id`, `origin_kind`, `cart_id`, `checkout_id`, `checkout_journey_key` when one already exists, `commercial_revision_after`, `resolved_change_fact_id null`, `resolution` null. Unique `source_command_id`. If that id already exists, the transaction returns the existing commercial result and the existing origin. It does not insert another origin. If evaluation then fails, the origin remains.
 
 When a later Review evaluation commits:
 
-- Load unresolved origins for that checkout whose `commercial_revision_after` is the revision this evaluation read.
-- If the new fingerprint equals the previous Review result, mark those origins `NO_RESULT_CHANGE`. Write no change fact. They do not attach to a later different result.
-- If the fingerprint differs and at least one origin is unresolved, insert one `COMMERCIAL_STATE_CHANGE` or return the existing fact, then set `resolved_change_fact_id` on each of those origins.
+- Load every unresolved origin for that checkout whose `commercial_revision_after` is greater than the previous Review result's revision and less than or equal to the revision this evaluation read. The predicate is that range, not equality with only the latest revision. An origin at revision N remains in the range when a later command has advanced the checkout to N+1 and this evaluation reads N+1.
+- If the new fingerprint equals the previous Review result, mark every origin in that range `NO_RESULT_CHANGE`. Write no change fact. They do not attach to a later different result.
+- If the fingerprint differs and the range contains at least one origin, insert one `COMMERCIAL_STATE_CHANGE` or return the existing fact, then set `resolved_change_fact_id` on every origin in that range.
 - Provenance identity is SHA-256 of the journey key, `0x00`, and the new fingerprint.
 - Several origins that resolve to the same fingerprint share that one fact and do not allocate another sequence.
 
@@ -390,7 +392,7 @@ No abandonment timeout removes `A2`.
 
 | Signal | Where it is written | Dedup |
 |---|---|---|
-| Offer result viewed | Server observation row for `(evaluation_id, surface)` after comparison | One per presented evaluation. Repaint returns it |
+| Offer result viewed | One server observation row for that `evaluation_id` after comparison. Surface must match the evaluation scope | One per presented evaluation. Repaint returns it |
 | Coupon outcome | `coarse_outcome` on the server coupon-command result, no raw code | One per `source_command_id` |
 | Review → Payment | `REVIEW_TO_PAYMENT` when Review continue commits and an authoritative Review evaluation is current | One per `continue_command_id` |
 | Payment attempt | `PAYMENT_ATTEMPT` beside the existing payment command | Existing payment idempotency key |
