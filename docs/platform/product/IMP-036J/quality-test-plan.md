@@ -242,7 +242,10 @@ The observation fixture reads committed row text. It does not resend the evaluat
 |---|---|
 | Retry of the same Cart or Review evaluation after the server committed and before the response returned | The unique scoped fingerprint returns the original `evaluation_id`. No second observation and no second `REVIEW_PRESENTED` |
 | Same savings and payable, different delivery charge, progress, or complimentary variant | A different fingerprint and a different `evaluation_id` |
-| Invalid coupon that writes no revision | A `commercial_command_results` row exists with the coarse class and occurrence time. No origin and no change fact |
+| Invalid coupon that writes no revision | A `commercial_command_results` row stores `surface`, the coarse class, occurrence time, and null `payable_changed_vs_valid_alternative`. `journey_sequence` stays null. No origin and no change fact |
+| Same coarse outcome on Cart and on Review | Two result rows, distinguished by `surface` |
+| Client sends `payable_changed_vs_valid_alternative` | Rejected. The server writes that boolean from the evaluation |
+| Expected complimentary line rendered as a different item name | The observation stores the committed line name. Comparison emits `WRONG_COMPLIMENTARY_ITEM`. A client variant id is rejected |
 | Observation surface that does not match the evaluation scope | Rejected. `evaluation_id` stays unique, so one view row |
 | Expected ₹80 rendered as ₹80 | `server_presentation_match = true` |
 | Expected ₹80 rendered as ₹8 | `WRONG_AMOUNT`. Match is false |
@@ -291,6 +294,7 @@ Database and HTTP proof, plus a browser check that one press sends one id and a 
 | No-op | No origin and no change fact |
 | Closed journey replay | Existing fact returned |
 | Closed journey new fingerprint | Rejected. No sequence |
+| Explicit cancel, then a later start mints a new key | Unresolved origins of the closed journey are `JOURNEY_BOUNDARY`. They do not receive the new key and do not become that journey's change fact |
 | Quantity edit | Not an origin |
 
 `PROVENANCE_PROOF_PLANNED = YES`.
