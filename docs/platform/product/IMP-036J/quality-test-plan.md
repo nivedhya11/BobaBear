@@ -242,9 +242,9 @@ The observation fixture reads committed row text. It does not resend the evaluat
 |---|---|
 | Retry of the same Cart or Review evaluation after the server committed and before the response returned | The unique scoped fingerprint returns the original `evaluation_id`. No second observation and no second `REVIEW_PRESENTED` |
 | Same savings and payable, different delivery charge, progress, or complimentary variant | A different fingerprint and a different `evaluation_id` |
-| Invalid coupon that writes no revision | A `commercial_command_results` row stores `surface`, the coarse class, occurrence time, and null `payable_changed_vs_valid_alternative`. `journey_sequence` stays null. No origin and no change fact |
-| Same coarse outcome on Cart and on Review | Two result rows, distinguished by `surface` |
-| Client sends `payable_changed_vs_valid_alternative` | Rejected. The server writes that boolean from the evaluation |
+| Invalid coupon that writes no revision | No origin and no change fact. `surface` stays null until a server evaluation cites `source_command_id`. Checkout evaluate sets `CHECKOUT_REVIEW` and allocates `COUPON_ATTEMPT`. Cart evaluate sets `CART` and allocates no journey sequence |
+| Client sends a surface string or `payable_changed_vs_valid_alternative` | Rejected. Surface comes from the evaluation route. The payable flag is written by the server |
+| Cart coupon before any checkout, then the first `startCheckout` | The null-key, null-checkout origin receives that first journey key and can resolve on the first Review |
 | Expected complimentary line rendered as a different item name | The observation stores the committed line name. Comparison emits `WRONG_COMPLIMENTARY_ITEM`. A client variant id is rejected |
 | Observation surface that does not match the evaluation scope | Rejected. `evaluation_id` stays unique, so one view row |
 | Expected ₹80 rendered as ₹80 | `server_presentation_match = true` |
