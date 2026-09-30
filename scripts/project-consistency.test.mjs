@@ -17513,14 +17513,14 @@ describe("IMP-036I implementation authorization persistence", () => {
     const live = readFileSync("docs/platform/product/IMP-036J/product-definition.md", "utf8");
     assert.deepEqual(evaluateImp036jStoryReadiness(live), { ok: true });
     const readyStories = live.replaceAll(
-      "Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate PASS; Architecture Fit PASS / LOCKED; Design Readiness NOT_PERFORMED; implementation NOT_AUTHORIZED.",
+      "Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate PASS; Architecture Fit PASS / LOCKED; Design Readiness PASS; Implementation Plan NOT_PERFORMED; implementation NOT_AUTHORIZED.",
       "Readiness: READY_FOR_IMPLEMENTATION",
     );
     const tooReady = evaluateImp036jStoryReadiness(readyStories);
     assert.equal(tooReady.ok, false);
     assert.equal(tooReady.code, "IMP036J_READINESS_POST_GATE");
     const staleGate = live.replace(
-      "| `NOT_READY_FOR_IMPLEMENTATION`. Reason: Product Definition Gate PASS; Architecture Fit PASS / LOCKED; Design Readiness NOT_PERFORMED; implementation NOT_AUTHORIZED. |",
+      "| `NOT_READY_FOR_IMPLEMENTATION`. Reason: Product Definition Gate PASS; Architecture Fit PASS / LOCKED; Design Readiness PASS; Implementation Plan NOT_PERFORMED; implementation NOT_AUTHORIZED. |",
       "| `NOT_READY_FOR_IMPLEMENTATION`. Reason: Product Definition Gate NOT_PERFORMED; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED. |",
     );
     const stale = evaluateImp036jStoryReadiness(staleGate);

@@ -39533,14 +39533,15 @@ export function evaluateImp036jStoryReadiness(productDefinitionText) {
     const readinessCell = imp036jReadinessCell(text);
     const postGateBlockers =
       readinessCell.startsWith("`NOT_READY_FOR_IMPLEMENTATION`") &&
-      /Architecture Fit PASS \/ LOCKED; Design Readiness NOT_PERFORMED/.test(readinessCell) &&
+      /Architecture Fit PASS \/ LOCKED; Design Readiness PASS; Implementation Plan NOT_PERFORMED/.test(readinessCell) &&
       /implementation NOT_AUTHORIZED/.test(readinessCell) &&
-      !/Product Definition Gate NOT_PERFORMED/.test(readinessCell);
+      !/Product Definition Gate NOT_PERFORMED/.test(readinessCell) &&
+      !/Design Readiness NOT_PERFORMED/.test(readinessCell);
     if (!postGateBlockers) {
       return {
         ok: false,
         code: "IMP036J_READINESS_POST_GATE",
-        message: "After Gate PASS, definition of ready must stay NOT_READY with Design Readiness and implementation authorization outstanding",
+        message: "After Design Readiness PASS, definition of ready must stay NOT_READY with the Implementation Plan and implementation authorization outstanding",
       };
     }
     for (const match of readiness) {
@@ -39554,13 +39555,14 @@ export function evaluateImp036jStoryReadiness(productDefinitionText) {
       }
       if (
         !line.startsWith("NOT_READY_FOR_IMPLEMENTATION") ||
-        !/Architecture Fit PASS \/ LOCKED; Design Readiness NOT_PERFORMED/.test(line) ||
-        !/implementation NOT_AUTHORIZED/.test(line)
+        !/Architecture Fit PASS \/ LOCKED; Design Readiness PASS; Implementation Plan NOT_PERFORMED/.test(line) ||
+        !/implementation NOT_AUTHORIZED/.test(line) ||
+        /Design Readiness NOT_PERFORMED/.test(line)
       ) {
         return {
           ok: false,
           code: "IMP036J_READINESS_POST_GATE",
-          message: `${match[1]} must stay NOT_READY_FOR_IMPLEMENTATION with Design Readiness and implementation authorization outstanding after Gate PASS`,
+          message: `${match[1]} must stay NOT_READY_FOR_IMPLEMENTATION with the Implementation Plan and implementation authorization outstanding after Design Readiness PASS`,
         };
       }
     }
