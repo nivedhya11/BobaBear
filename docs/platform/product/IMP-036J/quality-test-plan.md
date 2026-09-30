@@ -296,6 +296,7 @@ Database and HTTP proof, plus a browser check that one press sends one id and a 
 | Closed journey replay | Existing fact returned |
 | Closed journey new fingerprint | Rejected. No sequence |
 | Explicit cancel, then a later start mints a new key | Unresolved origins of the closed journey are `JOURNEY_BOUNDARY`. They do not receive the new key and do not become that journey's change fact |
+| Reconcile adopts the guest coupon onto the customer cart | One new `COUPON_APPLY` or `COUPON_REPLACE` origin on the surviving cart, with a new `source_command_id`. Guest rows are not copied. A line-only reconcile writes no origin |
 | Quantity edit | Not an origin |
 
 `PROVENANCE_PROOF_PLANNED = YES`.
