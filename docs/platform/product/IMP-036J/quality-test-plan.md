@@ -277,7 +277,11 @@ The observation fixture reads committed row text. It does not resend the evaluat
 | Complimentary equal-payable selection with no equal-payable sentence | Shape is `COMPLIMENTARY_LINE`, not `EQUAL_PAYABLE_NOT_SELECTED`. `presentation_class` is `COMPLIMENTARY_ITEM` |
 | Coupon that pays less, with both saving rows | Shape is `COUPON_SELECTED`. `presentation_class` is `COUPON_SELECTED` |
 | Equal-payable coupon selected, with no complimentary line | Shape is `EQUAL_PAYABLE_SELECTED`. `presentation_class` is `EQUAL_PAYABLE_SELECTED`, reported as Coupon selected with that sub-segment |
-| Changed-total recovery Review whose new result is an order saving | Shape stays `ORDER_SAVING`. `presentation_class` is `CHANGED_TOTAL_RECOVERY`. The class difference is not `WRONG_SHAPE` |
+| Equal-payable coupon not selected, with no complimentary line | Shape is `EQUAL_PAYABLE_NOT_SELECTED`. `presentation_class` is `EQUAL_PAYABLE_NOT_SELECTED`, reported as Coupon valid but not selected with that sub-segment |
+| Coupon valid but not selected | Shape is `COUPON_VALID_NOT_SELECTED`. `presentation_class` is `COUPON_VALID_NOT_SELECTED` |
+| Threshold progress with no saving row | Shape is `THRESHOLD_PROGRESS`. `presentation_class` is `THRESHOLD_PROGRESS` |
+| Changed-total recovery Review whose new result is an order saving | Shape stays `ORDER_SAVING`. The change fact has a `STALE_RECOVERY` origin and `explanation_reason_class` is not `COMPLIMENTARY_ITEM_UNAVAILABLE`. `presentation_class` is `CHANGED_TOTAL_RECOVERY`. The class difference is not `WRONG_SHAPE` |
+| Complimentary unavailable before pay | `explanation_reason_class` is `COMPLIMENTARY_ITEM_UNAVAILABLE`. The continuation denominator includes that journey. `presentation_class` follows the recomputed result and is not `CHANGED_TOTAL_RECOVERY` |
 | No applicable Offer | Shape is `NONE`. `presentation_class` is `NO_OFFER` |
 | Committed `COPY-APPLIED-AUTO` or `COPY-APPLIED-REASON` and no earlier matching row | Observed shape is `AUTOMATIC_SAVING`. The legal expected shape is not `AUTOMATIC_SAVING`. Comparison is `WRONG_SHAPE` |
 | Wrong coarse shape | `WRONG_SHAPE` |
