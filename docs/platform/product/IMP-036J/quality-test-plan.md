@@ -244,9 +244,12 @@ The observation fixture reads committed row text. It does not resend the evaluat
 | Same savings and payable, different delivery charge, progress, or complimentary variant | A different fingerprint and a different `evaluation_id` |
 | Invalid coupon that writes no revision | The result row stores `cart_id` and does not store a bearer token, guest verifier, or session subject. No origin and no change fact. An observation for another cart is denied. `claimGuestCart` keeps the cart id, so the new owner can still cite the row. `reconcileGuestCartWithCustomer` deletes the guest cart and does not copy the row onto the surviving customer cart |
 | Same fingerprint, new origin, reused `evaluation_id` | The watermark advances. The new origin is marked `NO_RESULT_CHANGE` and cannot attach to a later different result |
-| Client sends a surface string or `payable_changed_vs_valid_alternative` | Rejected. Surface comes from the committed observation. The payable flag is written by the server |
+| Client sends a surface string or `payable_changed_vs_valid_alternative` | Rejected. Surface is set from a verified `checkoutId` at command completion, or `CART` when it is omitted. The payable flag is written by the server |
 | Cart coupon before any checkout, then the first `startCheckout` | The null-key, null-checkout origin receives that first journey key and can resolve on the first Review |
-| Expected complimentary line rendered as a different item name | The observation stores the committed line name. Comparison emits `WRONG_COMPLIMENTARY_ITEM`. A client variant id is rejected |
+| Invalid coupon on Review, then the observation POST fails | The command row already has `surface = CHECKOUT_REVIEW` because the request carried that cart's current checkout id. `COUPON_ATTEMPT` is already allocated. Surface does not stay null |
+| Expected complimentary line rendered as a different item | The observation stores the committed line's SHA-256, not the plaintext. Comparison emits `WRONG_COMPLIMENTARY_ITEM` |
+| Result A, then B, then A again | The second A is a new `source_revision`, a new `evaluation_id`, a new `REVIEW_PRESENTED`, and a new change fact. A retry of one of those occurrences returns the same id |
+| Two journey facts whose lock order differs from transaction start | `occurred_at` is `clock_timestamp()` after the journey-head lock. The higher sequence does not carry the earlier transaction-start time |
 | Observation surface that does not match the evaluation scope | Rejected. `evaluation_id` stays unique, so one view row |
 | Expected ₹80 rendered as ₹80 | `server_presentation_match = true` |
 | Expected ₹80 rendered as ₹8 | `WRONG_AMOUNT`. Match is false |
