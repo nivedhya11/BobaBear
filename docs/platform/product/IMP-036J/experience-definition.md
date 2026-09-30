@@ -55,8 +55,9 @@ FOUNDER_EXPERIENCE_UAT = NOT_PERFORMED
 This document is the approved Experience Definition for IMP-036J. Independent Experience Gate
 review `5342581233` returned PASS for `XD-IMP-036J-DRAFT-6`. The version stays
 `XD-IMP-036J-DRAFT-6`. This Experience Definition itself did not perform Architecture Fit.
-Independent Architecture Fit later returned PASS for Candidate 5. The capability architecture
-is now locked. The next gate is Design Readiness, which remains NOT_PERFORMED. Implementation
+Architecture Fit current source is `IMP-036J-FIT-CANDIDATE-9`. Architecture Fit is PASS.
+Architecture is LOCKED. Prior lock history: `IMP-036J-FIT-CANDIDATE-5` (independent review
+`5347761109`). The next gate is Design Readiness, which remains NOT_PERFORMED. Implementation
 remains unauthorized. This record does not change
 [`product-definition.md`](./product-definition.md). Lifecycle truth remains
 [`ROADMAP.md`](../../ROADMAP.md) and [`STATE.md`](../../STATE.md).
@@ -1134,7 +1135,7 @@ OPEN_EXPERIENCE_DECISIONS = NONE
 
 ## 20. Architecture Fit reconciliation
 
-Experience requirements that Architecture Fit had to satisfy. These requirements remain Experience semantics. They are not schemas, keys, locks, topology, or API ownership. Architecture Fit PASS for `IMP-036J-FIT-CANDIDATE-5` is persisted; this section does not change the requirements.
+Experience requirements that Architecture Fit had to satisfy. These requirements remain Experience semantics. They are not schemas, keys, locks, topology, or API ownership. Architecture Fit PASS for current source `IMP-036J-FIT-CANDIDATE-9` is persisted. Prior lock history preserves `IMP-036J-FIT-CANDIDATE-5`. This section does not change the requirements.
 
 - A threshold sentence can be driven by an authoritative gap. Independent eligibility maths on the client is prohibited.
 - One commercial result can explain order saving, delivery saving, total saved, and payable amount without a second calculator.
@@ -1165,7 +1166,7 @@ SOURCE_VALUE = authoritative commercial evaluation or purchased truth
 FRONTEND_INDEPENDENT_ELIGIBILITY_CALCULATION = PROHIBITED
 ```
 
-Architecture Fit is `PASS`. The locked capability architecture preserves `IMP-036J-FIT-CANDIDATE-5`. This Experience Definition does not change experience semantics to follow that architecture. Design Readiness remains `NOT_PERFORMED`.
+Architecture Fit is `PASS`. The locked capability architecture current source is `IMP-036J-FIT-CANDIDATE-9`. Prior lock history preserves `IMP-036J-FIT-CANDIDATE-5`. This Experience Definition does not change experience semantics to follow that architecture. Design Readiness remains `NOT_PERFORMED`.
 
 An experience requirement that Fit cannot support safely remains a Fit STOP under the Product Definition. This document does not downgrade the complimentary item, the breakdown, or the shared coupon state to avoid that question.
 
@@ -1445,8 +1446,7 @@ DESIGN_READINESS = NOT_PERFORMED
 IMPLEMENTATION_AUTHORIZED = NO
 ```
 
-Independent Experience Gate PASS is persisted. Independent Architecture Fit review `5347761109`
-passed Candidate 5; the capability architecture is locked. `ARCHITECTURE_MECHANISM_CHOSEN = YES`
+Independent Experience Gate PASS is persisted. Architecture Fit current source is `IMP-036J-FIT-CANDIDATE-9`. Architecture Fit is PASS and architecture is LOCKED. Prior lock history: independent review `5347761109` passed `IMP-036J-FIT-CANDIDATE-5`. `ARCHITECTURE_MECHANISM_CHOSEN = YES`
 records that choice by locked Architecture Fit, not by this Experience Definition. The next gate
 is Design Readiness, still NOT_PERFORMED. Quality/Test Plan and Measurement/Instrumentation Plan
 finalization and the Implementation Plan remain pending. Implementation remains unauthorized.

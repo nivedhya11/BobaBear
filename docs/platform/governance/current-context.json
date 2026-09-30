@@ -10,8 +10,8 @@
     "docs/platform/decision-register.md"
   ],
   "versions": {
-    "roadmapVersion": "GTM-R172",
-    "stateVersion": "STATE-R170",
+    "roadmapVersion": "GTM-R173",
+    "stateVersion": "STATE-R171",
     "architectureVersion": "ARCH-R23",
     "decisionRegisterVersion": "DR-23"
   },

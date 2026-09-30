@@ -2,13 +2,13 @@
 {
   "status": "CURRENT",
   "authority": "IMPLEMENTATION_SEQUENCE",
-  "roadmapVersion": "GTM-R172",
+  "roadmapVersion": "GTM-R173",
   "acceptedThrough": "IMP-036I",
   "currentProductSlice": "IMP-036J",
   "nextProductSlice": "IMP-037",
   "gtmBoundary": "IMP-040",
-  "lastReviewed": "2026-09-29",
-  "supersedes": "GTM-R171"
+  "lastReviewed": "2026-09-30",
+  "supersedes": "GTM-R172"
 }
 -->
 
@@ -34,7 +34,7 @@
   change) before the next slice begins: **ACCEPT → RECONCILE → ADVANCE**.
 - The historical IMP-026 → IMP-028 controlled-continuation exception (GTM-R15 onward) is **CLOSED**.
   It does **not** generalize to future slices and is **not** reopened by GTM-R138 / GTM-R139 /
-  GTM-R140 / GTM-R141 / GTM-R142 / GTM-R143 / GTM-R144 / GTM-R145 / GTM-R146 / GTM-R147 / GTM-R148 / GTM-R149 / GTM-R150 / GTM-R151 / GTM-R152 / GTM-R153 / GTM-R154 / GTM-R155 / GTM-R156 / GTM-R157 / GTM-R158 / GTM-R159 / GTM-R160 / GTM-R161 / GTM-R162 / GTM-R163 / GTM-R164 / GTM-R165 / GTM-R166 / GTM-R167 / GTM-R168 / GTM-R169 / GTM-R170 / GTM-R171 / GTM-R172.
+  GTM-R140 / GTM-R141 / GTM-R142 / GTM-R143 / GTM-R144 / GTM-R145 / GTM-R146 / GTM-R147 / GTM-R148 / GTM-R149 / GTM-R150 / GTM-R151 / GTM-R152 / GTM-R153 / GTM-R154 / GTM-R155 / GTM-R156 / GTM-R157 / GTM-R158 / GTM-R159 / GTM-R160 / GTM-R161 / GTM-R162 / GTM-R163 / GTM-R164 / GTM-R165 / GTM-R166 / GTM-R167 / GTM-R168 / GTM-R169 / GTM-R170 / GTM-R171 / GTM-R172 / GTM-R173.
 - **GTM-R138** records a **NEW**, Founder-authorized one-off exception
   `CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038` (authority PR#179/5771367844) so
   IMP-038 may activate for PD-1 Product Definition work while IMP-037 remains an
@@ -74,6 +74,29 @@
   exact-head review findings `4115981679` and `4115981682` on unmerged pull request #312
   reopened the acceptance slice. Gate PASS was not persisted. Canonical main never recorded
   DRAFT-3 as APPROVED. DRAFT-4 supersedes DRAFT-3.
+- **GTM-R173** records independent Architecture Fit PASS for `IMP-036J-FIT-CANDIDATE-9` and
+  locks the IMP-036J capability architecture to that candidate. Evaluated head
+  `052289471cfc2424879932e16fd88d6c16696de8`, tree
+  `ed6d0b4c7e82eef4fd764c0fe3f73539f8e1858b`, and governance fingerprint
+  `5be074e0736c097b6d68f18a3b71cd26cc69c03600eac0cf956bf74d0b6834b0`. Exact-head CI run
+  `36611527090` attempt 2 succeeded. Attempt 1 of that same run remains historical evidence of
+  an unrelated IMP-036I reminder timeout and is not erased. Exact-head CodeQL run
+  `36611527053` succeeded. Fresh Codex issue comment `5896150834` on that head reported no
+  major issues. No numeric independent ChatGPT Architecture Fit review identifier was
+  available. Candidate 5 remains historical Architecture Fit PASS and the prior lock.
+  Candidates 6, 7, and 8 remain historical STOP candidates. They were never merged and never
+  locked. Product Definition stays `PD-IMP-036J-DRAFT-6` / `APPROVED` / `PASS`. Experience
+  Definition stays `XD-IMP-036J-DRAFT-6` / `APPROVED` / `PASS`. Experience Criticality stays
+  `X3`. Change Risk stays `CR2`. `IMP036J_ARCHITECTURE_FIT` is `PASS`.
+  `IMP036J_ARCHITECTURE_LOCKED` is `YES`. Formal lifecycle is `ARCHITECTURE_LOCKED`. Design
+  Readiness stays `NOT_PERFORMED`. Quality/Test Plan finalization and
+  Measurement/Instrumentation Plan finalization stay unperformed. Implementation Plan stays
+  unperformed. Implementation stays unauthorized and unstarted. `nextGate` is
+  `DESIGN_READINESS`. `acceptedThrough` stays IMP-036I. `currentProductSlice` stays IMP-036J.
+  `nextProductSlice` stays held IMP-037. D-377 and D-382 remain current. No D-383 is created.
+  ARCH-R23 is unchanged. DR-23 is unchanged. No ADR is created. IMP-037 and IMP-038 holds stay
+  unchanged. Historical accepted capabilities are not reopened. Architecture Fit remediation
+  is not Design Readiness, implementation authorization, or acceptance.
 - **GTM-R172** records independent Architecture Fit PASS for `IMP-036J-FIT-CANDIDATE-5` and
   locks the IMP-036J capability architecture. Independent review `5347761109` evaluated head
   `49912f35f2871ff77b9af267589d49666fc975ec`, tree
@@ -608,15 +631,22 @@ IMP036J_EXPERIENCE_DEFINITION_VERSION: XD-IMP-036J-DRAFT-6
 IMP036J_EXPERIENCE_GATE: PASS
 IMP036J_ARCHITECTURE_FIT: PASS
 IMP036J_ARCHITECTURE_LOCKED: YES
-ARCHITECTURE_FIT_SOURCE_CANDIDATE: IMP-036J-FIT-CANDIDATE-5
+ARCHITECTURE_FIT_SOURCE_CANDIDATE: IMP-036J-FIT-CANDIDATE-9
 INDEPENDENT_ARCHITECTURE_FIT_REVIEW: PASS
-INDEPENDENT_ARCHITECTURE_FIT_REVIEW_ID: 5347761109
-ARCHITECTURE_FIT_EVALUATED_HEAD: 49912f35f2871ff77b9af267589d49666fc975ec
-ARCHITECTURE_FIT_EVALUATED_TREE: 7046d5bb78012524972505f555226205199a58d0
-ARCHITECTURE_FIT_EVALUATED_GOVERNANCE_FINGERPRINT: ac6510d315148763069f06374a243a75a312a7693cf3e7c1d0eac71bc1026870
-ARCHITECTURE_FIT_EVALUATED_CODEX_REVIEW: 5883601198
-ARCHITECTURE_FIT_EVALUATED_CI_RUN: 36521141717
-ARCHITECTURE_FIT_EVALUATED_CODEQL_RUN: 36521141714
+ARCHITECTURE_FIT_EVALUATED_HEAD: 052289471cfc2424879932e16fd88d6c16696de8
+ARCHITECTURE_FIT_EVALUATED_TREE: ed6d0b4c7e82eef4fd764c0fe3f73539f8e1858b
+ARCHITECTURE_FIT_EVALUATED_GOVERNANCE_FINGERPRINT: 5be074e0736c097b6d68f18a3b71cd26cc69c03600eac0cf956bf74d0b6834b0
+ARCHITECTURE_FIT_EVALUATED_CI_RUN: 36611527090
+ARCHITECTURE_FIT_EVALUATED_CI_ATTEMPT: 2
+ARCHITECTURE_FIT_EVALUATED_CODEQL_RUN: 36611527053
+ARCHITECTURE_FIT_EVALUATED_CODEX_EVIDENCE: 5896150834
+HISTORICAL_CANDIDATE_5_ARCHITECTURE_FIT: PASS
+HISTORICAL_CANDIDATE_6_ARCHITECTURE_FIT_REVIEW: STOP
+HISTORICAL_CANDIDATE_7_ARCHITECTURE_FIT_REVIEW: STOP
+HISTORICAL_CANDIDATE_8_ARCHITECTURE_FIT_REVIEW: STOP
+QUALITY_TEST_PLAN_FINALIZED: NO
+MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED: NO
+IMPLEMENTATION_PLAN: NOT_PERFORMED
 IMP036J_DESIGN_READINESS: NOT_PERFORMED
 IMP036J_IMPLEMENTATION_AUTHORIZED: NO
 FD-036J-03: APPROVED 2026-09-28
@@ -636,6 +666,35 @@ EXPERIENCE_GATE_EVALUATED_WORKING_TREE_FINGERPRINT: 060269654ee36f130f8f8e4cc47f
 IMP036J_NEXT_GATE: DESIGN_READINESS
 nextGate: DESIGN_READINESS
 ```
+
+**GTM-R173** records independent Architecture Fit PASS for `IMP-036J-FIT-CANDIDATE-9` and locks
+the IMP-036J capability architecture to that candidate. Evaluated HEAD
+`052289471cfc2424879932e16fd88d6c16696de8`, tree
+`ed6d0b4c7e82eef4fd764c0fe3f73539f8e1858b`, and governance fingerprint
+`5be074e0736c097b6d68f18a3b71cd26cc69c03600eac0cf956bf74d0b6834b0`. Exact-head CI run
+`36611527090` attempt 2 and CodeQL run `36611527053` passed. Fresh Codex issue comment
+`5896150834` reported no major issues. No numeric independent ChatGPT review identifier was
+available. Candidate 5 remains historical Architecture Fit PASS and the prior lock. Candidates
+6, 7, and 8 remain historical STOP results. They were never merged and never locked. Formal
+lifecycle is `ARCHITECTURE_LOCKED`. `IMP036J_PRODUCT_DEFINITION` remains `APPROVED`.
+`IMP036J_PRODUCT_DEFINITION_VERSION` remains `PD-IMP-036J-DRAFT-6`.
+`IMP036J_PRODUCT_DEFINITION_GATE` remains `PASS`. `IMP036J_EXPERIENCE_DEFINITION` remains
+`APPROVED`. `IMP036J_EXPERIENCE_DEFINITION_VERSION` remains `XD-IMP-036J-DRAFT-6`.
+`IMP036J_EXPERIENCE_GATE` remains `PASS`. `IMP036J_EXPERIENCE_CRITICALITY` remains `X3`.
+`IMP036J_CHANGE_RISK` remains `CR2`. `IMP036J_ARCHITECTURE_FIT` is `PASS`.
+`IMP036J_ARCHITECTURE_LOCKED` is `YES`. `IMP036J_DESIGN_READINESS` remains `NOT_PERFORMED`.
+The Quality/Test Plan is not finalized. The Measurement/Instrumentation Plan is not finalized.
+The Implementation Plan is not performed. `IMP036J_IMPLEMENTATION_AUTHORIZED` remains `NO`.
+`IMP036J_STARTED` remains `NO`. `IMP036J_IMPLEMENTATION_STARTED` remains `NO`.
+`IMP036J_IMPLEMENTATION_COMPLETE` remains `NO`. `IMP036J_ACCEPTED` remains `NO`.
+`acceptedThrough` remains IMP-036I. `currentProductSlice` remains IMP-036J.
+`pendingAcceptance` remains NONE. `nextProductSlice` remains IMP-037. `nextGate` is
+`DESIGN_READINESS`. `IMP037_HOLD` and `IMP038_HOLD` remain YES. Architecture remains ARCH-R23.
+Decision register remains DR-23. D-377 remains CURRENT. D-382 remains CURRENT. Next decision ID
+remains D-383. No D-383 is created. No ADR is created. No FD-036J-04 is created. Deals,
+Campaigns, and Revenue Recommendations remain parked. `GAP-EXT-ASSESS-001` remains NOT_CLOSED.
+Historical accepted IMPs are not reopened. Architecture Fit remediation is not Design
+Readiness, not implementation authorization, and not acceptance.
 
 **GTM-R172** records independent Architecture Fit PASS for `IMP-036J-FIT-CANDIDATE-5` and locks
 the IMP-036J capability architecture. Independent review `5347761109` evaluated HEAD
@@ -1484,7 +1543,9 @@ Offers** (`currentProductSlice = IMP-036J`; `pendingAcceptance = NONE`;
 `IMP036J_ACTIVATED: YES`; formal lifecycle `ARCHITECTURE_LOCKED`; Product Definition
 `PD-IMP-036J-DRAFT-6` is `APPROVED`; Product Definition Gate `PASS`; Experience Definition
 `XD-IMP-036J-DRAFT-6` is `APPROVED`; Experience Gate `PASS`; Architecture Fit `PASS`
-(independent review `5347761109`; source candidate `IMP-036J-FIT-CANDIDATE-5`); architecture
+(source candidate `IMP-036J-FIT-CANDIDATE-9`; evaluated head
+`052289471cfc2424879932e16fd88d6c16696de8`; prior Candidate 5 PASS review `5347761109` remains
+history); architecture
 `LOCKED`; next gate `DESIGN_READINESS`; Design Readiness `NOT_PERFORMED`;
 implementation `NOT_AUTHORIZED`). IMP-036I — Scheduled
 Fulfilment is `COMPLETE_AND_ACCEPTED` (`IMP036I_ACCEPTED: YES`; `IMP036I_FOUNDER_UAT: PASS`;
