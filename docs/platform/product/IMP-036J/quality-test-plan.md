@@ -3,7 +3,10 @@
   "status": "CANDIDATE",
   "authority": "NONE",
   "capability": "IMP-036J",
-  "candidateId": "IMP-036J-QUALITY-CANDIDATE-1",
+  "candidateId": "IMP-036J-QUALITY-CANDIDATE-2",
+  "designCandidate": "IMP-036J-DESIGN-CANDIDATE-2",
+  "measurementCandidate": "IMP-036J-MEASUREMENT-CANDIDATE-2",
+  "architectureSource": "IMP-036J-FIT-CANDIDATE-9",
   "testingPolicy": "TEST-1",
   "qualityTestPlanFinalized": "NO"
 }
@@ -12,7 +15,7 @@
 # IMP-036J — Quality and test plan candidate
 
 ```text
-CANDIDATE_ID = IMP-036J-QUALITY-CANDIDATE-1
+CANDIDATE_ID = IMP-036J-QUALITY-CANDIDATE-2
 STATUS = CANDIDATE
 AUTHORITY = NONE
 CAPABILITY = IMP-036J
@@ -22,12 +25,28 @@ PROOF_EXECUTED = NO
 FOUNDER_UAT_REQUIRED = YES
 FOUNDER_UAT = NOT_STARTED
 DESIGN_READINESS = NOT_PERFORMED
+IMPLEMENTATION_PLAN = NOT_PERFORMED
 IMPLEMENTATION_AUTHORIZED = NO
+IMPLEMENTATION_STARTED = NO
+CANDIDATE_READY_FOR_INDEPENDENT_REVIEW = YES
+ARCHITECTURE_SOURCE = IMP-036J-FIT-CANDIDATE-9
+DESIGN_CANDIDATE = IMP-036J-DESIGN-CANDIDATE-2
+MEASUREMENT_CANDIDATE = IMP-036J-MEASUREMENT-CANDIDATE-2
+COVERAGE_PERCENTAGE_IS_ACCEPTANCE = NO
 ```
 
+`IMP-036J-QUALITY-CANDIDATE-1` is historical and superseded. It never passed Design Readiness.
+Its result remains `STOP / SUPERSEDED`. Historical findings `4134472848`, `4134472863`,
+`4134472881`, and `4134472894` stay in the pull-request record. The proof sections below are the
+Candidate 2 checks for those findings.
+
 This is planned proof for the approved Product Definition, the approved Experience Definition, the
-locked capability architecture, and `IMP-036J-DESIGN-CANDIDATE-1`. It is not executed evidence.
-Passing this plan later does not accept IMP-036J.
+locked Candidate 9 architecture, `IMP-036J-DESIGN-CANDIDATE-2`, and
+`IMP-036J-MEASUREMENT-CANDIDATE-2`. It is not executed evidence. Passing this plan later does not
+accept IMP-036J.
+
+TEST-1 ranks acceptance-scenario proof above a coverage percentage. No row below is satisfied by a
+coverage number.
 
 Architecture section 30 remains the fit proof sketch. This candidate is the PD-2 Quality/Test
 Plan candidate. It does not replace TEST-1 and does not add a layer outside TEST-1.
@@ -57,7 +76,7 @@ Founder UAT later.
 
 | Story | AC | Risk | Layers | Planned check | Real dependency | Substitute | Negative evidence |
 |---|---|---|---|---|---|---|---|
-| `US-036J-001` | `AC-036J-001-01` | Money shown matches the automatic saving | Domain, component, browser | Qualifying cart shows `COPY-APPLIED-AUTO` or the reason sentence, and the order-saving row equals the evaluated merchandise effect | Evaluation result | Fixture promotion in the test database | A client-side discount that was not in the quote is absent |
+| `US-036J-001` | `AC-036J-001-01` | Money shown matches the automatic saving | Domain, component, browser | Qualifying cart shows `COPY-APPLIED-AUTO` or the reason sentence, and the order-saving row equals the evaluated merchandise effect. The Cart label stays Estimated subtotal when fulfilment context is absent | Evaluation result | Fixture promotion in the test database | A client-side discount that was not in the quote is absent. Cart does not say Total payable |
 | `US-036J-001` | `AC-036J-001-02` | Out-of-window offer is not promised | Domain, browser | Outside-window offer does not appear as a saving or a progress line | Promotion window clock in the command | Frozen test clock | No apology copy and no strikethrough price |
 | `US-036J-002` | `AC-036J-002-01` | Coupon selected and saving visible | Domain, HTTP, component, browser | Apply stores one code and the lower payable result shows `COPY-APPLIED-COUPON` | Cart coupon route | None for the route contract | Payment has no apply control |
 | `US-036J-002` | `AC-036J-002-02` | Invalid code is not a saving | HTTP, component, browser | Unknown text does not write a code and shows `COPY-INVALID` | Coupon lookup | Fixture | Response text does not say a near-match exists |
@@ -115,7 +134,7 @@ Founder UAT later.
 | `XR-IMP-036J-007` | Stale pay stops | Integration, browser, accessibility | Focus moves to the Review explanation and the new total | Pay on the old amount is absent |
 | `XR-IMP-036J-008` | Purchased explanation | Browser, content | Confirmation and detail match the sealed split and the included line | A live progress line is absent |
 | `XR-IMP-036J-009` | Operator truthfulness | Component, authorization, concurrency, browser | Existing editor covers authoring, denial, and non-success | A success badge on a lost race is absent |
-| `XR-IMP-036J-010` | Mobile and keyboard | Accessibility, browser | Narrow cart sticky total, Review order, focus rules in the design candidate, non-colour status | Total only below the fold is absent on the cart |
+| `XR-IMP-036J-010` | Mobile and keyboard | Accessibility, browser | Narrow cart sticky estimated or current total, Review order, focus rules in the design candidate, non-colour status | Total payable on the incomplete Cart, and an amount only below the fold, are absent |
 | `XR-IMP-036J-011` | Privacy of failure copy | Component, content, security | Coarse sentences only | Near-match, cap size, and other customers' facts are absent |
 | `XR-IMP-036J-012` | Eligibility without a lecture | Component, browser, content | First-order absence and mode clause only | Pickup delivery saving is absent |
 | `XR-IMP-036J-013` | Complimentary tie presentation | Component, content | Included line, ₹0, no better-price sentence | A coupon-won sentence is absent |
@@ -168,7 +187,7 @@ Real overlapping transactions, not sequential calls:
 | Duplicate coupon submit | One `manual_coupon_code` |
 | Payment retry after `RELEASED` | One new reserved set, not a second consumption of the released attempt |
 | Complimentary unavailable at prepare | Recompute without a substitute |
-| Measurement head first insert | One head. Presentation sequence stays before the payment sequence when pay carries the receipt |
+| Journey head first insert | One head. `REVIEW_PRESENTED` sequence stays before `PAYMENT_ATTEMPT` when pay relies on that Review. Concurrent duplicate of the same result fingerprint leaves one fact |
 
 `CONCURRENCY_PROOF_PLANNED = YES`.
 
@@ -177,7 +196,7 @@ Real overlapping transactions, not sequential calls:
 | Case | Required result |
 |---|---|
 | Retry after a dropped coupon request | Previous state, then one successful mutation |
-| Duplicate pay or duplicate presentation acknowledgement | Existing payment or existing presented event. No second denominator |
+| Duplicate pay or duplicate observation POST | Existing payment or existing observation. No second denominator and no second `CART_REVIEW_REACH` |
 | Stale checkout | Review recovery, old amount not payable |
 | Interrupted evaluation | No saving painted from the incomplete response |
 | Reload | Committed cart code returns |
@@ -194,33 +213,112 @@ Real overlapping transactions, not sequential calls:
 |---|---|
 | Replay of coupon apply, pay, presentation acknowledgement, and activation | One durable effect |
 | Enumeration | Invalid copy and HTTP body do not reveal neighbouring codes |
-| Forgery of a presentation receipt, revision, or role | Unknown receipt writes no event. Wrong `expectedPromotionRevision` writes nothing. Client role is ignored |
+| Forgery of an observation, integrity boolean, revision, or role | A body with `integrityPass`, a coupon code, or another cart's `evaluationId` writes nothing. Wrong `expectedPromotionRevision` writes nothing. Client role is ignored |
 | Cap bypass | Concurrent proof above. No client-supplied remaining count |
 | Unauthorized operator mutation | Denial proof above |
 | Financial abuse | Customer cannot choose the discarded combination or pay the stale total |
 | Information leakage | Analytics and explanation proofs below |
 
+### Commercial truth
+
+| Check | Layers | Planned result | Negative evidence |
+|---|---|---|---|
+| Server is the only money authority | Domain, HTTP | Payable, saving, and eligibility come from the quote. The observation POST does not change them | A client amount in the observation body is ignored as authority |
+| Cart non-final amount | Component, browser | Without fulfilment context the label is Estimated subtotal, including the mobile sticky bar. No delivery figure is invented | The words Total payable are absent on that Cart |
+| Reused checkout context | Integration, browser | When fulfilment mode, matching revision, and a current checkout evaluation exist, Cart shows Current total from that evaluation, including delivery only if the evaluation returned it | Cart still does not say Total payable. A second calculator is absent |
+| Review current amount | Component, browser | Review shows Total payable from the current checkout evaluation | It does not say the amount is frozen forever |
+| Stale revalidation | Integration, recovery, browser | Prepare refuses the old amount and Review shows `COPY-STALE` with the new server amount | Pay on the stale amount is absent |
+| Zero payable | Domain, integration | A server payable of 0 binds through the existing zero-payable path and still records completion only in order materialization | A synthetic payment row is absent |
+| Complimentary unavailable | Integration, browser | The line leaves, `COPY-GIFT-GONE` shows, and pay is not offered on the old line | A substitute item is absent |
+| Purchased immutability | Database, browser | After retire, detail still shows the sealed saving and complimentary line | Live evaluation does not rewrite them |
+
+`COMMERCIAL_TRUTH_PROOF_PLANNED = YES`.
+
+### Render integrity
+
+The observation fixture reads committed row text. It does not resend the evaluation JSON.
+
+| Case | Planned result |
+|---|---|
+| Expected ₹80 rendered as ₹80 | `server_presentation_match = true` |
+| Expected ₹80 rendered as ₹8 | `WRONG_AMOUNT`. Match is false |
+| Omitted saving row | `OMITTED_ROW` |
+| Extra saving row | `EXTRA_ROW` |
+| Wrong component | `WRONG_COMPONENT` |
+| Wrong component amount | `WRONG_AMOUNT` |
+| Wrong Total saved | `WRONG_TOTAL_SAVED` |
+| Positive versus zero state swapped | `WRONG_ZERO_STATE` |
+| Wrong coarse shape | `WRONG_SHAPE` |
+| Progress presence or remaining paise differs | `PROGRESS_MISMATCH` |
+| Client sends `integrityPass: true` with a rendered ₹8 | Request rejected or the field ignored. Match stays false |
+| Observation POST fails | Checkout and payment still complete on the server amount |
+
+`RENDER_INTEGRITY_PROOF_PLANNED = YES`.
+
+### Cart activation
+
+Database and HTTP proof, plus a browser check that one press sends one id and a retry reuses it:
+
+| Sequence | Planned result |
+|---|---|
+| New checkout from Cart | One activation associated to the new journey. Denominator includes it |
+| Reused active checkout | Same activation associates to the existing journey key. No second key |
+| Same activation transport retry | One activation row |
+| Later distinct press | Second activation id |
+| `A1 → R1 → A2 → R2` | Numerator is both |
+| `A1 → R1 → A2 → abandon` | Numerator is `A1` only |
+| Direct Checkout then Review | No Cart activation row. Metric excludes it |
+| Stale or other-cart activation id | Checkout succeeds. Activation stays unassociated and cannot enter the numerator |
+| Historical Review before `A2` | That Review's sequence is not greater than `A2.watermark_sequence`, so it does not satisfy `A2` |
+
+`CART_ACTIVATION_PROOF_PLANNED = YES`.
+
+### Commercial-state provenance
+
+| Case | Planned result |
+|---|---|
+| Apply, replace, remove, fulfilment change, stale recovery that changes the fingerprint | One change fact plus the matching origin |
+| Same command retry | Existing fact. No second sequence |
+| Concurrent retries of the same result | One fact |
+| Several origins resolving to one fingerprint | One fact, several origin rows |
+| No-op | No origin and no change fact |
+| Closed journey replay | Existing fact returned |
+| Closed journey new fingerprint | Rejected. No sequence |
+| Quantity edit | Not an origin |
+
+`PROVENANCE_PROOF_PLANNED = YES`.
+
 ### Measurement proof
 
 Implementation tests, not this candidate's runs, must show:
 
-- A presented Review writes one `CHECKOUT_REVIEW_PRESENTED` for one receipt.
-- A repaint does not.
-- The same journey key survives cart edit, coupon change, fulfilment change, stale recovery, and payment-driven expiry.
+- A presented Review writes one `REVIEW_PRESENTED` for one `evaluation_id`.
+- A repaint does not write a second Offer-result view.
+- A later Cart activation does not require a second Offer-result view to record `CART_REVIEW_REACH`.
+- The same journey key survives cart edit, coupon change, fulfilment change, stale recovery, reused active checkout, and payment-driven expiry.
 - Explicit cancel and successful completion mint a new key on the next attempt.
 - One completion per key, written in order materialization, not on payment success alone.
-- Duplicate events do not allocate a second sequence.
-- Event rows contain no coupon text, customer id, name, email, or phone.
-- Cohort and snapshot formulas in the measurement candidate are pure functions of those rows.
+- Duplicate facts do not allocate a second sequence.
+- Fact and observation rows contain no coupon text, customer id, guest id, name, email, phone, or payment secret.
+- `activation_id` is a UUID and is not derived from those identities.
+- Cohort, Cart→Review, and integrity formulas in the measurement candidate are pure functions of those rows and the named `REPORT_AS_OF`.
+- A published snapshot row is not updated in place.
+- Support-contact counts are not filled from coupon errors.
+
+`MEASUREMENT_PROOF_PLANNED = YES`.
 
 ### Experience proof
 
 Accessibility, responsive, content, and perceived-performance checks are the XR rows plus:
 
 - Keyboard order and focus moves named in the design candidate, including dialog trap and cancel-first retire focus.
-- Viewports below `lg` and at `lg` for cart, Review, and the editor.
+- Screen-reader names: coupon field "Coupon", status and alert roles, money `dl` label.
+- Live regions: polite status for applied and checking text; alert for invalid, stale, unavailable, and network failure.
+- Viewports below `lg` and at `lg` for Cart, Review, and Payment. The sticky Cart bar matches the Cart label and does not say Total payable.
+- Disabled and pending controls stay visible, are not double-submitted, and keep the previous amount.
 - Updating and checking states never show a new total before the response.
 - Status text remains when `prefers-reduced-motion` is set.
+- Operator retire confirmation names the future-order effect and the paid-order non-effect. Cancel leaves the Offer active.
 
 `ACCESSIBILITY_PROOF_PLANNED = YES`.
 
@@ -269,12 +367,21 @@ Later experience UAT looks at discoverability, first impression, hesitation, cla
 ```text
 QUALITY_PLAN_COVERS_ALL_MANDATORY_AC = YES
 QUALITY_PLAN_COVERS_ALL_XR = YES
+COMMERCIAL_TRUTH_PROOF_PLANNED = YES
+RENDER_INTEGRITY_PROOF_PLANNED = YES
+CART_ACTIVATION_PROOF_PLANNED = YES
+PROVENANCE_PROOF_PLANNED = YES
+MEASUREMENT_PROOF_PLANNED = YES
 CR2_SECURITY_ABUSE_REVIEW_PLANNED = YES
 CONCURRENCY_PROOF_PLANNED = YES
 DATABASE_PROOF_PLANNED = YES
 REAL_BROWSER_PROOF_PLANNED = YES
 ACCESSIBILITY_PROOF_PLANNED = YES
+RESPONSIVE_PROOF_PLANNED = YES
 CONTENT_QA_PLANNED = YES
 PROOF_EXECUTED = NO
 FOUNDER_UAT = NOT_STARTED
+QUALITY_TEST_PLAN_FINALIZED = NO
+DESIGN_READINESS = NOT_PERFORMED
+IMPLEMENTATION_AUTHORIZED = NO
 ```

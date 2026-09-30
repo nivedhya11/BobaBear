@@ -3,32 +3,62 @@
   "status": "CANDIDATE",
   "authority": "NONE",
   "capability": "IMP-036J",
-  "candidateId": "IMP-036J-MEASUREMENT-CANDIDATE-1",
+  "candidateId": "IMP-036J-MEASUREMENT-CANDIDATE-2",
   "experienceDefinition": "XD-IMP-036J-DRAFT-6",
-  "measurementInstrumentationPlanFinalized": "NO"
+  "architectureSource": "IMP-036J-FIT-CANDIDATE-9",
+  "measurementInstrumentationPlanFinalized": "NO",
+  "designReadiness": "NOT_PERFORMED",
+  "implementationAuthorized": false
 }
 -->
 
 # IMP-036J — Measurement and instrumentation plan candidate
 
 ```text
-CANDIDATE_ID = IMP-036J-MEASUREMENT-CANDIDATE-1
+CANDIDATE_ID = IMP-036J-MEASUREMENT-CANDIDATE-2
 STATUS = CANDIDATE
 AUTHORITY = NONE
 CAPABILITY = IMP-036J
 MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = NO
 DESIGN_READINESS = NOT_PERFORMED
+QUALITY_TEST_PLAN_FINALIZED = NO
+IMPLEMENTATION_PLAN = NOT_PERFORMED
 IMPLEMENTATION_AUTHORIZED = NO
-NUMERIC_TARGET_ADDED = NO
-NEW_BUSINESS_OUTCOME = NO
+IMPLEMENTATION_STARTED = NO
+CANDIDATE_READY_FOR_INDEPENDENT_REVIEW = YES
+NUMERIC_SUCCESS_TARGET = NONE
+NEW_NUMERIC_RETENTION = NO
+NEW_SERVICE = NO
+NEW_MONEY_AUTHORITY = NO
+NEW_PROMOTION_AUTHORITY = NO
+NEW_ROLE = NO
 ```
 
-This candidate operationalizes the measurement intent in `XD-IMP-036J-DRAFT-6` section 17 on the
-locked architecture in capability section 27A. It does not reselect the journey key, the sequence,
-the calendar, the window, or the event kinds. It does not implement collection.
+This candidate chooses the concrete measurement encoding that `IMP-036J-FIT-CANDIDATE-9` left open. It operationalizes `XD-IMP-036J-DRAFT-6` section 17. It does not finalize the Measurement/Instrumentation Plan, does not perform Design Readiness, and does not authorize implementation.
 
-Analytics is not monetary authority. Payable amounts remain the commercial evaluation and the
-purchased snapshot.
+## 0. Candidate history
+
+`IMP-036J-MEASUREMENT-CANDIDATE-1` is historical. It was written before Candidate 9 Architecture remediation and is not the reviewable measurement candidate. Candidate 1 never passed Design Readiness. Its result remains `STOP / SUPERSEDED`. This document does not rewrite that result as a pass.
+
+Historical review comments that stay in the pull-request record:
+
+| Comment | Defect this candidate resolves |
+|---|---|
+| `4134472863` | Cart → Review used a checkout-row or journey-key ratio. The grain is now one genuine Cart-surface Checkout activation. |
+| `4134472881` | Savings integrity could not be derived from rendered money. Observed evidence is now parsed from the committed presentation and compared on the server. |
+| `4134472894` | Commercial-state change had no durable provenance identity. The identity is now the new Review-result fingerprint plus its source origins. |
+
+Comment `4134472848` is a Design candidate defect. The Design candidate records it. This plan does not treat a Cart estimate as payable authority.
+
+Candidate 9 Architecture Lock is the binding input. Product, Experience, and Architecture decisions are not reopened. Concrete schema, transport, storage, identifier encoding, event ownership, sequence representation, and collection are selected here because Architecture explicitly assigned those choices to this plan.
+
+```text
+CANDIDATE_1 = HISTORICAL_SUPERSEDED
+CANDIDATE_1_DESIGN_READINESS = NOT_PASSED
+ARCHITECTURE_SOURCE = IMP-036J-FIT-CANDIDATE-9
+ARCHITECTURE_FIT = PASS
+ARCHITECTURE_LOCKED = YES
+```
 
 ## 1. Preserved intent
 
@@ -36,270 +66,389 @@ purchased snapshot.
 BUSINESS_INTENT = A customer reaches a direct order with an understandable payable amount, including when an Offer, a coupon, a threshold, or a complimentary item is part of that amount. Margin stays inside the approved commercial rules.
 PRIMARY_METRIC = CHECKOUT_REVIEW_TO_SUCCESSFUL_DIRECT_ORDER_COMPLETION_RATE
 PRIMARY_METRIC_COUNT = 1
+PRIMARY_GRAIN = ONE_CHECKOUT_JOURNEY_KEY
 NUMERIC_SUCCESS_TARGET = NONE
 REVENUE_KPI_ADDED = NO
-```
-
-Secondary metrics, all subordinate:
-
-- Cart to Checkout Review continuation, only as defined in section 5
-- Review to Payment continuation
-- Payment completion after revalidation
-- Coupon outcome distribution for classes the locked allowlist already stores
-- Continuation after a valid coupon was not selected, including equal-payable not selected
-- Continuation after changed-total recovery
-- Continuation after complimentary-unavailable recovery
-- Repeated coupon failures, as an operational guardrail and not as a new event attribute
-- Support contacts about a coupon, an Offer, the total, or an included item, from existing support handling
-- Displayed savings integrity
-
-Guardrails, unchanged:
-
-- Margin inside the approved commercial rules
-- Payment completion
-- Refund and cancellation
-- Those support contacts
-- Commercial evaluation errors and coupon errors
-- Delivery and pickup completion
-- Privacy
-- Accessibility minimums
-- Financial truth: displayed savings match evaluated effects
-
-```text
 CAUSAL_CONVERSION_CLAIM = NOT_MADE
-CURRENT_EVIDENCE_FOR_LIFT = INSUFFICIENT_EVIDENCE
-LOW_VOLUME = INSUFFICIENT_EVIDENCE
-MEASUREMENT_SUBSTITUTES_FOR_ACCEPTANCE = NO
 BASELINE_PROVES_LAUNCH_UPLIFT = NO
 STATISTICAL_SIGNIFICANCE_THRESHOLD = NOT_CLAIMED
+MEASUREMENT_SUBSTITUTES_FOR_ACCEPTANCE = NO
+LOW_VOLUME = INSUFFICIENT_EVIDENCE
 ```
 
-A controlled experiment is not authorized here. Low volume is `INSUFFICIENT_EVIDENCE`, not a winner and not a failure.
+Secondary measures, subordinate to that one primary rate, are the approved Experience set in section 12. None is redefined because a convenient event already exists. Support contacts stay `UNAVAILABLE` because no existing approved support-contact instrumentation was found.
 
-## 2. Journey identity
+Guardrails stay the Experience list: approved commercial margin, payment completion, refund and cancellation, support contacts, commercial and coupon errors, delivery and pickup completion, privacy, accessibility minimums, and financial truth. No numeric guardrail target is added.
 
-Locked representation: `checkouts.checkout_journey_key`. This plan does not choose another token, cookie, or customer id.
+A controlled experiment is not authorized.
 
-```text
-CHECKOUT_JOURNEY_KEY = OPAQUE_NON_PII_NON_CUSTOMER_FACING
-CUSTOMER_OR_GUEST_IDENTITY = WHO_IS_PRESENT_ONLY
-JOIN = CHECKOUT_JOURNEY_KEY_ALONE
-ONE_LOGICAL_CHECKOUT = ONE_KEY
-ONE_KEY = ONE_DENOMINATOR_AND_AT_MOST_ONE_COMPLETION
-```
-
-The key continues across cart edits, coupon apply, change, and remove, fulfilment changes, stale Review recovery, payment retry, and payment-driven expiry of the latest causal checkout. A new key starts after successful direct-order completion and after explicit customer cancellation when the next checkout starts. `checkouts.id` and `carts.id` are not the key.
-
-`AUTHORITATIVE_JOURNEY_SEQUENCE` is `checkout_journey_measurement_events.journey_sequence` for that key. It is a strict total order. Analytics arrival order, `recorded_at`, and physical row order are not the order.
-
-Owner of every event write: the existing `customer-commerce` process, through the locked append procedure. There is no new analytics service, queue, or vendor.
-
-## 3. Cohort, snapshot, and formulas
+## 2. Ownership, calendar, and retention
 
 ```text
+COLLECTION_OWNER = customer-commerce
+WRITE_AUTHORITY = SERVER
+BROWSER_MONEY_AUTHORITY = NO
+BROWSER_INTEGRITY_AUTHORITY = NO
+BROWSER_PRESENTATION_OBSERVER = YES
+NEW_SERVICE = NO
+NEW_QUEUE = NO
+ANALYTICS_VENDOR = NONE
+FACADE = EXISTING /api/v1/*
+AUTH_BOUNDARY = EXISTING_CART_CREDENTIAL_AND_CUSTOMER_SESSION
+NEW_ROLE_OR_PERMISSION = NO
 MEASUREMENT_CALENDAR_TIMEZONE = Asia/Kolkata
-CALENDAR_APPLIES_TO = THIS_MEASUREMENT_CONTRACT_ONLY
-WINDOW = HALF_OPEN
-INITIAL_COHORT_INTERVAL = [PRODUCTION_RELEASE_ANCHOR, SAME_LOCAL_CLOCK_TIME_PLUS_28_CIVIL_DAYS)
-REPORT_AS_OF = OBSERVATION_CUTOFF_OF_ONE_PUBLISHED_SNAPSHOT
-INITIAL_REPORT_AS_OF = INITIAL_COHORT_END
-EVENT_INCLUDED = occurred_at < REPORT_AS_OF
+WINDOW = HALF_OPEN_28_CIVIL_DAYS
+RETENTION_AUTHORITY = EXISTING_COMMERCE_ANALYTICS_RETENTION
+NEW_NUMERIC_RETENTION_PERIOD = NO
+RETENTION_PERIOD_INVENTED = NO
 ```
 
-`PRODUCTION_RELEASE_ANCHOR` is a named instant supplied to the calculation. This plan does not add a release table, a feature flag, or a build SHA on the event. Release attribution for a published number is that named anchor plus that snapshot's `REPORT_AS_OF`.
+Approved Experience says to follow existing commerce analytics retention and not extend it. A search of current platform authority did not find a numeric commerce-analytics retention period for this contract. This plan does not invent one. Rows live under that same existing retention authority. They are not a second commercial ledger and they do not set payable, saving, or eligibility.
 
-Cohort entry is selected once per key:
+`PRODUCTION_RELEASE_ANCHOR` remains a named instant supplied to the calculation. This plan does not add a release table or a feature flag. The initial window is `[PRODUCTION_RELEASE_ANCHOR, that instant plus 28 civil days in Asia/Kolkata)`. The start is inclusive. The end is exclusive. An entry exactly at the end belongs to the next window. Adjacent windows do not overlap.
 
-1. Read `CHECKOUT_REVIEW_PRESENTED` rows for the key, ignoring receipts with no presentation event.
-2. Choose the lowest `journey_sequence`.
-3. `GLOBAL_COHORT_ENTRY_TIME` is that row's `occurred_at`.
-4. The key is in a window when `WINDOW_START <= GLOBAL_COHORT_ENTRY_TIME < WINDOW_END`.
-5. Do not test a later Review, including one whose timestamp falls in a later window.
+`REPORT_AS_OF` is an input of one published calculation. It is not a checkout column. A fact is included only when its authoritative occurrence time is strictly before that cutoff. A fact exactly at the cutoff is excluded. The initial snapshot uses the exclusive end of the initial window as `REPORT_AS_OF`. Checkout expiry, cart lifetime, and payment state do not read this cutoff. No product abandonment timeout is created.
+
+## 3. Identifier encoding
+
+| Identity | Encoding | What it is not |
+|---|---|---|
+| `CHECKOUT_JOURNEY_KEY` | Server-minted UUID v4, stored as `checkouts.checkout_journey_key`. Opaque. Immutable once assigned. Copied onto a successor checkout of the same unpaid attempt under the existing Cart lock, using the Candidate 9 mint/copy rules. | `checkouts.id`, `carts.id`, customer id, guest id, a cookie that contains identity, a customer-facing token |
+| Cart causal order | `checkouts.cart_causal_ordinal bigint`, allocated under the Cart lock already held by `startCheckout` as `max(ordinal for that cart) + 1`. Unique `(cart_id, cart_causal_ordinal)`. Latest row is the greatest ordinal. | `created_at`, UUID sort order, walking backward to an older continuable row |
+| `AUTHORITATIVE_JOURNEY_SEQUENCE` | `bigint` on `checkout_journey_facts.journey_sequence`, unique per journey key, allocated by the procedure in section 5. | Analytics arrival, `recorded_at`, physical row order, `checkouts.revision`, an evaluation row by itself |
+| Cart activation | `activation_id` UUID v4 minted in the Cart Checkout control's activation handler and held in memory for that gesture. Server stores it only after UUID validation. | Customer id, guest id, cart id, coupon text, money, eligibility, a repaint |
+| Review-result fingerprint | SHA-256 of the canonical server commercial result defined in section 8. Hex stored as `bytea`. | Raw coupon text, a client-supplied hash, occurrence time |
+| Commercial-change provenance | SHA-256 of `checkout_journey_key` bytes, a single `0x00` separator, then the new result fingerprint. Unique per journey. | Customer id, telemetry arrival, occurrence timestamp |
+| Command origin | Server-minted UUID `source_command_id` for the commercial command that actually changed the commercial revision. | Customer id, click timestamp |
+
+`checkout_journey_key` is assigned only inside the checkout flows Candidate 9 already names: adopt-or-copy-or-mint in `startCheckout` under the Cart lock, one-time adoption in `evaluateCheckout` and in the payment-binding transaction when those flows already hold the Cart-then-Checkout lock, and copy onto an inserted successor. Cart evaluation does not mint or rewrite the key. A Cart view may copy an already-existing key. It does not invent one from a missing or terminal checkout.
+
+Adoption, continuable payment-expired predecessor, explicit cancel, and successful completion follow section 27A of the locked architecture. This plan does not change those predicates.
+
+## 4. Storage
+
+Schema is selected here and is not written as a migration by this candidate.
 
 ```text
-COHORT_MEMBERSHIP_PER_CHECKOUT_JOURNEY_KEY = ZERO_OR_ONE
-LATER_REVIEW_CREATES_NEW_COHORT_MEMBERSHIP = NO
-RESELECT_ENTRY_REVIEW_FOR_SUBSEQUENT_WINDOW = NO
+SCHEMA_SELECTED = YES
+MIGRATION_WRITTEN_BY_THIS_CANDIDATE = NO
 ```
 
-Adjacent 28-day windows use the same half-open civil-day rule. An entry exactly at a window end belongs to the next window that starts then, and to no earlier window.
+| Relation | Role | Uniqueness that enforces the semantic |
+|---|---|---|
+| `checkouts.checkout_journey_key` | Journey correlation | Immutable after assignment. Not unique across rows, because a successor checkout copies it |
+| `checkouts.cart_causal_ordinal` | Predecessor selection | Unique `(cart_id, cart_causal_ordinal)` |
+| `checkout_journey_heads` | One row per journey key. Columns: `checkout_journey_key` primary key, `next_sequence bigint not null`, `closed_at timestamptz null` | One allocator |
+| `checkout_journey_facts` | Authoritative journey facts. Columns below | Unique `(checkout_journey_key, journey_sequence)`. Partial unique indexes for each idempotency identity in section 6 |
+| `commercial_evaluations` | Server expected presentation for one authoritative evaluation | `evaluation_id uuid` primary key |
+| `commercial_presentation_observations` | Non-authoritative observed committed presentation | Unique `(evaluation_id, surface)` |
+| `cart_checkout_activations` | One genuine Cart-surface Checkout activation | `activation_id uuid` primary key |
+| `commercial_change_origins` | Source origins attached to one change fact | Unique `(change_fact_id, origin_kind, source_command_id)` |
+| `measurement_report_snapshots` | Immutable published calculations | Insert only. Same `(metric, window_start, window_end, report_as_of)` returns the existing row and does not update it |
+
+`checkout_journey_facts` columns: `fact_id uuid`, `checkout_journey_key`, `fact_kind`, `journey_sequence`, `occurred_at timestamptz`, `idempotency_key bytea`, `evaluation_id uuid null`, `activation_id uuid null`, `result_fingerprint bytea null`, `presentation_class text null`, `coarse_outcome text null`. No customer id, guest id, raw coupon, payment instrument, or client integrity boolean.
+
+`commercial_evaluations` columns, all server-written from the quote in the evaluation transaction: `evaluation_id`, `cart_id`, `checkout_id null`, `checkout_journey_key null`, `surface_scope` `CART` or `CHECKOUT`, `result_fingerprint`, `expected_components` as the component set in section 7, `expected_total_saved_paise`, `expected_progress_present`, `expected_progress_remaining_paise`, `expected_coarse_shape`, `explanation_reason_class` as the existing server reason class with no private eligibility text, `server_explanation_integrity boolean`, `occurred_at`. Complimentary-unavailable continuation reads `STALE_RECOVERY` plus `explanation_reason_class`. The browser is not sent this expected descriptor to echo.
+
+`commercial_presentation_observations` columns: `evaluation_id`, `surface` `CART` or `CHECKOUT_REVIEW`, `observed_components`, `observed_progress_present`, `observed_progress_remaining_paise`, `observed_coarse_shape`, `server_presentation_match boolean null`, `mismatch_flags text[]`, `occurred_at`. `server_presentation_match` and `mismatch_flags` are written only by server comparison. A request that includes an integrity boolean, a coupon code, an eligibility reason, or a payment secret is rejected and writes nothing.
+
+`cart_checkout_activations` columns: `activation_id`, `cart_id` for the ownership check only, `checkout_journey_key null`, `checkout_id null`, `watermark_sequence bigint null`, `occurred_at`, `review_reach_fact_id null`. `cart_id` is the access boundary. It is not the metric grain and it is not inside `activation_id`.
+
+Fact kinds that consume `AUTHORITATIVE_JOURNEY_SEQUENCE`:
 
 ```text
-PRIMARY_DENOMINATOR = UNIQUE_KEYS_WHOSE_GLOBAL_COHORT_ENTRY_TIME_IS_INSIDE_THE_WINDOW
-NUMERATOR_AS_OF(REPORT_AS_OF) = THOSE_KEYS_WITH_ONE_SUCCESSFUL_DIRECT_ORDER_COMPLETION_WHOSE_occurred_at_IS_STRICTLY_BEFORE_REPORT_AS_OF
-UNFINISHED = DENOMINATOR_KEY_WITH_NO_SUCH_COMPLETION
-UNFINISHED_STATE = NOT_COMPLETED_AS_OF_REPORT_CUTOFF
-UNFINISHED_DENOMINATOR = YES
-UNFINISHED_NUMERATOR = NO
+REVIEW_PRESENTED
+COMMERCIAL_STATE_CHANGE
+CART_REVIEW_REACH
+REVIEW_TO_PAYMENT
+PAYMENT_ATTEMPT
+DIRECT_ORDER_COMPLETION
 ```
 
-Successful completion is the `SUCCESSFUL_DIRECT_ORDER_COMPLETION` event written in the Order-materialization transaction after accepted payment truth holds. Payment `SUCCEEDED` alone is not the numerator. A stopped stale pay attempt and a failed payment are not the numerator. One completion counts once, on the denominator key. A completion with no presented Review on that key is not assigned through customer identity.
+`CART_REVIEW_REACH` is the activation-scoped step fact. It is not a second cohort-entry Review. Cohort entry reads only `REVIEW_PRESENTED`.
 
-An already issued snapshot is immutable. A later completion may appear only on a later snapshot whose own `REPORT_AS_OF` is after that completion's `occurred_at`. This plan creates no abandonment timeout, cart expiry, or customer-visible cutoff state.
+Cart offer-result observations do not consume this sequence. A Cart evaluation with no journey key is still a valid evaluation.
 
-### Segment
+## 5. Sequence allocation and occurrence time
 
-Segments are descriptive. They are not causes.
+Authoritative occurrence time is `transaction_timestamp()` at the first insert of that fact or activation. It is not a client timestamp, not an analytics ingest time, and not updated on replay.
 
-Completed journey: among `CHECKOUT_REVIEW_PRESENTED` events with sequence lower than the completion sequence, take the greatest sequence. The segment is that event's `presentation_class`.
+Allocation for one journey, inside the same transaction as the commercial or measurement write it belongs to:
 
-Unfinished journey: among presented events with `occurred_at < REPORT_AS_OF`, take the greatest sequence.
+1. `SELECT … FOR UPDATE` the `checkout_journey_heads` row, inserting it at the key's mint with `next_sequence = 1` if it does not exist.
+2. Re-read the fact's idempotency identity.
+3. If that identity already exists, return the existing fact. Allocate nothing. Do not change closure.
+4. If `closed_at` is set, reject the new fact. Allocate nothing.
+5. Otherwise insert the fact with `journey_sequence = next_sequence`, then increment `next_sequence`.
+6. Successful direct-order completion sets `closed_at` in that same order-materialization transaction, as Candidate 9 requires.
 
-If only the cohort-entry Review exists, it is the segment. `COMMERCIAL_STATE_CHANGE` does not choose the segment. Equal timestamps still use sequence. Events at or after `REPORT_AS_OF` do not change an issued snapshot's segment.
+```text
+IDEMPOTENT_REPLAY_LOOKUP_PRECEDES_CLOSED_JOURNEY_REJECTION = YES
+EXISTING_FACT_ON_CLOSED_JOURNEY = RETURN_EXISTING
+NEW_FACT_ON_CLOSED_JOURNEY = REJECT
+OCCURRED_AT_AS_IDEMPOTENCY_KEY = NO
+CUSTOMER_IDENTITY_AS_IDEMPOTENCY_KEY = NO
+ANALYTICS_INGESTION_ORDER = NOT_AUTHORITY
+```
 
-`presentation_class` maps to the approved descriptive labels only when the locked allowlist already stores that class: no Offer, automatic saving, coupon selected, coupon valid but not selected, equal-payable selected, equal-payable not selected, threshold progress, complimentary line, changed-total recovery. A class the allowlist does not store is not added so a segment can look finer.
+When a payment operation relies on a Review that was presented, the measurement write for that payment runs after the presented fact is recorded, or the same transaction allocates the presented fact's sequence first. The first recording cannot reverse that order. Pay is not held for a customer-visible analytics wait. Failure to record measurement rolls back only when Candidate 9 already requires the completion fact to commit with the Order. A failed presentation observation does not roll back evaluation, checkout, or payment. Section 10 states that non-blocking posture.
 
-## 4. Event contracts
+## 6. Idempotency identities
 
-Schema identity is the locked `event_kind` check. This plan adds no `event_version` column. Contract label for reviewers: `IMP-036J-MEASUREMENT-CANDIDATE-1`.
+| Fact | Idempotency identity | Replay | New fact after close |
+|---|---|---|---|
+| `REVIEW_PRESENTED` | `(checkout_journey_key, evaluation_id)` | Return existing | Reject |
+| `COMMERCIAL_STATE_CHANGE` | provenance identity in section 8 | Return existing, including after close | Reject |
+| `CART_REVIEW_REACH` | `activation_id` | Return existing | Reject a new reach. Replay of the existing reach returns it |
+| `REVIEW_TO_PAYMENT` | server `continue_command_id` for that continue action | Return existing | Reject |
+| `PAYMENT_ATTEMPT` | existing payment idempotency key | Return existing | Reject a new attempt fact. Existing replay returns it |
+| `DIRECT_ORDER_COMPLETION` | one per `checkout_journey_key` | Return existing, including after close | A second completion is rejected |
 
-Common rules for every row:
+Partial unique indexes implement those identities. Concurrent inserts lose on the unique violation, re-read, and return the winner. They do not allocate a second sequence.
 
-| Rule | Value |
+## 7. Rendered presentation observation
+
+```text
+AUTHORITATIVE_MONEY = SERVER_COMMERCIAL_EVALUATION
+SERVER_EXPECTED_TRUTH = YES
+OBSERVED_PRESENTATION_EVIDENCE = FUNCTION_OF_ACTUAL_COMMITTED_PRESENTATION
+OBSERVATION_COPIED_FROM_SERVER_RESULT_ONLY = PROHIBITED
+OBSERVATION_COPIED_FROM_EXPECTED_DESCRIPTOR_ONLY = PROHIBITED
+OBSERVATION_COPIED_FROM_EVALUATION_FINGERPRINT_ONLY = PROHIBITED
+BROWSER_MONEY_AUTHORITY = NO
+BROWSER_INTEGRITY_AUTHORITY = NO
+FINAL_INTEGRITY_COMPARISON = SERVER
+CLIENT_AUTHORED_INTEGRITY_BOOLEAN = REJECTED
+```
+
+### Expected value
+
+Inside `evaluateCart` or `evaluateCheckout`, the server writes `commercial_evaluations` from that same quote before the response returns. Expected components are integer paise plus presence, for this closed set:
+
+```text
+ORDER_SAVING
+DELIVERY_SAVING
+TOTAL_SAVED
+ESTIMATED_SUBTOTAL
+TOTAL_PAYABLE
+DELIVERY_CHARGE
+PROGRESS
+```
+
+`expected_coarse_shape` is one of: `NONE`, `AUTOMATIC_SAVING`, `ORDER_SAVING`, `DELIVERY_SAVING`, `BOTH_SAVINGS`, `COMPLIMENTARY_LINE`, `COUPON_SELECTED`, `COUPON_VALID_NOT_SELECTED`, `EQUAL_PAYABLE_SELECTED`, `EQUAL_PAYABLE_NOT_SELECTED`, `THRESHOLD_PROGRESS`. The shape is derived from the server result class, not from client text. Saving components are omitted when their paise amount is zero. A standing ₹0 delivery charge is not a saving. `server_explanation_integrity` is true only when the server explanation parts equal that quote's evaluated saving. The client does not send this boolean.
+
+The response may include `evaluationId` so the observation can name which evaluation it saw. It does not include the expected descriptor, the fingerprint, or an integrity verdict.
+
+### Observation source and encoding
+
+After the customer surface commits the money region to the DOM, the page reads that committed region. The reader uses the rendered text of each money row in `OrderMoneySummaryPanel` or the Cart stack, including the Cart sticky amount label. It parses rupee text with the same `formatPaise` display rules into integer paise. ₹80.00 is 8000. ₹8.00 or a rendered ₹8 is 800. A row that was not committed is absent. A row that was committed extra is present.
+
+The POST body is exactly:
+
+```text
+evaluationId
+surface = CART | CHECKOUT_REVIEW
+components = [{ kind, amountPaise, present }]
+progressPresent
+progressRemainingPaise
+observedCoarseShape
+```
+
+`observedCoarseShape` is chosen from the copy the screen actually committed, using the Design candidate's copy ids, mapped to the same shape enum. It is not read back from the evaluation response object. The body has no coupon field, no eligibility reason, no payment field, and no integrity field. Unknown fields in that set are rejected.
+
+### Transport
+
+`POST /api/v1/commerce-observations` on the existing customer façade, served by `customer-commerce`. Auth is the existing cart credential or customer session that owns the evaluation. The server loads `evaluation_id` and refuses a cross-cart or cross-checkout id with the existing denial response. It writes no price.
+
+### Comparison
+
+The server compares expected and observed:
+
+| Failure | Comparison |
 |---|---|
-| Owner | `customer-commerce` measurement append |
-| Identity | No customer, guest, name, email, or phone column. Who-is-present stays on checkout and is not the join |
-| Journey | `journey_key` plus `journey_sequence` when the event is written |
-| Time | `occurred_at` from the writing transaction clock. `recorded_at` is not used for cohort, cutoff, or order |
-| Source of truth | The commercial or payment fact that committed in that transaction, not the browser paint |
-| Validation | Kind, sequence uniqueness, idempotency re-read, and allowlisted class where a class is stored. A published integrity flag is true only when the explained rows equal the evaluated saving on that presented result |
-| Dedup | Locked re-read of the event's idempotency identity before any new sequence. A replay returns the existing row |
-| Retention / privacy | Section 6 |
-| Forbidden | Raw coupon text, private eligibility facts, payment instrument data, cap sizes, other customers' identifiers, a journey key derived from those, analytics arrival order as order |
+| Expected ₹80 rendered as ₹80 | `ORDER_SAVING` or the relevant component 8000 equals 8000. Match |
+| Expected ₹80 rendered as ₹8 | 8000 versus 800. `WRONG_AMOUNT` |
+| Missing saving row | Expected kind present, observed kind absent. `OMITTED_ROW` |
+| Extra saving row | Observed kind absent from expected. `EXTRA_ROW` |
+| Wrong component | Expected `ORDER_SAVING` present and observed `DELIVERY_SAVING` present in its place, or the reverse. `WRONG_COMPONENT` |
+| Wrong component amount | Same kind, different paise. `WRONG_AMOUNT` |
+| Wrong total saved | `TOTAL_SAVED` paise differs. `WRONG_TOTAL_SAVED` |
+| Positive versus zero | Expected total saved is 0 and a saving row is observed, or expected total saved is positive and the saving row is absent. `WRONG_ZERO_STATE` |
+| Wrong shape | `expected_coarse_shape` differs from `observedCoarseShape`. `WRONG_SHAPE` |
+| Progress presence or value | `progressPresent` differs, or both are present and `progressRemainingPaise` differs. `PROGRESS_MISMATCH` |
 
-| Event | Meaning | Trigger | Required attributes already locked | Dedup key | Feeds | Guardrail |
-|---|---|---|---|---|---|---|
-| `CHECKOUT_REVIEW_PRESENTED` | Authoritative Review result was shown | Presentation acknowledgement, or pay ensuring that receipt before a later event | `journey_key`, `journey_sequence`, `occurred_at`, `review_evaluation_receipt_id`, `presentation_class`, `checkout_id` | One event per receipt | Denominator, segment, savings-integrity flag on that class | Financial truth and privacy |
-| `COMMERCIAL_STATE_CHANGE` | Review result changed | Coupon apply, remove, replace, fulfilment change, or stale recovery that changes the Review result | `journey_key`, `journey_sequence`, `occurred_at`, `checkout_id` | One append per new committed Review-result change inside the open journey | Secondary recovery and continuation context. Not the segment and not an extra denominator | Evaluation errors stay out of this row |
-| `REVIEW_TO_PAYMENT_PROGRESSION` | Review proceeded toward payment | `prepareCheckoutForPayment` commits `READY_FOR_PAYMENT` after any ensured presentation | `journey_key`, `journey_sequence`, `occurred_at`, `checkout_id` | The progression fact's locked identity for that attempt to leave Review | Review to payment continuation | A stale mismatch does not write this as success |
-| `PAYMENT_ATTEMPT` | A pay attempt happened | Payment initiation or `retryPayment` inserts the attempt, after ensured presentation | `journey_key`, `journey_sequence`, `occurred_at`, `payment_attempt_id` | That payment attempt | Payment continuation after revalidation | Failed and stale attempts are not the numerator |
-| `SUCCESSFUL_DIRECT_ORDER_COMPLETION` | Direct order placed and accepted payment truth holds | Order-materialization transaction | `journey_key`, `journey_sequence`, `occurred_at`, `checkout_id` | One event per `journey_key` for this kind | Numerator | Payment success alone does not write it |
+`server_presentation_match` is true only when every comparison above passes and `server_explanation_integrity` is already true. A browser field cannot set it. If the observation is absent, the match stays null. Null is unobserved. It is not a pass and it is not a payable failure.
 
-Cart impressions are not a sixth event. A cart that never reaches Review is outside the denominator, which both the Experience Definition and the locked architecture already say. The design candidate may render Cart savings. That paint does not write a measurement row and does not mint a journey key.
+### Dedup, retention, failure
 
-Coupon failure classes that are not in the locked `presentation_class` allowlist are not added to these rows. They remain the HTTP reason the customer already receives. Operational error counts may use those existing reason codes with the coupon text removed. They are not a new analytics attribute.
+One observation per `(evaluation_id, surface)`. A repaint or transport retry returns that row and does not count a second Offer-result view. The first committed observation is the evidence for that evaluation. Offer-result view count is one per presented evaluation, not per repaint.
 
-### Experience meanings mapped onto these events
-
-| Experience meaning | Locked write |
-|---|---|
-| Offer result viewed on Review | `CHECKOUT_REVIEW_PRESENTED` |
-| Offer result viewed on Cart only | No measurement event |
-| Coupon attempt finished inside a journey whose Review result changed | `COMMERCIAL_STATE_CHANGE`, then the next presented class when that result is shown |
-| Step: Review reached | `CHECKOUT_REVIEW_PRESENTED` |
-| Step: Review continue to payment | `REVIEW_TO_PAYMENT_PROGRESSION` |
-| Step: pay attempt | `PAYMENT_ATTEMPT` |
-| Step: successful completion | `SUCCESSFUL_DIRECT_ORDER_COMPLETION` |
-| Recovery shown | The next `CHECKOUT_REVIEW_PRESENTED` whose class is the locked recovery class, plus `COMMERCIAL_STATE_CHANGE` when the Review result changed |
-| Confirmation view | No additional event. Completion is already the numerator fact |
-
-A repaint is not an event. Server `evaluateCheckout` writes a receipt, not a denominator row, until presentation is acknowledged or pay ensures that receipt.
-
-## 5. Reporting contract
-
-| Question | Rule |
-|---|---|
-| Cohort entry | Lowest presented-Review sequence for the key, across every window |
-| Successful completion | One completion event with `occurred_at < REPORT_AS_OF` |
-| Unfinished journey | Denominator key without that completion. Numerator contribution 0 |
-| Duplicate events | Idempotent replay. Not an extra denominator or numerator |
-| Retries | A retried pay attempt may add `PAYMENT_ATTEMPT`. It does not add a key or a completion |
-| Late events | Visible only on a snapshot whose cutoff is strictly after their `occurred_at` |
-| Ordering | `journey_sequence`. A shared `occurred_at` does not tie |
-| Time zone | `Asia/Kolkata` civil days for window bounds only. Stored instants stay `timestamptz` |
-| Report snapshot | One cohort definition and one named `REPORT_AS_OF` per published number |
-| Segment attribution | Section 3. Later Reviews can update a later snapshot's segment. They do not move the cohort |
-| Release attribution | Named `PRODUCTION_RELEASE_ANCHOR` input. No event carries a release id |
-
-Primary rate for one snapshot:
+Measurement failure, a rejected observation, a mismatch, or a dropped POST does not change the commercial evaluation, the cart, the checkout revision, eligibility, or payment. Checkout and payment do not wait on the POST. Mismatch is reported in the integrity ratio. It is not a second money authority.
 
 ```text
-RATE = NUMERATOR_AS_OF(REPORT_AS_OF) / PRIMARY_DENOMINATOR
+MEASUREMENT_FAILURE_AFFECTS_CHECKOUT_OR_PAYMENT = NO
+OBSERVED_RENDERED_AMOUNT_SETS_PAYABLE = NO
+TELEMETRY_IS_SECOND_MONEY_LEDGER = NO
 ```
 
-Denominator zero is not a rate. It is no evidence for that window.
-
-Secondary formulas, each still cut by `occurred_at < REPORT_AS_OF`, and none of them a second primary metric:
-
-| Metric | Formula |
-|---|---|
-| Review to payment continuation | Denominator keys in the snapshot that also have `REVIEW_TO_PAYMENT_PROGRESSION` before the cutoff, divided by the primary denominator |
-| Payment completion after revalidation | Denominator keys whose latest pre-completion presented class is a recovery class and that then have a completion before the cutoff, divided by denominator keys with that recovery class |
-| Coupon distribution | Count of presented classes in the snapshot among the allowlisted coupon classes. Not divided into a causal rate |
-| Continuation after valid-but-not-selected | Completions whose completed segment is `COUPON_VALID_NOT_SELECTED` or `COUPON_EQUAL_PAYABLE_NOT_SELECTED`, divided by denominator keys whose unfinished-or-completed segment at this snapshot is that class |
-| Continuation after changed-total or complimentary-unavailable recovery | Same shape, using the locked recovery class |
-| Displayed savings integrity | Presented events in the snapshot whose integrity flag is true, divided by presented events in the snapshot. A false flag is a guardrail breach |
-| Cart to Review continuation | Not computed from a new event. A cart that never starts a checkout has no journey key. This secondary metric is the count of keys that reached a presented Review divided by the count of checkouts created in the same window that received a journey key. Carts that never reach checkout stay outside, matching the approved denominator exclusion. This ratio is descriptive and is not the primary denominator |
-
-Support contacts and refund or cancellation counts stay on their existing operational records. This plan does not define a ticket schema. Margin stays the approved commercial result, not a new margin policy.
-
-## 6. Privacy and retention boundary
+## 8. Commercial-state-change provenance
 
 ```text
-EVENT_PRIVACY_BOUNDARY_DEFINED = YES
-RAW_COUPON_TEXT_STORED = NO
-PRIVATE_ELIGIBILITY_STORED = NO
-PAYMENT_SECRET_STORED = NO
-CUSTOMER_ID_ON_MEASUREMENT_ROWS = NO
+COMMERCIAL_STATE_CHANGE_ORIGINATING_FACT = NEW_REVIEW_RESULT_WITH_A_DIFFERENT_AUTHORITATIVE_FINGERPRINT_AND_AT_LEAST_ONE_SOURCE_ORIGIN
+SAME_OPERATION_RETRY = RETURN_EXISTING_OBSERVATION
+ONE_ORIGIN_MULTIPLE_CHANGE_OBSERVATIONS = NO
+ONE_RESULT_MULTIPLE_ORIGINS = ONE_CHANGE_OBSERVATION
+NO_OP = NO_CHANGE_OBSERVATION
+CLOSED_JOURNEY_NEW_CHANGE = REJECT
+CLOSED_JOURNEY_REPLAY = RETURN_EXISTING_OBSERVATION
 ```
 
-Forbidden on measurement heads, events, and review receipts: coupon text, eligibility internals, payment secrets, security secrets, customer or guest identifiers, names, email, phone, and item free text that is not already the ordered item.
+The fingerprint is SHA-256 over canonical UTF-8 JSON with sorted keys and these server fields only: component kind and paise for each positive saving, total saved paise, payable paise, coarse outcome class, complimentary-present boolean. The raw coupon code is not an input.
 
-`presentation_class` is an allowlisted token, not a sentence and not a code the customer typed.
+Allowed `origin_kind` values: `COUPON_APPLY`, `COUPON_REPLACE`, `COUPON_REMOVE`, `FULFILMENT_CHANGE`, `STALE_RECOVERY`. A quantity edit is not an origin. An origin is written only when that command changes the commercial revision. A no-op writes no origin and no change fact.
 
-Retention: these rows are a projection inside existing commerce data, in the existing database, with no separate analytics store. The Experience Definition says to follow existing commerce retention and not extend it. ADR-013 leaves exact retention periods to a dedicated privacy decision. IMP-037's backup retention is not customer-data retention. This plan does not set a new duration, a purge job, or a longer window.
+On a Review evaluation whose fingerprint differs from the journey's previous Review result and that consumed at least one such origin:
 
-That boundary is resolved. A new numeric retention period is not.
+- Provenance identity is SHA-256 of the journey key, `0x00`, and the new fingerprint.
+- Insert one `COMMERCIAL_STATE_CHANGE` fact with that identity, or return the existing fact.
+- Insert one `commercial_change_origins` row per distinct `(origin_kind, source_command_id)`.
+- Several origins that resolve to the same fingerprint share that one fact and do not allocate another sequence.
 
-## 7. Validation of the formulas
+Same-command retry reuses `source_command_id` and the same fingerprint, so both the origin row and the fact already exist and are returned. Concurrent commands that produce the same fingerprint collide on the fact unique index. The loser returns the winner and may attach its own origin row. The fact count remains one. Concurrent commands that produce different fingerprints are different results and therefore different facts, still one fact per fingerprint.
 
-Later implementation proof, planned in the quality candidate, checks:
+If the journey is closed, a replay of the existing provenance identity returns the fact. A new fingerprint is rejected with the result write and allocates nothing.
 
-- The same rows and the same window always select the same cohort entry and the same membership.
-- A Review revisit does not add a denominator or move the window.
-- A pre-window key that returns during the window stays outside the window.
-- An event exactly at `REPORT_AS_OF` is excluded.
-- Equal timestamps still produce one segment.
-- An issued snapshot does not change when a later completion arrives.
-- A completion without a presented Review is not joined through customer identity.
-- Dedup returns the existing event and allocates no sequence, including after `closed_at`.
-- A new presentation after closure is rejected.
-- Rows fail validation if they contain coupon text or a customer identifier.
+Customer identity, telemetry arrival, and occurrence time are not this identity.
 
-## 8. Causal limits
-
-Preserved from the Experience Definition:
-
-- No trustworthy pre-release baseline. The first 28-day window may describe a baseline and does not prove launch uplift.
-- Segments are not causes.
-- Low traffic cannot separate an experience effect from ordinary volume.
-- Menu, price, season, and payment-provider changes can move the rate.
-- Comprehension is outside this metric. It belongs to later Founder Experience UAT and internal usability review.
-- Acceptance is not this rate.
-- Improvement does not silently change product behaviour.
-- Financial truth, privacy, authorization, and accessibility are not traded against the rate.
+## 9. Cart activation and Cart → Review
 
 ```text
-INSUFFICIENT_EVIDENCE = LOW_VOLUME_AND_EVERY_CAUSAL_CLAIM
+SECONDARY_METRIC = CART_TO_CHECKOUT_REVIEW_CONTINUATION
+GRAIN = ONE_GENUINE_CART_SURFACE_CHECKOUT_ACTIVATION
+CART_ACTIVATION_IDENTITY = activation_id
+SAME_ACTIVATION_RETRY = SAME_ACTIVATION_OBSERVATION
+NEW_CART_ACTIVATION = DISTINCT_ACTIVATION_OBSERVATION
+REPAINT = NOT_A_NEW_ACTIVATION
+DIRECT_CHECKOUT_ENTRY = NOT_A_CART_ACTIVATION
+REUSED_ACTIVE_CHECKOUT_ASSOCIATION = YES
+MULTIPLE_DISTINCT_ACTIVATIONS_MAY_SHARE_ONE_JOURNEY = YES
+OLD_REVIEW_SATISFIES_NEW_ACTIVATION = NO
+ACTIVATION_REQUIRES_SUBSEQUENT_REVIEW_REACH = YES
+ACTIVATION_SCOPED_REVIEW_REACH_REQUIRED = YES
+REPEATED_OFFER_RESULT_VIEW_REQUIRED_FOR_LATER_ACTIVATION = NO
+ACTIVATION_TO_REVIEW_CAUSAL_ORDER_REQUIRED = YES
 ```
 
-## 9. Implementability flags
+The Cart Checkout control mints `activation_id` when the customer activates that control by click or keyboard. The same in-memory id is sent on every transport retry of that `POST /api/v1/checkouts`. A later genuine activation mints a new id. A repaint does not. Direct entry to `/order/checkout`, refresh, login return that does not present this id, and an in-checkout restart omit `cartActivationId`.
+
+`startCheckout` accepts optional `cartActivationId`. Missing means the start is not a Cart activation. Checkout still proceeds. The field is not money, not a coupon, and not eligibility.
+
+Association, inside that same transaction, only when all of the following hold:
+
+- the id is a UUID
+- the activation's cart is the cart being started
+- the call resolves to the checkout for that cart, whether newly inserted or the already-active `DRAFT`, `READY_FOR_PAYMENT`, or `PAYMENT_PENDING` row
+- that checkout has a journey key, minted or copied by the existing rule, not by the activation
+
+Then set `checkout_journey_key`, `checkout_id`, and `watermark_sequence` to the greatest already-allocated `journey_sequence` on that key, or `0` when none exists. The activation does not mint the key, does not bump checkout revision, and does not change price or eligibility.
+
+Unknown, stale, or other-cart context does not fail checkout and does not attach. An activation that never associates remains in the denominator and cannot enter the numerator. The report does not join it to a later checkout by cart id, customer id, or guest id. A retry of an already-associated activation returns that same association.
+
+When Checkout Review commits an authoritative evaluation and the client still holds the activation id from the navigation that opened this Review, it sends that id with the Review observation. The server records `CART_REVIEW_REACH` once for that `activation_id`. The reach fact's sequence is allocated after the activation's watermark, so it is strictly greater. A historical `REVIEW_PRESENTED` whose sequence is less than or equal to the watermark does not satisfy the activation. Reaching Review again does not require a second Offer-result view when `REVIEW_PRESENTED` for the same `evaluation_id` already exists.
+
+A qualifying reach requires an authoritative Review evaluation on that journey at the time the reach is recorded. The reach fact points at that `evaluation_id`. It does not copy the evaluation into a new view row.
+
+### Metric formula
+
+`A` is in the denominator of a named half-open window and `REPORT_AS_OF` when `A.occurred_at` satisfies `WINDOW_START <= A.occurred_at < WINDOW_END` and `A.occurred_at < REPORT_AS_OF`. Window membership uses the activation's own occurrence time. It does not use the journey's global cohort entry, because a later activation must not inherit an earlier Review.
+
+`A` is in the numerator only when all of the following hold:
+
+1. `A` is associated to journey `J`.
+2. Reach fact `R` is `CART_REVIEW_REACH` for that exact `A` and belongs to `J`.
+3. `R.evaluation_id` is an authoritative Review evaluation on `J`.
+4. `R.journey_sequence > A.watermark_sequence`.
+5. `R.occurred_at < REPORT_AS_OF`.
+
+An unassociated activation fails 1 and stays denominator-only.
+
+| Sequence | Denominator | Numerator |
+|---|---|---|
+| `A1 → R1 → A2 → R2` | `A1`, `A2` | `A1`, `A2` |
+| `A1 → R1 → A2 → abandon` | `A1`, `A2` | `A1` only |
+| `A1 → retry(A1) → R1` | one activation | that activation |
+| Direct Checkout, then Review | none from this metric | none |
+
+No abandonment timeout removes `A2`.
+
+## 10. Other collection and failure posture
+
+| Signal | Where it is written | Dedup |
+|---|---|---|
+| Offer result viewed | Server observation row for `(evaluation_id, surface)` after comparison | One per presented evaluation. Repaint returns it |
+| Coupon outcome | `coarse_outcome` on the server coupon-command result, no raw code | One per `source_command_id` |
+| Review → Payment | `REVIEW_TO_PAYMENT` when Review continue commits and an authoritative Review evaluation is current | One per `continue_command_id` |
+| Payment attempt | `PAYMENT_ATTEMPT` beside the existing payment command | Existing payment idempotency key |
+| Successful completion | `DIRECT_ORDER_COMPLETION` inside `materializeOrderForCompletedCheckout`, using the Candidate 9 order-materialization rules | One per journey key |
+| Changed-total recovery | `STALE_RECOVERY` origin on the one change fact when the server explanation is a changed total | One fact per new fingerprint |
+| Complimentary-unavailable continuation | The same `STALE_RECOVERY` origin when the new Review result's server explanation class is complimentary unavailable. That is not a sixth origin | Does not mint a journey |
 
 ```text
-BUSINESS_INTENT_PRESERVED = YES
-PRIMARY_METRIC_PRESERVED = YES
-SECONDARY_METRICS_PRESERVED = YES
-GUARDRAILS_PRESERVED = YES
-JOURNEY_KEY_DEFINED = YES
-COHORT_SEMANTICS_DEFINED = YES
-REPORTING_SNAPSHOT_DEFINED = YES
-EVENT_CONTRACTS_COMPLETE = YES
-PII_BOUNDARY_COMPLETE = YES
-DEDUPLICATION_COMPLETE = YES
-VALIDATION_PLAN_COMPLETE = YES
-RETENTION_PRIVACY_BOUNDARY_COMPLETE = YES
-CAUSAL_LIMITS_PRESERVED = YES
-NUMERIC_TARGET_ADDED = NO
-MEASUREMENT_PLAN_IMPLEMENTABLE = YES
+MEASUREMENT_FAILURE_BLOCKS_CHECKOUT = NO
+MEASUREMENT_FAILURE_BLOCKS_PAYMENT = NO
+MISMATCH_CHANGES_PAYABLE = NO
+```
+
+Observation and activation persistence failures are logged inside `customer-commerce` and returned as a non-commercial error. The UI keeps the last commercial result. It does not invent a saving and it does not treat the failure as money authority.
+
+## 11. Formulas
+
+Occurrence cutoff for every formula: authoritative occurrence time strictly before `REPORT_AS_OF`.
+
+### Primary
+
+Cohort entry is the `REVIEW_PRESENTED` fact with the lowest `journey_sequence` for that key, across the whole journey. `GLOBAL_COHORT_ENTRY_TIME` is that fact's `occurred_at`. The key is in the named window when `WINDOW_START <= GLOBAL_COHORT_ENTRY_TIME < WINDOW_END`. A later `REVIEW_PRESENTED` does not add a denominator and does not move the window. An evaluation that was not presented does not count. Membership is recomputed from these facts. It is not a mutable flag.
+
+Denominator = those keys. Numerator = those same keys whose `DIRECT_ORDER_COMPLETION.occurred_at` is strictly before `REPORT_AS_OF`. Payment `SUCCEEDED` alone is not the numerator. Unfinished keys stay in the denominator as `NOT_COMPLETED_AS_OF_REPORT_CUTOFF`.
+
+Completed segment = `presentation_class` on the `REVIEW_PRESENTED` fact with the greatest sequence that is still strictly before the completion's sequence. Unfinished segment = the greatest `REVIEW_PRESENTED` sequence whose `occurred_at` is strictly before `REPORT_AS_OF`. `COMMERCIAL_STATE_CHANGE` is not a segment source.
+
+Equal timestamps still order by sequence. The same facts and the same cutoff publish the same numbers. A published `measurement_report_snapshots` row is immutable. A later maturation report inserts a new row with its own `report_as_of` and leaves the earlier row unchanged.
+
+Rate = numerator / denominator when the denominator is non-zero. No target is attached. A zero denominator is `INSUFFICIENT_EVIDENCE`, not a success.
+
+### Secondary
+
+| Measure | Grain | Numerator | Denominator | Unavailable |
+|---|---|---|---|---|
+| Cart → Checkout Review continuation | One Cart activation | Section 9 | Section 9 | No |
+| Review → Payment | One primary-denominator journey | That key has `REVIEW_TO_PAYMENT` causally after its cohort-entry Review and before the cutoff | Primary denominator | No |
+| Payment completion after revalidation | One primary-denominator journey that had a revalidation `COMMERCIAL_STATE_CHANGE` or an unchanged revalidation attempt before pay | That key's completion is before the cutoff and a `PAYMENT_ATTEMPT` sequence is after the revalidated Review | Journeys in the primary denominator whose pay path ran revalidation before the cutoff | No |
+| Coupon outcome distribution | One completed coupon command | Count of `coarse_outcome` values before the cutoff | Not a conversion rate. The distribution is the count per class | No |
+| Valid-but-not-selected continuation, including equal-payable not selected | One journey whose presented Review class is that class | Later `REVIEW_TO_PAYMENT` or completion on that key before the cutoff | Those journeys | No |
+| Changed-total recovery continuation | One journey with a `STALE_RECOVERY` origin before the cutoff | Later continuation or completion on that key before the cutoff | Those journeys | No |
+| Complimentary-unavailable continuation | One journey whose `STALE_RECOVERY` change before the cutoff carries the server explanation class for complimentary unavailable | Later continuation or completion on that key before the cutoff | Those journeys | No |
+| Repeated invalid attempts | Coupon commands on one journey before the cutoff whose class is invalid | Count of those commands. This is a guardrail count, not a new event attribute | n/a | No |
+| Support contacts about a coupon, an Offer, the total, or an included item | Existing support handling | n/a | n/a | `UNAVAILABLE`. No existing approved instrumentation was found. Coupon-error counts are not a substitute |
+| Displayed savings integrity | One presented evaluation on Cart or Review with both an expected row and an observation, occurrence before the cutoff | `server_presentation_match = true` | Those presented evaluations. Unobserved evaluations are reported separately as unobserved, not as matches | No |
+
+Segments and secondary rates are descriptive. They are not causes.
+
+## 12. Privacy
+
+Stored measurement fields are opaque ids, integer paise for the minimum presentation comparison, component kinds, coarse classes, sequences, and occurrence times. They exclude raw coupon text, private eligibility reasons, payment secrets, customer name, email, phone, guest id, another customer's data, and a client-authored integrity boolean. `activation_id` does not contain customer or guest identity. Customer identity remains on checkout and on the first-order guard for eligibility and auth. It is not a measurement join.
+
+Cross-scope reads and writes use the existing cart and checkout denial. An observation for another customer's `evaluation_id` writes nothing.
+
+## 13. What this candidate does not do
+
+```text
+DESIGN_READINESS = NOT_PERFORMED
 MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = NO
+IMPLEMENTATION_AUTHORIZED = NO
+IMPLEMENTATION_STARTED = NO
+D-383 = NO
+ARCH-R24 = NO
+NEW_ADR = NO
+RUNTIME_CHANGED_BY_THIS_DOCUMENT = NO
 ```

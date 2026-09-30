@@ -3,27 +3,38 @@
   "status": "CANDIDATE",
   "authority": "NONE",
   "capability": "IMP-036J",
-  "candidateId": "IMP-036J-DESIGN-CANDIDATE-1",
+  "candidateId": "IMP-036J-DESIGN-CANDIDATE-2",
   "productDefinition": "PD-IMP-036J-DRAFT-6",
   "experienceDefinition": "XD-IMP-036J-DRAFT-6",
   "architecture": "ARCH-R23",
-  "designReadiness": "NOT_PERFORMED"
+  "architectureSource": "IMP-036J-FIT-CANDIDATE-9",
+  "designReadiness": "NOT_PERFORMED",
+  "implementationAuthorized": false
 }
 -->
 
 # IMP-036J — Design Readiness candidate
 
 ```text
-CANDIDATE_ID = IMP-036J-DESIGN-CANDIDATE-1
+CANDIDATE_ID = IMP-036J-DESIGN-CANDIDATE-2
 STATUS = CANDIDATE
 AUTHORITY = NONE
 CAPABILITY = IMP-036J
 DESIGN_READINESS = NOT_PERFORMED
 QUALITY_TEST_PLAN_FINALIZED = NO
 MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = NO
+IMPLEMENTATION_PLAN = NOT_PERFORMED
 IMPLEMENTATION_AUTHORIZED = NO
 IMPLEMENTATION_STARTED = NO
 CANDIDATE_READY_FOR_INDEPENDENT_REVIEW = YES
+ARCHITECTURE_SOURCE = IMP-036J-FIT-CANDIDATE-9
+ARCHITECTURE_FIT = PASS
+ARCHITECTURE_LOCKED = YES
+ARCH_R23 = UNCHANGED
+DR_23 = UNCHANGED
+D-383 = NO
+ARCH-R24 = NO
+NEW_ADR = NO
 ```
 
 This document is an implementation-ready interaction and presentation candidate. It is not Design
@@ -32,6 +43,28 @@ Readiness PASS. It does not authorize implementation, does not change `PD-IMP-03
 D-383, or ARCH-R24.
 
 Independent review still answers whether this candidate is complete enough to build.
+
+## 0. Candidate history
+
+`IMP-036J-DESIGN-CANDIDATE-1` is historical. It was prepared before Candidate 9 Architecture
+remediation and is not the reviewable design. Candidate 1 never passed Design Readiness. Its
+result remains `STOP / SUPERSEDED`. This document does not rewrite that result as a pass.
+
+Historical finding `4134472848` remains in the pull-request record. Candidate 1 labeled the normal
+Cart amount as final Total payable before fulfilment and Offer context existed. Candidate 2 keeps
+the current non-final Cart treatment unless a current Checkout evaluation already supplies that
+context, and it still does not call the Cart figure the final payable amount.
+
+```text
+CANDIDATE_1 = HISTORICAL_SUPERSEDED
+CANDIDATE_1_DESIGN_READINESS = NOT_PASSED
+HISTORICAL_FINDING_4134472848 = PRESERVED
+BINDING_ARCHITECTURE = IMP-036J-FIT-CANDIDATE-9
+FIRST_DESIGN_CANDIDATE_RECONCILED_TO_CANDIDATE_9 = IMP-036J-DESIGN-CANDIDATE-2
+```
+
+Analytics hooks in this candidate name facts in `IMP-036J-MEASUREMENT-CANDIDATE-2`. They do not
+implement collection and they do not make the browser a money authority.
 
 ## 0. What this candidate may finalize
 
@@ -50,7 +83,10 @@ the only operator explanation.
 
 ## 1. Source inspection
 
-Inspected on the candidate base. Names below are repository names.
+Re-inspected on this branch after the non-destructive merge of canonical main
+`64ab23c89b54b016b198f8e3a8de8a669e52378d`. Names below are repository names. The Cart amount on
+that source is still "Estimated subtotal" in `CartSummary`, `cart-presentation`, the desktop aside,
+and `cart-mobile-checkout`. Checkout Review still labels the summary "Total payable".
 
 | Surface | Path | What exists today |
 |---|---|---|
@@ -88,7 +124,7 @@ No new customer route. No Offers destination. No marketing browse hub. No coupon
 
 | Surface | Role | Files to extend later |
 |---|---|---|
-| Cart `/order/cart` | Items, authoritative amount, saving stack, threshold, coupon | `CartClient`, `CartLineList` read-only extra row, money rows |
+| Cart `/order/cart` | Items, non-final amount, saving stack only from a server result that does not invent delivery, threshold, coupon | `CartClient`, `CartLineList` read-only extra row, money rows |
 | Checkout Review inside `/order/checkout` | Same shared coupon state and the same stack, plus fulfilment | `CheckoutClient`, `OrderMoneySummaryPanel` |
 | Payment step | Read-only summary. Pay only the current amount | `PaymentPanel` |
 | Confirmation `/order/confirmation` | Purchased truth | `OrderConfirmationClient` |
@@ -101,42 +137,68 @@ Shared coupon authority stays `carts.manual_coupon_code`. Cart and Review both c
 
 ## 3. Information hierarchy
 
+### Money truth
+
+There is one money authority: the server commercial evaluation. The browser formats `formatPaise` of a server-supplied paise value, or it shows an explicit non-amount waiting state. It does not calculate eligibility, a delivery charge, or a saving.
+
+The normal Cart exists before fulfilment and before Offers that depend on that context. That amount is not the final customer payable.
+
+```text
+PRECHECKOUT_CART_FINAL_PAYABLE = NO
+NORMAL_CART_LABEL = Estimated subtotal
+DELIVERY_AMOUNT_INVENTED_ON_CART = NO
+TOTAL_PAYABLE_ON_INCOMPLETE_CART = PROHIBITED
+CHECKOUT_REVIEW = AUTHORITATIVE_PREPAYMENT_COMMERCIAL_REVIEW
+PURCHASED_SNAPSHOT = IMMUTABLE_PAID_TRUTH
+TWO_MONEY_AUTHORITIES = NO
+```
+
+| Cart context | What is shown | Label | What stays non-final |
+|---|---|---|---|
+| No active checkout, or the checkout has no selected fulfilment mode, or `sourceCartRevision` does not match the current cart | Existing estimated merchandise subtotal. Real order-saving and threshold rows only when the server Cart evaluation returned them. No delivery row. | `COPY-ESTIMATED-SUBTOTAL` | The whole figure. `COPY-CART-NOT-FINAL` says delivery and the full total are confirmed at checkout, without a delivery number |
+| Active checkout reused, fulfilment mode selected, revision matches, and a current Checkout evaluation exists | The same server Checkout evaluation Review will show, including a delivery charge only when that evaluation returned one | `COPY-CURRENT-CHECKOUT-TOTAL` | It is the current evaluated checkout amount. It is not labeled Total payable on Cart, and it is not the purchased amount. Payment binding still revalidates it |
+| Checkout Review after that evaluation | The current pre-payment commercial review | `COPY-TOTAL-PAYABLE` | Still not frozen forever. Stale revalidation can return a new server amount |
+| Payment | Read-only current evaluation or snapshot | `COPY-TOTAL-PAYABLE` | Coupon cannot change it. Revalidation failure leaves Payment |
+| Confirmation and history | Sealed purchased amounts | Purchased copy | Live Offers do not rewrite them |
+
+Showing the reused checkout evaluation on Cart does not create a second calculator. The number is that evaluation. Cart does not relabel it as the amount the customer finally pays. Review is the surface that presents Total payable.
+
 ### Cart and Checkout Review
 
 Reading order:
 
 1. Items, including one complimentary line when the selected result has one.
-2. Real saving lines, only when that money exists.
-3. Delivery charge when delivery is in play.
+2. Real saving lines, only when that server money exists.
+3. Delivery charge only when a current Checkout evaluation includes it. Cart without that context omits it.
 4. Total saved, only when the evaluated total saved is greater than zero.
-5. Total payable.
+5. The amount label from the table above.
 6. Coupon interaction, secondary.
 7. Primary continue or pay action.
 
 The stack is one result. An automatic Offer and a coupon are not two competing totals.
 
-Money row order inside the existing `dl` in `OrderMoneySummaryPanel`:
+Money row order inside the existing `dl` in `OrderMoneySummaryPanel` on Review, Payment, and purchased detail:
 
 | Row | Show when |
 |---|---|
 | Subtotal | Always, merchandise subtotal the summary already isolates from charges |
 | Order saving | Server merchandise or order saving is greater than zero |
 | Packaging and other existing non-delivery charges | Already present on the snapshot |
-| Delivery | Delivery is in play. Amount may be zero. Label stays the charge name already returned, "Delivery" when the code fallback is used |
+| Delivery | Delivery is in the server evaluation. Amount may be zero. Label stays the charge name already returned, "Delivery" when the code fallback is used |
 | Delivery saving | Server delivery saving is greater than zero |
 | Tax | Existing tax rows, unchanged |
 | Total saved | Server total saved is greater than zero. The figure equals the shown component lines. It is not an extra amount |
-| Total payable | Always, visually strongest row, existing border-top treatment |
+| Total payable | Review, Payment, and purchased detail. Visually strongest row, existing border-top treatment. Not used as the Cart label |
 
 A complimentary ₹0 merchandise line is an item row, not a second saving row. Do not invent a struck-through "was" price.
 
 ### Desktop cart (`lg` and up)
 
-Left column: heading, items, complimentary line, non-money alerts already on the cart. Right aside (`cart-order-summary`, `lg:sticky lg:top-20`): saving stack, threshold line, coupon region, primary Checkout, secondary "Keep browsing". The aside is the money and the action. Coupon sits under the total and above Checkout.
+Left column: heading, items, complimentary line, non-money alerts already on the cart. Right aside (`cart-order-summary`, `lg:sticky lg:top-20`): the non-final amount, saving stack, threshold line, coupon region, primary Checkout, secondary "Keep browsing". The aside is the money and the action. Coupon sits under the amount and above Checkout.
 
 ### Narrow cart (below `lg`)
 
-One column. Items, then the same stack, threshold, and coupon. The existing `cart-mobile-checkout` bar stays `lg:hidden` and stays the always-visible total plus Checkout. The bar shows the same total payable figure as the stack, the words "Total payable", and the Checkout button. It does not contain the coupon. Page bottom padding already clears the bar. While the total is updating, the bar uses the waiting treatment in section 8 and Checkout is disabled.
+One column. Items, then the same stack, threshold, and coupon. The existing `cart-mobile-checkout` bar stays `lg:hidden` and stays the always-visible amount plus Checkout. The bar repeats the Cart label from the money-truth table, `COPY-ESTIMATED-SUBTOTAL` or `COPY-CURRENT-CHECKOUT-TOTAL`, and the Checkout button. It does not say Total payable. It does not contain the coupon. Page bottom padding already clears the bar. While the amount is updating, the bar uses the waiting treatment in section 8 and Checkout is disabled. Menu `StickyCartBar` keeps "Estimated subtotal" and gains no offer treatment.
 
 ### Checkout Review, all widths
 
@@ -186,7 +248,10 @@ Sentence case. Money inside a sentence is the `formatPaise` string of the server
 | `COPY-DELIVERY-SAVING-ROW` | Delivery saving | Row label |
 | `COPY-ORDER-SAVING-ROW` | Order saving | Row label |
 | `COPY-TOTAL-SAVED-ROW` | Total saved | Row label. Same figure as the components |
-| `COPY-TOTAL-PAYABLE` | Total payable | Row label |
+| `COPY-ESTIMATED-SUBTOTAL` | Estimated subtotal | Cart amount when full checkout context is absent. Existing customer label |
+| `COPY-CART-NOT-FINAL` | Delivery and the full total are confirmed at checkout. | Cart sentence. No delivery amount |
+| `COPY-CURRENT-CHECKOUT-TOTAL` | Current total | Cart label only when a reused checkout evaluation already includes fulfilment context. Not the final payable label |
+| `COPY-TOTAL-PAYABLE` | Total payable | Review, Payment, and purchased detail. Not the incomplete Cart label |
 | `COPY-DELIVERY-ROW` | Delivery | Only as the existing charge-name fallback |
 | `COPY-PURCHASED` | You saved {amount} on this order. | Confirmation and detail. `{amount}` is purchased total saved. Not a second amount on top of the lines |
 | `COPY-INCLUDED` | Included with your offer | Complimentary line reason |
@@ -229,12 +294,12 @@ Standing delivery at ₹0 shows the delivery row at zero and no delivery-saving 
 
 ## 5. User flows
 
-Shared rules for every customer flow: one evaluation result; previous money stays visible until the new server result arrives; a failed request does not paint a new total; focus and announcements follow section 7; analytics hooks are the locked event kinds in the measurement candidate, not a second calculator.
+Shared rules for every customer flow: one server evaluation; previous money stays visible until the new server result arrives; a failed request does not paint a new total; Cart does not present an incomplete figure as Total payable; focus and announcements follow section 7; analytics hooks are the fact kinds in `IMP-036J-MEASUREMENT-CANDIDATE-2`, not a second calculator. The Cart Checkout control mints one activation id for that gesture. A retry of the same request reuses it. A later press mints another. A repaint does not. Direct Checkout omits it.
 
 | # | Flow | Behaviour |
 |---|---|---|
 | 1 | Automatic Offer applies | Cart or Review shows the item list and `COPY-APPLIED-AUTO` or `COPY-APPLIED-REASON`. Order-saving and, when real, delivery-saving rows match the server. Primary action is Checkout or Continue to payment. The customer does not activate the Offer. |
-| 2 | No Offer applies | No saving rows, no progress, no apology. Coupon field is still there. Total payable is the server total. |
+| 2 | No Offer applies | No saving rows, no progress, no apology. Coupon field is still there. Cart shows the estimated subtotal. Review shows Total payable from the server evaluation. |
 | 3 | Coupon apply succeeds | Customer types a code and presses Apply. "Checking this coupon" holds the previous total. On success the stack updates and shows `COPY-APPLIED-COUPON` because this combination pays less. Change and Remove appear. |
 | 4 | Coupon invalid | `COPY-INVALID`. No saving from that attempt. Focus returns to the field. The previous shared code, if any, stays only when the server wrote nothing. An unknown code writes nothing. |
 | 5 | Coupon requires sign-in | `COPY-SIGN-IN` and Sign in. The code remains the cart's one code. Do not explain who qualifies. |
@@ -248,7 +313,7 @@ Shared rules for every customer flow: one evaluation result; previous money stay
 | 13 | Threshold reached | The progress line is replaced by the applied saving. Announce the change. No extra celebratory value. |
 | 14 | Offer falls away | After a cart, fulfilment, or timing change, the saving leaves when the new result says so. `COPY-DROPPED`. Progress returns only when the new result includes a real rupee gap and benefit. |
 | 15 | Delivery incentive | Delivery row shows the charge after the incentive, including ₹0 when that is the result, plus one Delivery saving row for the positive evaluated effect, inside total saved. |
-| 16 | Order saving and delivery saving together | Both rows, then total saved, then total payable. One merchandise story. The delivery saving does not add a second item discount. |
+| 16 | Order saving and delivery saving together | On Review, both rows, then total saved, then Total payable. On Cart, the delivery row appears only when the reused checkout evaluation returned it. One merchandise story. The delivery saving does not add a second item discount. |
 | 17 | Complimentary item | Read-only line: operator item name, `COPY-INCLUDED`, merchandise `formatPaise(0)`. No options, no remove, no replace-with-another-item. A real delivery saving stays its own row. The equal-payable complimentary selection uses this same line and does not say a coupon was the better price. |
 | 18 | Complimentary item becomes unavailable | Stay on Review. Line disappears. `COPY-GIFT-GONE`. New total. Pay is not offered on the old line. No substitute list. |
 | 19 | Stale checkout total | Pay stops. Customer is on Review with `COPY-STALE`, the new stack, and no pay action against the old amount. |
@@ -270,41 +335,41 @@ Columns the tables compress: surface, trigger, hierarchy, money, primary action,
 
 Mobile for Cart means the column text plus the `lg:hidden` total bar. Desktop Cart means the `lg` aside holds the stack, coupon, and Checkout. Review, Payment, confirmation, and history use the same single column at every width. Operator forms stack at the default width and use the existing `sm` grid for the create row.
 
-`LIVE-MONEY` means a polite announcement of the new total payable. `LIVE-STATUS` means a polite announcement of the status sentence. Alerts use `role="alert"` and are announced assertively.
+`LIVE-MONEY` means a polite announcement of the new server amount, using the surface's label. On Cart that label is Estimated subtotal or Current total. On Review and Payment it is Total payable. `LIVE-STATUS` means a polite announcement of the status sentence. Alerts use `role="alert"` and are announced assertively. Hooks name measurement facts. `OFFER_RESULT_VIEW` is the committed-presentation observation. `CART_ACTIVATION` is the Checkout control gesture. `CART_REVIEW_REACH` is the later Review reach for that activation. `COMMERCIAL_STATE_CHANGE` is server provenance, not a client event.
 
 | State | Surface | Trigger | What is visible | Money | Primary | Secondary | Recovery | Copy | Focus | Announcement | Hook |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| Default / ready | Cart, Review | Evaluation returned and nothing is pending | Items, stack, coupon field, primary action | Latest server total | Checkout or Continue to payment | Apply if the field has text | None | Field hint | Natural tab order | None extra | Review presentation when Review shows this result |
-| No applicable Offer | Cart, Review | Server result has no saving and no progress | Items and total. No apology | Total payable only | Continue | Apply | None | Hint only | None forced | None | Review presentation class for no offer |
-| Automatic applied | Cart, Review | Server selected an automatic saving | Status then stack | Order saving and delivery saving only when positive | Continue | None for the Offer | If a later result drops it, the dropped state | `COPY-APPLIED-AUTO` or reason | None forced | `LIVE-STATUS` and `LIVE-MONEY` when it newly appears | Review presentation |
+| Default / ready | Cart, Review | Evaluation returned and nothing is pending | Items, stack, coupon field, primary action | Cart: estimated subtotal, or current checkout total when section 3 allows it. Review: Total payable | Checkout or Continue to payment | Apply if the field has text | None | Field hint. Cart also uses `COPY-CART-NOT-FINAL` when the amount is only an estimate | Natural tab order | None extra | `OFFER_RESULT_VIEW` after the money region commits |
+| No applicable Offer | Cart, Review | Server result has no saving and no progress | Items and the surface amount. No apology | Cart estimate or Review Total payable. No invented delivery on the estimate | Continue | Apply | None | Hint only | None forced | None | `OFFER_RESULT_VIEW` shape `NONE` |
+| Automatic applied | Cart, Review | Server selected an automatic saving | Status then stack | Order saving and delivery saving only when positive | Continue | None for the Offer | If a later result drops it, the dropped state | `COPY-APPLIED-AUTO` or reason | None forced | `LIVE-STATUS` and `LIVE-MONEY` when it newly appears | `OFFER_RESULT_VIEW` |
 | Loading / no result yet | Cart, Review | First evaluation in flight | Items may show. No guessed discount | `COPY-CHECKING-TOTAL`. No payable figure yet | Disabled | Coupon disabled | Retry on failure | `COPY-CHECKING-TOTAL` | Leave focus where it is | Polite waiting text | None until a result is shown |
-| Evaluation refresh | Cart, Review | Cart, fulfilment, or timing change in flight | Last stack remains | Last total, marked `COPY-UPDATING` | Disabled until the new result | Coupon disabled | Failure keeps the last committed result and offers retry | `COPY-UPDATING` | Leave focus | Polite updating text. Do not announce the old total as new | Commercial change when the Review result changes |
+| Evaluation refresh | Cart, Review | Cart, fulfilment, or timing change in flight | Last stack remains | Last total, marked `COPY-UPDATING` | Disabled until the new result | Coupon disabled | Failure keeps the last committed result and offers retry | `COPY-UPDATING` | Leave focus | Polite updating text. Do not announce the old total as new | `COMMERCIAL_STATE_CHANGE` only when the new Review fingerprint differs |
 | Coupon empty | Cart, Review | No code committed and field blank | Named field, Apply disabled | Unchanged | Continue | None | Empty is valid | Hint | Field is tabbable | None | None |
 | Coupon entered | Cart, Review | Field has non-space text, not submitted | Apply enabled | Unchanged | Continue or Apply | None | None | Hint | Field | None | None |
 | Coupon checking | Cart, Review | Apply, change, or remove request in flight | Previous stack. Typed code remains | Previous total | Disabled | Disabled | Failure state | `COPY-CHECKING` | Stay on the action that was pressed | Polite checking text | None until completion |
-| Coupon applied | Cart, Review; summary only on Payment | Server class is the lower coupon combination | `COPY-APPLIED-COUPON` and the stack | Actual saving | Continue | Change, Remove before payment | Remove recomputes | `COPY-APPLIED-COUPON` | Move to the status | `LIVE-STATUS` and `LIVE-MONEY` if the total changed | Review presentation and commercial change |
+| Coupon applied | Cart, Review; summary only on Payment | Server class is the lower coupon combination | `COPY-APPLIED-COUPON` and the stack | Actual saving | Continue | Change, Remove before payment | Remove recomputes | `COPY-APPLIED-COUPON` | Move to the status | `LIVE-STATUS` and `LIVE-MONEY` if the total changed | `OFFER_RESULT_VIEW` and `COMMERCIAL_STATE_CHANGE` |
 | Coupon invalid | Cart, Review | Unknown code | Error under the field | No saving from this attempt | Continue on the previous committed total | Apply again | Correct the text | `COPY-INVALID` | Field | Alert | No new measurement attribute beyond locked classes |
 | Expired | Cart, Review | Server expired class | Same placement | No saving from this attempt | Continue | Change or Remove | Try another code | `COPY-EXPIRED` | Field | Alert | Same |
 | Inapplicable | Cart, Review | Recognized code does not qualify | Error under the field | No saving from this attempt | Continue | Change fulfilment or cart, or Remove | Those recomputes | `COPY-INAPPLICABLE` plus the mode clause only in the two allowed cases | Field | Alert | Same |
 | Globally exhausted | Cart, Review | Server global-cap class | Error | No saving from this attempt | Continue | Remove | Continue without it | `COPY-GLOBAL-CAP` | Field | Alert | Same |
 | Personally exhausted | Cart, Review | Server personal-cap class | Error | No saving from this attempt | Continue | Remove | Continue without it | `COPY-PERSONAL-CAP` | Field | Alert | Same |
 | Identity required | Cart or Review, where submitted | Server identity class | Sign-in request. Code kept | Previous total | Sign in | Remove | Return flow | `COPY-SIGN-IN` | Sign in button | Alert | None that records the code |
-| Sign-in return | Same surface | Authentication return | Checking, then the real result, or the re-enter sentence | No false applied total | Read the result | Apply if re-entry is required | `COPY-RETRY-CODE` | Result copy | Coupon status, or the field if re-entry is required | `LIVE-STATUS` | Review presentation after the result |
-| Strictly lower non-coupon | Cart, Review | Server retained a lower non-coupon total | Retained stack plus the sentence | Retained lower total | Continue | Remove | Remove keeps that total | `COPY-STRICT-KEEP` | Status | `LIVE-STATUS` | Review presentation |
-| Equal payable selected | Cart, Review; read-only on Payment | Server selected the coupon tie | Sentence plus only actual effects | Same payable as the alternative | Continue | Change, Remove | Either recomputes from the code being gone | `COPY-EQUAL-SELECTED` | Status | Announce applied and that the total stayed the same | Review presentation |
-| Equal payable not selected | Cart, Review | Server retained the non-coupon tie | Retained stack plus the sentence | Unchanged versus that alternative | Continue | Remove | Remove keeps the retained result | `COPY-EQUAL-KEPT` or with offer | Status | Announce valid and unchanged total | Review presentation |
-| Coupon removed | Cart, Review | Remove succeeded | Empty field. New stack | Recomputed total | Continue | Apply | Empty | Hint | Field | `LIVE-MONEY` | Commercial change |
-| Coupon replaced | Cart, Review | Replace succeeded | One code and the new result | New total | Continue | Change, Remove | Failure keeps the previous state | The new result's copy | Status | `LIVE-STATUS` | Commercial change |
-| Threshold progress | Cart and Review | Server rupee gap and benefit | Progress with the total story | No invented saving | Continue or add items | Apply | Omit if the pair is incomplete | `COPY-THRESHOLD` | None forced | Polite progress text when it appears or changes | Review presentation |
-| Threshold satisfied | Cart, Review | Minimum now holds | Progress gone. Applied saving | The new saving | Continue | None | Drop state if a later edit falls below | Applied copy | None forced | `LIVE-STATUS` and `LIVE-MONEY` | Review presentation |
-| Threshold lost | Cart, Review | New result is below the minimum | Dropped sentence. Progress only if the gap is real again | Updated total | Continue | Add items | None beyond the line | `COPY-DROPPED` | Status | `LIVE-STATUS` and `LIVE-MONEY` | Commercial change |
-| Order and delivery savings | Cart, Review, Payment, purchased | Both effects are positive | Both rows, total saved, total payable | Both components once | Continue or pay | Coupon only before payment | Recompute if inputs change | Row labels | None forced | `LIVE-MONEY` when new | Review presentation |
-| Complimentary item | Cart, Review; purchased later | Selected complimentary combination | Item row, included, ₹0 | ₹0 merchandise. Delivery saving only if positive | Continue. No edit | None on that line | Unavailable flow | `COPY-INCLUDED` | Line is in tab order as text, not a control | Polite line text when it appears | Review presentation |
-| Complimentary unavailable | Review | Availability recheck removed it | Line gone. Explanation. New total | New result | Continue on the new total | Change cart | No substitute. Pay not offered on the old line | `COPY-GIFT-GONE` | Explanation, then the continue action | Alert and `LIVE-MONEY` | Recovery presentation |
-| Complimentary conflict | Cart, Review | More than one complimentary would qualify | Neither gift. Ordinary total. Conflict sentence only if a line had been shown | Ordinary evaluated total | Continue | None | No picker | `COPY-GIFT-CONFLICT` only in that case | Explanation if shown | Alert if the sentence appears | Review presentation |
-| Stale changed | Review | Prepare or pay found a mismatch | Stop the old pay. New stack and reason | New total | Continue on the new total, or change coupon or cart | No payment-page coupon edit | Stay on Review | `COPY-STALE` | Explanation, then continue | Alert and `LIVE-MONEY` | Recovery presentation |
-| Stale unchanged | Review or pay | Revalidation matches | Same amount. Pay proceeds | Same total | Pay | None | None | No change sentence | No focus jump | Do not announce a change | Payment progression |
-| Payment read-only | Payment | Customer reached payment | Summary only | Current sealed or current quoted total | Pay | Back only if the existing checkout already offers non-coupon back navigation | Commercial recovery is Review | Stack copy only | Pay | None extra | Payment attempt |
+| Sign-in return | Same surface | Authentication return | Checking, then the real result, or the re-enter sentence | No false applied total | Read the result | Apply if re-entry is required | `COPY-RETRY-CODE` | Result copy | Coupon status, or the field if re-entry is required | `LIVE-STATUS` | `OFFER_RESULT_VIEW` after the result |
+| Strictly lower non-coupon | Cart, Review | Server retained a lower non-coupon total | Retained stack plus the sentence | Retained lower total | Continue | Remove | Remove keeps that total | `COPY-STRICT-KEEP` | Status | `LIVE-STATUS` | `OFFER_RESULT_VIEW` |
+| Equal payable selected | Cart, Review; read-only on Payment | Server selected the coupon tie | Sentence plus only actual effects | Same payable as the alternative | Continue | Change, Remove | Either recomputes from the code being gone | `COPY-EQUAL-SELECTED` | Status | Announce applied and that the total stayed the same | `OFFER_RESULT_VIEW` |
+| Equal payable not selected | Cart, Review | Server retained the non-coupon tie | Retained stack plus the sentence | Unchanged versus that alternative | Continue | Remove | Remove keeps the retained result | `COPY-EQUAL-KEPT` or with offer | Status | Announce valid and unchanged total | `OFFER_RESULT_VIEW` |
+| Coupon removed | Cart, Review | Remove succeeded | Empty field. New stack | Recomputed total | Continue | Apply | Empty | Hint | Field | `LIVE-MONEY` | `COMMERCIAL_STATE_CHANGE` when the fingerprint differs |
+| Coupon replaced | Cart, Review | Replace succeeded | One code and the new result | New total | Continue | Change, Remove | Failure keeps the previous state | The new result's copy | Status | `LIVE-STATUS` | `COMMERCIAL_STATE_CHANGE` when the fingerprint differs |
+| Threshold progress | Cart and Review | Server rupee gap and benefit | Progress with the total story | No invented saving | Continue or add items | Apply | Omit if the pair is incomplete | `COPY-THRESHOLD` | None forced | Polite progress text when it appears or changes | `OFFER_RESULT_VIEW` |
+| Threshold satisfied | Cart, Review | Minimum now holds | Progress gone. Applied saving | The new saving | Continue | None | Drop state if a later edit falls below | Applied copy | None forced | `LIVE-STATUS` and `LIVE-MONEY` | `OFFER_RESULT_VIEW` |
+| Threshold lost | Cart, Review | New result is below the minimum | Dropped sentence. Progress only if the gap is real again | Updated total | Continue | Add items | None beyond the line | `COPY-DROPPED` | Status | `LIVE-STATUS` and `LIVE-MONEY` | `COMMERCIAL_STATE_CHANGE` when the fingerprint differs |
+| Order and delivery savings | Cart, Review, Payment, purchased | Both effects are positive | Both rows, total saved, total payable | Both components once | Continue or pay | Coupon only before payment | Recompute if inputs change | Row labels | None forced | `LIVE-MONEY` when new | `OFFER_RESULT_VIEW` |
+| Complimentary item | Cart, Review; purchased later | Selected complimentary combination | Item row, included, ₹0 | ₹0 merchandise. Delivery saving only if positive | Continue. No edit | None on that line | Unavailable flow | `COPY-INCLUDED` | Line is in tab order as text, not a control | Polite line text when it appears | `OFFER_RESULT_VIEW` |
+| Complimentary unavailable | Review | Availability recheck removed it | Line gone. Explanation. New total | New result | Continue on the new total | Change cart | No substitute. Pay not offered on the old line | `COPY-GIFT-GONE` | Explanation, then the continue action | Alert and `LIVE-MONEY` | `COMMERCIAL_STATE_CHANGE` with origin `STALE_RECOVERY`. Complimentary loss is that origin plus the server explanation class, not a new origin |
+| Complimentary conflict | Cart, Review | More than one complimentary would qualify | Neither gift. Ordinary total. Conflict sentence only if a line had been shown | Ordinary evaluated total | Continue | None | No picker | `COPY-GIFT-CONFLICT` only in that case | Explanation if shown | Alert if the sentence appears | `OFFER_RESULT_VIEW` |
+| Stale changed | Review | Prepare or pay found a mismatch | Stop the old pay. New stack and reason | New total | Continue on the new total, or change coupon or cart | No payment-page coupon edit | Stay on Review | `COPY-STALE` | Explanation, then continue | Alert and `LIVE-MONEY` | `COMMERCIAL_STATE_CHANGE` with origin `STALE_RECOVERY`. Complimentary loss is that origin plus the server explanation class, not a new origin |
+| Stale unchanged | Review or pay | Revalidation matches | Same amount. Pay proceeds | Same total | Pay | None | None | No change sentence | No focus jump | Do not announce a change | `REVIEW_TO_PAYMENT` |
+| Payment read-only | Payment | Customer reached payment | Summary only | Current sealed or current quoted total | Pay | Back only if the existing checkout already offers non-coupon back navigation | Commercial recovery is Review | Stack copy only | Pay | None extra | `PAYMENT_ATTEMPT` |
 | Server or network failure | Cart, Review | Apply, replace, remove, or evaluate did not finish | Previous state | Previous total | Try again | Continue on that previous total | Same action | `COPY-RETRY` | The action that failed | Alert | None that claims success |
 | Disabled | Any pending control | Request in flight, empty Apply, or out-of-scope operator control | Control remains visible | Last safe total | The surviving enabled action | None | Enable again when the request ends | Existing labels | Disabled controls are skipped | None | None |
 | Destructive confirmation | Operator retire dialog | Retire pressed | Title, body, Retire offer, Cancel | No customer money | Retire offer | Cancel | Cancel leaves Active | Retire strings | Cancel first | Dialog title | None customer |
@@ -326,7 +391,7 @@ The UI sends the existing commands. It does not decide the winning combination, 
 | `RETRY` | A failed action is showing | Same pending treatment as the action it repeats | Ignored | Stays on Try again until the result | Same place as the original error | Previous total | The action's own success |
 | `SIGN_IN_RETURN` | Identity-required result, then the existing sign-in return | Checking text on return when the code was kept | The return loads once | Result status, or the field when the code was lost | Under the field | No false applied total | `COPY-RETRY-CODE` |
 | `FULFILMENT_CHANGE` | Existing fulfilment controls, not during a coupon request | `COPY-UPDATING`. Primary pay or continue disables | Existing fulfilment controls disable while saving | Leave the mode control | Total region if the new result is an error | Last total marked updating. Delivery saving of the other mode is not labeled current after the new result arrives. Until then, do not invent the other mode's saving | Failure restores the last committed mode presentation |
-| `CART_CHANGE` | Existing quantity, edit, clear, and remove line controls | `COPY-UPDATING` when a commercial refresh follows | Pending disables those line controls, as the cart already disables pending mutations | Leave the line control | Existing cart alert | Last authoritative total until the new quote | Existing cart error copy |
+| `CART_CHANGE` | Existing quantity, edit, clear, and remove line controls | `COPY-UPDATING` when a commercial refresh follows | Pending disables those line controls, as the cart already disables pending mutations | Leave the line control | Existing cart alert | Last shown server figure until the new quote. The Cart label does not become Total payable | Existing cart error copy |
 | `REVALIDATE` | Continue to payment, then the existing prepare inside pay | Do not spin on Payment while showing the old amount as the payable amount | One pay submission, matching `PaymentPanel`'s pending behaviour | Unchanged result: pay. Changed result: Review explanation | Review, not a coupon box on Payment | Either the same validated amount or the new Review total | `COPY-STALE` |
 | `PAYMENT_ENTRY` | Pay only when the amount is the current one | Existing payment pending copy | Existing payment idempotency. No coupon control to double-submit | Pay, or the recovery the panel already uses | Existing payment recovery | The summary matches the current result. Coupon text is not collected | Review when commerce changed |
 | `COMPLIMENTARY_ITEM_LOST` | Happens from revalidation, not from a customer control | Same as revalidation | Not a customer action | Explanation, then continue on the new total | With the total | New total. Old included line is not payable | Stay on Review |
@@ -362,7 +427,7 @@ Reuse the patterns already in the named components. Do not add a second focus ri
 
 | Width | Cart | Review | Payment | Operator |
 |---|---|---|---|---|
-| Below `lg`, including `sm` and `md` | One column. Stack and coupon scroll above the existing sticky bar. Sticky bar is total payable plus Checkout | Single `max-w-[640px]` column. Stack then Continue to payment then coupon. No second sticky bar | Existing payment column. Summary above pay | List, then form. Create grid stacks until `sm`, then `sm:grid-cols-4` |
+| Below `lg`, including `sm` and `md` | One column. Stack and coupon scroll above the existing sticky bar. Sticky bar is Estimated subtotal or Current total, plus Checkout. It does not say Total payable | Single `max-w-[640px]` column. Stack then Continue to payment then coupon. No second sticky bar | Existing payment column. Summary above pay | List, then form. Create grid stacks until `sm`, then `sm:grid-cols-4` |
 | `lg` and up | Two columns. Aside sticky at `top-20`. Mobile bar hidden | Same single column. Do not split a new dashboard | Same | Same stacked editor. Do not invent a wide table |
 | Menu `xl` | Unchanged. `StickyCartBar` still hides at `xl` and still has no offer content | n/a | n/a | n/a |
 
@@ -376,7 +441,7 @@ No important money is inside a disclosure, a carousel, or a marketing banner.
 |---|---|---|---|
 | Initial evaluation | `COPY-CHECKING-TOTAL` if nothing authoritative exists | No guessed discount | Reserve the stack's place under the items so the sticky total bar does not jump when the first total arrives |
 | Coupon check | `COPY-CHECKING` | Previous total | The status line is reserved under the field so the total does not move |
-| Cart mutation | `COPY-UPDATING` when a known total is refreshing | Last authoritative total, visibly marked updating | Sticky amount stays in the same bar slot |
+| Cart mutation | `COPY-UPDATING` when a known total is refreshing | Last shown server figure, visibly marked updating. Estimated subtotal stays estimated | Sticky amount stays in the same bar slot |
 | Fulfilment change | `COPY-UPDATING` | Same. The new result replaces mode-specific delivery lines only when it arrives | Summary stays above Continue to payment |
 | Sign-in return | `COPY-CHECKING` when the code was kept | No false applied total | Same coupon region |
 | Checkout revalidation | No payment spinner that still presents the old amount as payable | Matching result continues. Mismatch returns to Review before pay is offered | Review explanation is above the new total |
@@ -475,7 +540,7 @@ Acceptance scenarios stay the Product Definition's scenarios. This candidate doe
 These choices stay inside approved experience. They are not new product rules.
 
 - The empty coupon field is always present and secondary. It is not collapsed and not a hero. The external-search hypothesis stays a hypothesis. This candidate does not hide the field.
-- Review does not gain a second sticky pay bar. Cart keeps the existing mobile bar and changes its amount from an estimate to the authoritative total payable.
+- Review does not gain a second sticky pay bar. The Cart mobile bar keeps Estimated subtotal when checkout context is incomplete, and Current total only when section 3's reused-checkout conditions hold. It does not say Total payable.
 - The lump "Discount" label is replaced, in this capability's summary, by Order saving, Delivery saving, and Total saved. `formatPaise` stays the formatter.
 - Retire confirmation reuses `ConsequenceReviewDialog` and takes Cancel as the initial focus.
 - Complimentary presentation reuses an item row and adds no picker.
@@ -508,7 +573,7 @@ DESIGN_SYSTEM_MAPPING = YES
 ANALYTICS_HOOKS = YES
 ```
 
-Hooks name locked measurement events. They do not implement collection.
+Hooks name `IMP-036J-MEASUREMENT-CANDIDATE-2` facts. They do not implement collection. The Cart Checkout control is `CART_ACTIVATION`. Review commit after that activation is `CART_REVIEW_REACH`. Observation evidence is read from the committed money text, not copied from the evaluation response.
 
 ```text
 DESIGN_READINESS = NOT_PERFORMED
