@@ -296,7 +296,7 @@ Database and HTTP proof, plus a browser check that one press sends one id and a 
 | Closed journey replay | Existing fact returned |
 | Closed journey new fingerprint | Rejected. No sequence |
 | Explicit cancel, then a later start mints a new key | Unresolved origins of the closed journey are `JOURNEY_BOUNDARY`. They do not receive the new key and do not become that journey's change fact |
-| Reconcile adopts the guest coupon onto the customer cart | One new `COUPON_APPLY` or `COUPON_REPLACE` origin on the surviving cart, with a new `source_command_id`. Guest rows are not copied. A continuable checkout keeps that origin on its journey key. A `CANCELLED` or `COMPLETED` checkout leaves the origin null-key so the next start attaches it to the new journey. A line-only reconcile writes no origin |
+| Reconcile adopts the guest coupon onto the customer cart | One new `COUPON_APPLY` or `COUPON_REPLACE` origin on the surviving cart, with a null journey key and a new `source_command_id`. Reconcile does not lock or stamp a checkout. A later start or checkout evaluation attaches the key only if that checkout is still continuable. An explicit cancel that commits first leaves the origin null-key for the next new journey. Guest rows are not copied. A line-only reconcile writes no origin |
 | Quantity edit | Not an origin |
 
 `PROVENANCE_PROOF_PLANNED = YES`.
