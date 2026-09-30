@@ -12,7 +12,10 @@
   "experienceGate": "PASS",
   "experienceCriticality": "X3",
   "changeRisk": "CR2",
-  "designReadiness": "NOT_PERFORMED",
+  "designReadiness": "PASS",
+  "qualityTestPlanFinalized": "YES",
+  "measurementInstrumentationPlanFinalized": "YES",
+  "implementationPlan": "NOT_PERFORMED",
   "candidateRevision": "IMP-036J-FIT-CANDIDATE-9",
   "architectureFitSourceCandidate": "IMP-036J-FIT-CANDIDATE-9",
   "architectureBase": "ARCH-R23",
@@ -106,10 +109,10 @@ HISTORICAL_CANDIDATE_5_ARCHITECTURE_FIT = PASS
 HISTORICAL_CANDIDATE_5_ARCHITECTURE_LOCK = LOCKED
 IMP036J_ARCHITECTURE_FIT = PASS
 IMP036J_ARCHITECTURE_LOCKED = YES
-IMP036J_DESIGN_READINESS = NOT_PERFORMED
-IMP036J_NEXT_GATE = DESIGN_READINESS
-QUALITY_TEST_PLAN_FINALIZED = NO
-MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = NO
+IMP036J_DESIGN_READINESS = PASS
+IMP036J_NEXT_GATE = IMPLEMENTATION_PLAN
+QUALITY_TEST_PLAN_FINALIZED = YES
+MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = YES
 IMPLEMENTATION_PLAN = NOT_PERFORMED
 IMPLEMENTATION_AUTHORIZED = false
 IMP036J_IMPLEMENTATION_AUTHORIZED = NO
@@ -2300,18 +2303,18 @@ GLOBAL_DECISION_REQUIRED = NO
 Every mandatory story still has a safe fit inside the accepted Promotion, Pricing, Cart, Checkout Snapshot, Order, Catalog, and Availability authorities. The approved Experience Definition's presentation facts and X3 measurement contract are specified as semantic constraints: displayed-savings integrity on Cart and Checkout Review, amount-level observation of the actually committed presentation, commercial state-change identity, and Cart → Review continuation by activation, including a reused active checkout whose numerator requires a later Review reach. Concrete measurement encoding is not a Fit PASS criterion. Product and Experience semantics are unchanged. `PD-IMP-036J-DRAFT-6` and `XD-IMP-036J-DRAFT-6` are not modified.
 
 ```text
-IMP036J_DESIGN_READINESS = NOT_PERFORMED
-QUALITY_TEST_PLAN_FINALIZED = NO
-MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = NO
+IMP036J_DESIGN_READINESS = PASS
+QUALITY_TEST_PLAN_FINALIZED = YES
+MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = YES
 IMPLEMENTATION_PLAN = NOT_PERFORMED
 IMP036J_IMPLEMENTATION_AUTHORIZED = NO
 IMP036J_STARTED = NO
 IMP036J_IMPLEMENTATION_STARTED = NO
-IMP036J_NEXT_GATE = DESIGN_READINESS
+IMP036J_NEXT_GATE = IMPLEMENTATION_PLAN
 ```
 
-The architecture-fit proof plan in section 30 does not finalize the Quality/Test Plan. The X3
-measurement architecture in section 27A does not finalize the Measurement/Instrumentation Plan.
+Design Readiness PASS and the finalized Quality/Test Plan and Measurement/Instrumentation Plan
+are persisted in their own documents. This architecture record does not authorize implementation.
 Those plans remain part of Design Readiness. This PASS does not authorize or start
 implementation. Architecture Fit PASS is not Design Readiness and is not a finalized
 Measurement/Instrumentation Plan.

@@ -1,31 +1,31 @@
 <!-- governance-meta
 {
-  "status": "CANDIDATE",
-  "authority": "NONE",
+  "status": "CURRENT",
+  "authority": "MEASUREMENT_INSTRUMENTATION_PLAN",
   "capability": "IMP-036J",
   "candidateId": "IMP-036J-MEASUREMENT-CANDIDATE-2",
   "experienceDefinition": "XD-IMP-036J-DRAFT-6",
   "architectureSource": "IMP-036J-FIT-CANDIDATE-9",
-  "measurementInstrumentationPlanFinalized": "NO",
-  "designReadiness": "NOT_PERFORMED",
+  "measurementInstrumentationPlanFinalized": "YES",
+  "designReadiness": "PASS",
   "implementationAuthorized": false
 }
 -->
 
-# IMP-036J — Measurement and instrumentation plan candidate
+# IMP-036J — Measurement and instrumentation plan
 
 ```text
 CANDIDATE_ID = IMP-036J-MEASUREMENT-CANDIDATE-2
-STATUS = CANDIDATE
-AUTHORITY = NONE
+STATUS = CURRENT
+AUTHORITY = MEASUREMENT_INSTRUMENTATION_PLAN
 CAPABILITY = IMP-036J
-MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = NO
-DESIGN_READINESS = NOT_PERFORMED
-QUALITY_TEST_PLAN_FINALIZED = NO
+MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = YES
+DESIGN_READINESS = PASS
+QUALITY_TEST_PLAN_FINALIZED = YES
 IMPLEMENTATION_PLAN = NOT_PERFORMED
 IMPLEMENTATION_AUTHORIZED = NO
 IMPLEMENTATION_STARTED = NO
-CANDIDATE_READY_FOR_INDEPENDENT_REVIEW = YES
+INDEPENDENT_MEASUREMENT_PLAN_REVIEW = PASS
 NUMERIC_SUCCESS_TARGET = NONE
 NEW_NUMERIC_RETENTION = NO
 NEW_SERVICE = NO
@@ -34,7 +34,7 @@ NEW_PROMOTION_AUTHORITY = NO
 NEW_ROLE = NO
 ```
 
-This candidate chooses the concrete measurement encoding that `IMP-036J-FIT-CANDIDATE-9` left open. It operationalizes `XD-IMP-036J-DRAFT-6` section 17. It does not finalize the Measurement/Instrumentation Plan, does not perform Design Readiness, and does not authorize implementation.
+This plan chooses the concrete measurement encoding that `IMP-036J-FIT-CANDIDATE-9` left open. It operationalizes `XD-IMP-036J-DRAFT-6` section 17. The Measurement/Instrumentation Plan is finalized. Design Readiness is PASS. Implementation stays unauthorized.
 
 ## 0. Candidate history
 
@@ -567,8 +567,9 @@ Cross-scope reads and writes use the existing cart and checkout denial. An obser
 ## 13. What this candidate does not do
 
 ```text
-DESIGN_READINESS = NOT_PERFORMED
-MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = NO
+DESIGN_READINESS = PASS
+MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = YES
+IMPLEMENTATION_PLAN = NOT_PERFORMED
 IMPLEMENTATION_AUTHORIZED = NO
 IMPLEMENTATION_STARTED = NO
 D-383 = NO

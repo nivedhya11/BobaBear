@@ -1,32 +1,37 @@
 <!-- governance-meta
 {
-  "status": "CANDIDATE",
-  "authority": "NONE",
+  "status": "CURRENT",
+  "authority": "DESIGN_READINESS",
   "capability": "IMP-036J",
   "candidateId": "IMP-036J-DESIGN-CANDIDATE-2",
   "productDefinition": "PD-IMP-036J-DRAFT-6",
   "experienceDefinition": "XD-IMP-036J-DRAFT-6",
   "architecture": "ARCH-R23",
   "architectureSource": "IMP-036J-FIT-CANDIDATE-9",
-  "designReadiness": "NOT_PERFORMED",
+  "designReadiness": "PASS",
+  "qualityTestPlanFinalized": "YES",
+  "measurementInstrumentationPlanFinalized": "YES",
+  "implementationPlan": "NOT_PERFORMED",
   "implementationAuthorized": false
 }
 -->
 
-# IMP-036J — Design Readiness candidate
+# IMP-036J — Design Readiness
 
 ```text
 CANDIDATE_ID = IMP-036J-DESIGN-CANDIDATE-2
-STATUS = CANDIDATE
-AUTHORITY = NONE
+STATUS = CURRENT
+AUTHORITY = DESIGN_READINESS
 CAPABILITY = IMP-036J
-DESIGN_READINESS = NOT_PERFORMED
-QUALITY_TEST_PLAN_FINALIZED = NO
-MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = NO
+DESIGN_READINESS = PASS
+QUALITY_TEST_PLAN_FINALIZED = YES
+MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = YES
 IMPLEMENTATION_PLAN = NOT_PERFORMED
 IMPLEMENTATION_AUTHORIZED = NO
 IMPLEMENTATION_STARTED = NO
-CANDIDATE_READY_FOR_INDEPENDENT_REVIEW = YES
+INDEPENDENT_DESIGN_READINESS_REVIEW = PASS
+DESIGN_READINESS_ARCHITECT_REVIEW = 5917691904
+DESIGN_READINESS_EVALUATED_HEAD = aa41c3744995a68ca9d435670be408b99cb6827d
 ARCHITECTURE_SOURCE = IMP-036J-FIT-CANDIDATE-9
 ARCHITECTURE_FIT = PASS
 ARCHITECTURE_LOCKED = YES
@@ -37,12 +42,10 @@ ARCH-R24 = NO
 NEW_ADR = NO
 ```
 
-This document is an implementation-ready interaction and presentation candidate. It is not Design
-Readiness PASS. It does not authorize implementation, does not change `PD-IMP-036J-DRAFT-6`,
-`XD-IMP-036J-DRAFT-6`, the locked capability architecture, ROADMAP, STATE, the decision register,
-D-383, or ARCH-R24.
-
-Independent review still answers whether this candidate is complete enough to build.
+This document is the persisted Design Readiness for IMP-036J. Independent Architect review
+`5917691904` returned PASS on head `aa41c3744995a68ca9d435670be408b99cb6827d`. It does not
+authorize implementation, does not change `PD-IMP-036J-DRAFT-6`, `XD-IMP-036J-DRAFT-6`, the
+locked capability architecture, the decision register, D-383, or ARCH-R24.
 
 ## 0. Candidate history
 
@@ -594,6 +597,7 @@ ANALYTICS_HOOKS = YES
 Hooks name `IMP-036J-MEASUREMENT-CANDIDATE-2` facts. They do not implement collection. The Cart Checkout control is `CART_ACTIVATION`, which is the `cart_checkout_activations` row and not a journey-fact kind. Review commit after that activation is `CART_REVIEW_REACH`. Observation evidence is read from the committed money text, not copied from the evaluation response.
 
 ```text
-DESIGN_READINESS = NOT_PERFORMED
-CANDIDATE_READY_FOR_INDEPENDENT_REVIEW = YES
+DESIGN_READINESS = PASS
+IMPLEMENTATION_PLAN = NOT_PERFORMED
+IMPLEMENTATION_AUTHORIZED = NO
 ```
