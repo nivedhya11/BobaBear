@@ -141,7 +141,7 @@ MIGRATION_WRITTEN_BY_THIS_CANDIDATE = NO
 | `checkout_journey_heads` | One row per journey key. Columns: `checkout_journey_key` primary key, `next_sequence bigint not null`, `closed_at timestamptz null` | One allocator |
 | `checkout_journey_facts` | Authoritative journey facts. Columns below | Unique `(checkout_journey_key, journey_sequence)`. Partial unique indexes for each idempotency identity in section 6 |
 | `commercial_evaluations` | Server expected presentation for one authoritative result occurrence | `evaluation_id uuid` primary key. `occurrence_ordinal bigint` allocated under the Cart lock. Unique `(cart_id, result_fingerprint, occurrence_ordinal)` where `surface_scope = CART`. Unique `(checkout_id, result_fingerprint, occurrence_ordinal)` where `surface_scope = CHECKOUT` |
-| `commercial_presentation_observations` | Non-authoritative observed committed presentation | Unique `evaluation_id`. The submitted surface must equal that evaluation's `surface_scope` mapping. A second surface for the same id is rejected |
+| `commercial_presentation_observations` | Non-authoritative observed committed presentation | Unique `(evaluation_id, surface)`. `surface_scope = CART` accepts surface `CART` only. `surface_scope = CHECKOUT` accepts surface `CART` when Cart commits that same evaluation, and surface `CHECKOUT_REVIEW` when Review commits it. A second row for the same evaluation and the same surface is rejected. Cart is not stored as `CHECKOUT_REVIEW` |
 | `cart_checkout_activations` | One genuine Cart-surface Checkout activation | `activation_id uuid` primary key |
 | `checkout_review_surface_tokens` | SHA-256 of each token minted by `evaluateCheckout`, with `checkout_id` and `cart_id` | Unique `token_sha256`. Many rows may be valid for one checkout. A new evaluation inserts a row and does not delete earlier rows. The plaintext token is not stored |
 | `commercial_command_origins` | Origin written in the commercial mutation transaction, before evaluation, only when the revision changes | Unique `source_command_id`. Ordered by `cart_origin_ordinal` under the Cart lock. `resolved_change_fact_id` is null until a later Review evaluation resolves it |
@@ -206,7 +206,7 @@ When a payment operation relies on a Review that was presented, the measurement 
 | `COUPON_ATTEMPT` | `source_command_id` | Return existing | Reject |
 | `COMMERCIAL_STATE_CHANGE` | SHA-256 of the journey key, `0x00`, the previous occurrence's `evaluation_id` or sixteen zero bytes when there is no previous Review, `0x00`, and the new fingerprint | Return existing, including after close | Reject |
 | `CART_REVIEW_REACH` | `activation_id` | Return existing | Reject a new reach. Replay of the existing reach returns it |
-| `REVIEW_TO_PAYMENT` | server `continue_command_id` for that continue action | Return existing | Reject |
+| `REVIEW_TO_PAYMENT` | caller-minted `source_command_id` for that continue action, stored as the fact `idempotency_key` | Return existing | Reject |
 | `PAYMENT_ATTEMPT` | existing payment idempotency key | Return existing | Reject a new attempt fact. Existing replay returns it |
 | `DIRECT_ORDER_COMPLETION` | one per `checkout_journey_key` | Return existing, including after close | A second completion is rejected |
 
@@ -237,9 +237,12 @@ DELIVERY_SAVING
 TOTAL_SAVED
 ESTIMATED_SUBTOTAL
 TOTAL_PAYABLE
+CURRENT_CHECKOUT_TOTAL
 DELIVERY_CHARGE
 PROGRESS
 ```
+
+`CURRENT_CHECKOUT_TOTAL` is the checkout evaluation's payable paise under the Cart label `COPY-CURRENT-CHECKOUT-TOTAL`. On a `CHECKOUT` evaluation it is present and equal to `TOTAL_PAYABLE`. On a `CART` evaluation it is absent. It is that same server figure, not a second quote and not a Cart label of Total payable.
 
 `expected_coarse_shape` is one of: `NONE`, `AUTOMATIC_SAVING`, `ORDER_SAVING`, `DELIVERY_SAVING`, `BOTH_SAVINGS`, `COMPLIMENTARY_LINE`, `COUPON_SELECTED`, `COUPON_VALID_NOT_SELECTED`, `EQUAL_PAYABLE_SELECTED`, `EQUAL_PAYABLE_NOT_SELECTED`, `THRESHOLD_PROGRESS`. The shape is derived from the server result class, not from client text. Saving components are omitted when their paise amount is zero. A standing ₹0 delivery charge is not a saving. `server_explanation_integrity` is true only when the server explanation parts equal that quote's evaluated saving. The client does not send this boolean.
 
@@ -247,7 +250,7 @@ The response may include `evaluationId` so the observation can name which evalua
 
 ### Observation source and encoding
 
-After the customer surface commits the money region to the DOM, the page reads that committed region. The reader uses the rendered text of each money row in `OrderMoneySummaryPanel` or the Cart stack, including the Cart sticky amount label. It parses rupee text with the same `formatPaise` display rules into integer paise. ₹80.00 is 8000. ₹8.00 or a rendered ₹8 is 800. A row that was not committed is absent. A row that was committed extra is present.
+After the customer surface commits the money region to the DOM, the page reads that committed region. The reader uses the rendered text of each money row in `OrderMoneySummaryPanel` or the Cart stack, including the Cart sticky amount label. It parses rupee text with the same `formatPaise` display rules into integer paise. ₹80.00 is 8000. ₹8.00 or a rendered ₹8 is 800. A row that was not committed is absent. A row that was committed extra is present. The Cart label `COPY-ESTIMATED-SUBTOTAL` is kind `ESTIMATED_SUBTOTAL`. The Cart label `COPY-CURRENT-CHECKOUT-TOTAL` is kind `CURRENT_CHECKOUT_TOTAL`. The Review, Payment, and purchased label `COPY-TOTAL-PAYABLE` is kind `TOTAL_PAYABLE`.
 
 The POST body is exactly:
 
@@ -261,9 +264,12 @@ observedCoarseShape
 observedComplimentaryPresent
 observedComplimentaryLineSha256
 sourceCommandId null
+cartActivationId null
 ```
 
 `sourceCommandId` is present only when the committed coupon-result region is the presentation of that command. The server accepts it only when the result row's `cart_id` is the evaluation's cart and the request already passes the existing cart authorization for that cart. It does not set `surface`. `surface` is written when the coupon command completes. See section 10.
+
+`cartActivationId` is present only when this committed Review still holds the activation id from the Cart Checkout control that opened it. A Cart observation sends null. Direct entry to Review sends null. The server uses it only to record `CART_REVIEW_REACH` under section 9. It does not set `surface` and it does not allocate a second Offer-result view. A repeat POST that returns the existing observation row still records a reach for a new valid activation id on that body. A null id, or an id that already has a reach, allocates nothing.
 
 `observedComplimentaryLineSha256` is SHA-256 of the exact complimentary line text the DOM committed, or null when that line was not committed. The plaintext is not stored on the observation and is not stored on the evaluation. The evaluation stores `complimentary_variant_id` and `projected_complimentary_line_sha256`, which is SHA-256 of the catalog line projected at evaluation time. The server compares the two hashes. A different item changes the hash. The client does not send a variant id or the plaintext line.
 
@@ -291,11 +297,17 @@ The server compares expected and observed:
 | Wrong shape | `expected_coarse_shape` differs from `observedCoarseShape`. `WRONG_SHAPE` |
 | Progress presence or value | `progressPresent` differs, or both are present and `progressRemainingPaise` differs. `PROGRESS_MISMATCH` |
 
+The amount kind the surface must show is filtered. Saving, delivery, progress, and shape comparisons are not.
+
+- A `CART` observation of a `CART` evaluation requires `ESTIMATED_SUBTOTAL`. `CURRENT_CHECKOUT_TOTAL` and `TOTAL_PAYABLE` are not required rows. Observing either is `WRONG_COMPONENT`.
+- A `CART` observation of a `CHECKOUT` evaluation requires `CURRENT_CHECKOUT_TOTAL` equal to that evaluation's payable paise. It does not require an observed `TOTAL_PAYABLE` row, and an observed Total payable label on Cart is `WRONG_COMPONENT`.
+- A `CHECKOUT_REVIEW` observation requires `TOTAL_PAYABLE`. It does not require `CURRENT_CHECKOUT_TOTAL`, and an observed Current total label on Review is `WRONG_COMPONENT`.
+
 `server_presentation_match` is true only when every comparison above passes and `server_explanation_integrity` is already true. A browser field cannot set it. If the observation is absent, the match stays null. Null is unobserved. It is not a pass and it is not a payable failure.
 
 ### Dedup, retention, failure
 
-One observation per `evaluation_id`. `surface_scope = CART` accepts observation surface `CART` only. `surface_scope = CHECKOUT` accepts observation surface `CHECKOUT_REVIEW` only. Any other surface is rejected and writes nothing. A repaint or transport retry returns that row and does not count a second Offer-result view. The first committed observation is the evidence for that evaluation. Offer-result view count is one per presented evaluation, not per repaint and not per surface label.
+One observation per `(evaluation_id, surface)`. A `CART` evaluation accepts surface `CART` only. A `CHECKOUT` evaluation accepts surface `CART` when Cart commits that same evaluation under `COPY-CURRENT-CHECKOUT-TOTAL`, and surface `CHECKOUT_REVIEW` when Review commits it. Any other surface is rejected and writes nothing. Cart is not recorded as `CHECKOUT_REVIEW`, and Review is not recorded as `CART`. A repaint or transport retry of the same surface returns that row and does not count a second view of that surface. That return still records `CART_REVIEW_REACH` when the body carries a new `cartActivationId`, as section 9 requires. The first committed observation for a surface is the evidence for that evaluation on that surface. Offer-result view count is one per presented evaluation per surface, not per repaint.
 
 Measurement failure, a rejected observation, a mismatch, or a dropped POST does not change the commercial evaluation, the cart, the checkout revision, eligibility, or payment. Checkout and payment do not wait on the POST. Mismatch is reported in the integrity ratio. It is not a second money authority.
 
@@ -317,7 +329,7 @@ CLOSED_JOURNEY_NEW_CHANGE = REJECT
 CLOSED_JOURNEY_REPLAY = RETURN_EXISTING_OBSERVATION
 ```
 
-The fingerprint is SHA-256 over canonical UTF-8 JSON with sorted keys of the full authoritative expected presentation. That object includes every component in the closed set, present or absent, with its paise amount: `ORDER_SAVING`, `DELIVERY_SAVING`, `TOTAL_SAVED`, `ESTIMATED_SUBTOTAL`, `TOTAL_PAYABLE`, `DELIVERY_CHARGE`, and `PROGRESS`. It also includes `progressPresent`, `progressRemainingPaise`, `expected_coarse_shape`, `explanation_reason_class`, complimentary-present, and `complimentary_variant_id` (the server catalog id of the exact selected item, or null). The rendered complimentary line name is part of the expected presentation because that is the line the customer sees. The raw coupon code is not an input. Two results that differ in delivery charge, estimated subtotal, payable, progress, complimentary item, or any other expected field are different fingerprints and different `evaluation_id` values.
+The fingerprint is SHA-256 over canonical UTF-8 JSON with sorted keys of the full authoritative expected presentation. That object includes every component in the closed set, present or absent, with its paise amount: `ORDER_SAVING`, `DELIVERY_SAVING`, `TOTAL_SAVED`, `ESTIMATED_SUBTOTAL`, `TOTAL_PAYABLE`, `CURRENT_CHECKOUT_TOTAL`, `DELIVERY_CHARGE`, and `PROGRESS`. `CURRENT_CHECKOUT_TOTAL` follows the rule in section 7: present and equal to `TOTAL_PAYABLE` on a `CHECKOUT` evaluation, absent on a `CART` evaluation. It also includes `progressPresent`, `progressRemainingPaise`, `expected_coarse_shape`, `explanation_reason_class`, complimentary-present, and `complimentary_variant_id` (the server catalog id of the exact selected item, or null). The rendered complimentary line name is part of the expected presentation because that is the line the customer sees. The raw coupon code is not an input. Two results that differ in delivery charge, estimated subtotal, payable, progress, complimentary item, or any other expected field are different fingerprints and different `evaluation_id` values.
 
 Allowed `origin_kind` values: `COUPON_APPLY`, `COUPON_REPLACE`, `COUPON_REMOVE`, `FULFILMENT_CHANGE`, `STALE_RECOVERY`. A quantity edit is not an origin. An origin is written only when that command changes the commercial revision. A no-op writes no origin row and no change fact.
 
@@ -383,7 +395,7 @@ Then set `checkout_journey_key`, `checkout_id`, and `watermark_sequence` to the 
 
 Unknown, stale, or other-cart context does not fail checkout and does not attach. An activation that never associates remains in the denominator and cannot enter the numerator. The report does not join it to a later checkout by cart id, customer id, or guest id. A retry of an already-associated activation returns that same association.
 
-When Checkout Review commits an authoritative evaluation and the client still holds the activation id from the navigation that opened this Review, it sends that id with the Review observation. The server records `CART_REVIEW_REACH` once for that `activation_id`. The reach fact's sequence is allocated after the activation's watermark, so it is strictly greater. A historical `REVIEW_PRESENTED` whose sequence is less than or equal to the watermark does not satisfy the activation. Reaching Review again does not require a second Offer-result view when `REVIEW_PRESENTED` for the same `evaluation_id` already exists.
+When Checkout Review commits an authoritative evaluation and the client still holds the activation id from the navigation that opened this Review, it sends that id as `cartActivationId` in the section 7 observation body. The server records `CART_REVIEW_REACH` once for that `activation_id`. A later POST that only returns the existing observation row still records the reach when the id is new. The reach fact's sequence is allocated after the activation's watermark, so it is strictly greater. A historical `REVIEW_PRESENTED` whose sequence is less than or equal to the watermark does not satisfy the activation. Reaching Review again does not require a second Offer-result view when `REVIEW_PRESENTED` for the same `evaluation_id` already exists.
 
 A qualifying reach requires an authoritative Review evaluation on that journey at the time the reach is recorded. The reach fact points at that `evaluation_id`. It does not copy the evaluation into a new view row.
 
@@ -414,9 +426,9 @@ No abandonment timeout removes `A2`.
 
 | Signal | Where it is written | Dedup |
 |---|---|---|
-| Offer result viewed | One server observation row for that `evaluation_id` after comparison. Surface must match the evaluation scope | One per presented evaluation. Repaint returns it |
+| Offer result viewed | One server observation row per `(evaluation_id, surface)` after comparison. `CART` for a Cart evaluation. `CART` or `CHECKOUT_REVIEW` for a Checkout evaluation, and Cart is not relabeled as Review | One per presented evaluation per surface. Repaint returns that surface's row |
 | Coupon outcome | `commercial_command_results`, written when the coupon command completes, including an invalid command and including when the later observation POST fails. `surface` is written in that same transaction. No raw coupon, no bearer, and no client surface label | One per caller-known `source_command_id`. Retry returns that row, including its surface. A different cart is denied |
-| Review → Payment | `REVIEW_TO_PAYMENT` when Review continue commits and an authoritative Review evaluation is current | One per `continue_command_id` |
+| Review → Payment | `REVIEW_TO_PAYMENT` when Review continue commits and an authoritative Review evaluation is current. The Continue control mints `source_command_id` before the request and retries a lost response with that same id. The server does not mint a separate continue id | One per that caller-minted `source_command_id` |
 | Payment attempt | `PAYMENT_ATTEMPT` beside the existing payment command | Existing payment idempotency key |
 | Successful completion | `DIRECT_ORDER_COMPLETION` inside `materializeOrderForCompletedCheckout`, using the Candidate 9 order-materialization rules | One per journey key |
 | Changed-total recovery | `STALE_RECOVERY` origin on the one change fact when the server explanation is a changed total | One fact per new fingerprint |
@@ -465,7 +477,7 @@ Rate = numerator / denominator when the denominator is non-zero. No target is at
 | Complimentary-unavailable continuation | One journey whose `STALE_RECOVERY` change before the cutoff carries the server explanation class for complimentary unavailable | Later continuation or completion on that key before the cutoff | Those journeys | No |
 | Repeated invalid attempts | Coupon commands on one journey before the cutoff whose class is invalid | Count of those commands. This is a guardrail count, not a new event attribute | n/a | No |
 | Support contacts about a coupon, an Offer, the total, or an included item | Existing support handling | n/a | n/a | `UNAVAILABLE`. No existing approved instrumentation was found. Coupon-error counts are not a substitute |
-| Displayed savings integrity | One presented evaluation on Cart or Review with both an expected row and an observation, occurrence before the cutoff | `server_presentation_match = true` | Those presented evaluations. Unobserved evaluations are reported separately as unobserved, not as matches | No |
+| Displayed savings integrity | One observation of one evaluation on one surface, Cart or Review, with both an expected row and that surface's observation, occurrence before the cutoff | `server_presentation_match = true` | Those surface observations. The other surface is its own row. Unobserved surfaces are reported separately as unobserved, not as matches | No |
 
 Segments and secondary rates are descriptive. They are not causes.
 

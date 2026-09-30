@@ -124,7 +124,7 @@ No new customer route. No Offers destination. No marketing browse hub. No coupon
 
 | Surface | Role | Files to extend later |
 |---|---|---|
-| Cart `/order/cart` | Items, non-final amount, saving stack only from a server result that does not invent delivery, threshold, coupon | `CartClient`, `CartLineList` read-only extra row, money rows |
+| Cart `/order/cart` | Items, then the saving stack only from a server result that does not invent delivery, then the non-final amount, threshold, and coupon | `CartClient`, `CartLineList` read-only extra row, money rows |
 | Checkout Review inside `/order/checkout` | Same shared coupon state and the same stack, plus fulfilment | `CheckoutClient`, `OrderMoneySummaryPanel` |
 | Payment step | Read-only summary. Pay only the current amount | `PaymentPanel` |
 | Confirmation `/order/confirmation` | Purchased truth | `OrderConfirmationClient` |
@@ -204,7 +204,7 @@ A complimentary ₹0 merchandise line is an item row, not a second saving row. D
 
 ### Desktop cart (`lg` and up)
 
-Left column: heading, items, complimentary line, non-money alerts already on the cart. Right aside (`cart-order-summary`, `lg:sticky lg:top-20`): the non-final amount, saving stack, threshold line, coupon region, primary Checkout, secondary "Keep browsing". The aside is the money and the action. Coupon sits under the amount and above Checkout.
+Left column: heading, items, complimentary line, non-money alerts already on the cart. Right aside (`cart-order-summary`, `lg:sticky lg:top-20`): saving stack, the non-final amount, threshold line, coupon region, primary Checkout, secondary "Keep browsing". That is the same Cart sequence as the numbered order above and as the tab order in section 8: saving lines, then the amount. The aside is the money and the action. Coupon sits under the amount and above Checkout.
 
 ### Narrow cart (below `lg`)
 
