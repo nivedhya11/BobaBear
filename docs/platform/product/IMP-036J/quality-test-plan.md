@@ -251,7 +251,9 @@ The observation fixture reads committed row text. It does not resend the evaluat
 | Expected complimentary line rendered as a different item | The observation stores the committed line's SHA-256, not the plaintext. Comparison emits `WRONG_COMPLIMENTARY_ITEM` |
 | Result A, then B, then A again, including when cart and checkout revisions do not change | The second A gets a new `occurrence_ordinal` and a new `evaluation_id`. A retry while that fingerprint is still the latest row returns the first id |
 | Two journey facts whose lock order differs from transaction start | `occurred_at` is `clock_timestamp()` after the journey-head lock. The higher sequence does not carry the earlier transaction-start time |
-| Observation surface that does not match the evaluation scope | Rejected. `evaluation_id` stays unique, so one view row |
+| Observation surface outside the surfaces that evaluation accepts | Rejected. A `CART` evaluation accepts `CART` only. A `CHECKOUT` evaluation accepts `CART` and `CHECKOUT_REVIEW` only. A disallowed surface writes no integrity row and no counted view |
+| Same `CHECKOUT` evaluation committed on Cart, then on Checkout Review | Two integrity observations, surfaces `CART` and `CHECKOUT_REVIEW`. One `offer_result_views` row, surface `CART`, because Cart committed first. The Review observation does not update that row. `REVIEW_PRESENTED` still exists once for that evaluation on the journey. A new `cartActivationId` on the Review body still records `CART_REVIEW_REACH` |
+| Same `CHECKOUT` evaluation committed on Checkout Review, then on Cart | Two integrity observations. One counted view, surface `CHECKOUT_REVIEW`. The later Cart observation does not update that view and is not relabeled as Review |
 | Expected ₹80 rendered as ₹80 | `server_presentation_match = true` |
 | Expected ₹80 rendered as ₹8 | `WRONG_AMOUNT`. Match is false |
 | Omitted saving row | `OMITTED_ROW` |
@@ -311,6 +313,8 @@ Implementation tests, not this candidate's runs, must show:
 
 - A presented Review writes one `REVIEW_PRESENTED` for one `evaluation_id`.
 - A repaint does not write a second Offer-result view.
+- The same checkout evaluation committed on Cart and then on Review writes one counted Offer-result view and two surface-faithful integrity observations. The counted view stays on the first surface.
+- That later Review still records `REVIEW_PRESENTED`, and it records `CART_REVIEW_REACH` when the body carries a new activation id. Neither fact is dropped because the view was already counted on Cart.
 - A later Cart activation does not require a second Offer-result view to record `CART_REVIEW_REACH`.
 - The same journey key survives cart edit, coupon change, fulfilment change, stale recovery, reused active checkout, and payment-driven expiry.
 - Explicit cancel and successful completion mint a new key on the next attempt.

@@ -141,7 +141,8 @@ MIGRATION_WRITTEN_BY_THIS_CANDIDATE = NO
 | `checkout_journey_heads` | One row per journey key. Columns: `checkout_journey_key` primary key, `next_sequence bigint not null`, `closed_at timestamptz null` | One allocator |
 | `checkout_journey_facts` | Authoritative journey facts. Columns below | Unique `(checkout_journey_key, journey_sequence)`. Partial unique indexes for each idempotency identity in section 6 |
 | `commercial_evaluations` | Server expected presentation for one authoritative result occurrence | `evaluation_id uuid` primary key. `occurrence_ordinal bigint` allocated under the Cart lock. Unique `(cart_id, result_fingerprint, occurrence_ordinal)` where `surface_scope = CART`. Unique `(checkout_id, result_fingerprint, occurrence_ordinal)` where `surface_scope = CHECKOUT` |
-| `commercial_presentation_observations` | Non-authoritative observed committed presentation | Unique `(evaluation_id, surface)`. `surface_scope = CART` accepts surface `CART` only. `surface_scope = CHECKOUT` accepts surface `CART` when Cart commits that same evaluation, and surface `CHECKOUT_REVIEW` when Review commits it. A second row for the same evaluation and the same surface is rejected. Cart is not stored as `CHECKOUT_REVIEW` |
+| `commercial_presentation_observations` | Surface-grained rendered-money integrity evidence. Not the counted Offer-result view | Unique `(evaluation_id, surface)`. `surface_scope = CART` accepts surface `CART` only. `surface_scope = CHECKOUT` accepts surface `CART` when Cart commits that same evaluation, and surface `CHECKOUT_REVIEW` when Review commits it. A second row for the same evaluation and the same surface is rejected. A second surface of a `CHECKOUT` evaluation is accepted and does not count a second Offer-result view. Cart is not stored as `CHECKOUT_REVIEW` |
+| `offer_result_views` | Counted Offer-result view. One per authoritative evaluation, across Cart and Checkout Review | `evaluation_id` primary key. `surface` and `occurred_at` are the first committed presentation and are not updated by a later surface |
 | `cart_checkout_activations` | One genuine Cart-surface Checkout activation | `activation_id uuid` primary key |
 | `checkout_review_surface_tokens` | SHA-256 of each token minted by `evaluateCheckout`, with `checkout_id` and `cart_id` | Unique `token_sha256`. Many rows may be valid for one checkout. A new evaluation inserts a row and does not delete earlier rows. The plaintext token is not stored |
 | `commercial_command_origins` | Origin written in the commercial mutation transaction, before evaluation, only when the revision changes | Unique `source_command_id`. Ordered by `cart_origin_ordinal` under the Cart lock. `resolved_change_fact_id` is null until a later Review evaluation resolves it |
@@ -155,6 +156,8 @@ MIGRATION_WRITTEN_BY_THIS_CANDIDATE = NO
 A retry returns the existing `evaluation_id` only when the latest evaluation for that cart or checkout already has the same fingerprint. That retry does not allocate another ordinal. If the computed fingerprint differs from that latest evaluation, including a return to an older fingerprint after a different one, the transaction inserts a new row with `occurrence_ordinal = max(occurrence_ordinal for that scope) + 1`. The ordinal does not come from `carts.revision` or `checkouts.revision`. A cap change that does not bump those revisions still creates an occurrence because the fingerprint changed. A lost HTTP response is retried against the latest row and returns the same id. The second occurrence of fingerprint A after B gets its own `evaluation_id`, `REVIEW_PRESENTED`, and change fact.
 
 `commercial_presentation_observations` columns: `evaluation_id`, `surface` `CART` or `CHECKOUT_REVIEW`, `observed_components`, `observed_progress_present`, `observed_progress_remaining_paise`, `observed_coarse_shape`, `observed_complimentary_present`, `observed_complimentary_line_sha256 null`, `server_presentation_match boolean null`, `mismatch_flags text[]`, `occurred_at`. `observed_complimentary_line_sha256` is SHA-256 of the committed complimentary line text. The plaintext line is not stored. `server_presentation_match` and `mismatch_flags` are written only by server comparison. A request that includes an integrity boolean, a complimentary variant id, a coupon code, an eligibility reason, a plaintext item line, or a payment secret is rejected and writes nothing.
+
+`offer_result_views` columns: `evaluation_id` primary key, `surface` `CART` or `CHECKOUT_REVIEW`, `occurred_at`. Both `surface` and `occurred_at` are copied from the first accepted integrity observation of that evaluation and are not updated afterward. The row stores no customer id, guest id, coupon text, money amount, or client integrity boolean.
 
 `cart_checkout_activations` columns: `activation_id`, `cart_id` for the ownership check only, `checkout_journey_key null`, `checkout_id null`, `watermark_sequence bigint null`, `occurred_at`, `review_reach_fact_id null`. `cart_id` is the access boundary. It is not the metric grain and it is not inside `activation_id`.
 
@@ -269,7 +272,7 @@ cartActivationId null
 
 `sourceCommandId` is present only when the committed coupon-result region is the presentation of that command. The server accepts it only when the result row's `cart_id` is the evaluation's cart and the request already passes the existing cart authorization for that cart. It does not set `surface`. `surface` is written when the coupon command completes. See section 10.
 
-`cartActivationId` is present only when this committed Review still holds the activation id from the Cart Checkout control that opened it. A Cart observation sends null. Direct entry to Review sends null. The server uses it only to record `CART_REVIEW_REACH` under section 9. It does not set `surface` and it does not allocate a second Offer-result view. A repeat POST that returns the existing observation row still records a reach for a new valid activation id on that body. A null id, or an id that already has a reach, allocates nothing.
+`cartActivationId` is present only when this committed Review still holds the activation id from the Cart Checkout control that opened it. A Cart observation sends null. Direct entry to Review sends null. The server uses it only to record `CART_REVIEW_REACH` under section 9. It does not set `surface` and it does not allocate or change the counted Offer-result view. A repeat POST that returns the existing observation row still records a reach for a new valid activation id on that body. A null id, or an id that already has a reach, allocates nothing.
 
 `observedComplimentaryLineSha256` is SHA-256 of the exact complimentary line text the DOM committed, or null when that line was not committed. The plaintext is not stored on the observation and is not stored on the evaluation. The evaluation stores `complimentary_variant_id` and `projected_complimentary_line_sha256`, which is SHA-256 of the catalog line projected at evaluation time. The server compares the two hashes. A different item changes the hash. The client does not send a variant id or the plaintext line.
 
@@ -307,7 +310,27 @@ The amount kind the surface must show is filtered. Saving, delivery, progress, a
 
 ### Dedup, retention, failure
 
-One observation per `(evaluation_id, surface)`. A `CART` evaluation accepts surface `CART` only. A `CHECKOUT` evaluation accepts surface `CART` when Cart commits that same evaluation under `COPY-CURRENT-CHECKOUT-TOTAL`, and surface `CHECKOUT_REVIEW` when Review commits it. Any other surface is rejected and writes nothing. Cart is not recorded as `CHECKOUT_REVIEW`, and Review is not recorded as `CART`. A repaint or transport retry of the same surface returns that row and does not count a second view of that surface. That return still records `CART_REVIEW_REACH` when the body carries a new `cartActivationId`, as section 9 requires. The first committed observation for a surface is the evidence for that evaluation on that surface. Offer-result view count is one per presented evaluation per surface, not per repaint.
+Integrity evidence is one observation per `(evaluation_id, surface)`. A `CART` evaluation accepts surface `CART` only. A `CHECKOUT` evaluation accepts surface `CART` when Cart commits that same evaluation under `COPY-CURRENT-CHECKOUT-TOTAL`, and surface `CHECKOUT_REVIEW` when Review commits it. Any other surface is rejected and writes nothing. Cart is not recorded as `CHECKOUT_REVIEW`, and Review is not recorded as `CART`. A repaint or transport retry of the same surface returns that integrity row. That return still records `CART_REVIEW_REACH` when the body carries a new `cartActivationId`, as section 9 requires.
+
+The counted Offer-result view is a different fact. Its identity is `evaluation_id`. One authoritative evaluation contributes at most one counted view across Cart and Checkout Review.
+
+```text
+COUNTED_OFFER_RESULT_VIEW_IDENTITY = evaluation_id
+ONE_COUNTED_OFFER_RESULT_VIEW_ACROSS_CART_AND_REVIEW = YES
+COUNTED_VIEW_SURFACE = FIRST_COMMITTED_PRESENTATION
+LATER_SURFACE_MUTATES_OR_DUPLICATES_THE_COUNTED_VIEW = NO
+REPAINT_OR_RERENDER_ADDS_A_COUNTED_VIEW = NO
+INTEGRITY_OBSERVATION_GRAIN = (evaluation_id, surface)
+LATER_SURFACE_INTEGRITY_OBSERVATION_INCREMENTS_OFFER_RESULT_VIEW_COUNT = NO
+REVIEW_PRESENTED_SUPPRESSED_BY_THE_VIEW_RULE = NO
+CART_REVIEW_REACH_SUPPRESSED_BY_THE_VIEW_RULE = NO
+```
+
+The observation transaction that first accepts a committed presentation of that `evaluation_id` inserts `offer_result_views` with that surface and that occurrence time. A later accepted presentation of the same evaluation on the other allowed surface inserts only the new integrity row. It does not update `surface` or `occurred_at` on the counted view. A concurrent first presentation loses on the primary key, keeps its own integrity row, and does not replace the winner. A rejected surface writes neither row. The counted view does not consume `AUTHORITATIVE_JOURNEY_SEQUENCE`.
+
+`REVIEW_PRESENTED` and `CART_REVIEW_REACH` stay step-progression facts. If Cart commits evaluation `E1` first and Checkout Review later commits the same `E1`, the counted view remains one and its surface stays `CART`. Review still records its own integrity observation. `REVIEW_PRESENTED` is still written once for that evaluation on the journey. A new `cartActivationId` on that Review body still records `CART_REVIEW_REACH`. The view rule does not remove that reach, and it does not require a second counted view so the reach can exist.
+
+Offer-result view count in a named half-open window is the number of `offer_result_views` rows whose `occurred_at` satisfies `WINDOW_START <= occurred_at < WINDOW_END` and `occurred_at < REPORT_AS_OF`. It is not the number of integrity observations.
 
 Measurement failure, a rejected observation, a mismatch, or a dropped POST does not change the commercial evaluation, the cart, the checkout revision, eligibility, or payment. Checkout and payment do not wait on the POST. Mismatch is reported in the integrity ratio. It is not a second money authority.
 
@@ -395,7 +418,7 @@ Then set `checkout_journey_key`, `checkout_id`, and `watermark_sequence` to the 
 
 Unknown, stale, or other-cart context does not fail checkout and does not attach. An activation that never associates remains in the denominator and cannot enter the numerator. The report does not join it to a later checkout by cart id, customer id, or guest id. A retry of an already-associated activation returns that same association.
 
-When Checkout Review commits an authoritative evaluation and the client still holds the activation id from the navigation that opened this Review, it sends that id as `cartActivationId` in the section 7 observation body. The server records `CART_REVIEW_REACH` once for that `activation_id`. A later POST that only returns the existing observation row still records the reach when the id is new. The reach fact's sequence is allocated after the activation's watermark, so it is strictly greater. A historical `REVIEW_PRESENTED` whose sequence is less than or equal to the watermark does not satisfy the activation. Reaching Review again does not require a second Offer-result view when `REVIEW_PRESENTED` for the same `evaluation_id` already exists.
+When Checkout Review commits an authoritative evaluation and the client still holds the activation id from the navigation that opened this Review, it sends that id as `cartActivationId` in the section 7 observation body. The server records `CART_REVIEW_REACH` once for that `activation_id`. A later POST that only returns the existing observation row still records the reach when the id is new. The reach fact's sequence is allocated after the activation's watermark, so it is strictly greater. A historical `REVIEW_PRESENTED` whose sequence is less than or equal to the watermark does not satisfy the activation. That reach is not an Offer-result view. It is recorded whether or not `offer_result_views` already holds that `evaluation_id` from an earlier Cart presentation. It does not insert a second counted view, and it does not change the counted view's surface.
 
 A qualifying reach requires an authoritative Review evaluation on that journey at the time the reach is recorded. The reach fact points at that `evaluation_id`. It does not copy the evaluation into a new view row.
 
@@ -426,7 +449,7 @@ No abandonment timeout removes `A2`.
 
 | Signal | Where it is written | Dedup |
 |---|---|---|
-| Offer result viewed | One server observation row per `(evaluation_id, surface)` after comparison. `CART` for a Cart evaluation. `CART` or `CHECKOUT_REVIEW` for a Checkout evaluation, and Cart is not relabeled as Review | One per presented evaluation per surface. Repaint returns that surface's row |
+| Offer result viewed | `offer_result_views`, inserted with the first accepted committed presentation of that `evaluation_id`. A later allowed surface writes integrity evidence only | One counted view per `evaluation_id` across Cart and Checkout Review. Repaint returns the existing view and does not insert another |
 | Coupon outcome | `commercial_command_results`, written when the coupon command completes, including an invalid command and including when the later observation POST fails. `surface` is written in that same transaction. No raw coupon, no bearer, and no client surface label | One per caller-known `source_command_id`. Retry returns that row, including its surface. A different cart is denied |
 | Review → Payment | `REVIEW_TO_PAYMENT` when Review continue commits and an authoritative Review evaluation is current. The Continue control mints `source_command_id` before the request and retries a lost response with that same id. The server does not mint a separate continue id | One per that caller-minted `source_command_id` |
 | Payment attempt | `PAYMENT_ATTEMPT` beside the existing payment command | Existing payment idempotency key |
