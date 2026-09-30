@@ -195,7 +195,7 @@ The coupon stays secondary on Review. It is after the total and the primary acti
 
 The stack is one result. An automatic Offer and a coupon are not two competing totals.
 
-Money row order inside the existing `dl` in `OrderMoneySummaryPanel` on Review, Payment, and purchased detail. The previous-checkout panel in `PreviousPaymentRecoveryView` is not one of those surfaces. It keeps the previous snapshot and the title "Previous checkout total". It does not gain the new Offer saving rows, and it is not labeled Total payable.
+Money row order inside the existing `dl` in `OrderMoneySummaryPanel` on Review, Payment, and purchased detail. The previous-checkout panel in `PreviousPaymentRecoveryView` is not one of those surfaces. It keeps the previous snapshot, the title "Previous checkout total", and the inner total row that panel already renders. It does not gain the new Offer saving rows. That inner row is not the current Cart or Review payable label.
 
 | Row | Show when |
 |---|---|
@@ -353,7 +353,7 @@ Columns the tables compress: surface, trigger, hierarchy, money, primary action,
 
 Mobile for Cart means the column text plus the `lg:hidden` total bar. Desktop Cart means the `lg` aside holds the stack, coupon, and Checkout. Review, Payment, confirmation, and history use the same single column at every width. Operator forms stack at the default width and use the existing `sm` grid for the create row.
 
-`LIVE-MONEY` means a polite announcement of the new server amount, using the surface's label. On Cart that label is Estimated subtotal or Current total. On Review and Payment it is Total payable. `LIVE-STATUS` means a polite announcement of the status sentence. Alerts use `role="alert"` and are announced assertively. Hooks name measurement facts. `OFFER_RESULT_VIEW` is the counted view of one evaluation, taken from the first committed presentation. A later surface of that same evaluation records integrity evidence and does not count another view. `CART_ACTIVATION` is the Checkout control gesture. `CART_REVIEW_REACH` is the later Review reach for that activation. `COMMERCIAL_STATE_CHANGE` is server provenance, not a client event.
+`LIVE-MONEY` means a polite announcement of the new server amount, using the surface's label. On Cart that label is Estimated subtotal or Current total. On Review and Payment it is Total payable. `LIVE-STATUS` means a polite announcement of the status sentence. Alerts use `role="alert"` and are announced assertively. Hooks name measurement facts. `OFFER_RESULT_VIEW` is the counted view of one evaluation, taken from the first committed presentation. A later surface of that same evaluation records integrity evidence and does not count another view. `CART_ACTIVATION` names the `cart_checkout_activations` row for that Checkout control gesture. It is not a journey-fact kind and it does not consume `AUTHORITATIVE_JOURNEY_SEQUENCE`. `CART_REVIEW_REACH` is the later Review reach for that activation. `COMMERCIAL_STATE_CHANGE` is server provenance, not a client event.
 
 | State | Surface | Trigger | What is visible | Money | Primary | Secondary | Recovery | Copy | Focus | Announcement | Hook |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -382,7 +382,7 @@ Mobile for Cart means the column text plus the `lg:hidden` total bar. Desktop Ca
 | Threshold satisfied | Cart, Review | Minimum now holds | Progress gone. Applied saving | The new saving | Continue | None | Drop state if a later edit falls below | Applied copy | None forced | `LIVE-STATUS` and `LIVE-MONEY` | `OFFER_RESULT_VIEW` |
 | Threshold lost | Cart, Review | New result is below the minimum | Dropped sentence. Progress only if the gap is real again | Updated total | Continue | Add items | None beyond the line | `COPY-DROPPED` | Status | `LIVE-STATUS` and `LIVE-MONEY` | `COMMERCIAL_STATE_CHANGE` when the fingerprint differs |
 | Order and delivery savings | Cart, Review, Payment, purchased | Both effects are positive | Both saving rows and total saved. Cart uses its non-final amount label. Review, Payment, and purchased use Total payable | Both components once | Continue or pay | Coupon only before payment | Recompute if inputs change | Row labels | None forced | `LIVE-MONEY` when new | `OFFER_RESULT_VIEW` |
-| Complimentary item | Cart, Review; purchased later | Selected complimentary combination | Item row, included, ₹0 | ₹0 merchandise. Delivery saving only if positive | Continue. No edit | None on that line | Unavailable flow | `COPY-INCLUDED` | Line is in tab order as text, not a control | Polite line text when it appears | `OFFER_RESULT_VIEW` |
+| Complimentary item | Cart, Review; purchased later | Selected complimentary combination | Item row, included, ₹0 | ₹0 merchandise. Delivery saving only if positive | Continue. No edit | None on that line | Unavailable flow | `COPY-INCLUDED` | Read-only text. Not a control and not a tab stop | Polite line text when it appears | `OFFER_RESULT_VIEW` |
 | Complimentary unavailable | Review | Availability recheck removed it | Line gone. Explanation. New total | New result | Continue on the new total | Change cart | No substitute. Pay not offered on the old line | `COPY-GIFT-GONE` | Explanation, then the continue action | Alert and `LIVE-MONEY` | `COMMERCIAL_STATE_CHANGE` with origin `STALE_RECOVERY`. Complimentary loss is that origin plus the server explanation class, not a new origin |
 | Complimentary conflict | Cart, Review | More than one complimentary would qualify | Neither gift. Ordinary total. Conflict sentence only if a line had been shown | Ordinary evaluated total | Continue | None | No picker | `COPY-GIFT-CONFLICT` only in that case | Explanation if shown | Alert if the sentence appears | `OFFER_RESULT_VIEW` |
 | Stale changed | Review | Prepare or pay found a mismatch | Stop the old pay. New stack and reason | New total | Continue on the new total, or change coupon or cart | No payment-page coupon edit | Stay on Review | `COPY-STALE` | Explanation, then continue | Alert and `LIVE-MONEY` | `COMMERCIAL_STATE_CHANGE` with origin `STALE_RECOVERY`. Complimentary loss is that origin plus the server explanation class, not a new origin |
@@ -591,7 +591,7 @@ DESIGN_SYSTEM_MAPPING = YES
 ANALYTICS_HOOKS = YES
 ```
 
-Hooks name `IMP-036J-MEASUREMENT-CANDIDATE-2` facts. They do not implement collection. The Cart Checkout control is `CART_ACTIVATION`. Review commit after that activation is `CART_REVIEW_REACH`. Observation evidence is read from the committed money text, not copied from the evaluation response.
+Hooks name `IMP-036J-MEASUREMENT-CANDIDATE-2` facts. They do not implement collection. The Cart Checkout control is `CART_ACTIVATION`, which is the `cart_checkout_activations` row and not a journey-fact kind. Review commit after that activation is `CART_REVIEW_REACH`. Observation evidence is read from the committed money text, not copied from the evaluation response.
 
 ```text
 DESIGN_READINESS = NOT_PERFORMED
