@@ -271,6 +271,10 @@ The observation fixture reads committed row text. It does not resend the evaluat
 | Wrong component amount | `WRONG_AMOUNT` |
 | Wrong Total saved | `WRONG_TOTAL_SAVED` |
 | Positive versus zero state swapped | `WRONG_ZERO_STATE` |
+| Automatic offer with both order-saving and delivery-saving rows | Shape is `BOTH_SAVINGS`. It is not `AUTOMATIC_SAVING` and not `WRONG_SHAPE` |
+| Complimentary line plus a real delivery saving | Shape is `COMPLIMENTARY_LINE`. The delivery row stays a component. It is not `WRONG_SHAPE` |
+| Complimentary equal-payable selection with no equal-payable sentence | Shape is `COMPLIMENTARY_LINE`, not `EQUAL_PAYABLE_NOT_SELECTED` |
+| Coupon that pays less, with both saving rows | Shape is `COUPON_SELECTED` |
 | Wrong coarse shape | `WRONG_SHAPE` |
 | Progress presence or remaining paise differs | `PROGRESS_MISMATCH` |
 | Client sends `integrityPass: true` with a rendered ₹8 | Request rejected or the field ignored. Match stays false |

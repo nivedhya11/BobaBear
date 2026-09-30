@@ -256,7 +256,21 @@ PROGRESS
 
 `CURRENT_CHECKOUT_TOTAL` is the checkout evaluation's payable paise under the Cart label `COPY-CURRENT-CHECKOUT-TOTAL`. On a `CHECKOUT` evaluation it is present and equal to `TOTAL_PAYABLE`. On a `CART` evaluation it is absent. It is that same server figure, not a second quote and not a Cart label of Total payable.
 
-`expected_coarse_shape` is one of: `NONE`, `AUTOMATIC_SAVING`, `ORDER_SAVING`, `DELIVERY_SAVING`, `BOTH_SAVINGS`, `COMPLIMENTARY_LINE`, `COUPON_SELECTED`, `COUPON_VALID_NOT_SELECTED`, `EQUAL_PAYABLE_SELECTED`, `EQUAL_PAYABLE_NOT_SELECTED`, `THRESHOLD_PROGRESS`. The shape is derived from the server result class, not from client text. Saving components are omitted when their paise amount is zero. A standing ₹0 delivery charge is not a saving. `server_explanation_integrity` is true only when the server explanation parts equal that quote's evaluated saving. The client does not send this boolean.
+`expected_coarse_shape` is exactly one of: `NONE`, `AUTOMATIC_SAVING`, `ORDER_SAVING`, `DELIVERY_SAVING`, `BOTH_SAVINGS`, `COMPLIMENTARY_LINE`, `COUPON_SELECTED`, `COUPON_VALID_NOT_SELECTED`, `EQUAL_PAYABLE_SELECTED`, `EQUAL_PAYABLE_NOT_SELECTED`, `THRESHOLD_PROGRESS`. The server derives it from the selected quote by this first match. A later row does not also apply.
+
+1. The selected result includes the projected complimentary line. `COMPLIMENTARY_LINE`. A real delivery-saving component stays a component. It does not change the shape. The equal-payable complimentary selection stays this shape, because Design flow 17 does not commit an equal-payable sentence.
+2. The evaluated status is `COPY-EQUAL-SELECTED`. `EQUAL_PAYABLE_SELECTED`.
+3. The evaluated status is `COPY-APPLIED-COUPON`. `COUPON_SELECTED`.
+4. The evaluated status is `COPY-EQUAL-KEPT` or `COPY-EQUAL-KEPT-OFFER`, and the selected result has no complimentary line. `EQUAL_PAYABLE_NOT_SELECTED`.
+5. The evaluated status is `COPY-STRICT-KEEP`. `COUPON_VALID_NOT_SELECTED`.
+6. Order-saving and delivery-saving paise are both positive. `BOTH_SAVINGS`.
+7. Only delivery-saving paise are positive. `DELIVERY_SAVING`.
+8. Only order-saving paise are positive. `ORDER_SAVING`.
+9. The evaluated status is `COPY-APPLIED-AUTO` or `COPY-APPLIED-REASON`, and no row above matched. `AUTOMATIC_SAVING`.
+10. The evaluated presentation includes `COPY-THRESHOLD`, and no saving row above matched. `THRESHOLD_PROGRESS`.
+11. Otherwise `NONE`.
+
+Saving components are omitted when their paise amount is zero. A standing ₹0 delivery charge is not a saving. `server_explanation_integrity` is true only when the server explanation parts equal that quote's evaluated saving. The client does not send this boolean.
 
 The response may include `evaluationId` so the observation can name which evaluation it saw. It does not include the expected descriptor, the fingerprint, or an integrity verdict.
 
@@ -289,7 +303,7 @@ The canonical complimentary line is UTF-8 with three fields and no trailing newl
 
 The reader takes the complimentary digest from the committed item row, not from the money region. It reads that row's three text parts in flow 17 order, drops leading and trailing whitespace on each part, and joins them with U+000A. A missing part makes the observed line absent, so the hash is null, rather than a hash of a partial line. `observedComplimentaryLineSha256` is that digest, or null when the line was not committed. The plaintext is not stored on the observation and is not stored on the evaluation. The server compares the two hashes. A different item name, a different included sentence, or a non-zero amount changes the digest. A faithful render of the three parts matches. The client does not send a variant id or the plaintext line.
 
-`observedCoarseShape` is chosen from the copy the screen actually committed, using the Design candidate's copy ids, mapped to the same shape enum. It is not read back from the evaluation response object. The body has no coupon field, no eligibility reason, no payment field, and no integrity field. Unknown fields in that set are rejected.
+`observedCoarseShape` uses the same first-match list, read from the committed screen and not from the evaluation response. A committed complimentary item row is step 1. The committed status sentence is steps 2 through 5 and step 9. Positive committed order-saving and delivery-saving rows are steps 6 through 8. `COPY-THRESHOLD` is step 10. Anything else committed as the result is `NONE`. A status sentence that a higher step already classified is not a second shape. The body has no coupon field, no eligibility reason, no payment field, and no integrity field. Unknown fields in that set are rejected.
 
 ### Transport
 
