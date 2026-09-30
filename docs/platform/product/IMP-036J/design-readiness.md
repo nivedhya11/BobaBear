@@ -165,15 +165,25 @@ Showing the reused checkout evaluation on Cart does not create a second calculat
 
 ### Cart and Checkout Review
 
-Reading order:
+Reading order, and the DOM order, and the tab order, are the same sequence. Do not visually place a control in one place and tab to it in another.
+
+Cart:
 
 1. Items, including one complimentary line when the selected result has one.
 2. Real saving lines, only when that server money exists.
-3. Delivery charge only when a current Checkout evaluation includes it. Cart without that context omits it.
-4. Total saved, only when the evaluated total saved is greater than zero.
-5. The amount label from the table above.
-6. Coupon interaction, secondary.
-7. Primary continue or pay action.
+3. The non-final amount from the table above.
+4. Coupon field, then Apply, Change, and Remove.
+5. Checkout.
+
+Checkout Review:
+
+1. Fulfilment, because changing it recomputes.
+2. Items and real saving lines, including delivery only when the evaluation includes it.
+3. Total payable.
+4. Continue to payment.
+5. Coupon field, then Apply, Change, and Remove.
+
+The coupon stays secondary on Review. It is after the total and the primary action, in both the layout and the tab order.
 
 The stack is one result. An automatic Offer and a coupon are not two competing totals.
 
@@ -410,7 +420,7 @@ Reuse the patterns already in the named components. Do not add a second focus ri
 - The status node is `role="status"` and `aria-live="polite"` for applied, equal-payable, threshold, dropped, and checking text.
 - Invalid, expired, inapplicable, exhaustion, identity, stale, unavailable, and network failures use `role="alert"`.
 - Money remains a `dl` with `dt` and `dd`, `aria-label="Order total"`, as `OrderMoneySummaryPanel` already does. Extend that group. Do not replace it with a color cue.
-- Tab order on Cart and Review: items and their existing controls, complimentary line is not a control, saving text, coupon field, Apply, Change, Remove, primary action. On desktop the aside order is stack, coupon, primary, keep browsing.
+- Tab order follows the visual order in section 3. On Cart: items and their existing controls, complimentary line is not a control, saving text, amount, coupon field, Apply, Change, Remove, Checkout, Keep browsing. On Review: fulfilment, items, saving text, Total payable, Continue to payment, coupon field, Apply, Change, Remove. The coupon is not placed before Continue to payment in either the layout or the tab sequence.
 - Apply, Change, Remove, Sign in, Try again, Retire offer, and Cancel are keyboard operable.
 - After a validation failure, focus the coupon field.
 - After a successful apply or a non-error coupon result, focus the status.

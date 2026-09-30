@@ -240,6 +240,7 @@ The observation fixture reads committed row text. It does not resend the evaluat
 
 | Case | Planned result |
 |---|---|
+| Retry of the same Cart or Review evaluation after the server committed and before the response returned | The unique scoped fingerprint returns the original `evaluation_id`. No second observation and no second `REVIEW_PRESENTED` |
 | Expected ₹80 rendered as ₹80 | `server_presentation_match = true` |
 | Expected ₹80 rendered as ₹8 | `WRONG_AMOUNT`. Match is false |
 | Omitted saving row | `OMITTED_ROW` |
@@ -277,7 +278,9 @@ Database and HTTP proof, plus a browser check that one press sends one id and a 
 
 | Case | Planned result |
 |---|---|
-| Apply, replace, remove, fulfilment change, stale recovery that changes the fingerprint | One change fact plus the matching origin |
+| Apply, replace, remove, fulfilment change, or stale recovery commits, then Review evaluation fails | The origin row already exists from the mutation transaction. Retry with the same `source_command_id` returns it |
+| Later evaluation then changes the fingerprint | That persisted origin resolves onto one change fact |
+| Later evaluation keeps the same fingerprint | Origin is marked `NO_RESULT_CHANGE`. No change fact, and it does not attach to a later different result |
 | Same command retry | Existing fact. No second sequence |
 | Concurrent retries of the same result | One fact |
 | Several origins resolving to one fingerprint | One fact, several origin rows |
@@ -311,7 +314,7 @@ Implementation tests, not this candidate's runs, must show:
 
 Accessibility, responsive, content, and perceived-performance checks are the XR rows plus:
 
-- Keyboard order and focus moves named in the design candidate, including dialog trap and cancel-first retire focus.
+- Keyboard order matches the visual order in the design candidate. On Review, Continue to payment is before the coupon field in both layout and tab order. Dialog trap and cancel-first retire focus remain.
 - Screen-reader names: coupon field "Coupon", status and alert roles, money `dl` label.
 - Live regions: polite status for applied and checking text; alert for invalid, stale, unavailable, and network failure.
 - Viewports below `lg` and at `lg` for Cart, Review, and Payment. The sticky Cart bar matches the Cart label and does not say Total payable.

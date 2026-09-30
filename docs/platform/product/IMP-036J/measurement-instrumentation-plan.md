@@ -140,15 +140,17 @@ MIGRATION_WRITTEN_BY_THIS_CANDIDATE = NO
 | `checkouts.cart_causal_ordinal` | Predecessor selection | Unique `(cart_id, cart_causal_ordinal)` |
 | `checkout_journey_heads` | One row per journey key. Columns: `checkout_journey_key` primary key, `next_sequence bigint not null`, `closed_at timestamptz null` | One allocator |
 | `checkout_journey_facts` | Authoritative journey facts. Columns below | Unique `(checkout_journey_key, journey_sequence)`. Partial unique indexes for each idempotency identity in section 6 |
-| `commercial_evaluations` | Server expected presentation for one authoritative evaluation | `evaluation_id uuid` primary key |
+| `commercial_evaluations` | Server expected presentation for one authoritative result | `evaluation_id uuid` primary key. Unique `(cart_id, result_fingerprint)` where `surface_scope = CART`. Unique `(checkout_id, result_fingerprint)` where `surface_scope = CHECKOUT` |
 | `commercial_presentation_observations` | Non-authoritative observed committed presentation | Unique `(evaluation_id, surface)` |
 | `cart_checkout_activations` | One genuine Cart-surface Checkout activation | `activation_id uuid` primary key |
-| `commercial_change_origins` | Source origins attached to one change fact | Unique `(change_fact_id, origin_kind, source_command_id)` |
+| `commercial_command_origins` | Origin written in the commercial mutation transaction, before evaluation | Unique `source_command_id`. `resolved_change_fact_id` is null until a later Review evaluation resolves it |
 | `measurement_report_snapshots` | Immutable published calculations | Insert only. Same `(metric, window_start, window_end, report_as_of)` returns the existing row and does not update it |
 
 `checkout_journey_facts` columns: `fact_id uuid`, `checkout_journey_key`, `fact_kind`, `journey_sequence`, `occurred_at timestamptz`, `idempotency_key bytea`, `evaluation_id uuid null`, `activation_id uuid null`, `result_fingerprint bytea null`, `presentation_class text null`, `coarse_outcome text null`. No customer id, guest id, raw coupon, payment instrument, or client integrity boolean.
 
 `commercial_evaluations` columns, all server-written from the quote in the evaluation transaction: `evaluation_id`, `cart_id`, `checkout_id null`, `checkout_journey_key null`, `surface_scope` `CART` or `CHECKOUT`, `result_fingerprint`, `expected_components` as the component set in section 7, `expected_total_saved_paise`, `expected_progress_present`, `expected_progress_remaining_paise`, `expected_coarse_shape`, `explanation_reason_class` as the existing server reason class with no private eligibility text, `server_explanation_integrity boolean`, `occurred_at`. Complimentary-unavailable continuation reads `STALE_RECOVERY` plus `explanation_reason_class`. The browser is not sent this expected descriptor to echo.
+
+A retry of `evaluateCart` or `evaluateCheckout` that recomputes the same authoritative result returns the existing `evaluation_id`. The insert uses the unique index above. A lost race re-reads that row and returns its id. It does not mint a second evaluation, a second observation slot, or a second `REVIEW_PRESENTED` fact. A genuinely different fingerprint is a different result and gets a new id. The idempotency key is the scoped result fingerprint, not the timing of the HTTP response.
 
 `commercial_presentation_observations` columns: `evaluation_id`, `surface` `CART` or `CHECKOUT_REVIEW`, `observed_components`, `observed_progress_present`, `observed_progress_remaining_paise`, `observed_coarse_shape`, `server_presentation_match boolean null`, `mismatch_flags text[]`, `occurred_at`. `server_presentation_match` and `mismatch_flags` are written only by server comparison. A request that includes an integrity boolean, a coupon code, an eligibility reason, or a payment secret is rejected and writes nothing.
 
@@ -305,16 +307,19 @@ CLOSED_JOURNEY_REPLAY = RETURN_EXISTING_OBSERVATION
 
 The fingerprint is SHA-256 over canonical UTF-8 JSON with sorted keys and these server fields only: component kind and paise for each positive saving, total saved paise, payable paise, coarse outcome class, complimentary-present boolean. The raw coupon code is not an input.
 
-Allowed `origin_kind` values: `COUPON_APPLY`, `COUPON_REPLACE`, `COUPON_REMOVE`, `FULFILMENT_CHANGE`, `STALE_RECOVERY`. A quantity edit is not an origin. An origin is written only when that command changes the commercial revision. A no-op writes no origin and no change fact.
+Allowed `origin_kind` values: `COUPON_APPLY`, `COUPON_REPLACE`, `COUPON_REMOVE`, `FULFILMENT_CHANGE`, `STALE_RECOVERY`. A quantity edit is not an origin. An origin is written only when that command changes the commercial revision. A no-op writes no origin row and no change fact.
 
-On a Review evaluation whose fingerprint differs from the journey's previous Review result and that consumed at least one such origin:
+The origin row is inserted in the same transaction as the commercial mutation, before any Review evaluation runs. Columns: `source_command_id`, `origin_kind`, `cart_id`, `checkout_id`, `checkout_journey_key` when one already exists, `commercial_revision_after`, `resolved_change_fact_id null`, `resolution` null. Unique `source_command_id`. If evaluation then fails, the origin remains. The retry of that command sends the same `source_command_id` and returns the existing row. It does not insert another origin.
 
+When a later Review evaluation commits:
+
+- Load unresolved origins for that checkout whose `commercial_revision_after` is the revision this evaluation read.
+- If the new fingerprint equals the previous Review result, mark those origins `NO_RESULT_CHANGE`. Write no change fact. They do not attach to a later different result.
+- If the fingerprint differs and at least one origin is unresolved, insert one `COMMERCIAL_STATE_CHANGE` or return the existing fact, then set `resolved_change_fact_id` on each of those origins.
 - Provenance identity is SHA-256 of the journey key, `0x00`, and the new fingerprint.
-- Insert one `COMMERCIAL_STATE_CHANGE` fact with that identity, or return the existing fact.
-- Insert one `commercial_change_origins` row per distinct `(origin_kind, source_command_id)`.
 - Several origins that resolve to the same fingerprint share that one fact and do not allocate another sequence.
 
-Same-command retry reuses `source_command_id` and the same fingerprint, so both the origin row and the fact already exist and are returned. Concurrent commands that produce the same fingerprint collide on the fact unique index. The loser returns the winner and may attach its own origin row. The fact count remains one. Concurrent commands that produce different fingerprints are different results and therefore different facts, still one fact per fingerprint.
+Same-command retry reuses `source_command_id`. If the change fact already exists, replay returns it. Concurrent commands that produce the same fingerprint collide on the fact unique index. The loser returns the winner and resolves its own already-persisted origin onto that fact. The fact count remains one. Concurrent commands that produce different fingerprints are different results and therefore different facts, still one fact per fingerprint.
 
 If the journey is closed, a replay of the existing provenance identity returns the fact. A new fingerprint is rejected with the result write and allocates nothing.
 
