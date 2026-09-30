@@ -280,7 +280,7 @@ Database and HTTP proof, plus a browser check that one press sends one id and a 
 
 | Case | Planned result |
 |---|---|
-| Apply, replace, remove, fulfilment change, or stale recovery commits, then the response is lost | The caller already holds `source_command_id`. Retry sends that same id. The origin row already exists from the mutation transaction and is returned |
+| Apply, replace, remove, fulfilment change, or stale recovery commits, then the response is lost | The caller already holds `source_command_id`. Retry sends that same id for the same cart. The origin row already exists from the mutation transaction and is returned. The same id on another cart is denied |
 | Revision N then revision N+1 before the Review evaluation | Both unresolved origins in that range attach to the one new result, or both are marked `NO_RESULT_CHANGE` when the fingerprint did not change |
 | Later evaluation then changes the fingerprint | That persisted origin resolves onto one change fact |
 | Later evaluation keeps the same fingerprint | Origin is marked `NO_RESULT_CHANGE`. No change fact, and it does not attach to a later different result |

@@ -311,7 +311,7 @@ Allowed `origin_kind` values: `COUPON_APPLY`, `COUPON_REPLACE`, `COUPON_REMOVE`,
 
 The caller mints `source_command_id` as a UUID before the request is sent and keeps it for that gesture. The request body carries it. The server does not mint the id in the response. A lost response is retried with the same caller-known id. The id is not a customer id, guest id, coupon, or timestamp.
 
-The origin row is inserted in the same transaction as the commercial mutation, before any Review evaluation runs. Columns: `source_command_id`, `origin_kind`, `cart_id`, `checkout_id`, `checkout_journey_key` when one already exists, `commercial_revision_after`, `resolved_change_fact_id null`, `resolution` null. Unique `source_command_id`. If that id already exists, the transaction returns the existing commercial result and the existing origin. It does not insert another origin. If evaluation then fails, the origin remains.
+The origin row is inserted in the same transaction as the commercial mutation, before any Review evaluation runs. Columns: `source_command_id`, `origin_kind`, `cart_id`, `checkout_id`, `checkout_journey_key` when one already exists, `commercial_revision_after`, `resolved_change_fact_id null`, `resolution` null. Unique `source_command_id`. If that id already exists for the same cart and the same caller scope, the transaction returns the existing commercial result and the existing origin. It does not insert another origin. The same id presented for a different cart or caller is denied and writes nothing. If evaluation then fails, the origin remains.
 
 When a later Review evaluation commits:
 
