@@ -259,7 +259,10 @@ progressRemainingPaise
 observedCoarseShape
 observedComplimentaryPresent
 observedComplimentaryLineName
+sourceCommandId null
 ```
+
+`sourceCommandId` is present only when the committed coupon-result region is the presentation of that command. The server accepts it only when that command result belongs to the same cart as `evaluationId`. It is absent for a presentation that is not a coupon-command result. It is not a surface label.
 
 `observedComplimentaryLineName` is the complimentary item line text read from the committed DOM, or null when that line was not committed. It is the public catalog line the customer sees. It is not a variant id, a coupon, or an eligibility reason. The client does not send `complimentary_variant_id`.
 
@@ -411,18 +414,20 @@ No abandonment timeout removes `A2`.
 | Signal | Where it is written | Dedup |
 |---|---|---|
 | Offer result viewed | One server observation row for that `evaluation_id` after comparison. Surface must match the evaluation scope | One per presented evaluation. Repaint returns it |
-| Coupon outcome | `commercial_command_results`, written for every finished coupon command, including an invalid command that writes no commercial revision and therefore no origin. `surface` starts null and is set by the first server evaluation route that cites `source_command_id`. `journey_sequence` is the `COUPON_ATTEMPT` sequence when that route is checkout evaluate. No raw coupon and no client surface label | One per caller-known `source_command_id`. Same-cart retry returns the row. A different cart is denied |
+| Coupon outcome | `commercial_command_results`, written for every finished coupon command, including an invalid command that writes no commercial revision and therefore no origin. `surface` stays null until a committed presentation observation names that `source_command_id`. An evaluation citation does not set it. `COUPON_ATTEMPT` is allocated when a Review presentation commits. No raw coupon and no client surface label | One per caller-known `source_command_id`. Same-cart retry returns the row. A different cart is denied |
 | Review → Payment | `REVIEW_TO_PAYMENT` when Review continue commits and an authoritative Review evaluation is current | One per `continue_command_id` |
 | Payment attempt | `PAYMENT_ATTEMPT` beside the existing payment command | Existing payment idempotency key |
 | Successful completion | `DIRECT_ORDER_COMPLETION` inside `materializeOrderForCompletedCheckout`, using the Candidate 9 order-materialization rules | One per journey key |
 | Changed-total recovery | `STALE_RECOVERY` origin on the one change fact when the server explanation is a changed total | One fact per new fingerprint |
 | Complimentary-unavailable continuation | The same `STALE_RECOVERY` origin when the new Review result's server explanation class is complimentary unavailable. That is not a sixth origin | Does not mint a journey |
 
-`surface` is not taken from the coupon command and not from a client label. Cart and Checkout Review both call `POST /api/v1/cart/coupon`. A request that includes a surface string is rejected. The result row is written with `surface` null. The first later server evaluation that cites this `source_command_id` sets it: `POST /api/v1/cart/evaluate` sets `CART`; `POST /api/v1/checkouts/{checkoutId}/evaluate` sets `CHECKOUT_REVIEW` only after the server has loaded that checkout for this cart. A later citation does not flip the surface. Until one of those routes cites the id, the attempt is omitted from a surface breakdown.
+`surface` is not taken from the coupon command, not from a client label, and not from which evaluation route returns first. Cart and Checkout Review both call `POST /api/v1/cart/coupon`. A request that includes a surface string is rejected. The result row is written with `surface` null. `evaluateCart` and `evaluateCheckout` may cite `source_command_id`, and that citation does not set `surface` and does not allocate `COUPON_ATTEMPT`. Evaluation is not a rendered view.
+
+`surface` is set when `POST /api/v1/commerce-observations` is accepted for a committed presentation that names this `source_command_id` and the same cart. The observation's `surface` must match that evaluation's `surface_scope`, as section 7 already requires. A Cart observation may set `surface = CART` only while it is still null. A Checkout Review observation sets `surface = CHECKOUT_REVIEW`. If a Cart observation arrived first, the Review observation replaces `CART` with `CHECKOUT_REVIEW`. A later Cart observation does not replace `CHECKOUT_REVIEW`. An evaluation that arrives earlier, or a second tab's evaluation that never commits, does not fix the surface.
 
 `payable_changed_vs_valid_alternative` is written only by the server from that attempt's evaluation. It is true only when the selected payable differs from the valid non-coupon alternative. It is false when those payable amounts are equal. It is null when the attempt has no valid-alternative comparison, including invalid, expired, inapplicable, exhausted, identity required, and failed before that comparison. The client does not send this boolean. A request that includes it is rejected.
 
-When the citing route is checkout evaluate and a journey key exists, the server allocates one `COUPON_ATTEMPT` fact. This includes an invalid, expired, or rejected attempt that changes the committed Review sentence and writes no commercial revision. Idempotency is `source_command_id`. The fact consumes a journey sequence. The result row stores that sequence. The fact is not a `COMMERCIAL_STATE_CHANGE` and it does not require an origin. A Cart evaluation citation does not allocate `COUPON_ATTEMPT`, because that attempt has not altered Review. Cohort entry still reads only `REVIEW_PRESENTED`. If the same attempt also resolves to a change fact, that fact keeps its own sequence.
+`COUPON_ATTEMPT` is allocated when the accepted observation's surface is `CHECKOUT_REVIEW` and a journey key exists. This includes an invalid, expired, or rejected attempt whose committed Review sentence changed and which wrote no commercial revision. Idempotency is `source_command_id`. The fact consumes a journey sequence. The result row stores that sequence. The fact is not a `COMMERCIAL_STATE_CHANGE` and it does not require an origin. A Cart-only commitment does not allocate it. Cohort entry still reads only `REVIEW_PRESENTED`. If the same attempt also resolves to a change fact, that fact keeps its own sequence.
 
 ```text
 MEASUREMENT_FAILURE_BLOCKS_CHECKOUT = NO
