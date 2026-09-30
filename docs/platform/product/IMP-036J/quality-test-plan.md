@@ -271,10 +271,15 @@ The observation fixture reads committed row text. It does not resend the evaluat
 | Wrong component amount | `WRONG_AMOUNT` |
 | Wrong Total saved | `WRONG_TOTAL_SAVED` |
 | Positive versus zero state swapped | `WRONG_ZERO_STATE` |
-| Automatic offer with both order-saving and delivery-saving rows | Shape is `BOTH_SAVINGS`. It is not `AUTOMATIC_SAVING` and not `WRONG_SHAPE` |
-| Complimentary line plus a real delivery saving | Shape is `COMPLIMENTARY_LINE`. The delivery row stays a component. It is not `WRONG_SHAPE` |
-| Complimentary equal-payable selection with no equal-payable sentence | Shape is `COMPLIMENTARY_LINE`, not `EQUAL_PAYABLE_NOT_SELECTED` |
-| Coupon that pays less, with both saving rows | Shape is `COUPON_SELECTED` |
+| Automatic offer with both order-saving and delivery-saving rows | Shape is `BOTH_SAVINGS`. It is not `AUTOMATIC_SAVING` and not `WRONG_SHAPE`. `presentation_class` is `AUTOMATIC_SAVING` |
+| Automatic order saving only, or automatic delivery saving only | Shape is `ORDER_SAVING` or `DELIVERY_SAVING`. It is not `AUTOMATIC_SAVING`. `presentation_class` is `AUTOMATIC_SAVING` |
+| Complimentary line plus a real delivery saving | Shape is `COMPLIMENTARY_LINE`. The delivery row stays a component. It is not `WRONG_SHAPE`. `presentation_class` is `COMPLIMENTARY_ITEM` |
+| Complimentary equal-payable selection with no equal-payable sentence | Shape is `COMPLIMENTARY_LINE`, not `EQUAL_PAYABLE_NOT_SELECTED`. `presentation_class` is `COMPLIMENTARY_ITEM` |
+| Coupon that pays less, with both saving rows | Shape is `COUPON_SELECTED`. `presentation_class` is `COUPON_SELECTED` |
+| Equal-payable coupon selected, with no complimentary line | Shape is `EQUAL_PAYABLE_SELECTED`. `presentation_class` is `EQUAL_PAYABLE_SELECTED`, reported as Coupon selected with that sub-segment |
+| Changed-total recovery Review whose new result is an order saving | Shape stays `ORDER_SAVING`. `presentation_class` is `CHANGED_TOTAL_RECOVERY`. The class difference is not `WRONG_SHAPE` |
+| No applicable Offer | Shape is `NONE`. `presentation_class` is `NO_OFFER` |
+| Committed `COPY-APPLIED-AUTO` or `COPY-APPLIED-REASON` and no earlier matching row | Observed shape is `AUTOMATIC_SAVING`. The legal expected shape is not `AUTOMATIC_SAVING`. Comparison is `WRONG_SHAPE` |
 | Wrong coarse shape | `WRONG_SHAPE` |
 | Progress presence or remaining paise differs | `PROGRESS_MISMATCH` |
 | Client sends `integrityPass: true` with a rendered ₹8 | Request rejected or the field ignored. Match stays false |
