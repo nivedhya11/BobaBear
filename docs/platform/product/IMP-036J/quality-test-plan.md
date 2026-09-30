@@ -242,7 +242,8 @@ The observation fixture reads committed row text. It does not resend the evaluat
 |---|---|
 | Retry of the same Cart or Review evaluation after the server committed and before the response returned | The unique scoped fingerprint returns the original `evaluation_id`. No second observation and no second `REVIEW_PRESENTED` |
 | Same savings and payable, different delivery charge, progress, or complimentary variant | A different fingerprint and a different `evaluation_id` |
-| Invalid coupon that writes no revision | No origin and no change fact. `evaluateCart` or `evaluateCheckout` citing the command leaves `surface` null and allocates no sequence. A committed Review observation sets `CHECKOUT_REVIEW` and allocates `COUPON_ATTEMPT`. A Cart-only committed observation sets `CART` and allocates no sequence. An earlier Cart evaluation does not block the Review observation |
+| Invalid coupon that writes no revision | The result row stores `cart_id` and `caller_scope` in the command transaction. No origin and no change fact. An observation from another cart or caller is denied. A committed Review observation from the same cart and caller sets `CHECKOUT_REVIEW` and allocates `COUPON_ATTEMPT` |
+| Same fingerprint, new origin, reused `evaluation_id` | The watermark advances. The new origin is marked `NO_RESULT_CHANGE` and cannot attach to a later different result |
 | Client sends a surface string or `payable_changed_vs_valid_alternative` | Rejected. Surface comes from the committed observation. The payable flag is written by the server |
 | Cart coupon before any checkout, then the first `startCheckout` | The null-key, null-checkout origin receives that first journey key and can resolve on the first Review |
 | Expected complimentary line rendered as a different item name | The observation stores the committed line name. Comparison emits `WRONG_COMPLIMENTARY_ITEM`. A client variant id is rejected |
