@@ -161,7 +161,7 @@ TWO_MONEY_AUTHORITIES = NO
 | Payment | Read-only current evaluation or snapshot | `COPY-TOTAL-PAYABLE` | Coupon cannot change it. Revalidation failure leaves Payment |
 | Confirmation and history | Sealed purchased amounts | Purchased copy | Live Offers do not rewrite them |
 
-Showing the reused checkout evaluation on Cart does not create a second calculator. The number is that evaluation. Cart does not relabel it as the amount the customer finally pays. Review is the surface that presents Total payable.
+Showing the reused checkout evaluation on Cart does not create a second calculator. The number is that evaluation. Cart loads it by calling `evaluateCart`, which returns that existing `evaluation_id` and does not mint a review-surface token. `evaluateCheckout` remains the only command that mints that token. Cart does not relabel the figure as the amount the customer finally pays. Review is the surface that presents Total payable.
 
 ### Cart and Checkout Review
 
@@ -427,7 +427,7 @@ Reuse the patterns already in the named components. Do not add a second focus ri
 - On success or a non-error result, `aria-invalid` is absent and `aria-describedby` includes the status id.
 - The status node is `role="status"` and `aria-live="polite"` for applied, equal-payable, threshold, dropped, and checking text.
 - Invalid, expired, inapplicable, exhaustion, identity, stale, unavailable, and network failures use `role="alert"`.
-- Money remains a `dl` with `dt` and `dd`, `aria-label="Order total"`, as `OrderMoneySummaryPanel` already does. Extend that group. Do not replace it with a color cue.
+- On Review and Payment, money stays in the existing `OrderMoneySummaryPanel`. The accessible name stays on the wrapping section, which those screens already set to "Price summary". This candidate does not move that name onto the `dl` and does not rename it to "Order total". Cart keeps the amount as the existing paragraph text. It does not add a `dl`.
 - Tab order follows the visual order in section 3. At `lg` and up, Cart tab order is items and their existing controls, the complimentary line is not a control, saving text, the aside amount, coupon field, Apply, Change, Remove, Checkout, Keep browsing. Below `lg`, Cart tab order is items and their existing controls, saving text, coupon field, Apply, Change, Remove, then the bar amount and Checkout. On Review: fulfilment, items, saving text, Total payable, Continue to payment, coupon field, Apply, Change, Remove. The coupon is not placed before Continue to payment in either the Review layout or the Review tab sequence.
 - Apply, Change, Remove, Sign in, Try again, Retire offer, and Cancel are keyboard operable.
 - After a validation failure, focus the coupon field.
@@ -471,7 +471,7 @@ Checkout stays disabled while the cart total is updating or absent, so the bar's
 
 | Need | Existing pattern | Decision | Path | Reason | Accessibility | Responsive |
 |---|---|---|---|---|---|---|
-| Saving and total rows | Order summary definition list | Extend the row set | `OrderMoneySummaryPanel.tsx`, `snapshotPayableRows` | One summary already owns Subtotal, charges, tax, and Total payable. The lump Discount row cannot show order saving and delivery saving separately | Existing `dl` / `aria-label` | Existing full-width rows inside the current card |
+| Saving and total rows | Order summary definition list | Extend the row set | `OrderMoneySummaryPanel.tsx`, `snapshotPayableRows` | One summary already owns Subtotal, charges, tax, and Total payable. The lump Discount row cannot show order saving and delivery saving separately | Existing section name "Price summary" on Review and Payment. Cart amount is the visible label text | Existing full-width rows inside the current card |
 | Paise display | `formatPaise` | Reuse | `format-money.ts` | Exact rupee display already used on checkout | Text amount | Same |
 | Coupon field | `enterpriseFieldClass` on operator fields; customer inputs use border, `focus-ring`, and body type on checkout fields | Reuse the customer field treatment already on checkout forms | Checkout form controls and `enterpriseFieldClass` for the operator side | A new input style is unnecessary | Name, description, invalid, described-by | Full width of the summary column |
 | Apply, Change, Remove, Continue | `Button` | Reuse | `src/components/ui/Button.tsx` | Primary for Apply and continue. Outline for Change. Destructive for Remove | Native button, `focus-ring`, `lg` height | Full width under the field on narrow; inline in the aside when `lg` has room, wrapping rather than a new bar |

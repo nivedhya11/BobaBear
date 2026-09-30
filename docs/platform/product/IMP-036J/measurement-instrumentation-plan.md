@@ -232,7 +232,7 @@ CLIENT_AUTHORED_INTEGRITY_BOOLEAN = REJECTED
 
 ### Expected value
 
-Inside `evaluateCart` or `evaluateCheckout`, the server writes `commercial_evaluations` from that same quote before the response returns. Expected components are integer paise plus presence, for this closed set:
+Inside `evaluateCart` or `evaluateCheckout`, the server writes `commercial_evaluations` from that same quote before the response returns. When the Design candidate's reused-checkout conditions hold, `evaluateCart` returns the existing checkout `evaluation_id`. It does not insert a second evaluation and it does not mint `review_surface_token`. Only `evaluateCheckout` mints that token. Expected components are integer paise plus presence, for this closed set:
 
 ```text
 ORDER_SAVING
@@ -259,7 +259,7 @@ The POST body is exactly:
 
 ```text
 evaluationId
-surface = CART | CHECKOUT_REVIEW
+reviewSurfaceToken null
 components = [{ kind, amountPaise, present }]
 progressPresent
 progressRemainingPaise
@@ -270,7 +270,9 @@ sourceCommandId null
 cartActivationId null
 ```
 
-`sourceCommandId` is present only when the committed coupon-result region is the presentation of that command. The server accepts it only when the result row's `cart_id` is the evaluation's cart and the request already passes the existing cart authorization for that cart. It does not set `surface`. `surface` is written when the coupon command completes. See section 10.
+A field named `surface` is rejected and writes nothing. The server sets the observation surface. A `reviewSurfaceToken` whose SHA-256 matches a `checkout_review_surface_tokens` row for this cart, and whose checkout is still that cart's non-terminal checkout, sets `CHECKOUT_REVIEW`. No token sets `CART`. A presented token that does not match writes nothing. It is not stored as Cart. The plaintext token is not stored on the observation.
+
+`sourceCommandId` is present only when the committed coupon-result region is the presentation of that command. The server accepts it only when the result row's `cart_id` is the evaluation's cart and the request already passes the existing cart authorization for that cart. It does not set the observation surface. Coupon `surface` is written when the coupon command completes. See section 10.
 
 `cartActivationId` is present only when this committed Review still holds the activation id from the Cart Checkout control that opened it. A Cart observation sends null. Direct entry to Review sends null. The server uses it only to record `CART_REVIEW_REACH` under section 9. It does not set `surface` and it does not allocate or change the counted Offer-result view. A repeat POST that returns the existing observation row still records a reach for a new valid activation id on that body. A null id, or an id that already has a reach, allocates nothing.
 
