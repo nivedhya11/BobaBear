@@ -107,8 +107,10 @@ GOLDEN_JOURNEYS = GJ-1
 ## 2. Business outcome
 
 Help a customer discover a small number of genuinely relevant, already purchasable additions at
-Product Detail, Customization, and Cart, and help an authorized workforce operator influence
-those suggestions inside existing commercial eligibility.
+Product Detail, Customization, and Cart. Customization additions come from the current product's
+existing variant and modifier authority. An authorized workforce operator can influence Product
+Detail and Cart suggestions through product or category relationships, inside existing commercial
+eligibility.
 
 The business result, in priority order from the approved discovery direction, is:
 
@@ -150,7 +152,7 @@ Current repository evidence:
 | Persona ID | Responsibility / goal in this slice | Context / evidence |
 |---|---|---|
 | `PERSONA-CUSTOMER` | See a few optional, purchasable suggestions and decide whether to add one, while the original order remains completable if every suggestion is ignored. | [`personas.md`](../personas.md) PERSONA-1. Guest or authenticated customer. Persona is not a role or permission. |
-| `PERSONA-WORKFORCE-OPERATOR` | Define recommendation relationships, supported placements, relative priority, and an optional effective period, then activate or disable them, only where that person is already authorized for the applicable commercial configuration scope. | VISION workforce commercial configuration. IMP-036F administers commercial configuration through existing server authorization. This candidate does not invent a role or permission. |
+| `PERSONA-WORKFORCE-OPERATOR` | Define product or category recommendation relationships, their Product Detail and Cart placements, relative priority, and an optional effective period, then activate or disable them, only where that person is already authorized for the applicable commercial configuration scope. | VISION workforce commercial configuration. IMP-036F administers commercial configuration through existing server authorization. This candidate does not invent a role, permission, variant target, or modifier target. |
 
 `PERSONA-PLATFORM-OPERATOR` has no new product responsibility in this slice. Support diagnosis
 uses existing operational evidence boundaries in section 19.
@@ -170,9 +172,9 @@ Planned recommendation behaviour in discovery is not accepted current reality.
 | Journey ID | Entry / context | Ordered activities | Success / downstream outcome | Alternate / recovery paths |
 |---|---|---|---|---|
 | `JOURNEY-036K-PRODUCT-DETAIL` | Customer is on an eligible product in a known outlet and fulfilment context | See at most three eligible complements, or fewer; ignore them or explicitly add one when commerce allows, or continue into customization when configuration is required | The current product journey stays primary. An accepted add is ordinary cart intent. | No eligible complement: no padded set. Ignore: cart unchanged. Stale add: existing commerce rejects it. |
-| `JOURNEY-036K-CUSTOMIZATION` | Customer is configuring the current product | See at most one variant upgrade and two valid add-ons, three total; choose one explicitly through existing customization | Selection changes only after that choice. Paid modifiers stay unselected until the customer selects them. | No valid upgrade or add-on: the customization task continues. Invalid option: not offered. |
+| `JOURNEY-036K-CUSTOMIZATION` | Customer is configuring the current product | See at most one existing variant upgrade and two existing valid add-ons, three total, from that product's current customization authority; choose one explicitly through existing customization | Selection changes only after that choice. Paid modifiers stay unselected until the customer selects them. | No valid upgrade or add-on: the customization task continues. Invalid option: not offered. |
 | `JOURNEY-036K-CART` | Cart has at least one line | See at most four category-gap suggestions; continue to checkout with or without accepting one | Checkout remains available. Accepted adds follow existing cart rules. | Empty cart: no recommendation module. Category already present: that category is not treated as missing. Failed generation: cart and checkout continue. |
-| `JOURNEY-036K-WORKFORCE` | Operator is already inside an authorized commercial configuration scope | Define source, target, relationship kind, supported placements, relative priority, and optional effective period; activate or disable | New recommendation sets follow the effective relationship and still pass hard eligibility. | Unauthorized or cross-scope action is denied. Disable stops future use and leaves existing cart lines in place. |
+| `JOURNEY-036K-WORKFORCE` | Operator is already inside an authorized commercial configuration scope | Define a product or category source, a product or category target, relationship kind, Product Detail and Cart placements, relative priority, and an optional effective period; activate or disable | New Product Detail and Cart sets may follow the effective relationship and still pass hard eligibility. | Unauthorized or cross-scope action is denied. Disable stops future use of that relationship and leaves existing cart lines in place. Customization recommendations continue from existing customization authority. |
 
 ## 7. Story map
 
@@ -189,7 +191,7 @@ Planned recommendation behaviour in discovery is not accepted current reality.
 | Assisted sales are distinguishable from other sales | `PERSONA-CUSTOMER` | All customer journeys | Record presentation, action, and surviving purchase | `US-036K-009` | `V1_ACCEPTANCE_SLICE` |
 | Ranking stays inside eligibility | `PERSONA-WORKFORCE-OPERATOR` / `PERSONA-CUSTOMER` | Workforce and customer journeys | Order eligible candidates with deterministic rules | `US-036K-010` | `V1_ACCEPTANCE_SLICE` |
 | Popularity treatment stays evidence-backed | `PERSONA-CUSTOMER` | All customer journeys | Permit that treatment only when the evidence rule passes | `US-036K-011` | `V1_ACCEPTANCE_SLICE` |
-| Operators influence relationships inside their scope | `PERSONA-WORKFORCE-OPERATOR` | `JOURNEY-036K-WORKFORCE` | Define, activate, and disable relationships | `US-036K-012` | `V1_ACCEPTANCE_SLICE` |
+| Operators influence relationships inside their scope | `PERSONA-WORKFORCE-OPERATOR` | `JOURNEY-036K-WORKFORCE` | Define, activate, and disable product or category relationships for Product Detail and Cart | `US-036K-012` | `V1_ACCEPTANCE_SLICE` |
 | Incrementality can be measured later | `PERSONA-CUSTOMER` | All customer journeys | Be design-ready for a controlled holdout; do not require ~10% live activation for Product acceptance | `US-036K-013` | `V1_ACCEPTANCE_SLICE` |
 | Menu browse ranking, checkout suggestions, post-purchase suggestions, quantity-aware groups, view-through, threshold completion, frequently bought together, trending, personalized, reorder | `PERSONA-CUSTOMER` | Later journeys | Out of this acceptance slice | Section 23 | `FOLLOW_UP` / `DEFERRED` |
 | Limited Drop as a required customer placement | `PERSONA-CUSTOMER` | Future, dependency-conditional | Not a V1 acceptance dependency | Section 23 | `EXPLICITLY_DEFERRED` / `DEPENDENCY_CONDITIONAL` |
@@ -199,7 +201,7 @@ Planned recommendation behaviour in discovery is not accepted current reality.
 
 | Slice | Mandatory story IDs | Mandatory AC IDs | Required Golden Journeys | Observable acceptance boundary |
 |---|---|---|---|---|
-| `V1_ACCEPTANCE_SLICE` | `US-036K-001` through `US-036K-013` | Every `AC-036K-*` marked mandatory YES | `GJ-FIRST-ORDER`, `GJ-AVAILABILITY`, `GJ-PRODUCT-MENU-LAUNCH` must keep working with recommendations present, absent, failed, or held out. `GJ-PAYMENT-RECOVERY` must remain reachable when recommendations fail. | A customer can see bounded eligible suggestions on Product Detail, Customization, and a non-empty Cart; add one only by explicit action through existing commerce; ignore all of them and still order; an operator with existing commercial-configuration authority can maintain relationships inside eligibility. |
+| `V1_ACCEPTANCE_SLICE` | `US-036K-001` through `US-036K-013` | Every `AC-036K-*` marked mandatory YES | `GJ-FIRST-ORDER`, `GJ-AVAILABILITY`, `GJ-PRODUCT-MENU-LAUNCH` must keep working with recommendations present, absent, failed, or held out. `GJ-PAYMENT-RECOVERY` must remain reachable when recommendations fail. | A customer can see bounded eligible suggestions on Product Detail, Customization, and a non-empty Cart; add one only by explicit action through existing commerce; ignore all of them and still order. Customization suggestions use the current product's existing variant and modifier authority. An operator with existing commercial-configuration authority can maintain product or category relationships for Product Detail and Cart, inside eligibility. |
 | `FOLLOW_UP` | Menu discovery, checkout placement, post-purchase, quantity-aware cart inference, view-through attribution, co-purchase claims, trend claims, personalized recommendations, reorder, threshold completion | None in this candidate | None become mandatory | Each needs its own later authorization. None is a hidden V1 requirement. |
 | `DEFERRED` | ML / collaborative filtering / embeddings / vector search / LLM recommendation engine / external recommendation SaaS / feature store / bandits / psychographic profiling / cross-session personalization; mandatory Limited Drop dependency | None | None | Limited Drop waits for an authoritative Drop source through Product and Architecture authority. No Drop aggregate is defined here. |
 
@@ -235,16 +237,16 @@ so that an upgrade stays a choice about this product, not a second invented prod
 
 Journey / activity: JOURNEY-036K-CUSTOMIZATION / see and choose upgrades and add-ons
 Preconditions: The current product has existing variant or modifier authority. The customer is in the customization interaction.
-Acceptance scenarios: AC-036K-002-01 through AC-036K-002-05
-Business rules: BR-036K-005, BR-036K-009, BR-036K-027
+Acceptance scenarios: AC-036K-002-01 through AC-036K-002-06
+Business rules: BR-036K-005, BR-036K-009, BR-036K-027, BR-036K-031
 UX states: Customization recommendation states in section 13
 Permission / resource context: Customer storefront.
 Error / recovery: Invalid configuration is refused by existing customization rules.
-Dependencies: Existing customization (IMP-028C direction) and D-369 / ARCH-G20.
-Explicit non-goals: A parallel customization engine. Silent variant change. Paid modifier preselection.
-Data implications: Reads existing variant and modifier configuration. Does not create a new modifier authority.
+Dependencies: Existing customization (IMP-028C direction) and D-369 / ARCH-G20. The set is produced from the current product's existing variant and modifier customization authority.
+Explicit non-goals: A parallel customization engine. A new variant identity. A new modifier identity. Silent variant change. Paid modifier preselection. Producing this set from an operator-authored product or category relationship.
+Data implications: Reads existing variant and modifier configuration. Does not create a new variant identity, a new modifier identity, or a parallel customization authority.
 Security implications: A suggestion cannot select a positive-price modifier for the customer.
-Architecture fit / applicable invariants: ARCH-G20, D-369. Resolution of a variant upgrade versus a separate product uses existing product identity.
+Architecture fit / applicable invariants: ARCH-G20, D-369. A variant upgrade and a modifier or add-on resolve through existing product and customization identity. Architecture Fit must not invent a variant or modifier target for an operator relationship in order to place that relationship on Customization.
 Open material decisions: NONE
 Readiness: NOT_READY_FOR_IMPLEMENTATION
 ```
@@ -456,15 +458,15 @@ so that new suggestions follow that configuration without changing catalog truth
 Journey / activity: JOURNEY-036K-WORKFORCE / administer relationships
 Preconditions: The actor is a workforce principal established by existing server-validated session and server-derived scope (ARCH-G23 / ARCH-G25).
 Acceptance scenarios: AC-036K-012-01 through AC-036K-012-06
-Business rules: BR-036K-018, BR-036K-021, BR-036K-022, BR-036K-024
+Business rules: BR-036K-018, BR-036K-021, BR-036K-022, BR-036K-024, BR-036K-031
 UX states: Workforce configuration states in section 13
 Permission / resource context: Section 14. Exact existing permission and resource mapping is ARCHITECTURE_FIT_REQUIRED.
 Error / recovery: Denied actions do not change relationships. Disabling does not remove cart lines already added.
 Dependencies: Existing commercial administration workspace evidence from IMP-036F. No new role.
-Explicit non-goals: A recommendation-specific role or permission. Using a relationship to override assortment, price, availability, or fulfilment. Mandatory Limited Drop marking.
-Data implications: A relationship has a source product or category, a target product or category, a relationship kind, supported placements, relative priority, optional effective period, and active or disabled state. Durable aggregate versus catalog or merchandising ownership is ARCHITECTURE_FIT_REQUIRED.
+Explicit non-goals: A recommendation-specific role or permission. A variant target type. A modifier target type. A new relationship target kind. Customization as a placement of this relationship. Using a relationship to override assortment, price, availability, or fulfilment. Mandatory Limited Drop marking.
+Data implications: A relationship has a source product or category, a target product or category, a relationship kind, supported placements of Product Detail and Cart, relative priority, optional effective period, and active or disabled state. It does not carry a variant or modifier target. Durable aggregate versus catalog or merchandising ownership is ARCHITECTURE_FIT_REQUIRED.
 Security implications: Unauthorized and cross-scope actors cannot administer relationships. Caller-supplied roles are not authority.
-Architecture fit / applicable invariants: ARCH-G08, ARCH-G23, ARCH-G25, D-373. Exact permission mapping is ARCHITECTURE_FIT_REQUIRED.
+Architecture fit / applicable invariants: ARCH-G08, ARCH-G23, ARCH-G25, D-373. Exact permission mapping is ARCHITECTURE_FIT_REQUIRED. Architecture Fit must not invent a variant or modifier target, or a Customization placement, for this relationship.
 Open material decisions: NONE
 Readiness: NOT_READY_FOR_IMPLEMENTATION
 ```
@@ -573,6 +575,17 @@ Given existing customization already visibly preselects a zero-price standard op
 When recommendations render
 Then that existing default behaviour remains governed by customization authority
 And recommendation does not newly preselect a positive-price modifier
+Mandatory in acceptance slice: YES
+
+AC-036K-002-06 — Customization recommendations use existing customization authority
+Story: US-036K-002
+Given the customer is configuring a product that already has variant or modifier authority
+When customization recommendations are produced
+Then each candidate is an existing variant upgrade or an existing modifier or add-on of that product
+And the set contains at most 1 variant upgrade and at most 2 add-ons, within the total of 3
+And the set is produced from that existing customization authority
+And the set is not produced from an operator-authored product or category relationship
+And no new variant identity and no new modifier identity are created
 Mandatory in acceptance slice: YES
 ```
 
@@ -931,7 +944,9 @@ Story: US-036K-012
 Given a workforce operator already authorized for the applicable commercial configuration scope
 When they define a relationship
 Then they can set source product or category, target product or category, relationship kind, supported V1 placements, relative priority, and an optional effective period
-And supported V1 placements are Product Detail, Customization, and Cart
+And supported V1 placements for this relationship are Product Detail and Cart
+And Customization is not a supported placement for this relationship
+And this relationship does not name a variant target or a modifier target
 Mandatory in acceptance slice: YES
 
 AC-036K-012-02 — Activate and disable affect new recommendation use
@@ -1022,7 +1037,7 @@ Mandatory in acceptance slice: YES
 | Story / AC ID | Required behaviour / risk | Applicable test layers | Planned proof | Actual evidence / candidate / result |
 |---|---|---|---|---|
 | `US-036K-001` / `AC-036K-001-*` | Bounded complements; no padding; ignore leaves the product unchanged | Component, domain, E2E browser | Later Quality Plan. Not written in this candidate. | `NOT_EXECUTED` |
-| `US-036K-002` / `AC-036K-002-*` | Customization bounds; explicit variant and add-on choice; no paid preselection | Component, domain, E2E | Later Quality Plan | `NOT_EXECUTED` |
+| `US-036K-002` / `AC-036K-002-*` | Customization bounds; explicit variant and add-on choice; existing customization authority; no paid preselection | Component, domain, E2E | Later Quality Plan | `NOT_EXECUTED` |
 | `US-036K-003` / `AC-036K-003-*` | Cart bound, empty cart, category-gap examples, no group inference | Domain, component, E2E | Later Quality Plan | `NOT_EXECUTED` |
 | `US-036K-004` / `AC-036K-004-*` | Explicit add versus configuration handoff; no silent mutation | Domain, HTTP/API, component, E2E | Later Quality Plan. Cart reuse mechanism unresolved. | `NOT_EXECUTED` |
 | `US-036K-005` / `AC-036K-005-*` | Eligibility before rank; server authority; context change | Domain, authorization, integration, E2E | Later Quality Plan | `NOT_EXECUTED` |
@@ -1032,7 +1047,7 @@ Mandatory in acceptance slice: YES
 | `US-036K-009` / `AC-036K-009-*` | Distinct measurement meanings and assisted-purchase rule | Domain, integration | Later Measurement Plan. Schema not selected. | `NOT_EXECUTED` |
 | `US-036K-010` / `AC-036K-010-*` | Deterministic rank inside eligibility; weights not contracted; rationale hidden | Domain, component | Later Quality Plan | `NOT_EXECUTED` |
 | `US-036K-011` / `AC-036K-011-*` | Popularity evidence rule and no false popularity claim | Domain, component | Later Quality Plan | `NOT_EXECUTED` |
-| `US-036K-012` / `AC-036K-012-*` | Authorized administration; deny unauthorized and cross-scope; disable leaves cart lines | Authorization, domain, E2E | Later Quality Plan. Exact permission mapping unresolved. | `NOT_EXECUTED` |
+| `US-036K-012` / `AC-036K-012-*` | Authorized product or category relationship administration for Product Detail and Cart; Customization is not a placement of that relationship; deny unauthorized and cross-scope; disable leaves cart lines | Authorization, domain, E2E | Later Quality Plan. Exact permission mapping unresolved. | `NOT_EXECUTED` |
 | `US-036K-013` / `AC-036K-013-02` through `AC-036K-013-05` | When holdout is assigned, presentation is suppressed and commerce is unchanged. Unknown assignment does not block commerce. | Domain, component, E2E | Later Quality Plan for the observable boundary. | `NOT_EXECUTED` |
 | `AC-036K-013-01` | Design-ready holdout direction of approximately 10%. Not a live-activation acceptance outcome. | Measurement readiness | Later Measurement/Instrumentation Plan finalizes assignment unit, population, actual control percentage and activation, primary metric, guardrails, observation rule, stop condition, and interpretation rule. `INSUFFICIENT_EVIDENCE` remains valid. | `NOT_EXECUTED` |
 | Golden journeys in section 20 | First order, availability, and menu launch still complete | E2E browser, Golden Journey regression | Later Quality Plan | `NOT_EXECUTED` |
@@ -1069,18 +1084,19 @@ Database integration applies only if Architecture Fit later introduces durable s
 | `BR-036K-024` | Limited Drop is not a mandatory V1 acceptance dependency. Static `/#drops` marketing is not Drop commerce authority. | D-383; repository evidence. | Section 23 |
 | `BR-036K-025` | If a future candidate is both an authoritative Limited Drop and commercial priority, customer-facing semantics use Limited Drop. Internal commercial priority stays internal. | RRD-05, preserved as a future rule. | Section 23 |
 | `BR-036K-026` | Customer-visible semantics must not show internal strategy names, relationship enum names, commercial priority, contribution, or margin rationale, and must not falsely claim co-purchase, personalization, trend, or savings. Exact approved presentation, including placement headings, neutral supporting copy, conditional popularity wording, and holdout silence, is the Experience Definition. | RRD-02, RRD-05, LANG-1. | `US-036K-001`, `US-036K-010`, `US-036K-011` |
-| `BR-036K-027` | Relationship vocabulary and selection strategy are distinct. Where discovery sources a relationship, `COMPLEMENTS`, `UPSELLS_TO`, `PAIR_WITH`, `ADD_ON`, and `ALTERNATIVE` stay distinct and are not a generic related-products bucket. `ALTERNATIVE != SILENT_SWAP`. This definition does not make `ALTERNATIVE` a separate V1 recommendation strategy. Selection behaviour adopted for V1 is complementary suggestion on Product Detail, variant or add-on upsell inside existing customization, cart category-gap, commercial-priority ranking among already eligible candidates, and conditional popularity treatment under `BR-036K-019`. Limited Drop stays dependency-conditional. Persistence shape is Architecture Fit. | Discovery relationship model and strategy catalogue. | `US-036K-004`, `US-036K-012` |
+| `BR-036K-027` | Relationship vocabulary and selection strategy are distinct. Where discovery sources a relationship, `COMPLEMENTS`, `UPSELLS_TO`, `PAIR_WITH`, `ADD_ON`, and `ALTERNATIVE` stay distinct and are not a generic related-products bucket. `ALTERNATIVE != SILENT_SWAP`. This definition does not make `ALTERNATIVE` a separate V1 recommendation strategy. Selection behaviour adopted for V1 is complementary suggestion on Product Detail, variant or add-on upsell inside existing customization under `BR-036K-031`, cart category-gap, commercial-priority ranking among already eligible candidates, and conditional popularity treatment under `BR-036K-019`. Limited Drop stays dependency-conditional. Persistence shape is Architecture Fit. | Discovery relationship model and strategy catalogue. | `US-036K-002`, `US-036K-004`, `US-036K-012` |
 | `BR-036K-028` | Eligibility is decided on the server from existing commerce truth. | ARCH-G11. | `US-036K-005` |
 | `BR-036K-029` | Displaying a candidate does not reserve stock, price, or eligibility. | Discovery direct-add section. | `US-036K-004` |
 | `BR-036K-030` | V1 measurement distinguishes set render, item impression, click, add attempt, successful add, removal, and recommendation-assisted purchase. This rule does not choose storage, transport, schema, or vendor. | Discovery analytics vocabulary. | `US-036K-009` |
+| `BR-036K-031` | V1 Customization recommendations are produced from the current product's existing variant and modifier customization authority. A variant upgrade uses existing product or variant authority already attached to the current product. A modifier or add-on uses existing customization or modifier authority already attached to the current product. There is no parallel customization authority, no new variant identity, and no new modifier identity. The bounds remain at most 3 recommendations in total, at most 1 variant upgrade, and at most 2 add-ons. Those recommendations are not produced by an operator-authored recommendation relationship. For the V1 operator relationship, source identity is product or category and target identity is product or category. Supported placements for that relationship are Product Detail and Cart. Customization is not a supported placement of that relationship in V1. Future operator-authored variant or modifier targeting requires a later Product decision before Architecture Fit may design it. This rule does not add a variant target type, a modifier target type, a new relationship target kind, a new schema, a new permission, or a new role. | Architect review `5380003366`, resolving the formal gap between RR-US-010 / RR-US-020 and RR-US-200 / RR-US-201 without expanding discovery scope. | `US-036K-002`, `US-036K-012`, `AC-036K-002-06`, `AC-036K-012-01` |
 
-V1 placement bounds. Maxima are ceilings, not quotas. Presentation belongs to the Experience Definition.
+V1 customer placement bounds. Maxima are ceilings, not quotas. Presentation belongs to the Experience Definition. Customization remains a customer placement. It is not a placement of the operator product or category relationship (`BR-036K-031`).
 
-| Placement | Maximum | Composition |
-|---|---|---|
-| Product Detail | 3 | Complementary recommendations. A V1 recommendation placement. |
-| Customization | 3 total | At most 1 variant upgrade and at most 2 add-ons |
-| Cart | 4 | Requires at least one cart line |
+| Placement | Maximum | Composition | Operator product/category relationship |
+|---|---|---|---|
+| Product Detail | 3 | Complementary recommendations. A V1 customer recommendation placement. | Supported. |
+| Customization | 3 total | At most 1 variant upgrade and at most 2 add-ons, from the current product's existing variant and modifier authority. | Not a relationship placement in V1. |
+| Cart | 4 | Requires at least one cart line. | Supported. |
 
 ## 12. Journey Completeness Matrix
 
@@ -1091,7 +1107,7 @@ Customer journeys `JOURNEY-036K-PRODUCT-DETAIL`, `JOURNEY-036K-CUSTOMIZATION`, a
 | ENTRY | Product Detail and Customization open from existing product flow. Cart opens from the existing cart. Direct links to those existing surfaces still work. Recommendations are secondary modules on those surfaces. | `US-036K-001`, `US-036K-002`, `US-036K-003` |
 | DISCOVERY | The customer can notice an optional recommendation set. Approved headings and other presentation are the Experience Definition. Menu browse ranking is follow-up, so Menu itself is not a recommendation placement. | `AC-036K-001-04`, `AC-036K-003-02` |
 | CONTEXT | Selected outlet and fulfilment context, including Delivery, Pickup, and Scheduled when present, constrain eligibility. Cart gap also uses categories already in the cart. | `AC-036K-005-03`, `AC-036K-003-03` |
-| EMPTY / FIRST USE | Zero eligible recommendations is valid. Empty cart shows no cart recommendation module. No operator relationship yet means no relationship-driven candidate, and commerce still works. | `AC-036K-001-02`, `AC-036K-003-02`, `US-036K-012` |
+| EMPTY / FIRST USE | Zero eligible recommendations is valid. Empty cart shows no cart recommendation module. No operator relationship yet means no product or category relationship candidate on Product Detail or Cart, and commerce still works. Customization recommendations still come from the current product's existing variant and modifier authority when those options are eligible. | `AC-036K-001-02`, `AC-036K-002-06`, `AC-036K-003-02`, `US-036K-012` |
 | HAPPY PATH | Eligible bounded sets, explicit add, ordinary cart intent, assisted attribution when the line is purchased. | `AC-036K-001-01`, `AC-036K-004-01`, `AC-036K-009-02` |
 | ALTERNATE VALID PATHS | Ignore all suggestions. Direct add when commerce allows. Configuration handoff when it does not. Fewer than the maximum. No popularity treatment when evidence is insufficient. | `AC-036K-001-03`, `AC-036K-004-02`, `AC-036K-011-02` |
 | VALIDATION FAILURE | Ineligible and incompatible candidates are omitted. A stale add fails existing commerce validation. | `AC-036K-005-01`, `AC-036K-006-02` |
@@ -1116,7 +1132,7 @@ Observable behaviour is defined here. Presentation, focus detail, and copy tone 
 | Surface / state | Entry condition | Visible feedback / available actions | Focus / keyboard behaviour | Next / recovery state | AC ID or N/A reason |
 |---|---|---|---|---|---|
 | Product Detail / ready | Eligible complements exist and the customer is not in an assigned holdout | At most 3 complements; primary product actions remain available. Heading is Experience Definition. | Experience Definition | Explicit add, ignore, or configuration handoff | `AC-036K-001-01` |
-| Customization / ready | Eligible upgrade or add-on exists | At most 1 variant upgrade and 2 add-ons, 3 total. Heading is Experience Definition. | Experience Definition | Existing customization continues | `AC-036K-002-01` |
+| Customization / ready | Eligible existing variant upgrade or add-on exists on the current product | At most 1 variant upgrade and 2 add-ons, 3 total, from existing customization authority. Heading is Experience Definition. | Experience Definition | Existing customization continues | `AC-036K-002-01`, `AC-036K-002-06` |
 | Cart / ready | At least one cart line and an eligible suggestion | At most 4; checkout remains available. Heading is Experience Definition. | Experience Definition | Add, ignore, or checkout | `AC-036K-003-01` |
 | Any placement / loading | A set is still being produced | Primary Product, Customization, or Cart task remains usable | Experience Definition | Ready, empty, or fail-open | `AC-036K-007-01` |
 | Any placement / empty | No eligible candidate, or cart has no lines | No padded candidates. Empty cart shows no recommendation module | Primary task keeps focus availability | Continue ordering | `AC-036K-001-02`, `AC-036K-003-02` |
@@ -1126,9 +1142,9 @@ Observable behaviour is defined here. Presentation, focus detail, and copy tone 
 | Server / network failure | Generation or ranking fails | No blocking recommendation error. Module absent. | Primary task remains operable | Ordering continues | `AC-036K-007-01` |
 | Removal | Customer removes a recommendation-added line | Ordinary cart removal result. Item remains on the menu. | Experience Definition | Candidate suppressed for this cart or session | `AC-036K-008-01` |
 | Holdout | Customer assigned to the recommendation holdout | Recommendation presentation suppressed. Commerce unchanged. Exact silence is Experience Definition. | N/A — nothing extra to focus | Normal commerce | `AC-036K-013-02` |
-| Workforce / ready | Authorized operator opens relationship administration | Can define, activate, and disable within scope | Experience Definition | Effective for new sets after activation | `AC-036K-012-01` |
+| Workforce / ready | Authorized operator opens relationship administration | Can define a product or category relationship for Product Detail and Cart, then activate or disable it within scope. Customization is not a placement of that relationship. | Experience Definition | Effective for new Product Detail and Cart sets after activation | `AC-036K-012-01` |
 | Workforce / denied | Actor lacks scope | Action denied; configuration unchanged | Experience Definition | Remain without a successful write | `AC-036K-012-04` |
-| Workforce / disable | Authorized disable | New sets stop using it; existing cart lines remain | Experience Definition | Cart unchanged by the disable | `AC-036K-012-03` |
+| Workforce / disable | Authorized disable | New Product Detail and Cart sets stop using that relationship. Existing cart lines remain. Customization recommendations from existing customization authority continue. | Experience Definition | Cart unchanged by the disable | `AC-036K-012-03` |
 
 Pending mutation, concurrency conflict, and destructive confirmation use the existing cart and existing administration confirmations. This candidate does not add a second confirmation that implies the menu item was deleted.
 
@@ -1139,7 +1155,7 @@ Pending mutation, concurrency conflict, and destructive confirmation use the exi
 | View customer recommendations | Customer storefront. No new permission. | Selected outlet and fulfilment context already used by Menu, Product, and Cart | Eligible customers see eligible items only. An assigned holdout suppresses recommendation presentation. | `AC-036K-005-03`, `AC-036K-013-02` |
 | Add from a recommendation | Existing cart mutation authority | The active cart owned by the current guest or customer principal | Allowed only through explicit action and current commerce validation. A client-supplied ineligible item is denied. | `AC-036K-004-04`, `AC-036K-005-04` |
 | Remove a recommendation-added line | Existing cart removal authority | That same cart | Allowed as ordinary removal. Does not grant catalog deletion. | `AC-036K-008-01` |
-| Define, activate, or disable a relationship | Existing workforce commercial-configuration authorization. Server-validated workforce session and server-derived scope. ARCH-G23, ARCH-G25, D-373. IMP-036F records existing catalog, menu, assortment, pricing, and promotion permissions and states no new permission model for that slice. | The commercial scope the actor already holds | Allowed inside that scope. Denied for unauthorized actors. Denied across scopes. | `AC-036K-012-04`, `AC-036K-012-05` |
+| Define, activate, or disable a product or category relationship | Existing workforce commercial-configuration authorization. Server-validated workforce session and server-derived scope. ARCH-G23, ARCH-G25, D-373. IMP-036F records existing catalog, menu, assortment, pricing, and promotion permissions and states no new permission model for that slice. | The commercial scope the actor already holds. Relationship placements are Product Detail and Cart. | Allowed inside that scope. Denied for unauthorized actors. Denied across scopes. This action does not create a variant identity, a modifier identity, a new permission, or a new role. | `AC-036K-012-01`, `AC-036K-012-04`, `AC-036K-012-05` |
 
 Which of the existing permission and resource pairs enforces recommendation administration is `ARCHITECTURE_FIT_REQUIRED`. This candidate does not name a new permission, role, or delegation.
 
@@ -1151,13 +1167,13 @@ Existing authorities stay in place: Catalog and Menu identity, assortment, avail
 
 This capability needs to remember, by some later architecture:
 
-- operator relationships: source product or category, target product or category, kind, supported placements, relative priority, optional effective period, active or disabled
+- operator relationships: source product or category, target product or category, kind, supported placements limited to Product Detail and Cart, relative priority, optional effective period, active or disabled
 - which exact candidate was suppressed for an active cart or session
 - whether a purchased line was recommendation-assisted under the continuity rules
 - whether a session or cart is in the recommendation holdout
 - aggregate purchased-unit evidence for the popularity rule
 
-It does not choose tables, aggregates, event transport, schema, or a second price book. Display does not freeze price or availability. Historical purchased Orders remain the popularity evidence source and are not rewritten. Checkout Snapshot remains the payable truth for a purchased recommendation add.
+It does not choose tables, aggregates, event transport, schema, or a second price book. Display does not freeze price or availability. Historical purchased Orders remain the popularity evidence source and are not rewritten. Checkout Snapshot remains the payable truth for a purchased recommendation add. Customization recommendations are read from existing variant and modifier configuration. They are not stored as an operator relationship and they do not add a variant or modifier target.
 
 Category labels in the cart-gap examples are illustrations of presence and absence against categories the catalog already owns. This candidate does not create a new category taxonomy. How a category rule resolves to products is Architecture Fit.
 
@@ -1243,7 +1259,7 @@ Registry status is not a test verdict.
 |---|---|---|
 | Menu, customization, cart, checkout, and payment without recommendations | Existing verified on source main | Section 5; no recommendation matches under `src/` |
 | Product Detail complements, maximum 3 | V1 acceptance commitment | `US-036K-001` |
-| Customization variant and add-on bounds | V1 acceptance commitment | `US-036K-002` |
+| Customization variant and add-on bounds from existing customization authority | V1 acceptance commitment | `US-036K-002`, `BR-036K-031` |
 | Cart completion set and category-gap examples | V1 acceptance commitment | `US-036K-003` |
 | Explicit add or existing configuration handoff | V1 acceptance commitment | `US-036K-004` |
 | Hard eligibility before ranking | V1 acceptance commitment | `US-036K-005` |
@@ -1252,7 +1268,7 @@ Registry status is not a test verdict.
 | Removal, suppression, and attribution boundary | V1 acceptance commitment | `US-036K-008`, `US-036K-009` |
 | Deterministic ranking inside eligibility | V1 acceptance commitment | `US-036K-010` |
 | Conditional popularity treatment | V1 acceptance commitment; not a launch dependency | `US-036K-011` |
-| Workforce relationship administration inside existing authorization | V1 acceptance commitment | `US-036K-012` |
+| Workforce product or category relationship administration for Product Detail and Cart, inside existing authorization | V1 acceptance commitment | `US-036K-012`, `BR-036K-031` |
 | Controlled recommendation holdout policy | V1 design and measurement readiness. Approximately 10% is the target direction. Live activation of that share is not a Product acceptance outcome. | `US-036K-013`, `AC-036K-013-01` |
 
 V1 commitments are not implemented and are not accepted.
@@ -1274,6 +1290,7 @@ V1 commitments are not implemented and are not accepted.
 | Campaign or Offer metadata as a ranking input | FOLLOW_UP | May be consumed later from its own authority. | Architecture Fit coupling question. RR-US-140. |
 | ML, collaborative filtering, LLM recommendations, embeddings, vector search, external recommendation SaaS, feature store, bandits, psychographic profiling, cross-session personalization | DEFERRED | Not required for V1. | Later program decision. RR-US-153. |
 | Limited Drop as a mandatory customer or operator capability | `DEPENDENCY_CONDITIONAL` | No authoritative Drop commerce source is established. Static `/#drops` is not that source. Ordering V1 does not wait for it. | A future Product and Architecture authority that proves a Drop source. Discovery RR-US-050 and RR-US-202 drop marking are not V1 acceptance. |
+| Operator-authored variant or modifier targeting | Later Product decision, not V1 | The V1 operator relationship source and target are product or category. That model cannot place a relationship on Customization. Customization recommendations stay on existing customization authority. | A later Product decision is required before Architecture Fit may design any such targeting. |
 
 Preserved future presentation rule, not a V1 dependency: if a future eligible candidate is both Limited Drop under an authoritative Drop source and commercial priority, customer-facing semantics use Limited Drop. Internal commercial priority is not shown (`BR-036K-025`, RRD-05). This candidate does not invent a Drop aggregate.
 
@@ -1290,6 +1307,8 @@ Preserved future presentation rule, not a V1 dependency: if a future eligible ca
 | Using a recommendation failure to block payment | Fail-open commerce | `AC-036K-007-01` |
 | Treating static `/#drops` as Drop commerce truth | Repository evidence; D-383 | `BR-036K-024` |
 | Inventing a recommendation role or permission | D-383; ARCH-G25 | Section 14 |
+| Customization as a placement of an operator-authored product or category relationship | The V1 relationship identity model has no variant or modifier target | `BR-036K-031`, `AC-036K-012-01` |
+| A recommendation creating a new variant identity or a new modifier identity | Existing customization authority remains the only customization authority | `AC-036K-002-06` |
 | View-through counted as V1 assisted revenue | RRD-08 | `AC-036K-009-06` |
 | Suppression deleting a menu item | RRD-03 | `AC-036K-008-03` |
 
@@ -1300,7 +1319,7 @@ OPEN_PRODUCT_DECISIONS = NONE
 PRODUCT_DECISION_REQUIRED = NONE
 ```
 
-No material product behaviour in the V1 acceptance slice is left to an assumption. The items below are architecture mechanisms. They do not change the observable rules already stated.
+No material product behaviour in the V1 acceptance slice is left to an assumption. The items below are architecture mechanisms. They do not change the observable rules already stated. Customization candidate identity is not one of those mechanisms. V1 Customization recommendations use the current product's existing variant and modifier authority. The operator relationship does not include a Customization placement or a variant or modifier target (`BR-036K-031`). Architecture Fit must not invent that Product meaning.
 
 | `ARCHITECTURE_FIT_REQUIRED` item | Why it is not a product decision | Product behaviour already fixed by |
 |---|---|---|
@@ -1334,7 +1353,7 @@ Assumption register:
 
 The customer promise is optional, relevant, purchasable ideas. It is not a promise that a suggestion will be in stock beyond existing availability, that a price is discounted, or that operations will prepare a recommended item differently from any other cart line.
 
-System truth is existing commerce plus the relationship and eligibility rules in this candidate. Workforce action is configuration by an already authorized operator. Operational capability is the existing commercial-administration and storefront operation. No new store labour step is required to accept a recommendation add.
+System truth is existing commerce plus the relationship and eligibility rules in this candidate. Customization suggestions read existing variant and modifier authority. Product Detail and Cart may also use an effective product or category relationship after hard eligibility. Workforce action is configuration of that relationship by an already authorized operator. Operational capability is the existing commercial-administration and storefront operation. No new store labour step is required to accept a recommendation add.
 
 If suggestions fail, the operational promise is unchanged: the customer can still order.
 
@@ -1437,8 +1456,8 @@ Discovery story IDs are not formal acceptance IDs. This table maps them onto the
 | RR-US-001 | — | `US-036K-001`, `AC-036K-001-01` | V1 |
 | RR-US-002 | RRD-02 | `US-036K-001`, `AC-036K-001-04`, `BR-036K-026` | V1 |
 | RR-US-003 | — | `AC-036K-001-03` | V1 |
-| RR-US-010, RR-US-011, RR-US-012 | — | `US-036K-002`, `AC-036K-002-02` | V1 |
-| RR-US-020, RR-US-022 | — | `US-036K-002`, `AC-036K-002-03` | V1 |
+| RR-US-010, RR-US-011, RR-US-012 | — | `US-036K-002`, `AC-036K-002-02`, `AC-036K-002-06`, `BR-036K-031` | V1, from the current product's existing customization authority |
+| RR-US-020, RR-US-022 | — | `US-036K-002`, `AC-036K-002-03`, `AC-036K-002-06`, `BR-036K-031` | V1, from the current product's existing customization authority |
 | RR-US-021 | — | `BR-036K-009`, `AC-036K-004-03` | Not supported to violate |
 | RR-US-030, RR-US-031 | RRD-02, RRD-06 | `US-036K-003`, `AC-036K-003-01`, `AC-036K-003-08` | V1 |
 | RR-US-032 | — | `US-036K-007`, `AC-036K-003-08` | V1 |
@@ -1469,7 +1488,7 @@ Discovery story IDs are not formal acceptance IDs. This table maps them onto the
 | RR-US-150, RR-US-151, RR-US-152 | — | Section 23 | FOLLOW_UP; false claims not supported |
 | RR-US-153 | — | Section 23 | DEFERRED |
 | RR-US-170, RR-US-171, RR-US-172 | — | Section 23 | FOLLOW_UP |
-| RR-US-200, RR-US-201 | — | `US-036K-012` | V1 |
+| RR-US-200, RR-US-201 | — | `US-036K-012`, `AC-036K-012-01`, `BR-036K-031` | V1 for product or category source and target. Relationship placements are Product Detail and Cart. Customization is not a supported placement of that relationship. |
 | RR-US-202 | — | Commercial priority is `US-036K-010` / `US-036K-012`. Limited Drop marking is section 23. | Split: priority V1; Drop marking deferred |
 | RR-US-203 | — | Section 14 and section 25 | `ARCHITECTURE_FIT_REQUIRED` |
 | RR-US-210, RR-US-211, RR-US-212 | — | `AC-036K-012-02`, `AC-036K-012-03` | V1 |

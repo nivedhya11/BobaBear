@@ -65,8 +65,9 @@ Customer mental model:
 
 Operator mental model:
 
-> “I can influence relevant recommendations inside commercial eligibility, but I cannot make an
-> ineligible item purchasable or expose internal margin rationale to customers.”
+> “I can influence Product Detail and Cart recommendations through product or category
+> relationships inside commercial eligibility. I cannot place that relationship on Customization,
+> make an ineligible item purchasable, or expose internal margin rationale to customers.”
 
 ## 1. Identity / version / status
 
@@ -101,7 +102,7 @@ added while the customer was looking away.
 | `PERSONA-CUSTOMER` in Customization | See a real upgrade or add-on for this product | “Will this change my item only if I choose it?” |
 | `PERSONA-CUSTOMER` on Cart | See a short way to fill an obvious gap | “Can I check out now if I do not want these?” |
 | `PERSONA-CUSTOMER` after a refusal or a removal | Recover without losing the rest of the order | “Is the rest of my cart still here, and is the item still on the menu?” |
-| `PERSONA-WORKFORCE-OPERATOR` | Set relationships they are already allowed to administer | “Which placement, priority, and period apply, and what stays in carts I disable?” |
+| `PERSONA-WORKFORCE-OPERATOR` | Set product or category relationships they are already allowed to administer | “Which Product Detail or Cart placement, priority, and period apply, and what stays in carts I disable?” |
 | Holdout customer | Order normally | They should not need to ask why suggestions are missing. |
 
 ## 4. Evidence and assumptions
@@ -138,7 +139,7 @@ The desired states below are intent. They are not current behaviour.
 6. If the item needs choices, the existing customization interaction takes over. Paid modifiers stay unselected until the customer selects them. The cart changes only after that interaction accepts the configuration.
 7. If the item is no longer purchasable, existing calm recovery explains it and the rest of the cart remains. Checkout is still available.
 8. If they remove a recommendation-added line, ordinary cart removal runs. Later suggestion sets in that cart or session omit that candidate. The menu still lists the item. A later manual add feels like a normal menu add.
-9. An authorized operator defines or disables a relationship in the existing commercial configuration workspace. Disable stops future suggestions. Carts that already contain the item stay intact.
+9. An authorized operator defines or disables a product or category relationship for Product Detail or Cart in the existing commercial configuration workspace. Disable stops future use of that relationship. Customization suggestions continue from the current product's existing choices. Carts that already contain an item from that relationship stay intact.
 
 Popular appears only as an earned word on a qualifying item. The three placement headings stay
 in place. “You might also like” is neutral supporting copy when a popularity, trend, or
@@ -169,9 +170,9 @@ Each customer surface has one primary task and, when shown, one secondary recomm
 | Surface | Primary | Secondary | Hidden from the customer |
 |---|---|---|---|
 | Product Detail | The current product, its price, and the existing add or customize action | Up to three complements, heading “Goes great with this” | Strategy names, scores, margin, priority, relationship ids |
-| Customization | The current configuration and its existing choices | Up to one variant upgrade and two add-ons, heading “Make it yours” | A fake second product for a variant |
+| Customization | The current configuration and its existing choices | Up to one existing variant upgrade and two existing add-ons, heading “Make it yours” | A fake second product for a variant. An operator relationship form. |
 | Cart | Lines, totals, and the path to checkout | Up to four suggestions, heading “Complete your order” | Group-size inference, holdout status |
-| Workforce configuration | The relationship being edited and its effective scope | Priority, placements, and effective period as operational fields | Customer-facing copy of those internal fields |
+| Workforce configuration | The product or category relationship being edited and its effective scope | Priority, Product Detail and Cart placements, and effective period as operational fields | Customer-facing copy of those internal fields |
 
 “You might also like” is neutral supporting copy where a specific claim would be untrue. It does
 not replace “Goes great with this”, “Make it yours”, or “Complete your order”, and it is not a
@@ -191,9 +192,9 @@ The primary interaction on a suggestion is one explicit action: add, or open the
 customization. The module shows a handful of items so the customer can scan and move on.
 Maximums are ceilings. A short set is a normal result.
 
-Variant upgrades read as a step up of the item being configured. Add-ons read as optional extras
-the existing modifier rules already allow. Cart suggestions read as missing pieces of the order,
-not as a second menu.
+Variant upgrades read as a step up of the item being configured, using a variant that product
+already has. Add-ons read as optional extras the existing modifier rules already allow. Cart
+suggestions read as missing pieces of the order, not as a second menu.
 
 Cognitive load stays bounded by one group per surface, the placement caps in the Product
 Definition, no stacked claims, and no modal that must be cleared before checkout.
@@ -224,11 +225,13 @@ CUSTOMER PROMISE
         ↕
 SYSTEM TRUTH
   Existing assortment, availability, price, fulfilment, outlet, and configuration
-  plus effective recommendation relationships after hard eligibility
+  Customization suggestions read the current product's existing variant and modifier authority
+  Product Detail and Cart may also use an effective product or category relationship after hard eligibility
         ↕
 WORKFORCE ACTION
-  An already authorized operator defines, activates, or disables relationships
-  inside that commercial scope
+  An already authorized operator defines, activates, or disables a product or category relationship
+  for Product Detail or Cart, inside that commercial scope
+  Customization is not a placement of that relationship
         ↕
 OPERATIONAL CAPABILITY
   Existing commercial administration and existing storefront ordering
@@ -237,7 +240,9 @@ OPERATIONAL CAPABILITY
 
 If system truth says the item is ineligible, the customer experience is absence, not a
 purchasable-looking tease. If the operator disables a relationship, customers stop seeing new
-uses of it. Carts that already hold the item stay as carts.
+uses of that relationship on Product Detail and Cart. Customization suggestions that come from
+the current product's existing choices remain available when those choices are still eligible.
+Carts that already hold the item stay as carts.
 
 ## 12. Content requirements
 
@@ -261,9 +266,11 @@ Customer language:
 | Removal | Existing cart removal language |
 | Holdout, empty, or failed generation | No special recommendation sentence |
 
-Operator language may name relationship, placement, priority, effective period, activate, and
-disable. Those words serve the operator job. They are not copied into customer UI. Customers do
-not see strategy or relationship enum tokens.
+Operator language may name relationship, Product Detail placement, Cart placement, priority,
+effective period, activate, and disable. Those words serve the operator job. They are not copied
+into customer UI. The operator form does not offer Customization as a placement of a product or
+category relationship, and it does not ask for a variant or modifier target. Customers do not
+see strategy or relationship enum tokens.
 
 Future Drop language, only if Product and Architecture later prove a Drop source: “Limited Drop”
 or “Try the latest Drop”. Until then, that copy is unused.
@@ -595,8 +602,10 @@ Otherwise the item uses neutral copy and is not called Popular.
 Proof later: content QA with evidence present and evidence absent.
 
 XR-IMP-036K-011 — Workforce configuration clarity
-An authorized operator can see the relationship, supported placements, relative priority, optional effective period, and whether it is active.
-The experience makes clear that disabling stops new suggestions and leaves lines already in carts.
+An authorized operator can see the product or category relationship, its Product Detail and Cart placements, relative priority, optional effective period, and whether it is active.
+The experience does not ask the operator to place that relationship on Customization or to name a variant or modifier target.
+The customer Customization experience remains “Make it yours”, with at most one existing variant upgrade and two existing add-ons, chosen explicitly.
+The experience makes clear that disabling stops new use of that relationship and leaves lines already in carts.
 An unauthorized or cross-scope attempt uses the existing denial pattern and does not present another scope's configuration as editable.
 Proof later: workforce UI QA. Exact permission binding waits for Architecture Fit.
 
@@ -633,4 +642,5 @@ Proof later: paired session check against a session that may receive recommendat
 | Headings and neutral fallback, owned here | Product owns cardinality and false-claim boundaries in `BR-036K-026`. | RRD-02, RR-US-312 |
 | Future Drop wording only | `BR-036K-024`, `BR-036K-025` | RRD-05; not a V1 dependency |
 | Holdout silence, owned here | Product policy is `BR-036K-023`. Exact silence is `XR-IMP-036K-016`. | RRD-04, RR-US-321 |
-| Workforce clarity | `BR-036K-021`, `BR-036K-022` | RR-US-200, RR-US-211, RR-US-212 |
+| Customization upgrades and add-ons | `US-036K-002`, `BR-036K-009`, `BR-036K-031` | RR-US-010, RR-US-020. Existing customization authority. |
+| Workforce clarity | `BR-036K-021`, `BR-036K-022`, `BR-036K-031` | RR-US-200, RR-US-201, RR-US-211, RR-US-212. Relationship placements are Product Detail and Cart. |
