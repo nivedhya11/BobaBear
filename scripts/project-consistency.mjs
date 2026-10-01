@@ -1391,7 +1391,7 @@ const CURRENT_PRODUCT_DEFINITION_TIP_RELATIVE =
  * the same ROADMAP/STATE pair as canonical metadata. Historical narration
  * outside that fence is not current-tip authority.
  *
- * @param {{ productDefinitionText: string, roadmapVersion: string, stateVersion: string }} input
+ * @param {{ productDefinitionText: string, roadmapVersion: string, stateVersion: string, currentProductSlice?: string, nextProductSlice?: string }} input
  * @returns {{ ok: true } | { ok: false, code: string, message: string }}
  */
 export function evaluateCurrentProductDefinitionTipAlignment(input) {
@@ -1431,6 +1431,106 @@ export function evaluateCurrentProductDefinitionTipAlignment(input) {
       message: `IMP-036I Program context CURRENT tip STATE=${state?.[1] ?? "MISSING"} disagrees with canonical ${input.stateVersion}`,
     };
   }
+  if (input.currentProductSlice != null) {
+    const current = /^currentProductSlice = (\S+)$/m.exec(block);
+    if (!current || current[1] !== input.currentProductSlice) {
+      return {
+        ok: false,
+        code: "CURRENT_PRODUCT_DEFINITION_CURRENT_SLICE",
+        message: `IMP-036I Program context CURRENT tip currentProductSlice=${current?.[1] ?? "MISSING"} disagrees with canonical ${input.currentProductSlice}`,
+      };
+    }
+  }
+  if (input.nextProductSlice != null) {
+    const next = /^nextProductSlice = (\S+)$/m.exec(block);
+    if (!next || next[1] !== input.nextProductSlice) {
+      return {
+        ok: false,
+        code: "CURRENT_PRODUCT_DEFINITION_NEXT_SLICE",
+        message: `IMP-036I Program context CURRENT tip nextProductSlice=${next?.[1] ?? "MISSING"} disagrees with canonical ${input.nextProductSlice}`,
+      };
+    }
+  }
+  return { ok: true };
+}
+
+/**
+ * IMP-036I §1 identity provenance stays bound to acceptance anchors
+ * GTM-R162 / STATE-R160 (currentProductSlice NONE, nextProductSlice IMP-037).
+ * That row must not adopt only one live sequencing field while the other
+ * stays historical. The Program context CURRENT-tip fence is a separate
+ * surface and is checked by evaluateCurrentProductDefinitionTipAlignment.
+ *
+ * @param {{ productDefinitionText: string, currentProductSlice: string, nextProductSlice: string }} input
+ * @returns {{ ok: true } | { ok: false, code: string, message: string }}
+ */
+export function evaluateImp036iHistoricalLifecycleProvenance(input) {
+  const historical = {
+    roadmapVersion: "GTM-R162",
+    stateVersion: "STATE-R160",
+    currentProductSlice: "NONE",
+    nextProductSlice: "IMP-037",
+  };
+  const start = input.productDefinitionText.indexOf("## 1. Identity / version / status");
+  if (start < 0) {
+    return {
+      ok: false,
+      code: "IMP036I_HISTORICAL_LIFECYCLE_ROW_MISSING",
+      message: "IMP-036I Product Definition is missing the §1 identity section",
+    };
+  }
+  const rest = input.productDefinitionText.slice(start);
+  const nextHeading = rest.indexOf("\n## ", 1);
+  const section = nextHeading < 0 ? rest : rest.slice(0, nextHeading);
+  const cell = (label) => {
+    const match = new RegExp(`^\\| ${label} \\| ([^|]+)\\|`, "m").exec(section);
+    return match ? match[1].replace(/`/g, "").trim() : null;
+  };
+  const assignment = (value, key) => {
+    const match = new RegExp(`${key}\\s*=\\s*([A-Za-z0-9-]+)`).exec(value ?? "");
+    return match?.[1] ?? null;
+  };
+  const anchors = cell("Canonical anchors");
+  const lifecycle = cell("Capability lifecycle / authorization");
+  if (!anchors || !lifecycle) {
+    return {
+      ok: false,
+      code: "IMP036I_HISTORICAL_LIFECYCLE_ROW_MISSING",
+      message: "IMP-036I §1 identity table is missing Canonical anchors or Capability lifecycle / authorization",
+    };
+  }
+  const roadmapCited = /ROADMAP\s+(GTM-R\d+)/.exec(anchors)?.[1] ?? "MISSING";
+  const stateCited = /STATE\s+(STATE-R\d+)/.exec(anchors)?.[1] ?? "MISSING";
+  if (roadmapCited !== historical.roadmapVersion || stateCited !== historical.stateVersion) {
+    return {
+      ok: false,
+      code: "IMP036I_HISTORICAL_LIFECYCLE_ANCHOR",
+      message: `IMP-036I §1 Canonical anchors cite ${roadmapCited} / ${stateCited}; acceptance provenance must remain ${historical.roadmapVersion} / ${historical.stateVersion}`,
+    };
+  }
+  const current = assignment(lifecycle, "currentProductSlice");
+  const next = assignment(lifecycle, "nextProductSlice");
+  const currentIsHistorical = current === historical.currentProductSlice;
+  const nextIsHistorical = next === historical.nextProductSlice;
+  const currentIsLiveOnly =
+    input.currentProductSlice !== historical.currentProductSlice &&
+    current === input.currentProductSlice;
+  const nextIsLiveOnly =
+    input.nextProductSlice !== historical.nextProductSlice && next === input.nextProductSlice;
+  if ((currentIsHistorical && nextIsLiveOnly) || (nextIsHistorical && currentIsLiveOnly)) {
+    return {
+      ok: false,
+      code: "IMP036I_HISTORICAL_LIFECYCLE_PARTIAL_LIVE",
+      message: `IMP-036I §1 lifecycle row bound to ${historical.roadmapVersion} / ${historical.stateVersion} absorbed only one live sequencing value (currentProductSlice=${current ?? "MISSING"}, nextProductSlice=${next ?? "MISSING"}); historical pair is currentProductSlice=${historical.currentProductSlice}, nextProductSlice=${historical.nextProductSlice}`,
+    };
+  }
+  if (!currentIsHistorical || !nextIsHistorical) {
+    return {
+      ok: false,
+      code: "IMP036I_HISTORICAL_LIFECYCLE_SEQUENCING",
+      message: `IMP-036I §1 lifecycle row bound to ${historical.roadmapVersion} / ${historical.stateVersion} must keep currentProductSlice=${historical.currentProductSlice} and nextProductSlice=${historical.nextProductSlice} (got currentProductSlice=${current ?? "MISSING"}, nextProductSlice=${next ?? "MISSING"})`,
+    };
+  }
   return { ok: true };
 }
 
@@ -1456,16 +1556,31 @@ function checkRoadmapState(roadmap, state) {
       `Missing ${CURRENT_PRODUCT_DEFINITION_TIP_RELATIVE}`,
     );
   } else {
+    const productDefinitionText = readFileSync(tipPath, "utf8");
     const tip = evaluateCurrentProductDefinitionTipAlignment({
-      productDefinitionText: readFileSync(tipPath, "utf8"),
+      productDefinitionText,
       roadmapVersion: String(roadmap.meta.roadmapVersion ?? ""),
       stateVersion: String(state.meta.stateVersion ?? ""),
+      currentProductSlice: String(roadmap.meta.currentProductSlice ?? ""),
+      nextProductSlice: String(roadmap.meta.nextProductSlice ?? ""),
     });
     if (!tip.ok) {
       fail(tip.code, tip.message);
     } else {
       note(
         `IMP-036I Program context CURRENT tip matches ${roadmap.meta.roadmapVersion} / ${state.meta.stateVersion}`,
+      );
+    }
+    const historicalLifecycle = evaluateImp036iHistoricalLifecycleProvenance({
+      productDefinitionText,
+      currentProductSlice: String(roadmap.meta.currentProductSlice ?? ""),
+      nextProductSlice: String(roadmap.meta.nextProductSlice ?? ""),
+    });
+    if (!historicalLifecycle.ok) {
+      fail(historicalLifecycle.code, historicalLifecycle.message);
+    } else {
+      note(
+        "IMP-036I §1 lifecycle provenance remains GTM-R162 / STATE-R160 (currentProductSlice NONE, nextProductSlice IMP-037)",
       );
     }
   }

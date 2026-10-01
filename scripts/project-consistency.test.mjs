@@ -177,6 +177,7 @@ import {
   evaluateImp036iImplementationComplete,
   evaluateImp036iAcceptance,
   evaluateCurrentProductDefinitionTipAlignment,
+  evaluateImp036iHistoricalLifecycleProvenance,
   evaluateImp036iCurrentLifecycleSummaries,
   evaluateImp036iApprovedProductDefinitionCandidate,
   evaluateImp036hProductDefinitionGatePassCheckpoint,
@@ -17334,6 +17335,81 @@ describe("IMP-036I implementation authorization persistence", () => {
     });
     assert.equal(mismatch.ok, false);
     assert.equal(mismatch.code, "CURRENT_PRODUCT_DEFINITION_STATE_TIP");
+    const roadmapMeta = /"currentProductSlice": "([^"]+)"[\s\S]*?"nextProductSlice": "([^"]+)"/.exec(roadmap);
+    const liveCurrent = roadmapMeta?.[1];
+    const liveNext = roadmapMeta?.[2];
+    assert.equal(liveCurrent, "IMP-036J");
+    assert.equal(liveNext, "IMP-036K");
+    assert.equal(
+      evaluateCurrentProductDefinitionTipAlignment({
+        productDefinitionText,
+        roadmapVersion,
+        stateVersion,
+        currentProductSlice: liveCurrent,
+        nextProductSlice: liveNext,
+      }).ok,
+      true,
+    );
+    const rolledBackNext = productDefinitionText.replace(
+      /(### Program context \(CURRENT tip[\s\S]*?nextProductSlice = )IMP-036K/,
+      "$1IMP-037",
+    );
+    const nextMismatch = evaluateCurrentProductDefinitionTipAlignment({
+      productDefinitionText: rolledBackNext,
+      roadmapVersion,
+      stateVersion,
+      currentProductSlice: liveCurrent,
+      nextProductSlice: liveNext,
+    });
+    assert.equal(nextMismatch.ok, false);
+    assert.equal(nextMismatch.code, "CURRENT_PRODUCT_DEFINITION_NEXT_SLICE");
+  });
+
+  it("keeps the IMP-036I §1 lifecycle row on GTM-R162 / STATE-R160 when only one live sequencing value changes", () => {
+    const productDefinitionText = readFileSync(
+      "docs/platform/product/IMP-036I/product-definition.md",
+      "utf8",
+    );
+    const roadmap = readFileSync("docs/platform/ROADMAP.md", "utf8");
+    const live = /"currentProductSlice": "([^"]+)"[\s\S]*?"nextProductSlice": "([^"]+)"/.exec(roadmap);
+    assert.equal(live?.[1], "IMP-036J");
+    assert.equal(live?.[2], "IMP-036K");
+    const input = {
+      productDefinitionText,
+      currentProductSlice: live?.[1],
+      nextProductSlice: live?.[2],
+    };
+    assert.deepEqual(evaluateImp036iHistoricalLifecycleProvenance(input), { ok: true });
+    const absorbNextOnly = productDefinitionText.replace(
+      /(\| Capability lifecycle \/ authorization \|[^\n]*nextProductSlice = )IMP-037/,
+      "$1IMP-036K",
+    );
+    const partialNext = evaluateImp036iHistoricalLifecycleProvenance({
+      ...input,
+      productDefinitionText: absorbNextOnly,
+    });
+    assert.equal(partialNext.ok, false);
+    assert.equal(partialNext.code, "IMP036I_HISTORICAL_LIFECYCLE_PARTIAL_LIVE");
+    const absorbCurrentOnly = productDefinitionText.replace(
+      /(\| Capability lifecycle \/ authorization \|[^\n]*currentProductSlice = )NONE/,
+      "$1IMP-036J",
+    );
+    const partialCurrent = evaluateImp036iHistoricalLifecycleProvenance({
+      ...input,
+      productDefinitionText: absorbCurrentOnly,
+    });
+    assert.equal(partialCurrent.ok, false);
+    assert.equal(partialCurrent.code, "IMP036I_HISTORICAL_LIFECYCLE_PARTIAL_LIVE");
+    const absorbBoth = absorbCurrentOnly.replace(
+      /(\| Capability lifecycle \/ authorization \|[^\n]*nextProductSlice = )IMP-037/,
+      "$1IMP-036K",
+    );
+    const bothLive = evaluateImp036iHistoricalLifecycleProvenance({
+      ...input,
+      productDefinitionText: absorbBoth,
+    });
+    assert.equal(bothLive.ok, false);
+    assert.equal(bothLive.code, "IMP036I_HISTORICAL_LIFECYCLE_SEQUENCING");
   });
 
   it("recognizes GTM-R169 / STATE-R167 as IMP-036J Product Definition Gate PASS, not draft-ready", () => {
