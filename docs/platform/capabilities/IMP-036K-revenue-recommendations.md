@@ -86,12 +86,22 @@ ML_VECTOR_LLM_INFRASTRUCTURE_REQUIRED = NO
 HOLDOUT_ACTIVATED = NO
 ARCHITECT_DECISION_REQUIRED = NONE
 UNRESOLVED_ARCHITECTURE_QUESTIONS = NONE
+PRIOR_ARCHITECTURE_FIT_REVIEW = 5383371804
+PRIOR_ARCHITECTURE_FIT_VERDICT = STOP
+PRIOR_ARCHITECTURE_FIT_HEAD = 77a06feecff8882e059c08bff1a4edfed81eb8cb
+CANDIDATE_2_CREATED = NO
 ```
 
 This document is `IMP-036K-FIT-CANDIDATE-1`. It answers how approved Product and Experience fit
 existing technical authority. It does not perform Architecture Fit PASS, lock architecture,
 perform Design Readiness, finalize the Quality/Test Plan or the Measurement/Instrumentation
 Plan, authorize implementation, or start runtime or schema work.
+
+Architect review `5383371804` stopped the previous text of this same candidate at head
+`77a06feecff8882e059c08bff1a4edfed81eb8cb`. That STOP is not rewritten as a pass. The candidate
+identity stays `IMP-036K-FIT-CANDIDATE-1`. No Candidate 2 is created. This revision corrects the
+three findings in place: add-time eligibility revalidation, presentation-bound assisted
+attribution, and holdout assignment before exposure.
 
 Shared lifecycle files stay at GTM-R179 / STATE-R177 / ARCH-R23 / DR-24. IMP-036J remains the
 current implementation slice. D-383 remains the sequencing authority and is not amended.
@@ -209,7 +219,7 @@ Evidence is from source `main` `28e1c28914494a0142c51af94e13b83a4f8f7af0`.
 | Configuration eligibility | Modifier groups with `minSelections` | `src/server/assortment/resolve-eligibility.ts`. |
 | Display price | Outlet or brand variant price resolution | `resolveOutletVariantPrice` / `resolveBrandVariantPrice`, called from the menu projection. |
 | Payable price, discount, promotion | Pricing, Promotion, Checkout Snapshot | `price_books` are `sales_channel = direct`. Snapshot lines carry paise totals. No contribution or margin column was found on price books. |
-| Cart purchase intent | `addCartLine`, `setCartLineQuantity`, configuration update, `removeCartLine` | `src/server/cart/operations.ts`. HTTP: `POST /api/v1/cart/lines`, `PATCH /api/v1/cart/lines/{cartLineId}/quantity`, `PATCH /api/v1/cart/lines/{cartLineId}/configuration`, `POST /api/v1/cart/lines/{cartLineId}/remove`. |
+| Cart purchase intent | `addCartLine`, `setCartLineQuantity`, configuration update, `removeCartLine` | `src/server/cart/operations.ts`. HTTP: `POST /api/v1/cart/lines`, `PATCH /api/v1/cart/lines/{cartLineId}/quantity`, `PATCH /api/v1/cart/lines/{cartLineId}/configuration`, `POST /api/v1/cart/lines/{cartLineId}/remove`. `addCartLine` does not itself resolve selected Outlet, assortment, availability, or fulfilment. |
 | Structural configuration | `validateCartLineStructure` | Called inside `addCartLine` and configuration update. |
 | Cart concurrency | Cart row lock and `expectedRevision` | `addCartLine` locks the cart and checks revision. |
 | Unit sequence | `cart_line_units` | ARCH-G22. Schema in `src/platform/database/schema/cart.ts`. |
@@ -232,18 +242,18 @@ section 22 and are not binding product gaps.
 |---|---|---|---|
 | 1 | Recommendation domain representation | `EXTEND_EXISTING` | No durable Recommendation commerce aggregate. Persist an operator relationship under existing brand menu administration. |
 | 2 | Customization recommendation source | `REUSE_EXISTING` | Current product variants and modifier options only. |
-| 3 | Eligibility | `REUSE_EXISTING` | Menu projection, assortment/availability, price resolution, cart structure, fulfilment context. Applied before ranking. |
+| 3 | Read-time eligibility | `REUSE_EXISTING` | Menu projection, assortment/availability, price resolution, cart structure, fulfilment context. Applied before ranking. This read does not replace add-time revalidation. |
 | 4 | Category resolution | `REUSE_EXISTING` | Same active effective menu section and entry predicate as `projectCustomerMenu`. No new category entity. |
 | 5 | Ranking execution | `EXTEND_EXISTING` | Deterministic server read in customer-commerce after eligibility. Weights are not a contract. |
 | 6 | Money / contribution projection | `REUSE_EXISTING` | Relative priority is a non-money ordinal. Display price is the menu projection. No contribution formula. |
 | 7 | Workforce authorization | `REUSE_EXISTING` | `menu.manage` / `menu.read` on server-derived brand. |
 | 8 | Presentation / query boundary | `EXTEND_EXISTING` | Separate customer-commerce read. Primary commerce routes stay unchanged. |
-| 9 | Cart mutation reuse | `REUSE_EXISTING` | `addCartLine` and the existing customization flow. |
-| 10 | Stale candidate / revalidation | `REUSE_EXISTING` | Add-time `validateCartLineStructure` plus existing eligibility and availability. |
+| 9 | Cart mutation authority | `REUSE_EXISTING` | Existing `addCartLine` and the existing customization flow. No parallel Cart API. |
+| 10 | Recommendation add revalidation | `EXTEND_EXISTING` | Before recommendation-origin units or attribution are committed, the existing Cart mutation re-resolves current catalog, assortment, selected Outlet, availability, fulfilment, required configuration, and the applicable relationship period. |
 | 11 | Removal suppression | `EXTEND_EXISTING` | Cart-scoped suppression row. Not catalog or menu state. |
-| 12 | Recommendation-assisted attribution | `EXTEND_EXISTING` | Unit-level server mark copied onto the snapshot line as non-payable provenance. |
+| 12 | Recommendation-assisted attribution | `EXTEND_EXISTING` | Server-owned presentation correlation, then a unit-level server mark copied onto the snapshot line as non-payable provenance. Candidate eligibility alone is not that proof. |
 | 13 | Measurement / analytics | `EXTEND_EXISTING` | Meanings and durable proof identities are fixed here. Encoding stays with the later Measurement Plan. |
-| 14 | Holdout readiness | `EXTEND_EXISTING` | Inactive cart-scoped assignment. No experiment is activated. No customer-profile key. |
+| 14 | Holdout readiness | `EXTEND_EXISTING` | Inactive until the Measurement Plan activates it. When activated, no recommendation exposure occurs before a stable server-owned assignment. Not cart-id-only after a prior exposure. No customer-profile key. |
 | 15 | Popular evidence | `REUSE_EXISTING` | Read `orders` joined to Checkout Snapshot lines with `line_origin = cart`. No second order store. |
 | 16 | Fulfilment context | `REUSE_EXISTING` | Consume serviceability, pickup, and scheduled-fulfilment decisions. |
 | 17 | Future capability coupling | `REUSE_EXISTING` | No Campaign, Offer, or Limited Drop call in V1. |
@@ -265,8 +275,10 @@ PAYABLE_TRUTH = Checkout Snapshot
 PURCHASED_HISTORY = Order bound to that snapshot
 POPULAR_COUNTS = derived read over that purchased history
 SUPPRESSION = active Cart
-ATTRIBUTION = cart line units, then a non-priced snapshot copy
-HOLDOUT_ASSIGNMENT = inactive cart-scoped flag, not a customer profile
+ATTRIBUTION = server-owned presentation correlation, then cart line units, then a non-priced snapshot copy
+HOLDOUT_ASSIGNMENT = inactive until activation; when activated, a stable server-owned ordering-journey assignment before exposure. Not a customer profile and not browser authority
+CART_AUTHORITY = existing Cart
+RECOMMENDATION_ADD_REVALIDATION = EXTEND_EXISTING
 MEASUREMENT_ENCODING = later Measurement/Instrumentation Plan
 ```
 
@@ -467,6 +479,10 @@ display price when shown, whether the existing flow is direct add or customizati
 Popular indicator only when section 7.15 passes. It does not contain priority, margin,
 relationship kind names, holdout assignment, or suppression reasons.
 
+When that read returns a qualifying set, the server records the presentation correlation in
+section 7.12. A suppressed, empty, or failed read records no correlation. The client does not
+supply that correlation.
+
 Fail-open (`BR-036K-010`, `XR-IMP-036K-007`):
 
 - generation, ranking, or transport failure returns no module
@@ -479,7 +495,9 @@ Fail-open (`BR-036K-010`, `XR-IMP-036K-007`):
 Direct add calls existing `addCartLine` through `POST /api/v1/cart/lines`. Configuration-required
 items open the existing customization interaction. The cart changes only when that flow later
 calls the same `addCartLine` or configuration update. There is no recommendation-specific cart
-route.
+route. A recommendation action uses that same mutation. Section 7.10 revalidates eligibility
+and section 7.12 verifies presentation before any recommendation-origin unit or assistance mark
+is committed.
 
 Direct add is offered only when existing structure already allows a complete configuration
 without a further customer choice: one eligible variant, and every required modifier group
@@ -492,16 +510,57 @@ are the existing cart results plus the Experience Definition announcements.
 
 ### 7.10 Stale candidate and revalidation
 
+```text
+CART_AUTHORITY = existing Cart
+RECOMMENDATION_ADD_REVALIDATION = EXTEND_EXISTING
+PARALLEL_CART_API = NO
+CLIENT_ELIGIBILITY_AUTHORITY = NO
+```
+
 A rendered set does not reserve stock, price, or eligibility (`BR-036K-029`).
 
-At add time, `addCartLine` locks the cart, checks `expectedRevision`, runs
-`validateCartLineStructure`, and existing availability evaluation still rejects a line the outlet
-can no longer sell. If the target became ineligible, disabled, out of its effective period, or
-suppressed after render, the add fails closed with the existing cart error and the previous lines
-remain (`BR-036K-011`). Checkout and payment stay usable.
+Current `addCartLine` locks the cart, checks `expectedRevision`, runs
+`validateCartLineStructure`, coalesces by canonical configuration, and appends cart-line units.
+It does not resolve selected Outlet, assortment, availability, fulfilment context, catalog
+lifecycle, or a recommendation relationship's effective period. Later cart evaluation reads
+`serviceability.selectedOutletId`. That evaluation is not this mutation. Stale recommendation add
+is therefore not `REUSE_EXISTING`.
 
-Relationship disable does not delete lines already added. A later add of a no-longer-purchasable
-target fails the same way.
+The recommendation action stays on `POST /api/v1/cart/lines` and `addCartLine`. Locking, revision
+checks, and coalescing stay the existing Cart authority. Inside that mutation, before any
+recommendation-origin unit or assistance mark is committed, the server re-resolves authoritative
+current:
+
+- product and catalog lifecycle
+- assortment
+- selected Outlet
+- availability
+- fulfilment context
+- required configuration
+- the applicable recommendation relationship and its effective period, when the candidate comes
+  from a Product Detail or Cart relationship
+- cart suppression for that candidate, which blocks another recommendation-origin add and does
+  not block an ordinary Menu or Product add
+
+Those checks read existing catalog, menu, assortment, availability, serviceability, pickup,
+scheduled-fulfilment, and relationship authority. A client eligibility flag, a displayed price,
+or a candidate id is not one of those authorities. Assortment does not gain a fulfilment-mode
+argument. Mode and timing remain the fulfilment context in section 7.16.
+
+If any check fails, the recommendation-origin mutation is rejected. No recommendation-origin cart
+unit is created. No assistance mark is written. Prior lines remain. Checkout and payment stay
+usable (`BR-036K-011`, `AC-036K-004-04`, `AC-036K-006-02`).
+
+`validateCartLineStructure` still checks configuration shape. It does not replace the checks
+above.
+
+An ordinary Menu or Product add carries no server-issued recommendation-action correlation. It
+stays on the same `addCartLine` path, keeps today's structural validation and cart errors, and
+receives no assistance mark. A client-supplied candidate id or boolean does not turn that add
+into a recommendation-origin mutation.
+
+Relationship disable does not delete lines already added. A later recommendation action for a
+target that is no longer purchasable fails the same closed way.
 
 ### 7.11 Removal suppression
 
@@ -525,12 +584,46 @@ A later manual add of that product creates cart units with no recommendation att
 
 ### 7.12 Recommendation-assisted attribution
 
-Proof required by `BR-036K-014` is a chain:
+Proof required by `BR-036K-014` and `AC-036K-009-02` is a chain:
+
+```text
+presentation
+→ recommendation action
+→ accepted add
+→ same underlying purchased identity
+VIEW_THROUGH = OUT_OF_V1
+ELIGIBILITY_ALONE_PROVES_ASSISTANCE = NO
+```
 
 1. a recommendation set was presented
-2. the customer used the recommendation action
+2. the customer used the recommendation action associated with that presentation
 3. existing commerce accepted the add
 4. the same underlying identity is on the purchased Order
+
+Eligibility of a catalog identity is not proof that a recommendation set presented it.
+
+```text
+PRESENTATION_PROOF_AUTHORITY = server-owned recommendation-set correlation
+CLIENT_CANDIDATE_ID_OR_BOOLEAN = NOT_ATTRIBUTION_AUTHORITY
+```
+
+The recommendation read records that correlation only when it returns a qualifying set. The
+correlation names the set, the placement, each member's candidate identity, and the
+recommendation action bound to that member. The server writes it. A client render
+acknowledgement, a client-supplied candidate id, a relationship id, or a boolean recommendation
+flag does not create it. View-through is not recorded and is not inferred from an impression.
+
+The add path writes recommendation-assistance provenance only when the server verifies all of
+the following against that correlation:
+
+- a qualifying recommendation set was returned for presentation
+- the candidate belonged to that set
+- placement and candidate identity match
+- the customer used the recommendation action bound to that proof
+
+If the request carries a recommendation-action correlation the server cannot verify, the
+mutation creates no recommendation-origin unit and writes no assistance mark. Absence of a
+recommendation-action correlation is an ordinary Menu or Product add and stays unmarked.
 
 Representation:
 
@@ -550,13 +643,12 @@ Representation:
   third commercial origin and is ignored by price, promotion, tax, and payment.
 - Assisted purchase is true only when an Order exists for that snapshot and a marked snapshot
   line for that identity is present. Cancelled orders are not assisted purchases.
-- View-through is not recorded and is not inferred from an impression.
+- The client cannot set the mark. A candidate id, relationship id, or boolean in the add body is
+  not the presentation correlation and is not authority to attribute the add.
 
-The client cannot set the mark. A recommendation id in the add body is checked against the
-server cart and current eligibility; it is not itself authority to add.
-
-If writing the mark fails, the cart mutation still commits. The line exists. Assisted purchase
-is then not claimed. Measurement failure does not block commerce.
+If writing the mark fails after that verification has passed, the cart mutation still commits.
+The line exists. Assisted purchase is then not claimed. That failure does not skip the
+presentation check or the eligibility revalidation. Measurement failure does not block commerce.
 
 ### 7.13 Measurement and analytics
 
@@ -564,7 +656,7 @@ Event meanings required by `BR-036K-030` and Experience section 17:
 
 | Meaning | Owner | Durable signal | Not this |
 |---|---|---|---|
-| Recommendation-set render | Recommendation read, after a set is actually shown | Placement, set id, holdout false | A customer message or a payment event |
+| Recommendation-set render | Recommendation read, when the server returns a qualifying set and records the presentation correlation | Placement, set correlation, holdout false | A customer message, a client acknowledgement, or a payment event |
 | Item impression | Recommendation read | Candidate id, placement, rank, internal strategy kept off the customer surface | Customer-visible strategy names |
 | Click | Customer action on a suggestion | Candidate id, placement, set id | An add |
 | Add attempt | Customer action that asks to add or to open customization | Candidate id, placement | A successful add |
@@ -573,8 +665,9 @@ Event meanings required by `BR-036K-030` and Experience section 17:
 | Assisted purchase | Order bound to a marked snapshot line | Order id, snapshot line id, candidate identity | View-through |
 
 Acceptance of the slice and the later experiment result stay separate. These meanings do not
-choose storage, transport, vendor, schema, or retention. The Measurement Plan finalizes those.
-Section 21 says what that plan must still prove.
+choose storage, transport, vendor, schema, or retention. The Measurement Plan finalizes that
+encoding. The proof boundary stays section 7.12. Section 14 says what that plan must still
+finalize.
 
 Analytics payloads exclude payment secrets, credentials, addresses, names, another customer's
 cart, priority, and margin. Candidate ids are catalog or menu ids.
@@ -589,45 +682,59 @@ HOLDOUT_CONFIGURATION_DEFAULT = INACTIVE
 APPROXIMATE_10_PERCENT = TARGET_DIRECTION_ONLY
 LIVE_ACTIVATION_IS_PRODUCT_ACCEPTANCE = NO
 ASSIGNMENT_AUTHORITY = server
-BROWSER_HOLDOUT_FLAG = NOT_AUTHORITY
+BROWSER_AUTHORITATIVE = NO
+CUSTOMER_PROFILE_PERSONALIZATION_FLAG = NO
+EXPOSURE_BEFORE_ASSIGNMENT_WHEN_ACTIVATED = FORBIDDEN
+CART_ID_ONLY_AFTER_PRIOR_EXPOSURE = NOT_SUFFICIENT
 ```
 
-Constraints for any later activation: the assignment is server-derived, presentation-only,
-inactive until the Measurement Plan activates it, stable once written for that cart, and not a
-customer profile, credential copy, browser flag, or experiment vendor.
+The assignment is server-owned, presentation-only, inactive until the Measurement Plan activates
+it, and stable once written for the active ordering session or cart. It is not a customer-profile
+personalization flag, a credential copy, a browser flag, or an experiment vendor.
 
-The viable mechanism that meets those constraints is a write-once flag whose natural key is the
-active cart id:
+Cart-id-only assignment after Product Detail exposure is not sufficient. This sequence is
+forbidden once holdout is activated:
 
-- computed on the server from a server-only secret and that cart id
-- written once when the cart is created and reused for every later read of that cart, including
-  reload
-- not keyed by customer auth user id, customer session id, phone, email, or a copy of the guest
-  credential verifier
-- not derived from a client flag
-- not copied into customer responses
-- not carried onto a later cart for the same customer
+```text
+pre-cart Product Detail recommendation exposure
+→ later Cart creation
+→ same journey assigned to holdout
+```
 
-A new cart receives its own assignment. That keeps holdout off the customer profile and out of
-cross-session personalization. Before a cart exists, no holdout row is written. Those reads are
-unassigned, so reload does not flip them. They are not held out by a stored customer flag.
-After the cart exists, Product Detail, Customization, and Cart use that cart flag.
+A Product Detail, Customization, or Cart read that can return a recommendation set is an
+exposure. In this candidate, the ordering journey is the active ordering session or cart already
+named by `BR-036K-023`. It is not a new customer identity, a new cart, or a profile. While
+holdout is activated, that read must not present a set until a stable server-owned assignment
+already exists for that ordering session or cart.
 
-The Measurement Plan still finalizes the assignment unit, population, percentage, activation,
-metrics, and event encoding. The unit it finalizes must stay inside the constraints above:
-server-derived, stable for that cart once written, absent before a cart exists, and not a
-customer profile, credential copy, browser flag, or experiment vendor. Cart id is the viable
-unit this candidate shows can do that. The plan may confirm it. This candidate does not activate
-a percentage and does not make activation a product-acceptance result. Inactive configuration
-writes nothing.
+Two mechanisms make that observable behaviour feasible. The Measurement Plan chooses which one,
+and the exact assignment unit. This candidate does not activate either mechanism:
+
+1. The server establishes an ordering-session assignment before the first recommendation read
+   that could return a set. Product Detail before a Cart uses that assignment. A later Cart in
+   the same journey reuses it and does not roll a new holdout assignment.
+2. The server suppresses recommendation presentation until that assignment exists. An unassigned
+   read returns no module. Commerce continues (`AC-036K-013-05`). After the assignment exists,
+   Product Detail, Customization, and Cart use it.
+
+Unknown assignment suppresses presentation and does not block Cart, Checkout, or Payment. The
+browser does not choose the arm. The assignment is not keyed by customer auth user id, phone,
+email, or a guest-credential copy used as a cross-session profile. It is not copied into
+customer responses. A later journey may receive its own assignment only when that journey has
+not already been exposed.
+
+The Measurement Plan still finalizes the exact assignment unit, population, control percentage,
+activation, metrics, and observation, stop, and interpretation rules. This candidate does not
+select that unit beyond the constraints above, does not activate a percentage, and does not make
+activation a product-acceptance result. Inactive configuration writes nothing.
 
 Holdout suppresses recommendation presentation only. Catalog, price, promotion, fulfilment,
 Cart, Checkout, Payment, and entitlements are unchanged. The customer sees no holdout label
 (`XR-IMP-036K-016`).
 
-Until the Measurement Plan activates a percentage, the configuration stays inactive and every
-session is treated as eligible to receive recommendations. Inactive is not a 0% or 100%
-experiment result. Activation is not required for Product acceptance.
+Until the Measurement Plan activates a percentage, the configuration stays inactive and eligible
+journeys may receive recommendations. Inactive is not a 0% or 100% experiment result.
+Activation is not required for Product acceptance.
 
 ### 7.15 Popular evidence
 
@@ -717,10 +824,10 @@ slow or failed recommendation read does not block or fail those handlers.
 | Relationship create, update, activate, disable | One row revision. Writer sends the expected revision. Mismatch returns the existing conflict behaviour and does not publish an ineligible target. |
 | Two operators | The later stale revision loses. The winner cannot bypass eligibility at customer read time. |
 | Ranking read | Read-only. Same eligible inputs and the same commerce truth produce the same order. No cart write. |
-| Recommendation add | Existing cart lock, revision, and coalesce. Duplicate submit follows existing cart conflict rules. |
+| Recommendation add | Existing cart lock, revision, and coalesce. Duplicate submit follows existing cart conflict rules. Recommendation-origin eligibility is re-resolved before units or marks are committed. |
 | Suppression | Insert is idempotent per cart and candidate. Removal of an already suppressed candidate does not change catalog. |
-| Attribution mark | Written by the server for units created by the recommendation action. Client retry after a committed add does not create a second mark for the same unit. |
-| Holdout | Write-once on the active cart id when activation exists. Inactive configuration writes nothing. |
+| Attribution mark | Written by the server only after the presentation correlation in section 7.12 verifies. Client retry after a committed add does not create a second mark for the same unit. |
+| Holdout | When activation exists, write the server-owned assignment before the first exposure, or suppress presentation until it exists. A later Cart in an already exposed journey does not roll a new assignment. Inactive configuration writes nothing. |
 | Popular read | Read-only. Concurrent orders change later reads. They do not rewrite earlier snapshots. |
 
 No new customer-visible conflict copy is introduced.
@@ -740,8 +847,9 @@ relationship. It does not use prior-session click history.
 
 Abuse cases denied:
 
-- a forged candidate cannot pass `validateCartLineStructure` and current outlet eligibility
-- a disabled relationship or stale display cannot skip add-time validation
+- a forged candidate, candidate id, or recommendation boolean cannot create recommendation-origin units or an assistance mark
+- a recommendation action whose current outlet, assortment, availability, fulfilment, catalog lifecycle, required configuration, or relationship period fails is rejected before those units or marks are committed
+- a disabled relationship or stale display cannot skip that add-time revalidation
 - commercial priority cannot make an ineligible item return
 - `menu.manage` on another brand is denied by server-derived scope
 - priority values are admin-only and audited as relationship changes, not as price changes
@@ -761,7 +869,8 @@ record a customer cart.
 Customer surface
   → customer-commerce recommendation read
   → resolve outlet and fulfilment from existing authorities
-  → if holdout assignment is active and selected: return no module
+  → if holdout is activated and no stable server-owned assignment exists: return no module
+  → if that assignment selects holdout: return no module
   → if placement is CART and the cart has no lines: return no module
   → if placement is CUSTOMIZATION: read current product variants and modifiers
   → if placement is PRODUCT_DETAIL or CART: read active relationships
@@ -769,18 +878,36 @@ Customer surface
   → remove suppressed candidates
   → eligibility, then ranking, then ceiling
   → Popular decoration only if section 7.15 passes
+  → when a qualifying set is returned: record the server-owned presentation correlation
   → customer-safe payload
 ```
 
-Failure at any step after the primary surface has loaded returns no module and no cart write.
+Failure at any step after the primary surface has loaded returns no module, writes no
+presentation correlation, and writes no cart.
 
 ### Write path
 
 ```text
+Ordinary Menu or Product add
+  → POST /api/v1/cart/lines → addCartLine
+  → existing lock, revision, structure check, coalesce, and units
+  → no recommendation-action correlation
+  → no assistance mark
+
 Recommendation action
-  → direct add: POST /api/v1/cart/lines → addCartLine
-  → configuration: existing customization → same add or configuration command
-  → removal: existing removeCartLine → suppression row
+  → configuration-required items open existing customization first
+  → the cart changes only when that flow reaches the same add boundary below
+  → same POST /api/v1/cart/lines → addCartLine
+  → existing lock and revision
+  → re-resolve current eligibility (section 7.10)
+  → verify the presentation correlation (section 7.12)
+  → if ineligible or unverified: reject; no recommendation-origin units; no attribution; prior lines remain
+  → if verified and eligible: existing structure check, coalesce, and unit append
+  → assistance mark only on units created by that action
+
+Removal
+  → existing removeCartLine
+  → suppression row
 ```
 
 Administration:
@@ -797,8 +924,8 @@ Workforce session
 
 | Boundary | Rule |
 |---|---|
-| Browser | Display and explicit intent only |
-| Customer-commerce `/api/v1/*` | Eligibility, ranking, cart mutation, suppression, attribution |
+| Browser | Display and explicit intent only. Not eligibility, presentation proof, or holdout assignment. |
+| Customer-commerce `/api/v1/*` | Read-time eligibility, ranking, existing cart mutation, add-time revalidation, presentation correlation, suppression, attribution |
 | Administration `/api/admin/v1/*` | Relationship configuration |
 | Pricing / Promotion / Checkout / Payment | Unchanged authorities. Recommendation code does not call them to set money. |
 | Orders and snapshots | Read for Popular and assisted purchase. Not written by recommendation ranking. |
@@ -823,9 +950,10 @@ Later rows, all inside existing Postgres and existing processes:
 |---|---|---|
 | Operator relationship and revision | Menu administration | Become a product, price, or menu entry |
 | Cart suppression | Cart | Update catalog or menu |
-| Cart unit assistance mark | Cart unit | Become line identity or price |
+| Cart unit assistance mark | Cart unit | Become line identity, price, or a client-set flag |
+| Recommendation presentation correlation | Server record written only when a qualifying set is returned | Become a client candidate id, a boolean, view-through, or a second cart |
 | Snapshot assistance copy | Checkout snapshot line provenance | Change paise totals or `line_origin` |
-| Holdout assignment, only after activation | Active cart id | Store a customer profile, a credential copy, or a reason the customer can see |
+| Holdout assignment, only after activation | Server-owned ordering session or cart for that journey, established before exposure | Store a customer profile, a credential copy, a browser-authoritative flag, or a reason the customer can see |
 | Relationship audit | Workforce audit | Be recorded as a menu publish |
 
 Popular evidence needs no new order fact. A rebuildable read model is optional and non-authoritative.
@@ -840,8 +968,10 @@ Support and operators can distinguish, in server diagnostics and not in customer
 
 - no eligible candidate
 - holdout, only as an internal reason
+- holdout assignment not yet established, only while activation is on
 - generation failure
-- eligibility rejection
+- eligibility rejection at read time or at the recommendation add
+- unverified recommendation action, with no assistance mark
 - customer removal with suppression
 - operator disable
 
@@ -856,6 +986,7 @@ RECOMMENDATION_READ_DISABLED_OR_FAILING = no module
 CART_CHECKOUT_PAYMENT = unchanged
 RELATIONSHIP_TABLE_ABSENT = same as no relationships
 HOLDOUT_INACTIVE = recommendations may be shown when eligible
+HOLDOUT_ACTIVATED_ASSIGNMENT_UNKNOWN = no recommendation module; commerce unchanged
 POPULAR_READ_FAILS = no Popular treatment
 ATTRIBUTION_WRITE_FAILS = cart add still succeeds and assistance is not claimed
 ```
@@ -873,16 +1004,16 @@ customer or existing cart rules change them.
 | `US-036K-001` | Product Detail read, relationship complements, ceiling 3, fail-open |
 | `US-036K-002` | Customization read from variants and modifiers only |
 | `US-036K-003` | Cart gap over menu sections, empty cart has no module |
-| `US-036K-004` | `addCartLine` or existing customization |
+| `US-036K-004` | Existing `addCartLine` or existing customization; recommendation-origin adds revalidated inside that mutation |
 | `US-036K-005` | Eligibility before ranking |
-| `US-036K-006` | Add-time revalidation |
+| `US-036K-006` | Add-time revalidation extends the existing Cart mutation; stale recommendation add creates no units |
 | `US-036K-007` | Separate read, no cart write on failure |
 | `US-036K-008` | Cart-scoped suppression |
-| `US-036K-009` | Unit mark and snapshot copy; view-through excluded |
+| `US-036K-009` | Server-owned presentation correlation, then unit mark and snapshot copy; view-through excluded |
 | `US-036K-010` | Server ranking; priority after eligibility; weights not contracted |
 | `US-036K-011` | Order and snapshot read; minimum 30; top 3 |
 | `US-036K-012` | `menu.manage` on brand; Customization placement rejected |
-| `US-036K-013` | Inactive server holdout; presentation-only when later activated |
+| `US-036K-013` | Inactive holdout. When later activated, assignment before exposure or suppression until assignment; presentation-only |
 
 Experience rules `XR-IMP-036K-001` through `XR-IMP-036K-016` are unchanged. Proof of interaction,
 copy, and silence waits for Experience QA after Design Readiness.
@@ -915,22 +1046,30 @@ Quality / Test Plan must prove, under TEST-1:
 
 - eligibility before ranking, including cross-outlet rejection
 - direct add versus customization handoff
-- stale add leaves the prior cart
+- stale recommendation add is rejected inside the existing Cart mutation and leaves the prior cart
+- recommendation-origin units and assistance marks are absent when current eligibility fails
+- ordinary Menu or Product adds stay unmarked
+- assisted attribution requires the server-owned presentation correlation
+- a client candidate id or boolean does not create that attribution
 - fail-open when the recommendation read fails
 - suppression survives reload and does not change menu projection
 - manual re-add is not attributed
 - Popular treatment absent below 30 orders and present only for the top 3
 - `menu.manage` allowed, cross-brand denied
 - holdout inactive by default, and presentation-only if a fixture activates it
+- when that fixture activates holdout, no recommendation set is returned before a stable server-owned assignment exists
 - primary checkout and payment tests unchanged when recommendations fail
 
 Measurement / Instrumentation Plan must still finalize the assignment unit, population, the actual
 control percentage and whether it is activated, primary metric, guardrails, observation rule,
 stop condition, interpretation rule, and the concrete event encoding, including how an internal
-strategy attribute is stored. Section 7.14 constrains that unit: server-derived, stable for the
-cart once written, and not a customer profile, browser flag, or experiment vendor. Cart id is
-a viable unit. The plan confirms the unit. `INSUFFICIENT_EVIDENCE` remains valid. This candidate
-does not select event encoding, transport, or retention, and it does not activate a holdout.
+strategy attribute is stored. Section 7.14 constrains activation, not the encoding: the unit is
+server-owned, stable for the active ordering session or cart once written, and established
+before first exposure or presentation stays suppressed until it exists. It is not a
+customer-profile personalization flag, a browser-authoritative flag, or an experiment vendor.
+Cart id alone, assigned only after a Product Detail exposure, is not sufficient. `INSUFFICIENT_EVIDENCE`
+remains valid. This candidate does not select event encoding, transport, or retention, and it
+does not activate a holdout.
 
 Design Readiness must still specify the implementation-ready states for `XR-IMP-036K-001`
 through `XR-IMP-036K-016`.
