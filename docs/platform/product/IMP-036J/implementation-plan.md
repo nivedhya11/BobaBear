@@ -367,6 +367,17 @@ PRIMARY_AC_OWNERSHIP_END
 Ownership count: tranche 3 holds 15, tranche 4 holds 12, tranche 5 holds 7, tranche 6
 holds 6. Union is the 40 Quality Plan rows. Intersection is empty.
 
+Supporting browser, component, and accessibility proof, not a second primary, is required
+in tranche 5 for every tranche 3 or tranche 4 scenario whose Quality Plan row names those
+layers: `AC-036J-001-02`, `AC-036J-002-01`, `AC-036J-002-02`, `AC-036J-002-03`,
+`AC-036J-002-05`, `AC-036J-002-06`, `AC-036J-002-07`, `AC-036J-002-08`,
+`AC-036J-003-01`, `AC-036J-003-02`, `AC-036J-004-01`, `AC-036J-006-01`,
+`AC-036J-008-01`, `AC-036J-009-01`, `AC-036J-009-02`, `AC-036J-009-03`,
+`AC-036J-009-04`, `AC-036J-010-01`, `AC-036J-010-04`, `AC-036J-013-01`,
+`AC-036J-013-03`, and `AC-036J-013-04`. `AC-036J-010-02` and `AC-036J-010-03` are
+domain-only. `AC-036J-005-01`, `AC-036J-005-02`, and `AC-036J-006-02` are proved in
+tranche 4 without a customer sentence.
+
 Experience requirements:
 
 | Requirement | Primary tranche | What the owner must make true |
@@ -584,8 +595,13 @@ Inside `startCheckout`, under the cart lock already held:
 - adopt, copy, or mint `checkout_journey_key` using the Candidate 9 continuable
   predecessor rules encoded by the Measurement Plan. `created_at` and checkout UUID
   order are not that order;
-- accept optional `cartActivationId` only as association. Missing, malformed, wrong-cart,
-  or unresolvable association does not fail checkout and does not change price.
+- accept optional `cartActivationId` only as association. When the id is a UUID, the
+  activation's cart is the cart being started, and the call resolves to this cart's new or
+  already-active checkout that already has a journey key, set `checkout_journey_key`,
+  `checkout_id`, and `watermark_sequence` to the greatest `journey_sequence` already
+  allocated on that key, or `0` when none exists. The activation does not mint the key.
+  Missing, malformed, wrong-cart, or unresolvable association does not fail checkout,
+  does not change price, and leaves that activation denominator-only.
 
 `evaluateCheckout` and the payment-binding transaction may adopt a key once, only when
 they already hold the cart-then-checkout lock. Cart evaluation does not mint or rewrite
@@ -724,8 +740,10 @@ that gesture. The same id is sent on every transport retry of `POST /api/v1/chec
 A later genuine activation mints a new id. Repaint does not. Review sends that id as
 `cartActivationId` only while the navigation that opened this Review still holds it.
 The server records `CART_REVIEW_REACH` once, with sequence strictly after the activation
-watermark. A historical Review does not satisfy a later activation. Association failure
-at start leaves the activation in the denominator only.
+watermark. A repeat POST that only returns the existing observation still records the
+reach when the body carries a new valid activation id. A historical Review, including
+one whose sequence is less than or equal to the watermark, does not satisfy that later
+activation. Association failure at start leaves the activation in the denominator only.
 
 Money boundary: displayed amounts are formatted server paise or an explicit waiting
 state. The observation cannot set payable. Checkout and payment do not wait on the POST.
@@ -777,11 +795,14 @@ second model and does not change commercial behaviour.
 
 `measurement_report_snapshots` inserts one immutable row per
 `(metric, window_start, window_end, report_as_of)`. A repeat returns that row and does
-not update it. `REPORT_AS_OF` for the initial snapshot is the exclusive end of the
-initial half-open window. A fact whose `occurred_at` equals the cutoff is excluded.
-Occurrence time is the stored `clock_timestamp()`, never a client timestamp, ingest
-time, or `transaction_timestamp()`. The writer is an internal publication step in
-`customer-commerce`. This tranche adds no customer or operator route.
+not update it. `REPORT_AS_OF` and `PRODUCTION_RELEASE_ANCHOR` are inputs of that
+calculation. The initial window is the half-open 28 civil days in `Asia/Kolkata` that
+starts at the supplied anchor. The initial snapshot uses that window's exclusive end as
+`REPORT_AS_OF`. A fact whose `occurred_at` equals the cutoff is excluded. Occurrence
+time is the stored `clock_timestamp()`, never a client timestamp, ingest time, or
+`transaction_timestamp()`. The function lives in `customer-commerce`. Tests supply the
+two inputs. This tranche adds no scheduler, cron, queue, release table, customer route,
+or operator route.
 
 Primary rate uses one cohort-entry `REVIEW_PRESENTED` per journey key. Numerator is
 `DIRECT_ORDER_COMPLETION` before the cutoff. Payment success alone is not the numerator.
