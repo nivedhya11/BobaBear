@@ -15,7 +15,7 @@
   "designReadiness": "PASS",
   "qualityTestPlanFinalized": "YES",
   "measurementInstrumentationPlanFinalized": "YES",
-  "implementationPlan": "NOT_PERFORMED",
+  "implementationPlan": "PASS",
   "candidateRevision": "IMP-036J-FIT-CANDIDATE-9",
   "architectureFitSourceCandidate": "IMP-036J-FIT-CANDIDATE-9",
   "architectureBase": "ARCH-R23",
@@ -59,7 +59,7 @@
   "archR24Required": false,
   "founderUatRequired": true,
   "founderUat": "NOT_STARTED",
-  "lastReviewed": "2026-09-30",
+  "lastReviewed": "2026-10-01",
   "bindingDecisions": ["D-382", "ADR-007", "ADR-008"],
   "dependsOn": ["IMP-016", "IMP-021", "IMP-036F", "IMP-036H", "IMP-036I"]
 }
@@ -110,10 +110,10 @@ HISTORICAL_CANDIDATE_5_ARCHITECTURE_LOCK = LOCKED
 IMP036J_ARCHITECTURE_FIT = PASS
 IMP036J_ARCHITECTURE_LOCKED = YES
 IMP036J_DESIGN_READINESS = PASS
-IMP036J_NEXT_GATE = IMPLEMENTATION_PLAN
+IMP036J_NEXT_GATE = IMPLEMENTATION_AUTHORIZATION
 QUALITY_TEST_PLAN_FINALIZED = YES
 MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = YES
-IMPLEMENTATION_PLAN = NOT_PERFORMED
+IMPLEMENTATION_PLAN = PASS
 IMPLEMENTATION_AUTHORIZED = false
 IMP036J_IMPLEMENTATION_AUTHORIZED = NO
 IMP036J_STARTED = NO
@@ -2306,16 +2306,17 @@ Every mandatory story still has a safe fit inside the accepted Promotion, Pricin
 IMP036J_DESIGN_READINESS = PASS
 QUALITY_TEST_PLAN_FINALIZED = YES
 MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = YES
-IMPLEMENTATION_PLAN = NOT_PERFORMED
+IMPLEMENTATION_PLAN = PASS
 IMP036J_IMPLEMENTATION_AUTHORIZED = NO
 IMP036J_STARTED = NO
 IMP036J_IMPLEMENTATION_STARTED = NO
-IMP036J_NEXT_GATE = IMPLEMENTATION_PLAN
+IMP036J_NEXT_GATE = IMPLEMENTATION_AUTHORIZATION
 ```
 
 Design Readiness PASS and the finalized Quality/Test Plan and Measurement/Instrumentation Plan
 are persisted in their own documents. This architecture record does not authorize implementation.
-Those plans remain part of Design Readiness. This PASS does not authorize or start
+Those plans remain part of Design Readiness. Implementation Plan PASS is persisted separately.
+This PASS does not authorize or start
 implementation. Architecture Fit PASS is not Design Readiness and is not a finalized
 Measurement/Instrumentation Plan.
 

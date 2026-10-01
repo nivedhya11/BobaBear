@@ -1,6 +1,6 @@
 <!-- governance-meta
 {
-  "status": "CANDIDATE",
+  "status": "CURRENT",
   "authority": "IMPLEMENTATION_EXECUTION_PLAN",
   "capability": "IMP-036J",
   "candidateId": "IMP-036J-PLAN-CANDIDATE-1",
@@ -11,20 +11,26 @@
   "designReadinessSource": "IMP-036J-DESIGN-CANDIDATE-2",
   "qualityPlanSource": "IMP-036J-QUALITY-CANDIDATE-2",
   "measurementPlanSource": "IMP-036J-MEASUREMENT-CANDIDATE-2",
-  "implementationPlan": "CANDIDATE",
+  "implementationPlan": "PASS",
+  "implementationPlanFinalized": true,
+  "readyForImplementationAuthorization": true,
   "implementationAuthorized": false,
   "implementationStarted": false,
   "implementationComplete": false,
-  "authoritative": false
+  "authoritative": true,
+  "architectReview": "5925360293",
+  "evaluatedHead": "2cf349b10ecb3dd326818fd401662ed37817b603",
+  "evaluatedTree": "11e0a46f7b19bf5b7b7e17cfe2f0656c3b5f8bdb"
 }
 -->
 
 # IMP-036J — Implementation Execution Plan
 
 ```text
-PLAN_CANDIDATE = IMP-036J-PLAN-CANDIDATE-1
+PLAN_SOURCE = IMP-036J-PLAN-CANDIDATE-1
+STATUS = CURRENT
 AUTHORITY = IMPLEMENTATION_EXECUTION_PLAN
-AUTHORITATIVE = NO
+AUTHORITATIVE = YES
 CAPABILITY = IMP-036J — Promotions, Coupons & Offers
 PRODUCT_DEFINITION = PD-IMP-036J-DRAFT-6
 EXPERIENCE_DEFINITION = XD-IMP-036J-DRAFT-6
@@ -32,13 +38,18 @@ ARCHITECTURE_SOURCE = IMP-036J-FIT-CANDIDATE-9
 DESIGN_READINESS_SOURCE = IMP-036J-DESIGN-CANDIDATE-2
 QUALITY_PLAN_SOURCE = IMP-036J-QUALITY-CANDIDATE-2
 MEASUREMENT_PLAN_SOURCE = IMP-036J-MEASUREMENT-CANDIDATE-2
-IMPLEMENTATION_PLAN = CANDIDATE
+IMPLEMENTATION_PLAN = PASS
+IMPLEMENTATION_PLAN_FINALIZED = YES
 IMPLEMENTATION_AUTHORIZED = NO
 IMPLEMENTATION_STARTED = NO
 IMPLEMENTATION_COMPLETE = NO
 IMP036J_ACCEPTED = NO
 PROOF_EXECUTED = NO
 READY_FOR_IMPLEMENTATION_AUTHORIZATION = YES
+INDEPENDENT_IMPLEMENTATION_PLAN_REVIEW = PASS
+IMPLEMENTATION_PLAN_ARCHITECT_REVIEW = 5925360293
+IMPLEMENTATION_PLAN_EVALUATED_HEAD = 2cf349b10ecb3dd326818fd401662ed37817b603
+IMPLEMENTATION_PLAN_EVALUATED_TREE = 11e0a46f7b19bf5b7b7e17cfe2f0656c3b5f8bdb
 OPEN_MATERIAL_DECISIONS = NONE
 ARCH_R23 = UNCHANGED
 DR_23 = UNCHANGED
@@ -50,15 +61,18 @@ NEW_ROLE = NO
 NEW_PERMISSION = NO
 ```
 
-This document is a non-authoritative implementation-plan candidate. It uses the existing
-`IMPLEMENTATION_EXECUTION_PLAN` convention. It is not Product Definition, Experience Definition,
-architecture, a Decision Register entry, acceptance, or implementation authorization.
+This document is the current IMP-036J implementation execution plan. It uses the existing
+`IMPLEMENTATION_EXECUTION_PLAN` convention. Independent Architect review `5925360293`
+returned PASS for source `IMP-036J-PLAN-CANDIDATE-1` on head
+`2cf349b10ecb3dd326818fd401662ed37817b603` and tree
+`11e0a46f7b19bf5b7b7e17cfe2f0656c3b5f8bdb`. It is not Product Definition, Experience
+Definition, architecture, a Decision Register entry, acceptance, or implementation
+authorization.
 
-Independent review and later persistence may adopt this candidate. Until that happens,
-ROADMAP and STATE remain the lifecycle authority, and they still record
-`IMPLEMENTATION_PLAN = NOT_PERFORMED` and `IMP036J_IMPLEMENTATION_AUTHORIZED = NO`.
-Product Definition story rows stay `NOT_READY_FOR_IMPLEMENTATION` for the same reason.
-This candidate does not rewrite those rows.
+`READY_FOR_IMPLEMENTATION_AUTHORIZATION = YES` is a readiness conclusion. It is not
+authorization. `IMPLEMENTATION_AUTHORIZED` stays `NO` and `IMPLEMENTATION_STARTED` stays
+`NO`. Product Definition story rows stay `NOT_READY_FOR_IMPLEMENTATION` because explicit
+Implementation Authorization is still outstanding.
 
 Product, Experience, locked architecture, Design Readiness, the Quality/Test Plan, and the
 Measurement/Instrumentation Plan stay binding. This plan sequences their implementation.
@@ -69,7 +83,8 @@ It does not reopen them.
 ## 0. Authorization boundary
 
 ```text
-IMPLEMENTATION_PLAN_GATE = CANDIDATE_PREPARATION
+IMPLEMENTATION_PLAN_GATE = PASS
+IMPLEMENTATION_PLAN_FINALIZED = YES
 IMPLEMENTATION_AUTHORIZED = NO
 IMPLEMENTATION_STARTED = NO
 RUNTIME_CHANGE_AUTHORIZED = NO
@@ -125,8 +140,10 @@ NEXT_PRODUCT_SLICE = IMP-037
 SOURCE_DRIFT = NO
 ```
 
-Binding identities match section 0. Next gate on ROADMAP/STATE is `IMPLEMENTATION_PLAN`.
-Formal lifecycle stays `ARCHITECTURE_LOCKED`.
+Binding identities match section 0. When this plan was written, the next gate on
+ROADMAP/STATE was `IMPLEMENTATION_PLAN`. Formal lifecycle stays `ARCHITECTURE_LOCKED`.
+After persistence, the next gate is `IMPLEMENTATION_AUTHORIZATION`. Persistence does not
+authorize or start implementation.
 
 ---
 
@@ -158,8 +175,8 @@ IMPLEMENTATION_AUTHORIZED = NO
 
 `READY_FOR_IMPLEMENTATION_AUTHORIZATION` means a later human authorization can proceed
 without a missing material decision. It is not that authorization. Product Definition
-story readiness stays `NOT_READY_FOR_IMPLEMENTATION` until lifecycle authority records
-the Implementation Plan as performed and implementation as authorized.
+story readiness stays `NOT_READY_FOR_IMPLEMENTATION` until explicit Implementation
+Authorization.
 
 ---
 
@@ -1150,6 +1167,7 @@ EXPERIENCE_SEMANTICS_CHANGED = NO
 ARCHITECTURE_CHANGED = NO
 ```
 
-This verdict is the planning gate's readiness assessment. Lifecycle authorization
-remains a later human action recorded in ROADMAP and STATE. Stories in the Product
-Definition stay `NOT_READY_FOR_IMPLEMENTATION` until that authority changes.
+This verdict is the persisted planning-gate assessment. Implementation Plan PASS is
+recorded in ROADMAP and STATE. Explicit Implementation Authorization remains a later
+human action. Stories in the Product Definition stay `NOT_READY_FOR_IMPLEMENTATION`
+until that authorization.
