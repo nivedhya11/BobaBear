@@ -1201,7 +1201,7 @@ are in V1. Deal views, campaign aggregates, and incremental-revenue claims are n
 | Fulfilment mode | IMP-036H COMPLETE_AND_ACCEPTED | `US-036J-006` | None for product meaning |
 | Scheduled timing | IMP-036I COMPLETE_AND_ACCEPTED | `US-036J-006` | Do not redefine Scheduled |
 | Product Definition Gate | PASS | Architecture Fit | None. Gate PASS is not Architecture Fit. |
-| Architecture Fit | PASS / LOCKED | Implementation Tranche 1 | Implementation Plan PASS; Implementation Authorization APPROVED 2026-10-01; implementation STARTED; Tranche 1 PASS |
+| Architecture Fit | PASS / LOCKED | Implementation Tranche 2 | Implementation Plan PASS; Implementation Authorization APPROVED 2026-10-01; implementation STARTED; Tranche 1 PASS; Tranche 2 not started |
 | FD-036J-01 | APPROVED 2026-09-27: Cart and Checkout Review share one coupon state; Payment does not mutate it | None for Gate readiness | Does not itself pass the Gate |
 | FD-036J-02 | APPROVED 2026-09-27: one primary merchandise or order Offer plus one compatible delivery incentive; a qualifying compatible pair with real monetary benefit both apply; best valid monetary combination wins; standing free delivery creates no duplicate saving | None for Gate readiness | Product Definition decision. Not a Decision Register entry. Does not itself pass the Gate |
 | FD-036J-03 | APPROVED 2026-09-28: complimentary-item V1 operating model in the dedicated section below | None for Gate readiness | Product Definition decision. Not a Decision Register entry. Does not itself pass the Gate |
@@ -1287,7 +1287,7 @@ is required. This boundary is not ordinary commercial follow-up.
 
 | `UNRESOLVED_DECISION_REQUIRED` item | Material user/business impact | Decision owner / evidence needed | Affected stories / gate |
 |---|---|---|---|
-| None | `OPEN_FOUNDER_PRODUCT_DECISIONS = 0`; `UNRESOLVED_MATERIAL_PRODUCT_DECISIONS = 0` | FD-036J-01, FD-036J-02, and FD-036J-03 are APPROVED | Product Definition Gate PASS is persisted. Architecture Fit PASS and architecture lock are persisted. Design Readiness PASS and Implementation Plan PASS are persisted. Implementation Authorization is APPROVED and implementation has started. Tranche 1 is in review. |
+| None | `OPEN_FOUNDER_PRODUCT_DECISIONS = 0`; `UNRESOLVED_MATERIAL_PRODUCT_DECISIONS = 0` | FD-036J-01, FD-036J-02, and FD-036J-03 are APPROVED | Product Definition Gate PASS is persisted. Architecture Fit PASS and architecture lock are persisted. Design Readiness PASS and Implementation Plan PASS are persisted. Implementation Authorization is APPROVED and implementation has started. Tranche 1 is PASS. Tranche 2 has not started. |
 
 `FD-036J-01` = `APPROVED` on 2026-09-27.
 `FD-036J-02` = `APPROVED` on 2026-09-27.
@@ -1391,7 +1391,7 @@ READINESS_WHILE_GATE_NOT_PERFORMED = NOT_READY_FOR_IMPLEMENTATION
 AFTER_GATE_PASS_READINESS_MUST_DROP_GATE_BLOCKER = YES
 ```
 
-Stories are `READY_FOR_IMPLEMENTATION`. Product Definition Gate PASS, Design Readiness PASS, Quality/Test Plan and Measurement/Instrumentation Plan finalization, Implementation Plan PASS, and Implementation Authorization APPROVED on 2026-10-01 remove those readiness blockers. Implementation has started. Tranche 1 is in review and is not passed. No Sprint is assigned.
+Stories are `READY_FOR_IMPLEMENTATION`. Product Definition Gate PASS, Design Readiness PASS, Quality/Test Plan and Measurement/Instrumentation Plan finalization, Implementation Plan PASS, and Implementation Authorization APPROVED on 2026-10-01 remove those readiness blockers. Implementation has started. Tranche 1 is PASS. Tranche 2 has not started. No Sprint is assigned.
 
 ## 27. Product Definition Gate (historical evaluation)
 
