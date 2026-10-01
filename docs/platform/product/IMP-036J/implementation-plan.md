@@ -196,8 +196,13 @@ Checkout evaluation exists. That figure is `COPY-CURRENT-CHECKOUT-TOTAL`. It is 
 evaluated checkout money, not purchased truth, and it is not labeled Total payable.
 
 Review is the authoritative pre-payment commercial-review presentation. Coupon mutation
-exists on Cart and on Checkout Review over `carts.manual_coupon_code` only. Payment has
-no Apply, Change, or Remove control in the focus or tab order.
+exists on Cart and on Checkout Review over `carts.manual_coupon_code` only.
+
+`PaymentPanel` is the Payment-step read-only commercial summary and the pay/retry
+control. `PaymentReturnClient` at `/order/payment` stays the existing payment-status
+return into confirmation. It is not a commercial-summary surface and does not gain the
+Offer breakdown or the commercial explanation. Coupon mutation is absent from both.
+Neither surface has Apply, Change, or Remove in the focus or tab order.
 
 Confirmation, order detail, and history render sealed Checkout Snapshot truth. Live Offer
 evaluation does not rewrite purchased savings or a purchased complimentary line.
@@ -280,8 +285,13 @@ CUSTOMER_AUTH_USER → CART → CHECKOUT → PAYMENT → ATTEMPT
 ```
 
 A transaction that will lock the customer must not already hold the cart or checkout.
-A presentation-only observation does not lock the customer, cart, or checkout.
-Measurement-head lock does not precede the customer or the cart.
+`startPayment`, `retryPayment`, and `completeZeroPayableCheckout` lock
+`customer_auth_users` before the cart and the checkout. `applySuccess` and
+`applyDefinitiveNonSuccess` lock `customer_auth_users` before checkout and do not lock
+the cart. `prepareCheckoutForPayment` commits and releases its checkout lock before
+those binding transactions open. A presentation-only observation does not lock the
+customer, cart, or checkout. Measurement-head lock does not precede the customer or
+the cart.
 
 ---
 
@@ -340,7 +350,10 @@ Primary story ownership:
 | 8 | `US-036J-001` … `US-036J-013` re-proved together |
 
 A story named on more than one row is split by acceptance scenario. Each mandatory
-scenario still has one primary tranche.
+scenario still has one primary tranche. The complete first-order purchase-guard
+lifecycle belongs to tranche 4, under `AC-036J-005-01` and `AC-036J-005-02`. Tranche 5
+does not write the guard. The Payment-step commercial summary belongs to tranche 5 on
+`PaymentPanel` only. `/order/payment` is not a primary owner of that summary.
 
 ---
 
@@ -387,7 +400,7 @@ Experience requirements:
 | Requirement | Primary tranche | What the owner must make true |
 |---|---|---|
 | `XR-IMP-036J-001` | 5 | Applied automatic saving is visible without an activate control and without engine words. Tranche 3 supplies the evaluated result |
-| `XR-IMP-036J-002` | 5 | Cart and Review share one coupon interaction. Payment does not mutate. Tranche 4 owns the single stored code |
+| `XR-IMP-036J-002` | 5 | Cart and Review share one coupon interaction. `PaymentPanel` is read-only. `/order/payment` does not mutate and does not become a commercial summary. Tranche 4 owns the single stored code |
 | `XR-IMP-036J-003` | 5 | Threshold copy uses the server gap. Tranche 3 owns that gap. The client does not subtract |
 | `XR-IMP-036J-004` | 5 | Order saving, real delivery saving, total saved, and payable read as one model. Tranche 3 owns the component equality |
 | `XR-IMP-036J-005` | 5 | The three equal-payable and strictly-lower sentences match the three server classes and are not swapped |
@@ -513,7 +526,7 @@ behaviour that tranche owns.
 | Checkout and payment bind | `src/server/checkout/operations.ts`, `src/server/checkout/prepare.ts`, `src/server/payment/operations.ts`, `src/server/payment/redemption.ts` | 4 |
 | Customer façade | `src/server/customer-commerce/http/router.ts` | 4, 5 |
 | Customer Cart | `src/components/ordering/CartClient.tsx`, `CartSummary.tsx`, `cart-presentation.ts`, `StickyCartBar.tsx` unchanged except it stays estimated-only | 5 |
-| Customer Review and Payment | `CheckoutClient.tsx`, `CheckoutReviewSections.tsx`, `PaymentPanel.tsx` | 5 |
+| Customer Review and Payment step | `CheckoutClient.tsx`, `CheckoutReviewSections.tsx`, `PaymentPanel.tsx` | 5 |
 | Purchased truth | `OrderConfirmationClient.tsx`, `OrderDetailClient.tsx`, `OrderHistoryClient.tsx`, `checkout-snapshot-presentation.ts` | 5 |
 | Operator commands | `src/server/promotions/promotions.ts`, `src/server/operations/http/admin-promotions-routes.ts`, `src/lib/administration/commercial-promotions.ts` | 6 |
 | Operator surface | `src/components/administration/commercial/PromotionsEditor.tsx` | 6 |
@@ -521,6 +534,10 @@ behaviour that tranche owns.
 
 `StickyCartBar` stays "Estimated subtotal" and gains no Offer treatment, as Design
 Readiness already requires.
+
+`PaymentReturnClient.tsx` at `/order/payment` stays the existing status return into
+confirmation. Tranche 5 does not extend it with the Offer breakdown or the commercial
+explanation, and it does not add a coupon control.
 
 Menu and Home gain no promotions destination.
 
@@ -581,11 +598,64 @@ and returns `CHECKOUT_REPRICED` when the prior total or the prior complimentary 
 no longer valid. It does not bind the stale snapshot. Unavailable complimentary drops
 the Offer, leaves Review, and does not substitute an item.
 
-The binding transaction follows section 10A. First-order predicate is re-read under the
-customer lock before the guard insert. Failed, cancelled, expired, and abandoned
-payments do not consume eligibility. A later cancellation of a successful purchase does
-not restore it. Zero-payable completion inserts the guard as `CONSUMED`. No other
-command writes `first_order_purchase_guards`.
+The binding transaction follows architecture section 10A. `prepareCheckoutForPayment`
+stays its own transaction and releases the checkout before the bind opens.
+
+Ordinary Promotion claims stay the existing claim rows: one claim per applied Promotion,
+reserved, consumed, and released on the existing claim path. The first-order purchase
+guard is not a claim, is not a capacity counter, and is one row for the logical binding
+even when that binding applies more than one first-order-only Offer.
+
+Tranche 4 assigns the complete payment-bearing guard lifecycle from locked
+`IMP-036J-FIT-CANDIDATE-9`:
+
+```text
+startPayment / retryPayment
+  when the winning binding contains one or more first-order-only Offers
+  lock customer_auth_users FOR UPDATE before the cart and the checkout
+  re-read the purchase-existence predicate, ignoring this attempt's own uncommitted payment
+  insert exactly one RESERVED first-order purchase guard
+  insert one ordinary claim per applied Promotion
+  every first-order Offer in that binding shares that one guard
+  a prior success refuses the bind: no guard, no first-order claims, and no bound payment
+
+applySuccess
+  RESERVED → CONSUMED
+  lock customer_auth_users before checkout, payment, attempt, claims, and the guard
+  an ordinary purchase with no first-order Offer still takes that customer lock
+  before payments.status = SUCCEEDED and inserts no guard
+
+applyDefinitiveNonSuccess
+  RESERVED → RELEASED
+  lock customer_auth_users before checkout when updating that guard
+  failed, cancelled, expired, and abandoned payment do not consume the entitlement
+  a RESERVED guard is not a previous successful Order
+
+retry after definitive release
+  only after the prior attempt is resolved
+  the RELEASED row leaves the active unique indexes
+  the new attempt may insert one new RESERVED guard
+  it does not leave two active guards for the same payment
+
+completeZeroPayableCheckout
+  lock customer_auth_users before the cart and the checkout
+  when the completion contains one or more first-order-only Offers
+  insert exactly one CONSUMED guard for the logical completion
+  one guard, not one guard per Promotion
+  a completion with no first-order Offer inserts no guard
+```
+
+Active uniqueness stays the locked partial indexes: one `RESERVED` or `CONSUMED` row per
+customer, one active row per `payment_id` when `payment_id` is not null, and one guard
+per zero-payable `checkout_snapshot_id`. `RELEASED` rows leave the customer and payment
+indexes. A consumed guard stays in the customer index.
+
+An already committed `RESERVED` guard stays on its payment-bound snapshot. A later
+successful ordinary purchase on another checkout does not rewrite that snapshot and is
+not blocked only because the first-order payment is still pending. A later cancellation
+or refund of a successful purchase does not restore first-order eligibility and does not
+release or delete the consumed guard. No other command writes
+`first_order_purchase_guards`.
 
 Snapshot sealing writes `promotion_revision`, `line_origin = complimentary_offer` for
 the granted line, and the composite line foreign key. Cart lines stay `line_origin = cart`
@@ -607,9 +677,12 @@ Inside `startCheckout`, under the cart lock already held:
   Missing, malformed, wrong-cart, or unresolvable association does not fail checkout,
   does not change price, and leaves that activation denominator-only.
 
-`evaluateCheckout` and the payment-binding transaction may adopt a key once, only when
-they already hold the cart-then-checkout lock. Cart evaluation does not mint or rewrite
-the key.
+`evaluateCheckout` may adopt a key once inside the transaction that already locks
+the cart and then the checkout. A section 10A payment-binding transaction may adopt
+a key once only after the customer lock, then the cart, then the checkout. It does
+not enter that transaction already holding the cart or the checkout. Commands that
+already lock the checkout before the cart do not adopt. Cart evaluation does not mint
+or rewrite the key.
 
 ### Measurement writes that belong in the command transaction
 
@@ -658,8 +731,18 @@ rejects a forbidden analytics field by writing nothing for that analytics reques
 
 Primary proof is HTTP, database, and recovery tests for the tranche 4 scenarios,
 including real overlapping transactions for cap, first-order, and duplicate
-`source_command_id`. Browser proof of copy and focus is supporting proof in tranche 5,
-including `COPY-STALE` for `AC-036J-008-01`.
+`source_command_id`. First-order proof covers Quality Plan rows "First-order guard" and
+"Payment retry after `RELEASED`", plus `AC-036J-005-01` and `AC-036J-005-02`: one
+`RESERVED` guard when a payment-bearing bind applies one or more first-order Offers,
+`RESERVED → CONSUMED` only in `applySuccess`, `RESERVED → RELEASED` in
+`applyDefinitiveNonSuccess`, one new `RESERVED` guard only after that release, and one
+`CONSUMED` guard from `completeZeroPayableCheckout`. Failed, cancelled, expired, and
+abandoned payment leave no consumed guard. A later cancellation or refund of a
+successful purchase does not restore eligibility. Ordinary claims remain one row per
+applied Promotion. Two concurrent first-order bindings for the same customer leave one
+active guard; the loser rolls back. Sequential calls do not satisfy that race. Browser
+proof of copy and focus is supporting proof in tranche 5, including `COPY-STALE` for
+`AC-036J-008-01`.
 
 ---
 
@@ -685,11 +768,17 @@ Review (`/order/checkout`):
 - `COPY-GIFT-GONE` when the complimentary item is unavailable. No substitute line and no picker.
 - Direct entry does not send `cartActivationId`.
 
-Payment (`PaymentPanel` and `/order/payment`):
+Payment step (`PaymentPanel`):
 
-- Read-only explanation from the active snapshot.
+- Read-only commercial summary and explanation from the active snapshot, plus the existing pay and retry behaviour.
 - No coupon field, Apply, Change, or Remove, including controls that are hidden but remain in the tab order.
-- Revalidation failure leaves Payment for Review. Payment does not accept a coupon body.
+- Revalidation failure leaves Payment for Review. `PaymentPanel` does not accept a coupon body.
+
+Payment return (`PaymentReturnClient` at `/order/payment`):
+
+- Existing payment-status return into confirmation.
+- No Offer breakdown and no commercial explanation.
+- No coupon field, Apply, Change, or Remove.
 
 Purchased truth:
 
@@ -754,9 +843,10 @@ state. The observation cannot set payable. Checkout and payment do not wait on t
 A failed POST does not roll back evaluation, checkout, or payment.
 
 Primary proof is component, browser, and accessibility tests for the tranche 5
-scenarios, plus the render-integrity cases above. Keyboard proof includes Payment tab
-order. Narrow and `lg` viewports cover Cart, Review, and Payment. The sticky Cart bar
-uses the same label as the page and does not say Total payable.
+scenarios, plus the render-integrity cases above. Keyboard proof includes the
+`PaymentPanel` tab order and confirms `/order/payment` has no coupon control and no
+Offer breakdown. Narrow and `lg` viewports cover Cart, Review, and `PaymentPanel`. The
+sticky Cart bar uses the same label as the page and does not say Total payable.
 
 ---
 
@@ -835,7 +925,7 @@ Required re-proof:
 - `BR-036J-001` … `BR-036J-014`;
 - both Golden Journeys named by the Product Definition, `GJ-FIRST-ORDER` and `GJ-RETURNING-ORDER`, without new journey ids and without an Order Again shortcut;
 - migration from the pre-change schema and from empty database, with historical snapshots unchanged;
-- real concurrency listed in the Quality Plan, including complimentary activation, last cap unit, first-order guard, duplicate coupon submit, and duplicate observation;
+- real concurrency listed in the Quality Plan, including complimentary activation, last cap unit, the first-order guard lifecycle (`RESERVED`, `CONSUMED`, `RELEASED`, and a new `RESERVED` guard after release), duplicate coupon submit, and duplicate observation;
 - render integrity mismatches;
 - activation and reused-checkout sequencing, including multiple activations on one journey and a historical Review that does not satisfy a later activation;
 - privacy rejection of forbidden observation fields;
@@ -853,7 +943,14 @@ Founder can give that verdict.
 | Guarantee | Where it lives | What must not be the guarantee |
 |---|---|---|
 | One active complimentary Offer per brand | Partial unique index, checked inside the activation transaction | An in-memory lock in the editor |
-| One active first-order guard per customer and per binding | Partial unique indexes after `customer_auth_users FOR UPDATE` | A browser flag or a customer boolean column |
+| One active first-order guard per customer | Partial unique index on `RESERVED` and `CONSUMED`, taken after `customer_auth_users FOR UPDATE` and before the cart or checkout | A browser flag, a customer boolean column, or an unordered application check |
+| One active guard per payment, and one zero-payable guard per snapshot | Locked partial unique indexes on `payment_id` and on `checkout_snapshot_id` when `payment_id` is null | One guard row per first-order Offer |
+| Ordinary Promotion claims | Existing claim rows, one per applied Promotion, on the existing reserve, consume, and release path | Using the purchase-level guard as a claim or as a capacity counter |
+| Guard reserve | `startPayment` and `retryPayment` insert exactly one `RESERVED` guard when the winning binding contains one or more first-order-only Offers | `prepareCheckoutForPayment` or a customer page writing the guard |
+| Guard consume | `applySuccess` moves that guard `RESERVED → CONSUMED` | Consuming the entitlement on failed, cancelled, expired, or abandoned payment |
+| Guard release | `applyDefinitiveNonSuccess` moves that guard `RESERVED → RELEASED` | Leaving the active uniqueness row after definitive non-success |
+| Zero-payable guard | `completeZeroPayableCheckout` inserts exactly one `CONSUMED` guard when the completion contains one or more first-order-only Offers, and inserts none otherwise | One consumed guard per first-order Offer |
+| Customer lock order | Binding transactions lock the customer before cart and checkout. `applySuccess` and `applyDefinitiveNonSuccess` lock the customer before checkout and do not already hold the checkout | `cart → checkout → customer_auth_users` |
 | Global and per-customer caps | Existing promotion `FOR UPDATE` and claim rows, extended in place | A client remaining count |
 | One coupon code | `carts.manual_coupon_code` updated under the cart lock and `expectedRevision` | A second Review column or optimistic local clear |
 | Same command retry | Unique `source_command_id` on origins and on results | A server id minted only in the response |
@@ -863,7 +960,8 @@ Founder can give that verdict.
 | Journey sequence order | `checkout_journey_heads` locked with `FOR UPDATE`, then `clock_timestamp()` in the allocating statement | Ingest order or `transaction_timestamp()` |
 | Cart causal order | Unique `(cart_id, cart_causal_ordinal)` allocated under the cart lock | `created_at` or UUID order |
 | Closed journey | Reject a new fingerprint; return the existing fact for a replay | A client checkout status |
-| Payment retry after release | Existing payment idempotency plus a new reserved claim set, not a second consumption of the released attempt | Replaying the released claim id as success |
+| Payment retry after release | After definitive release, the next resolved attempt may insert one new `RESERVED` guard and one new reserved claim set. It does not consume the released attempt and it does not leave two active guards for the same payment | Replaying the released guard or claim id as success |
+| Later cancel or refund | A consumed guard and the successful purchase predicate stay consumed | Restoring first-order eligibility |
 
 `SAME_OPERATION_RETRY = RETURN_EXISTING_OBSERVATION` covers a lost coupon response, a
 lost observation POST, and a lost continue action. The caller keeps the id it minted
@@ -890,7 +988,9 @@ names the field:
 
 The complimentary digest is SHA-256 of the canonical line defined by the Measurement
 Plan. The plaintext is rendered only on the commerce surface that already shows the
-line. It is not copied into analytics columns.
+line. It is not copied into analytics columns. `customer_auth_user_id` on the
+first-order purchase guard is eligibility identity. It is not copied into a measurement
+table and it is not an operator customer list.
 
 CR2 planning obligations for every implementing tranche that touches the relevant path:
 
@@ -914,7 +1014,7 @@ Owned by tranche 5 for customers and tranche 6 for the retire confirmation. Proo
 follows the Quality Plan experience section:
 
 - Coupon field accessible name "Coupon".
-- Review and Payment section name "Price summary".
+- Review and `PaymentPanel` section name "Price summary". `/order/payment` does not gain that summary.
 - The visible Cart amount label matches the money-truth table.
 - Polite status for applied and checking. Alert for invalid, stale, unavailable, and network failure.
 - Focus moves to the result after sign-in retry, and to the Review explanation after stale revalidation.
@@ -950,8 +1050,8 @@ It does not create another Quality Plan. `PROOF_EXECUTED = NO`.
 Named Quality Plan risks stay mapped as follows:
 
 - Cart money finality and shared coupon state: tranche 5 presentation, tranche 4 state.
-- Payment read-only: tranche 5, `AC-036J-002-09`.
-- First-order eligibility: tranche 4.
+- Payment read-only commercial summary: tranche 5 `PaymentPanel`, `AC-036J-002-09`. `PaymentReturnClient` at `/order/payment` stays the existing status return and is not that surface. Coupon mutation stays absent from both.
+- First-order eligibility and the complete guard lifecycle: tranche 4, `AC-036J-005-01`, `AC-036J-005-02`, and Quality Plan concurrency rows "First-order guard" and "Payment retry after `RELEASED`".
 - Stacking and best candidate: tranche 3.
 - Standing zero delivery: tranche 3, `AC-036J-010-04`.
 - Stale Review and payment recovery: tranche 4 refusal, tranche 5 copy and focus.
