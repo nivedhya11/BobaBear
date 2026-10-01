@@ -1171,6 +1171,6 @@ ARCHITECTURE_CHANGED = NO
 ```
 
 This verdict is the persisted planning-gate assessment. Implementation Plan PASS is
-recorded in ROADMAP and STATE. Explicit Implementation Authorization remains a later
-human action. Stories in the Product Definition stay `NOT_READY_FOR_IMPLEMENTATION`
-until that authorization.
+recorded in ROADMAP and STATE. Implementation Authorization is APPROVED on 2026-10-01
+(PR #332 comment `5926464685`). Stories are `READY_FOR_IMPLEMENTATION`. Implementation
+has not started. This record does not start implementation.

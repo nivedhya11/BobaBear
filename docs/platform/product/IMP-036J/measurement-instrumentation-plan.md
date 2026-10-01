@@ -34,7 +34,7 @@ NEW_PROMOTION_AUTHORITY = NO
 NEW_ROLE = NO
 ```
 
-This plan chooses the concrete measurement encoding that `IMP-036J-FIT-CANDIDATE-9` left open. It operationalizes `XD-IMP-036J-DRAFT-6` section 17. The Measurement/Instrumentation Plan is finalized. Design Readiness is PASS. Implementation stays unauthorized.
+This plan chooses the concrete measurement encoding that `IMP-036J-FIT-CANDIDATE-9` left open. It operationalizes `XD-IMP-036J-DRAFT-6` section 17. The Measurement/Instrumentation Plan is finalized. Design Readiness is PASS. Implementation is authorized and not started.
 
 ## 0. Candidate history
 

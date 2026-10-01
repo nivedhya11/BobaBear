@@ -41113,7 +41113,7 @@ function checkImp036jImplementationAuthorization(roadmap, state, architecture, d
     !readmeExperienceRow.includes("Experience Gate = **PASS**") ||
     !readmeExperienceRow.includes("5342581233") ||
     !readmeExperienceRow.includes("1fbabd2fb80851912815efe4e0ebe331a1318557") ||
-    !readmeExperienceRow.includes("next gate = **IMPLEMENTATION_TRANCHE_1**") ||
+    !    readmeExperienceRow.includes("next gate = **IMPLEMENTATION_TRANCHE_1**") ||
     !readmeExperienceRow.includes("Design Readiness = **PASS**") ||
     !readmeExperienceRow.includes("**AUTHORIZED**") ||
     !readmeExperienceRow.includes("NOT_STARTED") ||
@@ -41121,7 +41121,7 @@ function checkImp036jImplementationAuthorization(roadmap, state, architecture, d
     readmeExperienceRow.includes("Experience Gate = **NOT_PERFORMED**") ||
     readmeExperienceRow.includes("EXPERIENCE_DEFINITION_CANDIDATE")
   ) {
-    fail("IMP036J_EXPERIENCE_README", "product/README.md IMP-036J Experience Definition row must record APPROVED DRAFT-6, Experience Gate PASS, Design Readiness PASS, review 5342581233, and next gate IMPLEMENTATION_AUTHORIZATION");
+    fail("IMP036J_EXPERIENCE_README", "product/README.md IMP-036J Experience Definition row must record APPROVED DRAFT-6, Experience Gate PASS, Design Readiness PASS, review 5342581233, next gate IMPLEMENTATION_TRANCHE_1, and implementation AUTHORIZED / NOT_STARTED");
   }
   const productReadmePointers = evaluateImp036jProductReadmePointers(productReadmeText);
   if (!productReadmePointers.ok) fail(productReadmePointers.code, productReadmePointers.message);
@@ -41139,9 +41139,9 @@ function checkImp036jImplementationAuthorization(roadmap, state, architecture, d
   ) {
     fail("IMP036J_EXPERIENCE_DEFINITION", "Experience Definition must stay XD-IMP-036J-DRAFT-6 APPROVED with Experience Gate PASS");
   }
-  if (!experienceText.includes("ARCHITECTURE_FIT = PASS") || !experienceText.includes("ARCHITECTURE_LOCKED = YES") || !experienceText.includes("IMPLEMENTATION_AUTHORIZED = YES") ||
+  if (!experienceText.includes("ARCHITECTURE_FIT = PASS") || !experienceText.includes("ARCHITECTURE_LOCKED = YES") ||     !experienceText.includes("IMPLEMENTATION_AUTHORIZED = YES") ||
     !experienceText.includes("IMPLEMENTATION_STARTED = NO") || !experienceText.includes("DESIGN_READINESS = PASS") || experienceText.includes("DESIGN_READINESS = NOT_PERFORMED")) {
-    fail("IMP036J_EXPERIENCE_BOUNDARY", "Locked Experience pointer must retain Fit PASS / lock, Design Readiness PASS, and implementation unauthorized");
+    fail("IMP036J_EXPERIENCE_BOUNDARY", "Locked Experience pointer must retain Fit PASS / lock, Design Readiness PASS, and implementation AUTHORIZED / NOT_STARTED");
   }
   const programme = evaluateImp036jProgrammeLifecycle(roadmapText);
   if (!programme.ok) fail(programme.code, programme.message);
