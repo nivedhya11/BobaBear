@@ -40959,6 +40959,59 @@ export function evaluateImp036jProductDeliveryTransition(text) {
   return { ok: true };
 }
 
+/**
+ * Current IMP-036J Product Definition authorization prose.
+ * Section 25 is the current unresolved-decision row. Section 27 keeps the historical
+ * Product Definition Gate fence, including Architecture Fit NOT_PERFORMED at that checkpoint.
+ * @param {string} productText
+ * @returns {{ ok: true } | { ok: false, code: string, message: string }}
+ */
+export function evaluateImp036jAuthorizationProse(productText) {
+  const source = String(productText ?? "");
+  const unresolved = source.split("## 25. Unresolved / decision required")[1]?.split("\n## ")[0] ?? "";
+  const gateSection = source.split("## 27. Product Definition Gate (historical evaluation)")[1] ?? "";
+  const fenceStart = gateSection.indexOf("```");
+  const fenceEnd = fenceStart < 0 ? -1 : gateSection.indexOf("```", fenceStart + 3);
+  const fence = fenceStart < 0 || fenceEnd < 0 ? "" : gateSection.slice(fenceStart, fenceEnd);
+  const afterFence = fenceEnd < 0 ? "" : gateSection.slice(fenceEnd);
+  if (!unresolved.includes("Implementation Authorization is APPROVED and implementation has not started.")) {
+    return {
+      ok: false,
+      code: "IMP036J_AUTHORIZATION_PROSE",
+      message: "Current unresolved-decision row must record Implementation Authorization APPROVED and implementation not started",
+    };
+  }
+  if (/implementation authorization is outstanding/i.test(unresolved)) {
+    return {
+      ok: false,
+      code: "IMP036J_AUTHORIZATION_PROSE",
+      message: "Current unresolved-decision row must not say implementation authorization is outstanding",
+    };
+  }
+  if (!fence.includes("Architecture Fit: NOT_PERFORMED") || !fence.includes("Gate Result: PASS")) {
+    return {
+      ok: false,
+      code: "IMP036J_AUTHORIZATION_PROSE",
+      message: "Historical Product Definition Gate fence must keep Architecture Fit NOT_PERFORMED and Gate Result PASS",
+    };
+  }
+  if (/implementation remains unauthorized/i.test(afterFence)) {
+    return {
+      ok: false,
+      code: "IMP036J_AUTHORIZATION_PROSE",
+      message: "Post-gate prose must not state that current implementation remains unauthorized",
+    };
+  }
+  if (!/implementation was not yet authorized/i.test(afterFence)) {
+    return {
+      ok: false,
+      code: "IMP036J_AUTHORIZATION_PROSE",
+      message: "Post-gate prose must keep implementation unauthorized only as the historical gate checkpoint",
+    };
+  }
+  return { ok: true };
+}
+
 /** Current platform capability index IMP-036J row must name Candidate 9. */
 export function evaluateImp036jPlatformIndexPointer(indexText) {
   const rows = indexText.split("\n").filter((line) => line.includes("capabilities/IMP-036J-promotions-coupons-offers.md"));
@@ -41119,7 +41172,7 @@ function checkImp036jImplementationAuthorization(roadmap, state, architecture, d
     futureRow.includes("implementation NOT_AUTHORIZED") ||
     futureRow.includes("nextGate EXPERIENCE_GATE")
   ) {
-    fail("IMP036J_FUTURE_LEDGER", "Future GTM slice ledger must keep IMP-036J ARCHITECTURE_LOCKED with Experience Gate PASS, Design Readiness PASS, Implementation Plan PASS, nextGate IMPLEMENTATION_AUTHORIZATION, and Fit PASS");
+    fail("IMP036J_FUTURE_LEDGER", "Future GTM slice ledger must keep IMP-036J ARCHITECTURE_LOCKED with Experience Gate PASS, Design Readiness PASS, Implementation Plan PASS, nextGate IMPLEMENTATION_TRANCHE_1, implementation AUTHORIZED / NOT_STARTED, and Fit PASS");
   }
   if (!currentSliceSection.includes("IMP-036J-FIT-CANDIDATE-9") || !currentSliceSection.includes("Experience Gate `PASS`") || !currentSliceSection.includes("IMPLEMENTATION_TRANCHE_1") || !currentSliceSection.includes("Design Readiness `PASS`") || !currentSliceSection.includes("Implementation Plan `PASS`")) {
     fail("IMP036J_CURRENT_SLICE", "ROADMAP current product slice must record Experience Gate PASS, Design Readiness PASS, Implementation Plan PASS, next gate IMPLEMENTATION_TRANCHE_1, and Architecture Fit PASS");
@@ -41239,6 +41292,8 @@ function checkImp036jImplementationAuthorization(roadmap, state, architecture, d
     : "";
   const productDeliveryTransition = evaluateImp036jProductDeliveryTransition(productDeliveryTransitionText);
   if (!productDeliveryTransition.ok) fail(productDeliveryTransition.code, productDeliveryTransition.message);
+  const authorizationProse = evaluateImp036jAuthorizationProse(productDefinitionText);
+  if (!authorizationProse.ok) fail(authorizationProse.code, authorizationProse.message);
   let experienceMeta;
   try { experienceMeta = JSON.parse(experienceText.match(/^<!-- governance-meta\s*([\s\S]*?)-->/)?.[1] ?? ""); } catch { experienceMeta = {}; }
   for (const [key, expected] of Object.entries({ architectureFit: "PASS", architectureLocked: "YES", designReadiness: "PASS", implementationAuthorized: true })) {

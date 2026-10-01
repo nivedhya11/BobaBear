@@ -115,6 +115,7 @@ import {
   evaluateImp036jExperienceFitPointer,
   evaluateImp036jTestingPointer,
   evaluateImp036jProductDeliveryTransition,
+  evaluateImp036jAuthorizationProse,
   evaluateImp036jProductReadmePointers,
   evaluateImp036jPlatformIndexPointer,
   evaluatePd2ProcessContract,
@@ -18378,6 +18379,44 @@ describe("PD-2 experience delivery transition", () => {
     const live = readFileSync(new URL("../docs/platform/PRODUCT-DELIVERY.md", import.meta.url), "utf8");
     const withHistory = `${live}\n\nHistorical checkpoint kept Architecture Fit NOT_PERFORMED and implementation unauthorized. The next gate was ARCHITECTURE_FIT.\n`;
     assert.equal(evaluateImp036jProductDeliveryTransition(withHistory).ok, true);
+  });
+});
+
+describe("IMP-036J current authorization prose", () => {
+  const live = readFileSync(new URL("../docs/platform/product/IMP-036J/product-definition.md", import.meta.url), "utf8");
+  const consistency = readFileSync(new URL("./project-consistency.mjs", import.meta.url), "utf8");
+
+  it("accepts approved not-started prose and the historical Product Definition Gate fence", () => {
+    assert.deepEqual(evaluateImp036jAuthorizationProse(live), { ok: true });
+  });
+
+  it("rejects restoring outstanding authorization or a current unauthorized claim", () => {
+    const outstanding = live.replace(
+      "Implementation Authorization is APPROVED and implementation has not started.",
+      "Implementation authorization is outstanding.",
+    );
+    const unauthorized = live.replace(
+      "Implementation was not yet authorized.",
+      "Implementation remains unauthorized.",
+    );
+    assert.notEqual(outstanding, live);
+    assert.notEqual(unauthorized, live);
+    assert.equal(evaluateImp036jAuthorizationProse(outstanding).code, "IMP036J_AUTHORIZATION_PROSE");
+    assert.equal(evaluateImp036jAuthorizationProse(unauthorized).code, "IMP036J_AUTHORIZATION_PROSE");
+  });
+
+  it("rejects rewriting the historical Product Definition Gate fence to Fit PASS", () => {
+    const rewritten = live.replace("Architecture Fit: NOT_PERFORMED", "Architecture Fit: PASS");
+    assert.notEqual(rewritten, live);
+    assert.equal(evaluateImp036jAuthorizationProse(rewritten).code, "IMP036J_AUTHORIZATION_PROSE");
+  });
+
+  it("keeps the current future-ledger failure on the Tranche-1 boundary", () => {
+    const authorization = consistency.split("function checkImp036jImplementationAuthorization")[1]?.split("function checkImp036jArchitectureLock")[0] ?? "";
+    const plan = consistency.split("function checkImp036jArchitectureLock")[1]?.split("function ")[0] ?? "";
+    assert.match(authorization, /nextGate IMPLEMENTATION_TRANCHE_1/);
+    assert.doesNotMatch(authorization, /nextGate IMPLEMENTATION_AUTHORIZATION/);
+    assert.match(plan, /nextGate IMPLEMENTATION_AUTHORIZATION/);
   });
 });
 

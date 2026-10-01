@@ -1281,7 +1281,7 @@ is required. This boundary is not ordinary commercial follow-up.
 
 | `UNRESOLVED_DECISION_REQUIRED` item | Material user/business impact | Decision owner / evidence needed | Affected stories / gate |
 |---|---|---|---|
-| None | `OPEN_FOUNDER_PRODUCT_DECISIONS = 0`; `UNRESOLVED_MATERIAL_PRODUCT_DECISIONS = 0` | FD-036J-01, FD-036J-02, and FD-036J-03 are APPROVED | Product Definition Gate PASS is persisted. Architecture Fit PASS and architecture lock are persisted. Design Readiness PASS and Implementation Plan PASS are persisted. Implementation authorization is outstanding. |
+| None | `OPEN_FOUNDER_PRODUCT_DECISIONS = 0`; `UNRESOLVED_MATERIAL_PRODUCT_DECISIONS = 0` | FD-036J-01, FD-036J-02, and FD-036J-03 are APPROVED | Product Definition Gate PASS is persisted. Architecture Fit PASS and architecture lock are persisted. Design Readiness PASS and Implementation Plan PASS are persisted. Implementation Authorization is APPROVED and implementation has not started. |
 
 `FD-036J-01` = `APPROVED` on 2026-09-27.
 `FD-036J-02` = `APPROVED` on 2026-09-27.
@@ -1425,7 +1425,7 @@ GATE_EVALUATED_FINGERPRINT: 9f9c708306a76e140ea4143feaf8e007ca975f03c3dc418f65e3
 ```
 
 At that Product Definition Gate checkpoint, `Architecture Conflicts: NONE IDENTIFIED` was not Architecture Fit PASS. Architecture Fit was
-`NOT_PERFORMED`. Implementation remains unauthorized. Exact permission keys remain an Architecture
+`NOT_PERFORMED`. Implementation was not yet authorized. Exact permission keys remain an Architecture
 Fit binding. Authorization variants were sufficient for the Product Definition Gate. Concurrency,
 including last-global-redemption, first-order, duplicate coupon submission, and complimentary-item
 concurrent activation, was considered; the mechanism remains Fit.
