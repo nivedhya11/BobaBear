@@ -40879,6 +40879,86 @@ export function evaluateImp036jTestingPointer(testingText) {
   return { ok: true };
 }
 
+/**
+ * CURRENT IMP-036J transition in PRODUCT-DELIVERY.md.
+ * Scoped to the `## IMP-036J transition` section so historical checkpoints elsewhere stay untouched.
+ * Rejects a pre-Fit or pre-authorization current transition and requires the authorized,
+ * not-started Tranche-1 boundary.
+ * @param {string} text
+ * @returns {{ ok: true } | { ok: false, code: string, message: string }}
+ */
+export function evaluateImp036jProductDeliveryTransition(text) {
+  const section = String(text ?? "").split("## IMP-036J transition")[1]?.split("\n## ")[0] ?? "";
+  if (!section.trim()) {
+    return {
+      ok: false,
+      code: "IMP036J_PD2_CURRENT_TRANSITION",
+      message: "PRODUCT-DELIVERY.md current IMP-036J transition section is missing",
+    };
+  }
+  const normalized = section.replace(/[`*]/g, "");
+  const staleClaims = [
+    [/architecture fit(?:\s+\w+){0,4}\s+not_performed/i, "Architecture Fit NOT_PERFORMED"],
+    [/architecture(?:\s+\w+){0,4}\s+unlocked/i, "Architecture unlocked"],
+    [/design readiness(?:\s+\w+){0,4}\s+not_performed/i, "Design Readiness NOT_PERFORMED"],
+    [/implementation(?:\s+\w+){0,4}\s+unauthorized/i, "implementation unauthorized"],
+    [/next gate(?:\s+\w+){0,3}\s+architecture_fit/i, "next gate ARCHITECTURE_FIT"],
+    [/next_gate\s*=\s*architecture_fit/i, "next gate ARCHITECTURE_FIT"],
+    [/next gate(?:\s+\w+){0,3}\s+implementation_authorization/i, "next gate IMPLEMENTATION_AUTHORIZATION"],
+    [/next_gate\s*=\s*implementation_authorization/i, "next gate IMPLEMENTATION_AUTHORIZATION"],
+  ];
+  for (const [pattern, claim] of staleClaims) {
+    if (pattern.test(normalized)) {
+      return {
+        ok: false,
+        code: "IMP036J_PD2_CURRENT_TRANSITION",
+        message: `PRODUCT-DELIVERY.md current IMP-036J transition must not claim ${claim}`,
+      };
+    }
+  }
+  const required = [
+    "PRODUCT_DEFINITION = PD-IMP-036J-DRAFT-6 APPROVED / PASS",
+    "EXPERIENCE_DEFINITION = XD-IMP-036J-DRAFT-6 APPROVED / PASS",
+    "ARCHITECTURE_FIT = PASS",
+    "ARCHITECTURE_LOCKED = YES",
+    "ARCHITECTURE_SOURCE = IMP-036J-FIT-CANDIDATE-9",
+    "DESIGN_READINESS = PASS",
+    "QUALITY_TEST_PLAN_FINALIZED = YES",
+    "MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = YES",
+    "IMPLEMENTATION_PLAN = PASS",
+    "IMPLEMENTATION_PLAN_FINALIZED = YES",
+    "IMPLEMENTATION_AUTHORIZATION = APPROVED",
+    "IMPLEMENTATION_AUTHORIZED = YES",
+    "IMPLEMENTATION_STARTED = NO",
+    "IMPLEMENTATION_COMPLETE = NO",
+    "IMP036J_ACCEPTED = NO",
+    "NEXT_GATE = IMPLEMENTATION_TRANCHE_1",
+    "FORMAL_LIFECYCLE = ARCHITECTURE_LOCKED",
+  ];
+  for (const token of required) {
+    if (!section.includes(token)) {
+      return {
+        ok: false,
+        code: "IMP036J_PD2_CURRENT_TRANSITION",
+        message: `PRODUCT-DELIVERY.md current IMP-036J transition must record ${token}`,
+      };
+    }
+  }
+  if (
+    /IMPLEMENTATION_STARTED\s*=\s*YES/.test(section) ||
+    /IMPLEMENTATION_COMPLETE\s*=\s*YES/.test(section) ||
+    /IMP036J_ACCEPTED\s*=\s*YES/.test(section) ||
+    /IMPLEMENTATION_AUTHORIZED\s*=\s*NO/.test(section)
+  ) {
+    return {
+      ok: false,
+      code: "IMP036J_PD2_CURRENT_TRANSITION",
+      message: "PRODUCT-DELIVERY.md current IMP-036J transition must stay authorized and not started",
+    };
+  }
+  return { ok: true };
+}
+
 /** Current platform capability index IMP-036J row must name Candidate 9. */
 export function evaluateImp036jPlatformIndexPointer(indexText) {
   const rows = indexText.split("\n").filter((line) => line.includes("capabilities/IMP-036J-promotions-coupons-offers.md"));
@@ -41153,6 +41233,12 @@ function checkImp036jImplementationAuthorization(roadmap, state, architecture, d
   const testingText = testingAbs ? readFileSync(testingAbs, "utf8") : "";
   const testingPointer = evaluateImp036jTestingPointer(testingText);
   if (!testingPointer.ok) fail(testingPointer.code, testingPointer.message);
+  const productDeliveryAbs = resolvePlatformDoc("docs/platform/PRODUCT-DELIVERY.md");
+  const productDeliveryTransitionText = productDeliveryAbs && existsSync(productDeliveryAbs)
+    ? readFileSync(productDeliveryAbs, "utf8")
+    : "";
+  const productDeliveryTransition = evaluateImp036jProductDeliveryTransition(productDeliveryTransitionText);
+  if (!productDeliveryTransition.ok) fail(productDeliveryTransition.code, productDeliveryTransition.message);
   let experienceMeta;
   try { experienceMeta = JSON.parse(experienceText.match(/^<!-- governance-meta\s*([\s\S]*?)-->/)?.[1] ?? ""); } catch { experienceMeta = {}; }
   for (const [key, expected] of Object.entries({ architectureFit: "PASS", architectureLocked: "YES", designReadiness: "PASS", implementationAuthorized: true })) {

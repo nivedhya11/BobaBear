@@ -4,7 +4,7 @@
   "authority": "PRODUCT_DELIVERY_PROCESS",
   "version": "PD-2",
   "effectiveFrom": "IMP-036F",
-  "lastReviewed": "2026-09-28",
+  "lastReviewed": "2026-10-01",
   "supersedes": "PD-1"
 }
 -->
@@ -429,15 +429,38 @@ adopting PD-2.
 
 ## IMP-036J transition
 
-IMP-036J is the first current X3 capability transitioning into PD-2. Its Product Definition
-`PD-IMP-036J-DRAFT-6` stays approved and its Product Definition Gate stays `PASS`. Experience
-Definition and Experience Gate were not performed under PD-1. `XD-IMP-036J-DRAFT-6` is now
-`APPROVED` and Experience Gate is `PASS`. Architecture Fit stays `NOT_PERFORMED` and unlocked.
-An unmerged Architecture Fit candidate may exist as investigation. It is not persisted Fit
-authority. Design Readiness stays `NOT_PERFORMED`. Implementation stays unauthorized. The next
-gate is `ARCHITECTURE_FIT`. Experience Gate PASS is not Architecture Fit, not Design Readiness,
-and not implementation authorization. Change Risk is recorded in ROADMAP/STATE and is not an
-AGENTS risk level.
+IMP-036J is the first current X3 capability transitioning into PD-2. Experience Definition and
+Experience Gate were not performed under PD-1. The current transition is authorized and has not
+started:
+
+```text
+PRODUCT_DEFINITION = PD-IMP-036J-DRAFT-6 APPROVED / PASS
+EXPERIENCE_DEFINITION = XD-IMP-036J-DRAFT-6 APPROVED / PASS
+ARCHITECTURE_FIT = PASS
+ARCHITECTURE_LOCKED = YES
+ARCHITECTURE_SOURCE = IMP-036J-FIT-CANDIDATE-9
+DESIGN_READINESS = PASS
+QUALITY_TEST_PLAN_FINALIZED = YES
+MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = YES
+IMPLEMENTATION_PLAN = PASS
+IMPLEMENTATION_PLAN_FINALIZED = YES
+IMPLEMENTATION_AUTHORIZATION = APPROVED
+IMPLEMENTATION_AUTHORIZED = YES
+IMPLEMENTATION_STARTED = NO
+IMPLEMENTATION_COMPLETE = NO
+IMP036J_ACCEPTED = NO
+NEXT_GATE = IMPLEMENTATION_TRANCHE_1
+FORMAL_LIFECYCLE = ARCHITECTURE_LOCKED
+```
+
+Product Definition `PD-IMP-036J-DRAFT-6` is `APPROVED` and its Product Definition Gate is `PASS`.
+Experience Definition `XD-IMP-036J-DRAFT-6` is `APPROVED` and Experience Gate is `PASS`.
+Architecture Fit is `PASS` and architecture is locked on `IMP-036J-FIT-CANDIDATE-9`. Design
+Readiness is `PASS`. The Quality/Test Plan and the Measurement/Instrumentation Plan are finalized.
+The Implementation Plan is `PASS` and finalized. Implementation Authorization is `APPROVED`.
+Implementation is authorized and has not started. Implementation is not complete, and IMP-036J is
+not accepted. The next gate is `IMPLEMENTATION_TRANCHE_1`. Formal lifecycle is
+`ARCHITECTURE_LOCKED`. Change Risk is recorded in ROADMAP/STATE and is not an AGENTS risk level.
 
 ## AI execution and documentation efficiency
 

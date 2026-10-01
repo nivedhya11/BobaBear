@@ -114,6 +114,7 @@ import {
   evaluateImp036jProductIdentity,
   evaluateImp036jExperienceFitPointer,
   evaluateImp036jTestingPointer,
+  evaluateImp036jProductDeliveryTransition,
   evaluateImp036jProductReadmePointers,
   evaluateImp036jPlatformIndexPointer,
   evaluatePd2ProcessContract,
@@ -18347,6 +18348,36 @@ describe("PD-2 experience delivery transition", () => {
       ).code,
       "PD2_HISTORICAL_ACCEPTANCE",
     );
+  });
+
+  it("accepts the current authorized not-started IMP-036J transition", () => {
+    const live = readFileSync(new URL("../docs/platform/PRODUCT-DELIVERY.md", import.meta.url), "utf8");
+    assert.deepEqual(evaluateImp036jProductDeliveryTransition(live), { ok: true });
+    assert.deepEqual(evaluatePd2ProcessContract(live), { ok: true });
+  });
+
+  it("rejects a current transition that restores a pre-authorization boundary", () => {
+    const live = readFileSync(new URL("../docs/platform/PRODUCT-DELIVERY.md", import.meta.url), "utf8");
+    const cases = [
+      ["ARCHITECTURE_FIT = PASS", "Architecture Fit NOT_PERFORMED"],
+      ["architecture is locked", "Architecture unlocked"],
+      ["DESIGN_READINESS = PASS", "Design Readiness NOT_PERFORMED"],
+      ["Implementation is authorized and has not started.", "Implementation stays unauthorized."],
+      ["NEXT_GATE = IMPLEMENTATION_TRANCHE_1", "next gate ARCHITECTURE_FIT"],
+      ["NEXT_GATE = IMPLEMENTATION_TRANCHE_1", "next gate IMPLEMENTATION_AUTHORIZATION"],
+      ["IMPLEMENTATION_STARTED = NO", "IMPLEMENTATION_STARTED = YES"],
+    ];
+    for (const [from, to] of cases) {
+      const mutated = live.replace(from, to);
+      assert.notEqual(mutated, live, from);
+      assert.equal(evaluateImp036jProductDeliveryTransition(mutated).code, "IMP036J_PD2_CURRENT_TRANSITION", to);
+    }
+  });
+
+  it("ignores stale historical wording outside the current IMP-036J transition section", () => {
+    const live = readFileSync(new URL("../docs/platform/PRODUCT-DELIVERY.md", import.meta.url), "utf8");
+    const withHistory = `${live}\n\nHistorical checkpoint kept Architecture Fit NOT_PERFORMED and implementation unauthorized. The next gate was ARCHITECTURE_FIT.\n`;
+    assert.equal(evaluateImp036jProductDeliveryTransition(withHistory).ok, true);
   });
 });
 
