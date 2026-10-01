@@ -204,7 +204,7 @@ authorization (this Product Definition is **not** lifecycle authority):
 acceptedThrough = IMP-036I
 currentProductSlice = IMP-036J
 pendingAcceptance = NONE
-nextProductSlice = IMP-037
+nextProductSlice = IMP-036K
 
 IMP036H: COMPLETE_AND_ACCEPTED
 IMP036I_ACTIVATED: YES
@@ -232,7 +232,7 @@ IMP039: NOT_ACTIVATED / HOLD
 IMP040: NOT_ACTIVATED / HOLD
 
 PROGRAM_PAUSE_AUTHORITY = D-377
-ADDITIONAL_SEQUENCING_AUTHORITY = D-382
+ADDITIONAL_SEQUENCING_AUTHORITY = D-382 (AMENDED by D-383 only for Revenue Recommendations identity, activation, and sequencing)
 ROADMAP = GTM-R177
 STATE = STATE-R175
 ARCHITECTURE = ARCH-R23
@@ -254,7 +254,7 @@ IMP-039/040, close `GAP-EXT-ASSESS-001`, perform Architecture Fit, or authorize 
 | Process / verification policy | `PD-1` / `TEST-1` |
 | Canonical anchors | VISION-1; ROADMAP GTM-R162; STATE STATE-R160; ARCH-R23; DR-22 (D-377, D-378 AMENDED, D-379 CURRENT, D-380 CURRENT, D-381 CURRENT); PD-1; TEST-1; PERSONA-1; GJ-1; accepted IMP-036H Product Definition `PD-IMP-036H-DRAFT-1`; Founder FD-036I-01…15 resolution 2026-09-24; FD-036I-09 sealing amendment 2026-09-24; Gate PASS evidence review `5307761142`; Architecture Fit PASS review `5312653831`; implementation authorization 2026-09-25 (architecture-lock verification `5313026804`); integrated Tranche 5 independent verification PASS (reviewed main `335e8b55c74b81d745e923b3d078d6af9ec0b5cc`; no numeric review ID); Founder UAT PASS 2026-09-27 against accepted candidate `44f4d7d84af07c3226da606476844d8f05454b28`; execution plan [`implementation-plan.md`](./implementation-plan.md) |
 | Repository candidate | Canonical path `/home/ajoshi/repos/boba-bear-platform`; gate-evaluated HEAD `1c4be04b6d6b51bdedebfea0485099dede3c7923` / tree `a0774c9b2cb256f8d329fc49cea1c9859a39d1d7` / fingerprint `07720d20f1e285ef46e6bd3be6d710be383baacde4facab7651482547b6dc15d` |
-| Capability lifecycle / authorization | ROADMAP/STATE: `IMP036I_ACTIVATED: YES`; `currentProductSlice = NONE`; formal lifecycle **COMPLETE_AND_ACCEPTED**; Product Definition **APPROVED** (`PD-IMP-036I-DRAFT-4`); Gate **PASS**; Architecture Fit **PASS** (review `5312653831`); architecture **LOCKED**; implementation **AUTHORIZED** / **STARTED** / **COMPLETE**; `IMP036I_IMPLEMENTATION_COMPLETE: YES`; `IMP036I_INDEPENDENT_IMPLEMENTATION_REVIEW: PASS`; `IMP036I_ACCEPTED: YES`; `IMP036I_FOUNDER_UAT: PASS`; `IMP036I_FORMAL_ACCEPTANCE: ACCEPTED`; `pendingAcceptance = NONE`; `acceptedThrough = IMP-036I`; `nextProductSlice = IMP-037` |
+| Capability lifecycle / authorization | ROADMAP/STATE: `IMP036I_ACTIVATED: YES`; `currentProductSlice = NONE`; formal lifecycle **COMPLETE_AND_ACCEPTED**; Product Definition **APPROVED** (`PD-IMP-036I-DRAFT-4`); Gate **PASS**; Architecture Fit **PASS** (review `5312653831`); architecture **LOCKED**; implementation **AUTHORIZED** / **STARTED** / **COMPLETE**; `IMP036I_IMPLEMENTATION_COMPLETE: YES`; `IMP036I_INDEPENDENT_IMPLEMENTATION_REVIEW: PASS`; `IMP036I_ACCEPTED: YES`; `IMP036I_FOUNDER_UAT: PASS`; `IMP036I_FORMAL_ACCEPTANCE: ACCEPTED`; `pendingAcceptance = NONE`; `acceptedThrough = IMP-036I`; `nextProductSlice = IMP-036K` |
 | Relevant capability architecture / ADRs | Locked: [`capabilities/IMP-036I-scheduled-fulfilment.md`](../../capabilities/IMP-036I-scheduled-fulfilment.md); D-379 / ADR-019 CURRENT/Accepted; D-380 / ADR-020 CURRENT/Accepted; ARCH-R23 / ARCH-G29 / ARCH-G30. D-378 / ADR-018 AMENDED only for ASAP-only / no-scheduled-schema clauses. Foundations otherwise unchanged. |
 | Founder UAT applicability | `FOUNDER_UAT_REQUIRED = YES`; `FOUNDER_UAT_STATUS = PASS` — Founder UAT 2026-09-27 against accepted candidate `44f4d7d84af07c3226da606476844d8f05454b28` |
 

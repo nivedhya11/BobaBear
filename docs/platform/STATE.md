@@ -274,7 +274,7 @@ Current Governance Activity:    IMP-036J PRODUCT_DEFINITION APPROVED / GATE PASS
                               D-375_CREATED: YES; ARCH_R21_CREATED: YES;
                               D-377_CREATED: YES; D-378_CREATED: YES; ARCH_R22_CREATED: YES;
                               D-379_CREATED: YES; D-380_CREATED: YES; ARCH_R23_CREATED: YES;
-                              Decision register tip DR-21;
+                              historical IMP-036G decision-register tip DR-21;
                               nextGate: FOUNDER_UAT
                               Founder UAT PASS 2026-09-24 on runtime candidate
                               37bae964f964bddd317e4c290dc146097e4c8f57;
@@ -542,7 +542,7 @@ Prior accepted locked capability architecture:
 [`capabilities/IMP-036F-catalog-menu-pricing-promotions-management.md`](./capabilities/IMP-036F-catalog-menu-pricing-promotions-management.md).
 Earlier accepted locked capability architecture:
 [`capabilities/IMP-036E-store-operations-management.md`](./capabilities/IMP-036E-store-operations-management.md).
-Architecture tip ARCH-R23 / D-379 CURRENT / D-380 CURRENT (`D-379_CREATED: YES`; `D-380_CREATED: YES`; `ARCH_R23_CREATED: YES`; D-378 AMENDED; preserves ARCH-R22 mode remainder, ARCH-R21 / D-375, and ARCH-R20 / D-374). Decision register tip: DR-21.
+Architecture tip ARCH-R23 / D-379 CURRENT / D-380 CURRENT (`D-379_CREATED: YES`; `D-380_CREATED: YES`; `ARCH_R23_CREATED: YES`; D-378 AMENDED; preserves ARCH-R22 mode remainder, ARCH-R21 / D-375, and ARCH-R20 / D-374). Decision register tip: DR-24.
 Detailed accepted-slice marker inventories for IMP-024…IMP-036F remain in the historical STATE
 snapshot and capability/acceptance artifacts.
 
@@ -679,10 +679,10 @@ Cart → Checkout → Payment → Order
 acceptedThrough: IMP-036I
 pendingAcceptance: NONE
 currentProductSlice: IMP-036J
-nextProductSlice: IMP-037 — Backup, Restore & Migration Readiness
+nextProductSlice: IMP-036K — Revenue Recommendations
 PROGRAM_PAUSE: PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED
 PROGRAM_PAUSE_AUTHORITY: D-377
-ADDITIONAL_SEQUENCING_AUTHORITY: D-382
+ADDITIONAL_SEQUENCING_AUTHORITY: D-382 (AMENDED by D-383 only for Revenue Recommendations identity, activation, and sequencing)
 IMP-036F: COMPLETE_AND_ACCEPTED
 IMP-036F_ARCHITECTURE: LOCKED
 IMP036F_ARCHITECTURE_LOCKED: YES
