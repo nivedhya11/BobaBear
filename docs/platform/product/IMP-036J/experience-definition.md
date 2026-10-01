@@ -11,7 +11,7 @@
   "experienceGate": "PASS",
   "architectureFit": "PASS",
   "architectureLocked": "YES",
-  "designReadiness": "NOT_PERFORMED",
+  "designReadiness": "PASS",
   "implementationAuthorized": false
 }
 -->
@@ -39,7 +39,7 @@ EXPERIENCE_GATE_EVALUATED_WORKING_TREE_FINGERPRINT = 060269654ee36f130f8f8e4cc47
 EXPERIENCE_GATE_EVALUATED_GOVERNANCE_FINGERPRINT = f7288bc395a2c46ef754bcc344eae5721fb5beef8c2e6b0fcf58860bbc421e21
 ARCHITECTURE_FIT = PASS
 ARCHITECTURE_LOCKED = YES
-DESIGN_READINESS = NOT_PERFORMED
+DESIGN_READINESS = PASS
 IMPLEMENTATION_AUTHORIZED = NO
 PRODUCT_DECISION_REQUIRED = NO
 EXPERIENCE_GATE_RESULT = PASS
@@ -57,8 +57,8 @@ review `5342581233` returned PASS for `XD-IMP-036J-DRAFT-6`. The version stays
 `XD-IMP-036J-DRAFT-6`. This Experience Definition itself did not perform Architecture Fit.
 Architecture Fit current source is `IMP-036J-FIT-CANDIDATE-9`. Architecture Fit is PASS.
 Architecture is LOCKED. Prior lock history: `IMP-036J-FIT-CANDIDATE-5` (independent review
-`5347761109`). The next gate is Design Readiness, which remains NOT_PERFORMED. Implementation
-remains unauthorized. This record does not change
+`5347761109`). Design Readiness is PASS. The next gate is the Implementation Plan, which
+remains NOT_PERFORMED. Implementation remains unauthorized. This record does not change
 [`product-definition.md`](./product-definition.md). Lifecycle truth remains
 [`ROADMAP.md`](../../ROADMAP.md) and [`STATE.md`](../../STATE.md).
 
@@ -1166,7 +1166,7 @@ SOURCE_VALUE = authoritative commercial evaluation or purchased truth
 FRONTEND_INDEPENDENT_ELIGIBILITY_CALCULATION = PROHIBITED
 ```
 
-Architecture Fit is `PASS`. The locked capability architecture current source is `IMP-036J-FIT-CANDIDATE-9`. Prior lock history preserves `IMP-036J-FIT-CANDIDATE-5`. This Experience Definition does not change experience semantics to follow that architecture. Design Readiness remains `NOT_PERFORMED`.
+Architecture Fit is `PASS`. The locked capability architecture current source is `IMP-036J-FIT-CANDIDATE-9`. Prior lock history preserves `IMP-036J-FIT-CANDIDATE-5`. This Experience Definition does not change experience semantics to follow that architecture. Design Readiness is `PASS`. Implementation remains unauthorized.
 
 An experience requirement that Fit cannot support safely remains a Fit STOP under the Product Definition. This document does not downgrade the complimentary item, the breakdown, or the shared coupon state to avoid that question.
 
@@ -1175,10 +1175,10 @@ An experience requirement that Fit cannot support safely remains a Fit STOP unde
 ## 21. Design Readiness
 
 ```text
-DESIGN_READINESS = NOT_PERFORMED
+DESIGN_READINESS = PASS
 ```
 
-Not started. Architecture Fit PASS and architecture lock are now recorded; Design Readiness is the next gate. Experience Gate PASS is already persisted and is not Design Readiness. When it is time, Design Readiness owes: final flows; every state in section 13; desktop and mobile; final microcopy; keyboard and focus behaviour; accessibility semantics; interaction rules for apply, remove, change, sign-in return, and recovery; perceived-performance layout; reuse of the components in section 15; and analytics hooks that match section 17. Pixel dimensions and a new visual language are not decided here.
+Design Readiness PASS is recorded in [`design-readiness.md`](./design-readiness.md) for `IMP-036J-DESIGN-CANDIDATE-2`. This Experience Definition does not change. The next gate is the Implementation Plan. Implementation remains unauthorized.
 
 ---
 
@@ -1442,7 +1442,7 @@ EXPERIENCE_GATE_RESULT = PASS
 INDEPENDENT_EXPERIENCE_GATE_REVIEW_ID = 5342581233
 EXPERIENCE_GATE_EVALUATED_HEAD = 1fbabd2fb80851912815efe4e0ebe331a1318557
 ARCHITECTURE_FIT = PASS
-DESIGN_READINESS = NOT_PERFORMED
+DESIGN_READINESS = PASS
 IMPLEMENTATION_AUTHORIZED = NO
 ```
 
