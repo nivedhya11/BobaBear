@@ -51,7 +51,7 @@
   "historicalCandidate5EvaluatedHead": "49912f35f2871ff77b9af267589d49666fc975ec",
   "historicalCandidate5EvaluatedTree": "7046d5bb78012524972505f555226205199a58d0",
   "historicalCandidate5GovernanceFingerprint": "ac6510d315148763069f06374a243a75a312a7693cf3e7c1d0eac71bc1026870",
-  "implementationAuthorized": false,
+  "implementationAuthorized": true,
   "implementationStarted": false,
   "schemaChangeRequired": true,
   "globalDecisionRequired": false,
@@ -110,14 +110,18 @@ HISTORICAL_CANDIDATE_5_ARCHITECTURE_LOCK = LOCKED
 IMP036J_ARCHITECTURE_FIT = PASS
 IMP036J_ARCHITECTURE_LOCKED = YES
 IMP036J_DESIGN_READINESS = PASS
-IMP036J_NEXT_GATE = IMPLEMENTATION_AUTHORIZATION
+IMP036J_NEXT_GATE = IMPLEMENTATION_TRANCHE_1
 QUALITY_TEST_PLAN_FINALIZED = YES
 MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = YES
 IMPLEMENTATION_PLAN = PASS
-IMPLEMENTATION_AUTHORIZED = false
-IMP036J_IMPLEMENTATION_AUTHORIZED = NO
+IMPLEMENTATION_AUTHORIZED = YES
+IMP036J_IMPLEMENTATION_AUTHORIZED = YES
+IMP036J_IMPLEMENTATION_AUTHORIZATION = APPROVED
+IMP036J_IMPLEMENTATION_AUTHORIZATION_DATE = 2026-10-01
+IMPLEMENTATION_AUTHORIZATION_EVIDENCE = PR#332/5926464685
 IMP036J_STARTED = NO
 IMP036J_IMPLEMENTATION_STARTED = NO
+FOUNDER_UAT = NOT_PERFORMED
 GLOBAL_DECISION_REQUIRED = NO
 D383_REQUIRED = NO
 ARCH_R24_REQUIRED = NO
@@ -138,7 +142,6 @@ NEW_CUSTOMER_FACADE_ROUTE = NOT_SELECTED
 NEW_AUTH_MODEL_REQUIRED = NO
 NEW_PERMISSION_REQUIRED = NO
 FOUNDER_UAT_REQUIRED = YES
-FOUNDER_UAT = NOT_STARTED
 ```
 
 This document is `IMP-036J-FIT-CANDIDATE-9`. It remediates the two exact-head Architecture Fit
@@ -2307,17 +2310,16 @@ IMP036J_DESIGN_READINESS = PASS
 QUALITY_TEST_PLAN_FINALIZED = YES
 MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = YES
 IMPLEMENTATION_PLAN = PASS
-IMP036J_IMPLEMENTATION_AUTHORIZED = NO
-IMP036J_STARTED = NO
+IMP036J_IMPLEMENTATION_AUTHORIZED = YES
 IMP036J_IMPLEMENTATION_STARTED = NO
-IMP036J_NEXT_GATE = IMPLEMENTATION_AUTHORIZATION
+IMP036J_NEXT_GATE = IMPLEMENTATION_TRANCHE_1
 ```
 
 Design Readiness PASS and the finalized Quality/Test Plan and Measurement/Instrumentation Plan
-are persisted in their own documents. This architecture record does not authorize implementation.
+are persisted in their own documents. This architecture record does not itself grant implementation authority.
 Those plans remain part of Design Readiness. Implementation Plan PASS is persisted separately.
-This PASS does not authorize or start
-implementation. Architecture Fit PASS is not Design Readiness and is not a finalized
+Founder Implementation Authorization is recorded in ROADMAP/STATE as APPROVED and NOT_STARTED.
+Architecture Fit PASS does not start implementation. Architecture Fit PASS is not Design Readiness and is not a finalized
 Measurement/Instrumentation Plan.
 
 ```text
