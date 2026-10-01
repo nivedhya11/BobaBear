@@ -81,14 +81,16 @@ Discovery sources are Founder-approved source material only:
 Those sources are not Product Definition approval, not a gate result, and not architecture.
 
 ```text
-SOURCE_MAIN = 24d424dbd22ee53cb3bbadec484bec3925b6e898
-SOURCE_TREE = 59842dfdb68b1733899f7544b0aab5f49437e815
-SOURCE_DRIFT = NONE
+SOURCE_MAIN = bd4ce6edfde83f22a9fb7bfc1d933fa8c52cd4d3
+SOURCE_TREE = 278eedb163219ab2a5cf440264793ea00078ebe5
+EVALUATED_SOURCE_MAIN = 24d424dbd22ee53cb3bbadec484bec3925b6e898
+EVALUATED_SOURCE_TREE = 59842dfdb68b1733899f7544b0aab5f49437e815
+SOURCE_DRIFT = IMP-036J Tranche 1 consumed GTM-R178 / STATE-R176 before persistence. Evaluated candidate drift against 24d424db was NONE.
 GATE_EVALUATED_HEAD = 072932df00c445c8215c61f19f81971bf657b160
 GATE_EVALUATED_TREE = a4912e6c649cad25094412ac07a005fbb441567e
 ARCHITECT_REVIEW = 5380398013
-ROADMAP = GTM-R178
-STATE = STATE-R176
+ROADMAP = GTM-R179
+STATE = STATE-R177
 DECISION_REGISTER = DR-24
 ARCHITECTURE = ARCH-R23
 VISION = VISION-1
@@ -112,7 +114,7 @@ GOLDEN_JOURNEYS = GJ-1
 | Change Risk | `CR2`, as recorded by D-383 / GTM-R177 / STATE-R175. The slice can affect cart contents, merchandising, and attribution, while Pricing, Promotion, Checkout, and Payment remain existing authorities. Change Risk is not an agent `R` level. |
 | Linked Experience Definition | [`experience-definition.md`](./experience-definition.md), `XD-IMP-036K-DRAFT-1`, `APPROVED` |
 | Experience Gate | `PASS` (Architect review `5380398013`). Design Readiness remains `NOT_PERFORMED`. |
-| Canonical anchors | VISION-1 / GTM-R178 / STATE-R176 / ARCH-R23 / DR-24 / PD-2 / EXP-1 / LANG-1 / TEST-1 / PERSONA-1 / GJ-1 |
+| Canonical anchors | VISION-1 / GTM-R179 / STATE-R177 / ARCH-R23 / DR-24 / PD-2 / EXP-1 / LANG-1 / TEST-1 / PERSONA-1 / GJ-1 |
 | Repository candidate | Canonical path `/home/ajoshi/repos/boba-bear-platform`. Gate evaluated on `072932df00c445c8215c61f19f81971bf657b160`, tree `a4912e6c649cad25094412ac07a005fbb441567e`, from source `main` `24d424dbd22ee53cb3bbadec484bec3925b6e898`, tree `59842dfdb68b1733899f7544b0aab5f49437e815`. `SOURCE_DRIFT = NONE`. |
 | Capability lifecycle / authorization | ROADMAP/STATE: `IMP-036K: PLANNED`; Product Definition `PD-IMP-036K-DRAFT-1` `APPROVED` / Gate `PASS`; Experience Definition `XD-IMP-036K-DRAFT-1` `APPROVED` / Gate `PASS`; next gate `ARCHITECTURE_FIT`; `currentProductSlice` remains IMP-036J; `acceptedThrough` remains IMP-036I; implementation unauthorized and unstarted. |
 | Relevant capability architecture / ADRs | None for IMP-036K. `ARCHITECTURE_FIT = NOT_PERFORMED`. Binding context: ARCH-G05, ARCH-G11, ARCH-G12, ARCH-G14, ARCH-G19, ARCH-G20, ARCH-G23, ARCH-G25; D-368, D-369, D-373, D-382, D-383. |

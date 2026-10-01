@@ -10,8 +10,8 @@
     "docs/platform/decision-register.md"
   ],
   "versions": {
-    "roadmapVersion": "GTM-R178",
-    "stateVersion": "STATE-R176",
+    "roadmapVersion": "GTM-R179",
+    "stateVersion": "STATE-R177",
     "architectureVersion": "ARCH-R23",
     "decisionRegisterVersion": "DR-24"
   },
@@ -39,8 +39,8 @@
     "architectureLocked": "YES",
     "designReadiness": "PASS",
     "implementationAuthorized": "YES",
-    "started": "NO",
-    "implementationStarted": "NO",
+    "started": "YES",
+    "implementationStarted": "YES",
     "implementationComplete": "NO",
     "accepted": "NO"
   },
