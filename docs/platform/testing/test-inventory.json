@@ -31,10 +31,10 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2226,
-    "executableTestFiles": 482,
+    "trackedPathsConsidered": 2229,
+    "executableTestFiles": 483,
     "sourceTestFiles": 142,
-    "testsTreeExecutableFiles": 265,
+    "testsTreeExecutableFiles": 266,
     "scriptTestFiles": 75,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
@@ -316,6 +316,7 @@
     "tests/database/idempotency.integration.test.ts",
     "tests/database/imp036h-fulfilment-mode-pickup.migration.integration.test.ts",
     "tests/database/imp036i-scheduled-fulfilment.integration.test.ts",
+    "tests/database/imp036j-tranche1-commercial-persistence.integration.test.ts",
     "tests/database/isolation.integration.test.ts",
     "tests/database/menu-import.integration.test.ts",
     "tests/database/migration-cli.integration.test.ts",
@@ -7539,6 +7540,24 @@
         "test:imp036i:tranche1"
       ],
       "ciInclusion": "YES",
+      "test1Layers": [
+        "4-integration",
+        "5-database-integration"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/database/imp036j-tranche1-commercial-persistence.integration.test.ts",
+      "runner": "vitest",
+      "domain": "database/imp036j-tranche1-commercial-persistence",
+      "testType": "integration",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:imp036j:tranche1"
+      ],
+      "ciInclusion": "NO",
       "test1Layers": [
         "4-integration",
         "5-database-integration"
