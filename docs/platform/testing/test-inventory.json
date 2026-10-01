@@ -31,23 +31,23 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2226,
-    "executableTestFiles": 482,
+    "trackedPathsConsidered": 2229,
+    "executableTestFiles": 483,
     "sourceTestFiles": 142,
-    "testsTreeExecutableFiles": 265,
+    "testsTreeExecutableFiles": 266,
     "scriptTestFiles": 75,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
     "playwrightConfigs": 7,
     "testSupportScripts": 51,
-    "packageTestCommands": 85,
+    "packageTestCommands": 86,
     "packageAuditCommands": 27,
     "packageE2eCommands": 9,
     "packageCheckCommands": 17,
     "packageCoverageCommands": 1,
     "packageInventoryCommands": 2,
     "ciWorkflowFiles": 4,
-    "ciValidationSteps": 117,
+    "ciValidationSteps": 118,
     "protectedEvidenceTrackedFiles": 3,
     "archiveTrackedFiles": 92
   },
@@ -316,6 +316,7 @@
     "tests/database/idempotency.integration.test.ts",
     "tests/database/imp036h-fulfilment-mode-pickup.migration.integration.test.ts",
     "tests/database/imp036i-scheduled-fulfilment.integration.test.ts",
+    "tests/database/imp036j-tranche1-commercial-persistence.integration.test.ts",
     "tests/database/isolation.integration.test.ts",
     "tests/database/menu-import.integration.test.ts",
     "tests/database/migration-cli.integration.test.ts",
@@ -673,6 +674,7 @@
       "test:imp036i:tranche3",
       "test:imp036i:tranche4",
       "test:imp036i:tranche5",
+      "test:imp036j:tranche1",
       "test:menu-import",
       "test:menu-parity",
       "test:operations:http",
@@ -880,6 +882,7 @@
     "test:imp036i:tranche3": "node scripts/run-vitest.mjs run tests/scheduled-fulfilment/operational-cues.test.ts src/components/ordering/CheckoutTimingChoice.test.tsx src/shared/notifications/customer-visible-content.test.ts && node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/checkout/scheduled-surfaces.tranche3.test.ts tests/customer-commerce/scheduled-http.tranche3.integration.test.ts tests/administration/admin-brand-policy-http.tranche3.integration.test.ts tests/operations/scheduling-http.tranche3.integration.test.ts tests/operations/scheduling-profile-workforce-journey.integration.test.ts",
     "test:imp036i:tranche4": "node scripts/run-vitest.mjs run src/shared/scheduled-fulfilment/cancellation.test.ts src/shared/notifications/notifications.domain.test.ts src/shared/notifications/customer-visible-content.test.ts && node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/order/scheduled-cancellation-reminder.tranche4.integration.test.ts",
     "test:imp036i:tranche5": "node scripts/run-vitest.mjs run tests/scheduled-fulfilment/tranche5-traceability.test.ts && node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/payment/payment.tranche5-hardening.integration.test.ts tests/payment/payment.scheduled-bind-race.domain.test.ts tests/order/scheduled-cancellation-reminder.tranche4.integration.test.ts tests/database/scheduled-financial-document-continuity.integration.test.ts",
+    "test:imp036j:tranche1": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/imp036j-tranche1-commercial-persistence.integration.test.ts",
     "test:menu-import": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/menu-import",
     "test:menu-parity": "node scripts/run-vitest.mjs run tests/menu-parity",
     "test:operations:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/operations/store-http.integration.test.ts tests/operations/refunds-http.integration.test.ts tests/operations/orders-read-http.integration.test.ts tests/operations/orders-mutation-http.integration.test.ts tests/operations/notifications-http.integration.test.ts tests/operations/scheduling-http.tranche3.integration.test.ts tests/operations/scheduling-profile-workforce-journey.integration.test.ts",
@@ -1018,6 +1021,10 @@
         {
           "name": "IMP-036I Tranche 5 proof",
           "run": "npm run test:imp036i:tranche5"
+        },
+        {
+          "name": "IMP-036J Tranche 1 proof",
+          "run": "npm run test:imp036j:tranche1"
         },
         {
           "name": "Install dependencies",
@@ -7535,6 +7542,24 @@
       "externalProviderSubstitute": "UNKNOWN",
       "packageCommands": [
         "test:imp036i:tranche1"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "4-integration",
+        "5-database-integration"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/database/imp036j-tranche1-commercial-persistence.integration.test.ts",
+      "runner": "vitest",
+      "domain": "database/imp036j-tranche1-commercial-persistence",
+      "testType": "integration",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:imp036j:tranche1"
       ],
       "ciInclusion": "YES",
       "test1Layers": [

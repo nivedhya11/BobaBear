@@ -657,7 +657,8 @@ export const checkoutSnapshotLinesTable = appSchema.table(
   {
     id: uuid("id").primaryKey(),
     snapshotId: uuid("snapshot_id").notNull(),
-    sourceCartLineId: uuid("source_cart_line_id").notNull(),
+    sourceCartLineId: uuid("source_cart_line_id"),
+    lineOrigin: text("line_origin").notNull().default("cart"),
     productId: uuid("product_id").notNull(),
     variantId: uuid("variant_id").notNull(),
     productName: text("product_name").notNull(),
@@ -689,6 +690,27 @@ export const checkoutSnapshotLinesTable = appSchema.table(
       columns: [table.variantId],
       foreignColumns: [catalogVariantsTable.id],
     }).onDelete("restrict"),
+    uniqueIndex("checkout_snapshot_lines_id_snapshot_uidx").on(
+      table.id,
+      table.snapshotId,
+    ),
+    check(
+      "checkout_snapshot_lines_line_origin_check",
+      sql`${table.lineOrigin} in ('cart', 'complimentary_offer')`,
+    ),
+    check(
+      "checkout_snapshot_lines_cart_origin_shape_check",
+      sql`${table.lineOrigin} <> 'cart' or ${table.sourceCartLineId} is not null`,
+    ),
+    check(
+      "checkout_snapshot_lines_complimentary_origin_shape_check",
+      sql`${table.lineOrigin} <> 'complimentary_offer' or (
+        ${table.sourceCartLineId} is null
+        and ${table.quantity} = 1
+        and ${table.lineModifierAdjustmentsPaise} = 0
+        and ${table.lineBundleAdjustmentsPaise} = 0
+      )`,
+    ),
     check(
       "checkout_snapshot_lines_quantity_positive_check",
       sql`${table.quantity} > 0`,
@@ -955,6 +977,8 @@ export const checkoutSnapshotPromotionEffectsTable = appSchema.table(
     stackingPolicy: text("stacking_policy"),
     componentId: text("component_id"),
     lineId: uuid("line_id"),
+    snapshotLineId: uuid("snapshot_line_id"),
+    promotionRevision: bigint("promotion_revision", { mode: "bigint" }),
     amountPaise: paise("amount_paise"),
     realizedDiscountPaise: paise("realized_discount_paise"),
     rewardVariantId: uuid("reward_variant_id"),
@@ -968,6 +992,11 @@ export const checkoutSnapshotPromotionEffectsTable = appSchema.table(
       name: "checkout_snapshot_promotion_effects_snapshot_fk",
       columns: [table.snapshotId],
       foreignColumns: [checkoutSnapshotsTable.id],
+    }).onDelete("cascade"),
+    foreignKey({
+      name: "checkout_snapshot_promotion_effects_line_ownership_fk",
+      columns: [table.snapshotLineId, table.snapshotId],
+      foreignColumns: [checkoutSnapshotLinesTable.id, checkoutSnapshotLinesTable.snapshotId],
     }).onDelete("cascade"),
     check(
       "checkout_snapshot_promotion_effects_kind_check",
