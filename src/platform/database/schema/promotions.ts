@@ -413,6 +413,8 @@ export const promotionBenefitsTable = appSchema.table(
         and ${table.maximumRewardQuantity} is null
         and ${table.complimentaryProductId} is null
         and ${table.complimentaryVariantId} is null
+        and ${table.includeModifiers} = false
+        and ${table.includeBundleDeltas} = false
       )`,
     ),
     check(
@@ -427,6 +429,8 @@ export const promotionBenefitsTable = appSchema.table(
         and ${table.getQuantity} is null
         and ${table.repeatable} is null
         and ${table.maximumRewardQuantity} is null
+        and ${table.includeModifiers} = false
+        and ${table.includeBundleDeltas} = false
       )`,
     ),
     check(

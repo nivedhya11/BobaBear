@@ -7196,7 +7196,7 @@
             "id",
             "snapshot_id"
           ],
-          "onDelete": "restrict",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -20311,11 +20311,11 @@
         },
         "promotion_benefits_delivery_fee_waiver_shape_check": {
           "name": "promotion_benefits_delivery_fee_waiver_shape_check",
-          "value": "\"app\".\"promotion_benefits\".\"benefit_type\" <> 'delivery_fee_waiver' or (\n        \"app\".\"promotion_benefits\".\"percentage_bps\" is null\n        and \"app\".\"promotion_benefits\".\"fixed_amount_paise\" is null\n        and \"app\".\"promotion_benefits\".\"maximum_discount_paise\" is null\n        and \"app\".\"promotion_benefits\".\"buy_quantity\" is null\n        and \"app\".\"promotion_benefits\".\"get_quantity\" is null\n        and \"app\".\"promotion_benefits\".\"repeatable\" is null\n        and \"app\".\"promotion_benefits\".\"maximum_reward_quantity\" is null\n        and \"app\".\"promotion_benefits\".\"complimentary_product_id\" is null\n        and \"app\".\"promotion_benefits\".\"complimentary_variant_id\" is null\n      )"
+          "value": "\"app\".\"promotion_benefits\".\"benefit_type\" <> 'delivery_fee_waiver' or (\n        \"app\".\"promotion_benefits\".\"percentage_bps\" is null\n        and \"app\".\"promotion_benefits\".\"fixed_amount_paise\" is null\n        and \"app\".\"promotion_benefits\".\"maximum_discount_paise\" is null\n        and \"app\".\"promotion_benefits\".\"buy_quantity\" is null\n        and \"app\".\"promotion_benefits\".\"get_quantity\" is null\n        and \"app\".\"promotion_benefits\".\"repeatable\" is null\n        and \"app\".\"promotion_benefits\".\"maximum_reward_quantity\" is null\n        and \"app\".\"promotion_benefits\".\"complimentary_product_id\" is null\n        and \"app\".\"promotion_benefits\".\"complimentary_variant_id\" is null\n        and \"app\".\"promotion_benefits\".\"include_modifiers\" = false\n        and \"app\".\"promotion_benefits\".\"include_bundle_deltas\" = false\n      )"
         },
         "promotion_benefits_complimentary_item_shape_check": {
           "name": "promotion_benefits_complimentary_item_shape_check",
-          "value": "\"app\".\"promotion_benefits\".\"benefit_type\" <> 'complimentary_item' or (\n        \"app\".\"promotion_benefits\".\"complimentary_product_id\" is not null\n        and \"app\".\"promotion_benefits\".\"complimentary_variant_id\" is not null\n        and \"app\".\"promotion_benefits\".\"percentage_bps\" is null\n        and \"app\".\"promotion_benefits\".\"fixed_amount_paise\" is null\n        and \"app\".\"promotion_benefits\".\"maximum_discount_paise\" is null\n        and \"app\".\"promotion_benefits\".\"buy_quantity\" is null\n        and \"app\".\"promotion_benefits\".\"get_quantity\" is null\n        and \"app\".\"promotion_benefits\".\"repeatable\" is null\n        and \"app\".\"promotion_benefits\".\"maximum_reward_quantity\" is null\n      )"
+          "value": "\"app\".\"promotion_benefits\".\"benefit_type\" <> 'complimentary_item' or (\n        \"app\".\"promotion_benefits\".\"complimentary_product_id\" is not null\n        and \"app\".\"promotion_benefits\".\"complimentary_variant_id\" is not null\n        and \"app\".\"promotion_benefits\".\"percentage_bps\" is null\n        and \"app\".\"promotion_benefits\".\"fixed_amount_paise\" is null\n        and \"app\".\"promotion_benefits\".\"maximum_discount_paise\" is null\n        and \"app\".\"promotion_benefits\".\"buy_quantity\" is null\n        and \"app\".\"promotion_benefits\".\"get_quantity\" is null\n        and \"app\".\"promotion_benefits\".\"repeatable\" is null\n        and \"app\".\"promotion_benefits\".\"maximum_reward_quantity\" is null\n        and \"app\".\"promotion_benefits\".\"include_modifiers\" = false\n        and \"app\".\"promotion_benefits\".\"include_bundle_deltas\" = false\n      )"
         },
         "promotion_benefits_complimentary_refs_check": {
           "name": "promotion_benefits_complimentary_refs_check",

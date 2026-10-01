@@ -47,7 +47,7 @@
     "packageCoverageCommands": 1,
     "packageInventoryCommands": 2,
     "ciWorkflowFiles": 4,
-    "ciValidationSteps": 117,
+    "ciValidationSteps": 118,
     "protectedEvidenceTrackedFiles": 3,
     "archiveTrackedFiles": 92
   },
@@ -1021,6 +1021,10 @@
         {
           "name": "IMP-036I Tranche 5 proof",
           "run": "npm run test:imp036i:tranche5"
+        },
+        {
+          "name": "IMP-036J Tranche 1 proof",
+          "run": "npm run test:imp036j:tranche1"
         },
         {
           "name": "Install dependencies",
@@ -7557,7 +7561,7 @@
       "packageCommands": [
         "test:imp036j:tranche1"
       ],
-      "ciInclusion": "NO",
+      "ciInclusion": "YES",
       "test1Layers": [
         "4-integration",
         "5-database-integration"

@@ -538,6 +538,82 @@ describe("IMP-036J tranche 1 commercial persistence", () => {
           [randomUUID(), compGoodId, graph.productId, graph.variantId],
         ),
       );
+      const waiverModifiersId = await insertDraftPromotion(
+        url,
+        graph.brandId,
+        "waiver-modifiers",
+        "",
+        "",
+        [],
+      );
+      await expectCheckViolation(
+        url,
+        `INSERT INTO app.promotion_benefits (
+           id, promotion_id, benefit_type, include_modifiers, created_at, updated_at
+         ) VALUES ($1::uuid, $2::uuid, 'delivery_fee_waiver', true, now(), now())`,
+        [randomUUID(), waiverModifiersId],
+      );
+      const waiverBundlesId = await insertDraftPromotion(
+        url,
+        graph.brandId,
+        "waiver-bundles",
+        "",
+        "",
+        [],
+      );
+      await expectCheckViolation(
+        url,
+        `INSERT INTO app.promotion_benefits (
+           id, promotion_id, benefit_type, include_bundle_deltas, created_at, updated_at
+         ) VALUES ($1::uuid, $2::uuid, 'delivery_fee_waiver', true, now(), now())`,
+        [randomUUID(), waiverBundlesId],
+      );
+      const compModifiersId = await insertDraftPromotion(
+        url,
+        graph.brandId,
+        "comp-modifiers",
+        "",
+        "",
+        [],
+      );
+      await expectCheckViolation(
+        url,
+        `INSERT INTO app.promotion_benefits (
+           id, promotion_id, benefit_type, complimentary_product_id, complimentary_variant_id,
+           include_modifiers, created_at, updated_at
+         ) VALUES (
+           $1::uuid, $2::uuid, 'complimentary_item', $3::uuid, $4::uuid, true, now(), now()
+         )`,
+        [randomUUID(), compModifiersId, graph.productId, graph.variantId],
+      );
+      const compBundlesId = await insertDraftPromotion(
+        url,
+        graph.brandId,
+        "comp-bundles",
+        "",
+        "",
+        [],
+      );
+      await expectCheckViolation(
+        url,
+        `INSERT INTO app.promotion_benefits (
+           id, promotion_id, benefit_type, complimentary_product_id, complimentary_variant_id,
+           include_bundle_deltas, created_at, updated_at
+         ) VALUES (
+           $1::uuid, $2::uuid, 'complimentary_item', $3::uuid, $4::uuid, true, now(), now()
+         )`,
+        [randomUUID(), compBundlesId, graph.productId, graph.variantId],
+      );
+      const percentFlagsId = await insertDraftPromotion(url, graph.brandId, "percent-flags", "", "", []);
+      await withTestDatabaseClient(url, (client) =>
+        client.pool.query(
+          `INSERT INTO app.promotion_benefits (
+             id, promotion_id, benefit_type, percentage_bps, include_modifiers, include_bundle_deltas,
+             created_at, updated_at
+           ) VALUES ($1::uuid, $2::uuid, 'percentage_discount', 500, true, true, now(), now())`,
+          [randomUUID(), percentFlagsId],
+        ),
+      );
       const percentRefsId = await insertDraftPromotion(url, graph.brandId, "percent-refs", "", "", []);
       await expectCheckViolation(
         url,
@@ -866,6 +942,70 @@ describe("IMP-036J tranche 1 commercial persistence", () => {
           status: "RESERVED",
         }),
       ).rejects.toMatchObject({ code: "23505" });
+    });
+  });
+
+  it("deletes a line-linked promotion effect through the checkout cascade", async () => {
+    await withIsolatedTestDatabase(adminConnectionInfo(), async (database) => {
+      await applyMigrations(database.connectionString);
+      const url = database.connectionString;
+      const graph = await seedGraph(url, randomUUID().slice(0, 8));
+      const promotionId = await insertDraftPromotion(url, graph.brandId, "cascade-offer", "", "", []);
+      const lineId = randomUUID();
+      const effectId = randomUUID();
+
+      await withTestDatabaseClient(url, async (client) => {
+        const ownership = await client.pool.query<{ confdeltype: string }>(
+          `SELECT confdeltype
+           FROM pg_constraint
+           WHERE conname = 'checkout_snapshot_promotion_effects_line_ownership_fk'`,
+        );
+        expect(ownership.rows[0]?.confdeltype).toBe("c");
+
+        await client.pool.query(
+          `INSERT INTO app.checkout_snapshot_lines (
+             id, snapshot_id, source_cart_line_id, line_origin, product_id, variant_id,
+             product_name, variant_name, quantity,
+             line_base_paise, line_modifier_adjustments_paise, line_bundle_adjustments_paise,
+             line_subtotal_paise, line_promotion_discount_paise, line_taxable_paise,
+             line_tax_paise, line_total_paise, sequence
+           ) VALUES (
+             $1::uuid, $2::uuid, $3::uuid, 'cart', $4::uuid, $5::uuid,
+             'Tea', 'Regular', 1,
+             100, 0, 0, 100, 0, 100, 0, 100, 1
+           )`,
+          [lineId, graph.snapshotId, graph.cartLineId, graph.productId, graph.variantId],
+        );
+        await client.pool.query(
+          `INSERT INTO app.checkout_snapshot_promotion_effects (
+             id, snapshot_id, effect_kind, promotion_id, promotion_code, display_name,
+             snapshot_line_id, promotion_revision, sort_order
+           ) VALUES (
+             $1::uuid, $2::uuid, 'applied_promotion', $3::uuid, 'cascade-offer', 'Cascade',
+             $4::uuid, 1, 0
+           )`,
+          [effectId, graph.snapshotId, promotionId, lineId],
+        );
+
+        await client.pool.query(`DELETE FROM app.checkouts WHERE id = $1::uuid`, [graph.checkoutId]);
+
+        const remaining = await client.pool.query<{
+          snapshots: string;
+          lines: string;
+          effects: string;
+        }>(
+          `SELECT
+             (SELECT COUNT(*) FROM app.checkout_snapshots WHERE id = $1::uuid)::text AS snapshots,
+             (SELECT COUNT(*) FROM app.checkout_snapshot_lines WHERE id = $2::uuid)::text AS lines,
+             (SELECT COUNT(*) FROM app.checkout_snapshot_promotion_effects WHERE id = $3::uuid)::text AS effects`,
+          [graph.snapshotId, lineId, effectId],
+        );
+        expect(remaining.rows[0]).toEqual({
+          snapshots: "0",
+          lines: "0",
+          effects: "0",
+        });
+      });
     });
   });
 });

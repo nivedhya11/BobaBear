@@ -46,7 +46,7 @@ CREATE UNIQUE INDEX "first_order_purchase_guards_active_payment_uidx" ON "app"."
 CREATE UNIQUE INDEX "first_order_purchase_guards_zero_snapshot_uidx" ON "app"."first_order_purchase_guards" USING btree ("checkout_snapshot_id") WHERE "app"."first_order_purchase_guards"."payment_id" is null;--> statement-breakpoint
 CREATE UNIQUE INDEX "first_order_purchase_guards_attempt_uidx" ON "app"."first_order_purchase_guards" USING btree ("payment_attempt_id") WHERE "app"."first_order_purchase_guards"."payment_attempt_id" is not null;--> statement-breakpoint
 CREATE UNIQUE INDEX "checkout_snapshot_lines_id_snapshot_uidx" ON "app"."checkout_snapshot_lines" USING btree ("id","snapshot_id");--> statement-breakpoint
-ALTER TABLE "app"."checkout_snapshot_promotion_effects" ADD CONSTRAINT "checkout_snapshot_promotion_effects_line_ownership_fk" FOREIGN KEY ("snapshot_line_id","snapshot_id") REFERENCES "app"."checkout_snapshot_lines"("id","snapshot_id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "app"."checkout_snapshot_promotion_effects" ADD CONSTRAINT "checkout_snapshot_promotion_effects_line_ownership_fk" FOREIGN KEY ("snapshot_line_id","snapshot_id") REFERENCES "app"."checkout_snapshot_lines"("id","snapshot_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "app"."promotion_benefits" ADD CONSTRAINT "promotion_benefits_complimentary_product_fk" FOREIGN KEY ("complimentary_product_id") REFERENCES "app"."catalog_products"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "app"."promotion_benefits" ADD CONSTRAINT "promotion_benefits_complimentary_variant_fk" FOREIGN KEY ("complimentary_variant_id") REFERENCES "app"."catalog_variants"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 CREATE UNIQUE INDEX "promotions_one_active_complimentary_per_brand_uidx" ON "app"."promotions" USING btree ("brand_id") WHERE "app"."promotions"."status" = 'active' and "app"."promotions"."complimentary_item";--> statement-breakpoint
@@ -68,6 +68,8 @@ ALTER TABLE "app"."promotion_benefits" ADD CONSTRAINT "promotion_benefits_delive
         and "app"."promotion_benefits"."maximum_reward_quantity" is null
         and "app"."promotion_benefits"."complimentary_product_id" is null
         and "app"."promotion_benefits"."complimentary_variant_id" is null
+        and "app"."promotion_benefits"."include_modifiers" = false
+        and "app"."promotion_benefits"."include_bundle_deltas" = false
       ));--> statement-breakpoint
 ALTER TABLE "app"."promotion_benefits" ADD CONSTRAINT "promotion_benefits_complimentary_item_shape_check" CHECK ("app"."promotion_benefits"."benefit_type" <> 'complimentary_item' or (
         "app"."promotion_benefits"."complimentary_product_id" is not null
@@ -79,6 +81,8 @@ ALTER TABLE "app"."promotion_benefits" ADD CONSTRAINT "promotion_benefits_compli
         and "app"."promotion_benefits"."get_quantity" is null
         and "app"."promotion_benefits"."repeatable" is null
         and "app"."promotion_benefits"."maximum_reward_quantity" is null
+        and "app"."promotion_benefits"."include_modifiers" = false
+        and "app"."promotion_benefits"."include_bundle_deltas" = false
       ));--> statement-breakpoint
 ALTER TABLE "app"."promotion_benefits" ADD CONSTRAINT "promotion_benefits_complimentary_refs_check" CHECK ((
         "app"."promotion_benefits"."benefit_type" = 'complimentary_item'

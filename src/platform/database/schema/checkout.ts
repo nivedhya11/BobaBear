@@ -997,7 +997,7 @@ export const checkoutSnapshotPromotionEffectsTable = appSchema.table(
       name: "checkout_snapshot_promotion_effects_line_ownership_fk",
       columns: [table.snapshotLineId, table.snapshotId],
       foreignColumns: [checkoutSnapshotLinesTable.id, checkoutSnapshotLinesTable.snapshotId],
-    }).onDelete("restrict"),
+    }).onDelete("cascade"),
     check(
       "checkout_snapshot_promotion_effects_kind_check",
       sql`${table.effectKind} in (
