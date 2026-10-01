@@ -114,6 +114,8 @@ import {
   evaluateImp036jProductIdentity,
   evaluateImp036jExperienceFitPointer,
   evaluateImp036jTestingPointer,
+  evaluateImp036jProductDeliveryTransition,
+  evaluateImp036jAuthorizationProse,
   evaluateImp036jProductReadmePointers,
   evaluateImp036jPlatformIndexPointer,
   evaluatePd2ProcessContract,
@@ -6689,7 +6691,7 @@ describe("canonical authority history compression", () => {
 
     const roadmap = readFileSync(new URL("../docs/platform/ROADMAP.md", import.meta.url), "utf8");
     const state = readFileSync(new URL("../docs/platform/STATE.md", import.meta.url), "utf8");
-    const tipIsImp036kParallelDefinition = /"roadmapVersion": "GTM-R176"/.test(roadmap);
+    const tipIsImp036jImplementationAuthorization = /"roadmapVersion": "GTM-R176"/.test(roadmap);
     const tipIsImp036jImplementationPlan = /"roadmapVersion": "GTM-R175"/.test(roadmap);
     const tipIsImp036jDesignReadiness = /"roadmapVersion": "GTM-R174"/.test(roadmap);
     const tipIsImp036jCandidate9Lock = /"roadmapVersion": "GTM-R173"/.test(roadmap);
@@ -6723,17 +6725,24 @@ describe("canonical authority history compression", () => {
     const tipIsAuthorizeStart = /"roadmapVersion": "GTM-R140"/.test(roadmap);
     const tipIsArchitectureLock = /"roadmapVersion": "GTM-R139"/.test(roadmap);
     const tipIsControlledContinuation = /"roadmapVersion": "GTM-R138"/.test(roadmap);
-    if (tipIsImp036kParallelDefinition) {
+    if (tipIsImp036jImplementationAuthorization) {
+      const section2 = roadmap.split("## 2. Current Position")[1]?.split("\n## ")[0] ?? "";
+      const currentMarker = section2.split("\n**GTM-R175**")[0];
       assert.match(roadmap, /"roadmapVersion": "GTM-R176"/);
       assert.match(state, /"stateVersion": "STATE-R174"/);
       assert.match(state, /"acceptedThrough": "IMP-036I"/);
       assert.match(state, /"currentProductSlice": "IMP-036J"/);
-      assert.match(state, /"nextProductSlice": "IMP-036K"/);
-      assert.match(roadmap, /IMP036K_PRODUCT_DEFINITION:\s*NOT_CREATED/);
-      assert.match(roadmap, /IMP036J_IMPLEMENTATION_PLAN:\s*PASS/);
-      assert.match(roadmap, /IMP036J_NEXT_GATE:\s*IMPLEMENTATION_AUTHORIZATION/);
-      assert.match(roadmap, /IMP036J_IMPLEMENTATION_AUTHORIZED:\s*NO/);
-      assert.match(state, /STATE-R174\s*=\s*IMP036K_PARALLEL_DEFINITION_AUTHORIZATION/);
+      assert.match(state, /"nextProductSlice": "IMP-037"/);
+      assert.match(currentMarker, /IMP036J_IMPLEMENTATION_AUTHORIZATION:\s*APPROVED/);
+      assert.match(currentMarker, /IMP036J_IMPLEMENTATION_AUTHORIZATION_DATE:\s*2026-10-01/);
+      assert.match(currentMarker, /5926464685/);
+      assert.match(currentMarker, /nextGate:\s*IMPLEMENTATION_TRANCHE_1/);
+      assert.match(currentMarker, /IMP036J_IMPLEMENTATION_AUTHORIZED:\s*YES/);
+      assert.match(currentMarker, /IMP036J_IMPLEMENTATION_STARTED:\s*NO/);
+      assert.match(currentMarker, /FOUNDER_UAT:\s*NOT_PERFORMED/);
+      assert.doesNotMatch(currentMarker, /IMP036J_IMPLEMENTATION_STARTED:\s*YES/);
+      assert.match(state, /STATE-R174\s*=\s*IMP036J_IMPLEMENTATION_AUTHORIZATION/);
+      assert.match(state, /STATE-R173\s*=\s*IMP036J_IMPLEMENTATION_PLAN_PASS/);
     } else if (tipIsImp036jImplementationPlan) {
       const section2 = roadmap.split("## 2. Current Position")[1]?.split("\n## ")[0] ?? "";
       const currentMarker = section2.split("\n**GTM-R173**")[0];
@@ -7250,7 +7259,7 @@ describe("canonical authority history compression", () => {
       assert.match(state, /"currentProductSlice": "IMP-037"/);
       assert.match(state, /"nextProductSlice": "IMP-038"/);
     }
-    if (tipIsImp036kParallelDefinition || tipIsImp036jImplementationPlan || tipIsImp036jDesignReadiness || tipIsImp036jCandidate9Lock || tipIsImp036jExperienceGate || tipIsImp036jPd2 || tipIsImp036jGatePass || tipIsImp036jDraftReady || tipIsImp036jActivation || tipIsImp036iAcceptance) {
+    if (tipIsImp036jImplementationAuthorization || tipIsImp036jImplementationPlan || tipIsImp036jDesignReadiness || tipIsImp036jCandidate9Lock || tipIsImp036jExperienceGate || tipIsImp036jPd2 || tipIsImp036jGatePass || tipIsImp036jDraftReady || tipIsImp036jActivation || tipIsImp036iAcceptance) {
       assert.match(state, /"acceptedThrough": "IMP-036I"/);
     } else if (tipIsImp036iImplementationComplete || tipIsImp036iTranche5 || tipIsImp036iTranche4 || tipIsImp036iTranche3 || tipIsImp036iTranche2 || tipIsImp036iImplementationStart || tipIsImp036iImplementationAuthorization || tipIsImp036iArchitectureLock || tipIsImp036iGatePass || tipIsImp036iDraftReady || tipIsImp036iDraftReadyDraft2Prior || tipIsImp036iDraftReadyPrior || tipIsImp036iActivation || tipIsImp036hAcceptance) {
       assert.match(state, /"acceptedThrough": "IMP-036H"/);
@@ -7307,7 +7316,7 @@ describe("canonical authority history compression", () => {
     assert.match(roadmap, /IMP036G_FOUNDER_UAT_CANDIDATE_FINGERPRINT:\s*9f472ce6e1ccaa2fe914006c846fb3018d668b718f569b6d0cb4fa64c3013f9b/);
     assert.match(roadmap, /IMP036G_EXACT_MAIN_CI:\s*35366698302/);
     assert.match(roadmap, /IMP036G_IMPLEMENTATION_MERGE_SHA:\s*c35c9eab6a30ec6ce745cefd75c523181326f360/);
-    if (tipIsImp036kParallelDefinition || tipIsImp036jImplementationPlan || tipIsImp036jDesignReadiness || tipIsImp036jCandidate9Lock || tipIsImp036jExperienceGate || tipIsImp036jPd2 || tipIsImp036jGatePass || tipIsImp036jDraftReady || tipIsImp036jActivation) {
+    if (tipIsImp036jImplementationAuthorization || tipIsImp036jImplementationPlan || tipIsImp036jDesignReadiness || tipIsImp036jCandidate9Lock || tipIsImp036jExperienceGate || tipIsImp036jPd2 || tipIsImp036jGatePass || tipIsImp036jDraftReady || tipIsImp036jActivation) {
       assert.match(state, /Current Product Slice:\s*IMP-036J/);
     } else if (tipIsImp036iAcceptance) {
       assert.match(state, /Current Product Slice:\s*NONE/);
@@ -7328,14 +7337,7 @@ describe("canonical authority history compression", () => {
     assert.match(state, /IMP037_ARCHITECTURE_FIT:\s*PASS/);
     assert.match(state, /IMP037_ARCHITECTURE_LOCKED:\s*YES/);
     assert.match(state, /STATE-R132 = IMP-037_ARCHITECTURE_LOCK/);
-    if (tipIsImp036kParallelDefinition) {
-      assert.match(roadmap, /IMP038_ACTIVATED:\s*YES/);
-      assert.match(roadmap, /IMP036H_ACTIVATED:\s*YES/);
-      assert.match(roadmap, /IMP036I_ACTIVATED:\s*YES/);
-      assert.match(roadmap, /IMP036J_ACTIVATED:\s*YES/);
-      assert.match(roadmap, /"currentProductSlice": "IMP-036J"/);
-      assert.match(roadmap, /"nextProductSlice": "IMP-036K"/);
-    } else if (tipIsImp036jImplementationPlan || tipIsImp036jDesignReadiness || tipIsImp036jCandidate9Lock || tipIsImp036jExperienceGate || tipIsImp036jPd2 || tipIsImp036jGatePass || tipIsImp036jDraftReady || tipIsImp036jActivation) {
+    if (tipIsImp036jImplementationAuthorization || tipIsImp036jImplementationPlan || tipIsImp036jDesignReadiness || tipIsImp036jCandidate9Lock || tipIsImp036jExperienceGate || tipIsImp036jPd2 || tipIsImp036jGatePass || tipIsImp036jDraftReady || tipIsImp036jActivation) {
       assert.match(roadmap, /IMP038_ACTIVATED:\s*YES/);
       assert.match(roadmap, /IMP036H_ACTIVATED:\s*YES/);
       assert.match(roadmap, /IMP036I_ACTIVATED:\s*YES/);
@@ -7403,7 +7405,7 @@ describe("canonical authority history compression", () => {
 
   it("passes CURRENT authority checks at the IMP-038 authorize+start / Architecture Fit lock / controlled-continuation tip", () => {
     const roadmap = readFileSync(new URL("../docs/platform/ROADMAP.md", import.meta.url), "utf8");
-    const tipIsImp036kParallelDefinition = /"roadmapVersion": "GTM-R176"/.test(roadmap);
+    const tipIsImp036jImplementationAuthorization = /"roadmapVersion": "GTM-R176"/.test(roadmap);
     const tipIsImp036jImplementationPlan = /"roadmapVersion": "GTM-R175"/.test(roadmap);
     const tipIsImp036jDesignReadiness = /"roadmapVersion": "GTM-R174"/.test(roadmap);
     const tipIsImp036jCandidate9Lock = /"roadmapVersion": "GTM-R173"/.test(roadmap);
@@ -7441,8 +7443,8 @@ describe("canonical authority history compression", () => {
     const failures = findings.filter((f) => !f.ok);
     assert.equal(failures.length, 0, failures.map((f) => `[${f.code}] ${f.message}`).join("\n"));
     const messages = findings.filter((f) => f.ok).map((f) => f.message);
-    if (tipIsImp036kParallelDefinition || tipIsImp036jImplementationPlan || tipIsImp036jDesignReadiness || tipIsImp036jCandidate9Lock || tipIsImp036jExperienceGate) {
-      assert.ok(messages.some((m) => /IMP-036J (Implementation Plan PASS|Design Readiness PASS|Architecture Fit PASS \/ lock) is CURRENT|D-383 allocates IMP-036K/.test(m)));
+    if (tipIsImp036jImplementationAuthorization || tipIsImp036jImplementationPlan || tipIsImp036jDesignReadiness || tipIsImp036jCandidate9Lock || tipIsImp036jExperienceGate) {
+      assert.ok(messages.some((m) => /IMP-036J (Implementation Authorization|Implementation Plan PASS|Design Readiness PASS|Architecture Fit PASS \/ lock) is CURRENT/.test(m)));
     } else if (tipIsImp036jPd2) {
       assert.ok(messages.some((m) => m.includes("PD-2 / EXP-1 / LANG-1 are CURRENT")));
     } else if (tipIsImp036jGatePass) {
@@ -17376,8 +17378,8 @@ describe("IMP-036I implementation authorization persistence", () => {
       "IMP036J_PD_FIT_REGRESSION",
     );
     assert.equal(
-      evaluateImp036jApprovedProductDefinition(replaceMeta("implementationAuthorized", true)).code,
-      "IMP036J_PD_IMPLEMENTATION_PREMATURE",
+      evaluateImp036jApprovedProductDefinition(replaceMeta("implementationAuthorized", false)).code,
+      "IMP036J_AUTHORIZATION_REGRESSION",
     );
     assert.equal(
       evaluateImp036jApprovedProductDefinition(live.replace("IMP036J_ARCHITECTURE_LOCKED = YES", "IMP036J_ARCHITECTURE_LOCKED = NO")).code,
@@ -17543,23 +17545,23 @@ describe("IMP-036I implementation authorization persistence", () => {
       "IMP036J_PD_FIT_REGRESSION",
     );
     assert.equal(
-      evaluateImp036jApprovedProductDefinition(live.replace('"implementationAuthorized": false', '"implementationAuthorized": true')).code,
-      "IMP036J_PD_IMPLEMENTATION_PREMATURE",
+      evaluateImp036jApprovedProductDefinition(live.replace('"implementationAuthorized": true', '"implementationAuthorized": false')).code,
+      "IMP036J_AUTHORIZATION_REGRESSION",
     );
   });
 
-  it("keeps IMP-036J stories unready after Gate PASS and rejects a ready-for-implementation claim", () => {
+  it("records IMP-036J stories ready after Implementation Authorization and rejects a pending-authorization claim", () => {
     const live = readFileSync("docs/platform/product/IMP-036J/product-definition.md", "utf8");
     assert.deepEqual(evaluateImp036jStoryReadiness(live), { ok: true });
-    const readyStories = live.replaceAll(
-      "Readiness: NOT_READY_FOR_IMPLEMENTATION — Product Definition Gate PASS; Architecture Fit PASS / LOCKED; Design Readiness PASS; Implementation Plan PASS; implementation NOT_AUTHORIZED pending Implementation Authorization.",
-      "Readiness: READY_FOR_IMPLEMENTATION",
+    const pendingStories = live.replaceAll(
+      "Readiness: READY_FOR_IMPLEMENTATION — Implementation Authorization APPROVED 2026-10-01; implementation NOT_STARTED.",
+      "Readiness: NOT_READY_FOR_IMPLEMENTATION — implementation NOT_AUTHORIZED pending Implementation Authorization.",
     );
-    const tooReady = evaluateImp036jStoryReadiness(readyStories);
-    assert.equal(tooReady.ok, false);
-    assert.equal(tooReady.code, "IMP036J_READINESS_POST_GATE");
+    const pending = evaluateImp036jStoryReadiness(pendingStories);
+    assert.equal(pending.ok, false);
+    assert.equal(pending.code, "IMP036J_READINESS_POST_GATE");
     const staleGate = live.replace(
-      "| `NOT_READY_FOR_IMPLEMENTATION`. Reason: Product Definition Gate PASS; Architecture Fit PASS / LOCKED; Design Readiness PASS; Implementation Plan PASS; implementation NOT_AUTHORIZED pending Implementation Authorization. |",
+      "| `READY_FOR_IMPLEMENTATION`. Reason: Implementation Authorization APPROVED 2026-10-01; implementation NOT_STARTED. |",
       "| `NOT_READY_FOR_IMPLEMENTATION`. Reason: Product Definition Gate NOT_PERFORMED; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED. |",
     );
     const stale = evaluateImp036jStoryReadiness(staleGate);
@@ -18348,6 +18350,74 @@ describe("PD-2 experience delivery transition", () => {
       "PD2_HISTORICAL_ACCEPTANCE",
     );
   });
+
+  it("accepts the current authorized not-started IMP-036J transition", () => {
+    const live = readFileSync(new URL("../docs/platform/PRODUCT-DELIVERY.md", import.meta.url), "utf8");
+    assert.deepEqual(evaluateImp036jProductDeliveryTransition(live), { ok: true });
+    assert.deepEqual(evaluatePd2ProcessContract(live), { ok: true });
+  });
+
+  it("rejects a current transition that restores a pre-authorization boundary", () => {
+    const live = readFileSync(new URL("../docs/platform/PRODUCT-DELIVERY.md", import.meta.url), "utf8");
+    const cases = [
+      ["ARCHITECTURE_FIT = PASS", "Architecture Fit NOT_PERFORMED"],
+      ["architecture is locked", "Architecture unlocked"],
+      ["DESIGN_READINESS = PASS", "Design Readiness NOT_PERFORMED"],
+      ["Implementation is authorized and has not started.", "Implementation stays unauthorized."],
+      ["NEXT_GATE = IMPLEMENTATION_TRANCHE_1", "next gate ARCHITECTURE_FIT"],
+      ["NEXT_GATE = IMPLEMENTATION_TRANCHE_1", "next gate IMPLEMENTATION_AUTHORIZATION"],
+      ["IMPLEMENTATION_STARTED = NO", "IMPLEMENTATION_STARTED = YES"],
+    ];
+    for (const [from, to] of cases) {
+      const mutated = live.replace(from, to);
+      assert.notEqual(mutated, live, from);
+      assert.equal(evaluateImp036jProductDeliveryTransition(mutated).code, "IMP036J_PD2_CURRENT_TRANSITION", to);
+    }
+  });
+
+  it("ignores stale historical wording outside the current IMP-036J transition section", () => {
+    const live = readFileSync(new URL("../docs/platform/PRODUCT-DELIVERY.md", import.meta.url), "utf8");
+    const withHistory = `${live}\n\nHistorical checkpoint kept Architecture Fit NOT_PERFORMED and implementation unauthorized. The next gate was ARCHITECTURE_FIT.\n`;
+    assert.equal(evaluateImp036jProductDeliveryTransition(withHistory).ok, true);
+  });
+});
+
+describe("IMP-036J current authorization prose", () => {
+  const live = readFileSync(new URL("../docs/platform/product/IMP-036J/product-definition.md", import.meta.url), "utf8");
+  const consistency = readFileSync(new URL("./project-consistency.mjs", import.meta.url), "utf8");
+
+  it("accepts approved not-started prose and the historical Product Definition Gate fence", () => {
+    assert.deepEqual(evaluateImp036jAuthorizationProse(live), { ok: true });
+  });
+
+  it("rejects restoring outstanding authorization or a current unauthorized claim", () => {
+    const outstanding = live.replace(
+      "Implementation Authorization is APPROVED and implementation has not started.",
+      "Implementation authorization is outstanding.",
+    );
+    const unauthorized = live.replace(
+      "Implementation was not yet authorized.",
+      "Implementation remains unauthorized.",
+    );
+    assert.notEqual(outstanding, live);
+    assert.notEqual(unauthorized, live);
+    assert.equal(evaluateImp036jAuthorizationProse(outstanding).code, "IMP036J_AUTHORIZATION_PROSE");
+    assert.equal(evaluateImp036jAuthorizationProse(unauthorized).code, "IMP036J_AUTHORIZATION_PROSE");
+  });
+
+  it("rejects rewriting the historical Product Definition Gate fence to Fit PASS", () => {
+    const rewritten = live.replace("Architecture Fit: NOT_PERFORMED", "Architecture Fit: PASS");
+    assert.notEqual(rewritten, live);
+    assert.equal(evaluateImp036jAuthorizationProse(rewritten).code, "IMP036J_AUTHORIZATION_PROSE");
+  });
+
+  it("keeps the current future-ledger failure on the Tranche-1 boundary", () => {
+    const authorization = consistency.split("function checkImp036jImplementationAuthorization")[1]?.split("function checkImp036jArchitectureLock")[0] ?? "";
+    const plan = consistency.split("function checkImp036jArchitectureLock")[1]?.split("function ")[0] ?? "";
+    assert.match(authorization, /nextGate IMPLEMENTATION_TRANCHE_1/);
+    assert.doesNotMatch(authorization, /nextGate IMPLEMENTATION_AUTHORIZATION/);
+    assert.match(plan, /nextGate IMPLEMENTATION_AUTHORIZATION/);
+  });
 });
 
 describe("IMP-036J Experience Gate PASS persistence", () => {
@@ -18441,7 +18511,7 @@ describe("IMP-036J architecture fit remediation candidate 9", () => {
     historicalCandidate6ArchitectureFitReview: "PASS",
     historicalCandidate6NeverMerged: false,
     historicalCandidate6NeverLocked: false,
-    designReadiness: "NOT_PERFORMED", implementationAuthorized: true, implementationStarted: true,
+    designReadiness: "NOT_PERFORMED", implementationAuthorized: false, implementationStarted: true,
     architectureBase: "ARCH-R24", historicalCandidate5IndependentReviewId: "wrong-review",
     historicalCandidate5EvaluatedHead: "wrong-head", historicalCandidate5EvaluatedTree: "wrong-tree",
     historicalCandidate5GovernanceFingerprint: "wrong-fingerprint",
@@ -18465,9 +18535,9 @@ describe("IMP-036J architecture fit remediation candidate 9", () => {
     ["HISTORICAL_CANDIDATE_6_ARCHITECTURE_FIT_REVIEW", "STOP", "PASS"],
     ["CANDIDATE_6_REWRITTEN_AS_PASSED", "NO", "YES"],
     ["CANDIDATE_5_REWRITTEN_AS_FAILED", "NO", "YES"],
-    ["IMP036J_NEXT_GATE", "IMPLEMENTATION_AUTHORIZATION", "IMPLEMENTATION_PLAN"],
+    ["IMP036J_NEXT_GATE", "IMPLEMENTATION_TRANCHE_1", "IMPLEMENTATION_AUTHORIZATION"],
     ["IMP036J_DESIGN_READINESS", "PASS", "NOT_PERFORMED"],
-    ["IMP036J_IMPLEMENTATION_AUTHORIZED", "NO", "YES"],
+    ["IMP036J_IMPLEMENTATION_AUTHORIZED", "YES", "NO"],
     ["IMP036J_IMPLEMENTATION_STARTED", "NO", "YES"],
     ["QUALITY_TEST_PLAN_FINALIZED", "YES", "NO"],
     ["MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED", "YES", "NO"],
@@ -18534,7 +18604,7 @@ describe("IMP-036J architecture fit remediation candidate 9", () => {
     assert.equal(evaluateImp036jProductIdentity(mutated).ok, false);
     assert.equal(evaluateImp036jProductIdentity(product).ok, true);
   });
-  it("rejects a Product Definition current tip reverted to GTM-R172 / STATE-R170", () => {
+  it("rejects a Product Definition current tip reverted to GTM-R175 / STATE-R173", () => {
     const mutated = product.replace(
       "ROADMAP = GTM-R176\nSTATE = STATE-R174",
       "ROADMAP = GTM-R175\nSTATE = STATE-R173",

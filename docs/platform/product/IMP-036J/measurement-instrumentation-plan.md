@@ -8,7 +8,7 @@
   "architectureSource": "IMP-036J-FIT-CANDIDATE-9",
   "measurementInstrumentationPlanFinalized": "YES",
   "designReadiness": "PASS",
-  "implementationAuthorized": false
+  "implementationAuthorized": true
 }
 -->
 
@@ -23,7 +23,7 @@ MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = YES
 DESIGN_READINESS = PASS
 QUALITY_TEST_PLAN_FINALIZED = YES
 IMPLEMENTATION_PLAN = PASS
-IMPLEMENTATION_AUTHORIZED = NO
+IMPLEMENTATION_AUTHORIZED = YES
 IMPLEMENTATION_STARTED = NO
 INDEPENDENT_MEASUREMENT_PLAN_REVIEW = PASS
 NUMERIC_SUCCESS_TARGET = NONE
@@ -34,7 +34,7 @@ NEW_PROMOTION_AUTHORITY = NO
 NEW_ROLE = NO
 ```
 
-This plan chooses the concrete measurement encoding that `IMP-036J-FIT-CANDIDATE-9` left open. It operationalizes `XD-IMP-036J-DRAFT-6` section 17. The Measurement/Instrumentation Plan is finalized. Design Readiness is PASS. Implementation stays unauthorized.
+This plan chooses the concrete measurement encoding that `IMP-036J-FIT-CANDIDATE-9` left open. It operationalizes `XD-IMP-036J-DRAFT-6` section 17. The Measurement/Instrumentation Plan is finalized. Design Readiness is PASS. Implementation is authorized and not started.
 
 ## 0. Candidate history
 
@@ -570,7 +570,7 @@ Cross-scope reads and writes use the existing cart and checkout denial. An obser
 DESIGN_READINESS = PASS
 MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = YES
 IMPLEMENTATION_PLAN = PASS
-IMPLEMENTATION_AUTHORIZED = NO
+IMPLEMENTATION_AUTHORIZED = YES
 IMPLEMENTATION_STARTED = NO
 D-383 = NO
 ARCH-R24 = NO

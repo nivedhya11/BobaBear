@@ -42,9 +42,9 @@ Definition `PD-IMP-036H-DRAFT-1` = `APPROVED`; Product Definition Gate
 `IMP036J_ACTIVATED: YES`; `IMP036J_PRODUCT_DEFINITION: APPROVED`
 (`PD-IMP-036J-DRAFT-6`; Product Definition Gate `PASS`; Experience Criticality `X3`;
 Experience Definition `XD-IMP-036J-DRAFT-6` `APPROVED`; Experience Gate `PASS`; next gate
-`IMPLEMENTATION_AUTHORIZATION`; Architecture Fit `PASS`; architecture `LOCKED`; Design Readiness `PASS`;
+`IMPLEMENTATION_TRANCHE_1`; Architecture Fit `PASS`; architecture `LOCKED`; Design Readiness `PASS`;
 Quality/Test Plan finalized; Measurement/Instrumentation Plan finalized; Implementation Plan
-`PASS`; implementation `NOT_AUTHORIZED`; implementation proof `NOT_EXECUTED`);
+`PASS`; implementation `AUTHORIZED` / `NOT_STARTED`; implementation proof `NOT_EXECUTED`);
 `IMP036I_PRODUCT_DEFINITION: APPROVED` (`PD-IMP-036I-DRAFT-4`);
 `IMP036I_PRODUCT_DEFINITION_GATE: PASS` (independent review `5307761142`); Architecture Fit
 `PASS` (independent review `5312653831`); architecture `LOCKED`; D-379 CURRENT; D-380 CURRENT;

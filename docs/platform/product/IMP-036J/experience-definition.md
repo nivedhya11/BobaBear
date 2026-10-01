@@ -12,7 +12,7 @@
   "architectureFit": "PASS",
   "architectureLocked": "YES",
   "designReadiness": "PASS",
-  "implementationAuthorized": false
+  "implementationAuthorized": true
 }
 -->
 
@@ -40,7 +40,8 @@ EXPERIENCE_GATE_EVALUATED_GOVERNANCE_FINGERPRINT = f7288bc395a2c46ef754bcc344eae
 ARCHITECTURE_FIT = PASS
 ARCHITECTURE_LOCKED = YES
 DESIGN_READINESS = PASS
-IMPLEMENTATION_AUTHORIZED = NO
+IMPLEMENTATION_AUTHORIZED = YES
+IMPLEMENTATION_STARTED = NO
 PRODUCT_DECISION_REQUIRED = NO
 EXPERIENCE_GATE_RESULT = PASS
 
@@ -58,8 +59,7 @@ review `5342581233` returned PASS for `XD-IMP-036J-DRAFT-6`. The version stays
 Architecture Fit current source is `IMP-036J-FIT-CANDIDATE-9`. Architecture Fit is PASS.
 Architecture is LOCKED. Prior lock history: `IMP-036J-FIT-CANDIDATE-5` (independent review
 `5347761109`). Design Readiness is PASS. The Implementation Plan is PASS for
-`IMP-036J-PLAN-CANDIDATE-1`. The next gate is Implementation Authorization, which
-remains ungranted. Implementation remains unauthorized. This record does not change
+`IMP-036J-PLAN-CANDIDATE-1`. Implementation Authorization is APPROVED on 2026-10-01 (pull request #332 comment `5926464685`). The next gate is Implementation Tranche 1. Implementation is AUTHORIZED and NOT_STARTED. This record does not change
 [`product-definition.md`](./product-definition.md). Lifecycle truth remains
 [`ROADMAP.md`](../../ROADMAP.md) and [`STATE.md`](../../STATE.md).
 
@@ -1167,7 +1167,7 @@ SOURCE_VALUE = authoritative commercial evaluation or purchased truth
 FRONTEND_INDEPENDENT_ELIGIBILITY_CALCULATION = PROHIBITED
 ```
 
-Architecture Fit is `PASS`. The locked capability architecture current source is `IMP-036J-FIT-CANDIDATE-9`. Prior lock history preserves `IMP-036J-FIT-CANDIDATE-5`. This Experience Definition does not change experience semantics to follow that architecture. Design Readiness is `PASS`. Implementation remains unauthorized.
+Architecture Fit is `PASS`. The locked capability architecture current source is `IMP-036J-FIT-CANDIDATE-9`. Prior lock history preserves `IMP-036J-FIT-CANDIDATE-5`. This Experience Definition does not change experience semantics to follow that architecture. Design Readiness is `PASS`. Implementation is AUTHORIZED and NOT_STARTED.
 
 An experience requirement that Fit cannot support safely remains a Fit STOP under the Product Definition. This document does not downgrade the complimentary item, the breakdown, or the shared coupon state to avoid that question.
 
@@ -1179,7 +1179,7 @@ An experience requirement that Fit cannot support safely remains a Fit STOP unde
 DESIGN_READINESS = PASS
 ```
 
-Design Readiness PASS is recorded in [`design-readiness.md`](./design-readiness.md) for `IMP-036J-DESIGN-CANDIDATE-2`. The Implementation Plan is PASS. This Experience Definition does not change. The next gate is Implementation Authorization. Implementation remains unauthorized.
+Design Readiness PASS is recorded in [`design-readiness.md`](./design-readiness.md) for `IMP-036J-DESIGN-CANDIDATE-2`. The Implementation Plan is PASS. This Experience Definition does not change. Implementation Authorization is APPROVED. The next gate is Implementation Tranche 1. Implementation is AUTHORIZED and NOT_STARTED.
 
 ---
 
@@ -1444,11 +1444,11 @@ INDEPENDENT_EXPERIENCE_GATE_REVIEW_ID = 5342581233
 EXPERIENCE_GATE_EVALUATED_HEAD = 1fbabd2fb80851912815efe4e0ebe331a1318557
 ARCHITECTURE_FIT = PASS
 DESIGN_READINESS = PASS
-IMPLEMENTATION_AUTHORIZED = NO
+IMPLEMENTATION_AUTHORIZED = YES
+IMPLEMENTATION_STARTED = NO
 ```
 
 Independent Experience Gate PASS is persisted. Architecture Fit current source is `IMP-036J-FIT-CANDIDATE-9`. Architecture Fit is PASS and architecture is LOCKED. Prior lock history: independent review `5347761109` passed `IMP-036J-FIT-CANDIDATE-5`. `ARCHITECTURE_MECHANISM_CHOSEN = YES`
-records that choice by locked Architecture Fit, not by this Experience Definition. The next gate
-is Implementation Authorization, still ungranted. The Implementation Plan is PASS.
-Implementation remains unauthorized.
+records that choice by locked Architecture Fit, not by this Experience Definition. Implementation Authorization is APPROVED on 2026-10-01. The next gate is Implementation Tranche 1. The Implementation Plan is PASS.
+Implementation is AUTHORIZED and NOT_STARTED.
 Experience semantics and Experience Gate provenance are unchanged.

@@ -23,11 +23,11 @@
     "gtmBoundary": "IMP-040"
   },
   "lifecycle": "ARCHITECTURE_LOCKED",
-  "nextGate": "IMPLEMENTATION_AUTHORIZATION",
+  "nextGate": "IMPLEMENTATION_TRANCHE_1",
   "currentSliceGates": {
     "slice": "IMP-036J",
     "lifecycle": "ARCHITECTURE_LOCKED",
-    "nextGate": "IMPLEMENTATION_AUTHORIZATION",
+    "nextGate": "IMPLEMENTATION_TRANCHE_1",
     "activated": "YES",
     "productDefinition": "APPROVED",
     "productDefinitionVersion": "PD-IMP-036J-DRAFT-6",
@@ -38,7 +38,7 @@
     "architectureFit": "PASS",
     "architectureLocked": "YES",
     "designReadiness": "PASS",
-    "implementationAuthorized": "NO",
+    "implementationAuthorized": "YES",
     "started": "NO",
     "implementationStarted": "NO",
     "implementationComplete": "NO",
