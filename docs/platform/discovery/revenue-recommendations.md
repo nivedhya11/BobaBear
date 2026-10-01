@@ -1,18 +1,29 @@
 # Revenue Recommendations — Product Discovery
 
 ```text
-STATUS: DISCOVERY_ONLY
+STATUS: DISCOVERY_SOURCE_MATERIAL
 AUTHORITY: NON_AUTHORITATIVE_PRODUCT_DISCOVERY
-ROADMAP_IDENTITY: NONE
-ACTIVATED: NO
+FORMAL_IDENTITY: IMP-036K — Revenue Recommendations
+FORMAL_IDENTITY_AUTHORITY: D-383
+FORMAL_IDENTITY_DATE: 2026-10-01
+PRIOR_WORKING_LABEL: "IMP-036K" was previously only a candidate / working label / not governance identity
+ROADMAP_IDENTITY: IMP-036K
+ACTIVATED: YES — parallel Product/Experience definition only
+PARALLEL_DEFINITION_ONLY: YES
 PRODUCT_DEFINITION: NOT_CREATED
 PRODUCT_DEFINITION_GATE: NOT_PERFORMED
+EXPERIENCE_CRITICALITY: X3
+CHANGE_RISK: CR2
+EXPERIENCE_DEFINITION: NOT_CREATED
+EXPERIENCE_GATE: NOT_PERFORMED
 ARCHITECTURE_FIT: NOT_PERFORMED
+ARCHITECTURE_LOCKED: NO
 IMPLEMENTATION_AUTHORIZED: NO
+IMPLEMENTATION_STARTED: NO
 
 FOUNDER_DISCOVERY_DIRECTION: APPROVED_FOR_DISCOVERY
 FOUNDER_DISCOVERY_DIRECTION_RECORDED: 2026-09-26
-FOUNDER_DISCOVERY_DECISIONS: RRD-01 through RRD-08 — APPROVED / RECORDED
+FOUNDER_DISCOVERY_DECISIONS: RRD-01 through RRD-08 — APPROVED / RECORDED discovery source material only
 FOUNDER_DISCOVERY_DECISIONS_RECORDED: 2026-09-26
 RECORDED_AS: FOUNDER_APPROVED_DISCOVERY_DIRECTION
 OPEN_FOUNDER_DISCOVERY_DECISIONS: 0
@@ -20,12 +31,14 @@ OPEN_ARCHITECTURE_QUESTIONS: see §22 — intentionally open
 OPEN_DISCOVERY_QUESTIONS: founder questions resolved in §21; architecture questions remain in §22
 
 WORKING_CAPABILITY_NAME: Revenue Recommendations
-CANDIDATE_WORKING_LABEL: "IMP-036K" — CANDIDATE / WORKING LABEL / NOT GOVERNANCE IDENTITY
+HISTORICAL_CANDIDATE_WORKING_LABEL: "IMP-036K" — previously CANDIDATE / WORKING LABEL / NOT GOVERNANCE IDENTITY
+FORMAL_ALLOCATION: D-383 on 2026-10-01 allocated that same label as formal identity
 
-PROCESS_PHASES_IN_SCOPE: ANCHOR → DISCOVER → STORY_MAP
-PROCESS_PHASES_EXPLICITLY_OUT: PRODUCT_DEFINITION_GATE | ARCHITECTURE_FIT | IMPLEMENTATION
+PROCESS_PHASES_IN_SCOPE: ANCHOR → DISCOVER → STORY_MAP remain the discovery record
+AUTHORIZED_AFTER_D383: PRODUCT_DEFINITION | EXPERIENCE_DEFINITION | PRODUCT_DEFINITION_GATE | EXPERIENCE_GATE
+PROCESS_PHASES_EXPLICITLY_OUT: ARCHITECTURE_FIT | IMPLEMENTATION
 
-PARALLEL_TO: IMP-036I — Scheduled Fulfilment
+PARALLEL_TO: IMP-036J implementation-authorization track
 RUNTIME_SEMANTIC_DRIFT: NONE — documentation only
 ```
 
@@ -44,12 +57,21 @@ an architecture lock, ROADMAP allocation, formal IMP identity, or implementation
 Founder discovery completeness is not Product Definition completeness and is not architecture
 readiness. `OPEN_FOUNDER_DISCOVERY_DECISIONS: 0` does not mean `OPEN_ARCHITECTURE_QUESTIONS: 0`.
 
-`"IMP-036K"` is a **candidate / working label only**. It is not allocated, not activated,
-not ROADMAP identity, and does not reserve sequence authority. Formal promotion may remap it.
+Historical provenance: before D-383, `"IMP-036K"` was a **candidate / working label only**.
+It was not allocated, not activated, and not ROADMAP identity. Formal promotion could have
+remapped it.
 
-This document is **isolated discovery**. Revenue Recommendations discovery does not amend
-VISION, ROADMAP, STATE, ARCHITECTURE, decision-register, PRODUCT-DELIVERY, TESTING,
-accepted Product Definitions, capability architectures, or active IMP-036I artifacts.
+D-383 (Founder authority 2026-10-01) now formally allocates that same label as
+**IMP-036K — Revenue Recommendations**. Allocation authorizes parallel Product and
+Experience definition work only. It is not Product Definition Gate PASS, not Architecture
+Fit, and not implementation authorization. RRD-01 through RRD-08 remain
+Founder-approved discovery source material only. Architecture Fit questions in §22 remain
+open.
+
+This document remains **non-authoritative discovery source material**. Formal identity,
+sequence, and authorization live in ROADMAP, STATE, and the decision register. This
+reconciliation does not amend VISION, ARCHITECTURE, PRODUCT-DELIVERY, TESTING proof
+rules, accepted Product Definitions, or capability architectures.
 
 Companion story map:
 [`revenue-recommendations-story-map.md`](./revenue-recommendations-story-map.md).

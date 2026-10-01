@@ -122,13 +122,13 @@ is not the current candidate.
 ### Program context (CURRENT tip — verify against ROADMAP/STATE)
 
 ```text
-ROADMAP = GTM-R175
-STATE = STATE-R173
+ROADMAP = GTM-R176
+STATE = STATE-R174
 ARCHITECTURE = ARCH-R23
-decision-register = DR-23
+decision-register = DR-24
 acceptedThrough = IMP-036I
 currentProductSlice = IMP-036J
-nextProductSlice = IMP-037
+nextProductSlice = IMP-036K
 pendingAcceptance = NONE
 PROGRAM_PAUSE = PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED
 PROGRAM_PAUSE_AUTHORITY = D-377
@@ -175,7 +175,7 @@ Revenue Recommendations.
 | Product Definition version / document status | `PD-IMP-036J-DRAFT-6`; **Document status: APPROVED**; `PRE_GATE_DRAFT = NO`; `PRODUCT_DEFINITION_IN_PROGRESS = NO`; `DRAFT_READY_FOR_GATE = NO`; `APPROVED = YES`. |
 | Product owner / approval evidence | Founder sequencing authorization 2026-09-27 (Promotions first) recorded as **D-382**. FD-036J-01 and FD-036J-02 approved by the Founder on 2026-09-27. FD-036J-03 approved by the Founder on 2026-09-28. Founder Product Definition Gate-PASS approval on 2026-09-28. Independent Product Definition Gate PASS against HEAD `24aa3ced280dbfc18ac52275ed97ae919904481d` / tree `e7fd72f2af3b0267f438bf9b65e7f7f23bf43f27` / fingerprint `9f9c708306a76e140ea4143feaf8e007ca975f03c3dc418f65e30aaf8bbbd1e1`. |
 | Process / verification policy | PD-2 / EXP-1 / LANG-1 / TEST-1. This Product Definition was approved under PD-1. PD-2 does not reopen that gate. |
-| Canonical anchors | VISION-1; ROADMAP GTM-R175; STATE STATE-R173; ARCH-R23; DR-23 (D-377 CURRENT; D-382 CURRENT; next decision ID D-383; no D-383 created); EXP-1; LANG-1; accepted IMP-016 Promotions; accepted IMP-036F commercial management; ADR-007 CURRENT; accepted IMP-036H fulfilment mode; accepted IMP-036I scheduled timing |
+| Canonical anchors | VISION-1; ROADMAP GTM-R176; STATE STATE-R174; ARCH-R23; DR-24 (D-377 CURRENT; D-382 CURRENT; D-383 CURRENT; next decision ID D-384); EXP-1; LANG-1; accepted IMP-016 Promotions; accepted IMP-036F commercial management; ADR-007 CURRENT; accepted IMP-036H fulfilment mode; accepted IMP-036I scheduled timing |
 | Repository candidate | `/home/ajoshi/repos/boba-bear-platform`; branch recorded at publication; HEAD / tree / fingerprint recorded by the activating change. This draft is not an acceptance candidate. |
 | Capability lifecycle / authorization | ROADMAP/STATE: formal lifecycle `ARCHITECTURE_LOCKED`; `IMP036J_ACTIVATED: YES`; Product Definition `APPROVED`; Gate `PASS`; Experience Criticality `X3`; Experience Definition `APPROVED` (`XD-IMP-036J-DRAFT-6`); Experience Gate `PASS`; next gate `IMPLEMENTATION_AUTHORIZATION`; Fit `PASS`; architecture `LOCKED`; Design Readiness `PASS`; Quality/Test Plan finalized; Measurement/Instrumentation Plan finalized; Implementation Plan `PASS`; implementation `NOT_AUTHORIZED`; `IMP036J_ACCEPTED: NO` |
 | Relevant capability architecture / ADRs | Locked capability architecture [`../../capabilities/IMP-036J-promotions-coupons-offers.md`](../../capabilities/IMP-036J-promotions-coupons-offers.md). Architecture Fit `PASS` for current source `IMP-036J-FIT-CANDIDATE-9`. Architecture is `LOCKED`. Prior lock history: `IMP-036J-FIT-CANDIDATE-5` independent review `5347761109`. Binding money authority remains accepted Promotion / Coupon / Pricing / Checkout Snapshot (ADR-007; IMP-016; IMP-036F). Fulfilment mode remains D-378 / IMP-036H. Scheduled timing remains D-379 / IMP-036I. |
