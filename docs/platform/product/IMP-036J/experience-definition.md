@@ -57,8 +57,9 @@ review `5342581233` returned PASS for `XD-IMP-036J-DRAFT-6`. The version stays
 `XD-IMP-036J-DRAFT-6`. This Experience Definition itself did not perform Architecture Fit.
 Architecture Fit current source is `IMP-036J-FIT-CANDIDATE-9`. Architecture Fit is PASS.
 Architecture is LOCKED. Prior lock history: `IMP-036J-FIT-CANDIDATE-5` (independent review
-`5347761109`). Design Readiness is PASS. The next gate is the Implementation Plan, which
-remains NOT_PERFORMED. Implementation remains unauthorized. This record does not change
+`5347761109`). Design Readiness is PASS. The Implementation Plan is PASS for
+`IMP-036J-PLAN-CANDIDATE-1`. The next gate is Implementation Authorization, which
+remains ungranted. Implementation remains unauthorized. This record does not change
 [`product-definition.md`](./product-definition.md). Lifecycle truth remains
 [`ROADMAP.md`](../../ROADMAP.md) and [`STATE.md`](../../STATE.md).
 
@@ -1178,7 +1179,7 @@ An experience requirement that Fit cannot support safely remains a Fit STOP unde
 DESIGN_READINESS = PASS
 ```
 
-Design Readiness PASS is recorded in [`design-readiness.md`](./design-readiness.md) for `IMP-036J-DESIGN-CANDIDATE-2`. This Experience Definition does not change. The next gate is the Implementation Plan. Implementation remains unauthorized.
+Design Readiness PASS is recorded in [`design-readiness.md`](./design-readiness.md) for `IMP-036J-DESIGN-CANDIDATE-2`. The Implementation Plan is PASS. This Experience Definition does not change. The next gate is Implementation Authorization. Implementation remains unauthorized.
 
 ---
 
@@ -1448,6 +1449,6 @@ IMPLEMENTATION_AUTHORIZED = NO
 
 Independent Experience Gate PASS is persisted. Architecture Fit current source is `IMP-036J-FIT-CANDIDATE-9`. Architecture Fit is PASS and architecture is LOCKED. Prior lock history: independent review `5347761109` passed `IMP-036J-FIT-CANDIDATE-5`. `ARCHITECTURE_MECHANISM_CHOSEN = YES`
 records that choice by locked Architecture Fit, not by this Experience Definition. The next gate
-is Design Readiness, still NOT_PERFORMED. Quality/Test Plan and Measurement/Instrumentation Plan
-finalization and the Implementation Plan remain pending. Implementation remains unauthorized.
+is Implementation Authorization, still ungranted. The Implementation Plan is PASS.
+Implementation remains unauthorized.
 Experience semantics and Experience Gate provenance are unchanged.
