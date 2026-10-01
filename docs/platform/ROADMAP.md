@@ -76,8 +76,10 @@
   DRAFT-3 as APPROVED. DRAFT-4 supersedes DRAFT-3.
 - **GTM-R179** records Architect review `5380398013` Product Definition Gate PASS for
   `PD-IMP-036K-DRAFT-1` and Experience Gate PASS for `XD-IMP-036K-DRAFT-1`. The evaluated
-  candidate is HEAD `072932df00c445c8215c61f19f81971bf657b160`, tree
-  `a4912e6c649cad25094412ac07a005fbb441567e`, prepared from source main
+  candidate is branch `docs/imp036k-product-experience-definition`, HEAD
+  `072932df00c445c8215c61f19f81971bf657b160`, tree
+  `a4912e6c649cad25094412ac07a005fbb441567e`, working-tree fingerprint
+  `f2886ed726c77301589ba36dccd602da6d44daadd7a0f2dec4e59aada3162c46`, prepared from source main
   `24d424dbd22ee53cb3bbadec484bec3925b6e898` with `SOURCE_DRIFT = NONE` at evaluation.
   Persistence is re-anchored on main `bd4ce6edfde83f22a9fb7bfc1d933fa8c52cd4d3`, tree
   `278eedb163219ab2a5cf440264793ea00078ebe5`, after IMP-036J Tranche 1 consumed
@@ -839,6 +841,11 @@ PRODUCT_DEFINITION_GATE_ARCHITECT_REVIEW: 5380398013
 EXPERIENCE_GATE_ARCHITECT_REVIEW: 5380398013
 GATE_EVALUATED_HEAD: 072932df00c445c8215c61f19f81971bf657b160
 GATE_EVALUATED_TREE: a4912e6c649cad25094412ac07a005fbb441567e
+CANONICAL_PATH: /home/ajoshi/repos/boba-bear-platform
+EVALUATED_BRANCH: docs/imp036k-product-experience-definition
+EVALUATED_HEAD: 072932df00c445c8215c61f19f81971bf657b160
+EVALUATED_TREE: a4912e6c649cad25094412ac07a005fbb441567e
+EVALUATED_WORKING_TREE_FINGERPRINT: f2886ed726c77301589ba36dccd602da6d44daadd7a0f2dec4e59aada3162c46
 DEALS_ROADMAP_IDENTITY: NONE
 CAMPAIGNS_ROADMAP_IDENTITY: NONE
 REVENUE_RECOMMENDATIONS_ROADMAP_IDENTITY: IMP-036K
@@ -854,9 +861,13 @@ SHARED_GOVERNANCE_PERSISTENCE: SERIALIZED
 
 **GTM-R179** records Architect review `5380398013` Product Definition Gate PASS for
 `PD-IMP-036K-DRAFT-1` and Experience Gate PASS for `XD-IMP-036K-DRAFT-1`. Evaluated HEAD
-`072932df00c445c8215c61f19f81971bf657b160` and tree
-`a4912e6c649cad25094412ac07a005fbb441567e` were prepared from source main
+`072932df00c445c8215c61f19f81971bf657b160`, tree
+`a4912e6c649cad25094412ac07a005fbb441567e`, and working-tree fingerprint
+`f2886ed726c77301589ba36dccd602da6d44daadd7a0f2dec4e59aada3162c46` on branch
+`docs/imp036k-product-experience-definition` were prepared from source main
 `24d424dbd22ee53cb3bbadec484bec3925b6e898` with no source drift at evaluation.
+That fingerprint is the evaluated candidate fingerprint and is not the fingerprint of this
+persistence pull request.
 Persistence is re-anchored on main `bd4ce6edfde83f22a9fb7bfc1d933fa8c52cd4d3` after
 IMP-036J Tranche 1 consumed GTM-R178 / STATE-R176.
 `IMP036K_PRODUCT_DEFINITION_STATUS` is `APPROVED`. `IMP036K_EXPERIENCE_DEFINITION_STATUS` is

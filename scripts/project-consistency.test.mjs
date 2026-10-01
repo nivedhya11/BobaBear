@@ -115,6 +115,7 @@ import {
   evaluateImp036jProductIdentity,
   evaluateImp036jExperienceFitPointer,
   evaluateImp036jTestingPointer,
+  evaluateImp036kGateCandidateProvenance,
   evaluateImp036jProductDeliveryTransition,
   evaluateImp036jAuthorizationProse,
   evaluateImp036jProductReadmePointers,
@@ -18831,5 +18832,43 @@ describe("IMP-036J architecture fit remediation candidate 9", () => {
     const withHistory = `${testing}\n\nHistorical Candidate-5 lock checkpoint remains GTM-R172 / STATE-R170.\n`;
     assert.notEqual(withHistory, testing);
     assert.equal(evaluateImp036jTestingPointer(withHistory).ok, true);
+  });
+});
+
+describe("IMP-036K gate candidate provenance", () => {
+  const surfaces = [
+    "docs/platform/product/IMP-036K/product-definition.md",
+    "docs/platform/product/IMP-036K/experience-definition.md",
+    "docs/platform/ROADMAP.md",
+    "docs/platform/STATE.md",
+    "docs/platform/PRODUCT-DELIVERY.md",
+    "docs/platform/product/README.md",
+  ];
+  for (const path of surfaces) {
+    it(`requires the complete evaluated candidate identity in ${path}`, () => {
+      const text = readFileSync(path, "utf8");
+      assert.deepEqual(evaluateImp036kGateCandidateProvenance(text), { ok: true });
+    });
+    it(`rejects ${path} without the evaluated working-tree fingerprint`, () => {
+      const text = readFileSync(path, "utf8").replaceAll(
+        "EVALUATED_WORKING_TREE_FINGERPRINT",
+        "OMITTED_WORKING_TREE_FINGERPRINT",
+      );
+      const result = evaluateImp036kGateCandidateProvenance(text);
+      assert.equal(result.ok, false);
+      assert.equal(result.code, "IMP036K_GATE_PROVENANCE");
+    });
+  }
+  it("rejects the persistence branch as the evaluated branch", () => {
+    const text = readFileSync("docs/platform/product/IMP-036K/product-definition.md", "utf8").replaceAll(
+      "EVALUATED_BRANCH = docs/imp036k-product-experience-definition",
+      "EVALUATED_BRANCH = docs/imp036k-pd-xd-gate-persistence",
+    ).replaceAll(
+      "EVALUATED_BRANCH: docs/imp036k-product-experience-definition",
+      "EVALUATED_BRANCH: docs/imp036k-pd-xd-gate-persistence",
+    );
+    const result = evaluateImp036kGateCandidateProvenance(text);
+    assert.equal(result.ok, false);
+    assert.equal(result.code, "IMP036K_GATE_PROVENANCE");
   });
 });

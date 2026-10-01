@@ -35,6 +35,11 @@ INDEPENDENT_EXPERIENCE_GATE_REVIEW = PASS
 INDEPENDENT_EXPERIENCE_GATE_REVIEW_ID = 5380398013
 EXPERIENCE_GATE_EVALUATED_HEAD = 072932df00c445c8215c61f19f81971bf657b160
 EXPERIENCE_GATE_EVALUATED_TREE = a4912e6c649cad25094412ac07a005fbb441567e
+CANONICAL_PATH = /home/ajoshi/repos/boba-bear-platform
+EVALUATED_BRANCH = docs/imp036k-product-experience-definition
+EVALUATED_HEAD = 072932df00c445c8215c61f19f81971bf657b160
+EVALUATED_TREE = a4912e6c649cad25094412ac07a005fbb441567e
+EVALUATED_WORKING_TREE_FINGERPRINT = f2886ed726c77301589ba36dccd602da6d44daadd7a0f2dec4e59aada3162c46
 EXPERIENCE_GATE_RESULT = PASS
 ARCHITECTURE_FIT = NOT_PERFORMED
 ARCHITECTURE_LOCKED = NO
@@ -58,7 +63,11 @@ measurement intent that is about how the experience is observed. Product entitle
 eligibility, cardinality, and false-claim boundaries stay in
 [`product-definition.md`](./product-definition.md). Exact customer wording in this document is
 not Product acceptance copy. Architect review `5380398013` performed the Experience Gate against
-exact candidate HEAD `072932df00c445c8215c61f19f81971bf657b160` and returned PASS. That PASS does
+exact candidate branch `docs/imp036k-product-experience-definition`, HEAD
+`072932df00c445c8215c61f19f81971bf657b160`, tree `a4912e6c649cad25094412ac07a005fbb441567e`,
+and working-tree fingerprint `f2886ed726c77301589ba36dccd602da6d44daadd7a0f2dec4e59aada3162c46`,
+and returned PASS. That fingerprint belongs to the evaluated candidate. It is not the fingerprint
+of this persistence pull request. That PASS does
 not perform Architecture Fit, Design Readiness, or implementation authorization.
 
 Experience Intent:
@@ -87,6 +96,7 @@ Operator mental model:
 | Experience Criticality | `X3`. Customer ordering, conversion, basket value, and trust. |
 | Change Risk | `CR2`, from D-383. Not an agent `R` level. |
 | Process anchors | PD-2 / EXP-1 / LANG-1 / TEST-1 |
+| Repository candidate | `CANONICAL_PATH = /home/ajoshi/repos/boba-bear-platform`. `EVALUATED_BRANCH = docs/imp036k-product-experience-definition`. `EVALUATED_HEAD = 072932df00c445c8215c61f19f81971bf657b160`. `EVALUATED_TREE = a4912e6c649cad25094412ac07a005fbb441567e`. `EVALUATED_WORKING_TREE_FINGERPRINT = f2886ed726c77301589ba36dccd602da6d44daadd7a0f2dec4e59aada3162c46`. Same evaluated candidate as the Product Definition Gate. |
 
 ## 2. Experience Intent
 
@@ -508,6 +518,11 @@ Research / evidence level disclosed: YES
 Unresolved experience decisions: NONE
 ARCHITECT_REVIEW: 5380398013
 EXPERIENCE_GATE_EVALUATED_HEAD: 072932df00c445c8215c61f19f81971bf657b160
+CANONICAL_PATH: /home/ajoshi/repos/boba-bear-platform
+EVALUATED_BRANCH: docs/imp036k-product-experience-definition
+EVALUATED_HEAD: 072932df00c445c8215c61f19f81971bf657b160
+EVALUATED_TREE: a4912e6c649cad25094412ac07a005fbb441567e
+EVALUATED_WORKING_TREE_FINGERPRINT: f2886ed726c77301589ba36dccd602da6d44daadd7a0f2dec4e59aada3162c46
 EXPERIENCE_GATE_EXECUTION: PERFORMED
 Result: PASS
 ```

@@ -42143,6 +42143,41 @@ function checkImp036kParallelDefinition(roadmap, state, architecture, decision) 
   note("D-383 allocates IMP-036K for parallel definition preparation only; IMP-036J remains authorized and not started");
 }
 
+export const IMP036K_GATE_CANDIDATE_PROVENANCE = [
+  ["CANONICAL_PATH", "/home/ajoshi/repos/boba-bear-platform"],
+  ["EVALUATED_BRANCH", "docs/imp036k-product-experience-definition"],
+  ["EVALUATED_HEAD", "072932df00c445c8215c61f19f81971bf657b160"],
+  ["EVALUATED_TREE", "a4912e6c649cad25094412ac07a005fbb441567e"],
+  ["EVALUATED_WORKING_TREE_FINGERPRINT", "f2886ed726c77301589ba36dccd602da6d44daadd7a0f2dec4e59aada3162c46"],
+];
+
+/**
+ * IMP-036K Product/Experience gate persistence must name the evaluated candidate by path,
+ * branch, HEAD, tree, and content-sensitive working-tree fingerprint together.
+ * @param {string} text
+ */
+export function evaluateImp036kGateCandidateProvenance(text) {
+  const body = text ?? "";
+  for (const [key, value] of IMP036K_GATE_CANDIDATE_PROVENANCE) {
+    const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (!new RegExp(`${key}\\s*[=:]\\s*${escaped}`).test(body)) {
+      return {
+        ok: false,
+        code: "IMP036K_GATE_PROVENANCE",
+        message: `IMP-036K gate candidate identity must include ${key} = ${value}`,
+      };
+    }
+  }
+  if (/EVALUATED_BRANCH\s*[=:]\s*docs\/imp036k-pd-xd-gate-persistence/.test(body)) {
+    return {
+      ok: false,
+      code: "IMP036K_GATE_PROVENANCE",
+      message: "IMP-036K evaluated branch must remain the gate candidate branch",
+    };
+  }
+  return { ok: true };
+}
+
 /**
  * CURRENT checkpoint: IMP-036K Product Definition Gate and Experience Gate PASS
  * (GTM-R179 / STATE-R177). IMP-036J stays the current implementation slice.
@@ -42334,9 +42369,22 @@ function checkImp036kProductExperienceGate(roadmap, state, architecture, decisio
   if (/EXPERIENCE_GATE = NOT_PERFORMED/.test(experienceText) || /DESIGN_READINESS = PASS/.test(experienceText)) {
     fail("IMP036K_EXPERIENCE_GATE", "Experience Definition must record Experience Gate PASS and must not record Design Readiness PASS");
   }
-  const productReadmeAbs = resolveExactRelativeFile("docs/platform/product/README.md");
-  const productReadmeText = productReadmeAbs ? readFileSync(productReadmeAbs, "utf8") : "";
-  const productReadmePointers = evaluateImp036jProductReadmePointers(productReadmeText);
+  const deliveryAbs = resolveExactRelativeFile("docs/platform/PRODUCT-DELIVERY.md");
+  const deliveryText = deliveryAbs ? readFileSync(deliveryAbs, "utf8") : "";
+  const readmeAbs = resolveExactRelativeFile("docs/platform/product/README.md");
+  const readmeText = readmeAbs ? readFileSync(readmeAbs, "utf8") : "";
+  for (const [label, body] of [
+    ["Product Definition", productText],
+    ["Experience Definition", experienceText],
+    ["ROADMAP", roadmapText],
+    ["STATE", stateText],
+    ["PRODUCT-DELIVERY", deliveryText],
+    ["product index", readmeText],
+  ]) {
+    const provenance = evaluateImp036kGateCandidateProvenance(body);
+    if (!provenance.ok) fail(provenance.code, `${label}: ${provenance.message}`);
+  }
+  const productReadmePointers = evaluateImp036jProductReadmePointers(readmeText);
   if (!productReadmePointers.ok) fail(productReadmePointers.code, productReadmePointers.message);
   const productDefAbs = resolveExactRelativeFile("docs/platform/product/IMP-036J/product-definition.md");
   const productDefinitionText = productDefAbs ? readFileSync(productDefAbs, "utf8") : "";
