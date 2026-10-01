@@ -462,6 +462,33 @@ Implementation is authorized and has not started. Implementation is not complete
 not accepted. The next gate is `IMPLEMENTATION_TRANCHE_1`. Formal lifecycle is
 `ARCHITECTURE_LOCKED`. Change Risk is recorded in ROADMAP/STATE and is not an AGENTS risk level.
 
+## IMP-036K gate persistence
+
+IMP-036K is the next product slice under D-383. It is not the current implementation slice.
+Architect review `5380398013` recorded Product Definition Gate PASS and Experience Gate PASS.
+Architecture Fit has not been performed. Implementation is not authorized.
+
+```text
+PRODUCT_DEFINITION = PD-IMP-036K-DRAFT-1 APPROVED / PASS
+EXPERIENCE_DEFINITION = XD-IMP-036K-DRAFT-1 APPROVED / PASS
+EXPERIENCE_CRITICALITY = X3
+CHANGE_RISK = CR2
+ARCHITECTURE_FIT = NOT_PERFORMED
+ARCHITECTURE_LOCKED = NO
+DESIGN_READINESS = NOT_PERFORMED
+QUALITY_TEST_PLAN = NOT_PERFORMED
+MEASUREMENT_PLAN = NOT_PERFORMED
+IMPLEMENTATION_PLAN = NOT_PERFORMED
+IMPLEMENTATION_AUTHORIZED = NO
+IMPLEMENTATION_STARTED = NO
+IMP036K_ACCEPTED = NO
+NEXT_GATE = ARCHITECTURE_FIT
+CURRENT_PRODUCT_SLICE = IMP-036J
+```
+
+Experience Gate PASS is not Design Readiness PASS. RRD-01 through RRD-08 remain discovery
+provenance. D-383 remains the sequencing authority.
+
 ## AI execution and documentation efficiency
 
 **MINIMUM_SUFFICIENT_CONTEXT** means enough verified authority to perform and review the bounded
