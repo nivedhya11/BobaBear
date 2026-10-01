@@ -91,6 +91,17 @@ PRIOR_ARCHITECTURE_FIT_VERDICT = STOP
 PRIOR_ARCHITECTURE_FIT_HEAD = 985f57dc21cd26e6d12a8cb413de6681a12c46e3
 EARLIER_REPAIRED_ARCHITECTURE_FIT_REVIEW = 5383371804
 EARLIER_REPAIRED_ARCHITECTURE_FIT_HEAD = 77a06feecff8882e059c08bff1a4edfed81eb8cb
+HISTORICAL_ARCHITECTURE_FIT_PASS_REVIEW = 5384137705
+HISTORICAL_ARCHITECTURE_FIT_PASS_HEAD = c0a2c52f885d25874d71472cdad77e4d5165d2a9
+HISTORICAL_ARCHITECTURE_FIT_PASS_VERDICT = PASS
+HISTORICAL_ARCHITECTURE_FIT_PASS_PERSISTABLE = NO
+HISTORICAL_ARCHITECTURE_FIT_PASS_REWRITTEN = NO
+ARCHITECTURE_FIT_REOPEN_REVIEW = 5385458836
+ARCHITECTURE_FIT_REOPEN_VERDICT = STOP
+ARCHITECTURE_FIT_REOPENED = YES
+ARCHITECTURE_FIT_PERSISTABLE = NO
+SUPERSEDES_FOR_PERSISTENCE = 5384137705
+HISTORICAL_REVIEWS_REWRITTEN = NO
 CANDIDATE_2_CREATED = NO
 ```
 
@@ -106,8 +117,25 @@ corrected those three findings in place: add-time eligibility revalidation, serv
 membership before assistance, and holdout assignment before exposure. Architect review
 `5383814980` accepted those three repairs and stopped head
 `985f57dc21cd26e6d12a8cb413de6681a12c46e3` on one remaining finding: a server-returned set was
-treated as actual presentation. This revision corrects that finding in the same candidate.
-Server issuance and committed presentation stay distinct occurrences.
+treated as actual presentation. The following revision corrected that finding in the same
+candidate. Server issuance and committed presentation stay distinct occurrences.
+
+Architect review `5384137705` passed head
+`c0a2c52f885d25874d71472cdad77e4d5165d2a9`. That PASS remains historical evidence. It is not
+deleted and it is not rewritten as a stop. Architect review `5385458836` later stopped that
+same head and reopened Architecture Fit after a continuity defect: a Customization mark could
+survive while the parent product remained even after the recommended variant or modifier itself
+no longer remained. Review `5385458836` supersedes `5384137705` for persistence purposes.
+Canonical main has not persisted that PASS. This revision corrects that continuity defect in
+the same candidate. No Candidate 2 is created.
+
+```text
+5383371804 = STOP
+5383814980 = STOP
+5384137705 = PASS, later reopened after continuity defect discovered
+5385458836 = STOP / REOPEN
+HISTORICAL_REVIEWS_REWRITTEN = NO
+```
 
 Shared lifecycle files on this branch stay at GTM-R179 / STATE-R177 / ARCH-R23 / DR-24.
 IMP-036J remains the current implementation slice. D-383 remains the sequencing authority and
@@ -276,7 +304,7 @@ section 22 and are not binding product gaps.
 | 9 | Cart mutation authority | `REUSE_EXISTING` | Existing `addCartLine` and the existing customization flow. No parallel Cart API. |
 | 10 | Recommendation add revalidation | `EXTEND_EXISTING` | Before recommendation-origin units or attribution are committed, the existing Cart mutation re-resolves current catalog, assortment, selected Outlet, availability, fulfilment, required configuration, and the applicable relationship period. |
 | 11 | Removal suppression | `EXTEND_EXISTING` | Cart-scoped suppression row. Not catalog or menu state. |
-| 12 | Recommendation-assisted attribution | `EXTEND_EXISTING` | Server-issued set correlation, then a server-validated committed presentation, then a unit-level server mark copied onto the snapshot line as non-payable provenance. Issuance alone, eligibility alone, and an unvalidated client observation are not that proof. |
+| 12 | Recommendation-assisted attribution | `EXTEND_EXISTING` | Server-issued set correlation, then a server-validated committed presentation, then a unit-level server mark whose continuity is the exact recommended identity. Checkout copies only surviving marks as non-payable provenance. Issuance alone, eligibility alone, an unvalidated client observation, and parent-product survival are not that proof. |
 | 13 | Measurement / analytics | `EXTEND_EXISTING` | Meanings and durable proof identities are fixed here. Encoding stays with the later Measurement Plan. |
 | 14 | Holdout readiness | `EXTEND_EXISTING` | Inactive until the Measurement Plan activates it. When activated, no recommendation exposure occurs before a stable server-owned assignment. Not cart-id-only after a prior exposure. No customer-profile key. |
 | 15 | Popular evidence | `REUSE_EXISTING` | Read `orders` joined to Checkout Snapshot lines with `line_origin = cart`. No second order store. |
@@ -616,9 +644,64 @@ Suppression does not update catalog lifecycle, menu entries, assortment, or avai
 Menu projection for ordinary browsing is unchanged, so the customer can still find the item when
 catalog truth says it is there (`BR-036K-013`, `XR-IMP-036K-009`).
 
-A later manual add of that product creates cart units with no recommendation attribution.
+A later manual add of that exact candidate creates cart units with no recommendation attribution.
 
 ### 7.12 Recommendation-assisted attribution
+
+The marked identity is the identity actually recommended. Continuity is evaluated against that
+identity. A variant or modifier recommendation is not broadened to the parent product because
+the parent product remains (`AC-036K-009-02`, `AC-036K-009-03`, `BR-036K-014`, `BR-036K-015`).
+
+```text
+MARKED_RECOMMENDED_IDENTITY = the identity actually recommended
+PRODUCT recommendation
+  underlying identity = the concrete recommended product
+CATEGORY-target relationship
+  underlying identity = the concrete product actually presented and added
+  NOT the category
+CUSTOMIZATION variant upgrade
+  underlying identity = the recommended variant
+CUSTOMIZATION add-on
+  underlying identity = the recommended modifier option
+PARENT_PRODUCT_SURVIVAL_IS_NOT_VARIANT_OR_MODIFIER_SURVIVAL = YES
+NEW_COMMERCIAL_LINE_ORIGIN = NO
+```
+
+Configuration changes use existing Cart authority. They preserve attribution only while that
+marked identity remains. They do not create a cart rejection merely because attribution drops.
+
+```text
+recommended product remains
++ quantity changes
+→ preserve
+
+recommended product remains
++ unrelated valid modifier changes
+→ preserve
+
+recommended variant remains
++ other compatible modifier changes
+→ preserve
+
+recommended modifier remains
++ quantity or other valid configuration changes
+→ preserve
+
+recommended modifier removed
+→ drop that recommendation assistance
+
+recommended variant changed to another variant
+→ drop that recommendation assistance
+
+recommended product replaced
+→ drop
+
+recommended item removed then manually recreated
+→ drop
+
+category-target recommendation where the originally recommended concrete product no longer survives
+→ drop
+```
 
 Proof required by `BR-036K-014` and `AC-036K-009-02` is a chain:
 
@@ -629,7 +712,7 @@ server issued a qualifying set
 → customer used the bound recommendation action
 → add-time authoritative eligibility passed
 → existing Cart accepted the add
-→ same underlying recommended identity on the purchased Order
+→ exact marked recommended identity survives on the purchased Order
 VIEW_THROUGH = OUT_OF_V1
 ISSUANCE_ALONE_PROVES_ASSISTANCE = NO
 ELIGIBILITY_ALONE_PROVES_ASSISTANCE = NO
@@ -702,12 +785,18 @@ the following:
 4. the customer used the recommendation action bound to that issued member
 5. add-time authoritative eligibility in section 7.10 passed
 6. existing Cart accepted the add
-7. the same underlying recommended identity survived to the purchased Order
+7. the exact marked recommended identity survived to the purchased Order
 
 A server-issued but never rendered set is insufficient. Eligibility of a catalog identity is
-insufficient. Containment of the product in an issued payload is insufficient. An ordinary Menu
-or Product add carries no recommendation-action correlation and stays unmarked. A client-supplied
-candidate id, relationship id, or boolean does not turn that add into assisted provenance.
+insufficient. Containment of the product in an issued payload is insufficient. Parent-product
+survival is insufficient when the recommendation was a variant or a modifier option. Category
+survival is insufficient for a category-target recommendation. An ordinary Menu or Product add
+carries no recommendation-action correlation and stays unmarked. A client-supplied candidate
+id, relationship id, or boolean does not turn that add into assisted provenance.
+
+The mark is written when the accepted add proves items 1 through 6. Item 7 is evaluated later,
+against the marked identity, through existing Cart configuration changes and Checkout copy.
+A dropped mark is not assistance.
 
 ```text
 PRESENTATION_PROOF_AUTHORITY = server-validated presentation occurrence against SERVER_SET_CORRELATION
@@ -732,22 +821,40 @@ Absence of a recommendation-action correlation remains an ordinary Menu or Produ
 
 Representation:
 
-- Each cart line unit created by a successful recommendation add carries a server-written mark.
-  The mark records placement and the relationship id when the candidate came from a relationship.
-  Customization marks record variant or modifier identity and do not record an operator
-  relationship.
+- Each cart line unit created by a proven recommendation action carries a server-written mark.
+  The mark records placement, the marked recommended identity above, and the relationship id
+  when the candidate came from a relationship. A Customization variant mark records that
+  variant. A Customization add-on mark records that modifier option. Customization marks do
+  not record an operator relationship and do not treat the parent product as the recommended
+  identity.
 - Units created by ordinary menu or product adds have no mark.
-- Quantity changes and valid modifier changes keep the mark while that underlying product or
-  variant identity remains (`BR-036K-015`).
-- Coalescing stays the existing cart line identity. A recommendation add that coalesces into an
-  existing manual line marks only the units created by that recommendation action. Pre-existing
-  manual units do not gain a mark. A later manual add does not copy a removed recommendation's
-  mark (`BR-036K-013`).
-- When Checkout copies cart lines into a snapshot, it copies the mark onto the snapshot line as
-  non-priced provenance. `line_origin` stays `cart` or `complimentary_offer`. The mark is not a
-  third commercial origin and is ignored by price, promotion, tax, and payment.
-- Assisted purchase is true only when an Order exists for that snapshot and a marked snapshot
-  line for that identity is present. Cancelled orders are not assisted purchases.
+- Assistance provenance stays unit-scoped. Only units created by the proven recommendation
+  action receive it. Pre-existing manual units never inherit it. Manual units later coalesced
+  onto the same cart line remain unmarked. A later manual add does not recreate recommendation
+  provenance (`BR-036K-013`, `AC-036K-008-04`, `AC-036K-009-04`).
+- Quantity changes use existing `setCartLineQuantity`. They keep the mark on surviving
+  recommendation-created units only while the marked recommended identity remains
+  (`BR-036K-015`).
+- Other valid configuration changes use existing `updateCartLineConfiguration`. They are not
+  a new Cart command and they are not a later manual add. The mark stays only while the
+  marked recommended identity remains after that configuration. Removing the marked modifier,
+  changing away from the marked variant, or replacing the marked product drops that
+  assistance on the affected units. Parent-product survival does not keep a variant or
+  modifier mark.
+- Coalescing stays the existing cart line identity. When `updateCartLineConfiguration`
+  moves units onto an equivalent line, moved recommendation units keep a mark only if the
+  marked identity remains. Units already on that line, including pre-existing manual units,
+  stay unmarked. Coalescing does not recreate provenance and does not keep a mark after the
+  marked identity no longer remains.
+- When Checkout copies cart lines into a snapshot, it copies only surviving recommendation
+  provenance onto the snapshot line as non-priced provenance. Dropped marks are not copied.
+  Unmarked coalesced units are not assistance. `line_origin` stays `cart` or
+  `complimentary_offer`. No new commercial `line_origin` is created. The mark is ignored by
+  price, promotion, tax, and payment.
+- Assisted purchase is true only when an Order exists for that snapshot and surviving marked
+  provenance for that exact recommended identity is present. Cancelled orders are not assisted
+  purchases. A category that remains is not that identity. A parent product that remains is
+  not a variant or modifier identity.
 - The client cannot set the mark. A candidate id, relationship id, boolean, or unvalidated
   render event is not presentation proof and is not authority to attribute the add.
 
@@ -769,7 +876,7 @@ Event meanings required by `BR-036K-030` and Experience section 17:
 | Add attempt | Customer action that asks to add or to open customization | Candidate id, placement | A successful add |
 | Successful add | Cart acceptance | Cart id, unit ids, placement | Opening customization, or assistance without validated presentation |
 | Removal | Cart removal of a recommendation-added line | Cart id, candidate id | A menu delete |
-| Assisted purchase | Order bound to a marked snapshot line | Order id, snapshot line id, candidate identity | View-through, or an issued set that was never shown |
+| Assisted purchase | Order bound to surviving marked provenance | Order id, snapshot line id, exact marked recommended identity | View-through, an issued set that was never shown, a dropped modifier or variant mark, parent-product survival, or the category itself |
 
 Acceptance of the slice and the later experiment result stay separate. These meanings do not
 choose storage, transport, vendor, schema, retention, dedupe encoding, or analytics projection.
@@ -1083,7 +1190,7 @@ Later rows, all inside existing Postgres and existing processes:
 | Cart unit assistance mark | Cart unit | Become line identity, price, or a client-set flag |
 | Issued-set correlation | Server record written only when a qualifying set is returned | Become presentation proof, a client-invented set, a client candidate id, a boolean, view-through, or a second cart |
 | Presentation occurrence | Server record written only after a browser observation validates against that issued set | Be created by server return alone, by an unvalidated client event, or by a candidate outside the issued set |
-| Snapshot assistance copy | Checkout snapshot line provenance | Change paise totals or `line_origin` |
+| Snapshot assistance copy | Checkout snapshot line provenance for surviving marked identity only | Change paise totals, create a commercial `line_origin`, or copy a dropped or unmarked unit |
 | Holdout assignment, only after activation | Server-owned ordering session or cart for that journey, established before exposure | Store a customer profile, a credential copy, a browser-authoritative flag, or a reason the customer can see |
 | Relationship audit | Workforce audit | Be recorded as a menu publish |
 
@@ -1144,7 +1251,7 @@ customer or existing cart rules change them.
 | `US-036K-006` | Add-time revalidation extends the existing Cart mutation; stale recommendation add creates no units |
 | `US-036K-007` | Separate read, no cart write on failure |
 | `US-036K-008` | Cart-scoped suppression |
-| `US-036K-009` | Issued set, then server-validated actual presentation, then unit mark and snapshot copy; issuance alone and view-through excluded |
+| `US-036K-009` | Issued set, then server-validated actual presentation, then a unit mark whose continuity is the exact recommended identity; snapshot copies only surviving provenance; issuance alone, view-through, and parent-product survival are excluded |
 | `US-036K-010` | Server ranking; priority after eligibility; weights not contracted |
 | `US-036K-011` | Order and snapshot read; minimum 30; top 3 |
 | `US-036K-012` | `menu.manage` on brand; Customization placement rejected |
@@ -1184,9 +1291,18 @@ Quality / Test Plan must prove, under TEST-1:
 - stale recommendation add is rejected inside the existing Cart mutation and leaves the prior cart
 - recommendation-origin units and assistance marks are absent when current eligibility fails
 - ordinary Menu or Product adds stay unmarked
-- assisted attribution requires an issued set, membership in that set, and a server-validated actual presentation
+- assisted attribution requires an issued set, membership in that set, a server-validated actual presentation, and survival of the exact marked recommended identity
 - an issued set that was never rendered does not create that attribution
 - a client candidate id, relationship id, boolean, or unvalidated render event does not create that attribution
+- removing the recommended modifier drops that assistance
+- changing away from the recommended variant drops that assistance
+- an unrelated valid configuration change keeps assistance while the marked recommended identity remains
+- a quantity change keeps assistance while the marked identity remains
+- a category-target mark follows the concrete product that was presented and added, not the category
+- a manual recreation has no previous recommendation provenance
+- manual units coalesced onto the same cart line do not inherit marks
+- snapshot and Order assistance use only surviving marked identity
+- `SET_ISSUED`, `SET_RENDER`, and `ITEM_IMPRESSION` stay distinct
 - presentation-observation persistence failure does not block ordinary commerce and does not claim assistance
 - fail-open when the recommendation read fails
 - suppression survives reload and does not change menu projection
