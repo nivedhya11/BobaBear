@@ -42145,7 +42145,7 @@ function checkImp036kParallelDefinition(roadmap, state, architecture, decision) 
 
 /**
  * CURRENT checkpoint: IMP-036K Product Definition Gate and Experience Gate PASS
- * (GTM-R178 / STATE-R176). IMP-036J stays the current implementation slice.
+ * (GTM-R179 / STATE-R177). IMP-036J stays the current implementation slice.
  * @param {Record<string, any>} roadmap
  * @param {Record<string, any>} state
  * @param {Record<string, any>} architecture
