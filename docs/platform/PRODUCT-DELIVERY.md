@@ -430,7 +430,7 @@ adopting PD-2.
 ## IMP-036J transition
 
 IMP-036J is the first current X3 capability transitioning into PD-2. Experience Definition and
-Experience Gate were not performed under PD-1. The current transition is authorized and implementation has started at Tranche 1:
+Experience Gate were not performed under PD-1. The current transition is authorized, implementation has started, and Tranche 1 has passed:
 
 ```text
 PRODUCT_DEFINITION = PD-IMP-036J-DRAFT-6 APPROVED / PASS
@@ -448,9 +448,9 @@ IMPLEMENTATION_AUTHORIZED = YES
 IMPLEMENTATION_STARTED = YES
 IMPLEMENTATION_COMPLETE = NO
 IMP036J_ACCEPTED = NO
-NEXT_GATE = IMPLEMENTATION_TRANCHE_1
+NEXT_GATE = IMPLEMENTATION_TRANCHE_2
 FORMAL_LIFECYCLE = IMPLEMENTATION_IN_PROGRESS
-TRANCHE_1 = IN_REVIEW
+TRANCHE_1 = PASS
 TRANCHE_2_STARTED = NO
 ```
 
@@ -459,9 +459,9 @@ Experience Definition `XD-IMP-036J-DRAFT-6` is `APPROVED` and Experience Gate is
 Architecture Fit is `PASS` and architecture is locked on `IMP-036J-FIT-CANDIDATE-9`. Design
 Readiness is `PASS`. The Quality/Test Plan and the Measurement/Instrumentation Plan are finalized.
 The Implementation Plan is `PASS` and finalized. Implementation Authorization is `APPROVED`.
-Implementation is authorized and has started. Tranche 1 is in review and is not passed.
+Implementation is authorized and has started. Tranche 1 is PASS. Tranche 2 has not started.
 Implementation is not complete, and IMP-036J is not accepted. The next gate is
-`IMPLEMENTATION_TRANCHE_1`. Formal lifecycle is `IMPLEMENTATION_IN_PROGRESS`. Architecture
+`IMPLEMENTATION_TRANCHE_2`. Formal lifecycle is `IMPLEMENTATION_IN_PROGRESS`. Architecture
 remains locked. Change Risk is recorded in ROADMAP/STATE and is not an AGENTS risk level.
 
 ## IMP-036K gate persistence

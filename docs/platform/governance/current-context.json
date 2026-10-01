@@ -10,8 +10,8 @@
     "docs/platform/decision-register.md"
   ],
   "versions": {
-    "roadmapVersion": "GTM-R179",
-    "stateVersion": "STATE-R177",
+    "roadmapVersion": "GTM-R180",
+    "stateVersion": "STATE-R178",
     "architectureVersion": "ARCH-R23",
     "decisionRegisterVersion": "DR-24"
   },
@@ -23,11 +23,11 @@
     "gtmBoundary": "IMP-040"
   },
   "lifecycle": "ARCHITECTURE_LOCKED",
-  "nextGate": "IMPLEMENTATION_TRANCHE_1",
+  "nextGate": "IMPLEMENTATION_TRANCHE_2",
   "currentSliceGates": {
     "slice": "IMP-036J",
     "lifecycle": "ARCHITECTURE_LOCKED",
-    "nextGate": "IMPLEMENTATION_TRANCHE_1",
+    "nextGate": "IMPLEMENTATION_TRANCHE_2",
     "activated": "YES",
     "productDefinition": "APPROVED",
     "productDefinitionVersion": "PD-IMP-036J-DRAFT-6",

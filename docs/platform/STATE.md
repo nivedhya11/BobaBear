@@ -2,7 +2,7 @@
 {
   "status": "CURRENT",
   "authority": "ACCEPTED_STATE",
-  "stateVersion": "STATE-R177",
+  "stateVersion": "STATE-R178",
   "acceptedThrough": "IMP-036I",
   "currentProductSlice": "IMP-036J",
   "nextProductSlice": "IMP-036K",
@@ -10,7 +10,7 @@
   "gtmBoundary": "IMP-040",
   "governanceHealth": "ALIGNED",
   "lastReviewed": "2026-10-01",
-  "supersedes": "STATE-R176"
+  "supersedes": "STATE-R177"
 }
 -->
 
@@ -43,7 +43,7 @@ Current Governance Activity:    IMP-036J PRODUCT_DEFINITION APPROVED / GATE PASS
                               IMP-036J EXPERIENCE_DEFINITION APPROVED / GATE PASS
                               IMP-036J ARCHITECTURE_FIT PASS / ARCHITECTURE_LOCKED
                               (formal lifecycle IMPLEMENTATION_IN_PROGRESS;
-                              nextGate: IMPLEMENTATION_TRANCHE_1;
+                              nextGate: IMPLEMENTATION_TRANCHE_2;
                               PRODUCT_DELIVERY_PROCESS: PD-2;
                               EXPERIENCE_STANDARD: EXP-1;
                               PRODUCT_LANGUAGE_STANDARD: LANG-1;
@@ -98,9 +98,10 @@ Current Governance Activity:    IMP-036J PRODUCT_DEFINITION APPROVED / GATE PASS
                               IMP036J_IMPLEMENTATION_AUTHORIZATION: APPROVED;
                               IMP036J_IMPLEMENTATION_AUTHORIZATION_DATE: 2026-10-01;
                               IMPLEMENTATION_AUTHORIZATION_EVIDENCE: PR#332/5926464685;
-                              IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_1;
+                              IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_2;
                               FOUNDER_UAT: NOT_PERFORMED;
-                              GTM-R179 / STATE-R177;
+                              GTM-R180 / STATE-R178;
+                              prior tip GTM-R179 / STATE-R177;
                               prior tip GTM-R178 / STATE-R176;
                               prior tip GTM-R177 / STATE-R175;
                               prior tip GTM-R176 / STATE-R174;
@@ -130,7 +131,7 @@ Current Governance Activity:    IMP-036J PRODUCT_DEFINITION APPROVED / GATE PASS
                               IMP036J_IMPLEMENTATION_STARTED: YES;
                               IMP036J_IMPLEMENTATION_COMPLETE: NO;
                               IMP036J_FORMAL_LIFECYCLE: IMPLEMENTATION_IN_PROGRESS;
-                              IMP036J_TRANCHE_1: IN_REVIEW;
+                              IMP036J_TRANCHE_1: PASS;
                               IMP036J_TRANCHE_2_STARTED: NO;
                               IMP036J_ACCEPTED: NO;
                               D-382 AMENDED by D-383 for Revenue Recommendations identity, activation, and sequencing only;
@@ -491,14 +492,14 @@ IMPLEMENTATION_PLAN_EVALUATED_TREE: 11e0a46f7b19bf5b7b7e17cfe2f0656c3b5f8bdb
 IMP036J_IMPLEMENTATION_AUTHORIZATION: APPROVED
 IMP036J_IMPLEMENTATION_AUTHORIZATION_DATE: 2026-10-01
 IMPLEMENTATION_AUTHORIZATION_EVIDENCE: PR#332/5926464685
-IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_1
-nextGate: IMPLEMENTATION_TRANCHE_1
+IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_2
+nextGate: IMPLEMENTATION_TRANCHE_2
 IMP036J_IMPLEMENTATION_AUTHORIZED: YES
 IMP036J_IMPLEMENTATION_STARTED: YES
 FOUNDER_UAT: NOT_PERFORMED
 IMP036J_STARTED: YES
 IMP036J_FORMAL_LIFECYCLE: IMPLEMENTATION_IN_PROGRESS
-IMP036J_TRANCHE_1: IN_REVIEW
+IMP036J_TRANCHE_1: PASS
 IMP036J_TRANCHE_2_STARTED: NO
 IMP036J_IMPLEMENTATION_COMPLETE: NO
 IMP036J_ACCEPTED: NO
@@ -1093,7 +1094,7 @@ Implementation/review provenance for IMP-036F is recorded in
 ## 8. Explicitly Not Yet Accepted
 
 - IMP-036K — Revenue Recommendations (`PLANNED`; `IMP036K_ACTIVATED: YES`; formal identity allocated by D-383 on 2026-10-01; `"IMP-036K"` was previously only a working label; `IMP036K_PRODUCT_DEFINITION: PD-IMP-036K-DRAFT-1`; `IMP036K_PRODUCT_DEFINITION_STATUS: APPROVED`; `IMP036K_PRODUCT_DEFINITION_GATE: PASS`; Architect review `5380398013`; `IMP036K_EXPERIENCE_CRITICALITY: X3`; `IMP036K_CHANGE_RISK: CR2`; `IMP036K_EXPERIENCE_DEFINITION: XD-IMP-036K-DRAFT-1`; `IMP036K_EXPERIENCE_DEFINITION_STATUS: APPROVED`; `IMP036K_EXPERIENCE_GATE: PASS`; `IMP036K_NEXT_GATE: ARCHITECTURE_FIT`; `IMP036K_ARCHITECTURE_FIT: NOT_PERFORMED`; `IMP036K_ARCHITECTURE_LOCKED: NO`; `IMP036K_DESIGN_READINESS: NOT_PERFORMED`; `IMP036K_QUALITY_TEST_PLAN: NOT_PERFORMED`; `IMP036K_MEASUREMENT_PLAN: NOT_PERFORMED`; `IMP036K_IMPLEMENTATION_PLAN: NOT_PERFORMED`; `IMP036K_IMPLEMENTATION_AUTHORIZED: NO`; `IMP036K_IMPLEMENTATION_STARTED: NO`; `IMP036K_IMPLEMENTATION_COMPLETE: NO`; `IMP036K_ACCEPTED: NO`; RRD-01 through RRD-08 remain discovery source material only; not the current implementation slice)
-- IMP-036J — Promotions, Coupons & Offers (`ARCHITECTURE_LOCKED`; `IMP036J_ACTIVATED: YES`; Product Definition `PD-IMP-036J-DRAFT-6` = `APPROVED`; Product Definition Gate `PASS`; Experience Criticality `X3`; Change Risk `CR2`; Experience Definition `XD-IMP-036J-DRAFT-6` = `APPROVED`; Experience Gate `PASS`; independent review `5342581233`; Architecture Fit `PASS`; source candidate `IMP-036J-FIT-CANDIDATE-9`; evaluated head `052289471cfc2424879932e16fd88d6c16696de8`; prior Candidate 5 Architecture Fit review `5347761109` remains history; architecture LOCKED; Design Readiness `PASS`; source candidate `IMP-036J-DESIGN-CANDIDATE-2`; architect review `5917691904`; Quality/Test Plan finalized; Measurement/Instrumentation Plan finalized; Implementation Plan `PASS`; source `IMP-036J-PLAN-CANDIDATE-1`; architect review `5925360293`; `READY_FOR_IMPLEMENTATION_AUTHORIZATION: YES`; `IMP036J_IMPLEMENTATION_AUTHORIZATION: APPROVED`; `IMP036J_IMPLEMENTATION_AUTHORIZED: YES`; `IMP036J_IMPLEMENTATION_AUTHORIZATION_DATE: 2026-10-01`; `IMP036J_STARTED: YES`; `IMP036J_IMPLEMENTATION_STARTED: YES`; `IMP036J_FORMAL_LIFECYCLE: IMPLEMENTATION_IN_PROGRESS`; `IMP036J_TRANCHE_1: IN_REVIEW`; `IMP036J_TRANCHE_2_STARTED: NO`; `IMP036J_IMPLEMENTATION_COMPLETE: NO`; `IMP036J_ACCEPTED: NO`; `FOUNDER_UAT: NOT_PERFORMED`; nextGate `IMPLEMENTATION_TRANCHE_1`; activated for Product Definition under D-382; FD-036J-01 APPROVED 2026-09-27; FD-036J-02 APPROVED 2026-09-27; FD-036J-03 APPROVED 2026-09-28; historical DRAFT-5 Product Definition Gate STOP was not persisted; historical Experience Gate PASS events for DRAFT-2 and DRAFT-3 were not persisted; historical Candidates 6, 7, and 8 remain STOP)
+- IMP-036J — Promotions, Coupons & Offers (`ARCHITECTURE_LOCKED`; `IMP036J_ACTIVATED: YES`; Product Definition `PD-IMP-036J-DRAFT-6` = `APPROVED`; Product Definition Gate `PASS`; Experience Criticality `X3`; Change Risk `CR2`; Experience Definition `XD-IMP-036J-DRAFT-6` = `APPROVED`; Experience Gate `PASS`; independent review `5342581233`; Architecture Fit `PASS`; source candidate `IMP-036J-FIT-CANDIDATE-9`; evaluated head `052289471cfc2424879932e16fd88d6c16696de8`; prior Candidate 5 Architecture Fit review `5347761109` remains history; architecture LOCKED; Design Readiness `PASS`; source candidate `IMP-036J-DESIGN-CANDIDATE-2`; architect review `5917691904`; Quality/Test Plan finalized; Measurement/Instrumentation Plan finalized; Implementation Plan `PASS`; source `IMP-036J-PLAN-CANDIDATE-1`; architect review `5925360293`; `READY_FOR_IMPLEMENTATION_AUTHORIZATION: YES`; `IMP036J_IMPLEMENTATION_AUTHORIZATION: APPROVED`; `IMP036J_IMPLEMENTATION_AUTHORIZED: YES`; `IMP036J_IMPLEMENTATION_AUTHORIZATION_DATE: 2026-10-01`; `IMP036J_STARTED: YES`; `IMP036J_IMPLEMENTATION_STARTED: YES`; `IMP036J_FORMAL_LIFECYCLE: IMPLEMENTATION_IN_PROGRESS`; `IMP036J_TRANCHE_1: PASS`; `IMP036J_TRANCHE_2_STARTED: NO`; `IMP036J_IMPLEMENTATION_COMPLETE: NO`; `IMP036J_ACCEPTED: NO`; `FOUNDER_UAT: NOT_PERFORMED`; nextGate `IMPLEMENTATION_TRANCHE_2`; activated for Product Definition under D-382; FD-036J-01 APPROVED 2026-09-27; FD-036J-02 APPROVED 2026-09-27; FD-036J-03 APPROVED 2026-09-28; historical DRAFT-5 Product Definition Gate STOP was not persisted; historical Experience Gate PASS events for DRAFT-2 and DRAFT-3 were not persisted; historical Candidates 6, 7, and 8 remain STOP)
 - IMP-037 — Backup, Restore & Migration Readiness (`IMPLEMENTATION_IN_PROGRESS`; `IMP037_HOLD: YES`; `IMP037_ACTIVATED: YES`; Product Definition APPROVED / `PD-IMP-037-DRAFT-1`; Gate PASS; Architecture Fit PASS; architecture LOCKED; implementation AUTHORIZED / STARTED; `IMP037_IMPLEMENTATION_COMPLETE: NO`; `IMP037_ACCEPTED: NO`; independent Architecture Fit review PASS; authorization evidence PR#171/5743814105; start evidence PR#172/5744869269; `PHASE1_BLOCK_STATUS: BLOCKED_PROVIDER_ACCESS`; held under D-377 program pause)
 - IMP-038 — Security & Privacy Hardening (`IMPLEMENTATION_IN_PROGRESS (HOLD — IMPLEMENTATION_COMPLETE / NOT_ACCEPTED)`; `IMP038_HOLD: YES`; `IMP038_ACTIVATED: YES`; historical `CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038` preserved; Product Definition APPROVED / `PD-IMP-038-DRAFT-2`; Gate PASS; Architecture Fit PASS; architecture LOCKED; independent Architecture Fit review PASS (reviewed head `3b03164d6581c5a98a893c24e92eaddece004e90`); implementation AUTHORIZED / STARTED / COMPLETE (`FOUNDER_IMP038_IMPLEMENTATION_AUTHORIZATION: CURSOR_SESSION_MANDATE`); `IMP038_IMPLEMENTATION_COMPLETE: YES`; `IMP038_ACCEPTED: NO`; `IMP038_ACCEPTANCE_BLOCKED_BY_IMP037: YES`; `IMP038_EXTERNAL_ASSESSMENT: DEFERRED_UNTIL_PRE_GTM_APPLICATION_SCOPE_STABILIZES`; frozen runtime `dc6b19e6f88d4084e424d927e6467c374596fb0a` / tree `c3aefb57f3f6c941d7f14907b6c095c4aa7f0547` / fingerprint `2800fe11397ee2a01e9decf572f85adf5c3a8b244ca34b1f53d579e05feac589`; `GAP-EXT-ASSESS-001: NOT_CLOSED`; held under D-377 program pause; `D-375_CREATED: YES`; `ARCH_R21_CREATED: YES`)
 - IMP-039 — Production Infrastructure & Release Pipeline (`PLANNED` / `NOT_ACTIVATED`; `IMP039_ACTIVATED: NO`)
@@ -1121,7 +1122,64 @@ Implementation/review provenance for IMP-036F is recorded in
 Agents may propose a STATE delta in their report. Only independent acceptance updates this file's
 accepted position and may promote `governanceHealth` to `ALIGNED`.
 
-## 10. STATE-R177 record
+## 10. STATE-R178 record
+
+```text
+STATE-R178 = IMP036J_TRANCHE_1_PASS
+supersedes: STATE-R177
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-036K
+nextGate: IMPLEMENTATION_TRANCHE_2
+formalLifecycle: IMPLEMENTATION_IN_PROGRESS
+IMP036J_STARTED: YES
+IMP036J_IMPLEMENTATION_STARTED: YES
+IMP036J_IMPLEMENTATION_COMPLETE: NO
+IMP036J_ACCEPTED: NO
+FOUNDER_UAT: NOT_PERFORMED
+IMP036J_TRANCHE_1: PASS
+IMP036J_TRANCHE_2_STARTED: NO
+IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_2
+REVIEWED_T1_HEAD: 406e772ae1d63d911b069884205dc5b94f5cc190
+T1_MERGE_SHA: bd4ce6edfde83f22a9fb7bfc1d933fa8c52cd4d3
+ARCHITECT_REVIEW: 5380765557
+POST_MERGE_CLOSURE: 5934371551
+EXACT_MAIN_CI: 36877849530
+EXACT_MAIN_CODEQL: 36877849547
+MIGRATION: 0047_imp036j_tranche1_commercial_persistence
+PR336: MERGED
+IMP036K_PRODUCT_DEFINITION_GATE: PASS
+IMP036K_EXPERIENCE_GATE: PASS
+IMP036K_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036K_IMPLEMENTATION_AUTHORIZED: NO
+IMP036K_IMPLEMENTATION_STARTED: NO
+IMP036K_ACCEPTED: NO
+IMP036K_NEXT_GATE: ARCHITECTURE_FIT
+D-383: CURRENT
+ARCH-R23: UNCHANGED
+DECISION_REGISTER: DR-24
+```
+
+IMP-036J Tranche 1 is `PASS`. Reviewed implementation head
+`406e772ae1d63d911b069884205dc5b94f5cc190` merged in pull request #336 at
+`bd4ce6edfde83f22a9fb7bfc1d933fa8c52cd4d3`. Architect review `5380765557`,
+post-merge closure `5934371551`, exact-main CI `36877849530`, and exact-main
+CodeQL `36877849547` succeeded. Migration
+`0047_imp036j_tranche1_commercial_persistence` is unchanged by this record.
+The next gate is `IMPLEMENTATION_TRANCHE_2`. Tranche 2 has not started.
+Formal lifecycle stays `IMPLEMENTATION_IN_PROGRESS`. Implementation stays
+started and incomplete. `IMP036J_ACCEPTED` stays `NO`. `FOUNDER_UAT` stays
+`NOT_PERFORMED`. `acceptedThrough` stays IMP-036I. `currentProductSlice` stays
+IMP-036J. `nextProductSlice` stays IMP-036K. IMP-036K Product Definition Gate
+and Experience Gate stay `PASS`. IMP-036K Architecture Fit stays
+`NOT_PERFORMED`. GTM-R178 / STATE-R176 remains the implementation-start
+checkpoint. GTM-R179 / STATE-R177 remains the IMP-036K Product and Experience
+Gate checkpoint. ARCH-R23 and DR-24 stay unchanged. D-383 stays CURRENT. This
+record does not start Tranche 2, accept IMP-036J, or perform IMP-036K
+Architecture Fit.
+
+## 10. STATE-R177 record (historical prior tip)
 
 ```text
 STATE-R177 = IMP036K_PRODUCT_EXPERIENCE_GATE_PASS
