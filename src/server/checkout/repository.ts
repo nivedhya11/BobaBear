@@ -831,8 +831,11 @@ async function loadSnapshotAggregate(
     bundlesByLine.set(b.snapshotLineId, list);
   }
 
-  const lines: CheckoutSnapshotLine[] = lineRows.map((l) =>
-    Object.freeze({
+  const lines: CheckoutSnapshotLine[] = lineRows.map((l) => {
+    if (l.sourceCartLineId == null) {
+      throw new Error(`Checkout snapshot line ${l.id} has no source cart line`);
+    }
+    return Object.freeze({
       id: l.id,
       sourceCartLineId: l.sourceCartLineId,
       productId: l.productId,
@@ -851,8 +854,8 @@ async function loadSnapshotAggregate(
       sequence: l.sequence,
       modifiers: Object.freeze(modifiersByLine.get(l.id) ?? []),
       bundleSelections: Object.freeze(bundlesByLine.get(l.id) ?? []),
-    }),
-  );
+    });
+  });
 
   const chargeRows = await context.db
     .select()

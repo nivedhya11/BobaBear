@@ -236,6 +236,11 @@
       "tag": "0046_imp036i_tranche4_cancellation_reminder",
       "path": "drizzle/0046_imp036i_tranche4_cancellation_reminder.sql",
       "sha256": "1cdfc614c1e3aa430c947257d253ef9c965d4dcf9942484482e18099d454d76d"
+    },
+    {
+      "tag": "0047_imp036j_tranche1_commercial_persistence",
+      "path": "drizzle/0047_imp036j_tranche1_commercial_persistence.sql",
+      "sha256": "dbdc2ff1f7b825ea87a01e746547a9ad0f774fc208abdc42d5b13865a17ad7fd"
     }
   ]
 }

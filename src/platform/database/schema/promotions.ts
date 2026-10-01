@@ -3,6 +3,9 @@
  * plus Payment-orchestrated redemption claims (IMP-022).
  *
  * IMP-016 tables: six. IMP-022 adds `promotion_redemption_claims` only.
+ * IMP-036J tranche 1 adds commercial columns on promotions and
+ * promotion_benefits, plus `first_order_purchase_guards` as a purchase-level
+ * eligibility guard (not a claim and not a capacity counter).
  * Money is always INR integer paise (`bigint`). Public APIs remain out of scope.
  *
  * Promotion outlet scope differs from price-book outlet scope: outlet promotions
@@ -29,7 +32,8 @@ import {
   catalogProductsTable,
   catalogVariantsTable,
 } from "./catalog";
-import { checkoutSnapshotsTable } from "./checkout";
+import { checkoutSnapshotsTable, checkoutsTable } from "./checkout";
+import { customerAuthUsers } from "./customer-auth";
 import {
   paymentAttemptIdForClaimsColumn,
   paymentAttemptPaymentIdForClaimsColumn,
@@ -145,6 +149,12 @@ export const promotionsTable = appSchema.table(
     endsAt: timestamp("ends_at", { withTimezone: true }),
     minimumQualifyingAmountPaise: paise("minimum_qualifying_amount_paise"),
     minimumItemQuantity: integer("minimum_item_quantity"),
+    firstOrderOnly: boolean("first_order_only").notNull().default(false),
+    eligibleFulfilmentModes: text("eligible_fulfilment_modes").array(),
+    eligibleFulfilmentTimings: text("eligible_fulfilment_timings").array(),
+    maximumRedemptions: integer("maximum_redemptions"),
+    maximumRedemptionsPerCustomer: integer("maximum_redemptions_per_customer"),
+    complimentaryItem: boolean("complimentary_item").notNull().default(false),
     configurationFingerprint: text("configuration_fingerprint"),
     revision: bigint("revision", { mode: "bigint" }).notNull().default(sql`1`),
     activatedAt: timestamp("activated_at", { withTimezone: true }),
@@ -232,6 +242,38 @@ export const promotionsTable = appSchema.table(
       sql`${table.minimumItemQuantity} is null or ${table.minimumItemQuantity} > 0`,
     ),
     check(
+      "promotions_eligible_fulfilment_modes_check",
+      sql`${table.eligibleFulfilmentModes} is null or (
+        cardinality(${table.eligibleFulfilmentModes}) between 1 and 2
+        and ${table.eligibleFulfilmentModes} <@ array['DELIVERY', 'PICKUP']::text[]
+        and cardinality(array_remove(${table.eligibleFulfilmentModes}, null)) = cardinality(${table.eligibleFulfilmentModes})
+        and (
+          cardinality(${table.eligibleFulfilmentModes}) = 1
+          or ${table.eligibleFulfilmentModes}[1] is distinct from ${table.eligibleFulfilmentModes}[2]
+        )
+      )`,
+    ),
+    check(
+      "promotions_eligible_fulfilment_timings_check",
+      sql`${table.eligibleFulfilmentTimings} is null or (
+        cardinality(${table.eligibleFulfilmentTimings}) between 1 and 2
+        and ${table.eligibleFulfilmentTimings} <@ array['ASAP', 'SCHEDULED']::text[]
+        and cardinality(array_remove(${table.eligibleFulfilmentTimings}, null)) = cardinality(${table.eligibleFulfilmentTimings})
+        and (
+          cardinality(${table.eligibleFulfilmentTimings}) = 1
+          or ${table.eligibleFulfilmentTimings}[1] is distinct from ${table.eligibleFulfilmentTimings}[2]
+        )
+      )`,
+    ),
+    check(
+      "promotions_maximum_redemptions_check",
+      sql`${table.maximumRedemptions} is null or ${table.maximumRedemptions} > 0`,
+    ),
+    check(
+      "promotions_maximum_redemptions_per_customer_check",
+      sql`${table.maximumRedemptionsPerCustomer} is null or ${table.maximumRedemptionsPerCustomer} > 0`,
+    ),
+    check(
       "promotions_code_format_check",
       sql`${table.code} ~ '^[a-z0-9][a-z0-9_-]*$' and char_length(${table.code}) between 1 and 64`,
     ),
@@ -255,6 +297,9 @@ export const promotionsTable = appSchema.table(
       table.startsAt,
     ),
     index("promotions_outlet_status_idx").on(table.outletId, table.status),
+    uniqueIndex("promotions_one_active_complimentary_per_brand_uidx")
+      .on(table.brandId)
+      .where(sql`${table.status} = 'active' and ${table.complimentaryItem}`),
   ],
 );
 
@@ -273,6 +318,8 @@ export const promotionBenefitsTable = appSchema.table(
     maximumRewardQuantity: integer("maximum_reward_quantity"),
     includeModifiers: boolean("include_modifiers").notNull().default(false),
     includeBundleDeltas: boolean("include_bundle_deltas").notNull().default(false),
+    complimentaryProductId: uuid("complimentary_product_id"),
+    complimentaryVariantId: uuid("complimentary_variant_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
@@ -283,9 +330,25 @@ export const promotionBenefitsTable = appSchema.table(
       columns: [table.promotionId],
       foreignColumns: [promotionsTable.id],
     }).onDelete("cascade"),
+    foreignKey({
+      name: "promotion_benefits_complimentary_product_fk",
+      columns: [table.complimentaryProductId],
+      foreignColumns: [catalogProductsTable.id],
+    }).onDelete("restrict"),
+    foreignKey({
+      name: "promotion_benefits_complimentary_variant_fk",
+      columns: [table.complimentaryVariantId],
+      foreignColumns: [catalogVariantsTable.id],
+    }).onDelete("restrict"),
     check(
       "promotion_benefits_type_check",
-      sql`${table.benefitType} in ('percentage_discount', 'fixed_amount_discount', 'buy_x_get_y')`,
+      sql`${table.benefitType} in (
+        'percentage_discount',
+        'fixed_amount_discount',
+        'buy_x_get_y',
+        'delivery_fee_waiver',
+        'complimentary_item'
+      )`,
     ),
     check(
       "promotion_benefits_percentage_shape_check",
@@ -336,6 +399,46 @@ export const promotionBenefitsTable = appSchema.table(
           ${table.repeatable} = true
           or ${table.maximumRewardQuantity} is null
         )
+      )`,
+    ),
+    check(
+      "promotion_benefits_delivery_fee_waiver_shape_check",
+      sql`${table.benefitType} <> 'delivery_fee_waiver' or (
+        ${table.percentageBps} is null
+        and ${table.fixedAmountPaise} is null
+        and ${table.maximumDiscountPaise} is null
+        and ${table.buyQuantity} is null
+        and ${table.getQuantity} is null
+        and ${table.repeatable} is null
+        and ${table.maximumRewardQuantity} is null
+        and ${table.complimentaryProductId} is null
+        and ${table.complimentaryVariantId} is null
+      )`,
+    ),
+    check(
+      "promotion_benefits_complimentary_item_shape_check",
+      sql`${table.benefitType} <> 'complimentary_item' or (
+        ${table.complimentaryProductId} is not null
+        and ${table.complimentaryVariantId} is not null
+        and ${table.percentageBps} is null
+        and ${table.fixedAmountPaise} is null
+        and ${table.maximumDiscountPaise} is null
+        and ${table.buyQuantity} is null
+        and ${table.getQuantity} is null
+        and ${table.repeatable} is null
+        and ${table.maximumRewardQuantity} is null
+      )`,
+    ),
+    check(
+      "promotion_benefits_complimentary_refs_check",
+      sql`(
+        ${table.benefitType} = 'complimentary_item'
+        and ${table.complimentaryProductId} is not null
+        and ${table.complimentaryVariantId} is not null
+      ) or (
+        ${table.benefitType} <> 'complimentary_item'
+        and ${table.complimentaryProductId} is null
+        and ${table.complimentaryVariantId} is null
       )`,
     ),
     check(
@@ -651,6 +754,105 @@ export const promotionRedemptionClaimsTable = appSchema.table(
     ),
     check(
       "promotion_redemption_claims_released_timestamps_check",
+      sql`${table.status} <> 'RELEASED' or (
+        ${table.consumedAt} is null and ${table.releasedAt} is not null
+      )`,
+    ),
+  ],
+);
+
+/**
+ * Purchase-level first-order eligibility guard (IMP-036J tranche 1).
+ * One row per logical purchase binding. Not a Promotion claim and not a
+ * capacity counter. Runtime RESERVED/CONSUMED/RELEASED transitions are later
+ * tranches; this table is persistence only.
+ */
+export const firstOrderPurchaseGuardsTable = appSchema.table(
+  "first_order_purchase_guards",
+  {
+    id: uuid("id").primaryKey(),
+    customerAuthUserId: text("customer_auth_user_id").notNull(),
+    checkoutId: uuid("checkout_id").notNull(),
+    checkoutSnapshotId: uuid("checkout_snapshot_id").notNull(),
+    paymentId: uuid("payment_id"),
+    paymentAttemptId: uuid("payment_attempt_id"),
+    status: text("status").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    consumedAt: timestamp("consumed_at", { withTimezone: true }),
+    releasedAt: timestamp("released_at", { withTimezone: true }),
+  },
+  (table) => [
+    foreignKey({
+      name: "first_order_purchase_guards_customer_fk",
+      columns: [table.customerAuthUserId],
+      foreignColumns: [customerAuthUsers.id],
+    }).onDelete("restrict"),
+    foreignKey({
+      name: "first_order_purchase_guards_checkout_fk",
+      columns: [table.checkoutId],
+      foreignColumns: [checkoutsTable.id],
+    }).onDelete("restrict"),
+    foreignKey({
+      name: "first_order_purchase_guards_checkout_snapshot_fk",
+      columns: [table.checkoutSnapshotId],
+      foreignColumns: [checkoutSnapshotsTable.id],
+    }).onDelete("restrict"),
+    foreignKey({
+      name: "first_order_purchase_guards_payment_snapshot_fk",
+      columns: [table.paymentId, table.checkoutSnapshotId],
+      foreignColumns: [
+        paymentIdForClaimsColumn(),
+        paymentCheckoutSnapshotIdForClaimsColumn(),
+      ],
+    }).onDelete("restrict"),
+    foreignKey({
+      name: "first_order_purchase_guards_attempt_payment_fk",
+      columns: [table.paymentAttemptId, table.paymentId],
+      foreignColumns: [
+        paymentAttemptIdForClaimsColumn(),
+        paymentAttemptPaymentIdForClaimsColumn(),
+      ],
+    }).onDelete("restrict"),
+    uniqueIndex("first_order_purchase_guards_active_customer_uidx")
+      .on(table.customerAuthUserId)
+      .where(sql`${table.status} in ('RESERVED', 'CONSUMED')`),
+    uniqueIndex("first_order_purchase_guards_active_payment_uidx")
+      .on(table.paymentId)
+      .where(
+        sql`${table.paymentId} is not null and ${table.status} in ('RESERVED', 'CONSUMED')`,
+      ),
+    uniqueIndex("first_order_purchase_guards_zero_snapshot_uidx")
+      .on(table.checkoutSnapshotId)
+      .where(sql`${table.paymentId} is null`),
+    uniqueIndex("first_order_purchase_guards_attempt_uidx")
+      .on(table.paymentAttemptId)
+      .where(sql`${table.paymentAttemptId} is not null`),
+    check(
+      "first_order_purchase_guards_status_check",
+      sql`${table.status} in ('RESERVED', 'CONSUMED', 'RELEASED')`,
+    ),
+    check(
+      "first_order_purchase_guards_payment_attempt_pair_check",
+      sql`(${table.paymentId} is null) = (${table.paymentAttemptId} is null)`,
+    ),
+    check(
+      "first_order_purchase_guards_zero_must_be_consumed_check",
+      sql`${table.paymentId} is not null or ${table.status} = 'CONSUMED'`,
+    ),
+    check(
+      "first_order_purchase_guards_reserved_timestamps_check",
+      sql`${table.status} <> 'RESERVED' or (
+        ${table.consumedAt} is null and ${table.releasedAt} is null
+      )`,
+    ),
+    check(
+      "first_order_purchase_guards_consumed_timestamps_check",
+      sql`${table.status} <> 'CONSUMED' or (
+        ${table.consumedAt} is not null and ${table.releasedAt} is null
+      )`,
+    ),
+    check(
+      "first_order_purchase_guards_released_timestamps_check",
       sql`${table.status} <> 'RELEASED' or (
         ${table.consumedAt} is null and ${table.releasedAt} is not null
       )`,
