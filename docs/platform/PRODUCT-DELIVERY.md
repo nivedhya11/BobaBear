@@ -464,19 +464,21 @@ Implementation is not complete, and IMP-036J is not accepted. The next gate is
 `IMPLEMENTATION_TRANCHE_2`. Formal lifecycle is `IMPLEMENTATION_IN_PROGRESS`. Architecture
 remains locked. Change Risk is recorded in ROADMAP/STATE and is not an AGENTS risk level.
 
-## IMP-036K gate persistence
+## IMP-036K architecture lock
 
 IMP-036K is the next product slice under D-383. It is not the current implementation slice.
 Architect review `5380398013` recorded Product Definition Gate PASS and Experience Gate PASS.
-Architecture Fit has not been performed. Implementation is not authorized.
+Architecture Fit is PASS and the capability architecture is LOCKED from `IMP-036K-FIT-CANDIDATE-1` (Architect review `5384137705`). The next gate is Design Readiness. Implementation is not authorized.
 
 ```text
 PRODUCT_DEFINITION = PD-IMP-036K-DRAFT-1 APPROVED / PASS
 EXPERIENCE_DEFINITION = XD-IMP-036K-DRAFT-1 APPROVED / PASS
 EXPERIENCE_CRITICALITY = X3
 CHANGE_RISK = CR2
-ARCHITECTURE_FIT = NOT_PERFORMED
-ARCHITECTURE_LOCKED = NO
+ARCHITECTURE_FIT = PASS
+ARCHITECTURE_LOCKED = YES
+ARCHITECTURE_FIT_SOURCE = IMP-036K-FIT-CANDIDATE-1
+ARCHITECTURE_FIT_REVIEW = 5384137705
 DESIGN_READINESS = NOT_PERFORMED
 QUALITY_TEST_PLAN = NOT_PERFORMED
 MEASUREMENT_PLAN = NOT_PERFORMED
@@ -484,7 +486,7 @@ IMPLEMENTATION_PLAN = NOT_PERFORMED
 IMPLEMENTATION_AUTHORIZED = NO
 IMPLEMENTATION_STARTED = NO
 IMP036K_ACCEPTED = NO
-NEXT_GATE = ARCHITECTURE_FIT
+NEXT_GATE = DESIGN_READINESS
 CURRENT_PRODUCT_SLICE = IMP-036J
 CANONICAL_PATH = /home/ajoshi/repos/boba-bear-platform
 EVALUATED_BRANCH = docs/imp036k-product-experience-definition
