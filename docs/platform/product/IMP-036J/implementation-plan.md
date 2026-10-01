@@ -943,7 +943,7 @@ Founder can give that verdict.
 | Guarantee | Where it lives | What must not be the guarantee |
 |---|---|---|
 | One active complimentary Offer per brand | Partial unique index, checked inside the activation transaction | An in-memory lock in the editor |
-| One active first-order guard per customer | Partial unique index on `RESERVED` and `CONSUMED`, taken after `customer_auth_users FOR UPDATE` and before the cart or checkout | A browser flag, a customer boolean column, or an unordered application check |
+| One active first-order guard per customer | Partial unique index on `RESERVED` and `CONSUMED`, enforced when the guard is inserted after `customer_auth_users FOR UPDATE`, then cart, then checkout, then payment and attempt, then promotion and coupon locks | A browser flag, a customer boolean column, or an unordered application check |
 | One active guard per payment, and one zero-payable guard per snapshot | Locked partial unique indexes on `payment_id` and on `checkout_snapshot_id` when `payment_id` is null | One guard row per first-order Offer |
 | Ordinary Promotion claims | Existing claim rows, one per applied Promotion, on the existing reserve, consume, and release path | Using the purchase-level guard as a claim or as a capacity counter |
 | Guard reserve | `startPayment` and `retryPayment` insert exactly one `RESERVED` guard when the winning binding contains one or more first-order-only Offers | `prepareCheckoutForPayment` or a customer page writing the guard |
