@@ -2,15 +2,15 @@
 {
   "status": "CURRENT",
   "authority": "ACCEPTED_STATE",
-  "stateVersion": "STATE-R174",
+  "stateVersion": "STATE-R175",
   "acceptedThrough": "IMP-036I",
   "currentProductSlice": "IMP-036J",
-  "nextProductSlice": "IMP-037",
+  "nextProductSlice": "IMP-036K",
   "pendingAcceptance": "NONE",
   "gtmBoundary": "IMP-040",
   "governanceHealth": "ALIGNED",
   "lastReviewed": "2026-10-01",
-  "supersedes": "STATE-R173"
+  "supersedes": "STATE-R174"
 }
 -->
 
@@ -37,7 +37,7 @@ Accepted Range:            IMP-001 → IMP-036I (including IMP-005A and IMP-026C
 Current Product Implementation: IMP-037 (unresolved held predecessor; provider-blocked; not acceptance)
 Pending Acceptance:             NONE
 Current Product Slice:          IMP-036J — Promotions, Coupons & Offers
-Next Product Slice:             IMP-037 — Backup, Restore & Migration Readiness
+Next Product Slice:             IMP-036K — Revenue Recommendations
 Unresolved Predecessor:         IMP-037 — Backup, Restore & Migration Readiness
 Current Governance Activity:    IMP-036J PRODUCT_DEFINITION APPROVED / GATE PASS
                               IMP-036J EXPERIENCE_DEFINITION APPROVED / GATE PASS
@@ -100,7 +100,8 @@ Current Governance Activity:    IMP-036J PRODUCT_DEFINITION APPROVED / GATE PASS
                               IMPLEMENTATION_AUTHORIZATION_EVIDENCE: PR#332/5926464685;
                               IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_1;
                               FOUNDER_UAT: NOT_PERFORMED;
-                              GTM-R176 / STATE-R174;
+                              GTM-R177 / STATE-R175;
+                              prior tip GTM-R176 / STATE-R174;
                               prior tip GTM-R175 / STATE-R173;
                               prior tip GTM-R174 / STATE-R172;
                               prior tip GTM-R173 / STATE-R171;
@@ -127,7 +128,9 @@ Current Governance Activity:    IMP-036J PRODUCT_DEFINITION APPROVED / GATE PASS
                               IMP036J_IMPLEMENTATION_STARTED: NO;
                               IMP036J_IMPLEMENTATION_COMPLETE: NO;
                               IMP036J_ACCEPTED: NO;
-                              D-382 CURRENT additional sequencing;
+                              D-382 AMENDED by D-383 for Revenue Recommendations identity, activation, and sequencing only;
+                              D-382 Promotions-first remainder binding;
+                              D-383 CURRENT parallel definition preparation;
                               D-377 remains CURRENT program pause;
                               prior tip GTM-R160 / STATE-R158;
                               prior tip GTM-R159 / STATE-R157;
@@ -271,7 +274,7 @@ Current Governance Activity:    IMP-036J PRODUCT_DEFINITION APPROVED / GATE PASS
                               D-375_CREATED: YES; ARCH_R21_CREATED: YES;
                               D-377_CREATED: YES; D-378_CREATED: YES; ARCH_R22_CREATED: YES;
                               D-379_CREATED: YES; D-380_CREATED: YES; ARCH_R23_CREATED: YES;
-                              Decision register tip DR-21;
+                              historical IMP-036G decision-register tip DR-21;
                               nextGate: FOUNDER_UAT
                               Founder UAT PASS 2026-09-24 on runtime candidate
                               37bae964f964bddd317e4c290dc146097e4c8f57;
@@ -489,8 +492,37 @@ IMP036J_IMPLEMENTATION_AUTHORIZED: YES
 IMP036J_IMPLEMENTATION_STARTED: NO
 FOUNDER_UAT: NOT_PERFORMED
 IMP036J_STARTED: NO
+IMP036J_IMPLEMENTATION_STARTED: NO
 IMP036J_IMPLEMENTATION_COMPLETE: NO
 IMP036J_ACCEPTED: NO
+IMP-036K: PLANNED
+IMP036K_FORMAL_IDENTITY: YES
+IMP036K_ACTIVATED: YES
+IMP036K_PRODUCT_DEFINITION: NOT_CREATED
+IMP036K_PRODUCT_DEFINITION_GATE: NOT_PERFORMED
+IMP036K_EXPERIENCE_CRITICALITY: X3
+IMP036K_CHANGE_RISK: CR2
+IMP036K_EXPERIENCE_DEFINITION: NOT_CREATED
+IMP036K_EXPERIENCE_GATE: NOT_PERFORMED
+IMP036K_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036K_ARCHITECTURE_LOCKED: NO
+IMP036K_DESIGN_READINESS: NOT_PERFORMED
+IMP036K_IMPLEMENTATION_PLAN: NOT_PERFORMED
+IMP036K_IMPLEMENTATION_AUTHORIZED: NO
+IMP036K_IMPLEMENTATION_STARTED: NO
+IMP036K_IMPLEMENTATION_COMPLETE: NO
+IMP036K_ACCEPTED: NO
+DEALS_ROADMAP_IDENTITY: NONE
+CAMPAIGNS_ROADMAP_IDENTITY: NONE
+REVENUE_RECOMMENDATIONS_ROADMAP_IDENTITY: IMP-036K
+PARALLEL_DEFINITION_ONLY: YES
+PARALLEL_PRODUCT_DEFINITION_PREPARATION: AUTHORIZED
+PARALLEL_EXPERIENCE_DEFINITION_PREPARATION: AUTHORIZED
+D-383_CREATED: YES
+D-382_STATUS: AMENDED
+D-382_AMENDED_BY: D-383
+D-382_AMENDMENT_SCOPE: Revenue Recommendations identity, activation, and sequencing
+SHARED_GOVERNANCE_PERSISTENCE: SERIALIZED
 PROGRAM_PAUSE_AUTHORITY:  D-377
 ```
 
@@ -510,7 +542,7 @@ Prior accepted locked capability architecture:
 [`capabilities/IMP-036F-catalog-menu-pricing-promotions-management.md`](./capabilities/IMP-036F-catalog-menu-pricing-promotions-management.md).
 Earlier accepted locked capability architecture:
 [`capabilities/IMP-036E-store-operations-management.md`](./capabilities/IMP-036E-store-operations-management.md).
-Architecture tip ARCH-R23 / D-379 CURRENT / D-380 CURRENT (`D-379_CREATED: YES`; `D-380_CREATED: YES`; `ARCH_R23_CREATED: YES`; D-378 AMENDED; preserves ARCH-R22 mode remainder, ARCH-R21 / D-375, and ARCH-R20 / D-374). Decision register tip: DR-21.
+Architecture tip ARCH-R23 / D-379 CURRENT / D-380 CURRENT (`D-379_CREATED: YES`; `D-380_CREATED: YES`; `ARCH_R23_CREATED: YES`; D-378 AMENDED; preserves ARCH-R22 mode remainder, ARCH-R21 / D-375, and ARCH-R20 / D-374). Decision register tip: DR-24.
 Detailed accepted-slice marker inventories for IMP-024…IMP-036F remain in the historical STATE
 snapshot and capability/acceptance artifacts.
 
@@ -647,10 +679,10 @@ Cart → Checkout → Payment → Order
 acceptedThrough: IMP-036I
 pendingAcceptance: NONE
 currentProductSlice: IMP-036J
-nextProductSlice: IMP-037 — Backup, Restore & Migration Readiness
+nextProductSlice: IMP-036K — Revenue Recommendations
 PROGRAM_PAUSE: PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED
 PROGRAM_PAUSE_AUTHORITY: D-377
-ADDITIONAL_SEQUENCING_AUTHORITY: D-382
+ADDITIONAL_SEQUENCING_AUTHORITY: D-382 (AMENDED by D-383 only for Revenue Recommendations identity, activation, and sequencing)
 IMP-036F: COMPLETE_AND_ACCEPTED
 IMP-036F_ARCHITECTURE: LOCKED
 IMP036F_ARCHITECTURE_LOCKED: YES
@@ -1039,6 +1071,7 @@ Implementation/review provenance for IMP-036F is recorded in
 
 ## 8. Explicitly Not Yet Accepted
 
+- IMP-036K — Revenue Recommendations (`PLANNED`; `IMP036K_ACTIVATED: YES`; formal identity allocated by D-383 on 2026-10-01; `"IMP-036K"` was previously only a working label; parallel Product Definition and Experience Definition preparation only; `IMP036K_PRODUCT_DEFINITION: NOT_CREATED`; `IMP036K_PRODUCT_DEFINITION_GATE: NOT_PERFORMED`; `IMP036K_EXPERIENCE_CRITICALITY: X3`; `IMP036K_CHANGE_RISK: CR2`; `IMP036K_EXPERIENCE_DEFINITION: NOT_CREATED`; `IMP036K_EXPERIENCE_GATE: NOT_PERFORMED`; `IMP036K_ARCHITECTURE_FIT: NOT_PERFORMED`; `IMP036K_ARCHITECTURE_LOCKED: NO`; `IMP036K_DESIGN_READINESS: NOT_PERFORMED`; `IMP036K_IMPLEMENTATION_PLAN: NOT_PERFORMED`; `IMP036K_IMPLEMENTATION_AUTHORIZED: NO`; `IMP036K_IMPLEMENTATION_STARTED: NO`; `IMP036K_IMPLEMENTATION_COMPLETE: NO`; `IMP036K_ACCEPTED: NO`; RRD-01 through RRD-08 remain discovery source material only)
 - IMP-036J — Promotions, Coupons & Offers (`ARCHITECTURE_LOCKED`; `IMP036J_ACTIVATED: YES`; Product Definition `PD-IMP-036J-DRAFT-6` = `APPROVED`; Product Definition Gate `PASS`; Experience Criticality `X3`; Change Risk `CR2`; Experience Definition `XD-IMP-036J-DRAFT-6` = `APPROVED`; Experience Gate `PASS`; independent review `5342581233`; Architecture Fit `PASS`; source candidate `IMP-036J-FIT-CANDIDATE-9`; evaluated head `052289471cfc2424879932e16fd88d6c16696de8`; prior Candidate 5 Architecture Fit review `5347761109` remains history; architecture LOCKED; Design Readiness `PASS`; source candidate `IMP-036J-DESIGN-CANDIDATE-2`; architect review `5917691904`; Quality/Test Plan finalized; Measurement/Instrumentation Plan finalized; Implementation Plan `PASS`; source `IMP-036J-PLAN-CANDIDATE-1`; architect review `5925360293`; `READY_FOR_IMPLEMENTATION_AUTHORIZATION: YES`; `IMP036J_IMPLEMENTATION_AUTHORIZATION: APPROVED`; `IMP036J_IMPLEMENTATION_AUTHORIZED: YES`; `IMP036J_IMPLEMENTATION_AUTHORIZATION_DATE: 2026-10-01`; `IMP036J_STARTED: NO`; `IMP036J_IMPLEMENTATION_STARTED: NO`; `IMP036J_IMPLEMENTATION_COMPLETE: NO`; `IMP036J_ACCEPTED: NO`; `FOUNDER_UAT: NOT_PERFORMED`; nextGate `IMPLEMENTATION_TRANCHE_1`; activated for Product Definition under D-382; FD-036J-01 APPROVED 2026-09-27; FD-036J-02 APPROVED 2026-09-27; FD-036J-03 APPROVED 2026-09-28; historical DRAFT-5 Product Definition Gate STOP was not persisted; historical Experience Gate PASS events for DRAFT-2 and DRAFT-3 were not persisted; historical Candidates 6, 7, and 8 remain STOP)
 - IMP-037 — Backup, Restore & Migration Readiness (`IMPLEMENTATION_IN_PROGRESS`; `IMP037_HOLD: YES`; `IMP037_ACTIVATED: YES`; Product Definition APPROVED / `PD-IMP-037-DRAFT-1`; Gate PASS; Architecture Fit PASS; architecture LOCKED; implementation AUTHORIZED / STARTED; `IMP037_IMPLEMENTATION_COMPLETE: NO`; `IMP037_ACCEPTED: NO`; independent Architecture Fit review PASS; authorization evidence PR#171/5743814105; start evidence PR#172/5744869269; `PHASE1_BLOCK_STATUS: BLOCKED_PROVIDER_ACCESS`; held under D-377 program pause)
 - IMP-038 — Security & Privacy Hardening (`IMPLEMENTATION_IN_PROGRESS (HOLD — IMPLEMENTATION_COMPLETE / NOT_ACCEPTED)`; `IMP038_HOLD: YES`; `IMP038_ACTIVATED: YES`; historical `CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038` preserved; Product Definition APPROVED / `PD-IMP-038-DRAFT-2`; Gate PASS; Architecture Fit PASS; architecture LOCKED; independent Architecture Fit review PASS (reviewed head `3b03164d6581c5a98a893c24e92eaddece004e90`); implementation AUTHORIZED / STARTED / COMPLETE (`FOUNDER_IMP038_IMPLEMENTATION_AUTHORIZATION: CURSOR_SESSION_MANDATE`); `IMP038_IMPLEMENTATION_COMPLETE: YES`; `IMP038_ACCEPTED: NO`; `IMP038_ACCEPTANCE_BLOCKED_BY_IMP037: YES`; `IMP038_EXTERNAL_ASSESSMENT: DEFERRED_UNTIL_PRE_GTM_APPLICATION_SCOPE_STABILIZES`; frozen runtime `dc6b19e6f88d4084e424d927e6467c374596fb0a` / tree `c3aefb57f3f6c941d7f14907b6c095c4aa7f0547` / fingerprint `2800fe11397ee2a01e9decf572f85adf5c3a8b244ca34b1f53d579e05feac589`; `GAP-EXT-ASSESS-001: NOT_CLOSED`; held under D-377 program pause; `D-375_CREATED: YES`; `ARCH_R21_CREATED: YES`)
@@ -1067,7 +1100,65 @@ Implementation/review provenance for IMP-036F is recorded in
 Agents may propose a STATE delta in their report. Only independent acceptance updates this file's
 accepted position and may promote `governanceHealth` to `ALIGNED`.
 
-## 10. STATE-R174 record
+## 10. STATE-R175 record
+
+```text
+STATE-R175 = IMP036K_PARALLEL_DEFINITION_AUTHORIZATION
+supersedes: STATE-R174
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-036K
+nextGate: IMPLEMENTATION_TRANCHE_1
+formalLifecycle: ARCHITECTURE_LOCKED
+IMP036J_IMPLEMENTATION_AUTHORIZATION: APPROVED
+IMP036J_IMPLEMENTATION_AUTHORIZED: YES
+IMP036J_IMPLEMENTATION_STARTED: NO
+IMP036J_IMPLEMENTATION_COMPLETE: NO
+IMP036J_ACCEPTED: NO
+IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_1
+IMP036K_FORMAL_IDENTITY: YES
+IMP036K_ACTIVATED: YES
+IMP036K_PRODUCT_DEFINITION: NOT_CREATED
+IMP036K_PRODUCT_DEFINITION_GATE: NOT_PERFORMED
+IMP036K_EXPERIENCE_CRITICALITY: X3
+IMP036K_CHANGE_RISK: CR2
+IMP036K_EXPERIENCE_DEFINITION: NOT_CREATED
+IMP036K_EXPERIENCE_GATE: NOT_PERFORMED
+IMP036K_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036K_ARCHITECTURE_LOCKED: NO
+IMP036K_DESIGN_READINESS: NOT_PERFORMED
+IMP036K_IMPLEMENTATION_PLAN: NOT_PERFORMED
+IMP036K_IMPLEMENTATION_AUTHORIZED: NO
+IMP036K_IMPLEMENTATION_STARTED: NO
+IMP036K_IMPLEMENTATION_COMPLETE: NO
+IMP036K_ACCEPTED: NO
+PARALLEL_PRODUCT_DEFINITION_PREPARATION: AUTHORIZED
+PARALLEL_EXPERIENCE_DEFINITION_PREPARATION: AUTHORIZED
+PARALLEL_DEFINITION_ONLY: YES
+D-383: CURRENT
+D-382: AMENDED
+D-382_AMENDED_BY: D-383
+D-382_AMENDMENT_SCOPE: Revenue Recommendations identity, activation, and sequencing
+SHARED_GOVERNANCE_PERSISTENCE: SERIALIZED
+IMP037_HOLD: YES
+IMP038_HOLD: YES
+ARCH-R23: UNCHANGED
+DECISION_REGISTER: DR-24
+```
+
+D-383 allocates formal identity **IMP-036K — Revenue Recommendations** on 2026-10-01.
+`"IMP-036K"` was previously only a working label. Authorization is parallel Product Definition
+preparation and Experience Definition preparation only. Product Definition, Experience
+Definition, Architecture Fit, Design Readiness, and the Implementation Plan are not performed.
+Implementation is unauthorized and unstarted. `currentProductSlice` stays IMP-036J.
+`acceptedThrough` stays IMP-036I. IMP-036J implementation authorization stays APPROVED and
+not started, with next gate `IMPLEMENTATION_TRANCHE_1`. D-383 amends D-382 only for Revenue
+Recommendations identity, activation, and sequencing. D-382's Promotions-first decisions remain
+binding. Shared ROADMAP, STATE, and decision-register persistence remains serialized. This
+record does not start IMP-036J Tranche 1, perform Architecture Fit, or accept either slice.
+
+## 10. STATE-R174 record (historical prior tip)
 
 ```text
 STATE-R174 = IMP036J_IMPLEMENTATION_AUTHORIZATION

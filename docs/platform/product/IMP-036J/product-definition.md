@@ -124,13 +124,13 @@ is not the current candidate.
 ### Program context (CURRENT tip — verify against ROADMAP/STATE)
 
 ```text
-ROADMAP = GTM-R176
-STATE = STATE-R174
+ROADMAP = GTM-R177
+STATE = STATE-R175
 ARCHITECTURE = ARCH-R23
-decision-register = DR-23
+decision-register = DR-24
 acceptedThrough = IMP-036I
 currentProductSlice = IMP-036J
-nextProductSlice = IMP-037
+nextProductSlice = IMP-036K
 pendingAcceptance = NONE
 PROGRAM_PAUSE = PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED
 PROGRAM_PAUSE_AUTHORITY = D-377
@@ -169,8 +169,9 @@ and
 [`../../discovery/offers-deals-campaigns-story-map.md`](../../discovery/offers-deals-campaigns-story-map.md)
 remains historical discovery authority. ODC-01..ODC-14 stay approved discovery direction.
 This draft consumes that direction only for Promotions, Coupons, and Offers. It does not
-reopen those discovery decisions and does not assign IMP identity to Deals, Campaigns, or
-Revenue Recommendations.
+reopen those discovery decisions and does not itself assign IMP identity to Deals, Campaigns,
+or Revenue Recommendations. D-383 later allocates Revenue Recommendations as IMP-036K for
+parallel definition preparation only. Deals and Campaigns stay unallocated.
 
 ---
 
@@ -182,7 +183,7 @@ Revenue Recommendations.
 | Product Definition version / document status | `PD-IMP-036J-DRAFT-6`; **Document status: APPROVED**; `PRE_GATE_DRAFT = NO`; `PRODUCT_DEFINITION_IN_PROGRESS = NO`; `DRAFT_READY_FOR_GATE = NO`; `APPROVED = YES`. |
 | Product owner / approval evidence | Founder sequencing authorization 2026-09-27 (Promotions first) recorded as **D-382**. FD-036J-01 and FD-036J-02 approved by the Founder on 2026-09-27. FD-036J-03 approved by the Founder on 2026-09-28. Founder Product Definition Gate-PASS approval on 2026-09-28. Independent Product Definition Gate PASS against HEAD `24aa3ced280dbfc18ac52275ed97ae919904481d` / tree `e7fd72f2af3b0267f438bf9b65e7f7f23bf43f27` / fingerprint `9f9c708306a76e140ea4143feaf8e007ca975f03c3dc418f65e30aaf8bbbd1e1`. |
 | Process / verification policy | PD-2 / EXP-1 / LANG-1 / TEST-1. This Product Definition was approved under PD-1. PD-2 does not reopen that gate. |
-| Canonical anchors | VISION-1; ROADMAP GTM-R176; STATE STATE-R174; ARCH-R23; DR-23 (D-377 CURRENT; D-382 CURRENT; next decision ID D-383; no D-383 created); EXP-1; LANG-1; accepted IMP-016 Promotions; accepted IMP-036F commercial management; ADR-007 CURRENT; accepted IMP-036H fulfilment mode; accepted IMP-036I scheduled timing |
+| Canonical anchors | VISION-1; ROADMAP GTM-R177; STATE STATE-R175; ARCH-R23; DR-24 (D-377 CURRENT; D-382 AMENDED by D-383 for Revenue Recommendations identity, activation, and sequencing only; D-383 CURRENT; next decision ID D-384); EXP-1; LANG-1; accepted IMP-016 Promotions; accepted IMP-036F commercial management; ADR-007 CURRENT; accepted IMP-036H fulfilment mode; accepted IMP-036I scheduled timing |
 | Repository candidate | `/home/ajoshi/repos/boba-bear-platform`; branch recorded at publication; HEAD / tree / fingerprint recorded by the activating change. This draft is not an acceptance candidate. |
 | Capability lifecycle / authorization | ROADMAP/STATE: formal lifecycle `ARCHITECTURE_LOCKED`; `IMP036J_ACTIVATED: YES`; Product Definition `APPROVED`; Gate `PASS`; Experience Criticality `X3`; Experience Definition `APPROVED` (`XD-IMP-036J-DRAFT-6`); Experience Gate `PASS`; next gate `IMPLEMENTATION_TRANCHE_1`; Fit `PASS`; architecture `LOCKED`; Design Readiness `PASS`; Quality/Test Plan finalized; Measurement/Instrumentation Plan finalized; Implementation Plan `PASS`; implementation `AUTHORIZED` / `NOT_STARTED`; `IMP036J_ACCEPTED: NO` |
 | Relevant capability architecture / ADRs | Locked capability architecture [`../../capabilities/IMP-036J-promotions-coupons-offers.md`](../../capabilities/IMP-036J-promotions-coupons-offers.md). Architecture Fit `PASS` for current source `IMP-036J-FIT-CANDIDATE-9`. Architecture is `LOCKED`. Prior lock history: `IMP-036J-FIT-CANDIDATE-5` independent review `5347761109`. Binding money authority remains accepted Promotion / Coupon / Pricing / Checkout Snapshot (ADR-007; IMP-016; IMP-036F). Fulfilment mode remains D-378 / IMP-036H. Scheduled timing remains D-379 / IMP-036I. |
@@ -298,7 +299,7 @@ Discovery story IDs `ODC-US-*` are discovery examples, not these formal story ID
 |---|---|---|---|---|
 | `V1_ACCEPTANCE_SLICE` | `US-036J-001` … `US-036J-013` | `AC-036J-001-01` … `AC-036J-013-04`, including `AC-036J-002-05`, `AC-036J-012-04`, `AC-036J-012-05`, `AC-036J-012-06`, `AC-036J-013-01`, `AC-036J-013-02`, `AC-036J-013-03`, and `AC-036J-013-04` | `GJ-FIRST-ORDER`, `GJ-RETURNING-ORDER` for explainable savings on an otherwise accepted purchase path. This slice does not redefine those journeys' non-offer steps. | A customer can receive an automatic or coupon-backed Offer, understand the saving, receive a qualifying complimentary menu item when that Offer is selected, and pay a revalidated total. An authorized operator can operate the accepted Promotion/Coupon surface for the V1 benefit and eligibility rules this definition includes. `MANDATORY_STORIES = US-036J-001..US-036J-013`. `COMPLIMENTARY_MENU_ITEM_V1_ACCEPTANCE = MANDATORY`. |
 | `FOLLOW_UP` | Items already classified as follow-up inside the commercial / Offer domain. See section 23 `FOLLOW_UP_NOT_V1`. | Not defined | Not added | Requires later authorization. Not a rejection and not a cut from an approved IMP-036J V1. |
-| `PARKED_SEQUENCED_FUTURE_CAPABILITIES` | Deals, Campaigns, and Revenue Recommendations. See section 23. | Not defined | Not added | Parked discovery. Not rejected. No IMP identity is assigned here. |
+| `PARKED_SEQUENCED_FUTURE_CAPABILITIES` | Deals and Campaigns remain parked. Revenue Recommendations is IMP-036K under D-383 for parallel definition preparation only. See section 23. | Not defined | Not added | Deals and Campaigns stay parked discovery with no IMP identity. IMP-036K is not an IMP-036J story and is not implementation-authorized. |
 | `EXPLICIT_NON_GOALS_AND_PROHIBITED_DIRECTIONS` | Second money engine, second Promotion evaluator, second Pricing engine, generic platform-wide rules engine, arbitrary marketing-automation platform. | Not defined | Not added | Intentionally not part of the desired architecture or product. Not deferred. |
 
 ## 9. User stories
@@ -1217,13 +1218,15 @@ not current.
 ### PARKED_SEQUENCED_FUTURE_CAPABILITIES
 
 These were not rejected. They must not disappear. They were deliberately sequenced out of
-IMP-036J by D-382. They are not "never planned." No future IMP number is assigned.
+IMP-036J by D-382. They are not "never planned." D-382 assigned no IMP numbers. D-383 later
+amends only Revenue Recommendations identity, activation, and sequencing. Deals and Campaigns
+still have no IMP identity.
 
 | Capability | Status | What is preserved |
 |---|---|---|
 | Deals | `PARKED_DISCOVERY`; `ROADMAP_IDENTITY = NONE`; `ACTIVATED = NO` | Historical Founder-approved discovery direction. The earlier broad discovery included meaningful Deal V1 candidates: fixed-price combo, Meal for One, Meal for Two / Group, multi-item Deal, choice-based combo, Deal discovery/browse, Deal configuration, direct Add-to-cart, and Deal availability behavior. |
 | Campaigns | `PARKED_DISCOVERY`; `ROADMAP_IDENTITY = NONE`; `ACTIVATED = NO` | Historical Founder-approved discovery direction. Campaign means a first-class business/operator orchestration concept over Deals/Offers, timing, scope, merchandising, objective, redemption visibility, and descriptive measurement. Earlier discovery V1 direction included lightweight Campaign orchestration and descriptive measurement. |
-| Revenue Recommendations | `PARKED_DISCOVERY`; `ROADMAP_IDENTITY = NONE`; `ACTIVATED = NO` | A separate parked discovery initiative. It was not part of the original Offers/Deals/Campaigns capability. This definition does not change its product semantics and does not imply it was removed from that earlier plan. |
+| Revenue Recommendations | Formal identity `IMP-036K` under D-383; parallel Product Definition and Experience Definition preparation only; `PRODUCT_DEFINITION = NOT_CREATED`; `EXPERIENCE_DEFINITION = NOT_CREATED`; `ARCHITECTURE_FIT = NOT_PERFORMED`; `IMPLEMENTATION_AUTHORIZED = NO` | Previously parked discovery. It was not part of the original Offers/Deals/Campaigns capability. This IMP-036J definition does not change its product semantics. D-383 allocates the identity and does not approve a Product Definition, Experience Definition, Architecture Fit, or implementation. |
 
 ### FOLLOW_UP_NOT_V1
 

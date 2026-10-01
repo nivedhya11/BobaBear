@@ -204,7 +204,7 @@ authorization (this Product Definition is **not** lifecycle authority):
 acceptedThrough = IMP-036I
 currentProductSlice = IMP-036J
 pendingAcceptance = NONE
-nextProductSlice = IMP-037
+nextProductSlice = IMP-036K
 
 IMP036H: COMPLETE_AND_ACCEPTED
 IMP036I_ACTIVATED: YES
@@ -232,11 +232,11 @@ IMP039: NOT_ACTIVATED / HOLD
 IMP040: NOT_ACTIVATED / HOLD
 
 PROGRAM_PAUSE_AUTHORITY = D-377
-ADDITIONAL_SEQUENCING_AUTHORITY = D-382
-ROADMAP = GTM-R176
-STATE = STATE-R174
+ADDITIONAL_SEQUENCING_AUTHORITY = D-382 (AMENDED by D-383 only for Revenue Recommendations identity, activation, and sequencing)
+ROADMAP = GTM-R177
+STATE = STATE-R175
 ARCHITECTURE = ARCH-R23
-decision-register = DR-23
+decision-register = DR-24
 ```
 
 Product Definition Gate PASS for IMP-036I does **not** resolve IMP-037/038, activate
