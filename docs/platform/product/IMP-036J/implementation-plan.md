@@ -298,7 +298,7 @@ not a target count.
 | 3 | `COMMERCIAL_EVALUATION` | 1 | Yes. Domain functions and quote projection. No new customer route |
 | 4 | `COMMERCIAL_COMMANDS` | 1, 2, 3 | Yes. Existing routes gain the locked command behaviour. Customer pages may still show the previous presentation until tranche 5 |
 | 5 | `CUSTOMER_PRESENTATION` | 4 | Yes. Customer surfaces render server results and post committed observations |
-| 6 | `WORKFORCE_AUTHORING` | 1 and 3 | Yes. May merge beside 4 and 5. Does not wait on customer UI |
+| 6 | `WORKFORCE_AUTHORING` | 1, 3, and 4 | Yes. May merge beside 5. Must not merge before command enforcement |
 | 7 | `MEASUREMENT_REPORTING` | 2, 4, and 5 | Yes. Read-only published calculation over stored facts |
 | 8 | `INTEGRATION_HARDENING` | 1–7 | Evidence and same-scope fixes only |
 
@@ -308,15 +308,19 @@ T2 measurement schema          (after T1 so migration journal order is serial)
 T3 evaluation                  (after T1; parallel with T2 is not required)
 T4 commands                    (after T1, T2, T3)
 T5 customer presentation       (after T4)
-T6 workforce                   (after T1 and T3; parallel with T4 and T5)
+T6 workforce                   (after T1, T3, and T4; parallel with T5 only)
 T7 reporting                   (after T4 and T5 writers exist)
 T8 integration                 (after T1–T7)
 ```
 
 T2 does not read commercial promotion columns. It follows T1 so the next migration
-identity stays a single forward chain. T6 does not call customer checkout. An operator
-activation is provable before the customer surfaces exist, against the T3 evaluator and
-the T1 unique index.
+identity stays a single forward chain. T6 does not call customer checkout and does
+not wait on customer presentation. It does wait on tranche 4. An operator must not be
+able to activate a first-order Offer, a capped Offer, a delivery waiver, or a
+complimentary item until the purchase predicate, cap enforcement, complimentary
+unavailability rejection, and snapshot sealing for that line are already on `main`.
+Draft authoring ships in the same tranche as activation, so an earlier deploy cannot
+activate those fields.
 
 Each tranche keeps `main` valid: new SQL is forward-only and additive; new routes reuse
 existing façades; a tranche does not ship a customer control whose server command is
@@ -759,7 +763,8 @@ uses the same label as the page and does not say Total payable.
 ## 11. Tranche 6 — workforce authoring
 
 Goal: authorized operators configure and activate the new fields on the existing
-commercial surface.
+commercial surface, only after tranche 4 enforces first-order eligibility, caps,
+complimentary unavailability, and snapshot sealing.
 
 Existing permissions only. `handleAdminPromotionsRoute` bodies gain the fields the
 architecture already names:
