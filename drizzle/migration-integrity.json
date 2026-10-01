@@ -245,7 +245,7 @@
     {
       "tag": "0048_imp036j_tranche2_measurement_persistence",
       "path": "drizzle/0048_imp036j_tranche2_measurement_persistence.sql",
-      "sha256": "c42acbc71b2cd6d013dc730bc93c0912f7068e56607b18b4c53d6ba5bd041745"
+      "sha256": "d7f518115ec0acfe4f69cffa502a697c3135b59378fff59ef7bce5faede8c997"
     }
   ]
 }

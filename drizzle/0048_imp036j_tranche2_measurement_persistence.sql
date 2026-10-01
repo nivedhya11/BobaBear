@@ -261,11 +261,9 @@ CREATE TABLE "app"."measurement_report_snapshots" (
 	"window_start" timestamp with time zone NOT NULL,
 	"window_end" timestamp with time zone NOT NULL,
 	"report_as_of" timestamp with time zone NOT NULL,
-	"published_result" jsonb NOT NULL,
 	CONSTRAINT "measurement_report_snapshots_publication_pk" PRIMARY KEY("metric","window_start","window_end","report_as_of"),
 	CONSTRAINT "measurement_report_snapshots_metric_check" CHECK ("app"."measurement_report_snapshots"."metric" ~ '^[A-Z][A-Z0-9_]*$'),
-	CONSTRAINT "measurement_report_snapshots_window_check" CHECK ("app"."measurement_report_snapshots"."window_start" < "app"."measurement_report_snapshots"."window_end"),
-	CONSTRAINT "measurement_report_snapshots_result_object_check" CHECK (jsonb_typeof("app"."measurement_report_snapshots"."published_result") = 'object')
+	CONSTRAINT "measurement_report_snapshots_window_check" CHECK ("app"."measurement_report_snapshots"."window_start" < "app"."measurement_report_snapshots"."window_end")
 );
 --> statement-breakpoint
 CREATE TABLE "app"."offer_result_views" (
@@ -354,20 +352,16 @@ CREATE TRIGGER offer_result_views_surface_scope
 BEFORE INSERT OR UPDATE ON app.offer_result_views
 FOR EACH ROW
 EXECUTE FUNCTION app.enforce_measurement_surface_scope();--> statement-breakpoint
-CREATE OR REPLACE FUNCTION app.measurement_report_snapshots_forbid_mutation()
+CREATE OR REPLACE FUNCTION app.measurement_report_snapshots_forbid_update()
 RETURNS trigger
 LANGUAGE plpgsql
 AS $fn$
 BEGIN
-  RAISE EXCEPTION 'measurement_report_snapshots are insert-only'
+  RAISE EXCEPTION 'measurement_report_snapshots cannot be updated'
     USING ERRCODE = '23514';
 END;
 $fn$;--> statement-breakpoint
 CREATE TRIGGER measurement_report_snapshots_forbid_update
 BEFORE UPDATE ON app.measurement_report_snapshots
 FOR EACH ROW
-EXECUTE FUNCTION app.measurement_report_snapshots_forbid_mutation();--> statement-breakpoint
-CREATE TRIGGER measurement_report_snapshots_forbid_delete
-BEFORE DELETE ON app.measurement_report_snapshots
-FOR EACH ROW
-EXECUTE FUNCTION app.measurement_report_snapshots_forbid_mutation();
+EXECUTE FUNCTION app.measurement_report_snapshots_forbid_update();

@@ -600,7 +600,6 @@ export const measurementReportSnapshotsTable = appSchema.table(
     windowStart: timestamp("window_start", { withTimezone: true }).notNull(),
     windowEnd: timestamp("window_end", { withTimezone: true }).notNull(),
     reportAsOf: timestamp("report_as_of", { withTimezone: true }).notNull(),
-    publishedResult: jsonb("published_result").notNull(),
   },
   (table) => [
     primaryKey({
@@ -614,10 +613,6 @@ export const measurementReportSnapshotsTable = appSchema.table(
     check(
       "measurement_report_snapshots_window_check",
       sql`${table.windowStart} < ${table.windowEnd}`,
-    ),
-    check(
-      "measurement_report_snapshots_result_object_check",
-      sql`jsonb_typeof(${table.publishedResult}) = 'object'`,
     ),
   ],
 );

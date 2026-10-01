@@ -923,10 +923,10 @@ describe("IMP-036J tranche 2 measurement persistence", () => {
       await withTestDatabaseClient(url, (client) =>
         client.pool.query(
           `INSERT INTO app.measurement_report_snapshots (
-             metric, window_start, window_end, report_as_of, published_result
+             metric, window_start, window_end, report_as_of
            ) VALUES (
              'CHECKOUT_REVIEW_TO_SUCCESSFUL_DIRECT_ORDER_COMPLETION_RATE',
-             $1::timestamptz, $2::timestamptz, $2::timestamptz, '{"denominator":0}'::jsonb
+             $1::timestamptz, $2::timestamptz, $2::timestamptz
            )`,
           [windowStart, windowEnd],
         ),
@@ -934,24 +934,47 @@ describe("IMP-036J tranche 2 measurement persistence", () => {
       await expectUniqueViolation(
         url,
         `INSERT INTO app.measurement_report_snapshots (
-           metric, window_start, window_end, report_as_of, published_result
+           metric, window_start, window_end, report_as_of
          ) VALUES (
            'CHECKOUT_REVIEW_TO_SUCCESSFUL_DIRECT_ORDER_COMPLETION_RATE',
-           $1::timestamptz, $2::timestamptz, $2::timestamptz, '{"denominator":1}'::jsonb
+           $1::timestamptz, $2::timestamptz, $2::timestamptz
          )`,
         [windowStart, windowEnd],
       );
       await expectCheckViolation(
         url,
         `UPDATE app.measurement_report_snapshots
-         SET published_result = '{"denominator":9}'::jsonb
+         SET window_end = window_end + interval '1 day'
          WHERE metric = 'CHECKOUT_REVIEW_TO_SUCCESSFUL_DIRECT_ORDER_COMPLETION_RATE'`,
       );
       await expectCheckViolation(
         url,
-        `DELETE FROM app.measurement_report_snapshots
-         WHERE metric = 'CHECKOUT_REVIEW_TO_SUCCESSFUL_DIRECT_ORDER_COMPLETION_RATE'`,
+        `INSERT INTO app.measurement_report_snapshots (
+           metric, window_start, window_end, report_as_of
+         ) VALUES (
+           'CHECKOUT_REVIEW_TO_SUCCESSFUL_DIRECT_ORDER_COMPLETION_RATE',
+           $1::timestamptz, $2::timestamptz, $2::timestamptz
+         )
+         ON CONFLICT (metric, window_start, window_end, report_as_of)
+         DO UPDATE SET report_as_of = EXCLUDED.report_as_of`,
+        [windowStart, windowEnd],
       );
+      await withTestDatabaseClient(url, async (client) => {
+        const beforeDelete = await client.pool.query<{ c: string }>(
+          `SELECT count(*)::text AS c FROM app.measurement_report_snapshots
+           WHERE metric = 'CHECKOUT_REVIEW_TO_SUCCESSFUL_DIRECT_ORDER_COMPLETION_RATE'`,
+        );
+        expect(beforeDelete.rows[0]?.c).toBe("1");
+        await client.pool.query(
+          `DELETE FROM app.measurement_report_snapshots
+           WHERE metric = 'CHECKOUT_REVIEW_TO_SUCCESSFUL_DIRECT_ORDER_COMPLETION_RATE'`,
+        );
+        const afterDelete = await client.pool.query<{ c: string }>(
+          `SELECT count(*)::text AS c FROM app.measurement_report_snapshots
+           WHERE metric = 'CHECKOUT_REVIEW_TO_SUCCESSFUL_DIRECT_ORDER_COMPLETION_RATE'`,
+        );
+        expect(afterDelete.rows[0]?.c).toBe("0");
+      });
 
       await withTestDatabaseClient(url, async (client) => {
         await client.pool.query(`DELETE FROM app.checkouts WHERE id = $1::uuid`, [successorId]);
@@ -1055,6 +1078,17 @@ describe("IMP-036J tranche 2 measurement persistence", () => {
              AND column_name = 'occurred_at'`,
         );
         expect(origins.rows).toEqual([]);
+        const snapshotColumns = await client.pool.query<{ column_name: string }>(
+          `SELECT column_name FROM information_schema.columns
+           WHERE table_schema = 'app' AND table_name = 'measurement_report_snapshots'
+           ORDER BY ordinal_position`,
+        );
+        expect(snapshotColumns.rows.map((row) => row.column_name)).toEqual([
+          "metric",
+          "window_start",
+          "window_end",
+          "report_as_of",
+        ]);
         const triggers = await client.pool.query<{ tgname: string }>(
           `SELECT tgname FROM pg_trigger
            WHERE tgname IN (
@@ -1067,9 +1101,17 @@ describe("IMP-036J tranche 2 measurement persistence", () => {
         );
         expect(triggers.rows.map((row) => row.tgname)).toEqual([
           "commercial_presentation_observations_surface_scope",
-          "measurement_report_snapshots_forbid_delete",
           "measurement_report_snapshots_forbid_update",
           "offer_result_views_surface_scope",
+        ]);
+        const snapshotTriggers = await client.pool.query<{ tgname: string }>(
+          `SELECT tgname FROM pg_trigger
+           WHERE tgrelid = 'app.measurement_report_snapshots'::regclass
+             AND NOT tgisinternal
+           ORDER BY tgname`,
+        );
+        expect(snapshotTriggers.rows.map((row) => row.tgname)).toEqual([
+          "measurement_report_snapshots_forbid_update",
         ]);
       });
     });

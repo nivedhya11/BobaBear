@@ -13646,12 +13646,6 @@
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true
-        },
-        "published_result": {
-          "name": "published_result",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
         }
       },
       "indexes": {},
@@ -13677,10 +13671,6 @@
         "measurement_report_snapshots_window_check": {
           "name": "measurement_report_snapshots_window_check",
           "value": "\"app\".\"measurement_report_snapshots\".\"window_start\" < \"app\".\"measurement_report_snapshots\".\"window_end\""
-        },
-        "measurement_report_snapshots_result_object_check": {
-          "name": "measurement_report_snapshots_result_object_check",
-          "value": "jsonb_typeof(\"app\".\"measurement_report_snapshots\".\"published_result\") = 'object'"
         }
       },
       "isRLSEnabled": false
