@@ -145,6 +145,17 @@ export const checkoutsTable = appSchema.table(
     activeSnapshotId: uuid("active_snapshot_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+    /**
+     * IMP-036J measurement identity. Opaque journey correlation.
+     * Not unique: a successor Checkout of the same unpaid attempt copies it.
+     * Null on historical rows. Assignment is later application behaviour.
+     */
+    checkoutJourneyKey: uuid("checkout_journey_key"),
+    /**
+     * Causal predecessor order within one cart. Null on historical rows.
+     * Assigned ordinals are unique per cart. Not created_at or UUID order.
+     */
+    cartCausalOrdinal: bigint("cart_causal_ordinal", { mode: "bigint" }),
   },
   (table) => [
     // Scoped ownership: active snapshot must belong to this Checkout.
@@ -273,6 +284,14 @@ export const checkoutsTable = appSchema.table(
       "checkouts_updated_at_after_created_at_check",
       sql`${table.updatedAt} >= ${table.createdAt}`,
     ),
+    check(
+      "checkouts_cart_causal_ordinal_positive_check",
+      sql`${table.cartCausalOrdinal} is null or ${table.cartCausalOrdinal} > 0`,
+    ),
+    uniqueIndex("checkouts_cart_causal_ordinal_uidx")
+      .on(table.cartId, table.cartCausalOrdinal)
+      .where(sql`${table.cartCausalOrdinal} is not null`),
+    index("checkouts_checkout_journey_key_idx").on(table.checkoutJourneyKey),
     // At most one non-terminal Checkout per Cart.
     uniqueIndex("checkouts_one_non_terminal_per_cart_uidx")
       .on(table.cartId)

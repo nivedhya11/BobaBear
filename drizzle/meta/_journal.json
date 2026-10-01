@@ -337,6 +337,13 @@
       "when": 1790856781667,
       "tag": "0047_imp036j_tranche1_commercial_persistence",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1790880736204,
+      "tag": "0048_imp036j_tranche2_measurement_persistence",
+      "breakpoints": true
     }
   ]
 }
