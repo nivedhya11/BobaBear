@@ -464,6 +464,38 @@ Implementation is not complete, and IMP-036J is not accepted. The next gate is
 `IMPLEMENTATION_TRANCHE_1`. Formal lifecycle is `IMPLEMENTATION_IN_PROGRESS`. Architecture
 remains locked. Change Risk is recorded in ROADMAP/STATE and is not an AGENTS risk level.
 
+## IMP-036K gate persistence
+
+IMP-036K is the next product slice under D-383. It is not the current implementation slice.
+Architect review `5380398013` recorded Product Definition Gate PASS and Experience Gate PASS.
+Architecture Fit has not been performed. Implementation is not authorized.
+
+```text
+PRODUCT_DEFINITION = PD-IMP-036K-DRAFT-1 APPROVED / PASS
+EXPERIENCE_DEFINITION = XD-IMP-036K-DRAFT-1 APPROVED / PASS
+EXPERIENCE_CRITICALITY = X3
+CHANGE_RISK = CR2
+ARCHITECTURE_FIT = NOT_PERFORMED
+ARCHITECTURE_LOCKED = NO
+DESIGN_READINESS = NOT_PERFORMED
+QUALITY_TEST_PLAN = NOT_PERFORMED
+MEASUREMENT_PLAN = NOT_PERFORMED
+IMPLEMENTATION_PLAN = NOT_PERFORMED
+IMPLEMENTATION_AUTHORIZED = NO
+IMPLEMENTATION_STARTED = NO
+IMP036K_ACCEPTED = NO
+NEXT_GATE = ARCHITECTURE_FIT
+CURRENT_PRODUCT_SLICE = IMP-036J
+CANONICAL_PATH = /home/ajoshi/repos/boba-bear-platform
+EVALUATED_BRANCH = docs/imp036k-product-experience-definition
+EVALUATED_HEAD = 072932df00c445c8215c61f19f81971bf657b160
+EVALUATED_TREE = a4912e6c649cad25094412ac07a005fbb441567e
+EVALUATED_WORKING_TREE_FINGERPRINT = f2886ed726c77301589ba36dccd602da6d44daadd7a0f2dec4e59aada3162c46
+```
+
+Experience Gate PASS is not Design Readiness PASS. RRD-01 through RRD-08 remain discovery
+provenance. D-383 remains the sequencing authority.
+
 ## AI execution and documentation efficiency
 
 **MINIMUM_SUFFICIENT_CONTEXT** means enough verified authority to perform and review the bounded
