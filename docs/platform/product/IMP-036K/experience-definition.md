@@ -46,9 +46,12 @@ RAW_BACKEND_LANGUAGE_TO_CUSTOMER = PROHIBITED
 ```
 
 This is the first Experience Definition candidate for IMP-036K. It owns presentation, interaction,
-trust, and measurement intent. Product entitlement stays in
-[`product-definition.md`](./product-definition.md). This candidate does not execute the Experience
-Gate, perform Architecture Fit, or authorize implementation.
+trust, recovery experience, and measurement intent that is about how the experience is observed.
+Product entitlement, eligibility, cardinality, and false-claim boundaries stay in
+[`product-definition.md`](./product-definition.md). Exact customer wording in this document is
+not Product acceptance copy. `DRAFT_READY_FOR_GATE = YES` on the Product candidate does not
+execute the Experience Gate. This candidate does not execute the Experience Gate, perform
+Architecture Fit, or authorize implementation.
 
 Experience Intent:
 
@@ -109,7 +112,7 @@ added while the customer was looking away.
 | No recommendation module exists in the current storefront | `FACT` | Repository search of `src/` on source main | — | Re-check at implementation |
 | Customers will feel safer when suggestions stay visually secondary and require an explicit add | `ASSUMPTION` | `FOUNDER_HEURISTIC_REVIEW` | A secondary module could still feel like a hard step | `XR-IMP-036K-001`, `XR-IMP-036K-002`, Founder Experience UAT |
 | “Goes great with this”, “Make it yours”, and “Complete your order” are understandable without claiming co-purchase or personalization | `ASSUMPTION` | `FOUNDER_HEURISTIC_REVIEW` | Copy could still be read as a guarantee | Content QA and `XR-IMP-036K-015` |
-| An unexplained absence of suggestions is less damaging than an error or a holdout explanation | `PRODUCT_DECISION` | RRD-04 and RRD-06, converted in the Product Definition | Someone may later add explanatory empty states that feel like errors | `XR-IMP-036K-006`, `XR-IMP-036K-016` |
+| An unexplained absence of suggestions is less damaging than an error or a holdout explanation | `ASSUMPTION` | Experience content owned here. Product owns when presentation is suppressed. | Someone may later add explanatory empty states that feel like errors | `XR-IMP-036K-006`, `XR-IMP-036K-016` |
 | Recommendations will raise incremental contribution without lowering conversion | `HYPOTHESIS` | `FOUNDER_HEURISTIC_REVIEW` | Click optimization could harm checkout | Holdout measurement in section 17. Not acceptance. |
 
 There is no `CUSTOMER_USABILITY_RESEARCH`, `PRODUCTION_BEHAVIOURAL_DATA`, or `CONTROLLED_EXPERIMENT` evidence yet.
@@ -387,21 +390,35 @@ Guardrails:
 - Payment completion
 - recommendation failure must not degrade primary-commerce availability
 
-Incrementality direction: approximately 10% session-level or cart-level holdout, stable for the
-active ordering session or cart, as defined in the Product Definition from RRD-04. Holdout is
-the control. The other sessions may see recommendations. The holdout sees none and receives no
-special message. The comparison does not change catalog, availability, prices, promotions,
+When a customer is in the holdout, no recommendation module is presented and there is no
+holdout-specific explanatory customer treatment (`XR-IMP-036K-016`). That silence stays
+Experience authority. The Product Definition requires V1 design and measurement readiness for a
+controlled holdout whose target direction is approximately 10%, stable for the active ordering
+session or cart. It does not require a production candidate to activate that share in order to
+pass Product acceptance. When the comparison runs, holdout is the control. Other sessions may
+see recommendations. The comparison does not change catalog, availability, prices, promotions,
 fulfilment, cart rules, checkout, payment, or entitlements.
 
-A later Measurement Plan compares holdout with non-holdout on the primary metric and the
-guardrails. Insufficient traffic or an unstable assignment is `INSUFFICIENT_EVIDENCE`, not a
-winner. Product acceptance stays separate from the experiment result. The experiment cannot waive
-eligibility, accessibility, pricing, or payment truth.
+The later Measurement/Instrumentation Plan must finalize, before implementation authorization
+where required:
+
+- assignment unit
+- population
+- actual control percentage and activation
+- primary metric
+- guardrails
+- observation rule
+- stop condition
+- interpretation rule
+
+`INSUFFICIENT_EVIDENCE` remains valid. This candidate does not select an assignment algorithm,
+persistence, vendor, event transport, or schema. A later comparison of holdout with
+non-holdout uses the primary metric and the guardrails. Insufficient traffic or an unstable
+assignment is `INSUFFICIENT_EVIDENCE`, not a winner. Product acceptance stays separate from the
+experiment result. The experiment cannot waive eligibility, accessibility, pricing, or payment
+truth.
 
 Baseline: none. There is no current recommendation behaviour to use as a production baseline.
-
-Observation window, stop condition, and any numeric success threshold belong to the Measurement
-Plan. This candidate does not set them.
 
 Learning signal: a guarded lift in attributable contribution is the useful result. A guardrail
 drop in checkout or payment completion means the result is not success. A high click rate alone
@@ -611,9 +628,9 @@ Proof later: paired session check against a session that may receive recommendat
 | Fail-open | `BR-036K-010` | RR-US-100, RR-US-101 |
 | Stale recovery | `BR-036K-011` | RR-US-091 |
 | Removal without menu deletion | `BR-036K-012`, `BR-036K-013` | RRD-03 |
-| Popular wording | `BR-036K-019`, `BR-036K-020` | RRD-01 |
-| Hidden priority and margin | `BR-036K-026` | RRD-05 |
-| Headings and neutral fallback | `BR-036K-026` | RRD-02, RR-US-312 |
+| Popular wording, owned here | Evidence permission is `BR-036K-019`, `BR-036K-020`. The word itself is this document. | RRD-01 |
+| Hidden priority and margin | `BR-036K-026` product non-visibility. Exact forbidden phrases are this document. | RRD-05 |
+| Headings and neutral fallback, owned here | Product owns cardinality and false-claim boundaries in `BR-036K-026`. | RRD-02, RR-US-312 |
 | Future Drop wording only | `BR-036K-024`, `BR-036K-025` | RRD-05; not a V1 dependency |
-| Holdout silence | `BR-036K-023` | RRD-04, RR-US-321 |
+| Holdout silence, owned here | Product policy is `BR-036K-023`. Exact silence is `XR-IMP-036K-016`. | RRD-04, RR-US-321 |
 | Workforce clarity | `BR-036K-021`, `BR-036K-022` | RR-US-200, RR-US-211, RR-US-212 |
