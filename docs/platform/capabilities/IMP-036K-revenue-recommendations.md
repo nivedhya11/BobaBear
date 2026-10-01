@@ -29,7 +29,7 @@
   "newRoleRequired": false,
   "globalDecisionRequired": false,
   "architectDecisionRequired": false,
-  "lastReviewed": "2026-10-01",
+  "lastReviewed": "2026-10-02",
   "bindingDecisions": ["D-368", "D-369", "D-371", "D-373", "D-382", "D-383"],
   "dependsOn": ["IMP-020", "IMP-023", "IMP-028B", "IMP-028C", "IMP-036F", "IMP-036H", "IMP-036I"]
 }
@@ -86,9 +86,11 @@ ML_VECTOR_LLM_INFRASTRUCTURE_REQUIRED = NO
 HOLDOUT_ACTIVATED = NO
 ARCHITECT_DECISION_REQUIRED = NONE
 UNRESOLVED_ARCHITECTURE_QUESTIONS = NONE
-PRIOR_ARCHITECTURE_FIT_REVIEW = 5383371804
+PRIOR_ARCHITECTURE_FIT_REVIEW = 5383814980
 PRIOR_ARCHITECTURE_FIT_VERDICT = STOP
-PRIOR_ARCHITECTURE_FIT_HEAD = 77a06feecff8882e059c08bff1a4edfed81eb8cb
+PRIOR_ARCHITECTURE_FIT_HEAD = 985f57dc21cd26e6d12a8cb413de6681a12c46e3
+EARLIER_REPAIRED_ARCHITECTURE_FIT_REVIEW = 5383371804
+EARLIER_REPAIRED_ARCHITECTURE_FIT_HEAD = 77a06feecff8882e059c08bff1a4edfed81eb8cb
 CANDIDATE_2_CREATED = NO
 ```
 
@@ -99,13 +101,18 @@ Plan, authorize implementation, or start runtime or schema work.
 
 Architect review `5383371804` stopped the previous text of this same candidate at head
 `77a06feecff8882e059c08bff1a4edfed81eb8cb`. That STOP is not rewritten as a pass. The candidate
-identity stays `IMP-036K-FIT-CANDIDATE-1`. No Candidate 2 is created. This revision corrects the
-three findings in place: add-time eligibility revalidation, presentation-bound assisted
-attribution, and holdout assignment before exposure.
+identity stays `IMP-036K-FIT-CANDIDATE-1`. No Candidate 2 is created. The following revision
+corrected those three findings in place: add-time eligibility revalidation, server-owned set
+membership before assistance, and holdout assignment before exposure. Architect review
+`5383814980` accepted those three repairs and stopped head
+`985f57dc21cd26e6d12a8cb413de6681a12c46e3` on one remaining finding: a server-returned set was
+treated as actual presentation. This revision corrects that finding in the same candidate.
+Server issuance and committed presentation stay distinct occurrences.
 
-Shared lifecycle files stay at GTM-R179 / STATE-R177 / ARCH-R23 / DR-24. IMP-036J remains the
-current implementation slice. D-383 remains the sequencing authority and is not amended.
-RRD-01 through RRD-08 remain discovery provenance and are not architecture authority.
+Shared lifecycle files on this branch stay at GTM-R179 / STATE-R177 / ARCH-R23 / DR-24.
+IMP-036J remains the current implementation slice. D-383 remains the sequencing authority and
+is not amended. RRD-01 through RRD-08 remain discovery provenance and are not architecture
+authority.
 
 This candidate is intentionally isolated from those shared revisions so IMP-036J can continue.
 Listing this file in the locked-capability index would overclaim the gate. That index is
@@ -145,8 +152,26 @@ D-383 = CURRENT
 NEXT_FREE_DECISION_ID = D-384
 IMP037_HOLD = YES
 IMP038_HOLD = YES
-SOURCE_DRIFT = NONE
+SOURCE_DRIFT_AT_BRANCH_CREATION = NONE
+LIVE_CANONICAL_MAIN_AT_THIS_REVISION = 95cddfa96b3fcdc1945890a41a3b4bc3b032d83f
+LIVE_ROADMAP = GTM-R180
+LIVE_STATE = STATE-R178
+LIVE_ARCHITECTURE = ARCH-R23
+LIVE_DECISION_REGISTER = DR-24
+LIVE_DRIFT_SOURCE = IMP-036J Tranche 1 PASS reconciliation
+LIVE_DRIFT_INVALIDATES_CANDIDATE = NO
+REBASE_TO_REWRITE_PROVENANCE = NO
+LATER_ARCHITECTURE_FIT_PERSISTENCE_MUST_REANCHOR = YES
+IMP036J_REGRESSION_ALLOWED = NO
 ```
+
+The source block above is the branch-creation provenance. It is not a claim that canonical
+`main` is still that commit. Live canonical `main` is
+`95cddfa96b3fcdc1945890a41a3b4bc3b032d83f` (`GTM-R180` / `STATE-R178` / `ARCH-R23` / `DR-24`).
+That advance is IMP-036J Tranche 1 PASS reconciliation. It does not invalidate this candidate
+and this revision does not rebase to rewrite that historical provenance. A later Architecture
+Fit persistence must refresh and re-anchor on the then-current canonical `main` and must not
+regress IMP-036J.
 
 Product and Experience gate provenance stays the evaluated candidate recorded by Architect
 review `5380398013`: branch `docs/imp036k-product-experience-definition`, head
@@ -192,7 +217,7 @@ Design Readiness still owns final geometry, focus maps, and component mapping.
 | Invariant | How this candidate honours it |
 |---|---|
 | ARCH-G05 | Popular evidence and assisted purchase read purchased Checkout Snapshot truth bound to Orders. Recommendations do not author payable history. |
-| ARCH-G08 / ARCH-G11 | Caller-supplied prices, eligibility, permissions, holdout flags, and recommendation payloads are not authority. |
+| ARCH-G08 / ARCH-G11 | Caller-supplied prices, eligibility, permissions, holdout flags, recommendation payloads, and unvalidated render observations are not authority. The browser must not become authoritative for pricing, tax, promotion eligibility, payment truth, authorization, or Order lifecycle. |
 | ARCH-G09 / ARCH-G22 / D-371 | Relationship writes use compare-and-swap. Cart adds, quantity, and removal keep existing Cart revision and unit-sequence authority. |
 | ARCH-G12 / ARCH-G14 | No recommendation service, queue, feature store, vector index, LLM, or vendor. Campaign and Limited Drop stay non-dependencies. |
 | ARCH-G19 / D-368 | Eligibility and category membership are read from the existing Customer Menu projection inputs. The projection does not become Catalog, Pricing, Availability, Cart, or Order authority. Display price is not payable truth. |
@@ -251,7 +276,7 @@ section 22 and are not binding product gaps.
 | 9 | Cart mutation authority | `REUSE_EXISTING` | Existing `addCartLine` and the existing customization flow. No parallel Cart API. |
 | 10 | Recommendation add revalidation | `EXTEND_EXISTING` | Before recommendation-origin units or attribution are committed, the existing Cart mutation re-resolves current catalog, assortment, selected Outlet, availability, fulfilment, required configuration, and the applicable relationship period. |
 | 11 | Removal suppression | `EXTEND_EXISTING` | Cart-scoped suppression row. Not catalog or menu state. |
-| 12 | Recommendation-assisted attribution | `EXTEND_EXISTING` | Server-owned presentation correlation, then a unit-level server mark copied onto the snapshot line as non-payable provenance. Candidate eligibility alone is not that proof. |
+| 12 | Recommendation-assisted attribution | `EXTEND_EXISTING` | Server-issued set correlation, then a server-validated committed presentation, then a unit-level server mark copied onto the snapshot line as non-payable provenance. Issuance alone, eligibility alone, and an unvalidated client observation are not that proof. |
 | 13 | Measurement / analytics | `EXTEND_EXISTING` | Meanings and durable proof identities are fixed here. Encoding stays with the later Measurement Plan. |
 | 14 | Holdout readiness | `EXTEND_EXISTING` | Inactive until the Measurement Plan activates it. When activated, no recommendation exposure occurs before a stable server-owned assignment. Not cart-id-only after a prior exposure. No customer-profile key. |
 | 15 | Popular evidence | `REUSE_EXISTING` | Read `orders` joined to Checkout Snapshot lines with `line_origin = cart`. No second order store. |
@@ -275,7 +300,10 @@ PAYABLE_TRUTH = Checkout Snapshot
 PURCHASED_HISTORY = Order bound to that snapshot
 POPULAR_COUNTS = derived read over that purchased history
 SUPPRESSION = active Cart
-ATTRIBUTION = server-owned presentation correlation, then cart line units, then a non-priced snapshot copy
+ATTRIBUTION = server-issued set correlation, then server-validated committed presentation, then the bound recommendation action, then cart line units, then a non-priced snapshot copy
+SERVER_SET_CORRELATION = issuance proof of set identity, placement, and candidate membership
+SERVER_SET_CORRELATION_IS_PRESENTATION_PROOF = NO
+PRESENTATION_OCCURRENCE = server-validated observation that the module or a specific item was actually shown
 HOLDOUT_ASSIGNMENT = inactive until activation; when activated, a stable server-owned ordering-journey assignment before exposure. Not a customer profile and not browser authority
 CART_AUTHORITY = existing Cart
 RECOMMENDATION_ADD_REVALIDATION = EXTEND_EXISTING
@@ -479,9 +507,15 @@ display price when shown, whether the existing flow is direct add or customizati
 Popular indicator only when section 7.15 passes. It does not contain priority, margin,
 relationship kind names, holdout assignment, or suppression reasons.
 
-When that read returns a qualifying set, the server records the presentation correlation in
-section 7.12. A suppressed, empty, or failed read records no correlation. The client does not
-supply that correlation.
+When that read returns a qualifying set, the server records the issued-set correlation in
+section 7.12 (`SET_ISSUED` / `SERVER_SET_CORRELATION`). That record proves the server issued a
+particular eligible set and its candidate membership. It does not prove the browser committed
+or showed the module or any item. A returned response may never be committed. A suppressed,
+empty, or failed read records no issued set. The client does not supply the set id, membership,
+eligibility, rank, relationship, or holdout.
+
+The customer-safe payload carries that server-issued correlation so the browser can later echo
+it as an observation. Echoing it does not create the set.
 
 Fail-open (`BR-036K-010`, `XR-IMP-036K-007`):
 
@@ -496,8 +530,9 @@ Direct add calls existing `addCartLine` through `POST /api/v1/cart/lines`. Confi
 items open the existing customization interaction. The cart changes only when that flow later
 calls the same `addCartLine` or configuration update. There is no recommendation-specific cart
 route. A recommendation action uses that same mutation. Section 7.10 revalidates eligibility
-and section 7.12 verifies presentation before any recommendation-origin unit or assistance mark
-is committed.
+before recommendation-origin units are committed. Section 7.12 writes recommendation-origin
+provenance and the assistance mark only after the server has validated actual committed
+presentation. A missing presentation occurrence does not by itself fail the cart.
 
 Direct add is offered only when existing structure already allows a complete configuration
 without a further customer choice: one eligible variant, and every required modifier group
@@ -517,7 +552,7 @@ PARALLEL_CART_API = NO
 CLIENT_ELIGIBILITY_AUTHORITY = NO
 ```
 
-A rendered set does not reserve stock, price, or eligibility (`BR-036K-029`).
+An issued set and a shown set do not reserve stock, price, or eligibility (`BR-036K-029`).
 
 Current `addCartLine` locks the cart, checks `expectedRevision`, runs
 `validateCartLineStructure`, coalesces by canonical configuration, and appends cart-line units.
@@ -527,9 +562,10 @@ lifecycle, or a recommendation relationship's effective period. Later cart evalu
 is therefore not `REUSE_EXISTING`.
 
 The recommendation action stays on `POST /api/v1/cart/lines` and `addCartLine`. Locking, revision
-checks, and coalescing stay the existing Cart authority. Inside that mutation, before any
-recommendation-origin unit or assistance mark is committed, the server re-resolves authoritative
-current:
+checks, and coalescing stay the existing Cart authority. The action is recognized only when it
+carries the recommendation-action identity the server bound at issuance. Inside that mutation,
+before any unit from that action is committed, whether or not presentation proof will allow an
+assistance mark, the server re-resolves authoritative current:
 
 - product and catalog lifecycle
 - assortment
@@ -587,43 +623,112 @@ A later manual add of that product creates cart units with no recommendation att
 Proof required by `BR-036K-014` and `AC-036K-009-02` is a chain:
 
 ```text
-presentation
-→ recommendation action
-→ accepted add
-→ same underlying purchased identity
+server issued a qualifying set
+→ candidate belonged to that issued set
+→ actual committed presentation was observed and server-validated
+→ customer used the bound recommendation action
+→ add-time authoritative eligibility passed
+→ existing Cart accepted the add
+→ same underlying recommended identity on the purchased Order
 VIEW_THROUGH = OUT_OF_V1
+ISSUANCE_ALONE_PROVES_ASSISTANCE = NO
 ELIGIBILITY_ALONE_PROVES_ASSISTANCE = NO
+CLIENT_OBSERVATION_ALONE_PROVES_ASSISTANCE = NO
 ```
 
-1. a recommendation set was presented
-2. the customer used the recommendation action associated with that presentation
-3. existing commerce accepted the add
-4. the same underlying identity is on the purchased Order
-
-Eligibility of a catalog identity is not proof that a recommendation set presented it.
+Occurrences are distinct. Experience section 17 and `AC-036K-009-01` stay the product meanings.
+A server return is not a render, and a set render is not an item impression.
 
 ```text
-PRESENTATION_PROOF_AUTHORITY = server-owned recommendation-set correlation
-CLIENT_CANDIDATE_ID_OR_BOOLEAN = NOT_ATTRIBUTION_AUTHORITY
+SET_ISSUED = server returned a qualifying recommendation set
+SET_RENDER = the recommendation module was actually shown
+ITEM_IMPRESSION = a specific recommendation item was actually shown
+SET_RENDERED = SET_RENDER
+SERVER_SET_CORRELATION = server proof that a particular eligible set and candidate membership was issued
+SERVER_SET_CORRELATION ≠ presentation proof
 ```
 
-The recommendation read records that correlation only when it returns a qualifying set. The
-correlation names the set, the placement, each member's candidate identity, and the
-recommendation action bound to that member. The server writes it. A client render
-acknowledgement, a client-supplied candidate id, a relationship id, or a boolean recommendation
-flag does not create it. View-through is not recorded and is not inferred from an impression.
+#### Set issuance
 
-The add path writes recommendation-assistance provenance only when the server verifies all of
-the following against that correlation:
+The recommendation read records `SERVER_SET_CORRELATION` only when it returns a qualifying set:
 
-- a qualifying recommendation set was returned for presentation
-- the candidate belonged to that set
-- placement and candidate identity match
-- the customer used the recommendation action bound to that proof
+```text
+server creates/records the issued set correlation
+→ set id
+→ placement
+→ candidate membership
+→ recommendation action identity bound to each member
+→ customer-safe payload
+```
 
-If the request carries a recommendation-action correlation the server cannot verify, the
-mutation creates no recommendation-origin unit and writes no assistance mark. Absence of a
-recommendation-action correlation is an ordinary Menu or Product add and stays unmarked.
+The server remains authoritative for set identity, candidate membership, placement, eligibility,
+ranking, holdout assignment, and relationship provenance. A suppressed, empty, or failed read
+records no issued set. The browser does not create that record.
+
+#### Actual presentation observation
+
+Only after the recommendation module or a specific item has actually committed and been shown
+may the browser report that occurrence, using the server-issued correlation:
+
+```text
+SET_RENDER
+ITEM_IMPRESSION
+```
+
+The browser is an observer only. It must not invent a set, candidate membership, a candidate
+identity outside that set, eligibility, rank, relationship, holdout assignment, or recommendation
+assistance. A client candidate id, relationship id, boolean, or unvalidated render event does
+not create a presentation occurrence and does not create attribution.
+
+The server validates the observation against the already-issued set. A `SET_RENDER` observation
+must name that issued set and placement. An `ITEM_IMPRESSION` observation must name a candidate
+that already belongs to that set; the server keeps the rank and relationship it stored at
+issuance. When validation succeeds, the server records the authoritative presentation
+occurrence. When validation fails, no presentation occurrence is recorded.
+
+A server-issued set that is never actually shown has no `SET_RENDER` and no `ITEM_IMPRESSION`.
+Click and add events may corroborate a later interaction. They do not redefine an unobserved
+set response as a render. View-through is not recorded and is not inferred because an issued set
+contained the product.
+
+#### Assisted attribution
+
+The add path writes recommendation-assistance provenance only when the server can prove all of
+the following:
+
+1. the server issued a qualifying set
+2. the candidate belonged to that issued set
+3. actual committed presentation of that set, and of that item, was observed and server-validated
+4. the customer used the recommendation action bound to that issued member
+5. add-time authoritative eligibility in section 7.10 passed
+6. existing Cart accepted the add
+7. the same underlying recommended identity survived to the purchased Order
+
+A server-issued but never rendered set is insufficient. Eligibility of a catalog identity is
+insufficient. Containment of the product in an issued payload is insufficient. An ordinary Menu
+or Product add carries no recommendation-action correlation and stays unmarked. A client-supplied
+candidate id, relationship id, or boolean does not turn that add into assisted provenance.
+
+```text
+PRESENTATION_PROOF_AUTHORITY = server-validated presentation occurrence against SERVER_SET_CORRELATION
+CLIENT_CANDIDATE_ID_OR_BOOLEAN = NOT_ATTRIBUTION_AUTHORITY
+COMMERCE_FAIL_OPEN = YES
+ATTRIBUTION_FAIL_CLOSED = YES
+```
+
+If the request presents a recommendation action and section 7.10 revalidation fails, the
+mutation is rejected. No unit is created and no assistance mark is written. Prior lines remain.
+
+If presentation-observation persistence fails, or the server cannot validate committed
+presentation for that action:
+
+- the recommendation module may still function
+- no presentation occurrence is recorded from the failed or invalid observation
+- existing Cart may still commit the product add when commerce accepts it
+- those units carry no recommendation-origin provenance and no assistance mark
+- Product, Cart, Checkout, and Payment are not failed because measurement failed
+
+Absence of a recommendation-action correlation remains an ordinary Menu or Product add.
 
 Representation:
 
@@ -643,12 +748,13 @@ Representation:
   third commercial origin and is ignored by price, promotion, tax, and payment.
 - Assisted purchase is true only when an Order exists for that snapshot and a marked snapshot
   line for that identity is present. Cancelled orders are not assisted purchases.
-- The client cannot set the mark. A candidate id, relationship id, or boolean in the add body is
-  not the presentation correlation and is not authority to attribute the add.
+- The client cannot set the mark. A candidate id, relationship id, boolean, or unvalidated
+  render event is not presentation proof and is not authority to attribute the add.
 
 If writing the mark fails after that verification has passed, the cart mutation still commits.
-The line exists. Assisted purchase is then not claimed. That failure does not skip the
-presentation check or the eligibility revalidation. Measurement failure does not block commerce.
+The line exists. Assisted purchase is then not claimed. That failure does not skip presentation
+validation or the eligibility revalidation. Measurement failure does not block commerce and does
+not claim assistance without the seven proofs above.
 
 ### 7.13 Measurement and analytics
 
@@ -656,18 +762,19 @@ Event meanings required by `BR-036K-030` and Experience section 17:
 
 | Meaning | Owner | Durable signal | Not this |
 |---|---|---|---|
-| Recommendation-set render | Recommendation read, when the server returns a qualifying set and records the presentation correlation | Placement, set correlation, holdout false | A customer message, a client acknowledgement, or a payment event |
-| Item impression | Recommendation read | Candidate id, placement, rank, internal strategy kept off the customer surface | Customer-visible strategy names |
-| Click | Customer action on a suggestion | Candidate id, placement, set id | An add |
+| Set issuance (`SET_ISSUED`) | Recommendation read, when the server returns a qualifying set and records `SERVER_SET_CORRELATION` | Set id, placement, candidate membership, bound recommendation action | A render, an item impression, a customer message, or a payment event |
+| Recommendation-set render (`SET_RENDER`) | Server, after it validates a browser observation that the module was actually shown | Placement, issued set correlation, holdout false | Server return alone, a client-invented set, an unvalidated render event, a customer message, or a payment event |
+| Item impression (`ITEM_IMPRESSION`) | Server, after it validates a browser observation that that specific item was actually shown | Issued candidate id, placement, server-stored rank, internal strategy kept off the customer surface | Membership in the returned payload without the item being shown, a candidate outside the issued set, customer-visible strategy names |
+| Click | Customer action on a suggestion | Candidate id, placement, set id | An add, or a redefinition of an unobserved return as a render |
 | Add attempt | Customer action that asks to add or to open customization | Candidate id, placement | A successful add |
-| Successful add | Cart acceptance | Cart id, unit ids, placement | Opening customization |
+| Successful add | Cart acceptance | Cart id, unit ids, placement | Opening customization, or assistance without validated presentation |
 | Removal | Cart removal of a recommendation-added line | Cart id, candidate id | A menu delete |
-| Assisted purchase | Order bound to a marked snapshot line | Order id, snapshot line id, candidate identity | View-through |
+| Assisted purchase | Order bound to a marked snapshot line | Order id, snapshot line id, candidate identity | View-through, or an issued set that was never shown |
 
 Acceptance of the slice and the later experiment result stay separate. These meanings do not
-choose storage, transport, vendor, schema, or retention. The Measurement Plan finalizes that
-encoding. The proof boundary stays section 7.12. Section 14 says what that plan must still
-finalize.
+choose storage, transport, vendor, schema, retention, dedupe encoding, or analytics projection.
+The Measurement Plan finalizes that encoding. The proof and occurrence boundary stays section
+7.12. Section 14 says what that plan must still finalize.
 
 Analytics payloads exclude payment secrets, credentials, addresses, names, another customer's
 cart, priority, and margin. Candidate ids are catalog or menu ids.
@@ -826,7 +933,7 @@ slow or failed recommendation read does not block or fail those handlers.
 | Ranking read | Read-only. Same eligible inputs and the same commerce truth produce the same order. No cart write. |
 | Recommendation add | Existing cart lock, revision, and coalesce. Duplicate submit follows existing cart conflict rules. Recommendation-origin eligibility is re-resolved before units or marks are committed. |
 | Suppression | Insert is idempotent per cart and candidate. Removal of an already suppressed candidate does not change catalog. |
-| Attribution mark | Written by the server only after the presentation correlation in section 7.12 verifies. Client retry after a committed add does not create a second mark for the same unit. |
+| Attribution mark | Written by the server only after the seven proofs in section 7.12 hold, including a server-validated presentation occurrence. An issued set without that occurrence writes no mark. Client retry after a committed add does not create a second mark for the same unit. |
 | Holdout | When activation exists, write the server-owned assignment before the first exposure, or suppress presentation until it exists. A later Cart in an already exposed journey does not roll a new assignment. Inactive configuration writes nothing. |
 | Popular read | Read-only. Concurrent orders change later reads. They do not rewrite earlier snapshots. |
 
@@ -847,7 +954,7 @@ relationship. It does not use prior-session click history.
 
 Abuse cases denied:
 
-- a forged candidate, candidate id, or recommendation boolean cannot create recommendation-origin units or an assistance mark
+- a forged candidate, candidate id, recommendation boolean, or unvalidated render event cannot create a presentation occurrence, recommendation-origin provenance, recommendation-origin units, or an assistance mark
 - a recommendation action whose current outlet, assortment, availability, fulfilment, catalog lifecycle, required configuration, or relationship period fails is rejected before those units or marks are committed
 - a disabled relationship or stale display cannot skip that add-time revalidation
 - commercial priority cannot make an ineligible item return
@@ -878,12 +985,34 @@ Customer surface
   → remove suppressed candidates
   → eligibility, then ranking, then ceiling
   → Popular decoration only if section 7.15 passes
-  → when a qualifying set is returned: record the server-owned presentation correlation
-  → customer-safe payload
+  → when a qualifying set is returned: record SERVER_SET_CORRELATION (set issued; not rendered)
+  → customer-safe payload carrying that correlation
 ```
 
-Failure at any step after the primary surface has loaded returns no module, writes no
-presentation correlation, and writes no cart.
+Failure at any step after the primary surface has loaded returns no module, writes no issued
+set, writes no presentation occurrence, and writes no cart.
+
+### Presentation observation path
+
+```text
+After the module has actually been shown
+  → browser reports SET_RENDER using the issued correlation
+  → server validates that observation against the issued set
+  → validation succeeds: record SET_RENDER
+  → validation fails: record no presentation occurrence
+
+After a specific item in that module has actually been shown
+  → browser reports ITEM_IMPRESSION for that issued member
+  → server validates membership against the issued set and keeps server-stored rank
+  → validation succeeds: record ITEM_IMPRESSION
+  → validation fails: record no presentation occurrence
+
+Observation persistence fails
+  → the module may still be shown
+  → no presentation occurrence is stored
+  → later assistance is not claimed
+  → Cart, Checkout, and Payment stay on their existing paths
+```
 
 ### Write path
 
@@ -900,10 +1029,11 @@ Recommendation action
   → same POST /api/v1/cart/lines → addCartLine
   → existing lock and revision
   → re-resolve current eligibility (section 7.10)
-  → verify the presentation correlation (section 7.12)
-  → if ineligible or unverified: reject; no recommendation-origin units; no attribution; prior lines remain
-  → if verified and eligible: existing structure check, coalesce, and unit append
-  → assistance mark only on units created by that action
+  → if ineligible: reject; no units; no attribution; prior lines remain
+  → verify server-validated SET_RENDER and ITEM_IMPRESSION for that issued member (section 7.12)
+  → if presentation is not proven: no recommendation-origin provenance and no assistance mark; existing structure check, coalesce, and unit append may still commit that add unmarked when commerce accepts it
+  → if presentation is proven and eligible: existing structure check, coalesce, and unit append
+  → assistance mark only on units created by that proven action
 
 Removal
   → existing removeCartLine
@@ -924,8 +1054,8 @@ Workforce session
 
 | Boundary | Rule |
 |---|---|
-| Browser | Display and explicit intent only. Not eligibility, presentation proof, or holdout assignment. |
-| Customer-commerce `/api/v1/*` | Read-time eligibility, ranking, existing cart mutation, add-time revalidation, presentation correlation, suppression, attribution |
+| Browser | Display, explicit intent, and observation of what was actually shown. Not set identity, membership, eligibility, rank, relationship, holdout assignment, presentation proof, or attribution. |
+| Customer-commerce `/api/v1/*` | Read-time eligibility, ranking, set issuance, validation of presentation observations, existing cart mutation, add-time revalidation, suppression, attribution |
 | Administration `/api/admin/v1/*` | Relationship configuration |
 | Pricing / Promotion / Checkout / Payment | Unchanged authorities. Recommendation code does not call them to set money. |
 | Orders and snapshots | Read for Popular and assisted purchase. Not written by recommendation ranking. |
@@ -951,7 +1081,8 @@ Later rows, all inside existing Postgres and existing processes:
 | Operator relationship and revision | Menu administration | Become a product, price, or menu entry |
 | Cart suppression | Cart | Update catalog or menu |
 | Cart unit assistance mark | Cart unit | Become line identity, price, or a client-set flag |
-| Recommendation presentation correlation | Server record written only when a qualifying set is returned | Become a client candidate id, a boolean, view-through, or a second cart |
+| Issued-set correlation | Server record written only when a qualifying set is returned | Become presentation proof, a client-invented set, a client candidate id, a boolean, view-through, or a second cart |
+| Presentation occurrence | Server record written only after a browser observation validates against that issued set | Be created by server return alone, by an unvalidated client event, or by a candidate outside the issued set |
 | Snapshot assistance copy | Checkout snapshot line provenance | Change paise totals or `line_origin` |
 | Holdout assignment, only after activation | Server-owned ordering session or cart for that journey, established before exposure | Store a customer profile, a credential copy, a browser-authoritative flag, or a reason the customer can see |
 | Relationship audit | Workforce audit | Be recorded as a menu publish |
@@ -966,6 +1097,9 @@ Measurement event storage is deliberately not selected.
 
 Support and operators can distinguish, in server diagnostics and not in customer copy:
 
+- set issued and not rendered
+- presentation observation rejected
+- presentation-observation persistence failed; commerce continued; assistance not claimed
 - no eligible candidate
 - holdout, only as an internal reason
 - holdout assignment not yet established, only while activation is on
@@ -988,6 +1122,7 @@ RELATIONSHIP_TABLE_ABSENT = same as no relationships
 HOLDOUT_INACTIVE = recommendations may be shown when eligible
 HOLDOUT_ACTIVATED_ASSIGNMENT_UNKNOWN = no recommendation module; commerce unchanged
 POPULAR_READ_FAILS = no Popular treatment
+PRESENTATION_OBSERVATION_WRITE_FAILS = module may still be shown; ordinary cart add may still succeed; assistance is not claimed
 ATTRIBUTION_WRITE_FAILS = cart add still succeeds and assistance is not claimed
 ```
 
@@ -1009,7 +1144,7 @@ customer or existing cart rules change them.
 | `US-036K-006` | Add-time revalidation extends the existing Cart mutation; stale recommendation add creates no units |
 | `US-036K-007` | Separate read, no cart write on failure |
 | `US-036K-008` | Cart-scoped suppression |
-| `US-036K-009` | Server-owned presentation correlation, then unit mark and snapshot copy; view-through excluded |
+| `US-036K-009` | Issued set, then server-validated actual presentation, then unit mark and snapshot copy; issuance alone and view-through excluded |
 | `US-036K-010` | Server ranking; priority after eligibility; weights not contracted |
 | `US-036K-011` | Order and snapshot read; minimum 30; top 3 |
 | `US-036K-012` | `menu.manage` on brand; Customization placement rejected |
@@ -1049,8 +1184,10 @@ Quality / Test Plan must prove, under TEST-1:
 - stale recommendation add is rejected inside the existing Cart mutation and leaves the prior cart
 - recommendation-origin units and assistance marks are absent when current eligibility fails
 - ordinary Menu or Product adds stay unmarked
-- assisted attribution requires the server-owned presentation correlation
-- a client candidate id or boolean does not create that attribution
+- assisted attribution requires an issued set, membership in that set, and a server-validated actual presentation
+- an issued set that was never rendered does not create that attribution
+- a client candidate id, relationship id, boolean, or unvalidated render event does not create that attribution
+- presentation-observation persistence failure does not block ordinary commerce and does not claim assistance
 - fail-open when the recommendation read fails
 - suppression survives reload and does not change menu projection
 - manual re-add is not attributed
@@ -1062,8 +1199,12 @@ Quality / Test Plan must prove, under TEST-1:
 
 Measurement / Instrumentation Plan must still finalize the assignment unit, population, the actual
 control percentage and whether it is activated, primary metric, guardrails, observation rule,
-stop condition, interpretation rule, and the concrete event encoding, including how an internal
-strategy attribute is stored. Section 7.14 constrains activation, not the encoding: the unit is
+stop condition, interpretation rule, and the concrete event encoding, transport, durable schema,
+retention, dedupe encoding, and analytics projection, including how an internal
+strategy attribute is stored. Section 7.13 locks the occurrence boundary those encodings must
+preserve: `SET_ISSUED`, `SET_RENDER`, and `ITEM_IMPRESSION` stay distinct, and only a
+server-validated presentation occurrence satisfies the presentation leg of assistance. Section
+7.14 constrains activation, not the encoding: the unit is
 server-owned, stable for the active ordering session or cart once written, and established
 before first exposure or presentation stays suppressed until it exists. It is not a
 customer-profile personalization flag, a browser-authoritative flag, or an experiment vendor.
