@@ -231,8 +231,11 @@ export function calculateBenefit(
         "complimentary_item missing complimentaryVariantId.",
       );
     }
+    // Only the projected gift line for this Offer — never cart merchandise of the same variant.
+    const giftLineId = `complimentary:${promotion.id}`;
     const giftComponents = snapshot.components.filter(
       (c) =>
+        c.lineId === giftLineId &&
         (c.kind === "variant_base" || c.kind === "modifier" || c.kind === "bundle_delta") &&
         c.variantId === variantId,
     );

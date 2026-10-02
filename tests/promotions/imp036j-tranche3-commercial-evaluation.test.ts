@@ -709,6 +709,54 @@ describe("IMP-036J T3 complimentary gift projection", () => {
     expect(projected.removedGiftGrossPaise).toBe(BigInt(2500));
     expect(projected.postPromotionComponents.some((c) => c.lineId === giftLine)).toBe(false);
   });
+
+  it("complimentary benefit does not allocate against cart lines of the same variant", () => {
+    const gift = complimentaryPromo("g1", "v1", "p1");
+    const snapshot = snapshotOf([
+      moneyComponent({
+        componentId: "cart-base",
+        amountPaise: BigInt(5000),
+        variantId: "v1",
+        productId: "p1",
+        lineId: "L-cart",
+      }),
+      moneyComponent({
+        componentId: "gift-base",
+        amountPaise: BigInt(2500),
+        variantId: "v1",
+        productId: "p1",
+        lineId: "complimentary:g1",
+      }),
+    ]);
+    const benefit = calculateBenefit(gift, snapshot);
+    expect(benefit.eligibleComponentIds).toEqual(["gift-base"]);
+    expect(benefit.nominalBenefitPaise).toBe(BigInt(2500));
+  });
+
+  it("projected complimentary gifts do not inflate amount thresholds", () => {
+    const promo = fixedPrimary("thresh", BigInt(1000), "exclusive", {
+      minimumQualifyingAmountPaise: BigInt(80000),
+    });
+    const snapshot = snapshotOf([
+      moneyComponent({ componentId: "c1", amountPaise: BigInt(50000) }),
+      moneyComponent({
+        componentId: "gift-base",
+        amountPaise: BigInt(40000),
+        variantId: "gv",
+        productId: "gp",
+        lineId: "complimentary:g1",
+      }),
+    ]);
+    const progress = buildThresholdProgress([promo], snapshot, {
+      at: new Date("2026-06-01T00:00:00Z"),
+      brandId: "brand",
+      territoryId: null,
+      organizationId: null,
+      outletId: "o1",
+      salesChannel: "direct",
+    });
+    expect(progress[0]!.remainingAmountPaise).toBe(BigInt(30000));
+  });
 });
 
 describe("IMP-036J T3 first-order classification interface (deferred purchase query)", () => {
