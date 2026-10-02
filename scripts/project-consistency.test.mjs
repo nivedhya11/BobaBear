@@ -6694,6 +6694,7 @@ describe("canonical authority history compression", () => {
 
     const roadmap = readFileSync(new URL("../docs/platform/ROADMAP.md", import.meta.url), "utf8");
     const state = readFileSync(new URL("../docs/platform/STATE.md", import.meta.url), "utf8");
+    const tipIsImp036kDesignReadinessPass = /"roadmapVersion": "GTM-R183"/.test(roadmap);
     const tipIsImp036jTranche2Pass = /"roadmapVersion": "GTM-R182"/.test(roadmap);
     const tipIsImp036kArchitectureLock = /"roadmapVersion": "GTM-R181"/.test(roadmap);
     const tipIsImp036jTranche1Pass = /"roadmapVersion": "GTM-R180"/.test(roadmap);
@@ -6734,7 +6735,32 @@ describe("canonical authority history compression", () => {
     const tipIsAuthorizeStart = /"roadmapVersion": "GTM-R140"/.test(roadmap);
     const tipIsArchitectureLock = /"roadmapVersion": "GTM-R139"/.test(roadmap);
     const tipIsControlledContinuation = /"roadmapVersion": "GTM-R138"/.test(roadmap);
-    if (tipIsImp036jTranche2Pass) {
+    if (tipIsImp036kDesignReadinessPass) {
+      const section2 = roadmap.split("## 2. Current Position")[1]?.split("\n## ")[0] ?? "";
+      const currentMarker = section2.split("\n**GTM-R182**")[0];
+      assert.match(roadmap, /"roadmapVersion": "GTM-R183"/);
+      assert.match(state, /"stateVersion": "STATE-R181"/);
+      assert.match(state, /"acceptedThrough": "IMP-036I"/);
+      assert.match(state, /"currentProductSlice": "IMP-036J"/);
+      assert.match(state, /"nextProductSlice": "IMP-036K"/);
+      assert.match(currentMarker, /IMP036K_DESIGN_READINESS:\s*PASS/);
+      assert.match(currentMarker, /DESIGN_READINESS_ARCHITECT_REVIEW:\s*5396061135/);
+      assert.match(currentMarker, /IMP036K_NEXT_GATE:\s*QUALITY \/ TEST PLAN FINALIZATION/);
+      assert.match(currentMarker, /IMP036K_QUALITY_TEST_PLAN:\s*NOT_PERFORMED/);
+      assert.match(currentMarker, /IMP036K_MEASUREMENT_PLAN:\s*NOT_PERFORMED/);
+      assert.match(currentMarker, /IMP036K_IMPLEMENTATION_AUTHORIZED:\s*NO/);
+      assert.match(currentMarker, /IMP036J_TRANCHE_1:\s*PASS/);
+      assert.match(currentMarker, /IMP036J_TRANCHE_2:\s*PASS/);
+      assert.match(currentMarker, /IMP036J_NEXT_GATE:\s*IMPLEMENTATION_TRANCHE_3/);
+      assert.doesNotMatch(currentMarker, /IMP036K_DESIGN_READINESS:\s*NOT_PERFORMED/);
+      assert.doesNotMatch(currentMarker, /IMP036K_NEXT_GATE:\s*DESIGN_READINESS/);
+      assert.match(state, /STATE-R181\s*=\s*IMP036K_DESIGN_READINESS_PASS/);
+      assert.match(state, /STATE-R180\s*=\s*IMP036J_TRANCHE_2_PASS/);
+      assert.match(roadmap, /5394618739/);
+      assert.match(roadmap, /5395779537/);
+      assert.match(roadmap, /5396061135/);
+    } else if (tipIsImp036jTranche2Pass) {
+
       const section2 = roadmap.split("## 2. Current Position")[1]?.split("\n## ")[0] ?? "";
       const currentMarker = section2.split("\n**GTM-R181**")[0];
       assert.match(roadmap, /"roadmapVersion": "GTM-R182"/);
