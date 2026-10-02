@@ -25051,22 +25051,22 @@ function checkTechnicalInventory() {
   const journal = JSON.parse(readFileSync(journalPath, "utf8"));
   const entries = journal.entries || [];
   const latest = entries[entries.length - 1];
-  if (!latest || latest.tag !== "0047_imp036j_tranche1_commercial_persistence") {
+  if (!latest || latest.tag !== "0048_imp036j_tranche2_measurement_persistence") {
     fail(
       "LATEST_MIGRATION",
-      `Expected latest migration tag 0047_imp036j_tranche1_commercial_persistence, got ${latest && latest.tag}`,
+      `Expected latest migration tag 0048_imp036j_tranche2_measurement_persistence, got ${latest && latest.tag}`,
     );
   } else {
-    note("Latest migration tag 0047_imp036j_tranche1_commercial_persistence");
+    note("Latest migration tag 0048_imp036j_tranche2_measurement_persistence");
   }
   const sqlFiles = readdirSync(path.join(projectRoot, "drizzle")).filter((f) => f.endsWith(".sql"));
-  if (sqlFiles.length !== 48 || entries.length !== 48) {
+  if (sqlFiles.length !== 49 || entries.length !== 49) {
     fail(
       "MIGRATION_COUNT",
-      `Expected 48 migrations, got sql=${sqlFiles.length} journal=${entries.length}`,
+      `Expected 49 migrations, got sql=${sqlFiles.length} journal=${entries.length}`,
     );
   } else {
-    note("Migration count 48");
+    note("Migration count 49");
   }
 
   // Application tables
@@ -25077,10 +25077,10 @@ function checkTechnicalInventory() {
     const t = readFileSync(path.join(schemaDir, name), "utf8");
     tableCount += [...t.matchAll(/appSchema\.table\(/g)].length;
   }
-  if (tableCount !== 142) {
-    fail("TABLE_COUNT", `Expected 142 appSchema.table declarations, got ${tableCount}`);
+  if (tableCount !== 152) {
+    fail("TABLE_COUNT", `Expected 152 appSchema.table declarations, got ${tableCount}`);
   } else {
-    note("Application table count 142");
+    note("Application table count 152");
   }
 
   const catalog = readFileSync(path.join(projectRoot, "src/shared/access-control/catalog.ts"), "utf8");

@@ -3,6 +3,9 @@
  * validation (IMP-005) against a real, disposable PostgreSQL 18 database
  * provisioned by Testcontainers (see global-setup.ts).
  */
+import { readFileSync } from "node:fs";
+import path from "node:path";
+
 import { describe, expect, inject, it } from "vitest";
 
 import { MIGRATIONS_SCHEMA, MIGRATIONS_TABLE } from "../../src/platform/database";
@@ -41,7 +44,10 @@ describe("clean migration replay", () => {
         );
         expect(migrationTable.rows[0]?.exists).toBe(true);
 
-        const journalCount = 46; // drizzle/meta/_journal.json — kept in lockstep with the committed journal
+        const journal = JSON.parse(
+          readFileSync(path.join(process.cwd(), "drizzle/meta/_journal.json"), "utf8"),
+        ) as { entries: unknown[] };
+        const journalCount = journal.entries.length;
         const historyRows = await client.pool.query<{ count: string }>(
           `SELECT COUNT(*) AS count FROM ${MIGRATIONS_SCHEMA}.${MIGRATIONS_TABLE}`,
         );
