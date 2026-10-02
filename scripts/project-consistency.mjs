@@ -43281,8 +43281,21 @@ function checkImp036kDesignReadinessPass(roadmap, state, architecture, decision)
   if (!productText.includes("DESIGN_READINESS = PASS") || !productText.includes("IMP036K_NEXT_GATE = QUALITY / TEST PLAN FINALIZATION")) {
     fail("IMP036K_DR_PRODUCT", "Product Definition lifecycle pointer must record Design Readiness PASS and next gate QUALITY / TEST PLAN FINALIZATION");
   }
+  if (
+    productText.includes("Design Readiness remains `NOT_PERFORMED`") ||
+    productText.includes("| Architecture Fit | `NOT_PERFORMED`") ||
+    productText.includes("| Design Readiness, Quality Plan, Measurement Plan | `NOT_PERFORMED`") ||
+    productText.includes("| Design Readiness dependency | `NOT_PERFORMED`") ||
+    productText.includes("Architecture Fit, Design Readiness, Quality Plan, Measurement Plan, and implementation authorization are not performed") ||
+    productText.includes("Architecture Fit, Design Readiness, and implementation authorization are not performed")
+  ) {
+    fail("IMP036K_DR_PRODUCT", "Product Definition CURRENT narrative must not leave Architecture Fit or Design Readiness as NOT_PERFORMED after Design Readiness PASS");
+  }
   if (!experienceText.includes("DESIGN_READINESS = PASS") || !experienceText.includes("IMP036K_NEXT_GATE = QUALITY / TEST PLAN FINALIZATION")) {
     fail("IMP036K_DR_EXPERIENCE", "Experience Definition lifecycle pointer must record Design Readiness PASS and next gate QUALITY / TEST PLAN FINALIZATION");
+  }
+  if (experienceText.includes("Design Readiness remains unperformed")) {
+    fail("IMP036K_DR_EXPERIENCE", "Experience Definition CURRENT narrative must not leave Design Readiness unperformed after Design Readiness PASS");
   }
   if (/\| D-384 \|/.test(architecture?.text ?? "")) {
     fail("IMP036K_DR_ADR", "Design Readiness persistence must not invent an ADR or D-384");
