@@ -313,7 +313,9 @@ export function projectComplimentary(
   competingNoneChosen: boolean,
 ): ComplimentaryProjection | null {
   if (competingNoneChosen) {
-    return null;
+    // Explicit NONE_CHOSEN must survive into CommercialExplanation.
+    // Do not collapse this into ordinary "no complimentary" (null).
+    return { competingOffers: "NONE_CHOSEN" };
   }
   const gift = winner.appliedPromotions.find((p) => p.isComplimentary === true);
   if (!gift) return null;
@@ -321,12 +323,12 @@ export function projectComplimentary(
   const variantId = gift.complimentaryVariantId ?? null;
   if (!productId || !variantId) return null;
   return {
+    competingOffers: "NONE",
     promotionId: gift.promotionId,
     productId,
     variantId,
     quantity: 1,
     merchandiseChargePaise: 0,
-    competingOffers: "NONE",
   };
 }
 
@@ -342,6 +344,11 @@ export function buildCommercialExplanation(input: {
   let deliverySavingPaise = BigInt(0);
 
   for (const applied of input.winner.appliedPromotions) {
+    // Complimentary internal zeroing allocation is pricing machinery, not a
+    // customer monetary saving. Exclude it from merchandise/order/total saved.
+    if (applied.isComplimentary === true) {
+      continue;
+    }
     const promo = input.promotionsById.get(applied.promotionId);
     const slot =
       applied.slotClass ??

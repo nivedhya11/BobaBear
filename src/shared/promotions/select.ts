@@ -74,9 +74,12 @@ function toApplied(
   couponId?: string | null,
 ): AppliedPromotion | null {
   const complimentary = isComplimentaryPromotion(promotion);
-  // Zero realized delivery / merchandise savings are omitted, but complimentary
-  // identity must survive even when the waived merchandise amount is zero.
-  if (realized <= BigInt(0) && !complimentary) return null;
+  // Zero realized delivery / merchandise savings are omitted from monetary
+  // saving rows, but:
+  // - complimentary identity must survive even when waived merchandise is ₹0
+  // - submitted coupon identity must survive zero-realized delivery waivers so
+  //   equal-payable classification is not collapsed into COUPON_VALID_NOT_SELECTED
+  if (realized <= BigInt(0) && !complimentary && !couponId) return null;
   return {
     promotionId: promotion.id,
     code: promotion.code,

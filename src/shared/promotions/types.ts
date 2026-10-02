@@ -212,14 +212,26 @@ export type ThresholdProgress = Readonly<{
   benefitType: PromotionBenefitType;
 }>;
 
-export type ComplimentaryProjection = Readonly<{
-  promotionId: string;
-  productId: string;
-  variantId: string;
-  quantity: 1;
-  merchandiseChargePaise: 0;
-  competingOffers: "NONE" | "NONE_CHOSEN";
-}>;
+/**
+ * Server-owned complimentary projection.
+ *
+ * Three CommercialExplanation states (do not collapse):
+ * - complimentary === null → no complimentary result
+ * - competingOffers === "NONE" → selected complimentary identity
+ * - competingOffers === "NONE_CHOSEN" → competing gifts discarded; no line projected
+ */
+export type ComplimentaryProjection =
+  | Readonly<{
+      competingOffers: "NONE";
+      promotionId: string;
+      productId: string;
+      variantId: string;
+      quantity: 1;
+      merchandiseChargePaise: 0;
+    }>
+  | Readonly<{
+      competingOffers: "NONE_CHOSEN";
+    }>;
 
 export type CommercialExplanation = Readonly<{
   selectedPromotionIds: readonly string[];

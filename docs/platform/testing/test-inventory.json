@@ -47,7 +47,7 @@
     "packageCoverageCommands": 1,
     "packageInventoryCommands": 2,
     "ciWorkflowFiles": 4,
-    "ciValidationSteps": 119,
+    "ciValidationSteps": 120,
     "protectedEvidenceTrackedFiles": 3,
     "archiveTrackedFiles": 92
   },
@@ -1035,6 +1035,10 @@
         {
           "name": "IMP-036J Tranche 2 proof",
           "run": "npm run test:imp036j:tranche2"
+        },
+        {
+          "name": "IMP-036J Tranche 3 proof",
+          "run": "npm run test:imp036j:tranche3"
         },
         {
           "name": "Install dependencies",

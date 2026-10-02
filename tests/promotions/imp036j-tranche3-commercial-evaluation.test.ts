@@ -542,6 +542,347 @@ describe("IMP-036J T3 complimentary (AC-036J-013)", () => {
     );
     expect(winner.promotionIds).toEqual(["m50"]);
   });
+
+  it("AR-036J-T3-01 A: gift-only non-zero resolved price is not monetary saving", () => {
+    const giftPrice = BigInt(2500);
+    const snapshot = snapshotOf([
+      moneyComponent({ componentId: "c1", amountPaise: BigInt(100000) }),
+      moneyComponent({
+        componentId: "gift-base",
+        amountPaise: giftPrice,
+        variantId: "v1",
+        productId: "p1",
+        lineId: "complimentary:g1",
+      }),
+    ]);
+    const gift = complimentaryPromo("g1", "v1", "p1");
+    const candidates = buildPromotionCandidates([{ promotion: gift }], snapshot);
+    const giftCand = candidates.find((c) => c.promotionIds.includes("g1"))!;
+    expect(giftCand.appliedPromotions.some((a) => a.isComplimentary === true)).toBe(true);
+    expect(
+      giftCand.appliedPromotions.find((a) => a.isComplimentary)?.realizedDiscountPaise,
+    ).toBe(giftPrice);
+    const projected = projectUnselectedComplimentaryGifts(
+      giftCand,
+      new Map([["complimentary:g1", giftPrice]]),
+    );
+    expect(projected.postPromotionComponents.some((c) => c.lineId === "complimentary:g1")).toBe(
+      true,
+    );
+    const giftLine = projected.postPromotionComponents.find(
+      (c) => c.lineId === "complimentary:g1",
+    )!;
+    expect(giftLine.amountPaise).toBe(BigInt(0));
+    const scored = scoreWithoutTax(candidates, BigInt(100000), BigInt(0));
+    const winner = selectBestCandidate(scored, new Map([["g1", gift]]));
+    expect(winner.promotionIds).toContain("g1");
+    const explanation = buildCommercialExplanation({
+      winner: { ...winner, grandTotalPaise: BigInt(100000) },
+      submittedCouponResult: null,
+      couponPresentationClass: null,
+      thresholdProgress: [],
+      complimentaryCompetingNoneChosen: false,
+      promotionsById: new Map([["g1", gift]]),
+    });
+    expect(explanation.complimentary).toEqual({
+      competingOffers: "NONE",
+      promotionId: "g1",
+      productId: "p1",
+      variantId: "v1",
+      quantity: 1,
+      merchandiseChargePaise: 0,
+    });
+    expect(explanation.merchandiseOrOrderSavingPaise).toBe(BigInt(0));
+    expect(explanation.deliverySavingPaise).toBe(BigInt(0));
+    expect(explanation.totalSavedPaise).toBe(BigInt(0));
+  });
+
+  it("AR-036J-T3-01 B: gift + delivery — totalSaved is real delivery only", () => {
+    const giftPrice = BigInt(2500);
+    const deliveryPaise = BigInt(4000);
+    const snapshot = snapshotOf([
+      moneyComponent({ componentId: "c1", amountPaise: BigInt(100000) }),
+      moneyComponent({
+        componentId: "gift-base",
+        amountPaise: giftPrice,
+        variantId: "v1",
+        productId: "p1",
+        lineId: "complimentary:g1",
+      }),
+      {
+        ...DELIVERY_CHARGE,
+        amountPaise: deliveryPaise,
+      },
+    ]);
+    const gift = complimentaryPromo("g1", "v1", "p1", "combinable");
+    const delivery = deliveryWaiver("d40", "combinable");
+    const candidates = buildPromotionCandidates(
+      [{ promotion: gift }, { promotion: delivery }],
+      snapshot,
+    );
+    const pair = candidates.find(
+      (c) => c.promotionIds.includes("g1") && c.promotionIds.includes("d40"),
+    )!;
+    expect(pair).toBeTruthy();
+    const scored = candidates.map((c) => ({
+      ...c,
+      grandTotalPaise: BigInt(100000) + deliveryPaise - c.promotionDiscountTotalPaise,
+    }));
+    const winner = selectBestCandidate(
+      scored,
+      new Map([gift, delivery].map((p) => [p.id, p] as const)),
+    );
+    expect(winner.promotionIds).toEqual(expect.arrayContaining(["g1", "d40"]));
+    const explanation = buildCommercialExplanation({
+      winner,
+      submittedCouponResult: null,
+      couponPresentationClass: null,
+      thresholdProgress: [],
+      complimentaryCompetingNoneChosen: false,
+      promotionsById: new Map([gift, delivery].map((p) => [p.id, p] as const)),
+    });
+    expect(explanation.complimentary?.competingOffers).toBe("NONE");
+    expect(explanation.merchandiseOrOrderSavingPaise).toBe(BigInt(0));
+    expect(explanation.deliverySavingPaise).toBe(deliveryPaise);
+    expect(explanation.totalSavedPaise).toBe(deliveryPaise);
+    expect(explanation.totalSavedPaise).not.toBe(giftPrice + deliveryPaise);
+  });
+
+  it("AR-036J-T3-01 C: gift whose resolved amount is zero — identity, no fabricated saving", () => {
+    const snapshot = snapshotOf([
+      moneyComponent({ componentId: "c1", amountPaise: BigInt(100000) }),
+      moneyComponent({
+        componentId: "gift-base",
+        amountPaise: BigInt(0),
+        variantId: "v1",
+        productId: "p1",
+        lineId: "complimentary:g1",
+      }),
+    ]);
+    const gift = complimentaryPromo("g1", "v1", "p1");
+    const candidates = buildPromotionCandidates([{ promotion: gift }], snapshot);
+    const scored = scoreWithoutTax(candidates, BigInt(100000), BigInt(0));
+    const winner = selectBestCandidate(scored, new Map([["g1", gift]]));
+    expect(winner.hasComplimentaryPrimary).toBe(true);
+    const explanation = buildCommercialExplanation({
+      winner: { ...winner, grandTotalPaise: BigInt(100000) },
+      submittedCouponResult: null,
+      couponPresentationClass: null,
+      thresholdProgress: [],
+      complimentaryCompetingNoneChosen: false,
+      promotionsById: new Map([["g1", gift]]),
+    });
+    expect(explanation.complimentary).toEqual({
+      competingOffers: "NONE",
+      promotionId: "g1",
+      productId: "p1",
+      variantId: "v1",
+      quantity: 1,
+      merchandiseChargePaise: 0,
+    });
+    expect(explanation.totalSavedPaise).toBe(BigInt(0));
+  });
+
+  it("AR-036J-T3-02 A: ordinary no qualifying gift is not NONE_CHOSEN", () => {
+    const snapshot = merchSnapshot(BigInt(100000), BigInt(0));
+    const merch = fixedPrimary("m50", BigInt(5000), "exclusive");
+    const candidates = buildPromotionCandidates([{ promotion: merch }], snapshot);
+    expect(candidates.every((c) => c.complimentaryCompetingNoneChosen !== true)).toBe(true);
+    const scored = scoreWithoutTax(candidates, BigInt(100000), BigInt(0));
+    const winner = selectBestCandidate(scored, new Map([["m50", merch]]));
+    const explanation = buildCommercialExplanation({
+      winner,
+      submittedCouponResult: null,
+      couponPresentationClass: null,
+      thresholdProgress: [],
+      complimentaryCompetingNoneChosen: false,
+      promotionsById: new Map([["m50", merch]]),
+    });
+    expect(explanation.complimentary).toBeNull();
+  });
+
+  it("AR-036J-T3-02 B: one qualifying gift → selected; not NONE_CHOSEN", () => {
+    const snapshot = snapshotOf([
+      moneyComponent({ componentId: "c1", amountPaise: BigInt(100000) }),
+      moneyComponent({
+        componentId: "gift-base",
+        amountPaise: BigInt(2500),
+        variantId: "v1",
+        productId: "p1",
+        lineId: "complimentary:g1",
+      }),
+    ]);
+    const gift = complimentaryPromo("g1", "v1", "p1");
+    const candidates = buildPromotionCandidates([{ promotion: gift }], snapshot);
+    const scored = scoreWithoutTax(candidates, BigInt(100000), BigInt(0));
+    const winner = selectBestCandidate(scored, new Map([["g1", gift]]));
+    const explanation = buildCommercialExplanation({
+      winner: { ...winner, grandTotalPaise: BigInt(100000) },
+      submittedCouponResult: null,
+      couponPresentationClass: null,
+      thresholdProgress: [],
+      complimentaryCompetingNoneChosen: false,
+      promotionsById: new Map([["g1", gift]]),
+    });
+    expect(explanation.complimentary).toMatchObject({
+      competingOffers: "NONE",
+      promotionId: "g1",
+      productId: "p1",
+      variantId: "v1",
+    });
+  });
+
+  it("AR-036J-T3-02 C: two qualifying gifts → explicit NONE_CHOSEN in CommercialExplanation", () => {
+    const snapshot = snapshotOf([
+      moneyComponent({ componentId: "c1", amountPaise: BigInt(100000) }),
+      moneyComponent({
+        componentId: "g1-base",
+        amountPaise: BigInt(1000),
+        variantId: "v1",
+        productId: "p1",
+        lineId: "complimentary:g1",
+      }),
+      moneyComponent({
+        componentId: "g2-base",
+        amountPaise: BigInt(2000),
+        variantId: "v2",
+        productId: "p2",
+        lineId: "complimentary:g2",
+      }),
+    ]);
+    const g1 = complimentaryPromo("g1", "v1", "p1");
+    const g2 = complimentaryPromo("g2", "v2", "p2");
+    const candidates = buildPromotionCandidates(
+      [{ promotion: g1 }, { promotion: g2 }],
+      snapshot,
+    );
+    expect(candidates.every((c) => c.complimentaryCompetingNoneChosen === true)).toBe(true);
+    expect(candidates.every((c) => !c.hasComplimentaryPrimary)).toBe(true);
+    const scored = scoreWithoutTax(candidates, BigInt(100000), BigInt(0));
+    const winner = selectBestCandidate(
+      scored,
+      new Map([g1, g2].map((p) => [p.id, p] as const)),
+    );
+    expect(winner.promotionIds).toEqual([]);
+    const explanation = buildCommercialExplanation({
+      winner: { ...winner, grandTotalPaise: BigInt(100000) },
+      submittedCouponResult: null,
+      couponPresentationClass: null,
+      thresholdProgress: [],
+      complimentaryCompetingNoneChosen: true,
+      promotionsById: new Map([g1, g2].map((p) => [p.id, p] as const)),
+    });
+    expect(explanation.complimentary).toEqual({ competingOffers: "NONE_CHOSEN" });
+    expect(
+      explanation.complimentary && "promotionId" in explanation.complimentary
+        ? explanation.complimentary.promotionId
+        : undefined,
+    ).toBeUndefined();
+  });
+
+  it("AR-036J-T3-02 D: NONE_CHOSEN + ordinary monetary Offer still competes", () => {
+    const snapshot = snapshotOf([
+      moneyComponent({ componentId: "c1", amountPaise: BigInt(100000) }),
+      moneyComponent({
+        componentId: "g1-base",
+        amountPaise: BigInt(1000),
+        variantId: "v1",
+        productId: "p1",
+        lineId: "complimentary:g1",
+      }),
+      moneyComponent({
+        componentId: "g2-base",
+        amountPaise: BigInt(2000),
+        variantId: "v2",
+        productId: "p2",
+        lineId: "complimentary:g2",
+      }),
+    ]);
+    const g1 = complimentaryPromo("g1", "v1", "p1");
+    const g2 = complimentaryPromo("g2", "v2", "p2");
+    const merch = fixedPrimary("m80", BigInt(8000), "exclusive");
+    const candidates = buildPromotionCandidates(
+      [{ promotion: g1 }, { promotion: g2 }, { promotion: merch }],
+      snapshot,
+    );
+    const scored = scoreWithoutTax(candidates, BigInt(103000), BigInt(0));
+    const winner = selectBestCandidate(
+      scored,
+      new Map([g1, g2, merch].map((p) => [p.id, p] as const)),
+    );
+    expect(winner.promotionIds).toEqual(["m80"]);
+    const explanation = buildCommercialExplanation({
+      winner,
+      submittedCouponResult: null,
+      couponPresentationClass: null,
+      thresholdProgress: [],
+      complimentaryCompetingNoneChosen: true,
+      promotionsById: new Map([g1, g2, merch].map((p) => [p.id, p] as const)),
+    });
+    expect(explanation.complimentary).toEqual({ competingOffers: "NONE_CHOSEN" });
+    expect(explanation.merchandiseOrOrderSavingPaise).toBe(BigInt(8000));
+    expect(explanation.totalSavedPaise).toBe(BigInt(8000));
+  });
+});
+
+describe("IMP-036J T3 zero-realized delivery coupon equal-payable class", () => {
+  it("ZERO_REALIZED_DELIVERY_COUPON_EQUAL_PAYABLE: standing ₹0 waiver is equal-payable, not VALID_NOT_SELECTED", () => {
+    const snapshot = merchSnapshot(BigInt(100000), BigInt(0));
+    const delCoupon = deliveryWaiver("dc0", "combinable", { triggerType: "coupon" });
+    const candidates = buildPromotionCandidates(
+      [{ promotion: delCoupon, couponId: "c-del0" }],
+      snapshot,
+    );
+    const couponCand = candidates.find((c) => c.promotionIds.includes("dc0"));
+    expect(couponCand).toBeTruthy();
+    expect(couponCand!.promotionDiscountTotalPaise).toBe(BigInt(0));
+    expect(
+      couponCand!.appliedPromotions.find((a) => a.promotionId === "dc0")?.realizedDiscountPaise,
+    ).toBe(BigInt(0));
+    const scored = scoreWithoutTax(candidates, BigInt(100000), BigInt(0));
+    const winner = selectBestCandidate(scored, new Map([["dc0", delCoupon]]));
+    const couponTotal =
+      scored.find((c) => c.promotionIds.includes("dc0"))?.grandTotalPaise ?? null;
+    const nonCouponTotal =
+      scored
+        .filter((c) => !c.promotionIds.includes("dc0"))
+        .sort((a, b) => (a.grandTotalPaise < b.grandTotalPaise ? -1 : 1))[0]
+        ?.grandTotalPaise ?? null;
+    expect(couponTotal).toBe(nonCouponTotal);
+    const cls = classifyCouponPresentation({
+      submittedCouponResult: {
+        status: "VALID_BUT_NOT_SELECTED",
+        reasonCode: "COUPON_VALID_BUT_NOT_SELECTED",
+        couponId: "c-del0",
+        promotionId: "dc0",
+        canonicalCode: "DC0",
+      },
+      winner,
+      bestCouponGrandTotalPaise: couponTotal,
+      bestNonCouponGrandTotalPaise: nonCouponTotal,
+      couponPromotionId: "dc0",
+    });
+    expect(cls === "COUPON_EQUAL_PAYABLE_SELECTED" || cls === "COUPON_EQUAL_PAYABLE_NOT_SELECTED").toBe(
+      true,
+    );
+    expect(cls).not.toBe("COUPON_VALID_NOT_SELECTED");
+    const explanation = buildCommercialExplanation({
+      winner,
+      submittedCouponResult: {
+        status: "VALID_BUT_NOT_SELECTED",
+        reasonCode: "COUPON_VALID_BUT_NOT_SELECTED",
+        couponId: "c-del0",
+        promotionId: "dc0",
+        canonicalCode: "DC0",
+      },
+      couponPresentationClass: cls,
+      thresholdProgress: [],
+      complimentaryCompetingNoneChosen: false,
+      promotionsById: new Map([["dc0", delCoupon]]),
+    });
+    expect(explanation.deliverySavingPaise).toBe(BigInt(0));
+    expect(explanation.totalSavedPaise).toBe(BigInt(0));
+  });
 });
 
 describe("IMP-036J T3 window / mode / timing / threshold (AC-036J-001/003/004)", () => {
