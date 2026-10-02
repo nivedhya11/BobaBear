@@ -153,7 +153,7 @@ HISTORICAL_REVIEWS_REWRITTEN = NO
 HISTORICAL_REVIEWS_DELETED = NO
 ```
 
-Shared lifecycle files on this branch stay at GTM-R179 / STATE-R177 / ARCH-R23 / DR-24.
+Shared lifecycle files on the source Architecture Fit candidate branch stayed at GTM-R179 / STATE-R177 / ARCH-R23 / DR-24.
 IMP-036J remains the current implementation slice. D-383 remains the sequencing authority and
 is not amended. RRD-01 through RRD-08 remain discovery provenance and are not architecture
 authority.
