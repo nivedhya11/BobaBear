@@ -74,12 +74,12 @@ function toApplied(
   couponId?: string | null,
 ): AppliedPromotion | null {
   const complimentary = isComplimentaryPromotion(promotion);
-  // Zero realized delivery / merchandise savings are omitted from monetary
-  // saving rows, but:
-  // - complimentary identity must survive even when waived merchandise is ₹0
-  // - submitted coupon identity must survive zero-realized delivery waivers so
-  //   equal-payable classification is not collapsed into COUPON_VALID_NOT_SELECTED
-  if (realized <= BigInt(0) && !complimentary && !couponId) return null;
+  // AppliedPromotion is claim-bearing benefit identity only.
+  // Zero realized non-complimentary savings are never applied benefits
+  // (including zero-effect delivery waivers). Complimentary identity may
+  // survive at ₹0. Submitted coupon candidate identity is preserved via
+  // promotionIds, not by fabricating AppliedPromotion rows.
+  if (realized <= BigInt(0) && !complimentary) return null;
   return {
     promotionId: promotion.id,
     code: promotion.code,
@@ -166,6 +166,17 @@ function candidateFromEligible(
         promotionIds.push(ep.promotion.id);
         primaryPromotionId = ep.promotion.id;
         hasComplimentaryPrimary = true;
+      }
+    } else if (ep.couponId) {
+      // SELECTED_CANDIDATE_IDENTITY != APPLIED_BENEFIT_IDENTITY.
+      // Keep zero-effect submitted coupon membership on the candidate so
+      // equal-payable classification can see promotionIds, without placing a
+      // claim-bearing AppliedPromotion for a ₹0 delivery waiver.
+      promotionIds.push(ep.promotion.id);
+      if (slot === "PRIMARY_MERCHANDISE_OR_ORDER") {
+        primaryPromotionId = ep.promotion.id;
+      } else {
+        deliveryPromotionId = ep.promotion.id;
       }
     }
   }

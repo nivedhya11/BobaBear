@@ -825,8 +825,8 @@ describe("IMP-036J T3 complimentary (AC-036J-013)", () => {
   });
 });
 
-describe("IMP-036J T3 zero-realized delivery coupon equal-payable class", () => {
-  it("ZERO_REALIZED_DELIVERY_COUPON_EQUAL_PAYABLE: standing ₹0 waiver is equal-payable, not VALID_NOT_SELECTED", () => {
+describe("IMP-036J T3 AR-036J-T3-03 zero-realized delivery coupon identity", () => {
+  it("A. standing ₹0 + coupon selected tie: candidate identity without AppliedPromotion", () => {
     const snapshot = merchSnapshot(BigInt(100000), BigInt(0));
     const delCoupon = deliveryWaiver("dc0", "combinable", { triggerType: "coupon" });
     const candidates = buildPromotionCandidates(
@@ -835,12 +835,17 @@ describe("IMP-036J T3 zero-realized delivery coupon equal-payable class", () => 
     );
     const couponCand = candidates.find((c) => c.promotionIds.includes("dc0"));
     expect(couponCand).toBeTruthy();
+    expect(couponCand!.promotionIds).toContain("dc0");
+    expect(couponCand!.deliveryPromotionId).toBe("dc0");
     expect(couponCand!.promotionDiscountTotalPaise).toBe(BigInt(0));
-    expect(
-      couponCand!.appliedPromotions.find((a) => a.promotionId === "dc0")?.realizedDiscountPaise,
-    ).toBe(BigInt(0));
+    expect(couponCand!.appliedPromotions.some((a) => a.promotionId === "dc0")).toBe(false);
+
     const scored = scoreWithoutTax(candidates, BigInt(100000), BigInt(0));
     const winner = selectBestCandidate(scored, new Map([["dc0", delCoupon]]));
+    expect(winner.promotionIds).toContain("dc0");
+    expect(winner.appliedPromotions.some((a) => a.promotionId === "dc0")).toBe(false);
+    expect(winner.promotionDiscountTotalPaise).toBe(BigInt(0));
+
     const couponTotal =
       scored.find((c) => c.promotionIds.includes("dc0"))?.grandTotalPaise ?? null;
     const nonCouponTotal =
@@ -849,6 +854,8 @@ describe("IMP-036J T3 zero-realized delivery coupon equal-payable class", () => 
         .sort((a, b) => (a.grandTotalPaise < b.grandTotalPaise ? -1 : 1))[0]
         ?.grandTotalPaise ?? null;
     expect(couponTotal).toBe(nonCouponTotal);
+    expect(winner.grandTotalPaise).toBe(couponTotal);
+
     const cls = classifyCouponPresentation({
       submittedCouponResult: {
         status: "VALID_BUT_NOT_SELECTED",
@@ -862,10 +869,9 @@ describe("IMP-036J T3 zero-realized delivery coupon equal-payable class", () => 
       bestNonCouponGrandTotalPaise: nonCouponTotal,
       couponPromotionId: "dc0",
     });
-    expect(cls === "COUPON_EQUAL_PAYABLE_SELECTED" || cls === "COUPON_EQUAL_PAYABLE_NOT_SELECTED").toBe(
-      true,
-    );
+    expect(cls).toBe("COUPON_EQUAL_PAYABLE_SELECTED");
     expect(cls).not.toBe("COUPON_VALID_NOT_SELECTED");
+
     const explanation = buildCommercialExplanation({
       winner,
       submittedCouponResult: {
@@ -882,6 +888,136 @@ describe("IMP-036J T3 zero-realized delivery coupon equal-payable class", () => 
     });
     expect(explanation.deliverySavingPaise).toBe(BigInt(0));
     expect(explanation.totalSavedPaise).toBe(BigInt(0));
+    expect(explanation.merchandiseOrOrderSavingPaise).toBe(BigInt(0));
+  });
+
+  it("B. standing ₹0 + equal-payable coupon not selected by deterministic tie", () => {
+    // Complimentary equal-payable product rule retains the gift; zero-effect
+    // delivery coupon remains a same-payable candidate without becoming applied.
+    const snapshot = snapshotOf([
+      moneyComponent({ componentId: "c1", amountPaise: BigInt(100000) }),
+      moneyComponent({
+        componentId: "gift-base",
+        amountPaise: BigInt(0),
+        variantId: "v1",
+        productId: "p1",
+        lineId: "complimentary:g1",
+      }),
+      {
+        ...DELIVERY_CHARGE,
+        amountPaise: BigInt(0),
+      },
+    ]);
+    const gift = complimentaryPromo("g1", "v1", "p1", "exclusive");
+    const delCoupon = deliveryWaiver("dc0", "exclusive", { triggerType: "coupon" });
+    const candidates = buildPromotionCandidates(
+      [{ promotion: gift }, { promotion: delCoupon, couponId: "c-del0" }],
+      snapshot,
+    );
+    const couponCand = candidates.find((c) => c.promotionIds.includes("dc0"));
+    expect(couponCand).toBeTruthy();
+    expect(couponCand!.appliedPromotions.some((a) => a.promotionId === "dc0")).toBe(false);
+
+    const scored = scoreWithoutTax(candidates, BigInt(100000), BigInt(0));
+    const winner = selectBestCandidate(
+      scored,
+      new Map([gift, delCoupon].map((p) => [p.id, p] as const)),
+    );
+    expect(winner.promotionIds).toEqual(["g1"]);
+    expect(winner.promotionIds).not.toContain("dc0");
+    expect(winner.appliedPromotions.some((a) => a.promotionId === "dc0")).toBe(false);
+
+    const couponTotal = couponCand
+      ? scored.find((c) => c.promotionIds.includes("dc0"))!.grandTotalPaise
+      : null;
+    expect(couponTotal).toBe(winner.grandTotalPaise);
+
+    const cls = classifyCouponPresentation({
+      submittedCouponResult: {
+        status: "VALID_BUT_NOT_SELECTED",
+        reasonCode: "COUPON_VALID_BUT_NOT_SELECTED",
+        couponId: "c-del0",
+        promotionId: "dc0",
+        canonicalCode: "DC0",
+      },
+      winner,
+      bestCouponGrandTotalPaise: couponTotal,
+      bestNonCouponGrandTotalPaise: winner.grandTotalPaise,
+      couponPromotionId: "dc0",
+    });
+    expect(cls).toBe("COUPON_EQUAL_PAYABLE_NOT_SELECTED");
+    expect(cls).not.toBe("COUPON_VALID_NOT_SELECTED");
+  });
+
+  it("C. positive delivery waiver remains an AppliedPromotion with real saving", () => {
+    const deliveryPaise = BigInt(4000);
+    const snapshot = merchSnapshot(BigInt(100000), deliveryPaise);
+    const delCoupon = deliveryWaiver("dc40", "combinable", { triggerType: "coupon" });
+    const candidates = buildPromotionCandidates(
+      [{ promotion: delCoupon, couponId: "c-del40" }],
+      snapshot,
+    );
+    const couponCand = candidates.find((c) => c.promotionIds.includes("dc40"));
+    expect(couponCand).toBeTruthy();
+    expect(couponCand!.promotionDiscountTotalPaise).toBe(deliveryPaise);
+    expect(couponCand!.appliedPromotions.some((a) => a.promotionId === "dc40")).toBe(true);
+    expect(
+      couponCand!.appliedPromotions.find((a) => a.promotionId === "dc40")?.realizedDiscountPaise,
+    ).toBe(deliveryPaise);
+
+    const scored = scoreWithoutTax(candidates, BigInt(100000), deliveryPaise);
+    const winner = selectBestCandidate(scored, new Map([["dc40", delCoupon]]));
+    expect(winner.promotionIds).toContain("dc40");
+    expect(winner.appliedPromotions.some((a) => a.promotionId === "dc40")).toBe(true);
+
+    const explanation = buildCommercialExplanation({
+      winner,
+      submittedCouponResult: {
+        status: "APPLIED",
+        reasonCode: "APPLIED",
+        couponId: "c-del40",
+        promotionId: "dc40",
+        canonicalCode: "DC40",
+      },
+      couponPresentationClass: "COUPON_APPLIED",
+      thresholdProgress: [],
+      complimentaryCompetingNoneChosen: false,
+      promotionsById: new Map([["dc40", delCoupon]]),
+    });
+    expect(explanation.deliverySavingPaise).toBe(deliveryPaise);
+    expect(explanation.totalSavedPaise).toBe(deliveryPaise);
+  });
+
+  it("D. claim-boundary invariant: zero-realized delivery coupon not claim-bearing", () => {
+    const zeroSnapshot = merchSnapshot(BigInt(100000), BigInt(0));
+    const positiveSnapshot = merchSnapshot(BigInt(100000), BigInt(4000));
+    const zeroCoupon = deliveryWaiver("dc-zero", "combinable", { triggerType: "coupon" });
+    const positiveCoupon = deliveryWaiver("dc-pos", "combinable", { triggerType: "coupon" });
+
+    const zeroCand = buildPromotionCandidates(
+      [{ promotion: zeroCoupon, couponId: "c-zero" }],
+      zeroSnapshot,
+    ).find((c) => c.promotionIds.includes("dc-zero"));
+    const positiveCand = buildPromotionCandidates(
+      [{ promotion: positiveCoupon, couponId: "c-pos" }],
+      positiveSnapshot,
+    ).find((c) => c.promotionIds.includes("dc-pos"));
+
+    expect(zeroCand).toBeTruthy();
+    expect(positiveCand).toBeTruthy();
+
+    // ZERO_REALIZED_DELIVERY_COUPON => NOT_IN_APPLIED_PROMOTIONS
+    expect(zeroCand!.promotionDiscountTotalPaise).toBe(BigInt(0));
+    expect(zeroCand!.appliedPromotions.some((a) => a.promotionId === "dc-zero")).toBe(false);
+
+    // POSITIVE_REALIZED_DELIVERY_COUPON => IN_APPLIED_PROMOTIONS
+    expect(positiveCand!.promotionDiscountTotalPaise).toBe(BigInt(4000));
+    expect(positiveCand!.appliedPromotions.some((a) => a.promotionId === "dc-pos")).toBe(true);
+
+    // T4 one-claim-per-AppliedPromotion cannot infer a claim from the zero-effect coupon.
+    expect(
+      zeroCand!.appliedPromotions.filter((a) => a.promotionId === "dc-zero"),
+    ).toHaveLength(0);
   });
 });
 
