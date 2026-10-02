@@ -36,16 +36,16 @@ Definition `PD-IMP-036H-DRAFT-1` = `APPROVED`; Product Definition Gate
 `PASS`; Architecture Fit `PASS`; architecture `LOCKED`; implementation
 `AUTHORIZED` / `STARTED` / `COMPLETE`; `IMP036H_IMPLEMENTATION_COMPLETE: YES`;
 `IMP036H_ACCEPTED: YES`; `IMP036H_FOUNDER_UAT: PASS`; `IMP036H_FORMAL_ACCEPTANCE: ACCEPTED`
-(acceptance provenance GTM-R147 / STATE-R145); CURRENT tip GTM-R180 / STATE-R178 (prior tip GTM-R179 / STATE-R177; prior tip GTM-R178 / STATE-R176; prior tip GTM-R177 / STATE-R175; prior tip GTM-R176 / STATE-R174; prior tip GTM-R175 / STATE-R173; prior tip GTM-R174 / STATE-R172; prior tip GTM-R173 / STATE-R171; prior tip GTM-R172 / STATE-R170; prior tip GTM-R171 / STATE-R169; prior tip GTM-R170 / STATE-R168; prior tip GTM-R169 / STATE-R167; prior tip GTM-R168 / STATE-R166; prior tip GTM-R167 / STATE-R165; prior tip GTM-R166 / STATE-R164; prior tip GTM-R165 / STATE-R163; prior tip GTM-R164 / STATE-R162; prior tip GTM-R162 / STATE-R160; prior tip GTM-R161 / STATE-R159; prior tip GTM-R156 / STATE-R154; prior tip GTM-R155 / STATE-R153; prior tip GTM-R154 / STATE-R152; prior tip GTM-R153 / STATE-R151; prior tip GTM-R152 / STATE-R150; prior tip GTM-R151 / STATE-R149; prior tip GTM-R150 / STATE-R148; prior tip GTM-R149 / STATE-R147);
+(acceptance provenance GTM-R147 / STATE-R145); CURRENT tip GTM-R181 / STATE-R179 (prior tip GTM-R180 / STATE-R178; prior tip GTM-R179 / STATE-R177; prior tip GTM-R178 / STATE-R176; prior tip GTM-R177 / STATE-R175; prior tip GTM-R176 / STATE-R174; prior tip GTM-R175 / STATE-R173; prior tip GTM-R174 / STATE-R172; prior tip GTM-R173 / STATE-R171; prior tip GTM-R172 / STATE-R170; prior tip GTM-R171 / STATE-R169; prior tip GTM-R170 / STATE-R168; prior tip GTM-R169 / STATE-R167; prior tip GTM-R168 / STATE-R166; prior tip GTM-R167 / STATE-R165; prior tip GTM-R166 / STATE-R164; prior tip GTM-R165 / STATE-R163; prior tip GTM-R164 / STATE-R162; prior tip GTM-R162 / STATE-R160; prior tip GTM-R161 / STATE-R159; prior tip GTM-R156 / STATE-R154; prior tip GTM-R155 / STATE-R153; prior tip GTM-R154 / STATE-R152; prior tip GTM-R153 / STATE-R151; prior tip GTM-R152 / STATE-R150; prior tip GTM-R151 / STATE-R149; prior tip GTM-R150 / STATE-R148; prior tip GTM-R149 / STATE-R147);
 `acceptedThrough` = IMP-036I; `currentProductSlice` = IMP-036J;
 `pendingAcceptance` = NONE; `nextProductSlice` = IMP-036K; `IMP036I_ACTIVATED: YES`;
 `IMP036J_ACTIVATED: YES`; `IMP036J_PRODUCT_DEFINITION: APPROVED`
 (`PD-IMP-036J-DRAFT-6`; Product Definition Gate `PASS`; Experience Criticality `X3`;
 Experience Definition `XD-IMP-036J-DRAFT-6` `APPROVED`; Experience Gate `PASS`; next gate
-`IMPLEMENTATION_TRANCHE_2`; Architecture Fit `PASS`; architecture `LOCKED`; Design Readiness `PASS`;
+`IMPLEMENTATION_TRANCHE_3`; Architecture Fit `PASS`; architecture `LOCKED`; Design Readiness `PASS`;
 Quality/Test Plan finalized; Measurement/Instrumentation Plan finalized; Implementation Plan
 `PASS`; implementation `AUTHORIZED` / `STARTED`; formal lifecycle `IMPLEMENTATION_IN_PROGRESS`;
-Tranche 1 `PASS`; Tranche 2 not started; `IMP036J_IMPLEMENTATION_COMPLETE: NO`);
+Tranche 1 `PASS`; Tranche 2 `PASS`; Tranche 3 not started; `IMP036J_IMPLEMENTATION_COMPLETE: NO`);
 `IMP036I_PRODUCT_DEFINITION: APPROVED` (`PD-IMP-036I-DRAFT-4`);
 `IMP036I_PRODUCT_DEFINITION_GATE: PASS` (independent review `5307761142`); Architecture Fit
 `PASS` (independent review `5312653831`); architecture `LOCKED`; D-379 CURRENT; D-380 CURRENT;
