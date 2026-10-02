@@ -18941,12 +18941,20 @@ describe("IMP-036J architecture fit remediation candidate 9", () => {
   });
   it("requires the Experience Definition index to keep Tranche 4 pending at GTM-R184 / STATE-R182", () => {
     assert.equal(evaluateImp036jProductReadmePointers(productReadme).ok, true);
-    const withoutPending = productReadme.replace("Tranche 4 has not started.", "");
+    const mutateExperienceRow = (transform) =>
+      productReadme
+        .split("\n")
+        .map((line) =>
+          line.includes("[IMP-036J Experience Definition](./IMP-036J/experience-definition.md)")
+            ? transform(line)
+            : line,
+        )
+        .join("\n");
+    const withoutPending = mutateExperienceRow((line) => line.replace("Tranche 4 has not started.", ""));
     assert.notEqual(withoutPending, productReadme);
     assert.equal(evaluateImp036jProductReadmePointers(withoutPending).ok, false);
-    const withCanonicalPending = productReadme.replace(
-      "Tranche 4 has not started.",
-      "IMP036J_TRANCHE_4: NOT_STARTED.",
+    const withCanonicalPending = mutateExperienceRow((line) =>
+      line.replace("Tranche 4 has not started.", "IMP036J_TRANCHE_4: NOT_STARTED."),
     );
     assert.notEqual(withCanonicalPending, productReadme);
     assert.equal(evaluateImp036jProductReadmePointers(withCanonicalPending).ok, true);
