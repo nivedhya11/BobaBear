@@ -287,7 +287,7 @@ describe("allocation", () => {
 });
 
 describe("stacking candidates", () => {
-  it("does not compound percentages sequentially", () => {
+  it("does not stack two primary merchandise combinables (slot model)", () => {
     const snapshot: PrePromotionSnapshot = {
       components: [moneyComponent({ componentId: "c1", amountPaise: BigInt(100000) })],
       units: [],
@@ -316,8 +316,14 @@ describe("stacking candidates", () => {
       ],
       snapshot,
     );
-    const combo = candidates.find((c) => c.promotionIds.length === 2)!;
-    expect(combo.promotionDiscountTotalPaise).toBe(BigInt(30000));
+    // Slot model: at most one primary — never an unlimited all-combinable candidate.
+    expect(candidates.every((c) => c.promotionIds.length <= 1)).toBe(true);
+    const bestPrimary = candidates
+      .filter((c) => c.promotionIds.length === 1)
+      .sort((a, b) =>
+        a.promotionDiscountTotalPaise > b.promotionDiscountTotalPaise ? -1 : 1,
+      )[0]!;
+    expect(bestPrimary.promotionDiscountTotalPaise).toBe(BigInt(20000));
   });
 });
 

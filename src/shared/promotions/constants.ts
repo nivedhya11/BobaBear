@@ -23,8 +23,42 @@ export const PROMOTION_BENEFIT_TYPES = [
   "percentage_discount",
   "fixed_amount_discount",
   "buy_x_get_y",
+  "delivery_fee_waiver",
+  "complimentary_item",
 ] as const;
 export type PromotionBenefitType = (typeof PROMOTION_BENEFIT_TYPES)[number];
+
+export const PROMOTION_SLOT_CLASSES = [
+  "PRIMARY_MERCHANDISE_OR_ORDER",
+  "DELIVERY_INCENTIVE",
+] as const;
+export type PromotionSlotClass = (typeof PROMOTION_SLOT_CLASSES)[number];
+
+export const FULFILMENT_MODES = ["DELIVERY", "PICKUP"] as const;
+export type FulfilmentMode = (typeof FULFILMENT_MODES)[number];
+
+export const FULFILMENT_TIMINGS = ["ASAP", "SCHEDULED"] as const;
+export type FulfilmentTiming = (typeof FULFILMENT_TIMINGS)[number];
+
+/** Server-owned coupon presentation classes (LANG-1 projects sentences). */
+export const COUPON_PRESENTATION_CLASSES = [
+  "COUPON_APPLIED",
+  "COUPON_VALID_NOT_SELECTED",
+  "COUPON_EQUAL_PAYABLE_SELECTED",
+  "COUPON_EQUAL_PAYABLE_NOT_SELECTED",
+] as const;
+export type CouponPresentationClass = (typeof COUPON_PRESENTATION_CLASSES)[number];
+
+/**
+ * Injected by the evaluation caller (T4 supplies the purchase-existence query).
+ * T3 classifies first-order Offers against this status and does not query orders/payments.
+ */
+export const FIRST_ORDER_PURCHASE_STATUSES = [
+  "NO_PRIOR_PURCHASE",
+  "HAS_PRIOR_PURCHASE",
+  "UNAVAILABLE",
+] as const;
+export type FirstOrderPurchaseStatus = (typeof FIRST_ORDER_PURCHASE_STATUSES)[number];
 
 export const PROMOTION_TARGET_ROLES = ["qualifier", "benefit"] as const;
 export type PromotionTargetRole = (typeof PROMOTION_TARGET_ROLES)[number];
@@ -66,6 +100,14 @@ export const PROMOTION_ELIGIBILITY_REASON_CODES = [
   "NO_QUALIFYING_CAPACITY",
   "RETIRED",
   "NOT_ACTIVE",
+  "FULFILMENT_MODE_MISMATCH",
+  "FULFILMENT_TIMING_MISMATCH",
+  "FULFILMENT_CONTEXT_REQUIRED",
+  "FIRST_ORDER_IDENTITY_REQUIRED",
+  "FIRST_ORDER_NOT_ELIGIBLE",
+  "FIRST_ORDER_PURCHASE_STATUS_UNAVAILABLE",
+  "COMPLIMENTARY_UNAVAILABLE",
+  "COMPLIMENTARY_VARIANT_REQUIRED",
 ] as const;
 export type PromotionEligibilityReasonCode =
   (typeof PROMOTION_ELIGIBILITY_REASON_CODES)[number];

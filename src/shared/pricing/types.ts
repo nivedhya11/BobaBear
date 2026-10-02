@@ -17,6 +17,7 @@ import type {
   AppliedPromotion,
   PromotionAllocation,
   SubmittedCouponResult,
+  CommercialExplanation,
 } from "../promotions/types";
 
 export type ResolvedOutletVariantPrice = Readonly<{
@@ -68,6 +69,8 @@ export type DirectPricingQuote = Readonly<{
   appliedPromotions: readonly AppliedPromotion[];
   promotionAllocations: readonly PromotionAllocation[];
   submittedCouponResult: SubmittedCouponResult | null;
+  /** IMP-036J T3 — server-owned commercial explanation projection. */
+  commercialExplanation?: CommercialExplanation | null;
   taxablePaise: bigint;
   taxPaise: bigint;
   taxComponents: readonly TaxComponentAmount[];

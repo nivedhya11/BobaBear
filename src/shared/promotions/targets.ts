@@ -43,6 +43,11 @@ export function componentMatchesBenefitTargets(
   targets: readonly PromotionTargetConfig[],
   benefit: PromotionDefinition["benefit"],
 ): boolean {
+  // Projected complimentary gift lines are allocated only by complimentary_item
+  // calculateBenefit. Generic merchandise benefits must not discount them.
+  if (component.lineId?.startsWith("complimentary:")) {
+    return false;
+  }
   const hasAllMerchandise = targets.some((t) => t.targetType === "all_merchandise");
   const chargeIds = new Set(
     targets.filter((t) => t.targetType === "charge" && t.chargeDefinitionId).map((t) => t.chargeDefinitionId!),
@@ -84,6 +89,8 @@ export function resolveQualifierUnits(
   const seen = new Set<string>();
   const out: SnapshotLineUnit[] = [];
   for (const unit of snapshot.units) {
+    // Projected complimentary gift lines are not customer merchandise for qualification.
+    if (unit.lineId.startsWith("complimentary:")) continue;
     if (!unitMatchesTargets(unit, targets)) continue;
     if (seen.has(unit.unitId)) continue;
     seen.add(unit.unitId);
@@ -128,6 +135,8 @@ export function qualifyingAmountPaise(
   const counted = new Set<string>();
   for (const c of snapshot.components) {
     if (counted.has(c.componentId)) continue;
+    // Projected complimentary gift merchandise must not inflate amount thresholds.
+    if (c.lineId?.startsWith("complimentary:")) continue;
     let match = false;
     if (c.kind === "charge") {
       match = c.chargeDefinitionId !== null && chargeIds.has(c.chargeDefinitionId);

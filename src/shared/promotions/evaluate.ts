@@ -1,20 +1,33 @@
 /**
- * Pure promotion evaluation orchestrator (IMP-016).
+ * Pure promotion evaluation orchestrator (IMP-016 + IMP-036J).
  *
  * Does not apply tax — caller evaluates each candidate's post-promotion
  * components through the IMP-015 tax engine and then calls selectBestCandidate.
  */
-import { isPromotionEffective } from "./eligibility";
-import { evaluateEligibility } from "./eligibility";
+import { isComplimentaryPromotion } from "./benefit";
+import {
+  buildThresholdProgress,
+  evaluateEligibility,
+  isPromotionEffective,
+} from "./eligibility";
 import { assertActivePromotionIntegrity } from "./targets";
-import { buildPromotionCandidates, type EligiblePromotion } from "./select";
+import {
+  buildPromotionCandidates,
+  classifyPromotionSlot,
+  type EligiblePromotion,
+} from "./select";
 import type {
+  CommercialExplanation,
+  ComplimentaryProjection,
+  CouponPresentationClass,
   CouponRecord,
   PrePromotionSnapshot,
+  PromotionCandidateResult,
   PromotionDefinition,
   PromotionEvaluationContext,
   PromotionEvaluationResult,
   SubmittedCouponResult,
+  ThresholdProgress,
 } from "./types";
 
 export type EvaluatePromotionsInput = Readonly<{
@@ -157,12 +170,18 @@ function evaluateSubmittedCoupon(
  */
 export function evaluatePromotions(input: EvaluatePromotionsInput): Omit<
   PromotionEvaluationResult,
-  "selectedPromotionIds" | "appliedPromotions" | "allocations" | "promotionDiscountTotalPaise" | "postPromotionComponents"
+  | "selectedPromotionIds"
+  | "appliedPromotions"
+  | "allocations"
+  | "promotionDiscountTotalPaise"
+  | "postPromotionComponents"
 > & {
   eligible: EligiblePromotion[];
   candidates: ReturnType<typeof buildPromotionCandidates>;
   submittedCouponResult: SubmittedCouponResult | null;
   baselineTotalPaise: bigint;
+  thresholdProgress: ThresholdProgress[];
+  complimentaryCompetingNoneChosen: boolean;
 } {
   for (const p of input.promotions) {
     if (p.status === "active") assertActivePromotionIntegrity(p);
@@ -188,7 +207,18 @@ export function evaluatePromotions(input: EvaluatePromotionsInput): Omit<
     (a, c) => a + c.amountPaise,
     BigInt(0),
   );
-  const candidates = buildPromotionCandidates(eligible, input.snapshot);
+  const candidates = buildPromotionCandidates(eligible, input.snapshot, {
+    deliveryChargeDefinitionIds: input.context.deliveryChargeDefinitionIds,
+  });
+  const complimentaryCompetingNoneChosen = candidates.some(
+    (c) => c.complimentaryCompetingNoneChosen === true,
+  );
+
+  const thresholdProgress = buildThresholdProgress(
+    input.promotions,
+    input.snapshot,
+    input.context,
+  );
 
   return {
     baselineTotalPaise,
@@ -196,6 +226,8 @@ export function evaluatePromotions(input: EvaluatePromotionsInput): Omit<
     submittedCouponResult: couponResultDraft,
     eligible,
     candidates,
+    thresholdProgress,
+    complimentaryCompetingNoneChosen,
   };
 }
 
@@ -217,7 +249,6 @@ export function finalizeCouponResult(
     return { ...draft, status: "APPLIED", reasonCode: "APPLIED" };
   }
   if (selectedPromotionIds.includes(draft.promotionId)) {
-    // Selected candidate included it but zero realized
     return {
       ...draft,
       status: "VALID_BUT_NOT_SELECTED",
@@ -230,3 +261,139 @@ export function finalizeCouponResult(
     reasonCode: "COUPON_VALID_BUT_NOT_SELECTED",
   };
 }
+
+export type ClassifyCouponPresentationInput = Readonly<{
+  submittedCouponResult: SubmittedCouponResult | null;
+  winner: PromotionCandidateResult & { grandTotalPaise: bigint };
+  /** Best valid combination that includes the coupon promotion id. */
+  bestCouponGrandTotalPaise: bigint | null;
+  /** Best valid combination that does not include the coupon promotion id. */
+  bestNonCouponGrandTotalPaise: bigint | null;
+  couponPromotionId: string | null;
+}>;
+
+/**
+ * Locked server-owned coupon presentation classes.
+ * Equal payable must not be described as "better".
+ */
+export function classifyCouponPresentation(
+  input: ClassifyCouponPresentationInput,
+): CouponPresentationClass | null {
+  const draft = input.submittedCouponResult;
+  if (!draft || !draft.promotionId || !input.couponPromotionId) return null;
+  if (
+    draft.status === "INVALID" ||
+    draft.status === "NOT_APPLICABLE" ||
+    draft.status === "CUSTOMER_IDENTITY_REQUIRED" ||
+    draft.status === "REDEMPTION_ENFORCEMENT_UNAVAILABLE"
+  ) {
+    return null;
+  }
+
+  const couponSelected = input.winner.promotionIds.includes(input.couponPromotionId);
+  const couponTotal = input.bestCouponGrandTotalPaise;
+  const nonCouponTotal = input.bestNonCouponGrandTotalPaise;
+
+  if (couponSelected) {
+    if (nonCouponTotal !== null && nonCouponTotal === input.winner.grandTotalPaise) {
+      return "COUPON_EQUAL_PAYABLE_SELECTED";
+    }
+    return "COUPON_APPLIED";
+  }
+
+  // Coupon not selected: equal payable vs strictly worse coupon combination.
+  if (couponTotal !== null && couponTotal === input.winner.grandTotalPaise) {
+    return "COUPON_EQUAL_PAYABLE_NOT_SELECTED";
+  }
+  return "COUPON_VALID_NOT_SELECTED";
+}
+
+export function projectComplimentary(
+  winner: PromotionCandidateResult,
+  competingNoneChosen: boolean,
+): ComplimentaryProjection | null {
+  if (competingNoneChosen) {
+    // Explicit NONE_CHOSEN must survive into CommercialExplanation.
+    // Do not collapse this into ordinary "no complimentary" (null).
+    return { competingOffers: "NONE_CHOSEN" };
+  }
+  const gift = winner.appliedPromotions.find((p) => p.isComplimentary === true);
+  if (!gift) return null;
+  const productId = gift.complimentaryProductId ?? null;
+  const variantId = gift.complimentaryVariantId ?? null;
+  if (!productId || !variantId) return null;
+  return {
+    competingOffers: "NONE",
+    promotionId: gift.promotionId,
+    productId,
+    variantId,
+    quantity: 1,
+    merchandiseChargePaise: 0,
+  };
+}
+
+export function buildCommercialExplanation(input: {
+  winner: PromotionCandidateResult & { grandTotalPaise: bigint };
+  submittedCouponResult: SubmittedCouponResult | null;
+  couponPresentationClass: CouponPresentationClass | null;
+  thresholdProgress: readonly ThresholdProgress[];
+  complimentaryCompetingNoneChosen: boolean;
+  promotionsById: ReadonlyMap<string, PromotionDefinition>;
+}): CommercialExplanation {
+  let merchandiseOrOrderSavingPaise = BigInt(0);
+  let deliverySavingPaise = BigInt(0);
+
+  for (const applied of input.winner.appliedPromotions) {
+    // Complimentary internal zeroing allocation is pricing machinery, not a
+    // customer monetary saving. Exclude it from merchandise/order/total saved.
+    if (applied.isComplimentary === true) {
+      continue;
+    }
+    const promo = input.promotionsById.get(applied.promotionId);
+    const slot =
+      applied.slotClass ??
+      (promo ? classifyPromotionSlot(promo) : "PRIMARY_MERCHANDISE_OR_ORDER");
+    if (slot === "DELIVERY_INCENTIVE") {
+      if (applied.realizedDiscountPaise > BigInt(0)) {
+        deliverySavingPaise += applied.realizedDiscountPaise;
+      }
+    } else {
+      merchandiseOrOrderSavingPaise += applied.realizedDiscountPaise;
+    }
+  }
+
+  const totalSavedPaise = merchandiseOrOrderSavingPaise + deliverySavingPaise;
+  const appliedCouponId =
+    input.couponPresentationClass === "COUPON_APPLIED" ||
+    input.couponPresentationClass === "COUPON_EQUAL_PAYABLE_SELECTED"
+      ? (input.submittedCouponResult?.couponId ?? null)
+      : null;
+
+  // Prefer amount-based progress when present; otherwise first quantity-only row.
+  const amountProgress =
+    input.thresholdProgress.find((t) => t.remainingAmountPaise !== null) ?? null;
+  const quantityOnly =
+    amountProgress === null
+      ? (input.thresholdProgress.find((t) => t.remainingItemQuantity !== null) ?? null)
+      : null;
+  const thresholdProgress = amountProgress ?? quantityOnly;
+
+  return {
+    selectedPromotionIds: input.winner.promotionIds,
+    appliedCouponId,
+    merchandiseOrOrderSavingPaise,
+    deliverySavingPaise,
+    totalSavedPaise,
+    grandTotalPaise: input.winner.grandTotalPaise,
+    couponPresentationClass: input.couponPresentationClass,
+    thresholdProgress,
+    complimentary: projectComplimentary(
+      input.winner,
+      input.complimentaryCompetingNoneChosen,
+    ),
+    submittedCouponResult: input.submittedCouponResult,
+  };
+}
+
+/** @internal test helper — re-export complimentary check */
+export { isComplimentaryPromotion };

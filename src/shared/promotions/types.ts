@@ -5,16 +5,29 @@
 import type {
   CouponOutcomeStatus,
   CouponOrigin,
+  CouponPresentationClass,
   CouponStatus,
+  FirstOrderPurchaseStatus,
+  FulfilmentMode,
+  FulfilmentTiming,
   PromotionBenefitType,
   PromotionEligibilityReasonCode,
   PromotionScopeType,
+  PromotionSlotClass,
   PromotionStackingPolicy,
   PromotionStatus,
   PromotionTargetRole,
   PromotionTargetType,
   PromotionTriggerType,
 } from "./constants";
+
+export type {
+  CouponPresentationClass,
+  FirstOrderPurchaseStatus,
+  FulfilmentMode,
+  FulfilmentTiming,
+  PromotionSlotClass,
+};
 
 export type MonetaryComponentKind =
   | "variant_base"
@@ -72,6 +85,8 @@ export type PromotionBenefitConfig = Readonly<{
   maximumRewardQuantity: number | null;
   includeModifiers: boolean;
   includeBundleDeltas: boolean;
+  complimentaryProductId?: string | null;
+  complimentaryVariantId?: string | null;
 }>;
 
 export type PromotionDefinition = Readonly<{
@@ -92,6 +107,10 @@ export type PromotionDefinition = Readonly<{
   endsAt: Date | null;
   minimumQualifyingAmountPaise: bigint | null;
   minimumItemQuantity: number | null;
+  firstOrderOnly?: boolean;
+  eligibleFulfilmentModes?: readonly FulfilmentMode[] | null;
+  eligibleFulfilmentTimings?: readonly FulfilmentTiming[] | null;
+  complimentaryItem?: boolean;
   configurationFingerprint: string | null;
   benefit: PromotionBenefitConfig;
   qualifierTargets: readonly PromotionTargetConfig[];
@@ -106,6 +125,20 @@ export type PromotionEvaluationContext = Readonly<{
   outletId: string;
   salesChannel: "direct";
   customerId?: string | null;
+  fulfilmentMode?: FulfilmentMode | null;
+  fulfilmentTiming?: FulfilmentTiming | null;
+  /**
+   * T4 injects the purchase-existence predicate result.
+   * Absent / UNAVAILABLE fails closed for first-order-only Offers.
+   */
+  firstOrderPurchaseStatus?: FirstOrderPurchaseStatus | null;
+  /**
+   * Map of complimentary catalog variant id → available at outlet.
+   * Missing entry for a complimentary Offer fails closed as unavailable.
+   */
+  complimentaryVariantAvailability?: ReadonlyMap<string, boolean>;
+  /** Charge definition ids whose code is delivery (defaults to locked system id). */
+  deliveryChargeDefinitionIds?: readonly string[];
 }>;
 
 export type EligibilityResult = Readonly<{
@@ -143,6 +176,11 @@ export type AppliedPromotion = Readonly<{
   stackingPolicy: PromotionStackingPolicy;
   realizedDiscountPaise: bigint;
   couponId?: string | null;
+  slotClass?: PromotionSlotClass;
+  isComplimentary?: boolean;
+  complimentaryProductId?: string | null;
+  complimentaryVariantId?: string | null;
+  complimentaryQuantity?: number | null;
 }>;
 
 export type SubmittedCouponResult = Readonly<{
@@ -159,6 +197,53 @@ export type PromotionCandidateResult = Readonly<{
   promotionDiscountTotalPaise: bigint;
   postPromotionComponents: readonly MonetaryComponent[];
   appliedPromotions: readonly AppliedPromotion[];
+  primaryPromotionId?: string | null;
+  deliveryPromotionId?: string | null;
+  hasComplimentaryPrimary?: boolean;
+  /** Competing complimentary Offers were discarded (NONE_CHOSEN). */
+  complimentaryCompetingNoneChosen?: boolean;
+}>;
+
+export type ThresholdProgress = Readonly<{
+  promotionId: string;
+  remainingAmountPaise: bigint | null;
+  remainingItemQuantity: number | null;
+  displayName: string;
+  benefitType: PromotionBenefitType;
+}>;
+
+/**
+ * Server-owned complimentary projection.
+ *
+ * Three CommercialExplanation states (do not collapse):
+ * - complimentary === null → no complimentary result
+ * - competingOffers === "NONE" → selected complimentary identity
+ * - competingOffers === "NONE_CHOSEN" → competing gifts discarded; no line projected
+ */
+export type ComplimentaryProjection =
+  | Readonly<{
+      competingOffers: "NONE";
+      promotionId: string;
+      productId: string;
+      variantId: string;
+      quantity: 1;
+      merchandiseChargePaise: 0;
+    }>
+  | Readonly<{
+      competingOffers: "NONE_CHOSEN";
+    }>;
+
+export type CommercialExplanation = Readonly<{
+  selectedPromotionIds: readonly string[];
+  appliedCouponId: string | null;
+  merchandiseOrOrderSavingPaise: bigint;
+  deliverySavingPaise: bigint;
+  totalSavedPaise: bigint;
+  grandTotalPaise: bigint;
+  couponPresentationClass: CouponPresentationClass | null;
+  thresholdProgress: ThresholdProgress | null;
+  complimentary: ComplimentaryProjection | null;
+  submittedCouponResult: SubmittedCouponResult | null;
 }>;
 
 export type PromotionEvaluationResult = Readonly<{
@@ -171,6 +256,8 @@ export type PromotionEvaluationResult = Readonly<{
   postPromotionComponents: readonly MonetaryComponent[];
   submittedCouponResult: SubmittedCouponResult | null;
   candidates: readonly PromotionCandidateResult[];
+  thresholdProgress: readonly ThresholdProgress[];
+  complimentaryCompetingNoneChosen: boolean;
 }>;
 
 export type CouponRecord = Readonly<{

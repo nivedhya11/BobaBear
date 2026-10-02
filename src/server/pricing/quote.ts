@@ -6,13 +6,23 @@
  * Does not assert orderability.
  */
 import type { DirectPricingQuote, TaxInclusionMode } from "../../shared/pricing";
+import { CHARGE_DEFINITION_DELIVERY_ID } from "../../shared/pricing";
 import {
+  buildCommercialExplanation,
+  classifyCouponPresentation,
   evaluatePromotions,
   finalizeCouponResult,
+  isComplimentaryPromotion,
+  projectUnselectedComplimentaryGifts,
   selectBestCandidate,
   type MonetaryComponent,
   type PrePromotionSnapshot,
   type SnapshotLineUnit,
+} from "../../shared/promotions";
+import type {
+  FirstOrderPurchaseStatus,
+  FulfilmentMode,
+  FulfilmentTiming,
 } from "../../shared/promotions";
 import type { PersistenceQueryContext } from "../persistence/types";
 import { catalogVariantsTable } from "../../platform/database/schema/catalog";
@@ -22,6 +32,7 @@ import {
   loadSubmittedCoupon,
   resolveOutletHierarchy,
 } from "../promotions/load-for-evaluation";
+import { resolveOutletVariantAvailability } from "../assortment/resolve-eligibility";
 import { assertApplicationRole, assertUuid } from "./assert-role";
 import {
   resolveBundleOptionPriceDelta,
@@ -63,6 +74,13 @@ export type BuildDirectPricingQuoteInput = Readonly<{
   }>[];
   customerId?: string | null;
   submittedCouponCode?: string | null;
+  fulfilmentMode?: FulfilmentMode | null;
+  fulfilmentTiming?: FulfilmentTiming | null;
+  /**
+   * T4 supplies the purchase-existence query result.
+   * Absent / UNAVAILABLE fails closed for first-order-only Offers.
+   */
+  firstOrderPurchaseStatus?: FirstOrderPurchaseStatus | null;
 }>;
 
 type InternalTaxableLine = {
@@ -351,7 +369,6 @@ export async function buildDirectPricingQuote(
   const prePromotionSubtotalPaise =
     basePaise + modifierAdjustmentsPaise + bundleAdjustmentsPaise + chargesPaise;
 
-  const snapshot: PrePromotionSnapshot = { components, units };
   const hierarchy = await resolveOutletHierarchy(context, input.outletId);
   const automatic = await loadApplicableAutomaticPromotions(context, {
     brandId: hierarchy.brandId,
@@ -377,6 +394,74 @@ export async function buildDirectPricingQuote(
     };
   }
 
+  // Complimentary projection: price gift variants into the pre-promotion snapshot
+  // so a winning complimentary Offer can allocate them to zero. Unselected gift
+  // lines are stripped before payable comparison and from the final quote.
+  const complimentaryAvailability = new Map<string, boolean>();
+  const complimentaryGrossByLineId = new Map<string, bigint>();
+  const promotionsForEval = [...automatic];
+  if (submittedCoupon?.promotion) {
+    promotionsForEval.push(submittedCoupon.promotion);
+  }
+  let complimentaryBasePaise = BigInt(0);
+  for (const promo of promotionsForEval) {
+    if (!isComplimentaryPromotion(promo)) continue;
+    const variantId = promo.benefit.complimentaryVariantId;
+    const productId = promo.benefit.complimentaryProductId;
+    if (!variantId || !productId) {
+      complimentaryAvailability.set(variantId ?? promo.id, false);
+      continue;
+    }
+    const availability = await resolveOutletVariantAvailability(context, {
+      outletId: input.outletId,
+      variantId,
+      context: { now: input.at },
+    });
+    const available = availability.eligible === true;
+    complimentaryAvailability.set(variantId, available);
+    if (!available) continue;
+
+    const resolved = await resolveOutletVariantPrice(context, {
+      variantId,
+      outletId: input.outletId,
+      at: input.at,
+    });
+    taxInclusionMode = resolved.taxInclusionMode;
+    sourcePriceBookIds.add(resolved.brandPriceBookId);
+    sourcePriceBookIds.add(resolved.winningPriceBookId);
+    const giftLineId = `complimentary:${promo.id}`;
+    const seq = lineSequence++;
+    complimentaryBasePaise += resolved.amountPaise;
+    complimentaryGrossByLineId.set(giftLineId, resolved.amountPaise);
+    components.push({
+      componentId: `base:${giftLineId}`,
+      kind: "variant_base",
+      lineId: giftLineId,
+      lineSequence: seq,
+      variantId,
+      productId,
+      chargeDefinitionId: null,
+      amountPaise: resolved.amountPaise,
+      taxCategoryId: resolved.taxCategoryId,
+    });
+    units.push({
+      unitId: `unit:${giftLineId}:0`,
+      lineId: giftLineId,
+      lineSequence: seq,
+      unitIndex: 0,
+      variantId,
+      productId,
+      unitBasePaise: resolved.amountPaise,
+      modifierPaise: BigInt(0),
+      bundleDeltaPaise: BigInt(0),
+      taxCategoryId: resolved.taxCategoryId,
+    });
+  }
+
+  basePaise += complimentaryBasePaise;
+  const prePromotionSubtotalWithGifts = prePromotionSubtotalPaise + complimentaryBasePaise;
+  const snapshot: PrePromotionSnapshot = { components, units };
+
   const evaluation = evaluatePromotions({
     context: {
       at: input.at,
@@ -386,6 +471,11 @@ export async function buildDirectPricingQuote(
       outletId: hierarchy.outletId,
       salesChannel: "direct",
       customerId: input.customerId ?? null,
+      fulfilmentMode: input.fulfilmentMode ?? null,
+      fulfilmentTiming: input.fulfilmentTiming ?? null,
+      firstOrderPurchaseStatus: input.firstOrderPurchaseStatus ?? null,
+      complimentaryVariantAvailability: complimentaryAvailability,
+      deliveryChargeDefinitionIds: [CHARGE_DEFINITION_DELIVERY_ID],
     },
     snapshot,
     promotions: automatic,
@@ -393,32 +483,63 @@ export async function buildDirectPricingQuote(
     redemptionEnforcementAvailable: true,
   });
 
-  const promotionsById = new Map(
-    evaluation.eligible.map((e) => [e.promotion.id, e.promotion] as const),
-  );
+  const promotionsById = new Map<string, (typeof evaluation.eligible)[number]["promotion"]>();
+  for (const e of evaluation.eligible) {
+    promotionsById.set(e.promotion.id, e.promotion);
+  }
+  for (const p of automatic) {
+    if (!promotionsById.has(p.id)) promotionsById.set(p.id, p);
+  }
+  if (submittedCoupon?.promotion) {
+    promotionsById.set(submittedCoupon.promotion.id, submittedCoupon.promotion);
+  }
 
-  type Cand = (typeof evaluation.candidates)[number] & { grandTotalPaise: bigint };
+  const projectCandidateGifts = (
+    candidate: (typeof evaluation.candidates)[number],
+  ): {
+    postPromotionComponents: MonetaryComponent[];
+    removedGiftGrossPaise: bigint;
+  } => projectUnselectedComplimentaryGifts(candidate, complimentaryGrossByLineId);
+
+  type Cand = (typeof evaluation.candidates)[number] & {
+    grandTotalPaise: bigint;
+    quotedPrePromotionSubtotalPaise: bigint;
+    quotedPostPromotionComponents: readonly MonetaryComponent[];
+  };
   const scored: Cand[] = [];
   for (const candidate of evaluation.candidates) {
+    const projected = projectCandidateGifts(candidate);
+    const quotedPrePromotionSubtotalPaise =
+      prePromotionSubtotalWithGifts - projected.removedGiftGrossPaise;
     const tax = await taxGrandTotal(context, {
       outletId: input.outletId,
       at: input.at,
       taxInclusionMode,
-      prePromotionSubtotalPaise,
+      prePromotionSubtotalPaise: quotedPrePromotionSubtotalPaise,
       promotionDiscountPaise: candidate.promotionDiscountTotalPaise,
-      taxableLines: componentsToTaxableLines(candidate.postPromotionComponents),
+      taxableLines: componentsToTaxableLines(projected.postPromotionComponents),
     });
-    scored.push({ ...candidate, grandTotalPaise: tax.grandTotalPaise });
+    scored.push({
+      ...candidate,
+      postPromotionComponents: projected.postPromotionComponents,
+      grandTotalPaise: tax.grandTotalPaise,
+      quotedPrePromotionSubtotalPaise,
+      quotedPostPromotionComponents: projected.postPromotionComponents,
+    });
   }
 
   const winner = selectBestCandidate(scored, promotionsById);
+  const winnerProjection = projectCandidateGifts(winner);
+  const finalPrePromotionSubtotalPaise =
+    prePromotionSubtotalWithGifts - winnerProjection.removedGiftGrossPaise;
+  const finalBasePaise = basePaise - winnerProjection.removedGiftGrossPaise;
   const winnerTax = await taxGrandTotal(context, {
     outletId: input.outletId,
     at: input.at,
     taxInclusionMode,
-    prePromotionSubtotalPaise,
+    prePromotionSubtotalPaise: finalPrePromotionSubtotalPaise,
     promotionDiscountPaise: winner.promotionDiscountTotalPaise,
-    taxableLines: componentsToTaxableLines(winner.postPromotionComponents),
+    taxableLines: componentsToTaxableLines(winnerProjection.postPromotionComponents),
   });
 
   const submittedCouponResult = finalizeCouponResult(
@@ -427,19 +548,61 @@ export async function buildDirectPricingQuote(
     winner.appliedPromotions.map((p) => p.promotionId),
   );
 
+  const couponPromotionId = submittedCoupon?.promotion?.id ?? null;
+  let bestNonCouponGrandTotalPaise: bigint | null = null;
+  let bestCouponGrandTotalPaise: bigint | null = null;
+  if (couponPromotionId) {
+    for (const c of scored) {
+      if (c.promotionIds.includes(couponPromotionId)) {
+        if (
+          bestCouponGrandTotalPaise === null ||
+          c.grandTotalPaise < bestCouponGrandTotalPaise
+        ) {
+          bestCouponGrandTotalPaise = c.grandTotalPaise;
+        }
+      } else if (
+        bestNonCouponGrandTotalPaise === null ||
+        c.grandTotalPaise < bestNonCouponGrandTotalPaise
+      ) {
+        bestNonCouponGrandTotalPaise = c.grandTotalPaise;
+      }
+    }
+  }
+
+  const couponPresentationClass = classifyCouponPresentation({
+    submittedCouponResult,
+    winner,
+    bestCouponGrandTotalPaise,
+    bestNonCouponGrandTotalPaise,
+    couponPromotionId,
+  });
+
+  const commercialExplanation = buildCommercialExplanation({
+    winner: {
+      ...winner,
+      postPromotionComponents: winnerProjection.postPromotionComponents,
+    },
+    submittedCouponResult,
+    couponPresentationClass,
+    thresholdProgress: evaluation.thresholdProgress,
+    complimentaryCompetingNoneChosen: evaluation.complimentaryCompetingNoneChosen,
+    promotionsById,
+  });
+
   return {
     calculatedAt: input.at.toISOString(),
     currency: "INR",
     taxInclusionMode,
-    basePaise,
+    basePaise: finalBasePaise,
     modifierAdjustmentsPaise,
     bundleAdjustmentsPaise,
     chargesPaise,
-    prePromotionSubtotalPaise,
+    prePromotionSubtotalPaise: finalPrePromotionSubtotalPaise,
     promotionDiscountPaise: winner.promotionDiscountTotalPaise,
     appliedPromotions: winner.appliedPromotions,
     promotionAllocations: winner.allocations,
     submittedCouponResult,
+    commercialExplanation,
     taxablePaise: winnerTax.taxablePaise,
     taxPaise: winnerTax.taxPaise,
     taxComponents: winnerTax.taxComponents,
