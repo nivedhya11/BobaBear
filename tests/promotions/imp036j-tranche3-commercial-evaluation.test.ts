@@ -777,6 +777,74 @@ describe("IMP-036J T3 complimentary gift projection", () => {
     expect(win.allocations.every((a) => a.componentId !== "gift-base")).toBe(true);
     expect(win.promotionDiscountTotalPaise).toBe(BigInt(5000));
   });
+
+  it("BOGO reward selection ignores projected complimentary gift units", () => {
+    const bogo = basePromo({
+      id: "bogo",
+      stackingPolicy: "exclusive",
+      benefit: {
+        benefitType: "buy_x_get_y",
+        percentageBps: null,
+        fixedAmountPaise: null,
+        maximumDiscountPaise: null,
+        buyQuantity: 1,
+        getQuantity: 1,
+        repeatable: false,
+        maximumRewardQuantity: null,
+        includeModifiers: false,
+        includeBundleDeltas: false,
+      },
+    });
+    const snapshot = snapshotOf(
+      [
+        moneyComponent({
+          componentId: "cart-base",
+          amountPaise: BigInt(10000),
+          variantId: "v1",
+          productId: "p1",
+          lineId: "L1",
+        }),
+        moneyComponent({
+          componentId: "gift-base",
+          amountPaise: BigInt(100),
+          variantId: "v1",
+          productId: "p1",
+          lineId: "complimentary:g1",
+        }),
+      ],
+      [
+        {
+          unitId: "u-cart",
+          lineId: "L1",
+          lineSequence: 0,
+          unitIndex: 0,
+          variantId: "v1",
+          productId: "p1",
+          unitBasePaise: BigInt(10000),
+          modifierPaise: BigInt(0),
+          bundleDeltaPaise: BigInt(0),
+          taxCategoryId: "tax",
+        },
+        {
+          unitId: "u-gift",
+          lineId: "complimentary:g1",
+          lineSequence: 1,
+          unitIndex: 0,
+          variantId: "v1",
+          productId: "p1",
+          unitBasePaise: BigInt(100),
+          modifierPaise: BigInt(0),
+          bundleDeltaPaise: BigInt(0),
+          taxCategoryId: "tax",
+        },
+      ],
+    );
+    // With only one cart unit, identical BOGO buy1get1 cannot complete a group
+    // if the cheap gift unit is excluded from the reward pool.
+    const benefit = calculateBenefit(bogo, snapshot);
+    expect(benefit.bogoRewardUnits ?? []).toEqual([]);
+    expect(benefit.nominalBenefitPaise).toBe(BigInt(0));
+  });
 });
 
 describe("IMP-036J T3 first-order classification interface (deferred purchase query)", () => {

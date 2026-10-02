@@ -98,7 +98,11 @@ function calculateBogoBenefit(
     resolveQualifierUnits(snapshot, promotion.qualifierTargets),
   );
   const rewardPool = sortCheapestFirst(
-    snapshot.units.filter((u) => unitMatchesTargets(u, promotion.benefitTargets)),
+    snapshot.units.filter(
+      (u) =>
+        !u.lineId.startsWith("complimentary:") &&
+        unitMatchesTargets(u, promotion.benefitTargets),
+    ),
   );
 
   let completedGroups = 0;
