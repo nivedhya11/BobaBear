@@ -41034,6 +41034,17 @@ export function evaluateImp036jProductIdentity(productText) {
   ) {
     return { ok: false, code: "IMP036J_PRODUCT_TIP", message: "Product Definition current tip must be GTM-R182 / STATE-R180" };
   }
+  const dependencies = productText.split("## 21. Dependencies")[1]?.split("\n## ")[0] ?? "";
+  const architectureFitDependency = dependencies
+    .split("\n")
+    .find((line) => /^\|\s*Architecture Fit\s*\|/.test(line)) ?? "";
+  if (!/^\|\s*Architecture Fit\s*\|\s*PASS \/ LOCKED\s*\|\s*Implementation Tranche 3\s*\|/.test(architectureFitDependency)) {
+    return {
+      ok: false,
+      code: "IMP036J_PRODUCT_DEPENDENCY_TRANCHE",
+      message: "Section 21 Architecture Fit dependency pointer must be Implementation Tranche 3 at GTM-R182 / STATE-R180",
+    };
+  }
   return { ok: true };
 }
 

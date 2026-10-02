@@ -18809,6 +18809,30 @@ describe("IMP-036J architecture fit remediation candidate 9", () => {
     assert.equal(evaluateImp036jProductIdentity(mutated).ok, false);
     assert.equal(evaluateImp036jProductIdentity(product).ok, true);
   });
+  it("requires section 21 Architecture Fit to point at Implementation Tranche 3 at GTM-R182 / STATE-R180", () => {
+    const dependencies = product.split("## 21. Dependencies")[1]?.split("\n## ")[0] ?? "";
+    const architectureFitRow = dependencies.split("\n").find((line) => line.startsWith("| Architecture Fit |")) ?? "";
+    assert.match(architectureFitRow, /\|\s*Architecture Fit\s*\|\s*PASS \/ LOCKED\s*\|\s*Implementation Tranche 3\s*\|/);
+    assert.equal(evaluateImp036jProductIdentity(product).ok, true);
+    const mutated = product.replace(
+      "| Architecture Fit | PASS / LOCKED | Implementation Tranche 3 |",
+      "| Architecture Fit | PASS / LOCKED | Implementation Tranche 2 |",
+    );
+    assert.notEqual(mutated, product);
+    const result = evaluateImp036jProductIdentity(mutated);
+    assert.equal(result.ok, false);
+    assert.equal(result.code, "IMP036J_PRODUCT_DEPENDENCY_TRANCHE");
+  });
+  it("preserves the GTM-R180 / STATE-R178 checkpoint where Tranche 2 had not started", () => {
+    const state = readFileSync("docs/platform/STATE.md", "utf8");
+    const roadmap = readFileSync("docs/platform/ROADMAP.md", "utf8");
+    const tranche1Record = state.split("## 10. STATE-R178 record")[1]?.split("## 10. STATE-R177 record")[0] ?? "";
+    assert.match(tranche1Record, /IMP036J_TRANCHE_1:\s*PASS/);
+    assert.match(tranche1Record, /IMP036J_TRANCHE_2_STARTED:\s*NO/);
+    assert.match(tranche1Record, /IMP036J_NEXT_GATE:\s*IMPLEMENTATION_TRANCHE_2/);
+    assert.match(tranche1Record, /The next gate is `IMPLEMENTATION_TRANCHE_2`\. Tranche 2 has not started\./);
+    assert.match(roadmap, /GTM-R180 \/ STATE-R178 remains the Tranche 1 PASS checkpoint/);
+  });
   it("rejects a Product Definition current tip reverted to GTM-R181 / STATE-R179", () => {
     const mutated = product.replace(
       "ROADMAP = GTM-R182\nSTATE = STATE-R180",
