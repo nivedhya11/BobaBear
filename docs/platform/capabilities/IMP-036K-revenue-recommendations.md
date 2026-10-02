@@ -16,7 +16,7 @@
   "architectureBase": "ARCH-R23",
   "architectureFit": "PASS",
   "architectureLock": "ARCHITECTURE_LOCKED",
-  "designReadiness": "NOT_PERFORMED",
+  "designReadiness": "PASS",
   "qualityTestPlan": "NOT_PERFORMED",
   "measurementPlan": "NOT_PERFORMED",
   "implementationPlan": "NOT_PERFORMED",
@@ -74,7 +74,9 @@ EXPERIENCE_CRITICALITY = X3
 CHANGE_RISK = CR2
 ARCHITECT_REVIEW = 5380398013
 
-DESIGN_READINESS = NOT_PERFORMED
+DESIGN_READINESS = PASS
+DESIGN_READINESS_SOURCE = IMP-036K-DESIGN-CANDIDATE-1
+DESIGN_READINESS_ARCHITECT_REVIEW = 5396061135
 QUALITY_TEST_PLAN = NOT_PERFORMED
 MEASUREMENT_PLAN = NOT_PERFORMED
 IMPLEMENTATION_PLAN = NOT_PERFORMED
@@ -117,7 +119,8 @@ CANDIDATE_2_CREATED = NO
 
 This document is the locked capability architecture for IMP-036K. Its reviewed source is
 `IMP-036K-FIT-CANDIDATE-1`. Architect review `5391917727` is the sole current Architecture Fit
-PASS source for this lock. The architecture is LOCKED. Design Readiness, the Quality/Test Plan,
+PASS source for this lock. The architecture is LOCKED. Design Readiness is PASS for
+`IMP-036K-DESIGN-CANDIDATE-1` under Architect review `5396061135`. The Quality/Test Plan,
 the Measurement Plan, and the Implementation Plan remain unperformed. Implementation is not
 authorized and has not started. The architecture semantics below are the reviewed candidate
 semantics from head `71cfd352f41f933072b583c7e914f93afb91a235`.

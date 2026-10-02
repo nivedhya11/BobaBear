@@ -7,6 +7,7 @@
   "productDefinitionStatus": "APPROVED",
   "productDefinitionGate": "PASS",
   "architectureFit": "PASS",
+  "designReadiness": "PASS",
   "implementationAuthorized": false
 }
 -->
@@ -38,13 +39,17 @@ ARCHITECTURE_FIT = PASS
 ARCHITECTURE_LOCKED = YES
 ARCHITECTURE_FIT_SOURCE = IMP-036K-FIT-CANDIDATE-1
 ARCHITECTURE_FIT_REVIEW = 5391917727
-DESIGN_READINESS = NOT_PERFORMED
+DESIGN_READINESS = PASS
+DESIGN_READINESS_SOURCE = IMP-036K-DESIGN-CANDIDATE-1
+DESIGN_READINESS_ARCHITECT_REVIEW = 5396061135
 QUALITY_TEST_PLAN = NOT_PERFORMED
+QUALITY_TEST_PLAN_FINALIZED = NO
 MEASUREMENT_PLAN = NOT_PERFORMED
+MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = NO
 IMPLEMENTATION_PLAN = NOT_PERFORMED
 IMPLEMENTATION_AUTHORIZED = NO
 IMPLEMENTATION_STARTED = NO
-IMP036K_NEXT_GATE = DESIGN_READINESS
+IMP036K_NEXT_GATE = QUALITY / TEST PLAN FINALIZATION
 FOUNDER_UAT = NOT_PERFORMED
 IMP036K_ACCEPTED = NO
 OPEN_PRODUCT_DECISIONS = NONE
@@ -63,7 +68,7 @@ HEAD `072932df00c445c8215c61f19f81971bf657b160`, tree
 `a4912e6c649cad25094412ac07a005fbb441567e`, and working-tree fingerprint
 `f2886ed726c77301589ba36dccd602da6d44daadd7a0f2dec4e59aada3162c46`, and returned PASS. That
 fingerprint is the evaluated candidate fingerprint. It is not the fingerprint of this persistence
-pull request. That gate persistence did not itself perform Architecture Fit. Architect review `5391917727` is the current Architecture Fit PASS and the lock from `IMP-036K-FIT-CANDIDATE-1`. Historical PASS `5384137705` was later reopened by `5385458836` and is not the current lock source. Design Readiness remains unperformed. Implementation stays unauthorized. The slice is not accepted.
+pull request. That gate persistence did not itself perform Architecture Fit. Architect review `5391917727` is the current Architecture Fit PASS and the lock from `IMP-036K-FIT-CANDIDATE-1`. Historical PASS `5384137705` was later reopened by `5385458836` and is not the current lock source. Architect review `5396061135` is the current Design Readiness PASS for `IMP-036K-DESIGN-CANDIDATE-1`. Quality/Test Plan and Measurement/Instrumentation Plan remain unperformed. Implementation stays unauthorized. The slice is not accepted.
 
 ```text
 PRODUCT DEFINITION
@@ -128,9 +133,9 @@ GOLDEN_JOURNEYS = GJ-1
 | Change Risk | `CR2`, as recorded by D-383 / GTM-R177 / STATE-R175. The slice can affect cart contents, merchandising, and attribution, while Pricing, Promotion, Checkout, and Payment remain existing authorities. Change Risk is not an agent `R` level. |
 | Linked Experience Definition | [`experience-definition.md`](./experience-definition.md), `XD-IMP-036K-DRAFT-1`, `APPROVED` |
 | Experience Gate | `PASS` (Architect review `5380398013`). Design Readiness remains `NOT_PERFORMED`. |
-| Canonical anchors | VISION-1 / GTM-R182 / STATE-R180 / ARCH-R23 / DR-24 / PD-2 / EXP-1 / LANG-1 / TEST-1 / PERSONA-1 / GJ-1 |
+| Canonical anchors | VISION-1 / GTM-R183 / STATE-R181 / ARCH-R23 / DR-24 / PD-2 / EXP-1 / LANG-1 / TEST-1 / PERSONA-1 / GJ-1 |
 | Repository candidate | `CANONICAL_PATH = /home/ajoshi/repos/boba-bear-platform`. `EVALUATED_BRANCH = docs/imp036k-product-experience-definition`. `EVALUATED_HEAD = 072932df00c445c8215c61f19f81971bf657b160`. `EVALUATED_TREE = a4912e6c649cad25094412ac07a005fbb441567e`. `EVALUATED_WORKING_TREE_FINGERPRINT = f2886ed726c77301589ba36dccd602da6d44daadd7a0f2dec4e59aada3162c46` (content-sensitive; captured for this exact candidate and confirmed by `npm run working-tree:fingerprint` on an isolated clean checkout of that HEAD and tree). Source `main` `24d424dbd22ee53cb3bbadec484bec3925b6e898`, tree `59842dfdb68b1733899f7544b0aab5f49437e815`. Evaluated candidate drift against that source was `NONE`. Persistence `SOURCE_DRIFT` is IMP-036J Tranche 1 consuming GTM-R178 / STATE-R176 before this record was re-anchored on `bd4ce6edfde83f22a9fb7bfc1d933fa8c52cd4d3`. The persistence pull request fingerprint is not this evaluated fingerprint. |
-| Capability lifecycle / authorization | ROADMAP/STATE: `IMP-036K: PLANNED`; Product Definition `PD-IMP-036K-DRAFT-1` `APPROVED` / Gate `PASS`; Experience Definition `XD-IMP-036K-DRAFT-1` `APPROVED` / Gate `PASS`; next gate `DESIGN_READINESS`; Architecture Fit `PASS`; architecture `LOCKED` (source `IMP-036K-FIT-CANDIDATE-1`; review `5391917727`); `currentProductSlice` remains IMP-036J; `acceptedThrough` remains IMP-036I; implementation unauthorized and unstarted. |
+| Capability lifecycle / authorization | ROADMAP/STATE: `IMP-036K: PLANNED`; Product Definition `PD-IMP-036K-DRAFT-1` `APPROVED` / Gate `PASS`; Experience Definition `XD-IMP-036K-DRAFT-1` `APPROVED` / Gate `PASS`; Architecture Fit `PASS`; architecture `LOCKED` (source `IMP-036K-FIT-CANDIDATE-1`; review `5391917727`); Design Readiness `PASS` (source `IMP-036K-DESIGN-CANDIDATE-1`; review `5396061135`); next gate `QUALITY / TEST PLAN FINALIZATION`; `currentProductSlice` remains IMP-036J; `acceptedThrough` remains IMP-036I; implementation unauthorized and unstarted. |
 | Relevant capability architecture / ADRs | Locked capability architecture [`../../capabilities/IMP-036K-revenue-recommendations.md`](../../capabilities/IMP-036K-revenue-recommendations.md). Architecture Fit `PASS`. Architecture is `LOCKED`. Source `IMP-036K-FIT-CANDIDATE-1`. Review `5391917727`. Historical PASS `5384137705` was later reopened by `5385458836`. No new ADR. Binding context: ARCH-R23; ARCH-G05, ARCH-G11, ARCH-G12, ARCH-G14, ARCH-G19, ARCH-G20, ARCH-G23, ARCH-G25; D-368, D-369, D-373, D-382, D-383. |
 | Founder UAT applicability | `FOUNDER_UAT_REQUIRED = YES`. X3 customer ordering, conversion, and trust. Not performed. |
 

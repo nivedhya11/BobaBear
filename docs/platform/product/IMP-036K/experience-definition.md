@@ -11,7 +11,7 @@
   "experienceGate": "PASS",
   "architectureFit": "PASS",
   "architectureLocked": "YES",
-  "designReadiness": "NOT_PERFORMED",
+  "designReadiness": "PASS",
   "implementationAuthorized": false
 }
 -->
@@ -45,10 +45,14 @@ ARCHITECTURE_FIT = PASS
 ARCHITECTURE_LOCKED = YES
 ARCHITECTURE_FIT_SOURCE = IMP-036K-FIT-CANDIDATE-1
 ARCHITECTURE_FIT_REVIEW = 5391917727
-DESIGN_READINESS = NOT_PERFORMED
+DESIGN_READINESS = PASS
+DESIGN_READINESS_SOURCE = IMP-036K-DESIGN-CANDIDATE-1
+DESIGN_READINESS_ARCHITECT_REVIEW = 5396061135
+QUALITY_TEST_PLAN = NOT_PERFORMED
+MEASUREMENT_PLAN = NOT_PERFORMED
 IMPLEMENTATION_AUTHORIZED = NO
 IMPLEMENTATION_STARTED = NO
-IMP036K_NEXT_GATE = DESIGN_READINESS
+IMP036K_NEXT_GATE = QUALITY / TEST PLAN FINALIZATION
 FOUNDER_UAT_REQUIRED = YES
 FOUNDER_EXPERIENCE_UAT = NOT_PERFORMED
 OPEN_EXPERIENCE_DECISIONS = NONE
@@ -528,7 +532,7 @@ EXPERIENCE_GATE_EXECUTION: PERFORMED
 Result: PASS
 ```
 
-Experience Gate PASS means the intended experience is understood. It is not Design Readiness. Exact component geometry, implementation-ready responsive states, and final component mapping remain Design Readiness after Architecture Fit. Founder Experience UAT remains `NOT_PERFORMED`.
+Experience Gate PASS means the intended experience is understood. Design Readiness PASS is recorded separately for `IMP-036K-DESIGN-CANDIDATE-1` under Architect review `5396061135`. Founder Experience UAT remains `NOT_PERFORMED`.
 
 ## 20. Architecture Fit reconciliation
 
@@ -541,17 +545,19 @@ honour. They do not add product entitlement:
 - add, customization, recovery, and removal reuse existing interactions
 - suppression does not look like a menu deletion
 
-The Experience Gate has passed (Architect review `5380398013`). Architecture Fit remains
-`NOT_PERFORMED` and is the next gate. This Experience Definition does not answer the
-Architecture Fit questions listed in the Product Definition.
+The Experience Gate has passed (Architect review `5380398013`). Architecture Fit is `PASS`
+and architecture is `LOCKED` from `IMP-036K-FIT-CANDIDATE-1` (Architect review
+`5391917727`). This Experience Definition does not answer Architecture Fit questions listed
+in the Product Definition.
 
 ## 21. Design Readiness
 
-`NOT_PERFORMED`. Experience Gate PASS does not perform it. It waits for a viable Architecture
-Fit. The later specification needs to cover the states and XR identifiers in this document,
-including desktop, mobile, content, keyboard, focus, accessible names, and perceived
-performance, using the reuse choices in section 15. This Experience Definition is not that
-specification.
+`PASS` for `IMP-036K-DESIGN-CANDIDATE-1` under Architect review `5396061135`. Exact
+component geometry, keyboard/focus, responsive states, and presentation-observation hooks
+are recorded in [`design-readiness.md`](./design-readiness.md). The next gate is
+`QUALITY / TEST PLAN FINALIZATION`, with `MEASUREMENT / INSTRUMENTATION PLAN FINALIZATION`
+also required under PD-2. This Experience Definition is not that Design Readiness
+specification and does not authorize implementation.
 
 ## 22. Experience QA and Founder Experience UAT
 

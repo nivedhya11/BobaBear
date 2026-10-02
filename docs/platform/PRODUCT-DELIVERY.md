@@ -465,11 +465,11 @@ Implementation is not complete, and IMP-036J is not accepted. The next gate is
 `IMPLEMENTATION_TRANCHE_3`. Formal lifecycle is `IMPLEMENTATION_IN_PROGRESS`. Architecture
 remains locked. Change Risk is recorded in ROADMAP/STATE and is not an AGENTS risk level.
 
-## IMP-036K architecture lock
+## IMP-036K Design Readiness PASS
 
 IMP-036K is the next product slice under D-383. It is not the current implementation slice.
 Architect review `5380398013` recorded Product Definition Gate PASS and Experience Gate PASS.
-Architecture Fit is PASS and the capability architecture is LOCKED from `IMP-036K-FIT-CANDIDATE-1` (current Architect review `5391917727`). The next gate is Design Readiness. Implementation is not authorized.
+Architecture Fit is PASS and the capability architecture is LOCKED from `IMP-036K-FIT-CANDIDATE-1` (current Architect review `5391917727`). Design Readiness is PASS for `IMP-036K-DESIGN-CANDIDATE-1` (Architect review `5396061135`). The next gate is Quality / Test Plan Finalization, with Measurement / Instrumentation Plan Finalization also required under PD-2. Implementation is not authorized.
 
 ```text
 PRODUCT_DEFINITION = PD-IMP-036K-DRAFT-1 APPROVED / PASS
@@ -486,14 +486,18 @@ ARCHITECTURE_FIT_EVALUATED_TREE = 90431caf3d26114a3ed81f6c6fd71b18c34fb930
 ARCHITECTURE_FIT_EVALUATED_WORKING_TREE_FINGERPRINT = db07f54f174c646de5de56ee7ae7a30c90f7f03de167b18ca0a6fa122a9f2ff7
 HISTORICAL_ARCHITECTURE_FIT_PASS_REVIEW = 5384137705
 ARCHITECTURE_FIT_REOPEN_REVIEW = 5385458836
-DESIGN_READINESS = NOT_PERFORMED
+DESIGN_READINESS = PASS
+DESIGN_READINESS_SOURCE = IMP-036K-DESIGN-CANDIDATE-1
+DESIGN_READINESS_ARCHITECT_REVIEW = 5396061135
 QUALITY_TEST_PLAN = NOT_PERFORMED
+QUALITY_TEST_PLAN_FINALIZED = NO
 MEASUREMENT_PLAN = NOT_PERFORMED
+MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = NO
 IMPLEMENTATION_PLAN = NOT_PERFORMED
 IMPLEMENTATION_AUTHORIZED = NO
 IMPLEMENTATION_STARTED = NO
 IMP036K_ACCEPTED = NO
-NEXT_GATE = DESIGN_READINESS
+NEXT_GATE = QUALITY / TEST PLAN FINALIZATION
 CURRENT_PRODUCT_SLICE = IMP-036J
 CANONICAL_PATH = /home/ajoshi/repos/boba-bear-platform
 EVALUATED_BRANCH = docs/imp036k-product-experience-definition
@@ -502,8 +506,9 @@ EVALUATED_TREE = a4912e6c649cad25094412ac07a005fbb441567e
 EVALUATED_WORKING_TREE_FINGERPRINT = f2886ed726c77301589ba36dccd602da6d44daadd7a0f2dec4e59aada3162c46
 ```
 
-Experience Gate PASS is not Design Readiness PASS. RRD-01 through RRD-08 remain discovery
-provenance. D-383 remains the sequencing authority.
+Design Readiness PASS does not finalize the Quality/Test Plan or Measurement Plan and does not
+authorize implementation. RRD-01 through RRD-08 remain discovery provenance. D-383 remains the
+sequencing authority.
 
 ## AI execution and documentation efficiency
 
