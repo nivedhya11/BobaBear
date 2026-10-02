@@ -116,6 +116,7 @@ import {
   evaluateImp036jExperienceFitPointer,
   evaluateImp036jTestingPointer,
   evaluateImp036kGateCandidateProvenance,
+  evaluateImp036kDesignReadinessPlanFinalizedFlags,
   evaluateImp036jProductDeliveryTransition,
   evaluateImp036jAuthorizationProse,
   evaluateImp036jProductReadmePointers,
@@ -6747,13 +6748,17 @@ describe("canonical authority history compression", () => {
       assert.match(currentMarker, /DESIGN_READINESS_ARCHITECT_REVIEW:\s*5396061135/);
       assert.match(currentMarker, /IMP036K_NEXT_GATE:\s*QUALITY \/ TEST PLAN FINALIZATION/);
       assert.match(currentMarker, /IMP036K_QUALITY_TEST_PLAN:\s*NOT_PERFORMED/);
+      assert.match(currentMarker, /IMP036K_QUALITY_TEST_PLAN_FINALIZED:\s*NO/);
       assert.match(currentMarker, /IMP036K_MEASUREMENT_PLAN:\s*NOT_PERFORMED/);
+      assert.match(currentMarker, /IMP036K_MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED:\s*NO/);
       assert.match(currentMarker, /IMP036K_IMPLEMENTATION_AUTHORIZED:\s*NO/);
       assert.match(currentMarker, /IMP036J_TRANCHE_1:\s*PASS/);
       assert.match(currentMarker, /IMP036J_TRANCHE_2:\s*PASS/);
       assert.match(currentMarker, /IMP036J_NEXT_GATE:\s*IMPLEMENTATION_TRANCHE_3/);
       assert.doesNotMatch(currentMarker, /IMP036K_DESIGN_READINESS:\s*NOT_PERFORMED/);
       assert.doesNotMatch(currentMarker, /IMP036K_NEXT_GATE:\s*DESIGN_READINESS/);
+      assert.doesNotMatch(currentMarker, /IMP036K_QUALITY_TEST_PLAN_FINALIZED:\s*YES/);
+      assert.doesNotMatch(currentMarker, /IMP036K_MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED:\s*YES/);
       assert.match(state, /STATE-R181\s*=\s*IMP036K_DESIGN_READINESS_PASS/);
       assert.match(state, /STATE-R180\s*=\s*IMP036J_TRANCHE_2_PASS/);
       assert.match(roadmap, /5394618739/);
@@ -18995,5 +19000,40 @@ describe("IMP-036K gate candidate provenance", () => {
     const result = evaluateImp036kGateCandidateProvenance(text);
     assert.equal(result.ok, false);
     assert.equal(result.code, "IMP036K_GATE_PROVENANCE");
+  });
+});
+
+describe("IMP-036K Design Readiness plan-finalized flags", () => {
+  const canonicalFence = [
+    "IMP036K_QUALITY_TEST_PLAN: NOT_PERFORMED",
+    "IMP036K_QUALITY_TEST_PLAN_FINALIZED: NO",
+    "IMP036K_MEASUREMENT_PLAN: NOT_PERFORMED",
+    "IMP036K_MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED: NO",
+  ].join("\n");
+
+  it("passes canonical NO / NO finalized markers while plans remain NOT_PERFORMED", () => {
+    assert.deepEqual(evaluateImp036kDesignReadinessPlanFinalizedFlags(canonicalFence), { ok: true });
+  });
+
+  it("fails when IMP036K_QUALITY_TEST_PLAN_FINALIZED is YES while the plan is NOT_PERFORMED", () => {
+    const mutated = canonicalFence.replace(
+      "IMP036K_QUALITY_TEST_PLAN_FINALIZED: NO",
+      "IMP036K_QUALITY_TEST_PLAN_FINALIZED: YES",
+    );
+    assert.notEqual(mutated, canonicalFence);
+    const result = evaluateImp036kDesignReadinessPlanFinalizedFlags(mutated);
+    assert.equal(result.ok, false);
+    assert.equal(result.code, "IMP036K_DR_QUALITY_FINALIZED");
+  });
+
+  it("fails when IMP036K_MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED is YES while the plan is NOT_PERFORMED", () => {
+    const mutated = canonicalFence.replace(
+      "IMP036K_MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED: NO",
+      "IMP036K_MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED: YES",
+    );
+    assert.notEqual(mutated, canonicalFence);
+    const result = evaluateImp036kDesignReadinessPlanFinalizedFlags(mutated);
+    assert.equal(result.ok, false);
+    assert.equal(result.code, "IMP036K_DR_MEASUREMENT_FINALIZED");
   });
 });

@@ -43112,6 +43112,52 @@ function checkImp036kArchitectureLock(roadmap, state, architecture, decision) {
 
 
 /**
+ * At IMP-036K Design Readiness PASS, Quality/Test Plan and Measurement Plan remain
+ * NOT_PERFORMED, so their FINALIZED markers must stay NO. FINALIZED=YES while the
+ * corresponding plan is still NOT_PERFORMED is a consistency failure.
+ * @param {string} text
+ * @returns {{ ok: true } | { ok: false, code: string, message: string }}
+ */
+export function evaluateImp036kDesignReadinessPlanFinalizedFlags(text) {
+  const body = text ?? "";
+  if (!/IMP036K_QUALITY_TEST_PLAN_FINALIZED:\s*NO/.test(body)) {
+    return {
+      ok: false,
+      code: "IMP036K_DR_QUALITY_FINALIZED",
+      message: "IMP-036K Design Readiness PASS must record IMP036K_QUALITY_TEST_PLAN_FINALIZED: NO while Quality/Test Plan remains NOT_PERFORMED",
+    };
+  }
+  if (!/IMP036K_MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED:\s*NO/.test(body)) {
+    return {
+      ok: false,
+      code: "IMP036K_DR_MEASUREMENT_FINALIZED",
+      message: "IMP-036K Design Readiness PASS must record IMP036K_MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED: NO while Measurement Plan remains NOT_PERFORMED",
+    };
+  }
+  if (
+    /IMP036K_QUALITY_TEST_PLAN:\s*NOT_PERFORMED/.test(body) &&
+    /IMP036K_QUALITY_TEST_PLAN_FINALIZED:\s*YES/.test(body)
+  ) {
+    return {
+      ok: false,
+      code: "IMP036K_DR_QUALITY_FINALIZED",
+      message: "IMP036K_QUALITY_TEST_PLAN_FINALIZED must not be YES while IMP036K_QUALITY_TEST_PLAN remains NOT_PERFORMED",
+    };
+  }
+  if (
+    /IMP036K_MEASUREMENT_PLAN:\s*NOT_PERFORMED/.test(body) &&
+    /IMP036K_MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED:\s*YES/.test(body)
+  ) {
+    return {
+      ok: false,
+      code: "IMP036K_DR_MEASUREMENT_FINALIZED",
+      message: "IMP036K_MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED must not be YES while IMP036K_MEASUREMENT_PLAN remains NOT_PERFORMED",
+    };
+  }
+  return { ok: true };
+}
+
+/**
  * CURRENT checkpoint: IMP-036K Design Readiness PASS (GTM-R183 / STATE-R181).
  * @param {Record<string, any>} roadmap
  * @param {Record<string, any>} state
@@ -43162,7 +43208,9 @@ function checkImp036kDesignReadinessPass(roadmap, state, architecture, decision)
     "HISTORICAL_DESIGN_READINESS_REVIEW_5395779537: STOP",
     "IMP036K_NEXT_GATE: QUALITY / TEST PLAN FINALIZATION",
     "IMP036K_QUALITY_TEST_PLAN: NOT_PERFORMED",
+    "IMP036K_QUALITY_TEST_PLAN_FINALIZED: NO",
     "IMP036K_MEASUREMENT_PLAN: NOT_PERFORMED",
+    "IMP036K_MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED: NO",
     "IMP036K_IMPLEMENTATION_PLAN: NOT_PERFORMED",
     "IMP036K_IMPLEMENTATION_AUTHORIZED: NO",
     "IMP036K_IMPLEMENTATION_STARTED: NO",
@@ -43188,13 +43236,19 @@ function checkImp036kDesignReadinessPass(roadmap, state, architecture, decision)
       fail("IMP036K_DR_POSITION", `Current ROADMAP fence and STATE position must record ${token}`);
     }
   }
+  const roadmapFinalized = evaluateImp036kDesignReadinessPlanFinalizedFlags(currentFence);
+  if (!roadmapFinalized.ok) fail(roadmapFinalized.code, roadmapFinalized.message);
+  const stateFinalized = evaluateImp036kDesignReadinessPlanFinalizedFlags(stateSection2);
+  if (!stateFinalized.ok) fail(stateFinalized.code, stateFinalized.message);
   for (const token of [
     "IMP036K_DESIGN_READINESS: NOT_PERFORMED",
     "IMP036K_NEXT_GATE: DESIGN_READINESS",
     "IMP036K_IMPLEMENTATION_AUTHORIZED: YES",
     "IMP036K_IMPLEMENTATION_STARTED: YES",
     "IMP036K_QUALITY_TEST_PLAN: PASS",
+    "IMP036K_QUALITY_TEST_PLAN_FINALIZED: YES",
     "IMP036K_MEASUREMENT_PLAN: PASS",
+    "IMP036K_MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED: YES",
     "IMP036K_IMPLEMENTATION_PLAN: PASS",
     "IMP036J_TRANCHE_3: PASS",
     "IMP036J_TRANCHE_3: IN_REVIEW",

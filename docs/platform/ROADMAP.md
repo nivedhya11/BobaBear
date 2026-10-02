@@ -2083,7 +2083,7 @@ architecture (latest accepted):
 [`product/IMP-036H/product-definition.md`](./product/IMP-036H/product-definition.md).
 Evidence candidate remains supporting evidence only (not acceptance authority):
 [`product/IMP-036H/evidence-candidate.md`](./product/IMP-036H/evidence-candidate.md).
-`acceptedThrough` is IMP-036I. Current next product slice is IMP-036K — Revenue Recommendations (`PLANNED`; Product Definition `PD-IMP-036K-DRAFT-1` `APPROVED` / Gate `PASS`; Experience Definition `XD-IMP-036K-DRAFT-1` `APPROVED` / Gate `PASS`; next gate `DESIGN_READINESS`; Architecture Fit `PASS`; architecture `LOCKED`; D-383; not the current implementation slice). IMP-037 — Backup, Restore & Migration Readiness remains the held unresolved predecessor (`IMP037_HOLD: YES`; not advanced by IMP-036I acceptance).
+`acceptedThrough` is IMP-036I. Current next product slice is IMP-036K — Revenue Recommendations (`PLANNED`; Product Definition `PD-IMP-036K-DRAFT-1` `APPROVED` / Gate `PASS`; Experience Definition `XD-IMP-036K-DRAFT-1` `APPROVED` / Gate `PASS`; Architecture Fit `PASS`; architecture `LOCKED`; Design Readiness `PASS`; next gate `QUALITY / TEST PLAN FINALIZATION`; D-383; not the current implementation slice). IMP-037 — Backup, Restore & Migration Readiness remains the held unresolved predecessor (`IMP037_HOLD: YES`; not advanced by IMP-036I acceptance).
 
 Paused GTM infrastructure predecessors remain historically progressed and explicitly held:
 
