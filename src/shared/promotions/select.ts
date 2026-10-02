@@ -255,6 +255,32 @@ export function buildPromotionCandidates(
 }
 
 /**
+ * After candidate construction, unselected complimentary gift lines must not
+ * remain as payable merchandise. Keep only the winning complimentary line
+ * (already zeroed by allocation when applied).
+ */
+export function projectUnselectedComplimentaryGifts(
+  candidate: PromotionCandidateResult,
+  complimentaryGrossByLineId: ReadonlyMap<string, bigint>,
+): {
+  postPromotionComponents: MonetaryComponent[];
+  removedGiftGrossPaise: bigint;
+} {
+  const selectedGiftLineId =
+    candidate.hasComplimentaryPrimary && candidate.primaryPromotionId
+      ? `complimentary:${candidate.primaryPromotionId}`
+      : null;
+  let removedGiftGrossPaise = BigInt(0);
+  const postPromotionComponents = candidate.postPromotionComponents.filter((c) => {
+    if (!c.lineId || !c.lineId.startsWith("complimentary:")) return true;
+    if (selectedGiftLineId && c.lineId === selectedGiftLineId) return true;
+    removedGiftGrossPaise += complimentaryGrossByLineId.get(c.lineId) ?? c.amountPaise;
+    return false;
+  });
+  return { postPromotionComponents, removedGiftGrossPaise };
+}
+
+/**
  * Select winning candidate after caller attaches post-tax grand totals.
  * Safety: winner.grandTotal must be <= baseline.grandTotal.
  *

@@ -31,10 +31,10 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2236,
-    "executableTestFiles": 484,
+    "trackedPathsConsidered": 2237,
+    "executableTestFiles": 485,
     "sourceTestFiles": 142,
-    "testsTreeExecutableFiles": 267,
+    "testsTreeExecutableFiles": 268,
     "scriptTestFiles": 75,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
@@ -439,6 +439,7 @@
     "tests/promotions/bogo.test.ts",
     "tests/promotions/engine.test.ts",
     "tests/promotions/fatal-and-money.test.ts",
+    "tests/promotions/imp036j-tranche3-commercial-evaluation.test.ts",
     "tests/promotions/targets-modifiers.test.ts",
     "tests/promotions/tax-integration.test.ts",
     "tests/refund-application/refund.application.test.ts",
@@ -9709,6 +9710,26 @@
     },
     {
       "path": "tests/promotions/fatal-and-money.test.ts",
+      "runner": "vitest",
+      "domain": "promotions",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage",
+        "test:imp036j:tranche3",
+        "test:promotions"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/promotions/imp036j-tranche3-commercial-evaluation.test.ts",
       "runner": "vitest",
       "domain": "promotions",
       "testType": "unit-or-domain",

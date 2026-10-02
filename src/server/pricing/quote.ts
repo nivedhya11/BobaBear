@@ -13,6 +13,7 @@ import {
   evaluatePromotions,
   finalizeCouponResult,
   isComplimentaryPromotion,
+  projectUnselectedComplimentaryGifts,
   selectBestCandidate,
   type MonetaryComponent,
   type PrePromotionSnapshot,
@@ -393,9 +394,11 @@ export async function buildDirectPricingQuote(
     };
   }
 
-  // Complimentary projection: price gift variants into the pre-promotion snapshot,
-  // then allocation zeroes that merchandise charge when the Offer wins.
+  // Complimentary projection: price gift variants into the pre-promotion snapshot
+  // so a winning complimentary Offer can allocate them to zero. Unselected gift
+  // lines are stripped before payable comparison and from the final quote.
   const complimentaryAvailability = new Map<string, boolean>();
+  const complimentaryGrossByLineId = new Map<string, bigint>();
   const promotionsForEval = [...automatic];
   if (submittedCoupon?.promotion) {
     promotionsForEval.push(submittedCoupon.promotion);
@@ -429,6 +432,7 @@ export async function buildDirectPricingQuote(
     const giftLineId = `complimentary:${promo.id}`;
     const seq = lineSequence++;
     complimentaryBasePaise += resolved.amountPaise;
+    complimentaryGrossByLineId.set(giftLineId, resolved.amountPaise);
     components.push({
       componentId: `base:${giftLineId}`,
       kind: "variant_base",
@@ -490,28 +494,52 @@ export async function buildDirectPricingQuote(
     promotionsById.set(submittedCoupon.promotion.id, submittedCoupon.promotion);
   }
 
-  type Cand = (typeof evaluation.candidates)[number] & { grandTotalPaise: bigint };
+  const projectCandidateGifts = (
+    candidate: (typeof evaluation.candidates)[number],
+  ): {
+    postPromotionComponents: MonetaryComponent[];
+    removedGiftGrossPaise: bigint;
+  } => projectUnselectedComplimentaryGifts(candidate, complimentaryGrossByLineId);
+
+  type Cand = (typeof evaluation.candidates)[number] & {
+    grandTotalPaise: bigint;
+    quotedPrePromotionSubtotalPaise: bigint;
+    quotedPostPromotionComponents: readonly MonetaryComponent[];
+  };
   const scored: Cand[] = [];
   for (const candidate of evaluation.candidates) {
+    const projected = projectCandidateGifts(candidate);
+    const quotedPrePromotionSubtotalPaise =
+      prePromotionSubtotalWithGifts - projected.removedGiftGrossPaise;
     const tax = await taxGrandTotal(context, {
       outletId: input.outletId,
       at: input.at,
       taxInclusionMode,
-      prePromotionSubtotalPaise: prePromotionSubtotalWithGifts,
+      prePromotionSubtotalPaise: quotedPrePromotionSubtotalPaise,
       promotionDiscountPaise: candidate.promotionDiscountTotalPaise,
-      taxableLines: componentsToTaxableLines(candidate.postPromotionComponents),
+      taxableLines: componentsToTaxableLines(projected.postPromotionComponents),
     });
-    scored.push({ ...candidate, grandTotalPaise: tax.grandTotalPaise });
+    scored.push({
+      ...candidate,
+      postPromotionComponents: projected.postPromotionComponents,
+      grandTotalPaise: tax.grandTotalPaise,
+      quotedPrePromotionSubtotalPaise,
+      quotedPostPromotionComponents: projected.postPromotionComponents,
+    });
   }
 
   const winner = selectBestCandidate(scored, promotionsById);
+  const winnerProjection = projectCandidateGifts(winner);
+  const finalPrePromotionSubtotalPaise =
+    prePromotionSubtotalWithGifts - winnerProjection.removedGiftGrossPaise;
+  const finalBasePaise = basePaise - winnerProjection.removedGiftGrossPaise;
   const winnerTax = await taxGrandTotal(context, {
     outletId: input.outletId,
     at: input.at,
     taxInclusionMode,
-    prePromotionSubtotalPaise: prePromotionSubtotalWithGifts,
+    prePromotionSubtotalPaise: finalPrePromotionSubtotalPaise,
     promotionDiscountPaise: winner.promotionDiscountTotalPaise,
-    taxableLines: componentsToTaxableLines(winner.postPromotionComponents),
+    taxableLines: componentsToTaxableLines(winnerProjection.postPromotionComponents),
   });
 
   const submittedCouponResult = finalizeCouponResult(
@@ -550,7 +578,10 @@ export async function buildDirectPricingQuote(
   });
 
   const commercialExplanation = buildCommercialExplanation({
-    winner,
+    winner: {
+      ...winner,
+      postPromotionComponents: winnerProjection.postPromotionComponents,
+    },
     submittedCouponResult,
     couponPresentationClass,
     thresholdProgress: evaluation.thresholdProgress,
@@ -562,11 +593,11 @@ export async function buildDirectPricingQuote(
     calculatedAt: input.at.toISOString(),
     currency: "INR",
     taxInclusionMode,
-    basePaise,
+    basePaise: finalBasePaise,
     modifierAdjustmentsPaise,
     bundleAdjustmentsPaise,
     chargesPaise,
-    prePromotionSubtotalPaise: prePromotionSubtotalWithGifts,
+    prePromotionSubtotalPaise: finalPrePromotionSubtotalPaise,
     promotionDiscountPaise: winner.promotionDiscountTotalPaise,
     appliedPromotions: winner.appliedPromotions,
     promotionAllocations: winner.allocations,

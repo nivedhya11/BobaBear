@@ -17,6 +17,7 @@ import {
   calculateBenefit,
   classifyCouponPresentation,
   evaluateEligibility,
+  projectUnselectedComplimentaryGifts,
   selectBestCandidate,
   type MonetaryComponent,
   type PrePromotionSnapshot,
@@ -678,6 +679,35 @@ describe("IMP-036J T3 commercial explanation coherence (AC-036J-004-01)", () => 
     expect(explanation.totalSavedPaise).toBe(
       explanation.merchandiseOrOrderSavingPaise + explanation.deliverySavingPaise,
     );
+  });
+});
+
+describe("IMP-036J T3 complimentary gift projection", () => {
+  it("unselected complimentary gift lines are stripped from payable projection", () => {
+    const giftLine = "complimentary:g1";
+    const snapshot = snapshotOf([
+      moneyComponent({ componentId: "c1", amountPaise: BigInt(100000) }),
+      moneyComponent({
+        componentId: "gift-base",
+        amountPaise: BigInt(2500),
+        variantId: "v1",
+        productId: "p1",
+        lineId: giftLine,
+      }),
+    ]);
+    const gift = complimentaryPromo("g1", "v1", "p1");
+    const merch = fixedPrimary("m80", BigInt(8000), "exclusive");
+    const candidates = buildPromotionCandidates(
+      [{ promotion: gift }, { promotion: merch }],
+      snapshot,
+    );
+    const merchCand = candidates.find((c) => c.promotionIds.includes("m80"))!;
+    const projected = projectUnselectedComplimentaryGifts(
+      merchCand,
+      new Map([[giftLine, BigInt(2500)]]),
+    );
+    expect(projected.removedGiftGrossPaise).toBe(BigInt(2500));
+    expect(projected.postPromotionComponents.some((c) => c.lineId === giftLine)).toBe(false);
   });
 });
 
