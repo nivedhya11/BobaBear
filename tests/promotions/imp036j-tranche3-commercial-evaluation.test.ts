@@ -757,6 +757,26 @@ describe("IMP-036J T3 complimentary gift projection", () => {
     });
     expect(progress[0]!.remainingAmountPaise).toBe(BigInt(30000));
   });
+
+  it("merchandise benefits do not allocate onto projected complimentary gifts", () => {
+    const merch = fixedPrimary("m50", BigInt(5000), "exclusive");
+    const snapshot = snapshotOf([
+      moneyComponent({ componentId: "c1", amountPaise: BigInt(100000) }),
+      moneyComponent({
+        componentId: "gift-base",
+        amountPaise: BigInt(2500),
+        variantId: "gv",
+        productId: "gp",
+        lineId: "complimentary:g1",
+      }),
+    ]);
+    const benefit = calculateBenefit(merch, snapshot);
+    expect(benefit.eligibleComponentIds).toEqual(["c1"]);
+    const candidates = buildPromotionCandidates([{ promotion: merch }], snapshot);
+    const win = candidates.find((c) => c.promotionIds.includes("m50"))!;
+    expect(win.allocations.every((a) => a.componentId !== "gift-base")).toBe(true);
+    expect(win.promotionDiscountTotalPaise).toBe(BigInt(5000));
+  });
 });
 
 describe("IMP-036J T3 first-order classification interface (deferred purchase query)", () => {

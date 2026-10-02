@@ -43,6 +43,11 @@ export function componentMatchesBenefitTargets(
   targets: readonly PromotionTargetConfig[],
   benefit: PromotionDefinition["benefit"],
 ): boolean {
+  // Projected complimentary gift lines are allocated only by complimentary_item
+  // calculateBenefit. Generic merchandise benefits must not discount them.
+  if (component.lineId?.startsWith("complimentary:")) {
+    return false;
+  }
   const hasAllMerchandise = targets.some((t) => t.targetType === "all_merchandise");
   const chargeIds = new Set(
     targets.filter((t) => t.targetType === "charge" && t.chargeDefinitionId).map((t) => t.chargeDefinitionId!),
