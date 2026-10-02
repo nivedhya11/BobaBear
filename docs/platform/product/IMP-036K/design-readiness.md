@@ -65,9 +65,14 @@ implementation-ready presentation decisions. It does not reopen Product semantic
 money authority, Cart authority, authorization, holdout activation, or implementation authority.
 
 Architect review `5394618739` STOPPED the first text of this same candidate at head
-`815ad8e711aa09c012aed8e65f59af788c21869e`. That STOP remains historical evidence. Candidate
+`815ad8e711aa09c012aed8e65f59af788c21869e`. That STOP remains historical evidence. Architect
+review `5395779537` later STOPPED the same candidate at head
+`5c8e1dcd0a7a084c4b8e15c5ed1b386810f7a827` for missing presentation-observation hooks while
+confirming the variant-upgrade and modal-focus findings were already resolved. Candidate
 identity remains `IMP-036K-DESIGN-CANDIDATE-1`; no Candidate 2 is created. The corrected text no
-longer assumes an existing variant-switch path or an existing complete modal focus trap/restoration.
+longer assumes an existing variant-switch path or an existing complete modal focus
+trap/restoration, and it now defines the presentation-observation lifecycle that preserves
+locked Architecture Fit.
 
 ---
 
@@ -138,6 +143,75 @@ Create/reuse one compact `RecommendationGroup`/item presentation pattern:
 
 Visual language extends the compact menu/product-summary pattern rather than introducing a new
 promotional-card system. The group is visually secondary to primary commerce content.
+
+### Presentation-observation lifecycle
+
+Design Readiness owns the component-side presentation hooks and visibility lifecycle. It
+preserves locked Architecture Fit meanings and does not select Measurement Plan encoding.
+
+```text
+SET_ISSUED ≠ SET_RENDER
+SET_RENDER ≠ ITEM_IMPRESSION
+BROWSER = OBSERVER_ONLY
+SERVER_SET_CORRELATION = REQUIRED_FOR_PRESENTATION_REPORTING
+COMMERCE_FAIL_OPEN = YES
+ATTRIBUTION_FAIL_CLOSED = YES
+```
+
+1. `SET_ISSUED`
+   - remains server issuance only;
+   - is **not** presentation;
+   - no UI observation is emitted merely because recommendation data was returned,
+     recommendation state was created, or an issued payload exists in memory/DOM.
+
+2. `RecommendationGroup` / `SET_RENDER`
+   - the group owns the presentation hook for the issued set;
+   - it may report `SET_RENDER` only after that recommendation module is actually committed
+     and shown to the customer on the eligible surface;
+   - response receipt, state creation, hidden DOM presence, pre-rendering, or an
+     off-screen/unshown set must not count as `SET_RENDER`;
+   - reporting must carry only the server-issued correlation required by locked Architecture
+     Fit (issued set identity and placement);
+   - the browser remains an observer, never authority for set identity, membership,
+     eligibility, rank, relationship, holdout, or attribution.
+
+3. Recommendation item / `ITEM_IMPRESSION`
+   - each issued recommendation item owns its item-presentation hook;
+   - it may report `ITEM_IMPRESSION` only after that specific item is actually shown;
+   - membership in the returned set, or presence in an unshown/below-fold portion of the
+     module, is not an impression;
+   - the browser may echo only the issued member correlation; server validation remains
+     authoritative for whether a presentation occurrence is recorded.
+
+4. Absence semantics
+   - server-issued but never shown set ⇒ no `SET_RENDER`;
+   - issued member never shown ⇒ no `ITEM_IMPRESSION`;
+   - recommendation commerce still fails open if observation reporting or persistence fails;
+   - missing presentation proof means attribution fails closed, per locked architecture.
+
+5. Re-render behaviour
+   - ordinary React re-render or remount of the same already-presented issued set must not
+     manufacture an additional `SET_RENDER` presentation occurrence;
+   - ordinary React re-render or remount of the same already-presented issued member must not
+     manufacture an additional `ITEM_IMPRESSION` presentation occurrence;
+   - a later distinct actual presentation of a newly issued set/member may report again
+     because that is a new issuance/presentation, not remount noise;
+   - this rule is presentation-semantics only. It does not invent analytics storage,
+     durable dedupe tables, transport retries, or vendor behaviour.
+
+6. Measurement-plan boundary
+   Later Measurement/Instrumentation Plan ownership remains explicit for:
+   - concrete event encoding;
+   - transport;
+   - durable schema;
+   - retention/privacy;
+   - detailed deduplication encoding;
+   - analytics projection;
+   - controlled-experiment observation/interpretation rules;
+   - analytics vendor.
+
+Design Readiness does not reopen holdout activation, ranking, assistance proofs beyond the
+presentation hooks above, Product/Experience meanings, or implementation authorization.
 
 ---
 
@@ -396,6 +470,11 @@ MenuItemRow.tsx
 
 new/reused ordering recommendation presentation
   - RecommendationGroup / item presentation only
+  - RecommendationGroup owns SET_RENDER after actual module presentation
+  - each recommendation item owns ITEM_IMPRESSION after that item is actually shown
+  - browser remains observer only; server-issued correlation required
+  - ordinary re-render/remount must not invent duplicate presentation occurrences
+  - Measurement Plan still owns encoding/transport/schema/vendor/dedupe details
 
 MenuItemCustomizationDialog.tsx
   - Make it yours placement
@@ -430,6 +509,7 @@ analytics vendor, retry policy or numeric ranking weights.
 | Popular / holdout truth | Evidence-backed label only; holdout silent. |
 | Workforce scope/model | Existing commercial Menu area; `menu.read/menu.manage`; Product/category relationships; Product Detail/Cart placements only. |
 | No authority drift | No new money, promotion, Catalog, Cart, role, permission, service or ML authority. |
+| Presentation observation hooks | `SET_ISSUED` is server-only and not presentation; `RecommendationGroup` reports `SET_RENDER` only after actual module show; each item reports `ITEM_IMPRESSION` only after that item is actually shown; below-fold/unshown members are not impressions; browser is observer-only with server-issued correlation; remount noise does not mint duplicate occurrences; Measurement Plan details remain deferred. |
 
 ---
 
@@ -449,12 +529,23 @@ Design Readiness may PASS only if the exact candidate head verifies all of the f
 10. Quality/Test Plan, Measurement Plan and Implementation Plan remain unperformed.
 11. Implementation remains unauthorized/unstarted.
 12. IMP-036J lifecycle and shared governance are untouched.
+13. Presentation-observation lifecycle is implementation-ready: `SET_ISSUED` ≠ presentation;
+    `SET_RENDER` and `ITEM_IMPRESSION` require actual shown presentation; client is observer
+    only with server-issued correlation; remount noise does not mint duplicate occurrences;
+    Measurement Plan encoding/transport/schema/vendor remain deferred.
 
 ```text
 PRIOR_ARCHITECT_REVIEW = 5394618739
 PRIOR_ARCHITECT_VERDICT = STOP
 PRIOR_REVIEWED_HEAD = 815ad8e711aa09c012aed8e65f59af788c21869e
 PRIOR_FINDINGS_PRESERVED = YES
+ARCHITECT_REVIEW_5395779537 = REMEDIATED
+PRESENTATION_OBSERVATION_HOOKS = DEFINED
+SET_ISSUED_DISTINCT_FROM_PRESENTATION = YES
+SET_RENDER_ACTUAL_PRESENTATION_ONLY = YES
+ITEM_IMPRESSION_ACTUAL_ITEM_PRESENTATION_ONLY = YES
+CLIENT_OBSERVER_ONLY = YES
+MEASUREMENT_PLAN_BOUNDARY_PRESERVED = YES
 MATERIAL_OPEN_DESIGN_QUESTIONS = NONE
 AUTHORITY_AMBIGUITY = NONE
 DRAFT_READY_FOR_DESIGN_READINESS_GATE = YES
