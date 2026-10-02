@@ -210,8 +210,51 @@ export function calculateBenefit(
     return { nominalBenefitPaise: nominal, eligibleCapacityPaise: capacity, eligibleComponentIds };
   }
 
+  if (promotion.benefit.benefitType === "delivery_fee_waiver") {
+    // Allocates against the delivery charge component already present in the quote.
+    // Standing ₹0 ⇒ nominal 0; caller must not fabricate a prior charge or saving.
+    const deliveryComponents = components.filter((c) => c.kind === "charge");
+    const deliveryIds = deliveryComponents.map((c) => c.componentId);
+    const deliveryCapacity = deliveryComponents.reduce((a, c) => a + c.amountPaise, BigInt(0));
+    return {
+      nominalBenefitPaise: deliveryCapacity,
+      eligibleCapacityPaise: deliveryCapacity,
+      eligibleComponentIds: deliveryIds.length > 0 ? deliveryIds : eligibleComponentIds,
+    };
+  }
+
+  if (promotion.benefit.benefitType === "complimentary_item") {
+    const variantId = promotion.benefit.complimentaryVariantId ?? null;
+    if (!variantId) {
+      throw new PromotionFatalError(
+        "PROMOTION_CONFIGURATION_INVALID",
+        "complimentary_item missing complimentaryVariantId.",
+      );
+    }
+    const giftComponents = snapshot.components.filter(
+      (c) =>
+        (c.kind === "variant_base" || c.kind === "modifier" || c.kind === "bundle_delta") &&
+        c.variantId === variantId,
+    );
+    const giftIds = giftComponents.map((c) => c.componentId);
+    const giftCapacity = giftComponents.reduce((a, c) => a + c.amountPaise, BigInt(0));
+    // Identity remains even when realized monetary amount is zero.
+    return {
+      nominalBenefitPaise: giftCapacity,
+      eligibleCapacityPaise: giftCapacity,
+      eligibleComponentIds: giftIds,
+    };
+  }
+
   throw new PromotionFatalError(
     "PROMOTION_CONFIGURATION_INVALID",
     "Unknown benefit type.",
+  );
+}
+
+export function isComplimentaryPromotion(promotion: PromotionDefinition): boolean {
+  return (
+    promotion.benefit.benefitType === "complimentary_item" ||
+    promotion.complimentaryItem === true
   );
 }

@@ -42,6 +42,8 @@ function toBenefit(row: typeof promotionBenefitsTable.$inferSelect): PromotionBe
     maximumRewardQuantity: row.maximumRewardQuantity,
     includeModifiers: row.includeModifiers,
     includeBundleDeltas: row.includeBundleDeltas,
+    complimentaryProductId: row.complimentaryProductId ?? null,
+    complimentaryVariantId: row.complimentaryVariantId ?? null,
   };
 }
 
@@ -94,6 +96,12 @@ export async function hydratePromotionDefinition(
     endsAt: row.endsAt,
     minimumQualifyingAmountPaise: row.minimumQualifyingAmountPaise,
     minimumItemQuantity: row.minimumItemQuantity,
+    firstOrderOnly: row.firstOrderOnly === true,
+    eligibleFulfilmentModes: (row.eligibleFulfilmentModes ?? null) as
+      | PromotionDefinition["eligibleFulfilmentModes"],
+    eligibleFulfilmentTimings: (row.eligibleFulfilmentTimings ?? null) as
+      | PromotionDefinition["eligibleFulfilmentTimings"],
+    complimentaryItem: row.complimentaryItem === true,
     configurationFingerprint: row.configurationFingerprint,
     benefit: toBenefit(benefit),
     qualifierTargets,
