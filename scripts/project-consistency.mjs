@@ -41138,6 +41138,10 @@ export function evaluateImp036jProductReadmePointers(readmeText) {
   if (!productRow.includes("`IMP-036J-FIT-CANDIDATE-5`") || !productRow.includes("5347761109")) {
     return { ok: false, code: "IMP036J_PRODUCT_README", message: "product/README.md IMP-036J Product Definition row must preserve Candidate 5 prior-lock review 5347761109" };
   }
+  const experienceTranche4Pending =
+    experienceRow.includes("Tranche 4 has not started") ||
+    experienceRow.includes("IMP036J_TRANCHE_4: NOT_STARTED") ||
+    experienceRow.includes("Tranche 4 is **NOT_STARTED**");
   if (
     !experienceRow.includes("current lock source `IMP-036J-FIT-CANDIDATE-9`") ||
     !experienceRow.includes("Architecture Fit = **PASS**") ||
@@ -41147,14 +41151,16 @@ export function evaluateImp036jProductReadmePointers(readmeText) {
     !experienceRow.includes("Tranche 2 is **PASS**") ||
     !experienceRow.includes("Tranche 3 is **PASS**") ||
     experienceRow.includes("Tranche 3 has not started") ||
+    !experienceTranche4Pending ||
+    experienceRow.includes("Tranche 4 is **PASS**") ||
+    experienceRow.includes("IMP036J_TRANCHE_4: PASS") ||
     !experienceRow.includes("**AUTHORIZED**") ||
     !experienceRow.includes("**STARTED**") ||
-    experienceRow.includes("IMP036J_TRANCHE_4: NOT_STARTED") ||
     experienceRow.includes("NOT_AUTHORIZED") ||
     experienceRow.includes("current lock source `IMP-036J-FIT-CANDIDATE-5`") ||
     experienceRow.includes("(review `5347761109`)")
   ) {
-    return { ok: false, code: "IMP036J_EXPERIENCE_README", message: "product/README.md IMP-036J Experience Definition row must name Candidate 9 as the current lock source" };
+    return { ok: false, code: "IMP036J_EXPERIENCE_README", message: "product/README.md IMP-036J Experience Definition row must name Candidate 9 as the current lock source and keep Tranche 4 pending" };
   }
   if (!experienceRow.includes("`IMP-036J-FIT-CANDIDATE-5`") || !experienceRow.includes("5347761109")) {
     return { ok: false, code: "IMP036J_EXPERIENCE_README", message: "product/README.md IMP-036J Experience Definition row must preserve Candidate 5 prior-lock review 5347761109" };
