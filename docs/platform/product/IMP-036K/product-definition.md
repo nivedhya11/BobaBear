@@ -7,6 +7,7 @@
   "productDefinitionStatus": "APPROVED",
   "productDefinitionGate": "PASS",
   "architectureFit": "PASS",
+  "designReadiness": "PASS",
   "implementationAuthorized": false
 }
 -->
@@ -38,13 +39,17 @@ ARCHITECTURE_FIT = PASS
 ARCHITECTURE_LOCKED = YES
 ARCHITECTURE_FIT_SOURCE = IMP-036K-FIT-CANDIDATE-1
 ARCHITECTURE_FIT_REVIEW = 5391917727
-DESIGN_READINESS = NOT_PERFORMED
+DESIGN_READINESS = PASS
+DESIGN_READINESS_SOURCE = IMP-036K-DESIGN-CANDIDATE-1
+DESIGN_READINESS_ARCHITECT_REVIEW = 5396061135
 QUALITY_TEST_PLAN = NOT_PERFORMED
+QUALITY_TEST_PLAN_FINALIZED = NO
 MEASUREMENT_PLAN = NOT_PERFORMED
+MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = NO
 IMPLEMENTATION_PLAN = NOT_PERFORMED
 IMPLEMENTATION_AUTHORIZED = NO
 IMPLEMENTATION_STARTED = NO
-IMP036K_NEXT_GATE = DESIGN_READINESS
+IMP036K_NEXT_GATE = QUALITY / TEST PLAN FINALIZATION
 FOUNDER_UAT = NOT_PERFORMED
 IMP036K_ACCEPTED = NO
 OPEN_PRODUCT_DECISIONS = NONE
@@ -63,7 +68,7 @@ HEAD `072932df00c445c8215c61f19f81971bf657b160`, tree
 `a4912e6c649cad25094412ac07a005fbb441567e`, and working-tree fingerprint
 `f2886ed726c77301589ba36dccd602da6d44daadd7a0f2dec4e59aada3162c46`, and returned PASS. That
 fingerprint is the evaluated candidate fingerprint. It is not the fingerprint of this persistence
-pull request. That gate persistence did not itself perform Architecture Fit. Architect review `5391917727` is the current Architecture Fit PASS and the lock from `IMP-036K-FIT-CANDIDATE-1`. Historical PASS `5384137705` was later reopened by `5385458836` and is not the current lock source. Design Readiness remains unperformed. Implementation stays unauthorized. The slice is not accepted.
+pull request. That gate persistence did not itself perform Architecture Fit. Architect review `5391917727` is the current Architecture Fit PASS and the lock from `IMP-036K-FIT-CANDIDATE-1`. Historical PASS `5384137705` was later reopened by `5385458836` and is not the current lock source. Architect review `5396061135` is the current Design Readiness PASS for `IMP-036K-DESIGN-CANDIDATE-1`. Quality/Test Plan and Measurement/Instrumentation Plan remain unperformed. Implementation stays unauthorized. The slice is not accepted.
 
 ```text
 PRODUCT DEFINITION
@@ -127,10 +132,10 @@ GOLDEN_JOURNEYS = GJ-1
 | Experience Criticality | `X3`. Recommendations sit on Product, Customization, and Cart during a customer purchase journey and can affect conversion, basket value, and trust. |
 | Change Risk | `CR2`, as recorded by D-383 / GTM-R177 / STATE-R175. The slice can affect cart contents, merchandising, and attribution, while Pricing, Promotion, Checkout, and Payment remain existing authorities. Change Risk is not an agent `R` level. |
 | Linked Experience Definition | [`experience-definition.md`](./experience-definition.md), `XD-IMP-036K-DRAFT-1`, `APPROVED` |
-| Experience Gate | `PASS` (Architect review `5380398013`). Design Readiness remains `NOT_PERFORMED`. |
-| Canonical anchors | VISION-1 / GTM-R182 / STATE-R180 / ARCH-R23 / DR-24 / PD-2 / EXP-1 / LANG-1 / TEST-1 / PERSONA-1 / GJ-1 |
+| Experience Gate | `PASS` (Architect review `5380398013`). Design Readiness is `PASS` (Architect review `5396061135`). |
+| Canonical anchors | VISION-1 / GTM-R183 / STATE-R181 / ARCH-R23 / DR-24 / PD-2 / EXP-1 / LANG-1 / TEST-1 / PERSONA-1 / GJ-1 |
 | Repository candidate | `CANONICAL_PATH = /home/ajoshi/repos/boba-bear-platform`. `EVALUATED_BRANCH = docs/imp036k-product-experience-definition`. `EVALUATED_HEAD = 072932df00c445c8215c61f19f81971bf657b160`. `EVALUATED_TREE = a4912e6c649cad25094412ac07a005fbb441567e`. `EVALUATED_WORKING_TREE_FINGERPRINT = f2886ed726c77301589ba36dccd602da6d44daadd7a0f2dec4e59aada3162c46` (content-sensitive; captured for this exact candidate and confirmed by `npm run working-tree:fingerprint` on an isolated clean checkout of that HEAD and tree). Source `main` `24d424dbd22ee53cb3bbadec484bec3925b6e898`, tree `59842dfdb68b1733899f7544b0aab5f49437e815`. Evaluated candidate drift against that source was `NONE`. Persistence `SOURCE_DRIFT` is IMP-036J Tranche 1 consuming GTM-R178 / STATE-R176 before this record was re-anchored on `bd4ce6edfde83f22a9fb7bfc1d933fa8c52cd4d3`. The persistence pull request fingerprint is not this evaluated fingerprint. |
-| Capability lifecycle / authorization | ROADMAP/STATE: `IMP-036K: PLANNED`; Product Definition `PD-IMP-036K-DRAFT-1` `APPROVED` / Gate `PASS`; Experience Definition `XD-IMP-036K-DRAFT-1` `APPROVED` / Gate `PASS`; next gate `DESIGN_READINESS`; Architecture Fit `PASS`; architecture `LOCKED` (source `IMP-036K-FIT-CANDIDATE-1`; review `5391917727`); `currentProductSlice` remains IMP-036J; `acceptedThrough` remains IMP-036I; implementation unauthorized and unstarted. |
+| Capability lifecycle / authorization | ROADMAP/STATE: `IMP-036K: PLANNED`; Product Definition `PD-IMP-036K-DRAFT-1` `APPROVED` / Gate `PASS`; Experience Definition `XD-IMP-036K-DRAFT-1` `APPROVED` / Gate `PASS`; Architecture Fit `PASS`; architecture `LOCKED` (source `IMP-036K-FIT-CANDIDATE-1`; review `5391917727`); Design Readiness `PASS` (source `IMP-036K-DESIGN-CANDIDATE-1`; review `5396061135`); next gate `QUALITY / TEST PLAN FINALIZATION`; `currentProductSlice` remains IMP-036J; `acceptedThrough` remains IMP-036I; implementation unauthorized and unstarted. |
 | Relevant capability architecture / ADRs | Locked capability architecture [`../../capabilities/IMP-036K-revenue-recommendations.md`](../../capabilities/IMP-036K-revenue-recommendations.md). Architecture Fit `PASS`. Architecture is `LOCKED`. Source `IMP-036K-FIT-CANDIDATE-1`. Review `5391917727`. Historical PASS `5384137705` was later reopened by `5385458836`. No new ADR. Binding context: ARCH-R23; ARCH-G05, ARCH-G11, ARCH-G12, ARCH-G14, ARCH-G19, ARCH-G20, ARCH-G23, ARCH-G25; D-368, D-369, D-373, D-382, D-383. |
 | Founder UAT applicability | `FOUNDER_UAT_REQUIRED = YES`. X3 customer ordering, conversion, and trust. Not performed. |
 
@@ -256,7 +261,7 @@ Data implications: Presentation of product identities already owned by catalog/m
 Security implications: Ineligible products are not offered as purchasable.
 Architecture fit / applicable invariants: ARCH-G11, ARCH-G19, ARCH-G20. Where complements are generated and ranked is ARCHITECTURE_FIT_REQUIRED.
 Open material decisions: NONE
-Readiness: NOT_READY_FOR_IMPLEMENTATION — Architecture Fit, Design Readiness, and implementation authorization are not performed.
+Readiness: NOT_READY_FOR_IMPLEMENTATION — Quality/Test Plan, Measurement/Instrumentation Plan, Implementation Plan, and implementation authorization are not performed.
 ```
 
 ```text
@@ -1280,9 +1285,10 @@ Registry status is not a test verdict.
 | D-368 Menu read model; D-369 paid-modifier selection | CURRENT | `US-036K-004`, `US-036K-005` | NONE |
 | IMP-036J promotions authority | Current slice; implementation authorized, not the subject of this document | Boundary only: recommendations must not become promotions | NONE if BR-036K-004 holds |
 | Authoritative Limited Drop source | `NOT_FOUND` as commerce authority | Not required for V1 | Limited Drop stays dependency-conditional |
-| Architecture Fit | `NOT_PERFORMED` | Implementation readiness | Open mechanism questions in section 25. Product behaviour is still defined. |
+| Architecture Fit | `PASS` / architecture `LOCKED` (source `IMP-036K-FIT-CANDIDATE-1`; review `5391917727`) | Completed before Design Readiness | NONE for current lifecycle. Open mechanism questions in section 25 remain historical Architecture Fit context. |
 | Experience Gate | `PASS` (Architect review `5380398013`) | Passed before Architecture Fit | NONE. This is not Design Readiness. |
-| Design Readiness, Quality Plan, Measurement Plan | `NOT_PERFORMED` | Implementation authorization | Stories stay `NOT_READY_FOR_IMPLEMENTATION` |
+| Design Readiness | `PASS` (source `IMP-036K-DESIGN-CANDIDATE-1`; review `5396061135`) | Completed before Quality/Test and Measurement plans | Exact presentation authority is in [`design-readiness.md`](./design-readiness.md). |
+| Quality Plan, Measurement Plan, Implementation Plan | `NOT_PERFORMED` | Implementation authorization | Stories stay `NOT_READY_FOR_IMPLEMENTATION` |
 
 ## 22. Supported now
 
@@ -1406,7 +1412,7 @@ If suggestions fail, the operational promise is unchanged: the customer can stil
 | Observability | `REQUIRED` | Distinguish empty, holdout, failure, rejection, removal, and disable. |
 | Supportability | `REQUIRED` | Support can explain suppression versus menu availability. |
 | Backward compatibility | `REQUIRED` | Existing catalog, cart, checkout, payment, and promotions behaviour remains valid when no recommendation is shown. |
-| Localization/presentation | `REQUIRED` | Customer language follows LANG-1. Exact geometry waits for Design Readiness. |
+| Localization/presentation | `REQUIRED` | Customer language follows LANG-1. Exact geometry is recorded by Design Readiness PASS (`IMP-036K-DESIGN-CANDIDATE-1`; review `5396061135`). |
 
 ## 25c. Quality, measurement, Design Readiness, and Production Readiness
 
@@ -1414,13 +1420,13 @@ If suggestions fail, the operational promise is unchanged: the customer can stil
 |---|---|
 | Quality / Test Plan | `NOT_PERFORMED`. Required before implementation authorization. Planned layers are in section 10. TEST-1 remains the policy. |
 | Measurement intent | Required because X3. Business intent is in `US-036K-009`. Holdout design readiness is in `US-036K-013` and `BR-036K-023`. The Experience Definition states presentation, trust, and event-meaning experience. Before implementation authorization where required, the Measurement/Instrumentation Plan finalizes assignment unit, population, actual control percentage and activation, primary metric, guardrails, observation rule, stop condition, and interpretation rule. `INSUFFICIENT_EVIDENCE` remains valid. Assignment algorithm, persistence, vendor, event transport, and schema are not selected. A Measurement Plan is `NOT_PERFORMED`. |
-| Design Readiness dependency | `NOT_PERFORMED`. Required for X3 after viable Architecture Fit and before implementation authorization. |
+| Design Readiness dependency | `PASS` for `IMP-036K-DESIGN-CANDIDATE-1` under Architect review `5396061135`. Quality/Test Plan and Measurement/Instrumentation Plan remain required before implementation authorization. |
 | Production Readiness applicability | `N/A` for this candidate. It will matter only after acceptance and before any production release. |
 | Experience requirement IDs | `XR-IMP-036K-001` through `XR-IMP-036K-016` in the Experience Definition. |
 
 ## 26. Definition of Ready
 
-Open material product decisions for every story below are `NONE`. Stories remain `NOT_READY_FOR_IMPLEMENTATION` because Architecture Fit, Design Readiness, Quality Plan, Measurement Plan, and implementation authorization are not performed. Experience Gate `PASS` does not make a story ready. That readiness label is not a ROADMAP state.
+Open material product decisions for every story below are `NONE`. Stories remain `NOT_READY_FOR_IMPLEMENTATION` because Quality Plan, Measurement Plan, Implementation Plan, and implementation authorization are not performed. Architecture Fit `PASS` / `LOCKED` and Design Readiness `PASS` do not make a story ready. That readiness label is not a ROADMAP state.
 
 | Story ID | Applicable fields complete / evidence | Open material decisions | Readiness / blocker |
 |---|---|---|---|
