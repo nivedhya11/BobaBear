@@ -37,7 +37,7 @@ EVALUATED_WORKING_TREE_FINGERPRINT = f2886ed726c77301589ba36dccd602da6d44daadd7a
 ARCHITECTURE_FIT = PASS
 ARCHITECTURE_LOCKED = YES
 ARCHITECTURE_FIT_SOURCE = IMP-036K-FIT-CANDIDATE-1
-ARCHITECTURE_FIT_REVIEW = 5384137705
+ARCHITECTURE_FIT_REVIEW = 5391917727
 DESIGN_READINESS = NOT_PERFORMED
 QUALITY_TEST_PLAN = NOT_PERFORMED
 MEASUREMENT_PLAN = NOT_PERFORMED
@@ -63,7 +63,7 @@ HEAD `072932df00c445c8215c61f19f81971bf657b160`, tree
 `a4912e6c649cad25094412ac07a005fbb441567e`, and working-tree fingerprint
 `f2886ed726c77301589ba36dccd602da6d44daadd7a0f2dec4e59aada3162c46`, and returned PASS. That
 fingerprint is the evaluated candidate fingerprint. It is not the fingerprint of this persistence
-pull request. That gate persistence did not itself perform Architecture Fit. Architect review `5384137705` later recorded Architecture Fit PASS and the lock from `IMP-036K-FIT-CANDIDATE-1`. Design Readiness remains unperformed. Implementation stays unauthorized. The slice is not accepted.
+pull request. That gate persistence did not itself perform Architecture Fit. Architect review `5391917727` is the current Architecture Fit PASS and the lock from `IMP-036K-FIT-CANDIDATE-1`. Historical PASS `5384137705` was later reopened by `5385458836` and is not the current lock source. Design Readiness remains unperformed. Implementation stays unauthorized. The slice is not accepted.
 
 ```text
 PRODUCT DEFINITION
@@ -130,8 +130,8 @@ GOLDEN_JOURNEYS = GJ-1
 | Experience Gate | `PASS` (Architect review `5380398013`). Design Readiness remains `NOT_PERFORMED`. |
 | Canonical anchors | VISION-1 / GTM-R181 / STATE-R179 / ARCH-R23 / DR-24 / PD-2 / EXP-1 / LANG-1 / TEST-1 / PERSONA-1 / GJ-1 |
 | Repository candidate | `CANONICAL_PATH = /home/ajoshi/repos/boba-bear-platform`. `EVALUATED_BRANCH = docs/imp036k-product-experience-definition`. `EVALUATED_HEAD = 072932df00c445c8215c61f19f81971bf657b160`. `EVALUATED_TREE = a4912e6c649cad25094412ac07a005fbb441567e`. `EVALUATED_WORKING_TREE_FINGERPRINT = f2886ed726c77301589ba36dccd602da6d44daadd7a0f2dec4e59aada3162c46` (content-sensitive; captured for this exact candidate and confirmed by `npm run working-tree:fingerprint` on an isolated clean checkout of that HEAD and tree). Source `main` `24d424dbd22ee53cb3bbadec484bec3925b6e898`, tree `59842dfdb68b1733899f7544b0aab5f49437e815`. Evaluated candidate drift against that source was `NONE`. Persistence `SOURCE_DRIFT` is IMP-036J Tranche 1 consuming GTM-R178 / STATE-R176 before this record was re-anchored on `bd4ce6edfde83f22a9fb7bfc1d933fa8c52cd4d3`. The persistence pull request fingerprint is not this evaluated fingerprint. |
-| Capability lifecycle / authorization | ROADMAP/STATE: `IMP-036K: PLANNED`; Product Definition `PD-IMP-036K-DRAFT-1` `APPROVED` / Gate `PASS`; Experience Definition `XD-IMP-036K-DRAFT-1` `APPROVED` / Gate `PASS`; next gate `DESIGN_READINESS`; Architecture Fit `PASS`; architecture `LOCKED` (source `IMP-036K-FIT-CANDIDATE-1`; review `5384137705`); `currentProductSlice` remains IMP-036J; `acceptedThrough` remains IMP-036I; implementation unauthorized and unstarted. |
-| Relevant capability architecture / ADRs | Locked capability architecture [`../../capabilities/IMP-036K-revenue-recommendations.md`](../../capabilities/IMP-036K-revenue-recommendations.md). Architecture Fit `PASS`. Architecture is `LOCKED`. Source `IMP-036K-FIT-CANDIDATE-1`. Review `5384137705`. No new ADR. Binding context: ARCH-R23; ARCH-G05, ARCH-G11, ARCH-G12, ARCH-G14, ARCH-G19, ARCH-G20, ARCH-G23, ARCH-G25; D-368, D-369, D-373, D-382, D-383. |
+| Capability lifecycle / authorization | ROADMAP/STATE: `IMP-036K: PLANNED`; Product Definition `PD-IMP-036K-DRAFT-1` `APPROVED` / Gate `PASS`; Experience Definition `XD-IMP-036K-DRAFT-1` `APPROVED` / Gate `PASS`; next gate `DESIGN_READINESS`; Architecture Fit `PASS`; architecture `LOCKED` (source `IMP-036K-FIT-CANDIDATE-1`; review `5391917727`); `currentProductSlice` remains IMP-036J; `acceptedThrough` remains IMP-036I; implementation unauthorized and unstarted. |
+| Relevant capability architecture / ADRs | Locked capability architecture [`../../capabilities/IMP-036K-revenue-recommendations.md`](../../capabilities/IMP-036K-revenue-recommendations.md). Architecture Fit `PASS`. Architecture is `LOCKED`. Source `IMP-036K-FIT-CANDIDATE-1`. Review `5391917727`. Historical PASS `5384137705` was later reopened by `5385458836`. No new ADR. Binding context: ARCH-R23; ARCH-G05, ARCH-G11, ARCH-G12, ARCH-G14, ARCH-G19, ARCH-G20, ARCH-G23, ARCH-G25; D-368, D-369, D-373, D-382, D-383. |
 | Founder UAT applicability | `FOUNDER_UAT_REQUIRED = YES`. X3 customer ordering, conversion, and trust. Not performed. |
 
 ## 2. Business outcome

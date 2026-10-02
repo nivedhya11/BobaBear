@@ -74,12 +74,15 @@
   exact-head review findings `4115981679` and `4115981682` on unmerged pull request #312
   reopened the acceptance slice. Gate PASS was not persisted. Canonical main never recorded
   DRAFT-3 as APPROVED. DRAFT-4 supersedes DRAFT-3.
-- **GTM-R181** records Architect review `5384137705` Architecture Fit PASS for
-  `IMP-036K-FIT-CANDIDATE-1` and locks that capability architecture. Evaluated branch
-  `docs/imp036k-architecture-fit-candidate`, HEAD
-  `c0a2c52f885d25874d71472cdad77e4d5165d2a9`, tree
-  `ad71c0fc497db1b27a44b2d633fcceecd137b627`, working-tree fingerprint
-  `fbd23b0e299b774b2403e1a80cdaf92dbc7bf78e356fc3afacbf1d691e088cb6`.
+- **GTM-R181** records Architect review `5391917727` as the sole current Architecture Fit
+  PASS for `IMP-036K-FIT-CANDIDATE-1` and locks that capability architecture. Evaluated
+  branch `docs/imp036k-architecture-fit-candidate`, HEAD
+  `71cfd352f41f933072b583c7e914f93afb91a235`, tree
+  `90431caf3d26114a3ed81f6c6fd71b18c34fb930`, working-tree fingerprint
+  `db07f54f174c646de5de56ee7ae7a30c90f7f03de167b18ca0a6fa122a9f2ff7`. Persistence
+  re-anchors on canonical main `676f7da7bbc78dbc31fc251e4a46d8357ee1e25b`. That SHA
+  advanced after IMP-036J Tranche 2 measurement persistence merged, while the live
+  ROADMAP and STATE versions remained GTM-R180 / STATE-R178.
   `IMP036K_ARCHITECTURE_FIT` becomes `PASS`. `IMP036K_ARCHITECTURE_LOCKED` becomes `YES`.
   `IMP036K_NEXT_GATE` becomes `DESIGN_READINESS`. Design Readiness, the Quality/Test Plan,
   the Measurement Plan, and the Implementation Plan stay `NOT_PERFORMED`.
@@ -87,8 +90,10 @@
   `NO`. `IMP036K_IMPLEMENTATION_COMPLETE` stays `NO`. `IMP036K_ACCEPTED` stays `NO`.
   `acceptedThrough` stays IMP-036I. `currentProductSlice` stays IMP-036J.
   `nextProductSlice` stays IMP-036K. IMP-036J Tranche 1 stays `PASS` and its next gate
-  stays `IMPLEMENTATION_TRANCHE_2`. Tranche 2 stays unstarted. Prior Architect reviews
-  `5383371804` and `5383814980` remain historical STOP and are not rewritten as PASS.
+  stays `IMPLEMENTATION_TRANCHE_2`. Tranche 2 stays unstarted. Review history stays
+  complete and is not rewritten: `5383371804` STOP, `5383814980` STOP, `5384137705`
+  historical PASS later reopened, `5385458836` STOP / REOPEN, and `5391917727` the
+  current PASS. The historical PASS is not deleted and is not the current lock source.
   GTM-R180 / STATE-R178 remains the IMP-036J Tranche 1 PASS checkpoint, where IMP-036K
   Architecture Fit was still `NOT_PERFORMED`. GTM-R179 / STATE-R177 remains the IMP-036K
   Product and Experience Gate checkpoint. D-383 stays CURRENT and is not amended. D-382
@@ -874,15 +879,19 @@ IMP036K_EXPERIENCE_GATE: PASS
 IMP036K_ARCHITECTURE_FIT: PASS
 IMP036K_ARCHITECTURE_LOCKED: YES
 IMP036K_ARCHITECTURE_FIT_SOURCE: IMP-036K-FIT-CANDIDATE-1
-IMP036K_ARCHITECTURE_FIT_REVIEW: 5384137705
+IMP036K_ARCHITECTURE_FIT_REVIEW: 5391917727
 ARCHITECTURE_FIT_EVALUATED_BRANCH: docs/imp036k-architecture-fit-candidate
-ARCHITECTURE_FIT_EVALUATED_HEAD: c0a2c52f885d25874d71472cdad77e4d5165d2a9
-ARCHITECTURE_FIT_EVALUATED_TREE: ad71c0fc497db1b27a44b2d633fcceecd137b627
-ARCHITECTURE_FIT_EVALUATED_WORKING_TREE_FINGERPRINT: fbd23b0e299b774b2403e1a80cdaf92dbc7bf78e356fc3afacbf1d691e088cb6
+ARCHITECTURE_FIT_EVALUATED_HEAD: 71cfd352f41f933072b583c7e914f93afb91a235
+ARCHITECTURE_FIT_EVALUATED_TREE: 90431caf3d26114a3ed81f6c6fd71b18c34fb930
+ARCHITECTURE_FIT_EVALUATED_WORKING_TREE_FINGERPRINT: db07f54f174c646de5de56ee7ae7a30c90f7f03de167b18ca0a6fa122a9f2ff7
 PRIOR_ARCHITECTURE_FIT_REVIEW: 5383814980
 PRIOR_ARCHITECTURE_FIT_VERDICT: STOP
 EARLIER_REPAIRED_ARCHITECTURE_FIT_REVIEW: 5383371804
+HISTORICAL_ARCHITECTURE_FIT_PASS_REVIEW: 5384137705
+ARCHITECTURE_FIT_REOPEN_REVIEW: 5385458836
+CURRENT_ARCHITECTURE_FIT_PASS_REVIEW: 5391917727
 PRIOR_STOP_REWRITTEN_AS_PASS: NO
+HISTORICAL_REVIEWS_REWRITTEN: NO
 IMP036K_DESIGN_READINESS: NOT_PERFORMED
 IMP036K_QUALITY_TEST_PLAN: NOT_PERFORMED
 IMP036K_MEASUREMENT_PLAN: NOT_PERFORMED
@@ -914,18 +923,22 @@ D-382_AMENDMENT_SCOPE: Revenue Recommendations identity, activation, and sequenc
 SHARED_GOVERNANCE_PERSISTENCE: SERIALIZED
 ```
 
-**GTM-R181** records Architect review `5384137705` Architecture Fit PASS for
-`IMP-036K-FIT-CANDIDATE-1` and locks the capability architecture. Evaluated HEAD
-`c0a2c52f885d25874d71472cdad77e4d5165d2a9`, tree
-`ad71c0fc497db1b27a44b2d633fcceecd137b627`, working-tree fingerprint
-`fbd23b0e299b774b2403e1a80cdaf92dbc7bf78e356fc3afacbf1d691e088cb6`, on branch
-`docs/imp036k-architecture-fit-candidate`. `IMP036K_ARCHITECTURE_FIT` is `PASS`.
+**GTM-R181** records Architect review `5391917727` as the sole current Architecture Fit
+PASS for `IMP-036K-FIT-CANDIDATE-1` and locks the capability architecture. Evaluated HEAD
+`71cfd352f41f933072b583c7e914f93afb91a235`, tree
+`90431caf3d26114a3ed81f6c6fd71b18c34fb930`, working-tree fingerprint
+`db07f54f174c646de5de56ee7ae7a30c90f7f03de167b18ca0a6fa122a9f2ff7`, on branch
+`docs/imp036k-architecture-fit-candidate`. Persistence re-anchors on canonical main
+`676f7da7bbc78dbc31fc251e4a46d8357ee1e25b` without a further ROADMAP or STATE version
+beyond GTM-R181 / STATE-R179. `IMP036K_ARCHITECTURE_FIT` is `PASS`.
 `IMP036K_ARCHITECTURE_LOCKED` is `YES`. `IMP036K_NEXT_GATE` is `DESIGN_READINESS`.
 Design Readiness, the Quality/Test Plan, the Measurement Plan, and the Implementation
 Plan stay `NOT_PERFORMED`. Implementation stays unauthorized and unstarted.
 `acceptedThrough` stays IMP-036I. `currentProductSlice` stays IMP-036J.
 `nextProductSlice` stays IMP-036K. IMP-036J Tranche 1 stays `PASS` with next gate
-`IMPLEMENTATION_TRANCHE_2`. Prior reviews `5383371804` and `5383814980` remain STOP.
+`IMPLEMENTATION_TRANCHE_2`. Tranche 2 stays unstarted. Review history is preserved:
+`5383371804` STOP, `5383814980` STOP, `5384137705` historical PASS later reopened,
+`5385458836` STOP / REOPEN, and `5391917727` the current PASS.
 GTM-R180 / STATE-R178 remains the Tranche 1 PASS checkpoint. GTM-R179 / STATE-R177
 remains the Product and Experience Gate checkpoint. ARCH-R23 and DR-24 are unchanged.
 D-383 stays CURRENT. No ADR and no D-384 is created. This record does not begin Design
@@ -2090,7 +2103,7 @@ Historical Food Direct insertion narration remains in
 | IMP-036H | Customer Pickup / Takeaway | COMPLETE_AND_ACCEPTED |
 | IMP-036I | Scheduled Fulfilment | COMPLETE_AND_ACCEPTED (IMP036I_ACTIVATED: YES; APPROVED; Gate PASS; Fit PASS; locked YES; implementation AUTHORIZED / STARTED / COMPLETE; IMP036I_IMPLEMENTATION_COMPLETE: YES; IMP036I_INDEPENDENT_IMPLEMENTATION_REVIEW: PASS; IMP036I_ACCEPTED: YES; IMP036I_FOUNDER_UAT: PASS; IMP036I_FORMAL_ACCEPTANCE: ACCEPTED) |
 | IMP-036J | Promotions, Coupons & Offers | ARCHITECTURE_LOCKED (IMP036J_ACTIVATED: YES; PRODUCT_DEFINITION APPROVED; PD-IMP-036J-DRAFT-6; Gate PASS; Experience X3; EXPERIENCE_DEFINITION APPROVED; XD-IMP-036J-DRAFT-6; Experience Gate PASS; Fit PASS; locked YES; nextGate IMPLEMENTATION_TRANCHE_2; Design Readiness PASS; Quality/Test Plan finalized; Measurement/Instrumentation Plan finalized; Implementation Plan PASS; implementation AUTHORIZED / STARTED; formal lifecycle IMPLEMENTATION_IN_PROGRESS; IMP036J_IMPLEMENTATION_AUTHORIZED: YES; IMP036J_IMPLEMENTATION_STARTED: YES; IMP036J_TRANCHE_1: PASS; IMP036J_TRANCHE_2_STARTED: NO; IMP036J_IMPLEMENTATION_COMPLETE: NO; IMP036J_ACCEPTED: NO) |
-| IMP-036K | Revenue Recommendations | PLANNED (IMP036K_ACTIVATED: YES; formal identity D-383; PRODUCT_DEFINITION PD-IMP-036K-DRAFT-1 APPROVED; PRODUCT_DEFINITION_GATE PASS; EXPERIENCE_CRITICALITY X3; CHANGE_RISK CR2; EXPERIENCE_DEFINITION XD-IMP-036K-DRAFT-1 APPROVED; EXPERIENCE_GATE PASS; next gate DESIGN_READINESS; ARCHITECTURE_FIT PASS; ARCHITECTURE_LOCKED YES; source IMP-036K-FIT-CANDIDATE-1; review 5384137705; DESIGN_READINESS NOT_PERFORMED; QUALITY_TEST_PLAN NOT_PERFORMED; MEASUREMENT_PLAN NOT_PERFORMED; IMPLEMENTATION_PLAN NOT_PERFORMED; implementation NOT_AUTHORIZED / NOT_STARTED; IMP036K_ACCEPTED: NO) |
+| IMP-036K | Revenue Recommendations | PLANNED (IMP036K_ACTIVATED: YES; formal identity D-383; PRODUCT_DEFINITION PD-IMP-036K-DRAFT-1 APPROVED; PRODUCT_DEFINITION_GATE PASS; EXPERIENCE_CRITICALITY X3; CHANGE_RISK CR2; EXPERIENCE_DEFINITION XD-IMP-036K-DRAFT-1 APPROVED; EXPERIENCE_GATE PASS; next gate DESIGN_READINESS; ARCHITECTURE_FIT PASS; ARCHITECTURE_LOCKED YES; source IMP-036K-FIT-CANDIDATE-1; review 5391917727; historical PASS 5384137705 later reopened by 5385458836; DESIGN_READINESS NOT_PERFORMED; QUALITY_TEST_PLAN NOT_PERFORMED; MEASUREMENT_PLAN NOT_PERFORMED; IMPLEMENTATION_PLAN NOT_PERFORMED; implementation NOT_AUTHORIZED / NOT_STARTED; IMP036K_ACCEPTED: NO) |
 | IMP-037 | Backup, Restore & Migration Readiness | IMPLEMENTATION_IN_PROGRESS (IMP037_HOLD: YES; BLOCKED_PROVIDER_ACCESS) |
 | IMP-038 | Security & Privacy Hardening | IMPLEMENTATION_IN_PROGRESS (IMP038_HOLD: YES; IMPLEMENTATION_COMPLETE / NOT_ACCEPTED; external assessment deferred) |
 | IMP-039 | Production Infrastructure & Release Pipeline | PLANNED |

@@ -25064,22 +25064,22 @@ function checkTechnicalInventory() {
   const journal = JSON.parse(readFileSync(journalPath, "utf8"));
   const entries = journal.entries || [];
   const latest = entries[entries.length - 1];
-  if (!latest || latest.tag !== "0047_imp036j_tranche1_commercial_persistence") {
+  if (!latest || latest.tag !== "0048_imp036j_tranche2_measurement_persistence") {
     fail(
       "LATEST_MIGRATION",
-      `Expected latest migration tag 0047_imp036j_tranche1_commercial_persistence, got ${latest && latest.tag}`,
+      `Expected latest migration tag 0048_imp036j_tranche2_measurement_persistence, got ${latest && latest.tag}`,
     );
   } else {
-    note("Latest migration tag 0047_imp036j_tranche1_commercial_persistence");
+    note("Latest migration tag 0048_imp036j_tranche2_measurement_persistence");
   }
   const sqlFiles = readdirSync(path.join(projectRoot, "drizzle")).filter((f) => f.endsWith(".sql"));
-  if (sqlFiles.length !== 48 || entries.length !== 48) {
+  if (sqlFiles.length !== 49 || entries.length !== 49) {
     fail(
       "MIGRATION_COUNT",
-      `Expected 48 migrations, got sql=${sqlFiles.length} journal=${entries.length}`,
+      `Expected 49 migrations, got sql=${sqlFiles.length} journal=${entries.length}`,
     );
   } else {
-    note("Migration count 48");
+    note("Migration count 49");
   }
 
   // Application tables
@@ -25090,10 +25090,10 @@ function checkTechnicalInventory() {
     const t = readFileSync(path.join(schemaDir, name), "utf8");
     tableCount += [...t.matchAll(/appSchema\.table\(/g)].length;
   }
-  if (tableCount !== 142) {
-    fail("TABLE_COUNT", `Expected 142 appSchema.table declarations, got ${tableCount}`);
+  if (tableCount !== 152) {
+    fail("TABLE_COUNT", `Expected 152 appSchema.table declarations, got ${tableCount}`);
   } else {
-    note("Application table count 142");
+    note("Application table count 152");
   }
 
   const catalog = readFileSync(path.join(projectRoot, "src/shared/access-control/catalog.ts"), "utf8");
@@ -42672,7 +42672,7 @@ function checkImp036kArchitectureLock(roadmap, state, architecture, decision) {
   }
   const locked = [
     "IMP036K_ARCHITECTURE_FIT_SOURCE: IMP-036K-FIT-CANDIDATE-1",
-    "IMP036K_ARCHITECTURE_FIT_REVIEW: 5384137705",
+    "IMP036K_ARCHITECTURE_FIT_REVIEW: 5391917727",
     "IMP036K_ARCHITECTURE_FIT: PASS",
     "IMP036K_ARCHITECTURE_LOCKED: YES",
     "IMP036K_NEXT_GATE: DESIGN_READINESS",
@@ -42684,9 +42684,12 @@ function checkImp036kArchitectureLock(roadmap, state, architecture, decision) {
     "IMP036K_IMPLEMENTATION_STARTED: NO",
     "IMP036K_IMPLEMENTATION_COMPLETE: NO",
     "IMP036K_ACCEPTED: NO",
-    "ARCHITECTURE_FIT_EVALUATED_HEAD: c0a2c52f885d25874d71472cdad77e4d5165d2a9",
-    "ARCHITECTURE_FIT_EVALUATED_TREE: ad71c0fc497db1b27a44b2d633fcceecd137b627",
-    "ARCHITECTURE_FIT_EVALUATED_WORKING_TREE_FINGERPRINT: fbd23b0e299b774b2403e1a80cdaf92dbc7bf78e356fc3afacbf1d691e088cb6",
+    "ARCHITECTURE_FIT_EVALUATED_HEAD: 71cfd352f41f933072b583c7e914f93afb91a235",
+    "ARCHITECTURE_FIT_EVALUATED_TREE: 90431caf3d26114a3ed81f6c6fd71b18c34fb930",
+    "ARCHITECTURE_FIT_EVALUATED_WORKING_TREE_FINGERPRINT: db07f54f174c646de5de56ee7ae7a30c90f7f03de167b18ca0a6fa122a9f2ff7",
+    "HISTORICAL_ARCHITECTURE_FIT_PASS_REVIEW: 5384137705",
+    "ARCHITECTURE_FIT_REOPEN_REVIEW: 5385458836",
+    "CURRENT_ARCHITECTURE_FIT_PASS_REVIEW: 5391917727",
     "PRIOR_ARCHITECTURE_FIT_REVIEW: 5383814980",
     "PRIOR_ARCHITECTURE_FIT_VERDICT: STOP",
     "EARLIER_REPAIRED_ARCHITECTURE_FIT_REVIEW: 5383371804",
@@ -42759,10 +42762,29 @@ function checkImp036kArchitectureLock(roadmap, state, architecture, decision) {
     '"authority": "CAPABILITY_ARCHITECTURE"',
     "ARCHITECTURE_FIT = PASS",
     "ARCHITECTURE_LOCKED = YES",
-    "ARCHITECTURE_FIT_REVIEW = 5384137705",
-    "c0a2c52f885d25874d71472cdad77e4d5165d2a9",
-    "ad71c0fc497db1b27a44b2d633fcceecd137b627",
-    "fbd23b0e299b774b2403e1a80cdaf92dbc7bf78e356fc3afacbf1d691e088cb6",
+    "ARCHITECTURE_FIT_REVIEW = 5391917727",
+    "71cfd352f41f933072b583c7e914f93afb91a235",
+    "90431caf3d26114a3ed81f6c6fd71b18c34fb930",
+    "db07f54f174c646de5de56ee7ae7a30c90f7f03de167b18ca0a6fa122a9f2ff7",
+    "5383371804",
+    "5383814980",
+    "5384137705",
+    "5385458836",
+    "5391917727 = CURRENT PASS",
+    "MARKED_RECOMMENDED_IDENTITY = the identity actually recommended",
+    "underlying identity = the concrete recommended product",
+    "underlying identity = the concrete product actually presented and added",
+    "NOT the category",
+    "underlying identity = the recommended variant",
+    "underlying identity = the recommended modifier option",
+    "PARENT_PRODUCT_SURVIVAL_IS_NOT_VARIANT_OR_MODIFIER_SURVIVAL = YES",
+    "NEW_COMMERCIAL_LINE_ORIGIN = NO",
+    "recommended modifier removed",
+    "changing away from the marked variant",
+    "Parent-product survival does not keep a variant or",
+    "Pre-existing manual units never inherit it",
+    "manually recreated",
+    "No new commercial `line_origin` is created",
     "5383371804",
     "5383814980",
     "That STOP is not rewritten as a pass",
@@ -42783,8 +42805,8 @@ function checkImp036kArchitectureLock(roadmap, state, architecture, decision) {
   for (const token of requiredCapability) {
     if (!capabilityText.includes(token)) fail("IMP036K_LOCK_CAPABILITY", `Locked capability architecture must preserve ${token}`);
   }
-  if (capabilityText.includes("STATUS = CANDIDATE") || capabilityText.includes("ARCHITECTURE_FIT = NOT_PERFORMED") || capabilityText.includes("It does not perform Architecture Fit PASS")) {
-    fail("IMP036K_LOCK_CAPABILITY", "Locked capability architecture must not remain a pre-PASS candidate");
+  if (capabilityText.includes("STATUS = CANDIDATE") || capabilityText.includes("ARCHITECTURE_FIT = NOT_PERFORMED") || capabilityText.includes("It does not perform Architecture Fit PASS") || capabilityText.includes("while that underlying product or variant identity remains")) {
+    fail("IMP036K_LOCK_CAPABILITY", "Locked capability architecture must not remain a pre-PASS candidate or keep the superseded parent-product continuity rule");
   }
   const productAbs = resolveExactRelativeFile("docs/platform/product/IMP-036K/product-definition.md");
   const experienceAbs = resolveExactRelativeFile("docs/platform/product/IMP-036K/experience-definition.md");
@@ -42796,7 +42818,7 @@ function checkImp036kArchitectureLock(roadmap, state, architecture, decision) {
   ]) {
     const provenance = evaluateImp036kGateCandidateProvenance(body);
     if (!provenance.ok) fail(provenance.code, `${label}: ${provenance.message}`);
-    for (const token of ["ARCHITECTURE_FIT = PASS", "ARCHITECTURE_LOCKED = YES", "DESIGN_READINESS = NOT_PERFORMED", "IMPLEMENTATION_AUTHORIZED = NO", "5384137705"]) {
+    for (const token of ["ARCHITECTURE_FIT = PASS", "ARCHITECTURE_LOCKED = YES", "DESIGN_READINESS = NOT_PERFORMED", "IMPLEMENTATION_AUTHORIZED = NO", "5391917727"]) {
       if (!body.includes(token)) fail("IMP036K_LOCK_DEFINITION", `${label} must record ${token}`);
     }
     if (body.includes("ARCHITECTURE_FIT = NOT_PERFORMED") || body.includes("IMP036K_NEXT_GATE = ARCHITECTURE_FIT")) {
@@ -42805,8 +42827,8 @@ function checkImp036kArchitectureLock(roadmap, state, architecture, decision) {
   }
   const indexAbs = resolveExactRelativeFile("docs/platform/README.md");
   const indexText = indexAbs ? readFileSync(indexAbs, "utf8") : "";
-  if (!indexText.includes("capabilities/IMP-036K-revenue-recommendations.md") || !indexText.includes("5384137705")) {
-    fail("IMP036K_LOCK_INDEX", "Platform index must list the locked IMP-036K capability and review 5384137705");
+  if (!indexText.includes("capabilities/IMP-036K-revenue-recommendations.md") || !indexText.includes("5391917727") || !indexText.includes("5384137705") || !indexText.includes("5385458836")) {
+    fail("IMP036K_LOCK_INDEX", "Platform index must list the locked IMP-036K capability, current review 5391917727, and preserved historical reviews");
   }
   const indexPointer = evaluateImp036jPlatformIndexPointer(indexText);
   if (!indexPointer.ok) fail(indexPointer.code, indexPointer.message);

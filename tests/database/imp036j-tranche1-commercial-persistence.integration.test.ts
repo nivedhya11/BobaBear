@@ -257,9 +257,10 @@ async function insertDraftPromotion(
 describe("IMP-036J tranche 1 commercial persistence", () => {
   it("records journal identity 0047 and applies an empty database to latest", async () => {
     const entries = loadJournalEntries();
-    const tip = entries.at(-1);
-    expect(tip).toMatchObject({ idx: TRANCHE_1_IDX, tag: TRANCHE_1_TAG });
+    const tranche1 = entries.find((entry) => entry.idx === TRANCHE_1_IDX);
+    expect(tranche1).toMatchObject({ idx: TRANCHE_1_IDX, tag: TRANCHE_1_TAG });
     expect(entries.filter((entry) => entry.idx === TRANCHE_1_IDX)).toHaveLength(1);
+    expect((entries.at(-1)?.idx ?? -1) >= TRANCHE_1_IDX).toBe(true);
     expect(entries.some((entry) => entry.tag === "0046_imp036i_tranche4_cancellation_reminder")).toBe(
       true,
     );

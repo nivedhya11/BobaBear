@@ -44,7 +44,7 @@ EXPERIENCE_GATE_RESULT = PASS
 ARCHITECTURE_FIT = PASS
 ARCHITECTURE_LOCKED = YES
 ARCHITECTURE_FIT_SOURCE = IMP-036K-FIT-CANDIDATE-1
-ARCHITECTURE_FIT_REVIEW = 5384137705
+ARCHITECTURE_FIT_REVIEW = 5391917727
 DESIGN_READINESS = NOT_PERFORMED
 IMPLEMENTATION_AUTHORIZED = NO
 IMPLEMENTATION_STARTED = NO
@@ -69,7 +69,7 @@ exact candidate branch `docs/imp036k-product-experience-definition`, HEAD
 `072932df00c445c8215c61f19f81971bf657b160`, tree `a4912e6c649cad25094412ac07a005fbb441567e`,
 and working-tree fingerprint `f2886ed726c77301589ba36dccd602da6d44daadd7a0f2dec4e59aada3162c46`,
 and returned PASS. That fingerprint belongs to the evaluated candidate. It is not the fingerprint
-of this persistence pull request. That Experience Gate PASS did not itself perform Architecture Fit. Architect review `5384137705` later recorded Architecture Fit PASS and the lock. Design Readiness remains unperformed. Implementation remains unauthorized.
+of this persistence pull request. That Experience Gate PASS did not itself perform Architecture Fit. Architect review `5391917727` is the current Architecture Fit PASS and the lock. Historical PASS `5384137705` was later reopened by `5385458836` and is not this lock source. Design Readiness remains unperformed. Implementation remains unauthorized.
 
 Experience Intent:
 
