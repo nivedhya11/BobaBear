@@ -6,7 +6,7 @@
  * command. Client timestamps and client monetary values are not authority.
  */
 import { createHash, randomUUID } from "node:crypto";
-import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 
 import {
   cartCheckoutActivationsTable,
@@ -439,51 +439,87 @@ export async function insertCommandResult(input: {
   });
 }
 
-export async function loadActiveCheckoutJourneyKey(
-  context: PersistenceQueryContext,
+const NON_TERMINAL_CHECKOUT_STATUSES = [
+  "DRAFT",
+  "READY_FOR_PAYMENT",
+  "PAYMENT_PENDING",
+] as const;
+
+function isNonTerminalCheckoutStatus(status: string | null | undefined): boolean {
+  return (
+    status === "DRAFT" ||
+    status === "READY_FOR_PAYMENT" ||
+    status === "PAYMENT_PENDING"
+  );
+}
+
+async function lockCouponCommandCheckoutAttribution(
+  context: PersistenceTransactionContext,
   cartId: string,
-): Promise<{ checkoutId: string; journeyKey: string | null } | null> {
-  const rows = await context.db
+): Promise<{
+  checkoutId: string | null;
+  journeyKey: string | null;
+  status: string | null;
+}> {
+  const activeRows = await context.db
     .select({
       id: checkoutsTable.id,
       journeyKey: checkoutsTable.checkoutJourneyKey,
       status: checkoutsTable.status,
-      cartCausalOrdinal: checkoutsTable.cartCausalOrdinal,
     })
     .from(checkoutsTable)
-    .where(eq(checkoutsTable.cartId, cartId));
-  const active = rows.find(
-    (row) =>
-      row.status === "DRAFT" ||
-      row.status === "READY_FOR_PAYMENT" ||
-      row.status === "PAYMENT_PENDING",
-  );
-  if (active?.journeyKey) {
-    return { checkoutId: active.id, journeyKey: active.journeyKey };
+    .where(
+      and(
+        eq(checkoutsTable.cartId, cartId),
+        inArray(checkoutsTable.status, [...NON_TERMINAL_CHECKOUT_STATUSES]),
+      ),
+    )
+    .limit(1)
+    .for("update");
+  const active = activeRows[0];
+  if (active && isNonTerminalCheckoutStatus(active.status)) {
+    return {
+      checkoutId: active.id,
+      journeyKey: active.journeyKey,
+      status: active.status,
+    };
   }
-  const ordered = rows.filter((row) => row.cartCausalOrdinal !== null);
-  if (ordered.length === 0) {
-    return active
-      ? { checkoutId: active.id, journeyKey: active.journeyKey }
-      : null;
+
+  const latestRows = await context.db
+    .select({
+      id: checkoutsTable.id,
+      journeyKey: checkoutsTable.checkoutJourneyKey,
+      status: checkoutsTable.status,
+    })
+    .from(checkoutsTable)
+    .where(
+      and(
+        eq(checkoutsTable.cartId, cartId),
+        isNotNull(checkoutsTable.cartCausalOrdinal),
+      ),
+    )
+    .orderBy(desc(checkoutsTable.cartCausalOrdinal))
+    .limit(1)
+    .for("update");
+  const latest = latestRows[0];
+  if (!latest) {
+    return { checkoutId: null, journeyKey: null, status: null };
   }
-  ordered.sort((a, b) => {
-    const left = a.cartCausalOrdinal ?? BigInt(0);
-    const right = b.cartCausalOrdinal ?? BigInt(0);
-    if (left === right) return 0;
-    return left < right ? -1 : 1;
-  });
-  const latest = ordered[ordered.length - 1]!;
   if (
     latest.journeyKey &&
     (await isPaymentDrivenExpiredPredecessor(context, latest.id))
   ) {
-    return { checkoutId: latest.id, journeyKey: latest.journeyKey };
+    return {
+      checkoutId: latest.id,
+      journeyKey: latest.journeyKey,
+      status: latest.status,
+    };
   }
-  if (active) {
-    return { checkoutId: active.id, journeyKey: active.journeyKey };
-  }
-  return { checkoutId: latest.id, journeyKey: null };
+  return {
+    checkoutId: latest.id,
+    journeyKey: null,
+    status: latest.status,
+  };
 }
 
 export async function resolveCouponCommandSurface(
@@ -495,12 +531,16 @@ export async function resolveCouponCommandSurface(
   checkoutId: string | null;
   journeyKey: string | null;
 }> {
-  const active = await loadActiveCheckoutJourneyKey(context, cartId);
-  if (!reviewSurfaceToken || !active) {
+  const locked = await lockCouponCommandCheckoutAttribution(context, cartId);
+  if (
+    !reviewSurfaceToken ||
+    !locked.checkoutId ||
+    !isNonTerminalCheckoutStatus(locked.status)
+  ) {
     return {
       surface: "CART",
-      checkoutId: active?.checkoutId ?? null,
-      journeyKey: active?.journeyKey ?? null,
+      checkoutId: locked.checkoutId,
+      journeyKey: locked.journeyKey,
     };
   }
   const digest = sha256Utf8(reviewSurfaceToken);
@@ -513,30 +553,18 @@ export async function resolveCouponCommandSurface(
   if (
     token &&
     token.cartId === cartId &&
-    token.checkoutId === active.checkoutId
+    token.checkoutId === locked.checkoutId
   ) {
-    const checkout = await context.db
-      .select({ status: checkoutsTable.status })
-      .from(checkoutsTable)
-      .where(eq(checkoutsTable.id, token.checkoutId))
-      .limit(1);
-    const status = checkout[0]?.status;
-    if (
-      status === "DRAFT" ||
-      status === "READY_FOR_PAYMENT" ||
-      status === "PAYMENT_PENDING"
-    ) {
-      return {
-        surface: "CHECKOUT_REVIEW",
-        checkoutId: active.checkoutId,
-        journeyKey: active.journeyKey,
-      };
-    }
+    return {
+      surface: "CHECKOUT_REVIEW",
+      checkoutId: locked.checkoutId,
+      journeyKey: locked.journeyKey,
+    };
   }
   return {
     surface: "CART",
-    checkoutId: active.checkoutId,
-    journeyKey: active.journeyKey,
+    checkoutId: locked.checkoutId,
+    journeyKey: locked.journeyKey,
   };
 }
 
@@ -1129,10 +1157,18 @@ export async function associateCartActivation(input: {
   if (row.cartId !== input.cartId) {
     return;
   }
-  if (
-    row.checkoutId === input.checkoutId &&
-    row.checkoutJourneyKey === input.journeyKey
-  ) {
+  const fullyAssociated =
+    row.checkoutId !== null &&
+    row.checkoutJourneyKey !== null &&
+    row.watermarkSequence !== null;
+  if (fullyAssociated) {
+    return;
+  }
+  const unassociated =
+    row.checkoutId === null &&
+    row.checkoutJourneyKey === null &&
+    row.watermarkSequence === null;
+  if (!unassociated) {
     return;
   }
   const seqRows = await input.context.db

@@ -142,7 +142,7 @@ export async function startCheckout(
             cartId: cart.id,
             customerAuthUserId: customer.authUserId,
             checkout: existing,
-            cartActivationId: parsed.cartActivationId,
+            cartActivationId: null,
             reuseExisting: true,
           });
           await markCheckoutCancelled(tx, predecessor, now);

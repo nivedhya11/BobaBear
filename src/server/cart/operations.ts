@@ -56,6 +56,7 @@ import {
   deleteNewestUnitForLine,
   deleteNewestUnitForVariant,
   deleteCartLines,
+  findCartRowById,
   findCustomerCartRow,
   findGuestCartRowByVerifier,
   insertCartLineWithConfiguration,
@@ -539,7 +540,7 @@ async function quotePayableChangedVsValidAlternative(
       outletId = snapshotRows[0]?.selectedOutletId ?? null;
     }
     if (!outletId) return null;
-    const cartRow = await lockCartForUpdate(tx, checkout.cartId);
+    const cartRow = await findCartRowById(tx, checkout.cartId);
     if (!cartRow) return null;
     const cart = await loadCartAggregate(tx, cartRow);
     if (!cart?.manualCouponCode) return null;
