@@ -168,12 +168,15 @@ selected Measurement design is testable without activating production holdout.
 
 | Check | Layers | Planned check | Negative evidence |
 |---|---|---|---|
+| Enrollment of never-exposed session | Domain, HTTP | When a future holdout config is fixture-activated, an eligible active ordering session with no prior recommendation exposure under that experiment version can be enrolled | Enrollment of a previously exposed session is absent |
+| Previously exposed pre-activation session | Domain, database | A session with `SET_ISSUED` or validated presentation before activation is excluded from that experiment version and is not newly randomized | Retroactive HOLDOUT assignment after prior exposure is absent |
 | Assignment before exposure | Domain, concurrency, HTTP | When a fixture activates holdout, assignment exists before any recommendation-capable Product Detail/Customization/Cart read that could expose a module | Exposure-before-assignment sequence is absent |
-| Stable unit | Database, HTTP | Assignment is stable for `SERVER_OWNED_ACTIVE_ORDERING_SESSION`; later Cart in same journey reuses it | Flip after Cart creation is absent |
+| Stable unit | Database, HTTP | Assignment is stable for `SERVER_OWNED_ACTIVE_ORDERING_SESSION`; later Cart create/reconcile/reload in the same journey reuses it | Flip after Cart creation/reconcile/reload is absent |
 | Unknown assignment | Domain, browser | Suppresses recommendations; commerce available; no holdout label | Holdout explanation copy is absent |
 | Browser not authority | Security, HTTP | Browser/profile cannot choose or forge arm | Client-supplied arm ignored; no write |
 | Concurrent first requests | Concurrency, database | Race settles to one stable authoritative assignment | Two arms for one session are absent |
-| Inactive default | Domain | Default configuration writes no experiment assignment solely for experimentation | Production activation by this candidate is absent |
+| Inactive experiment configuration | Domain, database | Default/inactive configuration writes no experiment assignment row solely for experimentation | Production activation by this candidate is absent |
+| Neutral ordering-session correlation | Database | While holdout is inactive, a neutral `recommendation_ordering_sessions` row may still exist for issued-set/presentation correlation; that relation has no experiment arm | `holdout_arm` on the ordering-session row is absent |
 
 `HOLDOUT_ACTIVATED_IN_THIS_CANDIDATE = NO`.
 
@@ -236,8 +239,11 @@ SET_RENDER != ITEM_IMPRESSION
 | Actually shown module | Browser, measurement | Eligible `SET_RENDER` after server validation | Client-only render without server row |
 | Item in payload never shown / below fold | Component, measurement | No `ITEM_IMPRESSION` | Membership-only impression |
 | Actually shown specific item | Browser, measurement | Eligible `ITEM_IMPRESSION` after server validation | Impression for non-member |
-| Browser echoes server correlation only | HTTP, security | Observation carries issued correlation; cannot invent set, membership, rank, placement, eligibility, or holdout | Invented membership accepted |
-| Server validates observation | Domain, HTTP | Invalid observation writes nothing | Unvalidated client event becomes occurrence |
+| Browser echoes server correlation only | HTTP, security | Observation carries issued correlation; cannot invent set, membership, rank, placement, eligibility, holdout, or schema version | Invented membership accepted |
+| Server validates observation | Domain, HTTP | Invalid/unsupported event-contract input writes nothing | Unvalidated client event becomes occurrence |
+| Schema version on durable rows | Database, measurement | Every durable material measurement occurrence is associated with `IMP-036K-RECOMMENDATION-MEASUREMENT-V1` | Row without recorded schema version treated as current by default invention |
+| Incompatible future version | Domain, measurement | A later incompatible schema identity is not silently interpreted as V1; old rows remain interpretable under their recorded version | Silent reinterpretation of old rows |
+| Missing required correlation | Domain, recovery | Attribution fails closed; commerce continues | Checkout failed because measurement correlation was missing |
 | Ordinary React rerender/remount | Component, measurement | No duplicate presentation occurrence | Remount doubles count |
 | Retry/replay of same observation | Recovery, measurement | No double authoritative occurrence | Second row for same occurrence identity |
 | Observation/reporting failure | Recovery, browser | Commerce remains usable; attribution fails closed | Checkout failed because measurement failed |
@@ -307,6 +313,8 @@ proof/correlation/persistence.
 | No payment secrets / address / name / full profile in recommendation telemetry | Security, measurement | Sensitive fields stored |
 | No customer-visible priority/margin | HTTP, content | Fields present on customer payload |
 | No client-owned eligibility, set identity, or membership | Security, HTTP | Client fields accepted as authority |
+| Browser cannot author holdout, rank, or assistance | Security, HTTP, measurement | Client-supplied holdout/rank/assistance stored as truth |
+| Required measurement identities present | Database | Durable row missing required occurrence, session, issued-set/member, or schema-version identity where that meaning requires it |
 | No cross-customer cart or suppression leakage | Database, security | Foreign cart suppression applied |
 | Replayed stale recommendation cannot bypass current eligibility | Security, recovery | Stale action creates units |
 | Instrumentation endpoint rejects unsupported sensitive/client-authoritative fields | HTTP, security | Unsupported fields write rows |
@@ -319,9 +327,10 @@ Database integration on real PostgreSQL, not an in-memory double, for later impl
 
 - relationship rows and compare-and-swap revision
 - cart suppression keyed by cart + exact candidate identity
-- issued-set correlation and presentation occurrences
+- issued-set correlation and presentation occurrences, including required authoritative identities and `measurement_schema_version`
 - cart-unit assistance marks and snapshot provenance copy
-- ordering-session holdout assignment rows when fixture-activated
+- ordering-session correlation rows (no experiment arm on that relation)
+- ordering-session holdout assignment rows when fixture-activated, never solely because a neutral session row exists
 - Popular read over Orders/snapshots without a second order truth
 
 `DATABASE_PROOF_PLANNED = YES`.
@@ -362,13 +371,25 @@ acceptance:
 - event meanings concretely distinguishable
 - holdout inactive by default; future 10/90 design testable
 - assignment unit = server-owned active ordering session before exposure
-- AOV grounded in `checkout_snapshots.grand_total_paise` through Order lineage
+- experiment population: never-exposed eligible sessions may enroll when future holdout is
+  activated; already-exposed pre-activation sessions are excluded from that experiment version;
+  retroactive enrollment is forbidden
+- every durable material occurrence associated with `IMP-036K-RECOMMENDATION-MEASUREMENT-V1`;
+  incompatible future versions are not silently read as V1; old rows keep their recorded version
+- required event attributes: real PostgreSQL constraints/rows prove authoritative identities;
+  browser cannot supply authoritative membership/rank/eligibility/holdout/assistance fields;
+  missing required correlation fails closed for attribution but not commerce
+- AOV grounded in `checkout_snapshots.grand_total_paise` through Order lineage; only qualifying
+  successful Orders enter conditional AOV; completion guardrail reporting remains separate and
+  visible; a fixture where treatment AOV rises but order completion falls is **not** interpreted as
+  automatic overall business success; insufficient evidence stays `INSUFFICIENT_EVIDENCE`
 - attach grounded in exact assisted identity, not impression/action-only
 - contribution formula not invented
 - commerce fail-open; attribution fail-closed
 - no analytics vendor; server write authority
 
 `MEASUREMENT_PROOF_PLANNED = YES`.
+`PROOF_EXECUTED = NO`.
 
 ## 11. Golden Journeys / regression
 
