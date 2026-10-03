@@ -321,10 +321,27 @@ export async function evaluateCheckout(
     )
   ) {
     const measured = await persistence.transaction(async (tx) => {
-      await lockCartForUpdate(tx, preload.row.cartId);
+      const cartLocked = await lockCartForUpdate(tx, preload.row.cartId);
+      if (!cartLocked || cartLocked.customerAuthUserId !== customer.authUserId) {
+        throw new CheckoutError("CHECKOUT_NOT_FOUND", "Checkout not found.");
+      }
+      const cart = await loadCartAggregate(tx, cartLocked);
+      if (cart.revision !== preload.cart.revision) {
+        throw new CheckoutError(
+          "CHECKOUT_CART_CHANGED",
+          "Cart changed during Checkout evaluation.",
+        );
+      }
       const row = await lockCheckoutForUpdate(tx, preload.row.id);
       if (!row) {
         throw new CheckoutError("CHECKOUT_NOT_FOUND", "Checkout not found.");
+      }
+      if (row.revision !== parsed.expectedCheckoutRevision) {
+        throw new CheckoutError(
+          "CHECKOUT_CONFLICT",
+          "Checkout revision does not match expectedCheckoutRevision.",
+          { field: "expectedCheckoutRevision" },
+        );
       }
       const ordered = await assignCheckoutJourney({
         context: tx,
