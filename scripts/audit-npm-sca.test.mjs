@@ -3,7 +3,9 @@
  * Unit tests for IMP-038 SCA exception filtering (no live npm audit required).
  *
  * Invariant: every High/Critical advisory must itself be covered by an ACTIVE
- * exception. One matched GHSA/CVE must never implicitly cover another advisory.
+ * exception. Inherited string `via` nodes resolve transitively to structured
+ * advisories. One matched GHSA/CVE must never implicitly cover another advisory.
+ * A package-name token never blankets structured GHSA/CVE identities.
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -24,6 +26,7 @@ import {
   activeExceptions,
   isActiveExpiry,
   isIsoDate,
+  exceptionCoversSeverity,
 } from "./audit-npm-sca.mjs";
 
 const HEADER =
@@ -202,14 +205,11 @@ test("expired exception → FAIL", () => {
   assert.equal(filterUncoveredPolicyFindings(vulns, active).length, 1);
 });
 
-test("package-name exception covers that package only (register contract)", () => {
+test("package-name exception covers only opaque package-level findings", () => {
   const vulns = {
     lodash: {
       severity: "high",
-      via: [
-        { severity: "high", url: "https://github.com/advisories/GHSA-aaaa-bbbb-cccc" },
-        { severity: "high", url: "https://github.com/advisories/GHSA-dddd-eeee-ffff" },
-      ],
+      via: [],
     },
     next: {
       severity: "critical",
@@ -286,7 +286,7 @@ const BRACES_CHAIN_VULNS = {
   },
 };
 
-test("VEX-NPM-001..005 parse as ACTIVE on 2026-10-03 and expire after 2026-10-17", () => {
+test("VEX-NPM-001 is the only ACTIVE npm row and expires after 2026-10-17", () => {
   const registerPath = path.join(
     path.dirname(fileURLToPath(import.meta.url)),
     "..",
@@ -295,51 +295,183 @@ test("VEX-NPM-001..005 parse as ACTIVE on 2026-10-03 and expire after 2026-10-17
   const markdown = readFileSync(registerPath, "utf8");
   const { rows, errors } = parseExceptionRegister(markdown);
   assert.deepEqual(errors, []);
-  const ids = ["VEX-NPM-001", "VEX-NPM-002", "VEX-NPM-003", "VEX-NPM-004", "VEX-NPM-005"];
-  const vexRows = ids.map((id) => {
-    const row = rows.find((r) => r.id === id);
-    assert.ok(row, `missing ${id}`);
-    return row;
-  });
-  assert.equal(vexRows[0]["package/cve"], "GHSA-vfj7-8cjw-p6xm");
-  assert.equal(vexRows[1]["package/cve"], "@next/eslint-plugin-next");
-  assert.equal(vexRows[2]["package/cve"], "eslint-config-next");
-  assert.equal(vexRows[3]["package/cve"], "fast-glob");
-  assert.equal(vexRows[4]["package/cve"], "micromatch");
-  for (const row of vexRows) {
-    assert.equal(row.severity, "high");
-    assert.equal(row.owner, "platform-security");
-    assert.equal(row.retest_date, "2026-10-10");
-    assert.equal(row.expiry, "2026-10-17");
-    assert.match(row.authority, /5966965948/);
-    assert.equal(isActiveExpiry("2026-10-03", row.expiry), true);
-    assert.equal(isActiveExpiry("2026-10-17", row.expiry), true);
-    assert.equal(isActiveExpiry("2026-10-18", row.expiry), false);
-  }
-  assert.equal(activeExceptions(vexRows, "2026-10-03").length, 5);
-  assert.equal(activeExceptions(vexRows, "2026-10-17").length, 5);
-  assert.equal(activeExceptions(vexRows, "2026-10-18").length, 0);
-});
-
-test("root GHSA exception does not cover inherited package-level High findings", () => {
-  const active = [exceptionRow({ "package/cve": "GHSA-vfj7-8cjw-p6xm" })];
-  const uncovered = filterUncoveredPolicyFindings(BRACES_CHAIN_VULNS, active);
-  assert.equal(uncovered.length, 4);
-  assert.deepEqual(
-    uncovered.map((f) => f.packageName).sort(),
-    ["@next/eslint-plugin-next", "eslint-config-next", "fast-glob", "micromatch"],
+  const npmRows = rows.filter((r) => String(r.id).startsWith("VEX-NPM-"));
+  assert.equal(npmRows.length, 1);
+  assert.equal(npmRows[0].id, "VEX-NPM-001");
+  assert.equal(npmRows[0]["package/cve"], "GHSA-vfj7-8cjw-p6xm");
+  assert.equal(npmRows[0].severity, "high");
+  assert.equal(npmRows[0].owner, "platform-security");
+  assert.equal(npmRows[0].retest_date, "2026-10-10");
+  assert.equal(npmRows[0].expiry, "2026-10-17");
+  assert.match(npmRows[0].authority, /5966965948/);
+  assert.equal(
+    rows.some((r) => ["VEX-NPM-002", "VEX-NPM-003", "VEX-NPM-004", "VEX-NPM-005"].includes(r.id)),
+    false,
   );
+  assert.equal(isActiveExpiry("2026-10-03", npmRows[0].expiry), true);
+  assert.equal(isActiveExpiry("2026-10-17", npmRows[0].expiry), true);
+  assert.equal(isActiveExpiry("2026-10-18", npmRows[0].expiry), false);
+  assert.equal(activeExceptions(npmRows, "2026-10-03").length, 1);
+  assert.equal(activeExceptions(npmRows, "2026-10-18").length, 0);
 });
 
-test("authorized five ACTIVE tokens cover the current braces-chain High findings only", () => {
-  const active = [
-    exceptionRow({ id: "VEX-NPM-001", "package/cve": "GHSA-vfj7-8cjw-p6xm" }),
-    exceptionRow({ id: "VEX-NPM-002", "package/cve": "@next/eslint-plugin-next" }),
-    exceptionRow({ id: "VEX-NPM-003", "package/cve": "eslint-config-next" }),
-    exceptionRow({ id: "VEX-NPM-004", "package/cve": "fast-glob" }),
-    exceptionRow({ id: "VEX-NPM-005", "package/cve": "micromatch" }),
-  ];
+test("root GHSA covers the current inherited braces chain", () => {
+  const active = [exceptionRow({ id: "VEX-NPM-001", "package/cve": "GHSA-vfj7-8cjw-p6xm" })];
   assert.deepEqual(filterUncoveredPolicyFindings(BRACES_CHAIN_VULNS, active), []);
+});
+
+test("same braces chain with no exception leaves the root High uncovered", () => {
+  const uncovered = filterUncoveredPolicyFindings(BRACES_CHAIN_VULNS, []);
+  assert.equal(uncovered.length, 1);
+  assert.equal(uncovered[0].severity, "high");
+  assert.ok(uncovered[0].keys.includes("ghsa-vfj7-8cjw-p6xm"));
+});
+
+test("root braces VEX does not cover an unrelated High GHSA on micromatch", () => {
+  const vulns = {
+    ...BRACES_CHAIN_VULNS,
+    micromatch: {
+      severity: "high",
+      range: ">=0.2.0",
+      via: [
+        "braces",
+        {
+          severity: "high",
+          url: "https://github.com/advisories/GHSA-aaaa-bbbb-cccc",
+        },
+      ],
+    },
+  };
+  const active = [exceptionRow({ id: "VEX-NPM-001", "package/cve": "GHSA-vfj7-8cjw-p6xm" })];
+  const uncovered = filterUncoveredPolicyFindings(vulns, active);
+  assert.equal(uncovered.length, 1);
+  assert.ok(uncovered[0].keys.includes("ghsa-aaaa-bbbb-cccc"));
+});
+
+test("root braces VEX does not cover an unrelated Critical GHSA on fast-glob", () => {
+  const vulns = {
+    ...BRACES_CHAIN_VULNS,
+    "fast-glob": {
+      severity: "critical",
+      range: "*",
+      via: [
+        "micromatch",
+        {
+          severity: "critical",
+          url: "https://github.com/advisories/GHSA-ffff-eeee-dddd",
+        },
+      ],
+    },
+  };
+  const active = [exceptionRow({ id: "VEX-NPM-001", "package/cve": "GHSA-vfj7-8cjw-p6xm" })];
+  const uncovered = filterUncoveredPolicyFindings(vulns, active);
+  assert.equal(uncovered.length, 1);
+  assert.equal(uncovered[0].severity, "critical");
+  assert.ok(uncovered[0].keys.includes("ghsa-ffff-eeee-dddd"));
+});
+
+test("high exception cannot cover the same GHSA when classified critical", () => {
+  assert.equal(exceptionCoversSeverity("high", "critical"), false);
+  assert.equal(exceptionCoversSeverity("high", "high"), true);
+  const vulns = {
+    braces: {
+      severity: "critical",
+      via: [
+        {
+          source: 1240992,
+          name: "braces",
+          severity: "critical",
+          url: "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm",
+        },
+      ],
+    },
+  };
+  const active = [exceptionRow({ id: "VEX-NPM-001", "package/cve": "GHSA-vfj7-8cjw-p6xm", severity: "high" })];
+  const uncovered = filterUncoveredPolicyFindings(vulns, active);
+  assert.equal(uncovered.length, 1);
+  assert.equal(uncovered[0].severity, "critical");
+  assert.ok(uncovered[0].keys.includes("ghsa-vfj7-8cjw-p6xm"));
+});
+
+test("package-name token cannot cover a structured same-package GHSA", () => {
+  const vulns = {
+    micromatch: {
+      severity: "high",
+      via: [{ severity: "high", url: "https://github.com/advisories/GHSA-unrelated-xxxx-yyyy" }],
+    },
+  };
+  const active = [exceptionRow({ "package/cve": "micromatch" })];
+  const uncovered = filterUncoveredPolicyFindings(vulns, active);
+  assert.equal(uncovered.length, 1);
+  assert.equal(uncovered[0].packageName, "micromatch");
+  assert.ok(uncovered[0].keys.includes("ghsa-unrelated-xxxx-yyyy"));
+});
+
+test("missing string via target fails closed", () => {
+  const vulns = {
+    "eslint-config-next": {
+      severity: "high",
+      via: ["missing-package"],
+    },
+  };
+  const uncovered = filterUncoveredPolicyFindings(vulns, [
+    exceptionRow({ id: "VEX-NPM-001", "package/cve": "GHSA-vfj7-8cjw-p6xm" }),
+    exceptionRow({ "package/cve": "eslint-config-next" }),
+  ]);
+  assert.equal(uncovered.length, 1);
+  assert.equal(uncovered[0].severity, "high");
+  assert.equal(uncovered[0].packageName, "eslint-config-next");
+  assert.match(uncovered[0].label, /missing-package/);
+});
+
+test("dependency cycle fails closed deterministically", () => {
+  const vulns = {
+    "pkg-a": { severity: "high", via: ["pkg-b"] },
+    "pkg-b": { severity: "high", via: ["pkg-a"] },
+  };
+  const uncovered = filterUncoveredPolicyFindings(vulns, [
+    exceptionRow({ "package/cve": "pkg-a" }),
+    exceptionRow({ "package/cve": "pkg-b" }),
+  ]);
+  assert.ok(uncovered.length >= 1);
+  assert.equal(
+    uncovered.every((f) => f.severity === "high"),
+    true,
+  );
+  assert.ok(uncovered.some((f) => /cycle/.test(f.label)));
+});
+
+test("multiple parents to the same root GHSA require only one exception", () => {
+  const vulns = {
+    braces: BRACES_CHAIN_VULNS.braces,
+    micromatch: { severity: "high", via: ["braces"] },
+    "fast-glob": { severity: "high", via: ["micromatch"] },
+    "other-parent": { severity: "high", via: ["braces"] },
+  };
+  const active = [exceptionRow({ id: "VEX-NPM-001", "package/cve": "GHSA-vfj7-8cjw-p6xm" })];
+  assert.deepEqual(filterUncoveredPolicyFindings(vulns, active), []);
+  const uncovered = filterUncoveredPolicyFindings(vulns, []);
+  assert.equal(uncovered.length, 1);
+  assert.ok(uncovered[0].keys.includes("ghsa-vfj7-8cjw-p6xm"));
+});
+
+test("expired VEX-NPM-001 fails closed for the current chain on 2026-10-18", () => {
+  const rows = [
+    exceptionRow({
+      id: "VEX-NPM-001",
+      "package/cve": "GHSA-vfj7-8cjw-p6xm",
+      expiry: "2026-10-17",
+    }),
+  ];
+  const expired = activeExceptions(rows, "2026-10-18");
+  assert.equal(expired.length, 0);
+  const uncovered = filterUncoveredPolicyFindings(BRACES_CHAIN_VULNS, expired);
+  assert.equal(uncovered.length, 1);
+  assert.ok(uncovered[0].keys.includes("ghsa-vfj7-8cjw-p6xm"));
+});
+
+test("unrelated other-package High remains uncovered beside the covered chain", () => {
+  const active = [exceptionRow({ id: "VEX-NPM-001", "package/cve": "GHSA-vfj7-8cjw-p6xm" })];
   const withUnrelated = {
     ...BRACES_CHAIN_VULNS,
     lodash: {
@@ -350,17 +482,22 @@ test("authorized five ACTIVE tokens cover the current braces-chain High findings
   const uncovered = filterUncoveredPolicyFindings(withUnrelated, active);
   assert.equal(uncovered.length, 1);
   assert.equal(uncovered[0].packageName, "lodash");
+  assert.ok(uncovered[0].keys.includes("ghsa-aaaa-bbbb-cccc"));
 });
 
-test("expired VEX-NPM braces-chain rows fail closed after 2026-10-17", () => {
-  const rows = [
-    exceptionRow({ id: "VEX-NPM-001", "package/cve": "GHSA-vfj7-8cjw-p6xm", expiry: "2026-10-17" }),
-    exceptionRow({ id: "VEX-NPM-002", "package/cve": "@next/eslint-plugin-next", expiry: "2026-10-17" }),
-    exceptionRow({ id: "VEX-NPM-003", "package/cve": "eslint-config-next", expiry: "2026-10-17" }),
-    exceptionRow({ id: "VEX-NPM-004", "package/cve": "fast-glob", expiry: "2026-10-17" }),
-    exceptionRow({ id: "VEX-NPM-005", "package/cve": "micromatch", expiry: "2026-10-17" }),
-  ];
-  const expired = activeExceptions(rows, "2026-10-18");
-  assert.equal(expired.length, 0);
-  assert.equal(filterUncoveredPolicyFindings(BRACES_CHAIN_VULNS, expired).length, 5);
+test("moderate/low cyclic toolchain packages remain ignored beside the covered High chain", () => {
+  const active = [exceptionRow({ id: "VEX-NPM-001", "package/cve": "GHSA-vfj7-8cjw-p6xm" })];
+  const vulns = {
+    ...BRACES_CHAIN_VULNS,
+    "@vitest/coverage-v8": { severity: "moderate", via: ["vitest"] },
+    vitest: {
+      severity: "moderate",
+      via: [
+        "@vitest/coverage-v8",
+        { severity: "moderate", url: "https://github.com/advisories/GHSA-82fw-gwwq-j7x9" },
+      ],
+    },
+    leftpad: { severity: "low", via: [] },
+  };
+  assert.deepEqual(filterUncoveredPolicyFindings(vulns, active), []);
 });

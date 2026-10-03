@@ -19,6 +19,12 @@ const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(scriptDir, "..");
 const REGISTER_REL = "docs/platform/security/vulnerability-exception-register.md";
 const POLICY_LEVELS = new Set(["high", "critical"]);
+const SEVERITY_RANK = Object.freeze({
+  low: 1,
+  moderate: 2,
+  high: 3,
+  critical: 4,
+});
 
 export const REQUIRED_HEADERS = Object.freeze([
   "id",
@@ -198,52 +204,209 @@ export function collectFindingKeys(packageName, entry) {
 }
 
 /**
- * Expand a package audit entry into individual High/Critical advisories.
- * String `via` entries are dependency references and are ignored.
- * When no structured advisory objects exist, the package-level severity is
- * treated as a single advisory keyed only by package name.
+ * @param {string} exceptionSeverity
+ * @param {string} findingSeverity
+ */
+export function exceptionCoversSeverity(exceptionSeverity, findingSeverity) {
+  const exceptionRank = SEVERITY_RANK[String(exceptionSeverity || "").toLowerCase()] || 0;
+  const findingRank = SEVERITY_RANK[String(findingSeverity || "").toLowerCase()] || 0;
+  return exceptionRank >= findingRank && findingRank > 0;
+}
+
+/**
+ * @param {Record<string, unknown>} vulnerabilities
+ * @param {string} packageName
+ * @returns {{ key: string, entry: { via?: unknown[], severity?: string, range?: string } } | null}
+ */
+function lookupVulnerabilityEntry(vulnerabilities, packageName) {
+  if (!vulnerabilities || typeof vulnerabilities !== "object") return null;
+  if (Object.prototype.hasOwnProperty.call(vulnerabilities, packageName)) {
+    return {
+      key: packageName,
+      entry: /** @type {{ via?: unknown[], severity?: string, range?: string }} */ (
+        vulnerabilities[packageName]
+      ),
+    };
+  }
+  const lowered = packageName.toLowerCase();
+  for (const key of Object.keys(vulnerabilities)) {
+    if (key.toLowerCase() === lowered) {
+      return {
+        key,
+        entry: /** @type {{ via?: unknown[], severity?: string, range?: string }} */ (
+          vulnerabilities[key]
+        ),
+      };
+    }
+  }
+  return null;
+}
+
+/**
+ * @param {{ packageName: string, severity: string, identityKeys: Set<string>, label: string, reason?: string, missingTarget?: string }} advisory
+ */
+export function stableAdvisoryIdentity(advisory) {
+  if (advisory.reason === "CYCLE") {
+    return `cycle:${advisory.packageName.toLowerCase()}`;
+  }
+  if (advisory.reason === "MISSING") {
+    return `missing:${advisory.packageName.toLowerCase()}->${String(advisory.missingTarget || "").toLowerCase()}`;
+  }
+  const identity = [...advisory.identityKeys]
+    .filter((k) => k.startsWith("ghsa-") || k.startsWith("cve-") || /^\d+$/.test(k) || k.startsWith("source:"))
+    .sort();
+  if (identity.length > 0) {
+    return `adv:${identity.join("|")}:${advisory.severity}`;
+  }
+  if (advisory.identityKeys.size > 0) {
+    return `adv:${[...advisory.identityKeys].sort().join("|")}:${advisory.severity}`;
+  }
+  return `pkg:${advisory.packageName.toLowerCase()}:${advisory.severity}:${advisory.label}`;
+}
+
+function structuredAdvisoryLabel(packageName, identityKeys, obj) {
+  const labelParts = [...identityKeys].filter((k) => k.startsWith("ghsa-") || k.startsWith("cve-"));
+  if (labelParts[0]) return labelParts[0];
+  if (typeof obj.source === "number") return `source:${obj.source}`;
+  return `${packageName}@advisory`;
+}
+
+/**
+ * Expand one package against the audit vulnerability graph.
+ * Structured `via` objects are independent advisories.
+ * String `via` values are inherited dependency links and are resolved recursively.
  *
  * @param {string} packageName
- * @param {{ via?: unknown[], severity?: string, range?: string }} entry
- * @returns {Array<{ packageName: string, severity: string, range?: string, identityKeys: Set<string>, label: string }>}
+ * @param {Record<string, { via?: unknown[], severity?: string, range?: string }>} vulnerabilities
+ * @param {Set<string>} [visiting]
+ * @param {Map<string, Array<object>>} [memo]
  */
-export function extractPolicyAdvisories(packageName, entry) {
-  /** @type {Array<{ packageName: string, severity: string, range?: string, identityKeys: Set<string>, label: string }>} */
-  const advisories = [];
+export function resolvePolicyAdvisories(
+  packageName,
+  vulnerabilities,
+  visiting = new Set(),
+  memo = new Map(),
+) {
+  const cacheKey = packageName.toLowerCase();
+  if (memo.has(cacheKey)) return memo.get(cacheKey);
+  if (visiting.has(cacheKey)) {
+    const found = lookupVulnerabilityEntry(vulnerabilities, packageName);
+    const severity = String(found?.entry?.severity || "").toLowerCase();
+    if (!POLICY_LEVELS.has(severity)) return [];
+    return [
+      {
+        packageName: found?.key || packageName,
+        severity,
+        identityKeys: new Set(),
+        label: `${found?.key || packageName}@cycle`,
+        reason: "CYCLE",
+        failClosed: true,
+        hasInheritedRefs: true,
+      },
+    ];
+  }
+
+  const found = lookupVulnerabilityEntry(vulnerabilities, packageName);
+  if (!found) {
+    return [];
+  }
+
+  visiting.add(cacheKey);
+  const entry = found.entry || {};
   const viaList = Array.isArray(entry.via) ? entry.via : [];
   const objectVias = viaList.filter((v) => v && typeof v === "object");
-
-  if (objectVias.length === 0) {
-    const severity = String(entry.severity || "").toLowerCase();
-    if (!POLICY_LEVELS.has(severity)) return advisories;
-    advisories.push({
-      packageName,
-      severity,
-      range: entry.range,
-      identityKeys: new Set(),
-      label: `${packageName}@package`,
-    });
-    return advisories;
-  }
+  const stringVias = viaList.filter((v) => typeof v === "string" && v.trim());
+  /** @type {Array<object>} */
+  const advisories = [];
 
   for (const via of objectVias) {
     const obj = /** @type {Record<string, unknown>} */ (via);
     const severity = String(obj.severity || entry.severity || "").toLowerCase();
     if (!POLICY_LEVELS.has(severity)) continue;
     const identityKeys = collectAdvisoryIdentityKeys(via);
-    const labelParts = [...identityKeys].filter((k) => k.startsWith("ghsa-") || k.startsWith("cve-"));
-    const label =
-      labelParts[0] ||
-      (typeof obj.source === "number" ? `source:${obj.source}` : `${packageName}@advisory`);
     advisories.push({
-      packageName,
+      packageName: found.key,
       severity,
       range: typeof obj.range === "string" ? obj.range : entry.range,
       identityKeys,
-      label,
+      label: structuredAdvisoryLabel(found.key, identityKeys, obj),
+      reason: "STRUCTURED",
+      hasInheritedRefs: false,
     });
   }
+
+  for (const ref of stringVias) {
+    const refName = ref.trim();
+    const child = lookupVulnerabilityEntry(vulnerabilities, refName);
+    if (!child) {
+      const parentSeverity = String(entry.severity || "").toLowerCase();
+      if (!POLICY_LEVELS.has(parentSeverity)) continue;
+      advisories.push({
+        packageName: found.key,
+        severity: parentSeverity,
+        range: entry.range,
+        identityKeys: new Set(),
+        label: `${refName}@unresolved`,
+        reason: "MISSING",
+        missingTarget: refName,
+        failClosed: true,
+        hasInheritedRefs: true,
+      });
+      continue;
+    }
+    advisories.push(...resolvePolicyAdvisories(child.key, vulnerabilities, visiting, memo));
+  }
+
+  if (objectVias.length === 0 && stringVias.length === 0) {
+    const severity = String(entry.severity || "").toLowerCase();
+    if (POLICY_LEVELS.has(severity)) {
+      advisories.push({
+        packageName: found.key,
+        severity,
+        range: entry.range,
+        identityKeys: new Set(),
+        label: `${found.key}@package`,
+        reason: "OPAQUE",
+        hasInheritedRefs: false,
+      });
+    }
+  } else if (
+    objectVias.length === 0 &&
+    stringVias.length > 0 &&
+    advisories.length === 0 &&
+    POLICY_LEVELS.has(String(entry.severity || "").toLowerCase())
+  ) {
+    advisories.push({
+      packageName: found.key,
+      severity: String(entry.severity).toLowerCase(),
+      range: entry.range,
+      identityKeys: new Set(),
+      label: `${found.key}@unresolved-inherited`,
+      reason: "EMPTY_INHERITED",
+      failClosed: true,
+      hasInheritedRefs: true,
+    });
+  }
+
+  visiting.delete(cacheKey);
+  memo.set(cacheKey, advisories);
   return advisories;
+}
+
+/**
+ * Expand a package audit entry into individual High/Critical advisories.
+ * When `vulnerabilities` is omitted, string `via` targets fail closed as missing.
+ *
+ * @param {string} packageName
+ * @param {{ via?: unknown[], severity?: string, range?: string }} entry
+ * @param {Record<string, { via?: unknown[], severity?: string, range?: string }>} [vulnerabilities]
+ */
+export function extractPolicyAdvisories(packageName, entry, vulnerabilities) {
+  const graph = vulnerabilities || { [packageName]: entry };
+  if (!vulnerabilities) {
+    graph[packageName] = entry;
+  }
+  return resolvePolicyAdvisories(packageName, graph);
 }
 
 /**
@@ -255,22 +418,32 @@ export function activeExceptions(rows, todayIso) {
 }
 
 /**
- * Cover an advisory when an ACTIVE exception token matches its advisory
- * identity (GHSA/CVE/source) **or** exactly equals the package name
- * (register contract: package-name rows cover that package's advisories).
+ * Cover an advisory when an ACTIVE exception token matches its structured
+ * identity (exact GHSA/CVE/source) and the row severity is at least the
+ * finding severity.
  *
- * One matched GHSA/CVE never covers a different advisory in the same package.
+ * A package-name token may cover only an opaque package-level finding that
+ * has no structured advisory identity and no inherited dependency reference.
+ * It never blankets GHSA/CVE advisories, inherited nodes, or fail-closed
+ * unresolved/cycle diagnostics. One matched GHSA/CVE never covers a sibling.
  *
- * @param {{ packageName: string, identityKeys: Set<string> }} advisory
+ * @param {{ packageName: string, severity: string, identityKeys: Set<string>, reason?: string, failClosed?: boolean, hasInheritedRefs?: boolean }} advisory
  * @param {Array<Record<string, string>>} activeRows
  */
 export function findCoveringExceptionForAdvisory(advisory, activeRows) {
+  if (advisory.failClosed) return null;
   const pkg = advisory.packageName.toLowerCase();
+  const hasStructuredIdentity = advisory.identityKeys.size > 0;
+  const allowPackageNameToken =
+    !hasStructuredIdentity &&
+    !advisory.hasInheritedRefs &&
+    advisory.reason === "OPAQUE";
   for (const row of activeRows) {
+    if (!exceptionCoversSeverity(row.severity, advisory.severity)) continue;
     const tokens = tokenizePackageCve(row["package/cve"]);
     for (const token of tokens) {
-      if (advisory.identityKeys.has(token)) return row;
-      if (token === pkg) return row;
+      if (hasStructuredIdentity && advisory.identityKeys.has(token)) return row;
+      if (allowPackageNameToken && token === pkg) return row;
     }
   }
   return null;
@@ -301,13 +474,28 @@ export function findCoveringException(findingKeys, activeRows) {
 export function filterUncoveredPolicyFindings(vulnerabilities, activeRows) {
   /** @type {Array<{ packageName: string, severity: string, range?: string, keys: string[], label: string }>} */
   const uncovered = [];
-  for (const [packageName, entry] of Object.entries(vulnerabilities || {})) {
-    const advisories = extractPolicyAdvisories(packageName, entry);
+  const seen = new Set();
+  const graph = vulnerabilities || {};
+  const visiting = new Set();
+  const memo = new Map();
+  for (const packageName of Object.keys(graph)) {
+    const entry = graph[packageName] || {};
+    const packageSeverity = String(entry.severity || "").toLowerCase();
+    const hasStructuredPolicyVia = (Array.isArray(entry.via) ? entry.via : []).some((v) => {
+      if (!v || typeof v !== "object") return false;
+      const viaSev = String(/** @type {Record<string, unknown>} */ (v).severity || entry.severity || "").toLowerCase();
+      return POLICY_LEVELS.has(viaSev);
+    });
+    if (!POLICY_LEVELS.has(packageSeverity) && !hasStructuredPolicyVia) continue;
+    const advisories = resolvePolicyAdvisories(packageName, graph, visiting, memo);
     for (const advisory of advisories) {
+      const identity = stableAdvisoryIdentity(advisory);
+      if (seen.has(identity)) continue;
+      seen.add(identity);
       const cover = findCoveringExceptionForAdvisory(advisory, activeRows);
       if (!cover) {
         uncovered.push({
-          packageName,
+          packageName: advisory.packageName,
           severity: advisory.severity,
           range: advisory.range,
           keys: [...advisory.identityKeys].sort(),
@@ -392,8 +580,10 @@ function main() {
 
   const uncovered = filterUncoveredPolicyFindings(audit.report.vulnerabilities || {}, active);
   const meta = audit.report.metadata?.vulnerabilities || {};
+  const uncoveredHigh = uncovered.filter((f) => f.severity === "high").length;
+  const uncoveredCritical = uncovered.filter((f) => f.severity === "critical").length;
   console.log(
-    `SCA policy=high+ today=${today} exceptions_active=${active.length} audit_high=${meta.high ?? "?"} audit_critical=${meta.critical ?? "?"}`,
+    `SCA policy=high+ today=${today} exceptions_active=${active.length} audit_high=${meta.high ?? "?"} audit_critical=${meta.critical ?? "?"} uncovered_high=${uncoveredHigh} uncovered_critical=${uncoveredCritical}`,
   );
 
   if (uncovered.length > 0) {
