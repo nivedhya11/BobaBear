@@ -14,6 +14,7 @@ import {
   type OrderMaterializationResult,
   type OrderPolicy,
 } from "../../shared/order";
+import { closeJourney } from "../customer-commerce/measurement/writers";
 import { enqueueOrderReceivedNotification, enqueueScheduledFulfilmentReminder } from "../notifications/enqueue";
 import { loadActiveSnapshot } from "../checkout/repository";
 import type { Persistence } from "../persistence/types";
@@ -101,6 +102,7 @@ export async function materializeOrderForCompletedCheckout(
 
       const existing = await findOrderByCheckoutId(tx, checkoutId);
       if (existing) {
+        await closeJourney(tx, checkout.checkoutJourneyKey);
         return Object.freeze({
           disposition: "ALREADY_EXISTS" as const,
           order: mapOrderRow(existing),
@@ -203,6 +205,7 @@ export async function materializeOrderForCompletedCheckout(
             // checkout_id / snapshot / payment uniqueness → treat as race win
             const raced = await findOrderByCheckoutId(tx, checkoutId);
             if (raced) {
+              await closeJourney(tx, checkout.checkoutJourneyKey);
               return Object.freeze({
                 disposition: "ALREADY_EXISTS" as const,
                 order: mapOrderRow(raced),
@@ -248,6 +251,8 @@ export async function materializeOrderForCompletedCheckout(
         snapshot: sealed,
       });
 
+      await closeJourney(tx, checkout.checkoutJourneyKey);
+
       let cartFinalization: OrderCartFinalizationDisposition =
         "PRESERVED_UNAVAILABLE";
       if (checkout.cartId) {
@@ -275,6 +280,9 @@ export async function materializeOrderForCompletedCheckout(
       findOrderByCheckoutId(ctx, checkoutId),
     );
     if (raced) {
+      await persistence.transaction(async (tx) => {
+        await closeJourney(tx, peek.checkoutJourneyKey);
+      });
       return Object.freeze({
         disposition: "ALREADY_EXISTS" as const,
         order: mapOrderRow(raced),

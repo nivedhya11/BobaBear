@@ -107,7 +107,7 @@ export const CHECKOUT_MERCHANDISE_PROBLEM_CODES = [
 export type CheckoutMerchandiseProblemCode =
   (typeof CHECKOUT_MERCHANDISE_PROBLEM_CODES)[number];
 
-export const CHECKOUT_START_INPUT_FIELDS = ["cartId"] as const;
+export const CHECKOUT_START_INPUT_FIELDS = ["cartId", "cartActivationId"] as const;
 
 export const CHECKOUT_GET_ACTIVE_INPUT_FIELDS = [
   "cartId",

@@ -352,6 +352,9 @@ export async function prepareCheckoutForPayment(
           ? preload.destination ?? undefined
           : undefined,
       fulfilmentMode: preload.fulfilmentMode,
+      fulfilmentTiming: (preload.row.fulfilmentTiming ?? "ASAP") as
+        | "ASAP"
+        | "SCHEDULED",
     }),
   );
 

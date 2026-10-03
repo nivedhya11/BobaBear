@@ -88,7 +88,8 @@ export type CheckoutSnapshotBundleSelection = Readonly<{
 
 export type CheckoutSnapshotLine = Readonly<{
   id: string;
-  sourceCartLineId: string;
+  sourceCartLineId: string | null;
+  lineOrigin: "cart" | "complimentary_offer";
   productId: string;
   variantId: string;
   productName: string;
@@ -135,6 +136,8 @@ export type CheckoutSnapshotPromotionEffect = Readonly<{
   rewardQuantity: number | null;
   rewardBasePaise: bigint | null;
   sortOrder: number;
+  snapshotLineId: string | null;
+  promotionRevision: bigint | null;
 }>;
 
 export type CheckoutSnapshotTaxComponent = Readonly<{
@@ -220,6 +223,8 @@ export type Checkout = Readonly<{
 export type CheckoutEvaluationSuccess = Readonly<{
   checkout: Checkout;
   snapshot: CheckoutSnapshot;
+  evaluationId?: string;
+  reviewSurfaceToken?: string;
 }>;
 
 export type SavedAddressDestinationInput = Readonly<{

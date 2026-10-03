@@ -37,6 +37,12 @@ import {
   resolveScheduledDeliveryOutlet,
 } from "./adapters/serviceability";
 import { systemCheckoutClock } from "./clock";
+import { assignCheckoutJourney } from "./journey";
+import {
+  mintReviewSurfaceToken,
+  persistCommercialEvaluation,
+  resolveCommercialStateChange,
+} from "../customer-commerce/measurement/writers";
 import { checkoutSnapshotsStructurallyEqual } from "./compare-snapshots";
 import type { CheckoutOperationOptions } from "./operations";
 import {
@@ -279,6 +285,9 @@ export async function evaluateCheckout(
           ? preload.destination ?? undefined
           : undefined,
       fulfilmentMode: preload.fulfilmentMode,
+      fulfilmentTiming: (preload.row.fulfilmentTiming ?? "ASAP") as
+        | "ASAP"
+        | "SCHEDULED",
     }),
   );
 
@@ -311,9 +320,69 @@ export async function evaluateCheckout(
       candidate.commercial,
     )
   ) {
+    const measured = await persistence.transaction(async (tx) => {
+      const cartLocked = await lockCartForUpdate(tx, preload.row.cartId);
+      if (!cartLocked || cartLocked.customerAuthUserId !== customer.authUserId) {
+        throw new CheckoutError("CHECKOUT_NOT_FOUND", "Checkout not found.");
+      }
+      const cart = await loadCartAggregate(tx, cartLocked);
+      if (cart.revision !== preload.cart.revision) {
+        throw new CheckoutError(
+          "CHECKOUT_CART_CHANGED",
+          "Cart changed during Checkout evaluation.",
+        );
+      }
+      const row = await lockCheckoutForUpdate(tx, preload.row.id);
+      if (!row) {
+        throw new CheckoutError("CHECKOUT_NOT_FOUND", "Checkout not found.");
+      }
+      if (row.revision !== parsed.expectedCheckoutRevision) {
+        throw new CheckoutError(
+          "CHECKOUT_CONFLICT",
+          "Checkout revision does not match expectedCheckoutRevision.",
+          { field: "expectedCheckoutRevision" },
+        );
+      }
+      const ordered = await assignCheckoutJourney({
+        context: tx,
+        cartId: preload.row.cartId,
+        customerAuthUserId: customer.authUserId,
+        checkout: row,
+        cartActivationId: null,
+        reuseExisting: true,
+      });
+      const evaluation = await persistCommercialEvaluation({
+        context: tx,
+        cartId: preload.row.cartId,
+        checkoutId: ordered.id,
+        checkoutJourneyKey: ordered.checkoutJourneyKey,
+        surfaceScope: "CHECKOUT",
+        quote: commercial.quote,
+      });
+      if (ordered.checkoutJourneyKey) {
+        await resolveCommercialStateChange({
+          context: tx,
+          cartId: preload.row.cartId,
+          checkoutId: ordered.id,
+          journeyKey: ordered.checkoutJourneyKey,
+          evaluationId: evaluation.evaluationId,
+          fingerprint: evaluation.fingerprint,
+          reusedExistingEvaluation: evaluation.reusedExistingEvaluation,
+          closedJourneyRejectNew: true,
+        });
+      }
+      const reviewSurfaceToken = await mintReviewSurfaceToken(
+        tx,
+        ordered.id,
+        preload.row.cartId,
+      );
+      return { evaluationId: evaluation.evaluationId, reviewSurfaceToken };
+    });
     return Object.freeze({
       checkout: preload.checkout,
       snapshot: preload.checkout.activeSnapshot,
+      evaluationId: measured.evaluationId,
+      reviewSurfaceToken: measured.reviewSurfaceToken,
     });
   }
 
@@ -422,18 +491,29 @@ export async function evaluateCheckout(
       );
     }
 
+    const remappedLines = candidate.commit.lines.map((line) => {
+      const nextId = newSnapshotId();
+      return {
+        line,
+        nextId,
+        next: {
+          ...line,
+          id: nextId,
+          bundleSelections: line.bundleSelections.map((b) => ({
+            ...b,
+            id: newSnapshotId(),
+          })),
+        },
+      };
+    });
+    const snapshotLineIdByPrior = new Map(
+      remappedLines.map((entry) => [entry.line.id, entry.nextId]),
+    );
     const commitPayload = {
       ...candidate.commit,
       snapshotId: newSnapshotId(),
       sourceCartRevision: cart.revision,
-      lines: candidate.commit.lines.map((line) => ({
-        ...line,
-        id: newSnapshotId(),
-        bundleSelections: line.bundleSelections.map((b) => ({
-          ...b,
-          id: newSnapshotId(),
-        })),
-      })),
+      lines: remappedLines.map((entry) => entry.next),
       charges: candidate.commit.charges.map((c) => ({
         ...c,
         id: newSnapshotId(),
@@ -441,6 +521,9 @@ export async function evaluateCheckout(
       promotionEffects: candidate.commit.promotionEffects.map((e) => ({
         ...e,
         id: newSnapshotId(),
+        snapshotLineId: e.snapshotLineId
+          ? (snapshotLineIdByPrior.get(e.snapshotLineId) ?? null)
+          : null,
       })),
       taxComponents: candidate.commit.taxComponents.map((t) => ({
         ...t,
@@ -449,10 +532,44 @@ export async function evaluateCheckout(
     };
 
     const updated = await commitReadySnapshot(tx, row, commitPayload);
-    return loadCheckoutAggregate(tx, updated);
+    const ordered = await assignCheckoutJourney({
+      context: tx,
+      cartId: updated.cartId,
+      customerAuthUserId: customer.authUserId,
+      checkout: updated,
+      cartActivationId: null,
+      reuseExisting: true,
+    });
+    const evaluation = await persistCommercialEvaluation({
+      context: tx,
+      cartId: ordered.cartId,
+      checkoutId: ordered.id,
+      checkoutJourneyKey: ordered.checkoutJourneyKey,
+      surfaceScope: "CHECKOUT",
+      quote: commercial.quote,
+    });
+    if (ordered.checkoutJourneyKey) {
+      await resolveCommercialStateChange({
+        context: tx,
+        cartId: ordered.cartId,
+        checkoutId: ordered.id,
+        journeyKey: ordered.checkoutJourneyKey,
+        evaluationId: evaluation.evaluationId,
+        fingerprint: evaluation.fingerprint,
+        reusedExistingEvaluation: evaluation.reusedExistingEvaluation,
+        closedJourneyRejectNew: true,
+      });
+    }
+    const reviewSurfaceToken = await mintReviewSurfaceToken(
+      tx,
+      ordered.id,
+      ordered.cartId,
+    );
+    const aggregate = await loadCheckoutAggregate(tx, ordered);
+    return { aggregate, evaluationId: evaluation.evaluationId, reviewSurfaceToken };
   });
 
-  if (!committed.activeSnapshot) {
+  if (!committed.aggregate.activeSnapshot) {
     throw new CheckoutError(
       "CHECKOUT_DEPENDENCY_INDETERMINATE",
       "READY snapshot was not activated.",
@@ -460,8 +577,10 @@ export async function evaluateCheckout(
   }
 
   return Object.freeze({
-    checkout: committed,
-    snapshot: committed.activeSnapshot,
+    checkout: committed.aggregate,
+    snapshot: committed.aggregate.activeSnapshot,
+    evaluationId: committed.evaluationId,
+    reviewSurfaceToken: committed.reviewSurfaceToken,
   });
 }
 

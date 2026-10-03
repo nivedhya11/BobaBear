@@ -55,6 +55,20 @@ function requireNonEmptyString(value: unknown, field: string): string {
   return value.trim();
 }
 
+function parseOptionalUuid(value: unknown, field: string): string | null {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== "string") {
+    throw new PaymentError(
+      "PAYMENT_INVALID_INPUT",
+      `${field} must be a UUID.`,
+      { field },
+    );
+  }
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return null;
+  return requireUuid(trimmed, field);
+}
+
 function requireUuid(value: unknown, field: string): string {
   const s = requireNonEmptyString(value, field);
   if (
@@ -123,6 +137,7 @@ export function parseStartPaymentInput(input: unknown): StartPaymentInput {
       "expectedCheckoutRevision",
       "paymentMethodIntent",
       "idempotencyKey",
+      "sourceCommandId",
     ],
     "startPayment",
   );
@@ -133,6 +148,7 @@ export function parseStartPaymentInput(input: unknown): StartPaymentInput {
     ),
     paymentMethodIntent: requireMethodIntent(input.paymentMethodIntent),
     idempotencyKey: requireNonEmptyString(input.idempotencyKey, "idempotencyKey"),
+    sourceCommandId: parseOptionalUuid(input.sourceCommandId, "sourceCommandId"),
   });
 }
 
@@ -150,6 +166,7 @@ export function parseRetryPaymentInput(input: unknown): RetryPaymentInput {
       "expectedCheckoutRevision",
       "paymentMethodIntent",
       "idempotencyKey",
+      "sourceCommandId",
     ],
     "retryPayment",
   );
@@ -160,6 +177,7 @@ export function parseRetryPaymentInput(input: unknown): RetryPaymentInput {
     ),
     paymentMethodIntent: requireMethodIntent(input.paymentMethodIntent),
     idempotencyKey: requireNonEmptyString(input.idempotencyKey, "idempotencyKey"),
+    sourceCommandId: parseOptionalUuid(input.sourceCommandId, "sourceCommandId"),
   });
 }
 

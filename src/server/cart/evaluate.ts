@@ -22,6 +22,9 @@ import type { Persistence } from "../persistence/types";
 import type { CartAccess } from "./operations";
 import { getActiveCart } from "./operations";
 import { systemCartClock, type CartClock } from "./clock";
+import { lockCartForUpdate } from "./repository";
+import { persistCommercialEvaluation } from "../customer-commerce/measurement/writers";
+import { loadFirstOrderPurchaseStatus } from "../payment/first-order";
 import {
   catalogModifierGroupOptionsTable,
 } from "../../platform/database/schema/catalog";
@@ -261,12 +264,19 @@ export async function evaluateCart(
   }
 
   try {
+    const firstOrderPurchaseStatus = await persistence.withContext((ctx) =>
+      loadFirstOrderPurchaseStatus(
+        ctx,
+        access.kind === "customer" ? access.actor.authUserId : null,
+      ),
+    );
     const quote = await persistence.withContext((ctx) =>
       buildDirectPricingQuote(ctx, {
         outletId: selectedOutletId,
         at: evaluatedAt,
         customerId:
           access.kind === "customer" ? access.actor.authUserId : null,
+        firstOrderPurchaseStatus,
         submittedCouponCode: cart.manualCouponCode,
         lines: cart.lines.map((line) => ({
           lineId: line.id,
@@ -290,6 +300,24 @@ export async function evaluateCart(
       }),
     );
 
+    let evaluationId: string | undefined;
+    try {
+      evaluationId = await persistence.transaction(async (tx) => {
+        await lockCartForUpdate(tx, cart.id);
+        const persisted = await persistCommercialEvaluation({
+          context: tx,
+          cartId: cart.id,
+          checkoutId: null,
+          checkoutJourneyKey: null,
+          surfaceScope: "CART",
+          quote,
+        });
+        return persisted.evaluationId;
+      });
+    } catch {
+      evaluationId = undefined;
+    }
+
     return Object.freeze({
       cartId: cart.id,
       cartRevision: cart.revision,
@@ -297,6 +325,7 @@ export async function evaluateCart(
       status: "COMPLETE",
       selectedOutletId,
       quote,
+      ...(evaluationId ? { evaluationId } : {}),
     });
   } catch {
     return Object.freeze({

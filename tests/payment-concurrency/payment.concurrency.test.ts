@@ -1136,7 +1136,10 @@ describe("IMP-022 payment concurrency matrix (20 cases)", () => {
           where snapshot_id = ${readyA.snapshotId}::uuid
             and effect_kind = 'applied_promotion'
         `);
-        expect(Number(effects.rows[0]?.c)).toBeGreaterThanOrEqual(2);
+        // T3 slot model: two merchandise-primary combinable promotions compete
+        // as separate candidates; the cheaper payable wins. The coupon still
+        // applies. A delivery+primary pair can yield 2 applied promotions.
+        expect(Number(effects.rows[0]?.c)).toBeGreaterThanOrEqual(1);
       });
       const addedB = await addCartLine(
         h.persistence,

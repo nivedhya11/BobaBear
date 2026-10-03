@@ -53,6 +53,7 @@ export function buildSnapshotCandidate(input: {
     return Object.freeze({
       id: lineId,
       sourceCartLineId: line.sourceCartLineId,
+      lineOrigin: line.lineOrigin ?? "cart",
       productId: line.productId,
       variantId: line.variantId,
       productName: line.productName,
@@ -85,12 +86,32 @@ export function buildSnapshotCandidate(input: {
     }),
   );
 
-  const promotionEffects = input.commercial.promotionEffects.map((e) =>
-    Object.freeze({
+  const complimentaryLine = lines.find(
+    (line) => line.lineOrigin === "complimentary_offer",
+  );
+  const complimentaryPromotionIds = new Set(
+    input.commercial.quote.appliedPromotions
+      .filter((applied) => applied.isComplimentary === true)
+      .map((applied) => applied.promotionId),
+  );
+  const complimentaryComponentIds = new Set(
+    [...complimentaryPromotionIds].map((id) => `base:complimentary:${id}`),
+  );
+  const promotionEffects = input.commercial.promotionEffects.map((e) => {
+    const giftOwned =
+      Boolean(complimentaryLine) &&
+      ((e.effectKind === "applied_promotion" &&
+        complimentaryPromotionIds.has(e.promotionId)) ||
+        (e.effectKind === "monetary_allocation" &&
+          e.componentId !== null &&
+          complimentaryComponentIds.has(e.componentId)));
+    return Object.freeze({
       id: randomUUID(),
       ...e,
-    }),
-  );
+      snapshotLineId: giftOwned ? complimentaryLine!.id : (e.snapshotLineId ?? null),
+      promotionRevision: e.promotionRevision ?? null,
+    });
+  });
 
   const taxComponents = input.commercial.taxComponents.map((t) =>
     Object.freeze({

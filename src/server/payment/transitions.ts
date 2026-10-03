@@ -1,7 +1,7 @@
 /**
  * Payment / Attempt / Checkout / claim transitions (IMP-022).
  *
- * Lock order: Checkout → Payment → Attempt → claims.
+ * Lock order: CUSTOMER_AUTH_USER → Checkout → Payment → Attempt → claims / guard.
  * Never hold locks across provider I/O.
  */
 
@@ -17,6 +17,7 @@ import {
   lockCheckoutForUpdate,
   type CheckoutRow,
 } from "../checkout/repository";
+import { lockCustomerAuthUserForUpdate } from "../cart/repository";
 import { enqueuePaymentConfirmedNotification } from "../notifications/enqueue";
 import type { PersistenceTransactionContext } from "../persistence/types";
 import { assertTransactionContext } from "./assert-role";
@@ -25,6 +26,11 @@ import {
   lockClaimsForAttempt,
   releaseClaimsForAttempt,
 } from "./redemption";
+import {
+  consumeFirstOrderGuardForAttempt,
+  lockFirstOrderGuardForAttempt,
+  releaseFirstOrderGuardForAttempt,
+} from "./first-order";
 import {
   findAttemptByExecutionIdentity,
   findCheckoutAndSnapshotForPayment,
@@ -84,7 +90,7 @@ async function lockCheckoutPaymentAttempt(
   assertTransactionContext(context, "lockCheckoutPaymentAttempt");
 
   // Resolve linkage without locking — then lock in canonical order:
-  // Checkout → Payment → Attempt → claims.
+  // CUSTOMER → Checkout → Payment → Attempt → claims / first-order guard.
   const paymentProbe = await findPaymentById(context, paymentId);
   if (!paymentProbe) {
     throw new PaymentError("PAYMENT_NOT_FOUND", "Payment not found.");
@@ -94,6 +100,7 @@ async function lockCheckoutPaymentAttempt(
     throw new PaymentError("PAYMENT_NOT_FOUND", "Payment not found.");
   }
 
+  await lockCustomerAuthUserForUpdate(context, linked.checkout.customerAuthUserId);
   const checkout = await lockCheckoutForUpdate(context, linked.checkout.id);
   if (!checkout) {
     throw new PaymentError("PAYMENT_NOT_FOUND", "Payment not found.");
@@ -107,6 +114,7 @@ async function lockCheckoutPaymentAttempt(
     throw new PaymentError("PAYMENT_NOT_FOUND", "Payment attempt not found.");
   }
   await lockClaimsForAttempt(context, attemptId);
+  await lockFirstOrderGuardForAttempt(context, attemptId);
 
   return {
     checkout,
@@ -216,6 +224,7 @@ async function applySuccess(
   });
 
   await consumeClaimsForAttempt(context, attempt.id, now);
+  await consumeFirstOrderGuardForAttempt(context, attempt.id, now);
 
   // IMP-033: notification intent commits with Payment SUCCEEDED authority.
   // Only on the real transition — the duplicate/contradictory paths above
@@ -295,6 +304,7 @@ async function applyDefinitiveNonSuccess(
   });
 
   await releaseClaimsForAttempt(context, attempt.id, now);
+  await releaseFirstOrderGuardForAttempt(context, attempt.id, now);
 
   // Expiry source = Checkout.expires_at (not a Payment-local clock).
   const validityElapsed = checkoutValidityElapsed(checkout, now);

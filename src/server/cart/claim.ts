@@ -7,6 +7,7 @@
  * 3. lines as needed
  */
 
+import { randomUUID } from "node:crypto";
 import {
   CartError,
   assertUuid,
@@ -18,6 +19,7 @@ import {
   type CartReconciliationResolution,
 } from "../../shared/cart";
 import type { Persistence } from "../persistence/types";
+import { insertCommandOrigin } from "../customer-commerce/measurement/writers";
 import { requireCustomerActor, type CustomerActor } from "./actor";
 import { cartLineToCanonicalConfiguration } from "./canonicalize-config";
 import { systemCartClock, type CartClock } from "./clock";
@@ -50,6 +52,7 @@ export type ReconcileGuestCartInput = Readonly<{
   expectedGuestRevision: bigint;
   expectedCustomerRevision: bigint;
   resolution?: CartReconciliationResolution;
+  sourceCommandId?: string;
 }>;
 
 function isGuestExpired(row: CartRow, now: Date): boolean {
@@ -103,6 +106,7 @@ function parseReconcileInput(raw: unknown): ReconcileGuestCartInput {
         "expectedGuestRevision",
         "expectedCustomerRevision",
         "resolution",
+        "sourceCommandId",
       ].includes(key)
     ) {
       throw new CartError(
@@ -124,6 +128,10 @@ function parseReconcileInput(raw: unknown): ReconcileGuestCartInput {
       obj.expectedCustomerRevision,
     ),
     resolution: parseReconciliationResolution(obj.resolution),
+    sourceCommandId:
+      typeof obj.sourceCommandId === "string" && obj.sourceCommandId.length > 0
+        ? assertUuid(obj.sourceCommandId, "sourceCommandId")
+        : undefined,
   });
 }
 
@@ -201,6 +209,16 @@ export async function claimGuestCart(
     });
 
     const refreshed = (await lockCartsByIdsAscending(tx, [locked.id]))[0]!;
+    if (refreshed.manualCouponCode) {
+      await insertCommandOrigin({
+        context: tx,
+        sourceCommandId: randomUUID(),
+        originKind: "COUPON_APPLY",
+        cartId: refreshed.id,
+        checkoutId: null,
+        checkoutJourneyKey: null,
+      });
+    }
     return loadCartAggregate(tx, refreshed);
   });
 }
@@ -282,6 +300,7 @@ export async function reconcileGuestCartWithCustomer(
 
     let survivingCoupon = lockedCustomer.manualCouponCode;
     const guestCoupon = lockedGuest.manualCouponCode;
+    let couponOriginKind: "COUPON_APPLY" | "COUPON_REPLACE" | null = null;
     if (
       guestCoupon !== null &&
       survivingCoupon !== null &&
@@ -294,10 +313,13 @@ export async function reconcileGuestCartWithCustomer(
           { resolutionOptions: ["KEEP_GUEST", "KEEP_CUSTOMER"] },
         );
       }
-      survivingCoupon =
-        parsed.resolution === "KEEP_GUEST" ? guestCoupon : survivingCoupon;
+      if (parsed.resolution === "KEEP_GUEST") {
+        survivingCoupon = guestCoupon;
+        couponOriginKind = "COUPON_REPLACE";
+      }
     } else if (survivingCoupon === null && guestCoupon !== null) {
       survivingCoupon = guestCoupon;
+      couponOriginKind = "COUPON_APPLY";
     }
 
     await lockCartLinesAscending(tx, lockedCustomer.id);
@@ -347,6 +369,17 @@ export async function reconcileGuestCartWithCustomer(
       updatedAt: now,
       manualCouponCode: survivingCoupon,
     });
+
+    if (couponOriginKind) {
+      await insertCommandOrigin({
+        context: tx,
+        sourceCommandId: parsed.sourceCommandId ?? randomUUID(),
+        originKind: couponOriginKind,
+        cartId: lockedCustomer.id,
+        checkoutId: null,
+        checkoutJourneyKey: null,
+      });
+    }
 
     const refreshed = (
       await lockCartsByIdsAscending(tx, [lockedCustomer.id])

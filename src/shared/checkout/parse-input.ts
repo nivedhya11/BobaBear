@@ -93,14 +93,24 @@ function rejectForbiddenRecursively(value: unknown, field: string): void {
 
 export type ParsedStartCheckoutInput = Readonly<{
   cartId: string;
+  cartActivationId: string | null;
 }>;
 
 export function parseStartCheckoutInput(input: unknown): ParsedStartCheckoutInput {
   const obj = assertPlainObject(input, "input");
   rejectForbiddenRecursively(obj, "input");
   rejectUnknownAndForbiddenFields(obj, CHECKOUT_START_INPUT_FIELDS, "input");
+  let cartActivationId: string | null = null;
+  if (typeof obj.cartActivationId === "string") {
+    try {
+      cartActivationId = assertUuid(obj.cartActivationId, "cartActivationId");
+    } catch {
+      cartActivationId = null;
+    }
+  }
   return Object.freeze({
     cartId: assertUuid(obj.cartId, "cartId"),
+    cartActivationId,
   });
 }
 

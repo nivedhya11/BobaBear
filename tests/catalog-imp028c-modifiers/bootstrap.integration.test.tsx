@@ -713,6 +713,7 @@ describe("IMP-028C modifier bootstrap (Slice 4)", () => {
         lines: [
           {
             sourceCartLineId: "line-1",
+            lineOrigin: "cart" as const,
             productId: "product-1",
             variantId: "variant-1",
             productName: "Hong Kong Milk Tea Boba",

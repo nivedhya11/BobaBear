@@ -10,13 +10,20 @@ import {
 } from "../../shared/checkout";
 import type { Persistence } from "../persistence/types";
 import { requireCustomerActor } from "../cart/actor";
+import {
+  lockCartForUpdate,
+  lockCustomerAuthUserForUpdate,
+} from "../cart/repository";
 import { systemCheckoutClock } from "./clock";
 import type { CheckoutOperationOptions } from "./operations";
 import {
   bumpCheckoutRevisionAfterFulfilmentChange,
+  findCheckoutRowById,
   loadCheckoutAggregate,
   lockCheckoutForUpdate,
 } from "./repository";
+import { insertCommandOrigin } from "../customer-commerce/measurement/writers";
+import { randomUUID } from "node:crypto";
 
 function assertMutablePrePayment(
   status: string,
@@ -66,6 +73,12 @@ export async function setCheckoutFulfilment(
   const parsed = parseSetCheckoutFulfilmentInput(input);
 
   return persistence.transaction(async (tx) => {
+    const probe = await findCheckoutRowById(tx, parsed.checkoutId);
+    if (!probe || probe.customerAuthUserId !== customer.authUserId) {
+      throw new CheckoutError("CHECKOUT_NOT_FOUND", "Checkout not found.");
+    }
+    await lockCustomerAuthUserForUpdate(tx, customer.authUserId);
+    await lockCartForUpdate(tx, probe.cartId);
     const row = await lockCheckoutForUpdate(tx, parsed.checkoutId);
     if (!row || row.customerAuthUserId !== customer.authUserId) {
       throw new CheckoutError("CHECKOUT_NOT_FOUND", "Checkout not found.");
@@ -110,6 +123,14 @@ export async function setCheckoutFulfilment(
         pickupOutletId: nextOutletId,
       },
     );
+    await insertCommandOrigin({
+      context: tx,
+      sourceCommandId: randomUUID(),
+      originKind: "FULFILMENT_CHANGE",
+      cartId: updated.cartId,
+      checkoutId: updated.id,
+      checkoutJourneyKey: updated.checkoutJourneyKey,
+    });
     return loadCheckoutAggregate(tx, updated);
   });
 }
@@ -168,6 +189,12 @@ export async function setCheckoutFulfilmentTiming(
   }
 
   return persistence.transaction(async (tx) => {
+    const probe = await findCheckoutRowById(tx, input.checkoutId);
+    if (!probe || probe.customerAuthUserId !== customer.authUserId) {
+      throw new CheckoutError("CHECKOUT_NOT_FOUND", "Checkout not found.");
+    }
+    await lockCustomerAuthUserForUpdate(tx, customer.authUserId);
+    await lockCartForUpdate(tx, probe.cartId);
     const row = await lockCheckoutForUpdate(tx, input.checkoutId);
     if (!row || row.customerAuthUserId !== customer.authUserId) {
       throw new CheckoutError("CHECKOUT_NOT_FOUND", "Checkout not found.");
@@ -206,6 +233,14 @@ export async function setCheckoutFulfilmentTiming(
         scheduledWindowEndAt: end,
       },
     );
+    await insertCommandOrigin({
+      context: tx,
+      sourceCommandId: randomUUID(),
+      originKind: "FULFILMENT_CHANGE",
+      cartId: updated.cartId,
+      checkoutId: updated.id,
+      checkoutJourneyKey: updated.checkoutJourneyKey,
+    });
     return loadCheckoutAggregate(tx, updated);
   });
 }

@@ -2,7 +2,8 @@
  * Pricing / promotions / GST adapter for Checkout (IMP-021).
  */
 
-import { and, eq } from "drizzle-orm";
+import { promotionsTable } from "../../../platform/database/schema/promotions";
+import { and, eq, inArray } from "drizzle-orm";
 
 import {
   chargeDefinitionsTable,
@@ -25,6 +26,7 @@ import type {
 } from "../../../shared/checkout";
 import { CheckoutError } from "../../../shared/checkout";
 import type { PersistenceQueryContext } from "../../persistence/types";
+import { loadFirstOrderPurchaseStatus } from "../../payment/first-order";
 import { buildDirectPricingQuote } from "../../pricing/quote";
 import { resolveCustomerDeliveryCharge } from "../../pricing/resolve-delivery-charge";
 import {
@@ -37,11 +39,20 @@ import {
   loadSubmittedCoupon,
   resolveOutletHierarchy,
 } from "../../promotions/load-for-evaluation";
+import {
+  catalogProductsTable,
+  catalogVariantsTable,
+} from "../../../platform/database/schema/catalog";
+import {
+  loadEffectiveProductContent,
+  loadEffectiveVariantContent,
+} from "../../catalog/revisions";
 import { assertApplicationRole } from "../assert-role";
 import type { CatalogLineLabels } from "./catalog";
 
 export type CheckoutCommercialLine = Readonly<{
-  sourceCartLineId: string;
+  sourceCartLineId: string | null;
+  lineOrigin: "cart" | "complimentary_offer";
   productId: string;
   variantId: string;
   productName: string;
@@ -100,6 +111,8 @@ export type CheckoutPromotionEffectDraft = Readonly<{
   rewardQuantity: number | null;
   rewardBasePaise: bigint | null;
   sortOrder: number;
+  promotionRevision: bigint | null;
+  snapshotLineId?: string | null;
 }>;
 
 export type CheckoutChargeDraft = Readonly<{
@@ -245,6 +258,7 @@ export async function buildCheckoutCommercialResult(
     destination?: CheckoutDestination;
     /** IMP-036H — defaults DELIVERY. PICKUP structurally omits delivery charge. */
     fulfilmentMode?: FulfilmentMode;
+    fulfilmentTiming?: "ASAP" | "SCHEDULED";
   },
 ): Promise<CheckoutCommercialResult> {
   assertApplicationRole(context, "buildCheckoutCommercialResult");
@@ -270,11 +284,18 @@ export async function buildCheckoutCommercialResult(
     const packagingDefs = chargeDefs.filter((c) => c.code === "packaging");
     const deliveryDef = chargeDefs.find((c) => c.code === "delivery");
 
+    const firstOrderPurchaseStatus = await loadFirstOrderPurchaseStatus(
+      context,
+      input.customerAuthUserId,
+    );
     const preliminaryQuote = await buildDirectPricingQuote(context, {
       outletId: input.outletId,
       at: input.at,
       customerId: input.customerAuthUserId,
       submittedCouponCode: input.cart.manualCouponCode,
+      fulfilmentMode,
+      fulfilmentTiming: input.fulfilmentTiming ?? null,
+      firstOrderPurchaseStatus,
       charges: packagingDefs.map((c) => ({
         chargeDefinitionId: c.chargeDefinitionId,
         calculationMode: c.calculationMode,
@@ -337,6 +358,9 @@ export async function buildCheckoutCommercialResult(
       at: input.at,
       customerId: input.customerAuthUserId,
       submittedCouponCode: input.cart.manualCouponCode,
+      fulfilmentMode,
+      fulfilmentTiming: input.fulfilmentTiming ?? null,
+      firstOrderPurchaseStatus,
       charges: finalCharges.map((c) => ({
         chargeDefinitionId: c.chargeDefinitionId,
         calculationMode: c.calculationMode,
@@ -393,7 +417,8 @@ export async function buildCheckoutCommercialResult(
   if (
     input.cart.manualCouponCode &&
     quote.submittedCouponResult &&
-    quote.submittedCouponResult.status !== "APPLIED"
+    quote.submittedCouponResult.status !== "APPLIED" &&
+    quote.submittedCouponResult.status !== "VALID_BUT_NOT_SELECTED"
   ) {
     throw new CheckoutError(
       "CHECKOUT_COUPON_INELIGIBLE",
@@ -501,6 +526,7 @@ export async function buildCheckoutCommercialResult(
     lines.push(
       Object.freeze({
         sourceCartLineId: line.id,
+        lineOrigin: "cart",
         productId: labels.productId,
         variantId: line.variantId,
         productName: labels.productName,
@@ -536,6 +562,57 @@ export async function buildCheckoutCommercialResult(
         lineTotalPaise: adjustedTotal < BigInt(0) ? BigInt(0) : adjustedTotal,
       });
     }
+  }
+
+  const gift = quote.commercialExplanation?.complimentary;
+  if (gift && gift.competingOffers === "NONE") {
+    const variantRows = await context.db
+      .select()
+      .from(catalogVariantsTable)
+      .where(eq(catalogVariantsTable.id, gift.variantId))
+      .limit(1);
+    const productRows = await context.db
+      .select()
+      .from(catalogProductsTable)
+      .where(eq(catalogProductsTable.id, gift.productId))
+      .limit(1);
+    const variant = variantRows[0];
+    const product = productRows[0];
+    const productContent = product
+      ? await loadEffectiveProductContent(context, product)
+      : null;
+    const variantContent = variant
+      ? await loadEffectiveVariantContent(context, variant)
+      : null;
+    const giftLineKey = `complimentary:${gift.promotionId}`;
+    const resolvedBase =
+      quote.promotionAllocations.find(
+        (alloc) =>
+          alloc.promotionId === gift.promotionId &&
+          alloc.componentId === `base:${giftLineKey}`,
+      )?.amountPaise ?? BigInt(0);
+    lines.push(
+      Object.freeze({
+        sourceCartLineId: null,
+        lineOrigin: "complimentary_offer" as const,
+        productId: gift.productId,
+        variantId: gift.variantId,
+        productName: productContent?.name ?? "Complimentary item",
+        variantName: variantContent?.name ?? "Complimentary item",
+        quantity: 1,
+        sequence: sequence++,
+        lineBasePaise: resolvedBase,
+        lineModifierAdjustmentsPaise: BigInt(0),
+        lineBundleAdjustmentsPaise: BigInt(0),
+        lineSubtotalPaise: resolvedBase,
+        linePromotionDiscountPaise: resolvedBase,
+        lineTaxablePaise: BigInt(0),
+        lineTaxPaise: BigInt(0),
+        lineTotalPaise: BigInt(0),
+        modifiers: Object.freeze([]),
+        bundleSelections: Object.freeze([]),
+      }),
+    );
   }
 
   const charges: CheckoutChargeDraft[] = appliedChargeDefs.map((c, i) => {
@@ -676,6 +753,22 @@ async function buildPromotionEffects(
 ): Promise<readonly CheckoutPromotionEffectDraft[]> {
   const effects: CheckoutPromotionEffectDraft[] = [];
   let sortOrder = 0;
+  const promotionIds = [
+    ...new Set(quote.appliedPromotions.map((p) => p.promotionId)),
+  ];
+  const revisionRows =
+    promotionIds.length === 0
+      ? []
+      : await context.db
+          .select({
+            id: promotionsTable.id,
+            revision: promotionsTable.revision,
+          })
+          .from(promotionsTable)
+          .where(inArray(promotionsTable.id, promotionIds));
+  const revisionById = new Map(
+    revisionRows.map((row) => [row.id, row.revision]),
+  );
 
   const appliedById = new Map<string, AppliedPromotion>();
   for (const applied of quote.appliedPromotions) {
@@ -698,6 +791,7 @@ async function buildPromotionEffects(
         rewardQuantity: null,
         rewardBasePaise: null,
         sortOrder: sortOrder++,
+        promotionRevision: revisionById.get(applied.promotionId) ?? null,
       }),
     );
   }
@@ -722,6 +816,7 @@ async function buildPromotionEffects(
         rewardQuantity: null,
         rewardBasePaise: null,
         sortOrder: sortOrder++,
+        promotionRevision: revisionById.get(alloc.promotionId) ?? null,
       }),
     );
   }
@@ -780,6 +875,7 @@ async function buildPromotionEffects(
             rewardQuantity: 1,
             rewardBasePaise: alloc.amountPaise,
             sortOrder: sortOrder++,
+            promotionRevision: revisionById.get(applied.promotionId) ?? null,
           }),
         );
       }

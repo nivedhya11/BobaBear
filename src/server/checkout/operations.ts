@@ -18,6 +18,7 @@ import {
   type CustomerActor,
 } from "../cart/actor";
 import { lockAndVerifyCustomerCart } from "./adapters/cart";
+import { assignCheckoutJourney } from "./journey";
 import { systemCheckoutClock, type CheckoutClock } from "./clock";
 import { isUniqueViolation } from "./assert-role";
 import {
@@ -136,16 +137,48 @@ export async function startCheckout(
             existing.status === "READY_FOR_PAYMENT") &&
           existing.sourceCartRevision !== cart.revision
         ) {
-          // Existing cancel semantics: supersede stale DRAFT/READY so a new
-          // draft can bind the current cart revision. Do not invent new states.
-          await markCheckoutCancelled(tx, existing, now);
-          existing = null;
+          const predecessor = await assignCheckoutJourney({
+            context: tx,
+            cartId: cart.id,
+            customerAuthUserId: customer.authUserId,
+            checkout: existing,
+            cartActivationId: null,
+            reuseExisting: true,
+          });
+          await markCheckoutCancelled(tx, predecessor, now);
+          const inserted = await insertDraftCheckout(tx, {
+            id: newCheckoutId(),
+            customerAuthUserId: customer.authUserId,
+            brandId: cart.brandId,
+            cartId: cart.id,
+            sourceCartRevision: cart.revision,
+            expiresAt: new Date(now.getTime() + ttlMs),
+            now,
+          });
+          const ordered = await assignCheckoutJourney({
+            context: tx,
+            cartId: cart.id,
+            customerAuthUserId: customer.authUserId,
+            checkout: inserted,
+            cartActivationId: parsed.cartActivationId,
+            reuseExisting: false,
+            continuablePredecessor: predecessor,
+          });
+          return loadCheckoutAggregate(tx, ordered);
         } else if (
           existing.status === "DRAFT" ||
           existing.status === "READY_FOR_PAYMENT" ||
           existing.status === "PAYMENT_PENDING"
         ) {
-          return loadCheckoutAggregate(tx, existing);
+          const ordered = await assignCheckoutJourney({
+            context: tx,
+            cartId: cart.id,
+            customerAuthUserId: customer.authUserId,
+            checkout: existing,
+            cartActivationId: parsed.cartActivationId,
+            reuseExisting: true,
+          });
+          return loadCheckoutAggregate(tx, ordered);
         }
       }
 
@@ -158,7 +191,15 @@ export async function startCheckout(
         expiresAt: new Date(now.getTime() + ttlMs),
         now,
       });
-      return loadCheckoutAggregate(tx, inserted);
+      const ordered = await assignCheckoutJourney({
+        context: tx,
+        cartId: cart.id,
+        customerAuthUserId: customer.authUserId,
+        checkout: inserted,
+        cartActivationId: parsed.cartActivationId,
+        reuseExisting: false,
+      });
+      return loadCheckoutAggregate(tx, ordered);
     });
   } catch (error) {
     if (isUniqueViolation(error)) {

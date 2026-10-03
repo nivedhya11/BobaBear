@@ -308,6 +308,29 @@ export function classifyCouponPresentation(
   return "COUPON_VALID_NOT_SELECTED";
 }
 
+/**
+ * Server-derived commercial_command_results.payable_changed_vs_valid_alternative.
+ * Compares the best valid coupon combination payable with the best valid
+ * non-coupon alternative from the same T3 candidate set. Never a client field.
+ */
+export function payableChangedVsValidAlternative(input: {
+  submittedCouponResult: SubmittedCouponResult | null;
+  bestCouponGrandTotalPaise: bigint | null;
+  bestNonCouponGrandTotalPaise: bigint | null;
+}): boolean | null {
+  const status = input.submittedCouponResult?.status;
+  if (status !== "APPLIED" && status !== "VALID_BUT_NOT_SELECTED") {
+    return null;
+  }
+  if (
+    input.bestCouponGrandTotalPaise === null ||
+    input.bestNonCouponGrandTotalPaise === null
+  ) {
+    return null;
+  }
+  return input.bestCouponGrandTotalPaise !== input.bestNonCouponGrandTotalPaise;
+}
+
 export function projectComplimentary(
   winner: PromotionCandidateResult,
   competingNoneChosen: boolean,

@@ -30,7 +30,10 @@ import {
   type ZeroPayableResult,
 } from "../../shared/payment";
 import { requireCustomerActor } from "../cart/actor";
-import { lockCartForUpdate } from "../cart/repository";
+import {
+  lockCartForUpdate,
+  lockCustomerAuthUserForUpdate,
+} from "../cart/repository";
 import {
   findCheckoutRowById,
   invalidateReadyToDraft,
@@ -83,6 +86,13 @@ import {
 } from "./verified-event";
 import { tryMaterializeOrderAfterPaymentCompletion } from "./order-materialize-hook";
 import { afterPaymentSucceeded } from "./after-payment-succeeded";
+import {
+  insertConsumedZeroPayableFirstOrderGuard,
+  insertReservedFirstOrderGuard,
+  snapshotHasFirstOrderOffer,
+} from "./first-order";
+import type { PersistenceTransactionContext } from "../persistence/types";
+import { ensureReviewPresentedThenPaymentFacts } from "../customer-commerce/measurement/writers";
 
 export type PaymentOperationOptions = Readonly<{
   clock?: PaymentClock;
@@ -106,6 +116,34 @@ export type PaymentOperationOptions = Readonly<{
    */
   afterScheduledAuthorityLocked?: () => Promise<void>;
 }>;
+
+async function reserveFirstOrderGuardIfNeeded(input: {
+  context: PersistenceTransactionContext;
+  customerAuthUserId: string;
+  checkoutId: string;
+  checkoutSnapshotId: string;
+  paymentId: string;
+  paymentAttemptId: string;
+  now: Date;
+}): Promise<void> {
+  if (!(await snapshotHasFirstOrderOffer(input.context, input.checkoutSnapshotId))) {
+    return;
+  }
+  await insertReservedFirstOrderGuard(input);
+}
+
+async function consumeZeroPayableFirstOrderGuardIfNeeded(input: {
+  context: PersistenceTransactionContext;
+  customerAuthUserId: string;
+  checkoutId: string;
+  checkoutSnapshotId: string;
+  now: Date;
+}): Promise<void> {
+  if (!(await snapshotHasFirstOrderOffer(input.context, input.checkoutSnapshotId))) {
+    return;
+  }
+  await insertConsumedZeroPayableFirstOrderGuard(input);
+}
 
 function requirePolicy(options: PaymentOperationOptions): void {
   requirePaymentPolicy(options.policy);
@@ -458,6 +496,7 @@ export async function startPayment(
     }
 
     const startPeek = await findCheckoutRowById(tx, parsed.checkoutId);
+    await lockCustomerAuthUserForUpdate(tx, customer.authUserId);
     if (startPeek) await lockCartForUpdate(tx, startPeek.cartId);
     const checkout = await lockCheckoutForUpdate(tx, parsed.checkoutId);
     if (!checkout || checkout.customerAuthUserId !== customer.authUserId) {
@@ -532,6 +571,15 @@ export async function startPayment(
       customerAuthUserId: customer.authUserId,
       now,
     });
+    await reserveFirstOrderGuardIfNeeded({
+      context: tx,
+      customerAuthUserId: customer.authUserId,
+      checkoutId: checkout.id,
+      checkoutSnapshotId: prepared.snapshot.id,
+      paymentId,
+      paymentAttemptId: attemptId,
+      now,
+    });
 
     await updatePaymentRow(tx, paymentId, {
       status: "PROCESSING",
@@ -542,6 +590,14 @@ export async function startPayment(
       status: "PAYMENT_PENDING",
       activeSnapshotId: checkout.activeSnapshotId,
       now,
+    });
+
+    await ensureReviewPresentedThenPaymentFacts({
+      context: tx,
+      journeyKey: updatedCheckout.checkoutJourneyKey,
+      checkoutId: updatedCheckout.id,
+      paymentIdempotencyKey: parsed.idempotencyKey,
+      continueSourceCommandId: parsed.sourceCommandId,
     });
 
     await bindInitiationIdempotency(tx, {
@@ -717,6 +773,7 @@ export async function completeZeroPayableCheckout(
     }
 
     const zeroPeek = await findCheckoutRowById(tx, parsed.checkoutId);
+    await lockCustomerAuthUserForUpdate(tx, customer.authUserId);
     if (zeroPeek) await lockCartForUpdate(tx, zeroPeek.cartId);
     const checkout = await lockCheckoutForUpdate(tx, parsed.checkoutId);
     if (!checkout || checkout.customerAuthUserId !== customer.authUserId) {
@@ -753,6 +810,13 @@ export async function completeZeroPayableCheckout(
     await acquireConsumedClaimsForZeroPayable(tx, {
       snapshotId: prepared.snapshot.id,
       customerAuthUserId: customer.authUserId,
+      now,
+    });
+    await consumeZeroPayableFirstOrderGuardIfNeeded({
+      context: tx,
+      customerAuthUserId: customer.authUserId,
+      checkoutId: checkout.id,
+      checkoutSnapshotId: prepared.snapshot.id,
       now,
     });
 
@@ -933,6 +997,7 @@ export async function retryPayment(
       throw new PaymentError("PAYMENT_NOT_FOUND", "Payment not found.");
     }
 
+    await lockCustomerAuthUserForUpdate(tx, customer.authUserId);
     await lockCartForUpdate(tx, linked.checkout.cartId);
     const checkout = await lockCheckoutForUpdate(tx, linked.checkout.id);
     if (!checkout) {
@@ -1005,6 +1070,15 @@ export async function retryPayment(
       customerAuthUserId: customer.authUserId,
       now,
     });
+    await reserveFirstOrderGuardIfNeeded({
+      context: tx,
+      customerAuthUserId: customer.authUserId,
+      checkoutId: checkout.id,
+      checkoutSnapshotId: payment.checkoutSnapshotId,
+      paymentId: payment.id,
+      paymentAttemptId: attemptId,
+      now,
+    });
 
     const updatedPayment = await updatePaymentRow(tx, payment.id, {
       status: "PROCESSING",
@@ -1015,6 +1089,14 @@ export async function retryPayment(
       status: "PAYMENT_PENDING",
       activeSnapshotId: checkout.activeSnapshotId,
       now,
+    });
+
+    await ensureReviewPresentedThenPaymentFacts({
+      context: tx,
+      journeyKey: updatedCheckout.checkoutJourneyKey,
+      checkoutId: updatedCheckout.id,
+      paymentIdempotencyKey: parsed.idempotencyKey,
+      continueSourceCommandId: parsed.sourceCommandId,
     });
 
     await bindInitiationIdempotency(tx, {
@@ -1097,6 +1179,7 @@ export async function cancelPayment(
         { field: "expectedCheckoutRevision" },
       );
     }
+    await lockCustomerAuthUserForUpdate(tx, customer.authUserId);
     return cancelPaymentAggregate(tx, parsed.paymentId, now);
   });
 

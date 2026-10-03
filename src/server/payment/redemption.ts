@@ -168,6 +168,60 @@ async function enforceCouponCapacity(
   }
 }
 
+async function enforcePromotionCapacity(
+  context: PersistenceTransactionContext,
+  target: AppliedPromotionTarget,
+  customerAuthUserId: string,
+  redemptionUnits: bigint,
+): Promise<void> {
+  const promotionRows = await context.db
+    .select({
+      maximumRedemptions: promotionsTable.maximumRedemptions,
+      maximumRedemptionsPerCustomer:
+        promotionsTable.maximumRedemptionsPerCustomer,
+    })
+    .from(promotionsTable)
+    .where(eq(promotionsTable.id, target.promotionId))
+    .limit(1);
+  const promotion = promotionRows[0];
+  if (!promotion) {
+    throw new PaymentError(
+      "PAYMENT_PROMOTION_CAPACITY_UNAVAILABLE",
+      "Promotion capacity could not be verified.",
+    );
+  }
+
+  if (promotion.maximumRedemptions !== null) {
+    const globalUsage = await countActiveUnitsForPromotion(
+      context,
+      target.promotionId,
+    );
+    if (globalUsage + redemptionUnits > BigInt(promotion.maximumRedemptions)) {
+      throw new PaymentError(
+        "PAYMENT_PROMOTION_CAPACITY_UNAVAILABLE",
+        "Promotion redemption capacity is unavailable.",
+      );
+    }
+  }
+
+  if (promotion.maximumRedemptionsPerCustomer !== null) {
+    const customerUsage = await countActiveUnitsForCustomer(
+      context,
+      target.promotionId,
+      customerAuthUserId,
+    );
+    if (
+      customerUsage + redemptionUnits >
+      BigInt(promotion.maximumRedemptionsPerCustomer)
+    ) {
+      throw new PaymentError(
+        "PAYMENT_PROMOTION_CAPACITY_UNAVAILABLE",
+        "Promotion redemption capacity is unavailable for this customer.",
+      );
+    }
+  }
+}
+
 /**
  * Reserve promotion capacity for a positive Payment attempt.
  * Inserts RESERVED claims bound to payment + attempt.
@@ -191,6 +245,12 @@ export async function acquireReservedClaimsForAttempt(
   for (const target of targets) {
     const redemptionUnits = BigInt(1);
     await enforceCouponCapacity(
+      context,
+      target,
+      input.customerAuthUserId,
+      redemptionUnits,
+    );
+    await enforcePromotionCapacity(
       context,
       target,
       input.customerAuthUserId,
@@ -231,6 +291,12 @@ export async function acquireConsumedClaimsForZeroPayable(
   for (const target of targets) {
     const redemptionUnits = BigInt(1);
     await enforceCouponCapacity(
+      context,
+      target,
+      input.customerAuthUserId,
+      redemptionUnits,
+    );
+    await enforcePromotionCapacity(
       context,
       target,
       input.customerAuthUserId,
