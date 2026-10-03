@@ -1000,6 +1000,7 @@ export async function copyJourneyKeyOntoUnresolvedOrigins(input: {
       .where(eq(commercialCommandOriginsTable.cartId, input.cartId));
     for (const origin of closed) {
       if (origin.resolution !== null) continue;
+      if (origin.resolvedChangeFactId !== null) continue;
       if (
         origin.checkoutJourneyKey === input.closedJourneyKey ||
         origin.checkoutId === input.predecessorCheckoutId
