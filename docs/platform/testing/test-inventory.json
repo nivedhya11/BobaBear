@@ -31,10 +31,10 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2238,
-    "executableTestFiles": 485,
+    "trackedPathsConsidered": 2242,
+    "executableTestFiles": 486,
     "sourceTestFiles": 142,
-    "testsTreeExecutableFiles": 268,
+    "testsTreeExecutableFiles": 269,
     "scriptTestFiles": 75,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
@@ -318,6 +318,7 @@
     "tests/database/imp036i-scheduled-fulfilment.integration.test.ts",
     "tests/database/imp036j-tranche1-commercial-persistence.integration.test.ts",
     "tests/database/imp036j-tranche2-measurement-persistence.integration.test.ts",
+    "tests/database/imp036j-tranche4-commercial-commands.integration.test.ts",
     "tests/database/isolation.integration.test.ts",
     "tests/database/menu-import.integration.test.ts",
     "tests/database/migration-cli.integration.test.ts",
@@ -7598,6 +7599,24 @@
       "externalProviderSubstitute": "UNKNOWN",
       "packageCommands": [
         "test:imp036j:tranche2"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "4-integration",
+        "5-database-integration"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/database/imp036j-tranche4-commercial-commands.integration.test.ts",
+      "runner": "vitest",
+      "domain": "database/imp036j-tranche4-commercial-commands",
+      "testType": "integration",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:imp036j:tranche4"
       ],
       "ciInclusion": "YES",
       "test1Layers": [
