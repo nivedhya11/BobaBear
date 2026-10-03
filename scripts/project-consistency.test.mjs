@@ -18902,31 +18902,42 @@ describe("IMP-036J architecture fit remediation candidate 9", () => {
     assert.match(designReadinessRecord, /IMP036J_NEXT_GATE:\s*IMPLEMENTATION_TRANCHE_3/);
     assert.match(roadmap, /GTM-R183 \/ STATE-R181 remains the (?:IMP-036K )?Design Readiness PASS checkpoint/);
   });
-  it("requires exact current source main 8e4221f at GTM-R184 / STATE-R182 and rejects stale 51cc0b3 CURRENT labels", () => {
+  it("requires exact current source main 43f280d9 at GTM-R184 / STATE-R182 and rejects stale 8e4221f CURRENT labels", () => {
     const state = readFileSync("docs/platform/STATE.md", "utf8");
     const roadmap = readFileSync("docs/platform/ROADMAP.md", "utf8");
     assert.deepEqual(evaluateImp036jTranche3CurrentSourceAnchor(roadmap, state), { ok: true });
-    assert.match(state, /CURRENT_SOURCE_MAIN:\s*8e4221f27d3e9c930dca4544382a038a58f0f93a/);
-    assert.match(state, /CURRENT_SOURCE_EXACT_MAIN_CI:\s*37071608421/);
-    assert.match(state, /CURRENT_SOURCE_EXACT_MAIN_CODEQL:\s*37071608405/);
+    assert.match(state, /CURRENT_SOURCE_MAIN:\s*43f280d9e42c159910d6f916b7db255e748e1c1e/);
+    assert.match(state, /CURRENT_SOURCE_EXACT_MAIN_CI:\s*37116839745/);
+    assert.match(state, /CURRENT_SOURCE_EXACT_MAIN_CODEQL:\s*37116839762/);
+    assert.match(state, /CURRENT_SOURCE_SECURITY_CHECKPOINT_PR:\s*349/);
+    assert.match(state, /CURRENT_SOURCE_SECURITY_CLOSURE:\s*5968401737/);
+    assert.match(state, /HISTORICAL_PRE_SECURITY_SOURCE_MAIN:\s*8e4221f27d3e9c930dca4544382a038a58f0f93a/);
     assert.match(state, /PR346_PROVENANCE_REPAIR_MERGE_CHECKPOINT:\s*51cc0b3c3964e2d5e4d301b1b43c80d5132b7210/);
+    assert.doesNotMatch(state, /CURRENT_SOURCE_MAIN:\s*8e4221f27d3e9c930dca4544382a038a58f0f93a/);
     assert.doesNotMatch(state, /CURRENT_SOURCE_MAIN:\s*51cc0b3c3964e2d5e4d301b1b43c80d5132b7210/);
+    assert.doesNotMatch(state, /CURRENT_SOURCE_EXACT_MAIN_CI:\s*37071608421/);
     assert.doesNotMatch(state, /CURRENT_SOURCE_EXACT_MAIN_CI:\s*37070367757/);
+    assert.doesNotMatch(state, /CURRENT_SOURCE_EXACT_MAIN_CODEQL:\s*37071608405/);
     assert.doesNotMatch(state, /CURRENT_SOURCE_EXACT_MAIN_CODEQL:\s*37070367671/);
     const staleMain = state.replace(
+      "CURRENT_SOURCE_MAIN: 43f280d9e42c159910d6f916b7db255e748e1c1e",
       "CURRENT_SOURCE_MAIN: 8e4221f27d3e9c930dca4544382a038a58f0f93a",
-      "CURRENT_SOURCE_MAIN: 51cc0b3c3964e2d5e4d301b1b43c80d5132b7210",
     );
     assert.notEqual(staleMain, state);
     assert.equal(evaluateImp036jTranche3CurrentSourceAnchor(roadmap, staleMain).code, "IMP036J_T3_STALE_CURRENT_SOURCE");
+    const staleRepair = state.replace(
+      "CURRENT_SOURCE_MAIN: 43f280d9e42c159910d6f916b7db255e748e1c1e",
+      "CURRENT_SOURCE_MAIN: 51cc0b3c3964e2d5e4d301b1b43c80d5132b7210",
+    );
+    assert.equal(evaluateImp036jTranche3CurrentSourceAnchor(roadmap, staleRepair).code, "IMP036J_T3_STALE_CURRENT_SOURCE");
     const staleCi = state.replace(
+      "CURRENT_SOURCE_EXACT_MAIN_CI: 37116839745",
       "CURRENT_SOURCE_EXACT_MAIN_CI: 37071608421",
-      "CURRENT_SOURCE_EXACT_MAIN_CI: 37070367757",
     );
     assert.equal(evaluateImp036jTranche3CurrentSourceAnchor(roadmap, staleCi).code, "IMP036J_T3_STALE_CURRENT_SOURCE");
     const staleCodeql = state.replace(
+      "CURRENT_SOURCE_EXACT_MAIN_CODEQL: 37116839762",
       "CURRENT_SOURCE_EXACT_MAIN_CODEQL: 37071608405",
-      "CURRENT_SOURCE_EXACT_MAIN_CODEQL: 37070367671",
     );
     assert.equal(evaluateImp036jTranche3CurrentSourceAnchor(roadmap, staleCodeql).code, "IMP036J_T3_STALE_CURRENT_SOURCE");
     const historicalOnly = state.replace(
