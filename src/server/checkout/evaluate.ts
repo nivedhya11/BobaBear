@@ -473,18 +473,29 @@ export async function evaluateCheckout(
       );
     }
 
+    const remappedLines = candidate.commit.lines.map((line) => {
+      const nextId = newSnapshotId();
+      return {
+        line,
+        nextId,
+        next: {
+          ...line,
+          id: nextId,
+          bundleSelections: line.bundleSelections.map((b) => ({
+            ...b,
+            id: newSnapshotId(),
+          })),
+        },
+      };
+    });
+    const snapshotLineIdByPrior = new Map(
+      remappedLines.map((entry) => [entry.line.id, entry.nextId]),
+    );
     const commitPayload = {
       ...candidate.commit,
       snapshotId: newSnapshotId(),
       sourceCartRevision: cart.revision,
-      lines: candidate.commit.lines.map((line) => ({
-        ...line,
-        id: newSnapshotId(),
-        bundleSelections: line.bundleSelections.map((b) => ({
-          ...b,
-          id: newSnapshotId(),
-        })),
-      })),
+      lines: remappedLines.map((entry) => entry.next),
       charges: candidate.commit.charges.map((c) => ({
         ...c,
         id: newSnapshotId(),
@@ -492,6 +503,9 @@ export async function evaluateCheckout(
       promotionEffects: candidate.commit.promotionEffects.map((e) => ({
         ...e,
         id: newSnapshotId(),
+        snapshotLineId: e.snapshotLineId
+          ? (snapshotLineIdByPrior.get(e.snapshotLineId) ?? null)
+          : null,
       })),
       taxComponents: candidate.commit.taxComponents.map((t) => ({
         ...t,

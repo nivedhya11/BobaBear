@@ -189,6 +189,12 @@ export async function setCheckoutFulfilmentTiming(
   }
 
   return persistence.transaction(async (tx) => {
+    const probe = await findCheckoutRowById(tx, input.checkoutId);
+    if (!probe || probe.customerAuthUserId !== customer.authUserId) {
+      throw new CheckoutError("CHECKOUT_NOT_FOUND", "Checkout not found.");
+    }
+    await lockCustomerAuthUserForUpdate(tx, customer.authUserId);
+    await lockCartForUpdate(tx, probe.cartId);
     const row = await lockCheckoutForUpdate(tx, input.checkoutId);
     if (!row || row.customerAuthUserId !== customer.authUserId) {
       throw new CheckoutError("CHECKOUT_NOT_FOUND", "Checkout not found.");
@@ -227,6 +233,14 @@ export async function setCheckoutFulfilmentTiming(
         scheduledWindowEndAt: end,
       },
     );
+    await insertCommandOrigin({
+      context: tx,
+      sourceCommandId: randomUUID(),
+      originKind: "FULFILMENT_CHANGE",
+      cartId: updated.cartId,
+      checkoutId: updated.id,
+      checkoutJourneyKey: updated.checkoutJourneyKey,
+    });
     return loadCheckoutAggregate(tx, updated);
   });
 }

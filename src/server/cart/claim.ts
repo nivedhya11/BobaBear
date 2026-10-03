@@ -209,6 +209,16 @@ export async function claimGuestCart(
     });
 
     const refreshed = (await lockCartsByIdsAscending(tx, [locked.id]))[0]!;
+    if (refreshed.manualCouponCode) {
+      await insertCommandOrigin({
+        context: tx,
+        sourceCommandId: randomUUID(),
+        originKind: "COUPON_APPLY",
+        cartId: refreshed.id,
+        checkoutId: null,
+        checkoutJourneyKey: null,
+      });
+    }
     return loadCartAggregate(tx, refreshed);
   });
 }

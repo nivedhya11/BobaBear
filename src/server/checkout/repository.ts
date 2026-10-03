@@ -838,13 +838,14 @@ async function loadSnapshotAggregate(
   }
 
   const lines: CheckoutSnapshotLine[] = lineRows.map((l) => {
-    if (l.sourceCartLineId == null) {
+    const lineOrigin = (l.lineOrigin ?? "cart") as CheckoutSnapshotLine["lineOrigin"];
+    if (lineOrigin === "cart" && l.sourceCartLineId == null) {
       throw new Error(`Checkout snapshot line ${l.id} has no source cart line`);
     }
     return Object.freeze({
       id: l.id,
       sourceCartLineId: l.sourceCartLineId,
-      lineOrigin: (l.lineOrigin ?? "cart") as CheckoutSnapshotLine["lineOrigin"],
+      lineOrigin,
       productId: l.productId,
       variantId: l.variantId,
       productName: l.productName,
