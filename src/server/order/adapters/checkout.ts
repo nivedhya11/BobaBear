@@ -34,6 +34,7 @@ export type OrderCheckoutProvenance = Readonly<{
   activeSnapshotId: string | null;
   sourceCartRevision: bigint;
   revision: bigint;
+  checkoutJourneyKey: string | null;
 }>;
 
 export type OrderSnapshotProvenance = Readonly<{
@@ -122,6 +123,7 @@ function mapCheckoutProvenance(row: CheckoutRow): OrderCheckoutProvenance {
     activeSnapshotId: row.activeSnapshotId,
     sourceCartRevision: row.sourceCartRevision,
     revision: row.revision,
+    checkoutJourneyKey: row.checkoutJourneyKey,
   });
 }
 

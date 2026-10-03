@@ -163,7 +163,6 @@ function promotionEffectsEqual(
       x.rewardQuantity !== y.rewardQuantity ||
       x.rewardBasePaise !== y.rewardBasePaise ||
       x.sortOrder !== y.sortOrder ||
-      x.snapshotLineId !== y.snapshotLineId ||
       x.promotionRevision !== y.promotionRevision
     ) {
       return false;

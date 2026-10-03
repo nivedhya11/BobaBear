@@ -137,8 +137,34 @@ export async function startCheckout(
             existing.status === "READY_FOR_PAYMENT") &&
           existing.sourceCartRevision !== cart.revision
         ) {
-          await markCheckoutCancelled(tx, existing, now);
-          existing = null;
+          const predecessor = await assignCheckoutJourney({
+            context: tx,
+            cartId: cart.id,
+            customerAuthUserId: customer.authUserId,
+            checkout: existing,
+            cartActivationId: parsed.cartActivationId,
+            reuseExisting: true,
+          });
+          await markCheckoutCancelled(tx, predecessor, now);
+          const inserted = await insertDraftCheckout(tx, {
+            id: newCheckoutId(),
+            customerAuthUserId: customer.authUserId,
+            brandId: cart.brandId,
+            cartId: cart.id,
+            sourceCartRevision: cart.revision,
+            expiresAt: new Date(now.getTime() + ttlMs),
+            now,
+          });
+          const ordered = await assignCheckoutJourney({
+            context: tx,
+            cartId: cart.id,
+            customerAuthUserId: customer.authUserId,
+            checkout: inserted,
+            cartActivationId: parsed.cartActivationId,
+            reuseExisting: false,
+            continuablePredecessor: predecessor,
+          });
+          return loadCheckoutAggregate(tx, ordered);
         } else if (
           existing.status === "DRAFT" ||
           existing.status === "READY_FOR_PAYMENT" ||

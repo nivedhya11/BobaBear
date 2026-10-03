@@ -531,6 +531,14 @@ async function finishCouponCommand(
   });
 }
 
+function rejectUnknownCoupon(): never {
+  throw new CartError(
+    "CART_COUPON_UNKNOWN",
+    "Coupon code is not recognized.",
+    { field: "couponCode" },
+  );
+}
+
 export async function applyCartCoupon(
   persistence: Persistence,
   access: CartAccess,
@@ -542,7 +550,7 @@ export async function applyCartCoupon(
   assertBrandId(access.brandId);
   const parsed = parseApplyCartCouponInput(input);
 
-  return persistence.transaction(async (tx) => {
+  const committed = await persistence.transaction(async (tx) => {
     const row = await lockAuthorizedCart(
       tx,
       access,
@@ -557,7 +565,7 @@ export async function applyCartCoupon(
         row.id,
       );
       if (replay === "replay") {
-        return loadCartAggregate(tx, row);
+        return { kind: "cart" as const, cart: await loadCartAggregate(tx, row) };
       }
     }
     assertRevisionMatch(row, parsed.expectedRevision);
@@ -573,11 +581,7 @@ export async function applyCartCoupon(
         coarseOutcome: "UNKNOWN",
         revisionChanged: false,
       });
-      throw new CartError(
-        "CART_COUPON_UNKNOWN",
-        "Coupon code is not recognized.",
-        { field: "couponCode" },
-      );
+      return { kind: "unknown" as const };
     }
     const coupon = await findCouponByCanonicalCode(tx, canonical);
     if (!coupon) {
@@ -589,11 +593,7 @@ export async function applyCartCoupon(
         coarseOutcome: "UNKNOWN",
         revisionChanged: false,
       });
-      throw new CartError(
-        "CART_COUPON_UNKNOWN",
-        "Coupon code is not recognized.",
-        { field: "couponCode" },
-      );
+      return { kind: "unknown" as const };
     }
     if (row.manualCouponCode === canonical) {
       await finishCouponCommand(tx, {
@@ -604,7 +604,7 @@ export async function applyCartCoupon(
         coarseOutcome: "NO_OP",
         revisionChanged: false,
       });
-      return loadCartAggregate(tx, row);
+      return { kind: "cart" as const, cart: await loadCartAggregate(tx, row) };
     }
     const originKind: OriginKind =
       row.manualCouponCode === null ? "COUPON_APPLY" : "COUPON_REPLACE";
@@ -630,8 +630,12 @@ export async function applyCartCoupon(
       revisionChanged: true,
     });
     const refreshed = await lockCartForUpdate(tx, row.id);
-    return loadCartAggregate(tx, refreshed!);
+    return { kind: "cart" as const, cart: await loadCartAggregate(tx, refreshed!) };
   });
+  if (committed.kind === "unknown") {
+    rejectUnknownCoupon();
+  }
+  return committed.cart;
 }
 
 export async function removeCartCoupon(

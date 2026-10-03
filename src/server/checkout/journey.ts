@@ -24,6 +24,7 @@ export async function assignCheckoutJourney(input: {
   checkout: CheckoutRow;
   cartActivationId: string | null;
   reuseExisting: boolean;
+  continuablePredecessor?: CheckoutRow | null;
 }): Promise<CheckoutRow> {
   let journeyKey = input.checkout.checkoutJourneyKey;
   let ordinal = input.checkout.cartCausalOrdinal;
@@ -37,6 +38,11 @@ export async function assignCheckoutJourney(input: {
       ordinal =
         ordinal ?? (await nextCartCausalOrdinal(input.context, input.cartId));
       mintKind = "continuable";
+    } else if (input.continuablePredecessor?.checkoutJourneyKey) {
+      journeyKey = input.continuablePredecessor.checkoutJourneyKey;
+      ordinal = await nextCartCausalOrdinal(input.context, input.cartId);
+      mintKind = "continuable";
+      predecessorId = input.continuablePredecessor.id;
     } else {
       const latest = await latestCausalCheckout(
         input.context,

@@ -6,7 +6,7 @@
  * command. Client timestamps and client monetary values are not authority.
  */
 import { createHash, randomUUID } from "node:crypto";
-import { and, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 
 import {
   cartCheckoutActivationsTable,
@@ -669,7 +669,12 @@ export async function persistCommercialEvaluation(input: {
   checkoutJourneyKey: string | null;
   surfaceScope: "CART" | "CHECKOUT";
   quote: DirectPricingQuote;
-}): Promise<{ evaluationId: string; fingerprint: Uint8Array; coarseShape: CoarseShape }> {
+}): Promise<{
+  evaluationId: string;
+  fingerprint: Uint8Array;
+  coarseShape: CoarseShape;
+  reusedExistingEvaluation: boolean;
+}> {
   const explanation = input.quote.commercialExplanation ?? null;
   const coarseShape = deriveCoarseShape({ explanation });
   const reasonClass = deriveExplanationReasonClass({ explanation, coarseShape });
@@ -715,6 +720,7 @@ export async function persistCommercialEvaluation(input: {
       evaluationId: latestRow.evaluationId,
       fingerprint,
       coarseShape,
+      reusedExistingEvaluation: true,
     };
   }
   const maxOrdinal = latestRow?.occurrenceOrdinal ?? BigInt(0);
@@ -750,7 +756,12 @@ export async function persistCommercialEvaluation(input: {
     occurrenceOrdinal: maxOrdinal + BigInt(1),
     occurredAt: sql`clock_timestamp()` as unknown as Date,
   });
-  return { evaluationId, fingerprint, coarseShape };
+  return {
+    evaluationId,
+    fingerprint,
+    coarseShape,
+    reusedExistingEvaluation: false,
+  };
 }
 
 function commercialChangeIdempotencyKey(input: {
@@ -784,6 +795,7 @@ export async function resolveCommercialStateChange(input: {
   journeyKey: string;
   evaluationId: string;
   fingerprint: Uint8Array;
+  reusedExistingEvaluation: boolean;
   closedJourneyRejectNew: boolean;
 }): Promise<void> {
   const previous = await input.context.db
@@ -799,7 +811,9 @@ export async function resolveCommercialStateChange(input: {
     .limit(2);
   const current = previous.find((row) => row.evaluationId === input.evaluationId);
   const prior = previous.find((row) => row.evaluationId !== input.evaluationId) ?? null;
-  const watermark = prior?.cartOriginOrdinalInclusive ?? BigInt(0);
+  const watermark = input.reusedExistingEvaluation
+    ? (current?.cartOriginOrdinalInclusive ?? BigInt(0))
+    : (prior?.cartOriginOrdinalInclusive ?? BigInt(0));
   const originMax = await input.context.db
     .select({
       max: sql<string>`coalesce(max(${commercialCommandOriginsTable.cartOriginOrdinal}), 0)`,
@@ -832,9 +846,7 @@ export async function resolveCommercialStateChange(input: {
       origin.checkoutId === input.checkoutId
     );
   });
-  const fingerprintChanged =
-    !prior ||
-    !Buffer.from(prior.resultFingerprint).equals(Buffer.from(input.fingerprint));
+  const fingerprintChanged = !input.reusedExistingEvaluation;
   if (!fingerprintChanged) {
     for (const origin of window) {
       await input.context.db
@@ -1154,15 +1166,31 @@ export async function ensureReviewPresentedThenPaymentFacts(input: {
     .limit(1);
   const evaluation = latest[0];
   if (!evaluation) return;
-  const stale = await input.context.db
-    .select({ originKind: commercialCommandOriginsTable.originKind })
-    .from(commercialCommandOriginsTable)
+  const changeFacts = await input.context.db
+    .select({ factId: checkoutJourneyFactsTable.factId })
+    .from(checkoutJourneyFactsTable)
     .where(
-      eq(
-        commercialCommandOriginsTable.resolvedChangeFactId,
-        evaluation.evaluationId,
+      and(
+        eq(
+          checkoutJourneyFactsTable.evaluationId,
+          evaluation.evaluationId,
+        ),
+        eq(checkoutJourneyFactsTable.factKind, "COMMERCIAL_STATE_CHANGE"),
       ),
     );
+  const changeFactIds = changeFacts.map((row) => row.factId);
+  const stale =
+    changeFactIds.length === 0
+      ? []
+      : await input.context.db
+          .select({ originKind: commercialCommandOriginsTable.originKind })
+          .from(commercialCommandOriginsTable)
+          .where(
+            inArray(
+              commercialCommandOriginsTable.resolvedChangeFactId,
+              changeFactIds,
+            ),
+          );
   const staleRecovery = stale.some((row) => row.originKind === "STALE_RECOVERY");
   const presentationClass = derivePresentationClass({
     coarseShape: evaluation.expectedCoarseShape as CoarseShape,

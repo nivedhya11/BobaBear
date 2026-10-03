@@ -350,6 +350,7 @@ export async function evaluateCheckout(
           journeyKey: ordered.checkoutJourneyKey,
           evaluationId: evaluation.evaluationId,
           fingerprint: evaluation.fingerprint,
+          reusedExistingEvaluation: evaluation.reusedExistingEvaluation,
           closedJourneyRejectNew: true,
         });
       }
@@ -538,6 +539,7 @@ export async function evaluateCheckout(
         journeyKey: ordered.checkoutJourneyKey,
         evaluationId: evaluation.evaluationId,
         fingerprint: evaluation.fingerprint,
+        reusedExistingEvaluation: evaluation.reusedExistingEvaluation,
         closedJourneyRejectNew: true,
       });
     }

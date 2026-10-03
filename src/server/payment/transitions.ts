@@ -18,7 +18,6 @@ import {
   type CheckoutRow,
 } from "../checkout/repository";
 import { lockCustomerAuthUserForUpdate } from "../cart/repository";
-import { closeJourney } from "../customer-commerce/measurement/writers";
 import { enqueuePaymentConfirmedNotification } from "../notifications/enqueue";
 import type { PersistenceTransactionContext } from "../persistence/types";
 import { assertTransactionContext } from "./assert-role";
@@ -246,9 +245,6 @@ async function applySuccess(
   } else if (checkout.status === "COMPLETED") {
     // Already completed — keep as no extra revision.
     updatedCheckout = checkout;
-  }
-  if (updatedCheckout.checkoutJourneyKey) {
-    await closeJourney(context, updatedCheckout.checkoutJourneyKey);
   }
 
   return Object.freeze({

@@ -92,10 +92,7 @@ import {
   snapshotHasFirstOrderOffer,
 } from "./first-order";
 import type { PersistenceTransactionContext } from "../persistence/types";
-import {
-  closeJourney,
-  ensureReviewPresentedThenPaymentFacts,
-} from "../customer-commerce/measurement/writers";
+import { ensureReviewPresentedThenPaymentFacts } from "../customer-commerce/measurement/writers";
 
 export type PaymentOperationOptions = Readonly<{
   clock?: PaymentClock;
@@ -828,9 +825,6 @@ export async function completeZeroPayableCheckout(
       activeSnapshotId: checkout.activeSnapshotId,
       now,
     });
-    if (updated.checkoutJourneyKey) {
-      await closeJourney(tx, updated.checkoutJourneyKey);
-    }
 
     await bindInitiationIdempotency(tx, {
       customerAuthUserId: customer.authUserId,
