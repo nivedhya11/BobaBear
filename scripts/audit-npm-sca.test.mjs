@@ -397,7 +397,13 @@ test("package-name token cannot cover a structured same-package GHSA", () => {
   const vulns = {
     micromatch: {
       severity: "high",
-      via: [{ severity: "high", url: "https://github.com/advisories/GHSA-unrelated-xxxx-yyyy" }],
+      via: [
+        {
+          name: "micromatch",
+          severity: "high",
+          url: "https://github.com/advisories/GHSA-unrelated-xxxx-yyyy",
+        },
+      ],
     },
   };
   const active = [exceptionRow({ "package/cve": "micromatch" })];
@@ -405,6 +411,28 @@ test("package-name token cannot cover a structured same-package GHSA", () => {
   assert.equal(uncovered.length, 1);
   assert.equal(uncovered[0].packageName, "micromatch");
   assert.ok(uncovered[0].keys.includes("ghsa-unrelated-xxxx-yyyy"));
+  assert.equal(uncovered[0].keys.includes("micromatch"), false);
+});
+
+test("package-name token cannot cover a structured GHSA whose via.name matches the package", () => {
+  const vulns = {
+    braces: {
+      severity: "high",
+      via: [
+        {
+          source: 1240992,
+          name: "braces",
+          severity: "high",
+          url: "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm",
+        },
+      ],
+    },
+  };
+  const active = [exceptionRow({ "package/cve": "braces" })];
+  const uncovered = filterUncoveredPolicyFindings(vulns, active);
+  assert.equal(uncovered.length, 1);
+  assert.ok(uncovered[0].keys.includes("ghsa-vfj7-8cjw-p6xm"));
+  assert.equal(uncovered[0].keys.includes("braces"), false);
 });
 
 test("missing string via target fails closed", () => {

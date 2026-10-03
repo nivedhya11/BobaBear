@@ -168,7 +168,7 @@ export function collectAdvisoryIdentityKeys(via) {
   }
   if (!via || typeof via !== "object") return keys;
   const obj = /** @type {Record<string, unknown>} */ (via);
-  for (const field of ["source", "url", "cve", "title", "name", "id"]) {
+  for (const field of ["source", "url", "cve", "title", "id"]) {
     const val = obj[field];
     if (typeof val === "string" && val) {
       keys.add(val.toLowerCase());
@@ -178,10 +178,20 @@ export function collectAdvisoryIdentityKeys(via) {
       if (cve) keys.add(cve[0].toLowerCase());
     }
   }
+  if (typeof obj.name === "string" && obj.name) {
+    const ghsa = obj.name.match(/GHSA-[a-z0-9-]+/i);
+    if (ghsa) keys.add(ghsa[0].toLowerCase());
+    const cve = obj.name.match(/CVE-\d{4}-\d+/i);
+    if (cve) keys.add(cve[0].toLowerCase());
+  }
   if (typeof obj.source === "number") {
     keys.add(String(obj.source));
   }
   return keys;
+}
+
+export function isStructuredExceptionToken(token) {
+  return token.startsWith("ghsa-") || token.startsWith("cve-") || /^\d+$/.test(token) || token.startsWith("source:");
 }
 
 /**
@@ -442,7 +452,13 @@ export function findCoveringExceptionForAdvisory(advisory, activeRows) {
     if (!exceptionCoversSeverity(row.severity, advisory.severity)) continue;
     const tokens = tokenizePackageCve(row["package/cve"]);
     for (const token of tokens) {
-      if (hasStructuredIdentity && advisory.identityKeys.has(token)) return row;
+      if (
+        hasStructuredIdentity &&
+        isStructuredExceptionToken(token) &&
+        advisory.identityKeys.has(token)
+      ) {
+        return row;
+      }
       if (allowPackageNameToken && token === pkg) return row;
     }
   }
