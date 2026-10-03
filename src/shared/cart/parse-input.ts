@@ -247,14 +247,21 @@ export function parseClearCartInput(raw: unknown): Readonly<{
   });
 }
 
+function parseOptionalUuid(raw: unknown, field: string): string | null {
+  if (raw === undefined || raw === null) return null;
+  return assertUuid(raw, field);
+}
+
 export function parseApplyCartCouponInput(raw: unknown): Readonly<{
   couponCode: string;
   expectedRevision: bigint;
+  sourceCommandId: string | null;
+  reviewSurfaceToken: string | null;
 }> {
   const obj = assertPlainObject(raw, "applyCartCoupon");
   rejectUnknownFields(
     obj,
-    ["couponCode", "expectedRevision"],
+    ["couponCode", "expectedRevision", "sourceCommandId", "reviewSurfaceToken"],
     "applyCartCoupon",
   );
   if (typeof obj.couponCode !== "string" || obj.couponCode.trim().length === 0) {
@@ -264,19 +271,44 @@ export function parseApplyCartCouponInput(raw: unknown): Readonly<{
       { field: "couponCode" },
     );
   }
+  if (obj.occurredAt !== undefined || obj.clientTimestamp !== undefined) {
+    throw new CartError(
+      "CART_INVALID_INPUT",
+      "Client timestamps are not accepted.",
+      { field: "occurredAt" },
+    );
+  }
   return Object.freeze({
     couponCode: obj.couponCode,
     expectedRevision: parseExpectedRevision(obj.expectedRevision),
+    sourceCommandId: parseOptionalUuid(obj.sourceCommandId, "sourceCommandId"),
+    reviewSurfaceToken:
+      typeof obj.reviewSurfaceToken === "string" &&
+      obj.reviewSurfaceToken.length > 0
+        ? obj.reviewSurfaceToken
+        : null,
   });
 }
 
 export function parseRemoveCartCouponInput(raw: unknown): Readonly<{
   expectedRevision: bigint;
+  sourceCommandId: string | null;
+  reviewSurfaceToken: string | null;
 }> {
   const obj = assertPlainObject(raw, "removeCartCoupon");
-  rejectUnknownFields(obj, ["expectedRevision"], "removeCartCoupon");
+  rejectUnknownFields(
+    obj,
+    ["expectedRevision", "sourceCommandId", "reviewSurfaceToken"],
+    "removeCartCoupon",
+  );
   return Object.freeze({
     expectedRevision: parseExpectedRevision(obj.expectedRevision),
+    sourceCommandId: parseOptionalUuid(obj.sourceCommandId, "sourceCommandId"),
+    reviewSurfaceToken:
+      typeof obj.reviewSurfaceToken === "string" &&
+      obj.reviewSurfaceToken.length > 0
+        ? obj.reviewSurfaceToken
+        : null,
   });
 }
 

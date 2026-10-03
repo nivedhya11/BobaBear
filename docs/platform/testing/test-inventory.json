@@ -40,14 +40,14 @@
     "vitestConfigs": 2,
     "playwrightConfigs": 7,
     "testSupportScripts": 51,
-    "packageTestCommands": 88,
+    "packageTestCommands": 89,
     "packageAuditCommands": 27,
     "packageE2eCommands": 9,
     "packageCheckCommands": 17,
     "packageCoverageCommands": 1,
     "packageInventoryCommands": 2,
     "ciWorkflowFiles": 4,
-    "ciValidationSteps": 120,
+    "ciValidationSteps": 121,
     "protectedEvidenceTrackedFiles": 3,
     "archiveTrackedFiles": 92
   },
@@ -679,6 +679,7 @@
       "test:imp036j:tranche1",
       "test:imp036j:tranche2",
       "test:imp036j:tranche3",
+      "test:imp036j:tranche4",
       "test:menu-import",
       "test:menu-parity",
       "test:operations:http",
@@ -889,6 +890,7 @@
     "test:imp036j:tranche1": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/imp036j-tranche1-commercial-persistence.integration.test.ts",
     "test:imp036j:tranche2": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/imp036j-tranche2-measurement-persistence.integration.test.ts",
     "test:imp036j:tranche3": "node scripts/run-vitest.mjs run tests/promotions/imp036j-tranche3-commercial-evaluation.test.ts tests/promotions/engine.test.ts tests/promotions/fatal-and-money.test.ts tests/promotions/tax-integration.test.ts tests/promotions/bogo.test.ts tests/promotions/targets-modifiers.test.ts",
+    "test:imp036j:tranche4": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/imp036j-tranche4-commercial-commands.integration.test.ts",
     "test:menu-import": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/menu-import",
     "test:menu-parity": "node scripts/run-vitest.mjs run tests/menu-parity",
     "test:operations:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/operations/store-http.integration.test.ts tests/operations/refunds-http.integration.test.ts tests/operations/orders-read-http.integration.test.ts tests/operations/orders-mutation-http.integration.test.ts tests/operations/notifications-http.integration.test.ts tests/operations/scheduling-http.tranche3.integration.test.ts tests/operations/scheduling-profile-workforce-journey.integration.test.ts",
@@ -1039,6 +1041,10 @@
         {
           "name": "IMP-036J Tranche 3 proof",
           "run": "npm run test:imp036j:tranche3"
+        },
+        {
+          "name": "IMP-036J Tranche 4 proof",
+          "run": "npm run test:imp036j:tranche4"
         },
         {
           "name": "Install dependencies",

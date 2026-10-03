@@ -46,6 +46,7 @@ function linesEqual(
     const y = b[i]!;
     if (
       x.sourceCartLineId !== y.sourceCartLineId ||
+      x.lineOrigin !== y.lineOrigin ||
       x.productId !== y.productId ||
       x.variantId !== y.variantId ||
       x.productName !== y.productName ||
@@ -161,7 +162,9 @@ function promotionEffectsEqual(
       x.rewardUnitId !== y.rewardUnitId ||
       x.rewardQuantity !== y.rewardQuantity ||
       x.rewardBasePaise !== y.rewardBasePaise ||
-      x.sortOrder !== y.sortOrder
+      x.sortOrder !== y.sortOrder ||
+      x.snapshotLineId !== y.snapshotLineId ||
+      x.promotionRevision !== y.promotionRevision
     ) {
       return false;
     }

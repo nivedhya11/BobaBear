@@ -37,6 +37,12 @@ import {
   resolveScheduledDeliveryOutlet,
 } from "./adapters/serviceability";
 import { systemCheckoutClock } from "./clock";
+import { assignCheckoutJourney } from "./journey";
+import {
+  mintReviewSurfaceToken,
+  persistCommercialEvaluation,
+  resolveCommercialStateChange,
+} from "../customer-commerce/measurement/writers";
 import { checkoutSnapshotsStructurallyEqual } from "./compare-snapshots";
 import type { CheckoutOperationOptions } from "./operations";
 import {
@@ -279,6 +285,9 @@ export async function evaluateCheckout(
           ? preload.destination ?? undefined
           : undefined,
       fulfilmentMode: preload.fulfilmentMode,
+      fulfilmentTiming: (preload.row.fulfilmentTiming ?? "ASAP") as
+        | "ASAP"
+        | "SCHEDULED",
     }),
   );
 
@@ -311,9 +320,51 @@ export async function evaluateCheckout(
       candidate.commercial,
     )
   ) {
+    const measured = await persistence.transaction(async (tx) => {
+      await lockCartForUpdate(tx, preload.row.cartId);
+      const row = await lockCheckoutForUpdate(tx, preload.row.id);
+      if (!row) {
+        throw new CheckoutError("CHECKOUT_NOT_FOUND", "Checkout not found.");
+      }
+      const ordered = await assignCheckoutJourney({
+        context: tx,
+        cartId: preload.row.cartId,
+        customerAuthUserId: customer.authUserId,
+        checkout: row,
+        cartActivationId: null,
+        reuseExisting: true,
+      });
+      const evaluation = await persistCommercialEvaluation({
+        context: tx,
+        cartId: preload.row.cartId,
+        checkoutId: ordered.id,
+        checkoutJourneyKey: ordered.checkoutJourneyKey,
+        surfaceScope: "CHECKOUT",
+        quote: commercial.quote,
+      });
+      if (ordered.checkoutJourneyKey) {
+        await resolveCommercialStateChange({
+          context: tx,
+          cartId: preload.row.cartId,
+          checkoutId: ordered.id,
+          journeyKey: ordered.checkoutJourneyKey,
+          evaluationId: evaluation.evaluationId,
+          fingerprint: evaluation.fingerprint,
+          closedJourneyRejectNew: true,
+        });
+      }
+      const reviewSurfaceToken = await mintReviewSurfaceToken(
+        tx,
+        ordered.id,
+        preload.row.cartId,
+      );
+      return { evaluationId: evaluation.evaluationId, reviewSurfaceToken };
+    });
     return Object.freeze({
       checkout: preload.checkout,
       snapshot: preload.checkout.activeSnapshot,
+      evaluationId: measured.evaluationId,
+      reviewSurfaceToken: measured.reviewSurfaceToken,
     });
   }
 
@@ -449,10 +500,43 @@ export async function evaluateCheckout(
     };
 
     const updated = await commitReadySnapshot(tx, row, commitPayload);
-    return loadCheckoutAggregate(tx, updated);
+    const ordered = await assignCheckoutJourney({
+      context: tx,
+      cartId: updated.cartId,
+      customerAuthUserId: customer.authUserId,
+      checkout: updated,
+      cartActivationId: null,
+      reuseExisting: true,
+    });
+    const evaluation = await persistCommercialEvaluation({
+      context: tx,
+      cartId: ordered.cartId,
+      checkoutId: ordered.id,
+      checkoutJourneyKey: ordered.checkoutJourneyKey,
+      surfaceScope: "CHECKOUT",
+      quote: commercial.quote,
+    });
+    if (ordered.checkoutJourneyKey) {
+      await resolveCommercialStateChange({
+        context: tx,
+        cartId: ordered.cartId,
+        checkoutId: ordered.id,
+        journeyKey: ordered.checkoutJourneyKey,
+        evaluationId: evaluation.evaluationId,
+        fingerprint: evaluation.fingerprint,
+        closedJourneyRejectNew: true,
+      });
+    }
+    const reviewSurfaceToken = await mintReviewSurfaceToken(
+      tx,
+      ordered.id,
+      ordered.cartId,
+    );
+    const aggregate = await loadCheckoutAggregate(tx, ordered);
+    return { aggregate, evaluationId: evaluation.evaluationId, reviewSurfaceToken };
   });
 
-  if (!committed.activeSnapshot) {
+  if (!committed.aggregate.activeSnapshot) {
     throw new CheckoutError(
       "CHECKOUT_DEPENDENCY_INDETERMINATE",
       "READY snapshot was not activated.",
@@ -460,8 +544,10 @@ export async function evaluateCheckout(
   }
 
   return Object.freeze({
-    checkout: committed,
-    snapshot: committed.activeSnapshot,
+    checkout: committed.aggregate,
+    snapshot: committed.aggregate.activeSnapshot,
+    evaluationId: committed.evaluationId,
+    reviewSurfaceToken: committed.reviewSurfaceToken,
   });
 }
 

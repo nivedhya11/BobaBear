@@ -27,6 +27,14 @@ import {
 } from "../../shared/cart";
 import type { Persistence } from "../persistence/types";
 import { findCouponByCanonicalCode } from "../promotions/coupons";
+import {
+  assertCommandIdForCart,
+  insertCommandOrigin,
+  insertCommandResult,
+  resolveCouponCommandSurface,
+  writeCouponAttemptFact,
+  type OriginKind,
+} from "../customer-commerce/measurement/writers";
 import { requireCustomerActor, type CustomerActor } from "./actor";
 import { cartLineToCanonicalConfiguration } from "./canonicalize-config";
 import { systemCartClock, type CartClock } from "./clock";
@@ -478,6 +486,51 @@ export async function clearCart(
   });
 }
 
+async function finishCouponCommand(
+  tx: Parameters<Parameters<Persistence["transaction"]>[0]>[0],
+  input: {
+    cartId: string;
+    sourceCommandId: string | null;
+    reviewSurfaceToken: string | null;
+    originKind: OriginKind | null;
+    coarseOutcome: string;
+    revisionChanged: boolean;
+  },
+): Promise<void> {
+  if (!input.sourceCommandId) return;
+  const surface = await resolveCouponCommandSurface(
+    tx,
+    input.cartId,
+    input.reviewSurfaceToken,
+  );
+  if (input.revisionChanged && input.originKind) {
+    await insertCommandOrigin({
+      context: tx,
+      sourceCommandId: input.sourceCommandId,
+      originKind: input.originKind,
+      cartId: input.cartId,
+      checkoutId: surface.checkoutId,
+      checkoutJourneyKey: surface.journeyKey,
+    });
+  }
+  await insertCommandResult({
+    context: tx,
+    sourceCommandId: input.sourceCommandId,
+    cartId: input.cartId,
+    surface: surface.surface,
+    coarseOutcome: input.coarseOutcome,
+    payableChangedVsValidAlternative: null,
+    checkoutJourneyKey: surface.journeyKey,
+  });
+  await writeCouponAttemptFact({
+    context: tx,
+    journeyKey: surface.journeyKey,
+    surface: surface.surface,
+    sourceCommandId: input.sourceCommandId,
+    coarseOutcome: input.coarseOutcome,
+  });
+}
+
 export async function applyCartCoupon(
   persistence: Persistence,
   access: CartAccess,
@@ -490,11 +543,36 @@ export async function applyCartCoupon(
   const parsed = parseApplyCartCouponInput(input);
 
   return persistence.transaction(async (tx) => {
-    const row = await lockAuthorizedCart(tx, access, now, parsed.expectedRevision);
+    const row = await lockAuthorizedCart(
+      tx,
+      access,
+      now,
+      parsed.expectedRevision,
+      { deferRevisionCheck: true },
+    );
+    if (parsed.sourceCommandId) {
+      const replay = await assertCommandIdForCart(
+        tx,
+        parsed.sourceCommandId,
+        row.id,
+      );
+      if (replay === "replay") {
+        return loadCartAggregate(tx, row);
+      }
+    }
+    assertRevisionMatch(row, parsed.expectedRevision);
     let canonical: string;
     try {
       canonical = normalizeCouponCode(parsed.couponCode);
     } catch {
+      await finishCouponCommand(tx, {
+        cartId: row.id,
+        sourceCommandId: parsed.sourceCommandId,
+        reviewSurfaceToken: parsed.reviewSurfaceToken,
+        originKind: null,
+        coarseOutcome: "UNKNOWN",
+        revisionChanged: false,
+      });
       throw new CartError(
         "CART_COUPON_UNKNOWN",
         "Coupon code is not recognized.",
@@ -503,6 +581,14 @@ export async function applyCartCoupon(
     }
     const coupon = await findCouponByCanonicalCode(tx, canonical);
     if (!coupon) {
+      await finishCouponCommand(tx, {
+        cartId: row.id,
+        sourceCommandId: parsed.sourceCommandId,
+        reviewSurfaceToken: parsed.reviewSurfaceToken,
+        originKind: null,
+        coarseOutcome: "UNKNOWN",
+        revisionChanged: false,
+      });
       throw new CartError(
         "CART_COUPON_UNKNOWN",
         "Coupon code is not recognized.",
@@ -510,9 +596,18 @@ export async function applyCartCoupon(
       );
     }
     if (row.manualCouponCode === canonical) {
-      const cart = await loadCartAggregate(tx, row);
-      return cart; // no-op
+      await finishCouponCommand(tx, {
+        cartId: row.id,
+        sourceCommandId: parsed.sourceCommandId,
+        reviewSurfaceToken: parsed.reviewSurfaceToken,
+        originKind: null,
+        coarseOutcome: "NO_OP",
+        revisionChanged: false,
+      });
+      return loadCartAggregate(tx, row);
     }
+    const originKind: OriginKind =
+      row.manualCouponCode === null ? "COUPON_APPLY" : "COUPON_REPLACE";
     await updateCartHeader(tx, {
       cartId: row.id,
       revision: row.revision + BigInt(1),
@@ -525,6 +620,14 @@ export async function applyCartCoupon(
             ),
           }
         : {}),
+    });
+    await finishCouponCommand(tx, {
+      cartId: row.id,
+      sourceCommandId: parsed.sourceCommandId,
+      reviewSurfaceToken: parsed.reviewSurfaceToken,
+      originKind,
+      coarseOutcome: originKind === "COUPON_APPLY" ? "APPLIED" : "REPLACED",
+      revisionChanged: true,
     });
     const refreshed = await lockCartForUpdate(tx, row.id);
     return loadCartAggregate(tx, refreshed!);
@@ -543,9 +646,34 @@ export async function removeCartCoupon(
   const parsed = parseRemoveCartCouponInput(input);
 
   return persistence.transaction(async (tx) => {
-    const row = await lockAuthorizedCart(tx, access, now, parsed.expectedRevision);
+    const row = await lockAuthorizedCart(
+      tx,
+      access,
+      now,
+      parsed.expectedRevision,
+      { deferRevisionCheck: true },
+    );
+    if (parsed.sourceCommandId) {
+      const replay = await assertCommandIdForCart(
+        tx,
+        parsed.sourceCommandId,
+        row.id,
+      );
+      if (replay === "replay") {
+        return loadCartAggregate(tx, row);
+      }
+    }
+    assertRevisionMatch(row, parsed.expectedRevision);
     if (row.manualCouponCode === null) {
-      return loadCartAggregate(tx, row); // no-op
+      await finishCouponCommand(tx, {
+        cartId: row.id,
+        sourceCommandId: parsed.sourceCommandId,
+        reviewSurfaceToken: parsed.reviewSurfaceToken,
+        originKind: null,
+        coarseOutcome: "NO_OP",
+        revisionChanged: false,
+      });
+      return loadCartAggregate(tx, row);
     }
     await updateCartHeader(tx, {
       cartId: row.id,
@@ -560,6 +688,14 @@ export async function removeCartCoupon(
           }
         : {}),
     });
+    await finishCouponCommand(tx, {
+      cartId: row.id,
+      sourceCommandId: parsed.sourceCommandId,
+      reviewSurfaceToken: parsed.reviewSurfaceToken,
+      originKind: "COUPON_REMOVE",
+      coarseOutcome: "REMOVED",
+      revisionChanged: true,
+    });
     const refreshed = await lockCartForUpdate(tx, row.id);
     return loadCartAggregate(tx, refreshed!);
   });
@@ -570,6 +706,7 @@ async function lockAuthorizedCart(
   access: CartAccess,
   now: Date,
   expectedRevision: bigint,
+  options: { deferRevisionCheck?: boolean } = {},
 ): Promise<CartRow> {
   if (access.kind === "customer") {
     const actor = requireCustomerActor(access.actor);
@@ -577,7 +714,9 @@ async function lockAuthorizedCart(
     if (!found) throw new CartError("CART_NOT_FOUND", "Cart not found.");
     const locked = await lockCartForUpdate(tx, found.id);
     if (!locked) throw new CartError("CART_NOT_FOUND", "Cart not found.");
-    assertRevisionMatch(locked, expectedRevision);
+    if (!options.deferRevisionCheck) {
+      assertRevisionMatch(locked, expectedRevision);
+    }
     return locked;
   }
   if (!access.guestToken) {
@@ -594,7 +733,9 @@ async function lockAuthorizedCart(
   if (isGuestExpired(locked, now)) {
     throw new CartError("CART_EXPIRED", "Guest Cart has expired.");
   }
-  assertRevisionMatch(locked, expectedRevision);
+  if (!options.deferRevisionCheck) {
+    assertRevisionMatch(locked, expectedRevision);
+  }
   return locked;
 }
 

@@ -109,6 +109,7 @@ export type CartEvaluationResult = Readonly<{
   problems?: readonly CartLineProblem[];
   /** Present only when status is COMPLETE — ephemeral quote authority. */
   quote?: unknown;
+  evaluationId?: string;
   serviceabilityReason?: string;
 }>;
 

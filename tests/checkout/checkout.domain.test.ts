@@ -1249,7 +1249,7 @@ describe("IMP-021 checkout domain — evaluate commercial", () => {
     );
   });
 
-  it("CO-19 manual coupon: eligible succeeds; recognized-but-ineligible blocks READY", async () => {
+  it("CO-19 manual coupon: eligible succeeds; recognized-but-ineligible does not fail checkout", async () => {
     await withCheckoutReadyHarness(
       async ({ persistence, actors, cartId, addressId }) => {
         const brandId = actors.tree.brand.id;
@@ -1427,17 +1427,18 @@ describe("IMP-021 checkout domain — evaluate commercial", () => {
             opts,
           );
         }
-        await expect(
-          evaluateCheckout(
-            persistence,
-            actors.customerA,
-            {
-              checkoutId: checkout.id,
-              expectedCheckoutRevision: checkout.revision,
-            },
-            opts,
-          ),
-        ).rejects.toMatchObject({ code: "CHECKOUT_COUPON_INELIGIBLE" });
+        const notSelected = await evaluateCheckout(
+          persistence,
+          actors.customerA,
+          {
+            checkoutId: checkout.id,
+            expectedCheckoutRevision: checkout.revision,
+          },
+          opts,
+        );
+        expect(notSelected.checkout.status).toBe("READY_FOR_PAYMENT");
+        expect(notSelected.snapshot.manualCouponCode).toBe("WRONGITEM");
+        expect(notSelected.snapshot.promotionDiscountPaise).toBe(BigInt(0));
       },
     );
   });
@@ -2063,6 +2064,7 @@ describe("IMP-021 checkout domain — evaluate commercial", () => {
         {
           id: "l1",
           sourceCartLineId: "00000000-0000-4000-8000-000000000010",
+          lineOrigin: "cart",
           productId: "00000000-0000-4000-8000-000000000011",
           variantId: "00000000-0000-4000-8000-000000000012",
           productName: "P",

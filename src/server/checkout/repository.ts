@@ -79,7 +79,8 @@ export type SnapshotCommitPayload = Readonly<{
   createdAt: Date;
   lines: readonly Readonly<{
     id: string;
-    sourceCartLineId: string;
+    sourceCartLineId: string | null;
+    lineOrigin: "cart" | "complimentary_offer";
     productId: string;
     variantId: string;
     productName: string;
@@ -148,6 +149,8 @@ export type SnapshotCommitPayload = Readonly<{
     rewardQuantity: number | null;
     rewardBasePaise: bigint | null;
     sortOrder: number;
+    snapshotLineId?: string | null;
+    promotionRevision?: bigint | null;
   }>[];
   taxComponents: readonly Readonly<{
     id: string;
@@ -600,6 +603,7 @@ export async function commitReadySnapshot(
       id: line.id,
       snapshotId: payload.snapshotId,
       sourceCartLineId: line.sourceCartLineId,
+      lineOrigin: line.lineOrigin ?? "cart",
       productId: line.productId,
       variantId: line.variantId,
       productName: line.productName,
@@ -696,6 +700,8 @@ export async function commitReadySnapshot(
         rewardQuantity: e.rewardQuantity,
         rewardBasePaise: e.rewardBasePaise,
         sortOrder: e.sortOrder,
+        snapshotLineId: e.snapshotLineId ?? null,
+        promotionRevision: e.promotionRevision ?? null,
       })),
     );
   }
@@ -838,6 +844,7 @@ async function loadSnapshotAggregate(
     return Object.freeze({
       id: l.id,
       sourceCartLineId: l.sourceCartLineId,
+      lineOrigin: (l.lineOrigin ?? "cart") as CheckoutSnapshotLine["lineOrigin"],
       productId: l.productId,
       variantId: l.variantId,
       productName: l.productName,
@@ -901,6 +908,8 @@ async function loadSnapshotAggregate(
       rewardQuantity: e.rewardQuantity,
       rewardBasePaise: e.rewardBasePaise,
       sortOrder: e.sortOrder,
+      snapshotLineId: e.snapshotLineId,
+      promotionRevision: e.promotionRevision,
     }),
   );
 

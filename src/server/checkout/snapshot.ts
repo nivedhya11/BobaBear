@@ -53,6 +53,7 @@ export function buildSnapshotCandidate(input: {
     return Object.freeze({
       id: lineId,
       sourceCartLineId: line.sourceCartLineId,
+      lineOrigin: line.lineOrigin ?? "cart",
       productId: line.productId,
       variantId: line.variantId,
       productName: line.productName,
@@ -85,12 +86,24 @@ export function buildSnapshotCandidate(input: {
     }),
   );
 
-  const promotionEffects = input.commercial.promotionEffects.map((e) =>
-    Object.freeze({
+  const complimentaryLine = lines.find(
+    (line) => line.lineOrigin === "complimentary_offer",
+  );
+  const promotionEffects = input.commercial.promotionEffects.map((e) => {
+    const appliedGift =
+      e.effectKind === "applied_promotion" &&
+      complimentaryLine &&
+      input.commercial.quote.appliedPromotions.some(
+        (applied) =>
+          applied.promotionId === e.promotionId && applied.isComplimentary === true,
+      );
+    return Object.freeze({
       id: randomUUID(),
       ...e,
-    }),
-  );
+      snapshotLineId: appliedGift ? complimentaryLine.id : null,
+      promotionRevision: e.promotionRevision ?? null,
+    });
+  });
 
   const taxComponents = input.commercial.taxComponents.map((t) =>
     Object.freeze({
