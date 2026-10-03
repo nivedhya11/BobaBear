@@ -112,6 +112,7 @@ export type CheckoutPromotionEffectDraft = Readonly<{
   rewardBasePaise: bigint | null;
   sortOrder: number;
   promotionRevision: bigint | null;
+  snapshotLineId?: string | null;
 }>;
 
 export type CheckoutChargeDraft = Readonly<{
@@ -583,6 +584,13 @@ export async function buildCheckoutCommercialResult(
     const variantContent = variant
       ? await loadEffectiveVariantContent(context, variant)
       : null;
+    const giftLineKey = `complimentary:${gift.promotionId}`;
+    const resolvedBase =
+      quote.promotionAllocations.find(
+        (alloc) =>
+          alloc.promotionId === gift.promotionId &&
+          alloc.componentId === `base:${giftLineKey}`,
+      )?.amountPaise ?? BigInt(0);
     lines.push(
       Object.freeze({
         sourceCartLineId: null,
@@ -593,11 +601,11 @@ export async function buildCheckoutCommercialResult(
         variantName: variantContent?.name ?? "Complimentary item",
         quantity: 1,
         sequence: sequence++,
-        lineBasePaise: BigInt(0),
+        lineBasePaise: resolvedBase,
         lineModifierAdjustmentsPaise: BigInt(0),
         lineBundleAdjustmentsPaise: BigInt(0),
-        lineSubtotalPaise: BigInt(0),
-        linePromotionDiscountPaise: BigInt(0),
+        lineSubtotalPaise: resolvedBase,
+        linePromotionDiscountPaise: resolvedBase,
         lineTaxablePaise: BigInt(0),
         lineTaxPaise: BigInt(0),
         lineTotalPaise: BigInt(0),

@@ -12,6 +12,7 @@ import {
   classifyCouponPresentation,
   evaluatePromotions,
   finalizeCouponResult,
+  payableChangedVsValidAlternative,
   isComplimentaryPromotion,
   projectUnselectedComplimentaryGifts,
   selectBestCandidate,
@@ -576,6 +577,11 @@ export async function buildDirectPricingQuote(
     bestNonCouponGrandTotalPaise,
     couponPromotionId,
   });
+  const payableChanged = payableChangedVsValidAlternative({
+    submittedCouponResult,
+    bestCouponGrandTotalPaise,
+    bestNonCouponGrandTotalPaise,
+  });
 
   const commercialExplanation = buildCommercialExplanation({
     winner: {
@@ -603,6 +609,7 @@ export async function buildDirectPricingQuote(
     promotionAllocations: winner.allocations,
     submittedCouponResult,
     commercialExplanation,
+    payableChangedVsValidAlternative: payableChanged,
     taxablePaise: winnerTax.taxablePaise,
     taxPaise: winnerTax.taxPaise,
     taxComponents: winnerTax.taxComponents,

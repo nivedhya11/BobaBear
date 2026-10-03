@@ -33,6 +33,7 @@ import {
   ensureReviewPresentedThenPaymentFacts,
   insertCommandOrigin,
   resolveCommercialStateChange,
+  sha256Utf8,
 } from "../../src/server/customer-commerce/measurement/writers";
 import { materializeOrderForCompletedCheckout } from "../../src/server/order";
 import * as afterPaymentSucceededModule from "../../src/server/payment/after-payment-succeeded";
@@ -51,6 +52,7 @@ import {
   activatePromotion,
   createPromotionDraft,
   getPromotion,
+  retirePromotion,
   setPromotionBenefit,
   setPromotionTargets,
 } from "../../src/server/promotions";
@@ -459,7 +461,7 @@ describe("IMP-036J T4 coupon commands", () => {
                 and coarse_outcome = 'UNKNOWN'`,
         ),
       ).toBe(1);
-      const unknownReplay = await applyCartCoupon(
+      const unknownReplay = applyCartCoupon(
         h.persistence,
         access,
         {
@@ -468,7 +470,9 @@ describe("IMP-036J T4 coupon commands", () => {
           sourceCommandId: unknownId,
         },
       );
-      expect(unknownReplay.manualCouponCode).toBeNull();
+      await expect(unknownReplay).rejects.toMatchObject({
+        code: "CART_COUPON_UNKNOWN",
+      });
       expect(
         await countSql(
           h.persistence,
@@ -1720,6 +1724,15 @@ describe("IMP-036J T4 guest, review commands, timing, gift, journey close", () =
   it("valid activation associates; wrong-cart activation is ignored", async () => {
     await withCheckoutReadyHarness(async (h) => {
       const activationId = randomUUID();
+      await h.persistence.withContext(async (ctx) => {
+        await ctx.db.execute(sql`
+          insert into app.cart_checkout_activations (
+            activation_id, cart_id, occurred_at
+          ) values (
+            ${activationId}::uuid, ${h.cartId}::uuid, clock_timestamp()
+          )
+        `);
+      });
       const started = await startCheckout(
         h.persistence,
         h.actors.customerA,
@@ -2565,6 +2578,1248 @@ describe("IMP-036J T4 architect remediations AR-036J-T4-01..06", () => {
         return r.rows[0]!.presentation_class as string;
       });
       expect(giftGone).not.toBe("CHANGED_TOTAL_RECOVERY");
+    });
+  });
+});
+
+describe("IMP-036J T4 architect remediations AR-036J-T4-07..13", () => {
+  async function commandResultOf(
+    persistence: Persistence,
+    sourceCommandId: string,
+  ): Promise<{
+    coarse_outcome: string;
+    surface: string;
+    checkout_journey_key: string | null;
+    payable_changed_vs_valid_alternative: boolean | null;
+    occurred_at: string;
+  }> {
+    return persistence.withContext(async (ctx) => {
+      const r = await ctx.db.execute(sql`
+        select
+          coarse_outcome,
+          surface,
+          checkout_journey_key::text as checkout_journey_key,
+          payable_changed_vs_valid_alternative,
+          occurred_at::text as occurred_at
+        from app.commercial_command_results
+        where source_command_id = ${sourceCommandId}::uuid
+      `);
+      return r.rows[0] as {
+        coarse_outcome: string;
+        surface: string;
+        checkout_journey_key: string | null;
+        payable_changed_vs_valid_alternative: boolean | null;
+        occurred_at: string;
+      };
+    });
+  }
+
+  async function seedExclusiveAutomatic(
+    persistence: Persistence,
+    brandId: string,
+    actor: unknown,
+    percentageBps: number,
+    priority: number,
+  ): Promise<string> {
+    return persistence.transaction(async (tx) => {
+      const created = await createPromotionDraft(tx, {
+        actor,
+        brandId,
+        code: uniqueCode("exauto"),
+        displayName: "Exclusive automatic T4",
+        scopeType: "brand",
+        territoryId: null,
+        organizationId: null,
+        outletId: null,
+        triggerType: "automatic",
+        stackingPolicy: "exclusive",
+        startsAt: new Date("2026-01-01T00:00:00Z"),
+        endsAt: null,
+        priority,
+      });
+      await setPromotionBenefit(tx, {
+        actor,
+        promotionId: created.id,
+        expectedPromotionRevision: (await getPromotion(tx, created.id))!.revision,
+        benefit: {
+          benefitType: "percentage_discount",
+          percentageBps,
+          fixedAmountPaise: null,
+          maximumDiscountPaise: null,
+          buyQuantity: null,
+          getQuantity: null,
+          repeatable: null,
+          maximumRewardQuantity: null,
+          includeModifiers: false,
+          includeBundleDeltas: false,
+        },
+      });
+      for (const role of ["qualifier", "benefit"] as const) {
+        await setPromotionTargets(tx, {
+          actor,
+          promotionId: created.id,
+          expectedPromotionRevision: (await getPromotion(tx, created.id))!
+            .revision,
+          targetRole: role,
+          targets: [
+            {
+              targetRole: role,
+              targetType: "all_merchandise",
+              productId: null,
+              variantId: null,
+              chargeDefinitionId: null,
+            },
+          ],
+        });
+      }
+      await activatePromotion(tx, {
+        actor,
+        expectedPromotionRevision: (await getPromotion(tx, created.id))!.revision,
+        promotionId: created.id,
+      });
+      return created.id;
+    });
+  }
+
+  async function insertActivation(
+    persistence: Persistence,
+    activationId: string,
+    cartId: string,
+  ): Promise<void> {
+    await persistence.withContext(async (ctx) => {
+      await ctx.db.execute(sql`
+        insert into app.cart_checkout_activations (
+          activation_id, cart_id, occurred_at
+        ) values (
+          ${activationId}::uuid, ${cartId}::uuid, clock_timestamp()
+        )
+      `);
+    });
+  }
+
+  it("AR-07 UNKNOWN retry remains UNKNOWN and does not mutate", async () => {
+    await withCheckoutReadyHarness(async (h) => {
+      const access = {
+        kind: "customer" as const,
+        actor: h.actors.customerA,
+        brandId: h.actors.tree.brand.id,
+      };
+      const unknownId = randomUUID();
+      await expect(
+        applyCartCoupon(h.persistence, access, {
+          couponCode: "NO-SUCH-CODE",
+          expectedRevision: h.cartRevision,
+          sourceCommandId: unknownId,
+        }),
+      ).rejects.toMatchObject({ code: "CART_COUPON_UNKNOWN" });
+      const cart = await getActiveCart(h.persistence, access);
+      await expect(
+        applyCartCoupon(h.persistence, access, {
+          couponCode: "STILL-UNKNOWN",
+          expectedRevision: cart!.revision,
+          sourceCommandId: unknownId,
+        }),
+      ).rejects.toMatchObject({ code: "CART_COUPON_UNKNOWN" });
+      expect(
+        await countSql(
+          h.persistence,
+          sql`select count(*)::text as c from app.commercial_command_results
+              where source_command_id = ${unknownId}::uuid
+                and coarse_outcome = 'UNKNOWN'`,
+        ),
+      ).toBe(1);
+      expect(
+        await countSql(
+          h.persistence,
+          sql`select count(*)::text as c from app.commercial_command_origins
+              where source_command_id = ${unknownId}::uuid`,
+        ),
+      ).toBe(0);
+      expect(
+        await countSql(
+          h.persistence,
+          sql`select count(*)::text as c from app.checkout_journey_facts
+              where fact_kind = 'COUPON_ATTEMPT'
+                and idempotency_key = ${Buffer.from(sha256Utf8(unknownId))}`,
+        ),
+      ).toBe(0);
+      const after = await getActiveCart(h.persistence, access);
+      expect(after!.manualCouponCode).toBeNull();
+      expect(after!.revision).toBe(cart!.revision);
+    });
+  });
+
+  it("AR-07 applied replay after later cart change does not mutate again", async () => {
+    await withCheckoutReadyHarness(async (h) => {
+      const brandId = h.actors.tree.brand.id;
+      const access = {
+        kind: "customer" as const,
+        actor: h.actors.customerA,
+        brandId,
+      };
+      const a = await seedRecognizedCoupon(
+        h.persistence,
+        brandId,
+        h.actors.brandAdminActor,
+        uniqueCode("A7"),
+      );
+      const b = await seedRecognizedCoupon(
+        h.persistence,
+        brandId,
+        h.actors.brandAdminActor,
+        uniqueCode("B7"),
+      );
+      const applyId = randomUUID();
+      const first = await applyCartCoupon(h.persistence, access, {
+        couponCode: a.canonicalCode,
+        expectedRevision: h.cartRevision,
+        sourceCommandId: applyId,
+      });
+      const stored = await commandResultOf(h.persistence, applyId);
+      const replaced = await applyCartCoupon(h.persistence, access, {
+        couponCode: b.canonicalCode,
+        expectedRevision: first.revision,
+        sourceCommandId: randomUUID(),
+      });
+      const replay = await applyCartCoupon(h.persistence, access, {
+        couponCode: a.canonicalCode,
+        expectedRevision: replaced.revision,
+        sourceCommandId: applyId,
+      });
+      expect(replay.manualCouponCode).toBe(b.canonicalCode);
+      expect(replay.revision).toBe(replaced.revision);
+      const replayed = await commandResultOf(h.persistence, applyId);
+      expect(replayed.occurred_at).toBe(stored.occurred_at);
+      expect(replayed.surface).toBe(stored.surface);
+      expect(replayed.coarse_outcome).toBe("APPLIED");
+      expect(
+        await countSql(
+          h.persistence,
+          sql`select count(*)::text as c from app.commercial_command_results
+              where source_command_id = ${applyId}::uuid`,
+        ),
+      ).toBe(1);
+    });
+  });
+
+  it("AR-07 no-op and remove replay keep stored outcome; apply id is not a remove", async () => {
+    await withCheckoutReadyHarness(async (h) => {
+      const brandId = h.actors.tree.brand.id;
+      const access = {
+        kind: "customer" as const,
+        actor: h.actors.customerA,
+        brandId,
+      };
+      const coupon = await seedRecognizedCoupon(
+        h.persistence,
+        brandId,
+        h.actors.brandAdminActor,
+        uniqueCode("N7"),
+      );
+      const applyId = randomUUID();
+      const applied = await applyCartCoupon(h.persistence, access, {
+        couponCode: coupon.canonicalCode,
+        expectedRevision: h.cartRevision,
+        sourceCommandId: applyId,
+      });
+      const noOpId = randomUUID();
+      const noOp = await applyCartCoupon(h.persistence, access, {
+        couponCode: coupon.canonicalCode,
+        expectedRevision: applied.revision,
+        sourceCommandId: noOpId,
+      });
+      const noOpStored = await commandResultOf(h.persistence, noOpId);
+      expect(noOpStored.coarse_outcome).toBe("NO_OP");
+      const noOpReplay = await applyCartCoupon(h.persistence, access, {
+        couponCode: coupon.canonicalCode,
+        expectedRevision: noOp.revision,
+        sourceCommandId: noOpId,
+      });
+      expect(noOpReplay.revision).toBe(noOp.revision);
+      const misusedRemove = await removeCartCoupon(h.persistence, access, {
+        expectedRevision: noOp.revision,
+        sourceCommandId: applyId,
+      });
+      expect(misusedRemove.manualCouponCode).toBe(coupon.canonicalCode);
+      const removeId = randomUUID();
+      const removed = await removeCartCoupon(h.persistence, access, {
+        expectedRevision: misusedRemove.revision,
+        sourceCommandId: removeId,
+      });
+      expect(removed.manualCouponCode).toBeNull();
+      const removeReplay = await removeCartCoupon(h.persistence, access, {
+        expectedRevision: removed.revision,
+        sourceCommandId: removeId,
+      });
+      expect(removeReplay.manualCouponCode).toBeNull();
+      expect(removeReplay.revision).toBe(removed.revision);
+      expect(
+        await countSql(
+          h.persistence,
+          sql`select count(*)::text as c from app.commercial_command_origins
+              where source_command_id in (
+                ${applyId}::uuid, ${noOpId}::uuid, ${removeId}::uuid
+              )`,
+        ),
+      ).toBe(2);
+    });
+  });
+
+  it("AR-08 causal expired attribution ignores older rows and non-qualifying terminals", async () => {
+    await withCheckoutReadyHarness(async (h) => {
+      const access = {
+        kind: "customer" as const,
+        actor: h.actors.customerA,
+        brandId: h.actors.tree.brand.id,
+      };
+      const ready = await bringCheckoutToReady(
+        h.persistence,
+        h.actors.customerA,
+        h.cartId,
+        h.addressId,
+      );
+      const first = await h.persistence.withContext(async (ctx) => {
+        const r = await ctx.db.execute(sql`
+          select
+            checkout_journey_key::text as k,
+            cart_causal_ordinal::text as o,
+            brand_id::text as brand_id,
+            customer_auth_user_id as customer_id
+          from app.checkouts where id = ${ready.checkoutId}::uuid
+        `);
+        return r.rows[0] as {
+          k: string;
+          o: string;
+          brand_id: string;
+          customer_id: string;
+        };
+      });
+      await h.persistence.withContext(async (ctx) => {
+        await ctx.db.execute(sql`
+          insert into app.payments (
+            id, checkout_id, checkout_snapshot_id, status,
+            created_at, updated_at, expired_at
+          ) values (
+            ${randomUUID()}::uuid, ${ready.checkoutId}::uuid,
+            ${ready.snapshotId}::uuid, 'EXPIRED', now(), now(), now()
+          )
+        `);
+        const paymentId = (
+          await ctx.db.execute(sql`
+            select id::text as id from app.payments
+            where checkout_id = ${ready.checkoutId}::uuid
+          `)
+        ).rows[0]!.id as string;
+        await ctx.db.execute(sql`
+          insert into app.payment_attempts (
+            id, payment_id, attempt_ordinal, provider, method_intent,
+            provider_execution_identity, status, created_at, updated_at, failed_at
+          ) values (
+            ${randomUUID()}::uuid, ${paymentId}::uuid, 1, 'fake', 'upi',
+            ${`exec-${randomUUID()}`}, 'FAILED', now(), now(), now()
+          )
+        `);
+        await ctx.db.execute(sql`
+          update app.checkouts
+          set status = 'EXPIRED', active_snapshot_id = null, updated_at = now()
+          where id = ${ready.checkoutId}::uuid
+        `);
+      });
+      const coupon = await seedRecognizedCoupon(
+        h.persistence,
+        h.actors.tree.brand.id,
+        h.actors.brandAdminActor,
+        uniqueCode("E8"),
+      );
+      const qualifyId = randomUUID();
+      await applyCartCoupon(h.persistence, access, {
+        couponCode: coupon.canonicalCode,
+        expectedRevision: h.cartRevision,
+        sourceCommandId: qualifyId,
+      });
+      expect((await commandResultOf(h.persistence, qualifyId)).checkout_journey_key).toBe(
+        first.k,
+      );
+
+      const olderKey = randomUUID();
+      const newerKey = randomUUID();
+      await h.persistence.transaction(async (tx) => {
+        await tx.db.execute(sql`
+          insert into app.checkout_journey_heads (
+            checkout_journey_key, next_sequence, closed_at
+          ) values
+            (${olderKey}::uuid, 1, null),
+            (${newerKey}::uuid, 1, null)
+          on conflict (checkout_journey_key) do nothing
+        `);
+      });
+      const extraA = randomUUID();
+      const extraB = randomUUID();
+      const extraC = randomUUID();
+      const extraD = randomUUID();
+      await h.persistence.withContext(async (ctx) => {
+        await ctx.db.execute(sql`
+          insert into app.checkouts (
+            id, customer_auth_user_id, brand_id, cart_id, source_cart_revision,
+            revision, status, fulfilment_mode, fulfilment_timing, expires_at,
+            created_at, updated_at, checkout_journey_key, cart_causal_ordinal
+          ) values
+            (
+              ${extraA}::uuid, ${first.customer_id}, ${first.brand_id}::uuid,
+              ${h.cartId}::uuid, 1, 1, 'EXPIRED', 'DELIVERY', 'ASAP', now() + interval '1 day',
+              now(), now(), ${olderKey}::uuid, ${Number(first.o) + 10}
+            ),
+            (
+              ${extraB}::uuid, ${first.customer_id}, ${first.brand_id}::uuid,
+              ${h.cartId}::uuid, 1, 1, 'EXPIRED', 'DELIVERY', 'ASAP', now() + interval '1 day',
+              now(), now(), ${newerKey}::uuid, ${Number(first.o) + 20}
+            ),
+            (
+              ${extraC}::uuid, ${first.customer_id}, ${first.brand_id}::uuid,
+              ${h.cartId}::uuid, 1, 1, 'CANCELLED', 'DELIVERY', 'ASAP', now() + interval '1 day',
+              now(), now(), ${newerKey}::uuid, ${Number(first.o) + 30}
+            ),
+            (
+              ${extraD}::uuid, ${first.customer_id}, ${first.brand_id}::uuid,
+              ${h.cartId}::uuid, 1, 1, 'EXPIRED', 'DELIVERY', 'ASAP', now() + interval '1 day',
+              now(), now(), ${newerKey}::uuid, ${Number(first.o) + 40}
+            )
+        `);
+      });
+      const olderDoesNotWin = randomUUID();
+      const cart2 = await getActiveCart(h.persistence, access);
+      await applyCartCoupon(h.persistence, access, {
+        couponCode: coupon.canonicalCode,
+        expectedRevision: cart2!.revision,
+        sourceCommandId: olderDoesNotWin,
+      });
+      expect(
+        (await commandResultOf(h.persistence, olderDoesNotWin)).checkout_journey_key,
+      ).toBeNull();
+
+      await cancelCheckout(
+        h.persistence,
+        h.actors.customerA,
+        {
+          checkoutId: extraC,
+          expectedCheckoutRevision: BigInt(1),
+        },
+        checkoutOpts,
+      ).catch(() => undefined);
+    });
+  });
+
+  it("AR-08 cancelled and completed latest causal rows do not supply a journey key", async () => {
+    await withCheckoutReadyHarness(async (h) => {
+      const access = {
+        kind: "customer" as const,
+        actor: h.actors.customerA,
+        brandId: h.actors.tree.brand.id,
+      };
+      const started = await startCheckout(
+        h.persistence,
+        h.actors.customerA,
+        { cartId: h.cartId },
+        checkoutOpts,
+      );
+      await cancelCheckout(
+        h.persistence,
+        h.actors.customerA,
+        {
+          checkoutId: started.id,
+          expectedCheckoutRevision: started.revision,
+        },
+        checkoutOpts,
+      );
+      const coupon = await seedRecognizedCoupon(
+        h.persistence,
+        h.actors.tree.brand.id,
+        h.actors.brandAdminActor,
+        uniqueCode("C8"),
+      );
+      const cancelId = randomUUID();
+      await applyCartCoupon(h.persistence, access, {
+        couponCode: coupon.canonicalCode,
+        expectedRevision: h.cartRevision,
+        sourceCommandId: cancelId,
+      });
+      expect((await commandResultOf(h.persistence, cancelId)).checkout_journey_key).toBeNull();
+    });
+  });
+
+  it("AR-09 startPayment writes REVIEW_TO_PAYMENT from caller continue id", async () => {
+    await withCheckoutReadyHarness(async (h) => {
+      const ready = await bringCheckoutToReady(
+        h.persistence,
+        h.actors.customerA,
+        h.cartId,
+        h.addressId,
+      );
+      const reviewed = await evaluateCheckout(
+        h.persistence,
+        h.actors.customerA,
+        {
+          checkoutId: ready.checkoutId,
+          expectedCheckoutRevision: ready.revision,
+        },
+        checkoutOpts,
+      );
+      const continueId = randomUUID();
+      const provider = createFakePaymentProvider({ defaultOutcome: "pending" });
+      await startPayment(
+        h.persistence,
+        h.actors.customerA,
+        {
+          checkoutId: ready.checkoutId,
+          expectedCheckoutRevision: reviewed.checkout.revision,
+          paymentMethodIntent: "upi",
+          idempotencyKey: newIdempotencyKey("rtp"),
+          sourceCommandId: continueId,
+        },
+        paymentOpts(provider),
+      );
+      const journey = await checkoutJourneyKeyOf(h.persistence, ready.checkoutId);
+      const facts = await h.persistence.withContext(async (ctx) => {
+        const r = await ctx.db.execute(sql`
+          select fact_kind, journey_sequence::text as seq
+          from app.checkout_journey_facts
+          where checkout_journey_key = ${journey}::uuid
+            and fact_kind in ('REVIEW_PRESENTED', 'REVIEW_TO_PAYMENT', 'PAYMENT_ATTEMPT')
+          order by journey_sequence
+        `);
+        return r.rows as Array<{ fact_kind: string; seq: string }>;
+      });
+      expect(facts.map((f) => f.fact_kind)).toEqual([
+        "REVIEW_PRESENTED",
+        "REVIEW_TO_PAYMENT",
+        "PAYMENT_ATTEMPT",
+      ]);
+      expect(
+        await countSql(
+          h.persistence,
+          sql`select count(*)::text as c from app.checkout_journey_facts
+              where fact_kind = 'REVIEW_TO_PAYMENT'
+                and idempotency_key = ${Buffer.from(sha256Utf8(continueId))}`,
+        ),
+      ).toBe(1);
+    });
+  });
+
+  it("AR-09 valid-not-selected and equal-payable-not-selected continue still allocate REVIEW_TO_PAYMENT", async () => {
+    await withCheckoutReadyHarness(async (h) => {
+      const brandId = h.actors.tree.brand.id;
+      await seedExclusiveAutomatic(
+        h.persistence,
+        brandId,
+        h.actors.brandAdminActor,
+        2000,
+        10,
+      );
+      const coupon = await seedRecognizedCoupon(
+        h.persistence,
+        brandId,
+        h.actors.brandAdminActor,
+        uniqueCode("NS9"),
+      );
+      await applyCartCoupon(
+        h.persistence,
+        {
+          kind: "customer",
+          actor: h.actors.customerA,
+          brandId,
+        },
+        {
+          couponCode: coupon.canonicalCode,
+          expectedRevision: h.cartRevision,
+          sourceCommandId: randomUUID(),
+        },
+      );
+      const ready = await bringCheckoutToReady(
+        h.persistence,
+        h.actors.customerA,
+        h.cartId,
+        h.addressId,
+      );
+      const reviewed = await evaluateCheckout(
+        h.persistence,
+        h.actors.customerA,
+        {
+          checkoutId: ready.checkoutId,
+          expectedCheckoutRevision: ready.revision,
+        },
+        checkoutOpts,
+      );
+      expect(
+        reviewed.snapshot.promotionEffects.some(
+          (e) => e.promotionCode === coupon.canonicalCode && e.effectKind === "applied_promotion",
+        ),
+      ).toBe(false);
+      const continueId = randomUUID();
+      const provider = createFakePaymentProvider({ defaultOutcome: "pending" });
+      await startPayment(
+        h.persistence,
+        h.actors.customerA,
+        {
+          checkoutId: ready.checkoutId,
+          expectedCheckoutRevision: reviewed.checkout.revision,
+          paymentMethodIntent: "upi",
+          idempotencyKey: newIdempotencyKey("vns"),
+          sourceCommandId: continueId,
+        },
+        paymentOpts(provider),
+      );
+      expect(
+        await countSql(
+          h.persistence,
+          sql`select count(*)::text as c from app.checkout_journey_facts
+              where fact_kind = 'REVIEW_TO_PAYMENT'
+                and idempotency_key = ${Buffer.from(sha256Utf8(continueId))}`,
+        ),
+      ).toBe(1);
+    });
+  });
+
+  it("AR-09 retryPayment reuses continue id; PAYMENT_ATTEMPT stays independently idempotent", async () => {
+    await withCheckoutReadyHarness(async (h) => {
+      const ready = await bringCheckoutToReady(
+        h.persistence,
+        h.actors.customerA,
+        h.cartId,
+        h.addressId,
+      );
+      const reviewed = await evaluateCheckout(
+        h.persistence,
+        h.actors.customerA,
+        {
+          checkoutId: ready.checkoutId,
+          expectedCheckoutRevision: ready.revision,
+        },
+        checkoutOpts,
+      );
+      const continueId = randomUUID();
+      const payKey = newIdempotencyKey("retry-rtp");
+      const provider = createFakePaymentProvider({ defaultOutcome: "pending" });
+      const started = await startPayment(
+        h.persistence,
+        h.actors.customerA,
+        {
+          checkoutId: ready.checkoutId,
+          expectedCheckoutRevision: reviewed.checkout.revision,
+          paymentMethodIntent: "upi",
+          idempotencyKey: payKey,
+          sourceCommandId: continueId,
+        },
+        paymentOpts(provider),
+      );
+      provider.setOutcome(started.attempt.providerExecutionIdentity, "fail");
+      await verifyAndProcessWebhook(
+        h.persistence,
+        provider,
+        {
+          executionIdentity: started.attempt.providerExecutionIdentity,
+          outcome: "fail",
+          amountPaise: started.payment.expectedAmountPaise,
+        },
+        paymentOpts(provider),
+      );
+      const checkout = await getActiveCheckout(
+        h.persistence,
+        h.actors.customerA,
+        { checkoutId: ready.checkoutId },
+        checkoutOpts,
+      );
+      const retryKey = newIdempotencyKey("retry-rtp-2");
+      const retried = await retryPayment(
+        h.persistence,
+        h.actors.customerA,
+        {
+          paymentId: started.payment.id,
+          expectedCheckoutRevision: checkout!.revision,
+          paymentMethodIntent: "upi",
+          idempotencyKey: retryKey,
+          sourceCommandId: continueId,
+        },
+        paymentOpts(provider),
+      );
+      expect(retried.attempt.id).not.toBe(started.attempt.id);
+      expect(
+        await countSql(
+          h.persistence,
+          sql`select count(*)::text as c from app.checkout_journey_facts
+              where fact_kind = 'REVIEW_TO_PAYMENT'
+                and idempotency_key = ${Buffer.from(sha256Utf8(continueId))}`,
+        ),
+      ).toBe(1);
+      expect(
+        await countSql(
+          h.persistence,
+          sql`select count(*)::text as c from app.checkout_journey_facts
+              where fact_kind = 'PAYMENT_ATTEMPT'`,
+        ),
+      ).toBe(2);
+      const replayStart = await startPayment(
+        h.persistence,
+        h.actors.customerA,
+        {
+          checkoutId: ready.checkoutId,
+          expectedCheckoutRevision: ready.revision,
+          paymentMethodIntent: "upi",
+          idempotencyKey: payKey,
+          sourceCommandId: continueId,
+        },
+        paymentOpts(provider),
+      );
+      expect(replayStart.payment.id).toBe(started.payment.id);
+      expect(
+        await countSql(
+          h.persistence,
+          sql`select count(*)::text as c from app.checkout_journey_facts
+              where fact_kind = 'PAYMENT_ATTEMPT'
+                and idempotency_key = ${Buffer.from(sha256Utf8(payKey))}`,
+        ),
+      ).toBe(1);
+    });
+  });
+
+  it("AR-09 direct pay without continue id does not invent REVIEW_TO_PAYMENT", async () => {
+    await withCheckoutReadyHarness(async (h) => {
+      const ready = await bringCheckoutToReady(
+        h.persistence,
+        h.actors.customerA,
+        h.cartId,
+        h.addressId,
+      );
+      const provider = createFakePaymentProvider({ defaultOutcome: "pending" });
+      await startPayment(
+        h.persistence,
+        h.actors.customerA,
+        {
+          checkoutId: ready.checkoutId,
+          expectedCheckoutRevision: ready.revision,
+          paymentMethodIntent: "upi",
+          idempotencyKey: newIdempotencyKey("nortp"),
+        },
+        paymentOpts(provider),
+      );
+      expect(
+        await countSql(
+          h.persistence,
+          sql`select count(*)::text as c from app.checkout_journey_facts
+              where checkout_journey_key = (
+                select checkout_journey_key from app.checkouts
+                where id = ${ready.checkoutId}::uuid
+              )
+                and fact_kind = 'REVIEW_TO_PAYMENT'`,
+        ),
+      ).toBe(0);
+    });
+  });
+
+  it("AR-10 payable_changed_vs_valid_alternative is server-derived", async () => {
+    await withCheckoutReadyHarness(async (h) => {
+      const brandId = h.actors.tree.brand.id;
+      const access = {
+        kind: "customer" as const,
+        actor: h.actors.customerA,
+        brandId,
+      };
+      const ready = await bringCheckoutToReady(
+        h.persistence,
+        h.actors.customerA,
+        h.cartId,
+        h.addressId,
+      );
+      const coupon = await seedRecognizedCoupon(
+        h.persistence,
+        brandId,
+        h.actors.brandAdminActor,
+        uniqueCode("P10"),
+      );
+      const improveId = randomUUID();
+      await applyCartCoupon(h.persistence, access, {
+        couponCode: coupon.canonicalCode,
+        expectedRevision: h.cartRevision,
+        sourceCommandId: improveId,
+      });
+      expect(
+        (await commandResultOf(h.persistence, improveId))
+          .payable_changed_vs_valid_alternative,
+      ).toBe(true);
+
+      const unknownId = randomUUID();
+      await expect(
+        applyCartCoupon(h.persistence, access, {
+          couponCode: "NO-SUCH-CODE",
+          expectedRevision: (await getActiveCart(h.persistence, access))!.revision,
+          sourceCommandId: unknownId,
+        }),
+      ).rejects.toMatchObject({ code: "CART_COUPON_UNKNOWN" });
+      expect(
+        (await commandResultOf(h.persistence, unknownId))
+          .payable_changed_vs_valid_alternative,
+      ).toBeNull();
+      void ready;
+    });
+  });
+
+  it("AR-10 equal payable is false; noncoupon-better is true; no checkout is null", async () => {
+    await withCheckoutReadyHarness(async (h) => {
+      const brandId = h.actors.tree.brand.id;
+      const access = {
+        kind: "customer" as const,
+        actor: h.actors.customerA,
+        brandId,
+      };
+      await seedExclusiveAutomatic(
+        h.persistence,
+        brandId,
+        h.actors.brandAdminActor,
+        1000,
+        1,
+      );
+      const equalCoupon = await seedRecognizedCoupon(
+        h.persistence,
+        brandId,
+        h.actors.brandAdminActor,
+        uniqueCode("EQ10"),
+      );
+      await bringCheckoutToReady(
+        h.persistence,
+        h.actors.customerA,
+        h.cartId,
+        h.addressId,
+      );
+      const equalId = randomUUID();
+      await applyCartCoupon(h.persistence, access, {
+        couponCode: equalCoupon.canonicalCode,
+        expectedRevision: h.cartRevision,
+        sourceCommandId: equalId,
+      });
+      expect(
+        (await commandResultOf(h.persistence, equalId))
+          .payable_changed_vs_valid_alternative,
+      ).toBe(false);
+    });
+
+    await withCheckoutReadyHarness(async (h) => {
+      const brandId = h.actors.tree.brand.id;
+      const access = {
+        kind: "customer" as const,
+        actor: h.actors.customerA,
+        brandId,
+      };
+      await seedExclusiveAutomatic(
+        h.persistence,
+        brandId,
+        h.actors.brandAdminActor,
+        2500,
+        10,
+      );
+      const weaker = await seedRecognizedCoupon(
+        h.persistence,
+        brandId,
+        h.actors.brandAdminActor,
+        uniqueCode("WK10"),
+      );
+      await bringCheckoutToReady(
+        h.persistence,
+        h.actors.customerA,
+        h.cartId,
+        h.addressId,
+      );
+      const weakerId = randomUUID();
+      await applyCartCoupon(h.persistence, access, {
+        couponCode: weaker.canonicalCode,
+        expectedRevision: h.cartRevision,
+        sourceCommandId: weakerId,
+      });
+      expect(
+        (await commandResultOf(h.persistence, weakerId))
+          .payable_changed_vs_valid_alternative,
+      ).toBe(true);
+    });
+
+    await withCartHarness(async (h) => {
+      const added = await addCartLine(
+        h.persistence,
+        {
+          kind: "customer",
+          actor: h.actors.customerA,
+          brandId: h.actors.tree.brand.id,
+        },
+        { variantId: h.catalog.variantId, quantity: 1 },
+      );
+      const coupon = await seedRecognizedCoupon(
+        h.persistence,
+        h.actors.tree.brand.id,
+        h.actors.brandAdminActor,
+        uniqueCode("NC10"),
+      );
+      const noneId = randomUUID();
+      await applyCartCoupon(
+        h.persistence,
+        {
+          kind: "customer",
+          actor: h.actors.customerA,
+          brandId: h.actors.tree.brand.id,
+        },
+        {
+          couponCode: coupon.canonicalCode,
+          expectedRevision: added.cart.revision,
+          sourceCommandId: noneId,
+        },
+      );
+      expect(
+        (await commandResultOf(h.persistence, noneId))
+          .payable_changed_vs_valid_alternative,
+      ).toBeNull();
+    });
+  });
+
+  it("AR-11 complimentary snapshot seals resolved base and excludes gift from totalSaved", async () => {
+    await withCheckoutReadyHarness(async (h) => {
+      const gift = await seedComplimentaryGift({
+        persistence: h.persistence,
+        brandId: h.actors.tree.brand.id,
+        actor: h.actors.brandAdminActor,
+        cartId: h.cartId,
+      });
+      const ready = await bringCheckoutToReady(
+        h.persistence,
+        h.actors.customerA,
+        h.cartId,
+        h.addressId,
+      );
+      const sealed = await h.persistence.withContext(async (ctx) => {
+        const line = await ctx.db.execute(sql`
+          select
+            line_base_paise::text as base,
+            line_subtotal_paise::text as subtotal,
+            line_promotion_discount_paise::text as discount,
+            line_total_paise::text as total
+          from app.checkout_snapshot_lines
+          where snapshot_id = ${ready.snapshotId}::uuid
+            and line_origin = 'complimentary_offer'
+        `);
+        const header = await ctx.db.execute(sql`
+          select grand_total_paise::text as grand
+          from app.checkout_snapshots
+          where id = ${ready.snapshotId}::uuid
+        `);
+        const saved = await ctx.db.execute(sql`
+          select expected_total_saved_paise::text as saved
+          from app.commercial_evaluations
+          where checkout_id = ${ready.checkoutId}::uuid
+          order by occurrence_ordinal desc
+          limit 1
+        `);
+        return {
+          line: line.rows[0] as {
+            base: string;
+            subtotal: string;
+            discount: string;
+            total: string;
+          },
+          grand: header.rows[0]!.grand as string,
+          saved: saved.rows[0]!.saved as string,
+        };
+      });
+      expect(sealed.line.base).toBe("2500");
+      expect(sealed.line.subtotal).toBe("2500");
+      expect(sealed.line.discount).toBe("2500");
+      expect(sealed.line.total).toBe("0");
+      expect(Number(sealed.saved)).toBeLessThan(2500);
+      const grandBeforeRetire = sealed.grand;
+      await h.persistence.transaction(async (tx) => {
+        const promo = await getPromotion(tx, gift.promotionId);
+        await retirePromotion(tx, {
+          actor: h.actors.brandAdminActor,
+          promotionId: gift.promotionId,
+          expectedPromotionRevision: promo!.revision,
+        });
+      });
+      const after = await h.persistence.withContext(async (ctx) => {
+        const r = await ctx.db.execute(sql`
+          select
+            line_base_paise::text as base,
+            line_promotion_discount_paise::text as discount,
+            line_total_paise::text as total
+          from app.checkout_snapshot_lines
+          where snapshot_id = ${ready.snapshotId}::uuid
+            and line_origin = 'complimentary_offer'
+        `);
+        const header = await ctx.db.execute(sql`
+          select grand_total_paise::text as grand
+          from app.checkout_snapshots
+          where id = ${ready.snapshotId}::uuid
+        `);
+        return {
+          line: r.rows[0] as { base: string; discount: string; total: string },
+          grand: header.rows[0]!.grand as string,
+        };
+      });
+      expect(after.line.base).toBe("2500");
+      expect(after.line.discount).toBe("2500");
+      expect(after.line.total).toBe("0");
+      expect(after.grand).toBe(grandBeforeRetire);
+    });
+  });
+
+  it("AR-12 complimentary applied and monetary allocation share the committed gift line", async () => {
+    await withCheckoutReadyHarness(async (h) => {
+      const gift = await seedComplimentaryGift({
+        persistence: h.persistence,
+        brandId: h.actors.tree.brand.id,
+        actor: h.actors.brandAdminActor,
+        cartId: h.cartId,
+      });
+      const ready = await bringCheckoutToReady(
+        h.persistence,
+        h.actors.customerA,
+        h.cartId,
+        h.addressId,
+      );
+      const linked = await h.persistence.withContext(async (ctx) => {
+        const r = await ctx.db.execute(sql`
+          select
+            e.effect_kind,
+            e.snapshot_line_id::text as snapshot_line_id,
+            l.id::text as gift_line
+          from app.checkout_snapshot_promotion_effects e
+          inner join app.checkout_snapshot_lines l
+            on l.snapshot_id = e.snapshot_id
+           and l.line_origin = 'complimentary_offer'
+          where e.snapshot_id = ${ready.snapshotId}::uuid
+            and e.promotion_id = ${gift.promotionId}::uuid
+            and e.effect_kind in ('applied_promotion', 'monetary_allocation')
+        `);
+        return r.rows as Array<{
+          effect_kind: string;
+          snapshot_line_id: string;
+          gift_line: string;
+        }>;
+      });
+      const kinds = linked.map((row) => row.effect_kind).sort();
+      expect(kinds).toEqual(["applied_promotion", "monetary_allocation"]);
+      expect(linked.every((row) => row.snapshot_line_id === row.gift_line)).toBe(
+        true,
+      );
+      expect(
+        new Set(linked.map((row) => row.snapshot_line_id)).size,
+      ).toBe(1);
+      const unrelated = await countSql(
+        h.persistence,
+        sql`select count(*)::text as c from app.checkout_snapshot_promotion_effects
+            where snapshot_id = ${ready.snapshotId}::uuid
+              and effect_kind = 'monetary_allocation'
+              and promotion_id <> ${gift.promotionId}::uuid
+              and snapshot_line_id = (
+                select id from app.checkout_snapshot_lines
+                where snapshot_id = ${ready.snapshotId}::uuid
+                  and line_origin = 'complimentary_offer'
+              )`,
+      );
+      expect(unrelated).toBe(0);
+      const coupon = await seedRecognizedCoupon(
+        h.persistence,
+        h.actors.tree.brand.id,
+        h.actors.brandAdminActor,
+        uniqueCode("FK12"),
+      );
+      await applyCartCoupon(
+        h.persistence,
+        {
+          kind: "customer",
+          actor: h.actors.customerA,
+          brandId: h.actors.tree.brand.id,
+        },
+        {
+          couponCode: coupon.canonicalCode,
+          expectedRevision: h.cartRevision,
+          sourceCommandId: randomUUID(),
+        },
+      );
+      const other = await bringCheckoutToReady(
+        h.persistence,
+        h.actors.customerA,
+        h.cartId,
+        h.addressId,
+      );
+      expect(other.snapshotId).not.toBe(ready.snapshotId);
+      await expect(
+        h.persistence.withContext(async (ctx) => {
+          await ctx.db.execute(sql`
+            insert into app.checkout_snapshot_promotion_effects (
+              id, snapshot_id, effect_kind, promotion_id, promotion_code,
+              display_name, sort_order, snapshot_line_id
+            )
+            select
+              ${randomUUID()}::uuid,
+              ${other.snapshotId}::uuid,
+              'applied_promotion',
+              ${gift.promotionId}::uuid,
+              'x',
+              'x',
+              0,
+              id
+            from app.checkout_snapshot_lines
+            where snapshot_id = ${ready.snapshotId}::uuid
+              and line_origin = 'complimentary_offer'
+          `);
+        }),
+      ).rejects.toBeTruthy();
+    });
+  });
+
+  it("AR-13 existing-only cart activation association", async () => {
+    await withCheckoutReadyHarness(async (h) => {
+      const genuine = randomUUID();
+      await insertActivation(h.persistence, genuine, h.cartId);
+      const started = await startCheckout(
+        h.persistence,
+        h.actors.customerA,
+        { cartId: h.cartId, cartActivationId: genuine },
+        checkoutOpts,
+      );
+      const associated = await h.persistence.withContext(async (ctx) => {
+        const r = await ctx.db.execute(sql`
+          select checkout_id::text as checkout_id,
+                 checkout_journey_key::text as k,
+                 watermark_sequence::text as w
+          from app.cart_checkout_activations
+          where activation_id = ${genuine}::uuid
+        `);
+        return r.rows[0] as { checkout_id: string; k: string; w: string };
+      });
+      expect(associated.checkout_id).toBe(started.id);
+      expect(associated.k).toBe(
+        await checkoutJourneyKeyOf(h.persistence, started.id),
+      );
+
+      const reused = await startCheckout(
+        h.persistence,
+        h.actors.customerA,
+        { cartId: h.cartId, cartActivationId: genuine },
+        checkoutOpts,
+      );
+      expect(reused.id).toBe(started.id);
+      const retry = await h.persistence.withContext(async (ctx) => {
+        const r = await ctx.db.execute(sql`
+          select checkout_id::text as checkout_id,
+                 watermark_sequence::text as w
+          from app.cart_checkout_activations
+          where activation_id = ${genuine}::uuid
+        `);
+        return r.rows[0] as { checkout_id: string; w: string };
+      });
+      expect(retry.checkout_id).toBe(started.id);
+      expect(retry.w).toBe(associated.w);
+
+      const missing = randomUUID();
+      await startCheckout(
+        h.persistence,
+        h.actors.customerA,
+        { cartId: h.cartId, cartActivationId: missing },
+        checkoutOpts,
+      );
+      expect(
+        await countSql(
+          h.persistence,
+          sql`select count(*)::text as c from app.cart_checkout_activations
+              where activation_id = ${missing}::uuid`,
+        ),
+      ).toBe(0);
+
+      const malformed = await startCheckout(
+        h.persistence,
+        h.actors.customerA,
+        { cartId: h.cartId, cartActivationId: "not-a-uuid" },
+        checkoutOpts,
+      );
+      expect(malformed.id).toBe(started.id);
+
+      const foreign = randomUUID();
+      const otherLine = await h.persistence.withContext(async (ctx) => {
+        const r = await ctx.db.execute(sql`
+          select variant_id::text as id from app.cart_lines
+          where cart_id = ${h.cartId}::uuid limit 1
+        `);
+        return r.rows[0]!.id as string;
+      });
+      const other = await addCartLine(
+        h.persistence,
+        {
+          kind: "customer",
+          actor: h.actors.customerB,
+          brandId: h.actors.tree.brand.id,
+        },
+        { variantId: otherLine, quantity: 1 },
+      );
+      await insertActivation(h.persistence, foreign, other.cart.id);
+      await startCheckout(
+        h.persistence,
+        h.actors.customerA,
+        { cartId: h.cartId, cartActivationId: foreign },
+        checkoutOpts,
+      );
+      const foreignRow = await h.persistence.withContext(async (ctx) => {
+        const r = await ctx.db.execute(sql`
+          select checkout_id::text as checkout_id
+          from app.cart_checkout_activations
+          where activation_id = ${foreign}::uuid
+        `);
+        return r.rows[0] as { checkout_id: string | null };
+      });
+      expect(foreignRow.checkout_id).toBeNull();
+
+      const second = randomUUID();
+      await insertActivation(h.persistence, second, h.cartId);
+      await startCheckout(
+        h.persistence,
+        h.actors.customerA,
+        { cartId: h.cartId, cartActivationId: second },
+        checkoutOpts,
+      );
+      expect(
+        await countSql(
+          h.persistence,
+          sql`select count(*)::text as c from app.cart_checkout_activations
+              where checkout_id = ${started.id}::uuid`,
+        ),
+      ).toBe(2);
+
+      await h.persistence.withContext(async (ctx) => {
+        await ctx.db.execute(sql`
+          insert into app.checkout_journey_facts (
+            fact_id, checkout_journey_key, fact_kind, journey_sequence,
+            idempotency_key, occurred_at
+          ) values (
+            ${randomUUID()}::uuid,
+            ${associated.k}::uuid,
+            'PAYMENT_ATTEMPT',
+            99,
+            ${Buffer.from(sha256Utf8(randomUUID()))},
+            clock_timestamp()
+          )
+        `);
+      });
+      const watermarked = randomUUID();
+      await insertActivation(h.persistence, watermarked, h.cartId);
+      await startCheckout(
+        h.persistence,
+        h.actors.customerA,
+        { cartId: h.cartId, cartActivationId: watermarked },
+        checkoutOpts,
+      );
+      const wm = await h.persistence.withContext(async (ctx) => {
+        const r = await ctx.db.execute(sql`
+          select watermark_sequence::text as w
+          from app.cart_checkout_activations
+          where activation_id = ${watermarked}::uuid
+        `);
+        return Number(r.rows[0]!.w);
+      });
+      expect(wm).toBeGreaterThanOrEqual(99);
     });
   });
 });

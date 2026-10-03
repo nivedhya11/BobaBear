@@ -26,7 +26,14 @@ import {
   type CartPolicy,
 } from "../../shared/cart";
 import type { Persistence } from "../persistence/types";
+import { eq } from "drizzle-orm";
+import {
+  checkoutSnapshotsTable,
+} from "../../platform/database/schema/checkout";
 import { findCouponByCanonicalCode } from "../promotions/coupons";
+import { buildDirectPricingQuote } from "../pricing/quote";
+import { loadFirstOrderPurchaseStatus } from "../payment/first-order";
+import { lockCheckoutForUpdate } from "../checkout/repository";
 import {
   assertCommandIdForCart,
   insertCommandOrigin,
@@ -486,6 +493,94 @@ export async function clearCart(
   });
 }
 
+function replayStoredCouponCommand(
+  coarseOutcome: string,
+  loadCart: () => Promise<Cart>,
+): Promise<Cart> {
+  if (coarseOutcome === "UNKNOWN") {
+    rejectUnknownCoupon();
+  }
+  return loadCart();
+}
+
+async function quotePayableChangedVsValidAlternative(
+  tx: Parameters<Parameters<Persistence["transaction"]>[0]>[0],
+  input: {
+    checkoutId: string | null;
+    coarseOutcome: string;
+    now: Date;
+    customerAuthUserId: string | null;
+  },
+): Promise<boolean | null> {
+  if (input.coarseOutcome === "UNKNOWN" || !input.checkoutId) {
+    return null;
+  }
+  try {
+    const checkout = await lockCheckoutForUpdate(tx, input.checkoutId);
+    if (!checkout) return null;
+    let outletId = checkout.pickupOutletId;
+    if (!outletId) {
+      const snapshotId = checkout.activeSnapshotId;
+      const snapshotRows = snapshotId
+        ? await tx.db
+            .select({
+              selectedOutletId: checkoutSnapshotsTable.selectedOutletId,
+            })
+            .from(checkoutSnapshotsTable)
+            .where(eq(checkoutSnapshotsTable.id, snapshotId))
+            .limit(1)
+        : await tx.db
+            .select({
+              selectedOutletId: checkoutSnapshotsTable.selectedOutletId,
+            })
+            .from(checkoutSnapshotsTable)
+            .where(eq(checkoutSnapshotsTable.checkoutId, checkout.id))
+            .limit(1);
+      outletId = snapshotRows[0]?.selectedOutletId ?? null;
+    }
+    if (!outletId) return null;
+    const cartRow = await lockCartForUpdate(tx, checkout.cartId);
+    if (!cartRow) return null;
+    const cart = await loadCartAggregate(tx, cartRow);
+    if (!cart?.manualCouponCode) return null;
+    const firstOrderPurchaseStatus = await loadFirstOrderPurchaseStatus(
+      tx,
+      input.customerAuthUserId,
+    );
+    const quote = await buildDirectPricingQuote(tx, {
+      outletId,
+      at: input.now,
+      customerId: input.customerAuthUserId,
+      firstOrderPurchaseStatus,
+      submittedCouponCode: cart.manualCouponCode,
+      fulfilmentMode: checkout.fulfilmentMode as "DELIVERY" | "PICKUP",
+      fulfilmentTiming: checkout.fulfilmentTiming as "ASAP" | "SCHEDULED",
+      lines: cart.lines.map((line) => ({
+        lineId: line.id,
+        variantId: line.variantId,
+        quantity: line.quantity,
+        modifiers: line.modifiers.map((m) => ({
+          variantModifierGroupId: m.variantModifierGroupId,
+          modifierGroupOptionId: m.modifierGroupOptionId,
+          quantity: m.quantity,
+        })),
+        bundleOptions: line.bundleSelections.map((b) => ({
+          bundleGroupOptionId: b.bundleGroupOptionId,
+          quantity: b.quantity,
+          modifiers: b.modifiers.map((m) => ({
+            variantModifierGroupId: m.variantModifierGroupId,
+            modifierGroupOptionId: m.modifierGroupOptionId,
+            quantity: m.quantity,
+          })),
+        })),
+      })),
+    });
+    return quote.payableChangedVsValidAlternative ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function finishCouponCommand(
   tx: Parameters<Parameters<Persistence["transaction"]>[0]>[0],
   input: {
@@ -495,6 +590,8 @@ async function finishCouponCommand(
     originKind: OriginKind | null;
     coarseOutcome: string;
     revisionChanged: boolean;
+    now: Date;
+    customerAuthUserId: string | null;
   },
 ): Promise<void> {
   if (!input.sourceCommandId) return;
@@ -513,13 +610,20 @@ async function finishCouponCommand(
       checkoutJourneyKey: surface.journeyKey,
     });
   }
+  const payableChangedVsValidAlternative =
+    await quotePayableChangedVsValidAlternative(tx, {
+      checkoutId: surface.checkoutId,
+      coarseOutcome: input.coarseOutcome,
+      now: input.now,
+      customerAuthUserId: input.customerAuthUserId,
+    });
   await insertCommandResult({
     context: tx,
     sourceCommandId: input.sourceCommandId,
     cartId: input.cartId,
     surface: surface.surface,
     coarseOutcome: input.coarseOutcome,
-    payableChangedVsValidAlternative: null,
+    payableChangedVsValidAlternative,
     checkoutJourneyKey: surface.journeyKey,
   });
   await writeCouponAttemptFact({
@@ -549,6 +653,8 @@ export async function applyCartCoupon(
   const now = clock.now();
   assertBrandId(access.brandId);
   const parsed = parseApplyCartCouponInput(input);
+  const customerAuthUserId =
+    access.kind === "customer" ? access.actor.authUserId : null;
 
   const committed = await persistence.transaction(async (tx) => {
     const row = await lockAuthorizedCart(
@@ -564,8 +670,12 @@ export async function applyCartCoupon(
         parsed.sourceCommandId,
         row.id,
       );
-      if (replay === "replay") {
-        return { kind: "cart" as const, cart: await loadCartAggregate(tx, row) };
+      if (replay.kind === "replay") {
+        return {
+          kind: "replay" as const,
+          outcome: replay.result.coarseOutcome,
+          cart: await loadCartAggregate(tx, row),
+        };
       }
     }
     assertRevisionMatch(row, parsed.expectedRevision);
@@ -580,6 +690,8 @@ export async function applyCartCoupon(
         originKind: null,
         coarseOutcome: "UNKNOWN",
         revisionChanged: false,
+        now,
+        customerAuthUserId,
       });
       return { kind: "unknown" as const };
     }
@@ -592,6 +704,8 @@ export async function applyCartCoupon(
         originKind: null,
         coarseOutcome: "UNKNOWN",
         revisionChanged: false,
+        now,
+        customerAuthUserId,
       });
       return { kind: "unknown" as const };
     }
@@ -603,6 +717,8 @@ export async function applyCartCoupon(
         originKind: null,
         coarseOutcome: "NO_OP",
         revisionChanged: false,
+        now,
+        customerAuthUserId,
       });
       return { kind: "cart" as const, cart: await loadCartAggregate(tx, row) };
     }
@@ -628,12 +744,17 @@ export async function applyCartCoupon(
       originKind,
       coarseOutcome: originKind === "COUPON_APPLY" ? "APPLIED" : "REPLACED",
       revisionChanged: true,
+      now,
+      customerAuthUserId,
     });
     const refreshed = await lockCartForUpdate(tx, row.id);
     return { kind: "cart" as const, cart: await loadCartAggregate(tx, refreshed!) };
   });
   if (committed.kind === "unknown") {
     rejectUnknownCoupon();
+  }
+  if (committed.kind === "replay") {
+    return replayStoredCouponCommand(committed.outcome, async () => committed.cart);
   }
   return committed.cart;
 }
@@ -648,8 +769,10 @@ export async function removeCartCoupon(
   const now = clock.now();
   assertBrandId(access.brandId);
   const parsed = parseRemoveCartCouponInput(input);
+  const customerAuthUserId =
+    access.kind === "customer" ? access.actor.authUserId : null;
 
-  return persistence.transaction(async (tx) => {
+  const committed = await persistence.transaction(async (tx) => {
     const row = await lockAuthorizedCart(
       tx,
       access,
@@ -663,8 +786,12 @@ export async function removeCartCoupon(
         parsed.sourceCommandId,
         row.id,
       );
-      if (replay === "replay") {
-        return loadCartAggregate(tx, row);
+      if (replay.kind === "replay") {
+        return {
+          kind: "replay" as const,
+          outcome: replay.result.coarseOutcome,
+          cart: await loadCartAggregate(tx, row),
+        };
       }
     }
     assertRevisionMatch(row, parsed.expectedRevision);
@@ -676,8 +803,10 @@ export async function removeCartCoupon(
         originKind: null,
         coarseOutcome: "NO_OP",
         revisionChanged: false,
+        now,
+        customerAuthUserId,
       });
-      return loadCartAggregate(tx, row);
+      return { kind: "cart" as const, cart: await loadCartAggregate(tx, row) };
     }
     await updateCartHeader(tx, {
       cartId: row.id,
@@ -699,10 +828,16 @@ export async function removeCartCoupon(
       originKind: "COUPON_REMOVE",
       coarseOutcome: "REMOVED",
       revisionChanged: true,
+      now,
+      customerAuthUserId,
     });
     const refreshed = await lockCartForUpdate(tx, row.id);
-    return loadCartAggregate(tx, refreshed!);
+    return { kind: "cart" as const, cart: await loadCartAggregate(tx, refreshed!) };
   });
+  if (committed.kind === "replay") {
+    return replayStoredCouponCommand(committed.outcome, async () => committed.cart);
+  }
+  return committed.cart;
 }
 
 async function lockAuthorizedCart(

@@ -89,18 +89,26 @@ export function buildSnapshotCandidate(input: {
   const complimentaryLine = lines.find(
     (line) => line.lineOrigin === "complimentary_offer",
   );
+  const complimentaryPromotionIds = new Set(
+    input.commercial.quote.appliedPromotions
+      .filter((applied) => applied.isComplimentary === true)
+      .map((applied) => applied.promotionId),
+  );
+  const complimentaryComponentIds = new Set(
+    [...complimentaryPromotionIds].map((id) => `base:complimentary:${id}`),
+  );
   const promotionEffects = input.commercial.promotionEffects.map((e) => {
-    const appliedGift =
-      e.effectKind === "applied_promotion" &&
-      complimentaryLine &&
-      input.commercial.quote.appliedPromotions.some(
-        (applied) =>
-          applied.promotionId === e.promotionId && applied.isComplimentary === true,
-      );
+    const giftOwned =
+      Boolean(complimentaryLine) &&
+      ((e.effectKind === "applied_promotion" &&
+        complimentaryPromotionIds.has(e.promotionId)) ||
+        (e.effectKind === "monetary_allocation" &&
+          e.componentId !== null &&
+          complimentaryComponentIds.has(e.componentId)));
     return Object.freeze({
       id: randomUUID(),
       ...e,
-      snapshotLineId: appliedGift ? complimentaryLine.id : null,
+      snapshotLineId: giftOwned ? complimentaryLine!.id : (e.snapshotLineId ?? null),
       promotionRevision: e.promotionRevision ?? null,
     });
   });

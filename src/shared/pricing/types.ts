@@ -71,6 +71,11 @@ export type DirectPricingQuote = Readonly<{
   submittedCouponResult: SubmittedCouponResult | null;
   /** IMP-036J T3 — server-owned commercial explanation projection. */
   commercialExplanation?: CommercialExplanation | null;
+  /**
+   * IMP-036J T4 — selected/coupon payable vs the valid non-coupon alternative
+   * from the same T3 candidate set. Null when no valid comparison exists.
+   */
+  payableChangedVsValidAlternative?: boolean | null;
   taxablePaise: bigint;
   taxPaise: bigint;
   taxComponents: readonly TaxComponentAmount[];

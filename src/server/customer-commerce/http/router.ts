@@ -963,6 +963,7 @@ export async function routeCustomerCommerceRequest(
         "expectedCheckoutRevision",
         "paymentMethodIntent",
         "idempotencyKey",
+        "sourceCommandId",
       ]);
       if (!body) return outcome("start_payment", 400, "INVALID_REQUEST");
       const identity = await requireTrustedIdentity(deps.runtime, req.headers);
@@ -1011,6 +1012,7 @@ export async function routeCustomerCommerceRequest(
           "expectedCheckoutRevision",
           "paymentMethodIntent",
           "idempotencyKey",
+          "sourceCommandId",
         ]);
         if (!body) return outcome("retry_payment", 400, "INVALID_REQUEST");
         const identity = await requireTrustedIdentity(deps.runtime, req.headers);

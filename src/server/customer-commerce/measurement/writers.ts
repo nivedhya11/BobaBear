@@ -374,13 +374,20 @@ export async function findCommandResult(
   return rows[0] ?? null;
 }
 
+export type CommandIdClaim =
+  | Readonly<{ kind: "fresh" }>
+  | Readonly<{
+      kind: "replay";
+      result: typeof commercialCommandResultsTable.$inferSelect;
+    }>;
+
 export async function assertCommandIdForCart(
   context: PersistenceTransactionContext,
   sourceCommandId: string,
   cartId: string,
-): Promise<"replay" | "fresh"> {
+): Promise<CommandIdClaim> {
   const existing = await findCommandResult(context, sourceCommandId);
-  if (!existing) return "fresh";
+  if (!existing) return { kind: "fresh" };
   if (existing.cartId !== cartId) {
     throw new CartError(
       "CART_CONFLICT",
@@ -388,7 +395,7 @@ export async function assertCommandIdForCart(
       { field: "sourceCommandId" },
     );
   }
-  return "replay";
+  return { kind: "replay", result: existing };
 }
 
 export async function insertCommandOrigin(input: {
@@ -441,6 +448,7 @@ export async function loadActiveCheckoutJourneyKey(
       id: checkoutsTable.id,
       journeyKey: checkoutsTable.checkoutJourneyKey,
       status: checkoutsTable.status,
+      cartCausalOrdinal: checkoutsTable.cartCausalOrdinal,
     })
     .from(checkoutsTable)
     .where(eq(checkoutsTable.cartId, cartId));
@@ -450,16 +458,32 @@ export async function loadActiveCheckoutJourneyKey(
       row.status === "READY_FOR_PAYMENT" ||
       row.status === "PAYMENT_PENDING",
   );
+  if (active?.journeyKey) {
+    return { checkoutId: active.id, journeyKey: active.journeyKey };
+  }
+  const ordered = rows.filter((row) => row.cartCausalOrdinal !== null);
+  if (ordered.length === 0) {
+    return active
+      ? { checkoutId: active.id, journeyKey: active.journeyKey }
+      : null;
+  }
+  ordered.sort((a, b) => {
+    const left = a.cartCausalOrdinal ?? BigInt(0);
+    const right = b.cartCausalOrdinal ?? BigInt(0);
+    if (left === right) return 0;
+    return left < right ? -1 : 1;
+  });
+  const latest = ordered[ordered.length - 1]!;
+  if (
+    latest.journeyKey &&
+    (await isPaymentDrivenExpiredPredecessor(context, latest.id))
+  ) {
+    return { checkoutId: latest.id, journeyKey: latest.journeyKey };
+  }
   if (active) {
     return { checkoutId: active.id, journeyKey: active.journeyKey };
   }
-  const expired = rows
-    .filter((row) => row.status === "EXPIRED" && row.journeyKey)
-    .at(-1);
-  if (expired) {
-    return { checkoutId: expired.id, journeyKey: expired.journeyKey };
-  }
-  return null;
+  return { checkoutId: latest.id, journeyKey: null };
 }
 
 export async function resolveCouponCommandSurface(
@@ -1098,7 +1122,17 @@ export async function associateCartActivation(input: {
     .from(cartCheckoutActivationsTable)
     .where(eq(cartCheckoutActivationsTable.activationId, input.cartActivationId))
     .limit(1);
-  if (existing[0]) {
+  const row = existing[0];
+  if (!row) {
+    return;
+  }
+  if (row.cartId !== input.cartId) {
+    return;
+  }
+  if (
+    row.checkoutId === input.checkoutId &&
+    row.checkoutJourneyKey === input.journeyKey
+  ) {
     return;
   }
   const seqRows = await input.context.db
@@ -1110,15 +1144,14 @@ export async function associateCartActivation(input: {
       eq(checkoutJourneyFactsTable.checkoutJourneyKey, input.journeyKey),
     );
   const watermark = BigInt(seqRows[0]?.max ?? "0");
-  await input.context.db.insert(cartCheckoutActivationsTable).values({
-    activationId: input.cartActivationId,
-    cartId: input.cartId,
-    checkoutJourneyKey: input.journeyKey,
-    checkoutId: input.checkoutId,
-    watermarkSequence: watermark,
-    occurredAt: sql`clock_timestamp()` as unknown as Date,
-    reviewReachFactId: null,
-  });
+  await input.context.db
+    .update(cartCheckoutActivationsTable)
+    .set({
+      checkoutJourneyKey: input.journeyKey,
+      checkoutId: input.checkoutId,
+      watermarkSequence: watermark,
+    })
+    .where(eq(cartCheckoutActivationsTable.activationId, input.cartActivationId));
 }
 
 export async function closeJourney(
@@ -1165,55 +1198,56 @@ export async function ensureReviewPresentedThenPaymentFacts(input: {
     .orderBy(desc(commercialEvaluationsTable.occurrenceOrdinal))
     .limit(1);
   const evaluation = latest[0];
-  if (!evaluation) return;
-  const changeFacts = await input.context.db
-    .select({ factId: checkoutJourneyFactsTable.factId })
-    .from(checkoutJourneyFactsTable)
-    .where(
-      and(
-        eq(
-          checkoutJourneyFactsTable.evaluationId,
-          evaluation.evaluationId,
+  if (evaluation) {
+    const changeFacts = await input.context.db
+      .select({ factId: checkoutJourneyFactsTable.factId })
+      .from(checkoutJourneyFactsTable)
+      .where(
+        and(
+          eq(
+            checkoutJourneyFactsTable.evaluationId,
+            evaluation.evaluationId,
+          ),
+          eq(checkoutJourneyFactsTable.factKind, "COMMERCIAL_STATE_CHANGE"),
         ),
-        eq(checkoutJourneyFactsTable.factKind, "COMMERCIAL_STATE_CHANGE"),
-      ),
-    );
-  const changeFactIds = changeFacts.map((row) => row.factId);
-  const stale =
-    changeFactIds.length === 0
-      ? []
-      : await input.context.db
-          .select({ originKind: commercialCommandOriginsTable.originKind })
-          .from(commercialCommandOriginsTable)
-          .where(
-            inArray(
-              commercialCommandOriginsTable.resolvedChangeFactId,
-              changeFactIds,
-            ),
-          );
-  const staleRecovery = stale.some((row) => row.originKind === "STALE_RECOVERY");
-  const presentationClass = derivePresentationClass({
-    coarseShape: evaluation.expectedCoarseShape as CoarseShape,
-    staleRecovery,
-    reasonClass: evaluation.explanationReasonClass,
-  });
-  await allocateJourneyFact({
-    context: input.context,
-    journeyKey: input.journeyKey,
-    factKind: "REVIEW_PRESENTED",
-    idempotencyKey: sha256Utf8(`${input.journeyKey}:${evaluation.evaluationId}`),
-    evaluationId: evaluation.evaluationId,
-    presentationClass,
-    rejectIfClosed: false,
-  });
-  if (input.continueSourceCommandId) {
+      );
+    const changeFactIds = changeFacts.map((row) => row.factId);
+    const stale =
+      changeFactIds.length === 0
+        ? []
+        : await input.context.db
+            .select({ originKind: commercialCommandOriginsTable.originKind })
+            .from(commercialCommandOriginsTable)
+            .where(
+              inArray(
+                commercialCommandOriginsTable.resolvedChangeFactId,
+                changeFactIds,
+              ),
+            );
+    const staleRecovery = stale.some((row) => row.originKind === "STALE_RECOVERY");
+    const presentationClass = derivePresentationClass({
+      coarseShape: evaluation.expectedCoarseShape as CoarseShape,
+      staleRecovery,
+      reasonClass: evaluation.explanationReasonClass,
+    });
     await allocateJourneyFact({
       context: input.context,
       journeyKey: input.journeyKey,
-      factKind: "REVIEW_TO_PAYMENT",
-      idempotencyKey: sha256Utf8(input.continueSourceCommandId),
-      rejectIfClosed: true,
+      factKind: "REVIEW_PRESENTED",
+      idempotencyKey: sha256Utf8(`${input.journeyKey}:${evaluation.evaluationId}`),
+      evaluationId: evaluation.evaluationId,
+      presentationClass,
+      rejectIfClosed: false,
     });
+    if (input.continueSourceCommandId) {
+      await allocateJourneyFact({
+        context: input.context,
+        journeyKey: input.journeyKey,
+        factKind: "REVIEW_TO_PAYMENT",
+        idempotencyKey: sha256Utf8(input.continueSourceCommandId),
+        rejectIfClosed: true,
+      });
+    }
   }
   if (input.paymentIdempotencyKey) {
     await allocateJourneyFact({

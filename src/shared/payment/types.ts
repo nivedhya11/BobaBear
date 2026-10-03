@@ -118,6 +118,7 @@ export type StartPaymentInput = Readonly<{
   expectedCheckoutRevision: bigint;
   paymentMethodIntent: SupportedPaymentMethodIntent;
   idempotencyKey: string;
+  sourceCommandId: string | null;
 }>;
 
 export type RetryPaymentInput = Readonly<{
@@ -125,6 +126,7 @@ export type RetryPaymentInput = Readonly<{
   expectedCheckoutRevision: bigint;
   paymentMethodIntent: SupportedPaymentMethodIntent;
   idempotencyKey: string;
+  sourceCommandId: string | null;
 }>;
 
 export type CancelPaymentInput = Readonly<{

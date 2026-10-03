@@ -597,7 +597,7 @@ export async function startPayment(
       journeyKey: updatedCheckout.checkoutJourneyKey,
       checkoutId: updatedCheckout.id,
       paymentIdempotencyKey: parsed.idempotencyKey,
-      continueSourceCommandId: null,
+      continueSourceCommandId: parsed.sourceCommandId,
     });
 
     await bindInitiationIdempotency(tx, {
@@ -1096,7 +1096,7 @@ export async function retryPayment(
       journeyKey: updatedCheckout.checkoutJourneyKey,
       checkoutId: updatedCheckout.id,
       paymentIdempotencyKey: parsed.idempotencyKey,
-      continueSourceCommandId: null,
+      continueSourceCommandId: parsed.sourceCommandId,
     });
 
     await bindInitiationIdempotency(tx, {
