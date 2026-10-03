@@ -113,6 +113,7 @@ import {
   evaluateImp036jArchitectureLock,
   evaluateImp036jProgrammeLifecycle,
   evaluateImp036jProductIdentity,
+  evaluateImp036jTranche3CurrentSourceAnchor,
   evaluateImp036jExperienceFitPointer,
   evaluateImp036jTestingPointer,
   evaluateImp036kGateCandidateProvenance,
@@ -18900,6 +18901,39 @@ describe("IMP-036J architecture fit remediation candidate 9", () => {
     assert.match(designReadinessRecord, /IMP036J_TRANCHE_3:\s*NOT_STARTED/);
     assert.match(designReadinessRecord, /IMP036J_NEXT_GATE:\s*IMPLEMENTATION_TRANCHE_3/);
     assert.match(roadmap, /GTM-R183 \/ STATE-R181 remains the (?:IMP-036K )?Design Readiness PASS checkpoint/);
+  });
+  it("requires exact current source main 8e4221f at GTM-R184 / STATE-R182 and rejects stale 51cc0b3 CURRENT labels", () => {
+    const state = readFileSync("docs/platform/STATE.md", "utf8");
+    const roadmap = readFileSync("docs/platform/ROADMAP.md", "utf8");
+    assert.deepEqual(evaluateImp036jTranche3CurrentSourceAnchor(roadmap, state), { ok: true });
+    assert.match(state, /CURRENT_SOURCE_MAIN:\s*8e4221f27d3e9c930dca4544382a038a58f0f93a/);
+    assert.match(state, /CURRENT_SOURCE_EXACT_MAIN_CI:\s*37071608421/);
+    assert.match(state, /CURRENT_SOURCE_EXACT_MAIN_CODEQL:\s*37071608405/);
+    assert.match(state, /PR346_PROVENANCE_REPAIR_MERGE_CHECKPOINT:\s*51cc0b3c3964e2d5e4d301b1b43c80d5132b7210/);
+    assert.doesNotMatch(state, /CURRENT_SOURCE_MAIN:\s*51cc0b3c3964e2d5e4d301b1b43c80d5132b7210/);
+    assert.doesNotMatch(state, /CURRENT_SOURCE_EXACT_MAIN_CI:\s*37070367757/);
+    assert.doesNotMatch(state, /CURRENT_SOURCE_EXACT_MAIN_CODEQL:\s*37070367671/);
+    const staleMain = state.replace(
+      "CURRENT_SOURCE_MAIN: 8e4221f27d3e9c930dca4544382a038a58f0f93a",
+      "CURRENT_SOURCE_MAIN: 51cc0b3c3964e2d5e4d301b1b43c80d5132b7210",
+    );
+    assert.notEqual(staleMain, state);
+    assert.equal(evaluateImp036jTranche3CurrentSourceAnchor(roadmap, staleMain).code, "IMP036J_T3_STALE_CURRENT_SOURCE");
+    const staleCi = state.replace(
+      "CURRENT_SOURCE_EXACT_MAIN_CI: 37071608421",
+      "CURRENT_SOURCE_EXACT_MAIN_CI: 37070367757",
+    );
+    assert.equal(evaluateImp036jTranche3CurrentSourceAnchor(roadmap, staleCi).code, "IMP036J_T3_STALE_CURRENT_SOURCE");
+    const staleCodeql = state.replace(
+      "CURRENT_SOURCE_EXACT_MAIN_CODEQL: 37071608405",
+      "CURRENT_SOURCE_EXACT_MAIN_CODEQL: 37070367671",
+    );
+    assert.equal(evaluateImp036jTranche3CurrentSourceAnchor(roadmap, staleCodeql).code, "IMP036J_T3_STALE_CURRENT_SOURCE");
+    const historicalOnly = state.replace(
+      "PR346_PROVENANCE_REPAIR_MERGE_CHECKPOINT: 51cc0b3c3964e2d5e4d301b1b43c80d5132b7210\n",
+      "",
+    );
+    assert.equal(evaluateImp036jTranche3CurrentSourceAnchor(roadmap, historicalOnly).code, "IMP036J_T3_HISTORICAL_SOURCE");
   });
   it("preserves the GTM-R180 / STATE-R178 checkpoint where Tranche 2 had not started", () => {
     const state = readFileSync("docs/platform/STATE.md", "utf8");

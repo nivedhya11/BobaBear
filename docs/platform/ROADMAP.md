@@ -80,9 +80,13 @@
   that reviewed head. Independent review `5961204791` passed.
   Post-merge closure `5961423809` and exact-main CI
   `37063266966` / CodeQL `37063266951` succeeded. Current
-  source main `51cc0b3c3964e2d5e4d301b1b43c80d5132b7210` (tree `3492b4eaf95ab4f0cbab89b6de08c1e6c9d147fb`) also reran the
+  source main `8e4221f27d3e9c930dca4544382a038a58f0f93a` (tree `3492b4eaf95ab4f0cbab89b6de08c1e6c9d147fb`) also reran the
   named IMP-036J Tranche 3 proof successfully (exact-main CI
-  `37070367757` / CodeQL `37070367671`).
+  `37071608421` / CodeQL `37071608405`). Historical
+  `PR346_PROVENANCE_REPAIR_MERGE_CHECKPOINT`
+  `51cc0b3c3964e2d5e4d301b1b43c80d5132b7210` (CI `37070367757` /
+  CodeQL `37070367671`) shared that same tree and is retained as prior
+  source evidence only.
   `IMP036J_TRANCHE_1` stays `PASS`. `IMP036J_TRANCHE_2` stays `PASS`.
   `IMP036J_TRANCHE_3` becomes `PASS`. `IMP036J_TRANCHE_4` stays
   `NOT_STARTED`. `IMP036J_NEXT_GATE` becomes `IMPLEMENTATION_TRANCHE_4`.
@@ -1029,9 +1033,13 @@ SHARED_GOVERNANCE_PERSISTENCE: SERIALIZED
 that head. Independent review `5961204791` passed. Post-merge
 closure `5961423809`, exact-main CI `37063266966`, and
 exact-main CodeQL `37063266951` succeeded. Current source main
-`51cc0b3c3964e2d5e4d301b1b43c80d5132b7210` (tree `3492b4eaf95ab4f0cbab89b6de08c1e6c9d147fb`) also reran the named
+`8e4221f27d3e9c930dca4544382a038a58f0f93a` (tree `3492b4eaf95ab4f0cbab89b6de08c1e6c9d147fb`) also reran the named
 IMP-036J Tranche 3 proof successfully (exact-main CI
-`37070367757` / CodeQL `37070367671`).
+`37071608421` / CodeQL `37071608405`). Historical
+`PR346_PROVENANCE_REPAIR_MERGE_CHECKPOINT`
+`51cc0b3c3964e2d5e4d301b1b43c80d5132b7210` (CI `37070367757` /
+CodeQL `37070367671`) shared that same tree and is retained as prior
+source evidence only.
 `IMP036J_TRANCHE_1` stays `PASS`. `IMP036J_TRANCHE_2` stays `PASS`.
 `IMP036J_TRANCHE_3` is `PASS`. `IMP036J_TRANCHE_4` is `NOT_STARTED`.
 `nextGate` is `IMPLEMENTATION_TRANCHE_4`. Formal lifecycle stays

@@ -43388,6 +43388,83 @@ function checkImp036kDesignReadinessPass(roadmap, state, architecture, decision)
 
 
 /**
+ * Exact current-source identity for IMP-036J Tranche 3 PASS (GTM-R184 / STATE-R182).
+ * CURRENT_SOURCE_* must name exact canonical main `8e4221f...`, not the
+ * tree-equivalent PR #346 provenance-repair ancestor `51cc0b3...`.
+ * Historical PR346 checkpoint evidence may remain when explicitly labeled.
+ * @param {string} roadmapText
+ * @param {string} stateText
+ * @returns {{ ok: true } | { ok: false, code: string, message: string }}
+ */
+export function evaluateImp036jTranche3CurrentSourceAnchor(roadmapText, stateText) {
+  const forbiddenCurrentLabels = [
+    "CURRENT_SOURCE_MAIN: 51cc0b3c3964e2d5e4d301b1b43c80d5132b7210",
+    "CURRENT_SOURCE_EXACT_MAIN_CI: 37070367757",
+    "CURRENT_SOURCE_EXACT_MAIN_CODEQL: 37070367671",
+  ];
+  for (const token of forbiddenCurrentLabels) {
+    if (stateText.includes(token) || roadmapText.includes(token)) {
+      return {
+        ok: false,
+        code: "IMP036J_T3_STALE_CURRENT_SOURCE",
+        message: `CURRENT source must not remain labeled ${token}; use exact main 8e4221f... / CI 37071608421 / CodeQL 37071608405`,
+      };
+    }
+  }
+  if (
+    roadmapText.includes("Current source main\n`51cc0b3c3964e2d5e4d301b1b43c80d5132b7210`") ||
+    roadmapText.includes("Current source main `51cc0b3c3964e2d5e4d301b1b43c80d5132b7210`") ||
+    stateText.includes("Current source main\n`51cc0b3c3964e2d5e4d301b1b43c80d5132b7210`") ||
+    stateText.includes("Current source main `51cc0b3c3964e2d5e4d301b1b43c80d5132b7210`")
+  ) {
+    return {
+      ok: false,
+      code: "IMP036J_T3_STALE_CURRENT_SOURCE",
+      message: "Narrative current source main must be 8e4221f...; 51cc0b3... is historical PR346 provenance only",
+    };
+  }
+  const requiredCurrent = [
+    "CURRENT_SOURCE_MAIN: 8e4221f27d3e9c930dca4544382a038a58f0f93a",
+    "CURRENT_SOURCE_MAIN_TREE: 3492b4eaf95ab4f0cbab89b6de08c1e6c9d147fb",
+    "CURRENT_SOURCE_EXACT_MAIN_CI: 37071608421",
+    "CURRENT_SOURCE_EXACT_MAIN_CODEQL: 37071608405",
+    "CURRENT_SOURCE_T3_NAMED_PROOF: PASS",
+  ];
+  for (const token of requiredCurrent) {
+    if (!stateText.includes(token)) {
+      return {
+        ok: false,
+        code: "IMP036J_T3_CURRENT_SOURCE",
+        message: `IMP-036J Tranche 3 PASS must record exact current source ${token}`,
+      };
+    }
+  }
+  if (
+    !stateText.includes("PR346_PROVENANCE_REPAIR_MERGE_CHECKPOINT: 51cc0b3c3964e2d5e4d301b1b43c80d5132b7210") ||
+    !stateText.includes("PR346_PROVENANCE_REPAIR_MERGE_CHECKPOINT_CI: 37070367757") ||
+    !stateText.includes("PR346_PROVENANCE_REPAIR_MERGE_CHECKPOINT_CODEQL: 37070367671")
+  ) {
+    return {
+      ok: false,
+      code: "IMP036J_T3_HISTORICAL_SOURCE",
+      message: "PR346 provenance-repair merge checkpoint 51cc0b3... / CI 37070367757 / CodeQL 37070367671 must remain as historical evidence",
+    };
+  }
+  if (
+    !roadmapText.includes("8e4221f27d3e9c930dca4544382a038a58f0f93a") ||
+    !roadmapText.includes("37071608421") ||
+    !roadmapText.includes("37071608405")
+  ) {
+    return {
+      ok: false,
+      code: "IMP036J_T3_CURRENT_SOURCE",
+      message: "ROADMAP must record exact current source main 8e4221f... with CI 37071608421 and CodeQL 37071608405",
+    };
+  }
+  return { ok: true };
+}
+
+/**
  * CURRENT checkpoint: IMP-036J Tranche 3 PASS (GTM-R184 / STATE-R182).
  * IMP-036K Design Readiness stays PASS. Tranche 4 stays unstarted.
  * Historical GTM-R183 / STATE-R181 remains Design Readiness PASS with
@@ -43450,10 +43527,10 @@ function checkImp036jTranche3Pass(roadmap, state, architecture, decision) {
     "5961423809",
     "37063266966",
     "37063266951",
-    "51cc0b3c3964e2d5e4d301b1b43c80d5132b7210",
+    "8e4221f27d3e9c930dca4544382a038a58f0f93a",
     "3492b4eaf95ab4f0cbab89b6de08c1e6c9d147fb",
-    "37070367757",
-    "37070367671",
+    "37071608421",
+    "37071608405",
     "IMP037_HOLD: YES",
     "IMP038_HOLD: YES",
     "GAP-EXT-ASSESS-001: NOT_CLOSED",
@@ -43463,6 +43540,8 @@ function checkImp036jTranche3Pass(roadmap, state, architecture, decision) {
       fail("IMP036J_T3_POSITION", `IMP-036J Tranche 3 PASS persistence must record ${token}`);
     }
   }
+  const sourceAnchor = evaluateImp036jTranche3CurrentSourceAnchor(roadmapText, stateText);
+  if (!sourceAnchor.ok) fail(sourceAnchor.code, sourceAnchor.message);
   const forbiddenCurrent = [
     "IMP036J_TRANCHE_3: NOT_STARTED",
     "IMP036J_TRANCHE_3: IN_REVIEW",
