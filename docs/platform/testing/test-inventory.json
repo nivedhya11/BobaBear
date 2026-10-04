@@ -31,9 +31,9 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2252,
-    "executableTestFiles": 489,
-    "sourceTestFiles": 144,
+    "trackedPathsConsidered": 2256,
+    "executableTestFiles": 491,
+    "sourceTestFiles": 146,
     "testsTreeExecutableFiles": 270,
     "scriptTestFiles": 75,
     "playwrightSpecs": 12,
@@ -91,6 +91,7 @@
     "src/components/ordering/checkout-snapshot-presentation.test.ts",
     "src/components/ordering/client-action.test.ts",
     "src/components/ordering/financial-document-presentation.test.ts",
+    "src/components/ordering/imp036j-tranche5-checkout-remediation.test.tsx",
     "src/components/ordering/imp036j-tranche5-presentation.test.tsx",
     "src/components/ordering/order-status.test.ts",
     "src/components/ordering/order-support.test.ts",
@@ -186,6 +187,7 @@
     "src/shared/financial-document/financial-document.render.test.ts",
     "src/shared/notifications/customer-visible-content.test.ts",
     "src/shared/notifications/notifications.domain.test.ts",
+    "src/shared/order/money-summary.test.ts",
     "src/shared/order/order-smoke.test.ts",
     "src/shared/pricing/delivery-fee-policy.test.ts",
     "src/shared/refund-statutory-decision/finalization-command.test.ts",
@@ -3498,6 +3500,25 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "src/components/ordering/imp036j-tranche5-checkout-remediation.test.tsx",
+      "runner": "vitest",
+      "domain": "components/ordering",
+      "testType": "component-or-tsx",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage",
+        "test:imp036j:tranche5"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "2-component"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "src/components/ordering/imp036j-tranche5-presentation.test.tsx",
       "runner": "vitest",
       "domain": "components/ordering",
@@ -5266,6 +5287,26 @@
         "test",
         "test:coverage",
         "test:imp036i:tranche4"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/shared/order/money-summary.test.ts",
+      "runner": "vitest",
+      "domain": "shared/order",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage",
+        "test:imp036j:tranche5"
       ],
       "ciInclusion": "YES",
       "test1Layers": [
