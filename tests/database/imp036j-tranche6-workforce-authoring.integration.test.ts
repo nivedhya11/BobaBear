@@ -986,6 +986,21 @@ describe("IMP-036J Tranche 6 workforce authoring", () => {
         ),
       ).rejects.toMatchObject({ code: "PROMOTION_COMPLIMENTARY_INVALID" });
 
+      await expect(
+        harness.persistence.transaction((tx) =>
+          setPromotionBenefit(tx, {
+            actor,
+            promotionId: draft.id,
+            expectedPromotionRevision: draft.revision,
+            benefit: {
+              ...emptyMoneyBenefit("complimentary_item"),
+              complimentaryProductId: "abc",
+              complimentaryVariantId: "abc",
+            },
+          }),
+        ),
+      ).rejects.toMatchObject({ code: "PROMOTION_COMPLIMENTARY_INVALID" });
+
       const published = await seedActiveStandardVariant(
         harness.persistence,
         brandId,
@@ -1780,6 +1795,71 @@ describe("IMP-036J Tranche 6 workforce authoring", () => {
           }),
         ),
       ).rejects.toMatchObject({ code: "PROMOTION_BENEFIT_INVALID" });
+
+      const leftoverGift = await createReadyDraftPromotion(harness, { code: uniqueCode("lg") });
+      const leftoverCatalog = await seedActiveStandardVariant(
+        harness.persistence,
+        harness.tree.brand.id,
+        harness.brandAdminPrincipal,
+        "lg",
+      );
+      let leftoverRev = leftoverGift.revision;
+      leftoverRev = (
+        await harness.persistence.transaction((tx) =>
+          setPromotionBenefit(tx, {
+            actor: harness.brandAdminPrincipal,
+            promotionId: leftoverGift.id,
+            expectedPromotionRevision: leftoverRev,
+            benefit: {
+              ...emptyMoneyBenefit("complimentary_item"),
+              complimentaryProductId: leftoverCatalog.productId,
+              complimentaryVariantId: leftoverCatalog.variantId,
+            },
+          }),
+        )
+      ).revision;
+      leftoverRev = (
+        await harness.persistence.transaction((tx) =>
+          setPromotionTargets(tx, {
+            actor: harness.brandAdminPrincipal,
+            promotionId: leftoverGift.id,
+            expectedPromotionRevision: leftoverRev,
+            targetRole: "qualifier",
+            targets: [{ targetRole: "qualifier", ...MERCH }],
+          }),
+        )
+      ).revision;
+      leftoverRev = (
+        await harness.persistence.transaction((tx) =>
+          setPromotionTargets(tx, {
+            actor: harness.brandAdminPrincipal,
+            promotionId: leftoverGift.id,
+            expectedPromotionRevision: leftoverRev,
+            targetRole: "benefit",
+            targets: [{ targetRole: "benefit", ...DELIVERY_CHARGE_TARGET }],
+          }),
+        )
+      ).revision;
+      await expect(
+        harness.persistence.transaction((tx) =>
+          activatePromotion(tx, {
+            actor: harness.brandAdminPrincipal,
+            promotionId: leftoverGift.id,
+            expectedPromotionRevision: leftoverRev,
+          }),
+        ),
+      ).rejects.toMatchObject({ code: "PROMOTION_BENEFIT_INVALID" });
+
+      await expect(
+        harness.persistence.transaction((tx) =>
+          updatePromotionDraft(tx, {
+            actor: harness.brandAdminPrincipal,
+            promotionId: leftoverGift.id,
+            expectedPromotionRevision: leftoverRev,
+            minimumQualifyingAmountPaise: BigInt(0),
+          }),
+        ),
+      ).rejects.toMatchObject({ message: expect.stringMatching(/greater than 0/) });
 
       await new Promise<void>((resolve, reject) => {
         server.close((err) => (err ? reject(err) : resolve()));

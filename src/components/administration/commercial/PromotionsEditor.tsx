@@ -453,9 +453,9 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
       ...(timingScheduled ? (["SCHEDULED"] as const) : []),
     ];
     const minPaise = minInr.trim() ? parseInrToPaise(minInr) : null;
-    if (minInr.trim() && minPaise === null) {
+    if (minInr.trim() && (minPaise === null || minPaise === "0" || minPaise.startsWith("-"))) {
       setBusy(false);
-      props.onStatus("Enter a valid minimum INR amount.");
+      props.onStatus("Enter a valid minimum INR amount greater than zero, or leave blank.");
       return;
     }
     let minimumItemQuantity: number | null = null;

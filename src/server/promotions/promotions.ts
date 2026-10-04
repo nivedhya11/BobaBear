@@ -188,6 +188,18 @@ function normalizeEligibilityList<T extends string>(
   return unique;
 }
 
+function normalizePositivePaise(
+  value: bigint | null | undefined,
+  field: string,
+): bigint | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  if (value <= BigInt(0)) {
+    throw new PromotionValidationError(`${field} must be null or greater than 0.`);
+  }
+  return value;
+}
+
 function normalizePositiveCap(
   value: number | null | undefined,
   field: string,
@@ -258,7 +270,9 @@ export async function createPromotionDraft(
       priority: input.priority ?? 0,
       startsAt: input.startsAt,
       endsAt: input.endsAt ?? null,
-      minimumQualifyingAmountPaise: input.minimumQualifyingAmountPaise ?? null,
+      minimumQualifyingAmountPaise:
+        normalizePositivePaise(input.minimumQualifyingAmountPaise ?? null, "minimumQualifyingAmountPaise") ??
+        null,
       minimumItemQuantity: input.minimumItemQuantity ?? null,
       firstOrderOnly: input.firstOrderOnly === true,
       eligibleFulfilmentModes:
@@ -364,7 +378,10 @@ export async function updatePromotionDraft(
       endsAt,
       minimumQualifyingAmountPaise:
         input.minimumQualifyingAmountPaise !== undefined
-          ? input.minimumQualifyingAmountPaise
+          ? (normalizePositivePaise(
+              input.minimumQualifyingAmountPaise,
+              "minimumQualifyingAmountPaise",
+            ) ?? null)
           : row.minimumQualifyingAmountPaise,
       minimumItemQuantity:
         input.minimumItemQuantity !== undefined
@@ -864,22 +881,17 @@ export async function activatePromotion(
       );
     }
   } else {
-    // Locked V1 slot model: a non-waiver Offer may not target both delivery charge
-    // and merchandise in one benefit set (would classify as dual slot classes).
+    // Only delivery_fee_waiver may occupy the delivery-charge benefit slot.
+    // Leftover delivery targets after switching to merchandise/gift would
+    // otherwise classify as a delivery incentive (dual-slot / wrong primary).
     const targetsDelivery = bConfigs.some(
       (t) =>
         t.targetType === "charge" && t.chargeDefinitionId === CHARGE_DEFINITION_DELIVERY_ID,
     );
-    const targetsMerchandise = bConfigs.some(
-      (t) =>
-        t.targetType === "all_merchandise" ||
-        t.targetType === "product" ||
-        t.targetType === "variant",
-    );
-    if (targetsDelivery && targetsMerchandise) {
+    if (targetsDelivery) {
       throw new PromotionAdminError(
         "PROMOTION_BENEFIT_INVALID",
-        "Benefit targets cannot mix delivery charge and merchandise classes.",
+        "Only delivery_fee_waiver may target the canonical delivery charge.",
       );
     }
   }

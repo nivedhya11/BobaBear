@@ -22,7 +22,6 @@ import {
   loadEffectiveVariantModifierGroupContent,
 } from "../catalog/revisions";
 import type { PersistenceTransactionContext } from "../persistence/types";
-import { assertUuid } from "./assert-role";
 import { PromotionAdminError } from "./errors";
 import { COPY_OP_GIFT_INVALID } from "../../shared/promotions/operator-copy";
 
@@ -52,8 +51,15 @@ export async function assertComplimentaryAuthoringSafe(
   ) {
     giftInvalid("complimentaryVariantId");
   }
-  const productId = assertUuid(input.complimentaryProductId, "complimentaryProductId");
-  const variantId = assertUuid(input.complimentaryVariantId, "complimentaryVariantId");
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!UUID_RE.test(input.complimentaryProductId)) {
+    giftInvalid("complimentaryProductId");
+  }
+  if (!UUID_RE.test(input.complimentaryVariantId)) {
+    giftInvalid("complimentaryVariantId");
+  }
+  const productId = input.complimentaryProductId;
+  const variantId = input.complimentaryVariantId;
 
   const [product] = await context.db
     .select()
