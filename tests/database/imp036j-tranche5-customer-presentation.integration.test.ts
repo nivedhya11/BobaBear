@@ -19,6 +19,7 @@ import {
   FIXED_NOW,
   withCheckoutReadyHarness,
 } from "./support/payment-fixtures";
+import { secondPersistence } from "./support/refund-fixtures";
 
 afterEach(async () => {
   await closeTrackedPersistenceHandles();
@@ -336,6 +337,58 @@ describe("IMP-036J Tranche 5 customer presentation observation", () => {
         return r.rows[0] as { grand: string; saved: string };
       });
       expect(after).toEqual(before);
+    });
+  });
+
+  it("AR-036J-T5-13 observation does not deadlock with cart/checkout re-evaluation locks", async () => {
+    await withCheckoutReadyHarness(async (h) => {
+      const access = {
+        kind: "customer" as const,
+        actor: h.actors.customerA,
+        brandId: h.actors.tree.brand.id,
+      };
+      const cartEval = await evaluateCart(h.persistence, access, loc);
+      const evaluationId = cartEval.evaluationId!;
+      const stored = await loadExpected(h.persistence, evaluationId);
+      const body = {
+        evaluationId,
+        components: componentsFromExpected(stored.expected_components),
+        progressPresent: stored.expected_progress_present,
+        progressRemainingPaise: stored.expected_progress_present ? stored.remaining : null,
+        observedCoarseShape: stored.expected_coarse_shape,
+        observedComplimentaryPresent: false,
+        observedComplimentaryLineSha256: null,
+      };
+      const other = secondPersistence(h.database.connectionString);
+      const raced = await Promise.allSettled([
+        h.persistence.transaction(async (tx) => {
+          await tx.db.execute(sql`
+            select id from app.carts where id = ${h.cartId}::uuid for update
+          `);
+          await tx.db.execute(sql`
+            select id from app.checkouts where cart_id = ${h.cartId}::uuid for update
+          `);
+          await tx.db.execute(sql`select pg_sleep(1.2)`);
+          await tx.db.execute(sql`
+            update app.commercial_evaluations
+            set expected_coarse_shape = expected_coarse_shape
+            where evaluation_id = ${evaluationId}::uuid
+          `);
+        }),
+        persistCommerceObservation(other, access, body),
+      ]);
+      const rejected = raced.filter((row) => row.status === "rejected");
+      expect(rejected).toEqual([]);
+      expect(raced.every((row) => row.status === "fulfilled")).toBe(true);
+
+      const otherCustomer = {
+        kind: "customer" as const,
+        actor: h.actors.customerB,
+        brandId: h.actors.tree.brand.id,
+      };
+      await expect(
+        persistCommerceObservation(h.persistence, otherCustomer, body),
+      ).rejects.toMatchObject({ code: "CART_NOT_FOUND" });
     });
   });
 });

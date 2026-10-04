@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   narrowSnapshotCharges,
   narrowSnapshotTaxComponents,
+  sealedCustomerSavingsFromSnapshot,
   snapshotPayableRows,
 } from "./checkout-snapshot-presentation";
 import type { CommerceCheckoutSnapshot } from "@/lib/customer-commerce";
@@ -88,5 +89,55 @@ describe("checkout snapshot presentation", () => {
     expect(rows.find((row) => row.key === "charge-packaging")?.amountPaise).toBe("2000");
     expect(rows.find((row) => row.key === "charge-delivery")?.amountPaise).toBe("4000");
     expect(rows.find((row) => row.key === "total")?.amountPaise).toBe("114600");
+  });
+
+  it("projects sealed customer savings and excludes complimentary allocation", () => {
+    const giftOnly = sealedCustomerSavingsFromSnapshot({
+      ...snapshot,
+      promotionDiscountPaise: "15000",
+      promotionEffects: [
+        {
+          effectKind: "monetary_allocation",
+          amountPaise: "15000",
+          snapshotLineId: "gift-line",
+          componentId: "base:complimentary:promo-gift",
+        },
+      ],
+    });
+    expect(giftOnly).toEqual({
+      orderSavingPaise: "0",
+      deliverySavingPaise: "0",
+      totalSavedPaise: "0",
+    });
+
+    const mixed = sealedCustomerSavingsFromSnapshot({
+      ...snapshot,
+      promotionDiscountPaise: "27000",
+      promotionEffects: [
+        {
+          effectKind: "monetary_allocation",
+          amountPaise: "15000",
+          snapshotLineId: "gift-line",
+          componentId: "base:complimentary:promo-gift",
+        },
+        {
+          effectKind: "monetary_allocation",
+          amountPaise: "8000",
+          snapshotLineId: null,
+          componentId: "line:1",
+        },
+        {
+          effectKind: "monetary_allocation",
+          amountPaise: "4000",
+          snapshotLineId: null,
+          componentId: "charge:delivery",
+        },
+      ],
+    });
+    expect(mixed).toEqual({
+      orderSavingPaise: "8000",
+      deliverySavingPaise: "4000",
+      totalSavedPaise: "12000",
+    });
   });
 });

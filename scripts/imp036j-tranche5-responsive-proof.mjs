@@ -106,6 +106,69 @@ await assertViewport(page, 1280, {
   desktopHasAmount: true,
 });
 
+async function observeAt(width) {
+  await page.setViewportSize({ width, height: 900 });
+  return page.evaluate(() => {
+    const visible = (el) => {
+      if (!el) return false;
+      const style = window.getComputedStyle(el);
+      return style.display !== "none" && style.visibility !== "hidden";
+    };
+    const desktop = document.querySelector('[data-testid="cart-order-summary"]');
+    const narrow = document.querySelector('[data-testid="cart-narrow-offer"]');
+    const sticky = document.querySelector('[data-testid="cart-mobile-checkout"]');
+    const desktopInner = desktop.querySelector("[data-offer-component]");
+    const classHiddenSelectsDesktop = Boolean(desktopInner?.closest(".hidden"));
+    const desktopVisible = visible(desktop);
+    const narrowVisible = visible(narrow);
+    const stickyVisible = visible(sticky);
+    const roots =
+      desktopVisible && !narrowVisible
+        ? [desktop]
+        : narrowVisible && stickyVisible
+          ? [narrow, sticky]
+          : [];
+    const kinds = roots.flatMap((root) =>
+      [...root.querySelectorAll("[data-offer-component]")].map((node) =>
+        node.getAttribute("data-offer-component"),
+      ),
+    );
+    return {
+      classHiddenSelectsDesktop,
+      desktopVisible,
+      narrowVisible,
+      stickyVisible,
+      kinds,
+      rootCount: roots.length,
+    };
+  });
+}
+
+const narrowObs = await observeAt(390);
+if (!narrowObs.narrowVisible || narrowObs.desktopVisible) {
+  throw new Error("390px must show only narrow presentation");
+}
+if (narrowObs.kinds.filter((kind) => kind === "ORDER_SAVING").length !== 1) {
+  throw new Error("390px posted hidden desktop ORDER_SAVING");
+}
+if (!narrowObs.kinds.includes("CURRENT_CHECKOUT_TOTAL")) {
+  throw new Error("390px missing sticky amount");
+}
+
+const desktopObs = await observeAt(1280);
+if (!desktopObs.desktopVisible || desktopObs.narrowVisible) {
+  throw new Error("1280px must show only desktop presentation");
+}
+if (desktopObs.classHiddenSelectsDesktop !== true) {
+  throw new Error("desktop still carries Tailwind hidden class while visible");
+}
+if (desktopObs.kinds.filter((kind) => kind === "ORDER_SAVING").length !== 1) {
+  throw new Error("1280px did not post visible desktop once");
+}
+if (desktopObs.kinds.filter((kind) => kind === "CURRENT_CHECKOUT_TOTAL").length !== 1) {
+  throw new Error("1280px missing or duplicated desktop amount");
+}
+
 // Hidden desktop must not be treated as the narrow committed observation root.
 const observationSafety = await page.evaluate(() => {
   const desktop = document.querySelector('[data-testid="cart-order-summary"]');

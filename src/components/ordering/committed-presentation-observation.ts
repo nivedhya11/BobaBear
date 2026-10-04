@@ -23,6 +23,40 @@ function sha256HexUtf8(value: string): Promise<string> {
   });
 }
 
+export function isCssVisibleCommittedNode(node: Element | null): boolean {
+  if (!node || typeof window === "undefined" || typeof window.getComputedStyle !== "function") {
+    return false;
+  }
+  const style = window.getComputedStyle(node);
+  return style.display !== "none" && style.visibility !== "hidden";
+}
+
+export function selectVisibleCartObservationRoots(input: {
+  observationRoot: "narrow" | "desktop" | null;
+  desktop: Element | null;
+  narrowOffer: Element | null;
+  sticky: Element | null;
+  isVisible?: (node: Element | null) => boolean;
+}): Element[] | null {
+  const isVisible = input.isVisible ?? isCssVisibleCommittedNode;
+  if (input.observationRoot === "desktop") {
+    const desktopSurface =
+      input.desktop?.closest("[data-testid='cart-order-summary']") ?? input.desktop;
+    if (!isVisible(desktopSurface) || !input.desktop) return null;
+    return [input.desktop];
+  }
+  if (input.observationRoot === "narrow") {
+    const narrowSurface =
+      input.narrowOffer?.closest("[data-testid='cart-narrow-offer']") ?? input.narrowOffer;
+    const stickySurface =
+      input.sticky?.closest("[data-testid='cart-mobile-checkout']") ?? input.sticky;
+    if (!isVisible(narrowSurface) || !isVisible(stickySurface)) return null;
+    if (!input.narrowOffer || !input.sticky) return null;
+    return [input.narrowOffer, input.sticky];
+  }
+  return null;
+}
+
 export function readCommittedPresentation(root: ParentNode | readonly ParentNode[]): {
   components: Array<{ kind: string; present: boolean; amountPaise: string }>;
   progressPresent: boolean;

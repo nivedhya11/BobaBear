@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { compareCommercialPresentation } from "./compare-presentation";
@@ -130,5 +132,13 @@ describe("compareCommercialPresentation", () => {
     });
     expect(swapped.mismatchFlags).toContain("WRONG_COMPONENT");
     expect(swapped.mismatchFlags).toContain("WRONG_TOTAL_SAVED");
+  });
+
+  it("AR-036J-T5-13 observation authorization does not lock commerce rows", () => {
+    const source = readFileSync(
+      path.join(process.cwd(), "src/server/customer-commerce/measurement/observe-presentation.ts"),
+      "utf8",
+    );
+    expect(source).not.toMatch(/\.for\("update"\)/);
   });
 });

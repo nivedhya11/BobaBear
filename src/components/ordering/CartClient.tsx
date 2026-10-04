@@ -6,7 +6,10 @@ import { Button } from "@/components/ui/Button";
 import { CartLineList } from "@/components/ordering/CartLineList";
 import { CouponField } from "@/components/ordering/CouponField";
 import { CommercialOfferStack } from "@/components/ordering/CommercialOfferStack";
-import { postCommittedPresentationObservation } from "@/components/ordering/committed-presentation-observation";
+import {
+  postCommittedPresentationObservation,
+  selectVisibleCartObservationRoots,
+} from "@/components/ordering/committed-presentation-observation";
 import {
   canReuseCheckoutEvaluation,
   merchandiseSubtotalFromQuote,
@@ -90,7 +93,7 @@ export function CartClient(props: { brandId: string }) {
   const [couponFocusInputToken, setCouponFocusInputToken] = useState(0);
   const [couponFocusResultToken, setCouponFocusResultToken] = useState(0);
   const [activeCheckout, setActiveCheckout] = useState<CommerceCheckout | null>(null);
-  const [observationRoot, setObservationRoot] = useState<"narrow" | "desktop">("desktop");
+  const [observationRoot, setObservationRoot] = useState<"narrow" | "desktop" | null>(null);
   const narrowOfferRef = useRef<HTMLDivElement | null>(null);
   const desktopOfferRef = useRef<HTMLDivElement | null>(null);
   const stickyAmountRef = useRef<HTMLDivElement | null>(null);
@@ -424,23 +427,31 @@ export function CartClient(props: { brandId: string }) {
       checkout: activeCheckout,
       cartRevision: cart.revision,
     });
+  const reuseCheckoutPending = reuseCheckoutEval && !reuseCheckoutEligible;
   const usingCheckoutEvaluation = reuseCheckoutEval && reuseCheckoutEligible;
   const serverMerchandise = merchandiseSubtotalFromQuote(evaluation?.quote);
   const estimatedPaise =
     serverMerchandise ??
     (presentationEstimate.complete ? presentationEstimate.totalPaise.toString() : "0");
-  const amountKind = usingCheckoutEvaluation
-    ? "current-checkout-total"
-    : "estimated-subtotal";
+  const amountKind = reuseCheckoutPending
+    ? "waiting"
+    : usingCheckoutEvaluation
+      ? "current-checkout-total"
+      : "estimated-subtotal";
   const amountLabel =
     amountKind === "current-checkout-total"
       ? IMP036J_COPY.CURRENT_CHECKOUT_TOTAL
-      : IMP036J_COPY.ESTIMATED_SUBTOTAL;
-  const amountPaise = usingCheckoutEvaluation
-    ? explanation?.grandTotalPaise ??
-      activeCheckout?.activeSnapshot?.grandTotalPaise ??
-      estimatedPaise
-    : estimatedPaise;
+      : amountKind === "waiting"
+        ? IMP036J_COPY.CHECKING_TOTAL
+        : IMP036J_COPY.ESTIMATED_SUBTOTAL;
+  const amountPaise =
+    amountKind === "waiting"
+      ? estimatedPaise
+      : usingCheckoutEvaluation
+        ? explanation?.grandTotalPaise ??
+          activeCheckout?.activeSnapshot?.grandTotalPaise ??
+          estimatedPaise
+        : estimatedPaise;
   const deliveryChargePaise = usingCheckoutEvaluation
     ? snapshotDeliveryChargePaise(activeCheckout?.activeSnapshot ?? null)
     : null;
@@ -461,10 +472,16 @@ export function CartClient(props: { brandId: string }) {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const session = await fetchCustomerSession();
-      if (!session.ok || !session.data.authenticated || !cart) return;
+      if (!cart) {
+        setActiveCheckout(null);
+        return;
+      }
       const active = await getActiveCheckout({ cartId: cart.id });
-      if (cancelled || !active.ok) return;
+      if (cancelled) return;
+      if (!active.ok) {
+        setActiveCheckout(null);
+        return;
+      }
       setActiveCheckout(active.data.checkout);
     })();
     return () => {
@@ -483,22 +500,26 @@ export function CartClient(props: { brandId: string }) {
 
   useEffect(() => {
     if (!evaluation?.evaluationId || couponPending) return;
-    if (observationRoot === "desktop") {
-      const root = desktopOfferRef.current;
-      if (!root || root.closest(".hidden")) return;
-      void postCommittedPresentationObservation(root, {
-        evaluationId: evaluation.evaluationId,
-      });
-      return;
-    }
-    const offer = narrowOfferRef.current;
-    const sticky = stickyAmountRef.current;
-    if (!offer || !sticky) return;
-    // Narrow committed presentation = visible offer stack + sticky amount only.
-    void postCommittedPresentationObservation([offer, sticky], {
+    if (reuseCheckoutPending) return;
+    const roots = selectVisibleCartObservationRoots({
+      observationRoot,
+      desktop: desktopOfferRef.current,
+      narrowOffer: narrowOfferRef.current,
+      sticky: stickyAmountRef.current,
+    });
+    if (!roots) return;
+    void postCommittedPresentationObservation(roots, {
       evaluationId: evaluation.evaluationId,
     });
-  }, [evaluation?.evaluationId, amountPaise, couponPending, observationRoot, complimentaryName]);
+  }, [
+    evaluation?.evaluationId,
+    amountPaise,
+    couponPending,
+    observationRoot,
+    complimentaryName,
+    reuseCheckoutPending,
+    amountKind,
+  ]);
 
   if (loading) {
     return (
@@ -615,7 +636,7 @@ export function CartClient(props: { brandId: string }) {
                 waitingText={
                   couponPending
                     ? IMP036J_COPY.CHECKING
-                    : evaluation == null
+                    : evaluation == null || reuseCheckoutPending
                       ? IMP036J_COPY.CHECKING_TOTAL
                       : null
                 }
@@ -668,7 +689,7 @@ export function CartClient(props: { brandId: string }) {
                 waitingText={
                   couponPending
                     ? IMP036J_COPY.CHECKING
-                    : evaluation == null
+                    : evaluation == null || reuseCheckoutPending
                       ? IMP036J_COPY.CHECKING_TOTAL
                       : null
                 }
@@ -737,7 +758,9 @@ export function CartClient(props: { brandId: string }) {
                 data-offer-component={
                   amountKind === "current-checkout-total"
                     ? "CURRENT_CHECKOUT_TOTAL"
-                    : "ESTIMATED_SUBTOTAL"
+                    : amountKind === "waiting"
+                      ? undefined
+                      : "ESTIMATED_SUBTOTAL"
                 }
                 data-offer-amount={amountPaise}
                 data-offer-present="true"

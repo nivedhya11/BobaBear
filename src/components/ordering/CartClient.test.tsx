@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CartClient } from "./CartClient";
+import { IMP036J_COPY } from "./imp036j-copy";
 import { writeDeliveryContext } from "@/lib/customer-location/delivery-context";
 import {
   STALE_MODIFIER_OPTION_LABEL,
@@ -16,6 +17,7 @@ const removeCartLine = vi.fn<(...args: unknown[]) => unknown>();
 const updateCartLineConfiguration = vi.fn<(...args: unknown[]) => unknown>();
 const evaluateCart = vi.fn<(...args: unknown[]) => unknown>();
 const clearCart = vi.fn<(...args: unknown[]) => unknown>();
+const getActiveCheckout = vi.fn<(...args: unknown[]) => unknown>();
 
 vi.mock("@/lib/customer-commerce", async () => {
   const actual = await vi.importActual<typeof import("@/lib/customer-commerce")>(
@@ -31,6 +33,7 @@ vi.mock("@/lib/customer-commerce", async () => {
       updateCartLineConfiguration(...args),
     evaluateCart: (...args: unknown[]) => evaluateCart(...args),
     clearCart: (...args: unknown[]) => clearCart(...args),
+    getActiveCheckout: (...args: unknown[]) => getActiveCheckout(...args),
   };
 });
 
@@ -158,6 +161,8 @@ beforeEach(() => {
   updateCartLineConfiguration.mockReset();
   evaluateCart.mockReset();
   clearCart.mockReset();
+  getActiveCheckout.mockReset();
+  getActiveCheckout.mockResolvedValue({ ok: true, status: 200, data: { checkout: null } });
   getCustomerMenu.mockResolvedValue({ ok: true, status: 200, data: { menu: baseMenu } });
   getActiveCart.mockResolvedValue({ ok: true, status: 200, data: { cart: null } });
   evaluateCart.mockResolvedValue({
@@ -1060,5 +1065,87 @@ describe("CartClient", () => {
     for (const button of checkoutButtons) {
       expect(button).toBeDisabled();
     }
+  });
+
+  it("AR-036J-T5-12 does not observe ESTIMATED_SUBTOTAL for a reused Checkout evaluation", async () => {
+    window.matchMedia = ((query: string) =>
+      ({
+        matches: query.includes("min-width: 1024px"),
+        media: query,
+        onchange: null,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+        addListener: () => undefined,
+        removeListener: () => undefined,
+        dispatchEvent: () => false,
+      })) as typeof window.matchMedia;
+    getActiveCart.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: { cart: guestCart("4", [{ id: "line-1", variantId, quantity: 1 }]) },
+    });
+    evaluateCart.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        cartId: "cart-1",
+        cartRevision: "4",
+        evaluatedAt: "2026-08-13T00:00:00.000Z",
+        status: "COMPLETE",
+        evaluationId: "eval-reuse",
+        reusedCheckoutEvaluation: true,
+        quote: {
+          commercialExplanation: {
+            couponPresentationClass: null,
+            merchandiseOrOrderSavingPaise: "0",
+            deliverySavingPaise: "0",
+            totalSavedPaise: "0",
+            grandTotalPaise: "24900",
+            thresholdProgress: null,
+            complimentary: null,
+            submittedCouponResult: null,
+          },
+          grandTotalPaise: "24900",
+          basePaise: "19900",
+        },
+      },
+    });
+    let resolveCheckout: ((value: unknown) => void) | undefined;
+    getActiveCheckout.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveCheckout = resolve;
+        }),
+    );
+
+    render(<CartClient brandId={brandId} />);
+    expect(await screen.findAllByText(IMP036J_COPY.CHECKING_TOTAL)).not.toHaveLength(0);
+    expect(screen.queryByText(IMP036J_COPY.ESTIMATED_SUBTOTAL)).not.toBeInTheDocument();
+
+    await act(async () => {
+      resolveCheckout?.({
+        ok: true,
+        status: 200,
+        data: {
+          checkout: {
+            id: "chk-1",
+            fulfilmentMode: "DELIVERY",
+            sourceCartRevision: "4",
+            revision: "3",
+            status: "READY_FOR_PAYMENT",
+            activeSnapshot: { grandTotalPaise: "24900", fulfilmentMode: "DELIVERY" },
+          },
+        },
+      });
+    });
+
+    await waitFor(() =>
+      expect(screen.getAllByText(IMP036J_COPY.CURRENT_CHECKOUT_TOTAL).length).toBeGreaterThan(0),
+    );
+    expect(screen.queryByText(IMP036J_COPY.ESTIMATED_SUBTOTAL)).not.toBeInTheDocument();
+    expect(document.querySelector('[data-offer-component="ESTIMATED_SUBTOTAL"]')).toBeNull();
+    expect(
+      document.querySelectorAll('[data-offer-component="CURRENT_CHECKOUT_TOTAL"]').length,
+    ).toBeGreaterThan(0);
   });
 });

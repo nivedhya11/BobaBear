@@ -337,8 +337,7 @@ export async function persistCommerceObservation(
       .select()
       .from(commercialEvaluationsTable)
       .where(eq(commercialEvaluationsTable.evaluationId, evaluationId))
-      .limit(1)
-      .for("update");
+      .limit(1);
     const evaluation = evaluationRows[0];
     if (!evaluation) denyNotFound();
 
@@ -346,8 +345,7 @@ export async function persistCommerceObservation(
       .select()
       .from(cartsTable)
       .where(eq(cartsTable.id, evaluation.cartId))
-      .limit(1)
-      .for("update");
+      .limit(1);
     if (!cartRow[0]) denyNotFound();
     authorizeCartRow(access, cartRow[0]);
 
@@ -374,8 +372,7 @@ export async function persistCommerceObservation(
         .select()
         .from(checkoutsTable)
         .where(eq(checkoutsTable.id, token.checkoutId))
-        .limit(1)
-        .for("update");
+        .limit(1);
       const checkout = checkoutRows[0];
       if (
         !checkout ||

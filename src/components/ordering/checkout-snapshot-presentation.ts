@@ -128,3 +128,59 @@ export function snapshotPayableRows(snapshot: CommerceCheckoutSnapshot): Readonl
 
   return rows;
 }
+
+function paiseFromUnknown(value: unknown): bigint {
+  if (typeof value === "string" && /^-?\d+$/.test(value)) return BigInt(value);
+  if (typeof value === "number" && Number.isInteger(value)) return BigInt(value);
+  return BigInt(0);
+}
+
+/**
+ * Sealed snapshot projection of customer monetary savings.
+ * Complimentary synthetic allocations are excluded from customer saving rows.
+ */
+export function sealedCustomerSavingsFromSnapshot(
+  snapshot: CommerceCheckoutSnapshot,
+): Readonly<{
+  orderSavingPaise: string;
+  deliverySavingPaise: string;
+  totalSavedPaise: string;
+}> {
+  let complimentaryAllocation = BigInt(0);
+  let deliverySaving = BigInt(0);
+  for (const raw of snapshot.promotionEffects) {
+    if (!isRecord(raw) || raw.effectKind !== "monetary_allocation") continue;
+    const amount = paiseFromUnknown(raw.amountPaise);
+    const snapshotLineId = raw.snapshotLineId;
+    if (snapshotLineId != null && String(snapshotLineId).length > 0) {
+      complimentaryAllocation += amount;
+      continue;
+    }
+    const componentId = typeof raw.componentId === "string" ? raw.componentId : "";
+    if (componentId.includes("charge:delivery")) {
+      deliverySaving += amount;
+    }
+  }
+  const discount = paiseFromUnknown(snapshot.promotionDiscountPaise);
+  const customer =
+    discount > complimentaryAllocation ? discount - complimentaryAllocation : BigInt(0);
+  const delivery = deliverySaving > customer ? customer : deliverySaving;
+  const order = customer > delivery ? customer - delivery : BigInt(0);
+  return Object.freeze({
+    orderSavingPaise: order.toString(),
+    deliverySavingPaise: delivery.toString(),
+    totalSavedPaise: (order + delivery).toString(),
+  });
+}
+
+export function sealedComplimentaryNameFromSnapshot(
+  snapshot: CommerceCheckoutSnapshot,
+): string | null {
+  for (const raw of snapshot.lines) {
+    if (!isRecord(raw)) continue;
+    if (raw.lineOrigin === "complimentary_offer" && typeof raw.productName === "string") {
+      return raw.productName;
+    }
+  }
+  return null;
+}

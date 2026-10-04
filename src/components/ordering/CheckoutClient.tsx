@@ -192,32 +192,27 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
     });
   }, [screen, evaluationId, reviewSurfaceToken, cartActivationId, snapshot?.id, couponPending]);
 
+  useEffect(() => {
+    if (screen !== "review" || !staleReview) return;
+    document.querySelector<HTMLElement>("[data-testid='copy-stale']")?.focus();
+  }, [screen, staleReview, snapshot?.id]);
+
   async function recoverStaleReview(): Promise<void> {
     setStaleReview(true);
     setScreen("review");
-    const current = checkout
-      ? await getActiveCheckout({ checkoutId: checkout.id, cartId: cart?.id })
-      : cart
-        ? await getActiveCheckout({ cartId: cart.id })
-        : null;
-    if (!current || !current.ok || !current.data.checkout) {
-      queueMicrotask(() => {
-        document.querySelector<HTMLElement>("[data-testid='copy-stale']")?.focus();
-      });
-      return;
-    }
-    const next = current.data.checkout;
-    setCheckout(next);
-    const evaluated = await evaluateCheckout({
-      checkoutId: next.id,
-      expectedCheckoutRevision: next.revision,
-    });
-    if (evaluated.ok) {
-      adoptEvaluated(evaluated.data);
-    }
-    queueMicrotask(() => {
-      document.querySelector<HTMLElement>("[data-testid='copy-stale']")?.focus();
-    });
+    const priorSnapshot = snapshot;
+    const priorCheckout = checkout;
+    if (!cart) return;
+    const refreshed = await getActiveCart(brandId, { guestToken: false });
+    if (!refreshed.ok || !refreshed.data.cart) return;
+    setCart(refreshed.data.cart);
+    await rebaseReviewAfterCouponMutation(
+      refreshed.data.cart,
+      priorSnapshot,
+      priorCheckout,
+    );
+    setStaleReview(true);
+    setScreen("review");
   }
 
   /**

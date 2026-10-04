@@ -3,9 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
-import { snapshotPayableRows } from "@/components/ordering/checkout-snapshot-presentation";
 import { CommercialOfferStack } from "@/components/ordering/CommercialOfferStack";
-import type { WireCommercialExplanation } from "@/components/ordering/commercial-explanation-presentation";
+import {
+  sealedPaymentExplanationFromSnapshot,
+  type WireCommercialExplanation,
+} from "@/components/ordering/commercial-explanation-presentation";
 import { IMP036J_COPY } from "@/components/ordering/imp036j-copy";
 import { commerceErrorCopy } from "@/components/ordering/error-copy";
 import { formatPaise } from "@/components/ordering/format-money";
@@ -135,7 +137,8 @@ export function PaymentPanel(props: {
 }) {
   const zeroPayable = isZeroPayableTotal(props.snapshot.grandTotalPaise);
   const payableLabel = formatPaise(props.snapshot.grandTotalPaise);
-  const payableRows = snapshotPayableRows(props.snapshot);
+  const paymentExplanation =
+    props.explanation ?? sealedPaymentExplanationFromSnapshot(props.snapshot);
   const resumePaymentId = props.resumePaymentId ?? null;
   const cartChangedWhilePending = props.cartChangedWhilePending === true;
   const embeddedRecovery = props.embeddedInPreviousPaymentRecovery === true;
@@ -674,18 +677,8 @@ export function PaymentPanel(props: {
       )}
       {!embeddedRecovery ? (
         <div data-testid="checkout-fee-breakdown" className="flex flex-col gap-2">
-          <dl className="grid grid-cols-2 gap-2 font-body text-[14px]">
-            {payableRows
-              .filter((row) => row.key !== "total" && row.key !== "discount")
-              .map((row) => (
-                <div key={row.key} className="contents">
-                  <dt className="text-[var(--text-tertiary)]">{row.label}</dt>
-                  <dd>{formatPaise(row.amountPaise)}</dd>
-                </div>
-              ))}
-          </dl>
           <CommercialOfferStack
-            explanation={props.explanation ?? null}
+            explanation={paymentExplanation}
             payableLabel={IMP036J_COPY.TOTAL_PAYABLE}
             payablePaise={props.snapshot.grandTotalPaise}
             fulfilmentMode={props.snapshot.fulfilmentMode}

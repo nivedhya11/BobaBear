@@ -4,11 +4,12 @@
  */
 
 import { formatPaise } from "@/components/ordering/format-money";
+import { copyThreshold, IMP036J_COPY } from "@/components/ordering/imp036j-copy";
 import {
-  copyAppliedReason,
-  copyThreshold,
-  IMP036J_COPY,
-} from "@/components/ordering/imp036j-copy";
+  sealedComplimentaryNameFromSnapshot,
+  sealedCustomerSavingsFromSnapshot,
+} from "@/components/ordering/checkout-snapshot-presentation";
+import type { CommerceCheckoutSnapshot } from "@/lib/customer-commerce";
 
 export type CouponPresentationClass =
   | "COUPON_APPLIED"
@@ -148,6 +149,32 @@ export function parseCommercialExplanation(
   };
 }
 
+export function sealedPaymentExplanationFromSnapshot(
+  snapshot: CommerceCheckoutSnapshot,
+): WireCommercialExplanation {
+  const savings = sealedCustomerSavingsFromSnapshot(snapshot);
+  const giftName = sealedComplimentaryNameFromSnapshot(snapshot);
+  return {
+    couponPresentationClass: null,
+    merchandiseOrOrderSavingPaise: savings.orderSavingPaise,
+    deliverySavingPaise: savings.deliverySavingPaise,
+    totalSavedPaise: savings.totalSavedPaise,
+    grandTotalPaise: snapshot.grandTotalPaise,
+    thresholdProgress: null,
+    complimentary: giftName
+      ? {
+          competingOffers: "NONE",
+          productId: "",
+          variantId: "",
+          quantity: 1,
+          merchandiseChargePaise: "0",
+          itemName: giftName,
+        }
+      : null,
+    submittedCouponResult: null,
+  };
+}
+
 export function merchandiseSubtotalFromQuote(quote: unknown): string | null {
   if (!isRecord(quote)) return null;
   const base = paiseString(quote.basePaise);
@@ -226,11 +253,7 @@ export function automaticStatusCopy(
   if (explanation.couponPresentationClass) return null;
   const order = BigInt(explanation.merchandiseOrOrderSavingPaise);
   const delivery = BigInt(explanation.deliverySavingPaise);
-  const threshold = explanation.thresholdProgress;
   if (order > BigInt(0) || delivery > BigInt(0)) {
-    if (threshold && threshold.displayName.length > 0 && BigInt(explanation.totalSavedPaise) > BigInt(0)) {
-      return { text: copyAppliedReason(threshold.displayName), tone: "polite" };
-    }
     return { text: IMP036J_COPY.APPLIED_AUTO, tone: "polite" };
   }
   return null;

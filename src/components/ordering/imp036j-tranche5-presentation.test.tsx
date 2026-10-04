@@ -5,8 +5,11 @@ import { CommercialOfferStack } from "./CommercialOfferStack";
 import { CouponField } from "./CouponField";
 import { IMP036J_COPY } from "./imp036j-copy";
 import {
+  automaticStatusCopy,
   canReuseCheckoutEvaluation,
   couponStatusCopy,
+  sealedPaymentExplanationFromSnapshot,
+  thresholdCopy,
 } from "./commercial-explanation-presentation";
 import {
   couponFieldStatusFromMutationFailure,
@@ -547,5 +550,138 @@ describe("AR-036J-T5 remediation contracts", () => {
     );
     expect(screen.queryByTestId("price-summary-total")).not.toBeInTheDocument();
     expect(screen.queryByText(IMP036J_COPY.ESTIMATED_SUBTOTAL)).not.toBeInTheDocument();
+  });
+
+  it("AR-036J-T5-15 uses generic applied copy when another Offer is still below threshold", () => {
+    const status = automaticStatusCopy({
+      couponPresentationClass: null,
+      merchandiseOrOrderSavingPaise: "8000",
+      deliverySavingPaise: "0",
+      totalSavedPaise: "8000",
+      grandTotalPaise: "19900",
+      thresholdProgress: {
+        remainingAmountPaise: "5000",
+        remainingItemQuantity: null,
+        displayName: "Free delivery",
+        benefitType: "delivery_fee_waiver",
+      },
+      complimentary: null,
+      submittedCouponResult: null,
+    });
+    expect(status?.text).toBe(IMP036J_COPY.APPLIED_AUTO);
+    expect(status?.text).not.toContain("Free delivery");
+    expect(status?.text).not.toContain("You reached");
+    expect(
+      thresholdCopy({
+        couponPresentationClass: null,
+        merchandiseOrOrderSavingPaise: "8000",
+        deliverySavingPaise: "0",
+        totalSavedPaise: "8000",
+        grandTotalPaise: "19900",
+        thresholdProgress: {
+          remainingAmountPaise: "5000",
+          remainingItemQuantity: null,
+          displayName: "Free delivery",
+          benefitType: "delivery_fee_waiver",
+        },
+        complimentary: null,
+        submittedCouponResult: null,
+      }),
+    ).toBe("Add ₹50.00 more to unlock Free delivery.");
+  });
+
+  it("AR-036J-T5-16/17 sealed Payment rows render once and exclude complimentary allocation", () => {
+    const snapshot = {
+      id: "snap-1",
+      checkoutId: "chk-1",
+      checkoutRevision: "1",
+      sourceCartRevision: "1",
+      selectedOutletId: "outlet-1",
+      evaluatedAt: "2026-08-13T00:00:00.000Z",
+      fulfilmentMode: "DELIVERY",
+      currency: "INR",
+      basePaise: "19900",
+      chargesPaise: "5000",
+      prePromotionSubtotalPaise: "24900",
+      promotionDiscountPaise: "27000",
+      taxablePaise: "12900",
+      taxPaise: "500",
+      grandTotalPaise: "13400",
+      taxInclusionMode: "exclusive",
+      destination: null,
+      pickupLocation: null,
+      lines: [
+        {
+          lineOrigin: "complimentary_offer",
+          productName: "Taro Milk Tea",
+        },
+      ],
+      charges: [
+        { chargeCode: "packaging", name: "Packaging", amountPaise: "1000" },
+        { chargeCode: "delivery", name: "Delivery", amountPaise: "4000" },
+      ],
+      promotionEffects: [
+        {
+          effectKind: "monetary_allocation",
+          amountPaise: "15000",
+          snapshotLineId: "gift-line",
+          componentId: "base:complimentary:promo-gift",
+        },
+        {
+          effectKind: "monetary_allocation",
+          amountPaise: "8000",
+          snapshotLineId: null,
+          componentId: "line:1",
+        },
+        {
+          effectKind: "monetary_allocation",
+          amountPaise: "4000",
+          snapshotLineId: null,
+          componentId: "charge:delivery",
+        },
+      ],
+      taxComponents: [{ taxType: "GST", taxAmountPaise: "500" }],
+      serviceabilityEvaluatedAt: null,
+    } as unknown as CommerceCheckoutSnapshot;
+
+    const sealed = sealedPaymentExplanationFromSnapshot(snapshot);
+    expect(sealed.merchandiseOrOrderSavingPaise).toBe("8000");
+    expect(sealed.deliverySavingPaise).toBe("4000");
+    expect(sealed.totalSavedPaise).toBe("12000");
+
+    render(
+      <PaymentPanel
+        checkout={{
+          id: "chk-1",
+          customerAuthUserId: "user-1",
+          brandId: "brand-1",
+          cartId: "cart-1",
+          sourceCartRevision: "1",
+          revision: "1",
+          status: "READY_FOR_PAYMENT",
+          expiresAt: "2026-08-13T01:00:00.000Z",
+          fulfilmentMode: "DELIVERY",
+          pickupOutletId: null,
+          activeSnapshotId: "snap-1",
+          createdAt: "2026-08-13T00:00:00.000Z",
+          updatedAt: "2026-08-13T00:00:00.000Z",
+          destination: null,
+          activeSnapshot: snapshot,
+        }}
+        snapshot={snapshot}
+        onOrderReady={() => undefined}
+      />,
+    );
+    const breakdown = screen.getByTestId("checkout-fee-breakdown");
+    expect(breakdown.querySelectorAll("[data-testid='price-summary-subtotal']")).toHaveLength(1);
+    expect(breakdown.querySelectorAll("[data-testid='price-summary-charge-packaging']")).toHaveLength(1);
+    expect(breakdown.querySelectorAll("[data-offer-component='DELIVERY_CHARGE']")).toHaveLength(1);
+    expect(breakdown.querySelectorAll("[data-offer-component='ORDER_SAVING']")).toHaveLength(1);
+    expect(breakdown.querySelectorAll("[data-offer-component='DELIVERY_SAVING']")).toHaveLength(1);
+    expect(breakdown.querySelectorAll("[data-offer-component='TOTAL_SAVED']")).toHaveLength(1);
+    expect(breakdown.querySelectorAll("[data-testid='price-summary-tax-GST']")).toHaveLength(1);
+    expect(breakdown.querySelectorAll("[data-testid='price-summary-total']")).toHaveLength(1);
+    expect(breakdown).toHaveTextContent("₹134.00");
+    expect(breakdown).not.toHaveTextContent("₹150.00");
   });
 });
