@@ -153,7 +153,10 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
   const [maxPerCustomer, setMaxPerCustomer] = useState("");
   const [giftProductId, setGiftProductId] = useState("");
   const [giftVariantId, setGiftVariantId] = useState("");
-  const [giftFieldError, setGiftFieldError] = useState<string | null>(null);
+  const [giftFieldError, setGiftFieldError] = useState<{
+    field: string;
+    message: string;
+  } | null>(null);
   const [redemptionCounts, setRedemptionCounts] = useState<RedemptionCounts | null>(null);
   const [couponCode, setCouponCode] = useState("");
 
@@ -590,7 +593,10 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
     if (!result.ok) {
       const mapped = fieldErrorFromResult(result);
       if (result.code === "PROMOTION_COMPLIMENTARY_INVALID") {
-        setGiftFieldError(mapped?.message ?? describeAdminFailure(result));
+        setGiftFieldError({
+          field: mapped?.field ?? "complimentaryVariantId",
+          message: mapped?.message ?? describeAdminFailure(result),
+        });
       }
       props.onStatus(`${result.code}: ${describeAdminFailure(result)}`);
       return;
@@ -715,7 +721,10 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
         setActivationError(msg);
         if (result.code === "PROMOTION_COMPLIMENTARY_INVALID") {
           const mapped = fieldErrorFromResult(result);
-          setGiftFieldError(mapped?.message ?? describeAdminFailure(result));
+          setGiftFieldError({
+            field: mapped?.field ?? "complimentaryVariantId",
+            message: mapped?.message ?? describeAdminFailure(result),
+          });
         }
       }
       return;
@@ -1237,8 +1246,14 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
                       <input
                         className={cn(enterpriseFieldClass)}
                         aria-label="Complimentary product id"
-                        aria-invalid={giftFieldError ? true : undefined}
-                        aria-describedby={giftFieldError ? "gift-invalid-reason" : undefined}
+                        aria-invalid={
+                          giftFieldError?.field === "complimentaryProductId" ? true : undefined
+                        }
+                        aria-describedby={
+                          giftFieldError?.field === "complimentaryProductId"
+                            ? "gift-invalid-reason"
+                            : undefined
+                        }
                         value={giftProductId}
                         onChange={(e) => setGiftProductId(e.target.value)}
                       />
@@ -1248,15 +1263,21 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
                       <input
                         className={cn(enterpriseFieldClass)}
                         aria-label="Complimentary variant id"
-                        aria-invalid={giftFieldError ? true : undefined}
-                        aria-describedby={giftFieldError ? "gift-invalid-reason" : undefined}
+                        aria-invalid={
+                          giftFieldError?.field === "complimentaryVariantId" ? true : undefined
+                        }
+                        aria-describedby={
+                          giftFieldError?.field === "complimentaryVariantId"
+                            ? "gift-invalid-reason"
+                            : undefined
+                        }
                         value={giftVariantId}
                         onChange={(e) => setGiftVariantId(e.target.value)}
                       />
                     </label>
                     {giftFieldError ? (
                       <p id="gift-invalid-reason" role="alert" className="text-sm">
-                        {giftFieldError}
+                        {giftFieldError.message}
                       </p>
                     ) : null}
                   </fieldset>
