@@ -344,6 +344,13 @@
       "when": 1790880736204,
       "tag": "0048_imp036j_tranche2_measurement_persistence",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1791118225548,
+      "tag": "0049_imp036j_tranche7_immutable_publication",
+      "breakpoints": true
     }
   ]
 }

@@ -33,6 +33,10 @@ import {
 } from "./pickup-eligibility";
 import { loadOutletPickupProfileByOutletId } from "../outlet-pickup-profile/repository";
 import {
+  tryRecordStaleRecoveryOrigin,
+  tryResolveEquivalentStaleRecovery,
+} from "../customer-commerce/measurement/writers";
+import {
   findCheckoutRowById,
   findDestinationByCheckoutId,
   invalidateReadyToDraft,
@@ -56,7 +60,13 @@ async function invalidateReady(
   await persistence.transaction(async (tx) => {
     const row = await lockCheckoutForUpdate(tx, checkoutId);
     if (row && row.status === "READY_FOR_PAYMENT") {
-      await invalidateReadyToDraft(tx, row, now);
+      const updated = await invalidateReadyToDraft(tx, row, now);
+      await tryRecordStaleRecoveryOrigin({
+        context: tx,
+        cartId: updated.cartId,
+        checkoutId: updated.id,
+        checkoutJourneyKey: updated.checkoutJourneyKey,
+      });
     }
   });
 }
@@ -171,7 +181,13 @@ export async function prepareCheckoutForPayment(
     await persistence.transaction(async (tx) => {
       const row = await lockCheckoutForUpdate(tx, preload.row.id);
       if (row && row.status === "READY_FOR_PAYMENT") {
-        await invalidateReadyToDraft(tx, row, now);
+        const updated = await invalidateReadyToDraft(tx, row, now);
+        await tryRecordStaleRecoveryOrigin({
+          context: tx,
+          cartId: updated.cartId,
+          checkoutId: updated.id,
+          checkoutJourneyKey: updated.checkoutJourneyKey,
+        });
       }
     });
     throw new CheckoutError(
@@ -256,7 +272,13 @@ export async function prepareCheckoutForPayment(
       await persistence.transaction(async (tx) => {
         const row = await lockCheckoutForUpdate(tx, preload.row.id);
         if (row && row.status === "READY_FOR_PAYMENT") {
-          await invalidateReadyToDraft(tx, row, now);
+          const updated = await invalidateReadyToDraft(tx, row, now);
+          await tryRecordStaleRecoveryOrigin({
+            context: tx,
+            cartId: updated.cartId,
+            checkoutId: updated.id,
+            checkoutJourneyKey: updated.checkoutJourneyKey,
+          });
         }
       });
       throw new CheckoutError(
@@ -289,7 +311,13 @@ export async function prepareCheckoutForPayment(
     await persistence.transaction(async (tx) => {
       const row = await lockCheckoutForUpdate(tx, preload.row.id);
       if (row && row.status === "READY_FOR_PAYMENT") {
-        await invalidateReadyToDraft(tx, row, now);
+        const updated = await invalidateReadyToDraft(tx, row, now);
+        await tryRecordStaleRecoveryOrigin({
+          context: tx,
+          cartId: updated.cartId,
+          checkoutId: updated.id,
+          checkoutJourneyKey: updated.checkoutJourneyKey,
+        });
       }
     });
     throw new CheckoutError(
@@ -430,6 +458,16 @@ export async function prepareCheckoutForPayment(
   );
 
   if (equivalent) {
+    await persistence.transaction(async (tx) => {
+      const row = await lockCheckoutForUpdate(tx, preload.row.id);
+      if (!row || row.status !== "READY_FOR_PAYMENT") return;
+      await tryResolveEquivalentStaleRecovery({
+        context: tx,
+        cartId: row.cartId,
+        checkoutId: row.id,
+        checkoutJourneyKey: row.checkoutJourneyKey,
+      });
+    });
     return Object.freeze({
       checkoutId: preload.row.id,
       snapshot: preload.snapshot,
@@ -439,7 +477,13 @@ export async function prepareCheckoutForPayment(
   await persistence.transaction(async (tx) => {
     const row = await lockCheckoutForUpdate(tx, preload.row.id);
     if (row && row.status === "READY_FOR_PAYMENT") {
-      await invalidateReadyToDraft(tx, row, now);
+      const updated = await invalidateReadyToDraft(tx, row, now);
+      await tryRecordStaleRecoveryOrigin({
+        context: tx,
+        cartId: updated.cartId,
+        checkoutId: updated.id,
+        checkoutJourneyKey: updated.checkoutJourneyKey,
+      });
     }
   });
 

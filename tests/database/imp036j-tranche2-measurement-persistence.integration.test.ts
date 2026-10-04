@@ -245,9 +245,8 @@ function factSql(): string {
 describe("IMP-036J tranche 2 measurement persistence", () => {
   it("records migration 0048 as the next journal entry after tranche 1", () => {
     const entries = loadJournalEntries();
-    const tip = entries.at(-1);
-    expect(tip?.idx).toBe(TRANCHE_2_IDX);
-    expect(tip?.tag).toBe(TRANCHE_2_TAG);
+    const t2 = entries.find((entry) => entry.tag === TRANCHE_2_TAG);
+    expect(t2?.idx).toBe(TRANCHE_2_IDX);
     expect(entries.some((entry) => entry.idx === PRE_TRANCHE_IDX)).toBe(true);
     const sql = readFileSync(
       path.join(process.cwd(), "drizzle", `${TRANCHE_2_TAG}.sql`),
@@ -1088,6 +1087,7 @@ describe("IMP-036J tranche 2 measurement persistence", () => {
           "window_start",
           "window_end",
           "report_as_of",
+          "published_report",
         ]);
         const triggers = await client.pool.query<{ tgname: string }>(
           `SELECT tgname FROM pg_trigger

@@ -609,6 +609,7 @@ export async function buildDirectPricingQuote(
     promotionAllocations: winner.allocations,
     submittedCouponResult,
     commercialExplanation,
+    complimentaryItemUnavailable: evaluation.complimentaryItemUnavailable,
     payableChangedVsValidAlternative: payableChanged,
     taxablePaise: winnerTax.taxablePaise,
     taxPaise: winnerTax.taxPaise,

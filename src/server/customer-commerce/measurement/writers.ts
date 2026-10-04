@@ -130,6 +130,7 @@ export function deriveCoarseShape(input: {
 export function deriveExplanationReasonClass(input: {
   explanation: CommercialExplanation | null | undefined;
   coarseShape: CoarseShape;
+  complimentaryItemUnavailable?: boolean;
 }): string {
   const explanation = input.explanation ?? null;
   const couponStatus = explanation?.submittedCouponResult?.status ?? null;
@@ -138,6 +139,9 @@ export function deriveExplanationReasonClass(input: {
   }
   if (couponStatus === "INVALID") return "INVALID";
   if (couponStatus === "NOT_APPLICABLE") return "NOT_APPLICABLE";
+  if (input.complimentaryItemUnavailable) {
+    return "COMPLIMENTARY_ITEM_UNAVAILABLE";
+  }
   if (explanation?.complimentary?.competingOffers === "NONE_CHOSEN") {
     return "COMPLIMENTARY_NONE_CHOSEN";
   }
@@ -494,6 +498,70 @@ export async function insertCommandOrigin(input: {
   });
 }
 
+export async function tryRecordStaleRecoveryOrigin(input: {
+  context: PersistenceTransactionContext;
+  cartId: string;
+  checkoutId: string;
+  checkoutJourneyKey: string | null;
+}): Promise<void> {
+  try {
+    await insertCommandOrigin({
+      context: input.context,
+      sourceCommandId: randomUUID(),
+      originKind: "STALE_RECOVERY",
+      cartId: input.cartId,
+      checkoutId: input.checkoutId,
+      checkoutJourneyKey: input.checkoutJourneyKey,
+    });
+  } catch {
+    // Measurement must not redefine checkout/payment commercial outcome.
+  }
+}
+
+export async function tryResolveEquivalentStaleRecovery(input: {
+  context: PersistenceTransactionContext;
+  cartId: string;
+  checkoutId: string;
+  checkoutJourneyKey: string | null;
+}): Promise<void> {
+  try {
+    if (!input.checkoutJourneyKey) return;
+    const latest = await input.context.db
+      .select()
+      .from(commercialEvaluationsTable)
+      .where(
+        and(
+          eq(commercialEvaluationsTable.checkoutId, input.checkoutId),
+          eq(commercialEvaluationsTable.surfaceScope, "CHECKOUT"),
+        ),
+      )
+      .orderBy(desc(commercialEvaluationsTable.occurrenceOrdinal))
+      .limit(1);
+    const current = latest[0];
+    if (!current) return;
+    await insertCommandOrigin({
+      context: input.context,
+      sourceCommandId: randomUUID(),
+      originKind: "STALE_RECOVERY",
+      cartId: input.cartId,
+      checkoutId: input.checkoutId,
+      checkoutJourneyKey: input.checkoutJourneyKey,
+    });
+    await resolveCommercialStateChange({
+      context: input.context,
+      cartId: input.cartId,
+      checkoutId: input.checkoutId,
+      journeyKey: input.checkoutJourneyKey,
+      evaluationId: current.evaluationId,
+      fingerprint: current.resultFingerprint,
+      reusedExistingEvaluation: true,
+      closedJourneyRejectNew: true,
+    });
+  } catch {
+    // Measurement must not redefine checkout/payment commercial outcome.
+  }
+}
+
 export async function insertCommandResult(input: {
   context: PersistenceTransactionContext;
   sourceCommandId: string;
@@ -805,7 +873,11 @@ export async function persistCommercialEvaluation(input: {
 }> {
   const explanation = input.quote.commercialExplanation ?? null;
   const coarseShape = deriveCoarseShape({ explanation });
-  const reasonClass = deriveExplanationReasonClass({ explanation, coarseShape });
+  const reasonClass = deriveExplanationReasonClass({
+    explanation,
+    coarseShape,
+    complimentaryItemUnavailable: input.quote.complimentaryItemUnavailable === true,
+  });
   const complimentary = await projectedComplimentaryLineSha256(
     input.context,
     explanation,

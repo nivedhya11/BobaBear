@@ -4,7 +4,32 @@
  */
 import { createHash, randomUUID } from "node:crypto";
 
+import { sql } from "drizzle-orm";
 import { afterEach, describe, expect, inject, it } from "vitest";
+
+import { setVariantAvailability } from "../../src/server/assortment";
+import { setCartLineQuantity } from "../../src/server/cart";
+import {
+  evaluateCheckout,
+  prepareCheckoutForPayment,
+} from "../../src/server/checkout";
+import { ensureReviewPresentedThenPaymentFacts } from "../../src/server/customer-commerce/measurement/writers";
+import { includeVariantAtBrand } from "../assortment-availability/support";
+import { checkoutOpts } from "./support/checkout-fixtures";
+import {
+  bringCheckoutToReady,
+  withCheckoutReadyHarness,
+} from "./support/payment-fixtures";
+import {
+  seedActiveStandardVariant,
+  uniqueCode,
+} from "./support/cart-fixtures";
+import {
+  activatePromotion,
+  createPromotionDraft,
+  getPromotion,
+  setPromotionTargets,
+} from "../../src/server/promotions";
 
 import {
   cartCheckoutActivationsTable,
@@ -508,6 +533,234 @@ describe("IMP-036J tranche 7 measurement reporting", () => {
         (row) => row.reportAsOf.getTime() === window.reportAsOf.getTime(),
       );
       expect(original).toBeTruthy();
+      expect(original?.publishedReport).toBeTruthy();
+      const storedOriginal = original?.publishedReport as Record<string, unknown>;
+      expect(storedOriginal.primary).toEqual(first.primary);
+    });
+  });
+
+  it("T7-IMMUTABLE late-visible pre-cutoff fact does not change exact-identity retry", async () => {
+    await withHarness("late", async ({ persistence, graph, window, inside }) => {
+      const journey = randomUUID();
+      await persistence.transaction(async (tx) => {
+        await presentedJourney(tx, {
+          graph,
+          journeyKey: journey,
+          occurredAt: inside,
+        });
+      });
+      const first = await publishMeasurementReport(persistence, {
+        productionReleaseAnchor: window.windowStart,
+        reportAsOf: window.reportAsOf,
+      });
+      expect(first.snapshotInserted).toBe(true);
+      expect(first.primary.status).toBe("RATE");
+      if (first.primary.status !== "RATE") return;
+      expect(first.primary.numerator).toBe(0);
+
+      await persistence.transaction(async (tx) => {
+        await insertFact(tx, {
+          journeyKey: journey,
+          kind: "DIRECT_ORDER_COMPLETION",
+          sequence: 2,
+          occurredAt: new Date(inside.getTime() + 5_000),
+          label: `late:${journey}`,
+        });
+      });
+      const retry = await publishMeasurementReport(persistence, {
+        productionReleaseAnchor: window.windowStart,
+        reportAsOf: window.reportAsOf,
+      });
+      expect(retry.snapshotInserted).toBe(false);
+      expect(retry.primary).toEqual(first.primary);
+      expect(retry.validNotSelectedContinuation).toEqual(
+        first.validNotSelectedContinuation,
+      );
+      expect(retry.changedTotalRecoveryContinuation).toEqual(
+        first.changedTotalRecoveryContinuation,
+      );
+
+      const laterAsOf = new Date(window.reportAsOf.getTime() + 60_000);
+      const matured = await publishMeasurementReport(persistence, {
+        productionReleaseAnchor: window.windowStart,
+        reportAsOf: laterAsOf,
+      });
+      expect(matured.snapshotInserted).toBe(true);
+      if (matured.primary.status !== "RATE") return;
+      expect(matured.primary.numerator).toBe(1);
+      const originalRetry = await publishMeasurementReport(persistence, {
+        productionReleaseAnchor: window.windowStart,
+        reportAsOf: window.reportAsOf,
+      });
+      expect(originalRetry.primary).toEqual(first.primary);
+    });
+  });
+
+  it("T7-IMMUTABLE concurrent exact publication returns one stored aggregate", async () => {
+    await withHarness("race", async ({ persistence, graph, window, inside }) => {
+      await persistence.transaction(async (tx) => {
+        await presentedJourney(tx, {
+          graph,
+          journeyKey: randomUUID(),
+          occurredAt: inside,
+        });
+      });
+      const raced = await Promise.all([
+        publishMeasurementReport(persistence, {
+          productionReleaseAnchor: window.windowStart,
+          reportAsOf: window.reportAsOf,
+        }),
+        publishMeasurementReport(persistence, {
+          productionReleaseAnchor: window.windowStart,
+          reportAsOf: window.reportAsOf,
+        }),
+      ]);
+      const inserted = raced.filter((row) => row.snapshotInserted);
+      expect(inserted.length).toBe(1);
+      const left = { ...raced[0]!, snapshotInserted: undefined };
+      const right = { ...raced[1]!, snapshotInserted: undefined };
+      expect(left).toEqual(right);
+      const rows = await persistence.withContext((ctx) =>
+        ctx.db.select().from(measurementReportSnapshotsTable),
+      );
+      expect(rows).toHaveLength(1);
+      expect(rows[0]?.publishedReport).toBeTruthy();
+    });
+  });
+
+  it("T7 valid-not-selected continuation inspects earlier qualifying reviews", async () => {
+    await withHarness("vns", async ({ persistence, graph, window, inside }) => {
+      const couponThenAuto = randomUUID();
+      const equalThenOther = randomUUID();
+      const continuationBefore = randomUUID();
+      const continuationAtCutoff = randomUUID();
+
+      await persistence.transaction(async (tx) => {
+        const eval1 = await insertEvaluation(tx, {
+          graph,
+          journeyKey: couponThenAuto,
+          occurredAt: inside,
+        });
+        await insertFact(tx, {
+          journeyKey: couponThenAuto,
+          kind: "REVIEW_PRESENTED",
+          sequence: 1,
+          occurredAt: inside,
+          evaluationId: eval1,
+          presentationClass: "COUPON_VALID_NOT_SELECTED",
+          label: `review:${couponThenAuto}:1`,
+        });
+        const eval2 = await insertEvaluation(tx, {
+          graph,
+          journeyKey: couponThenAuto,
+          occurredAt: new Date(inside.getTime() + 1_000),
+        });
+        await insertFact(tx, {
+          journeyKey: couponThenAuto,
+          kind: "REVIEW_PRESENTED",
+          sequence: 2,
+          occurredAt: new Date(inside.getTime() + 1_000),
+          evaluationId: eval2,
+          presentationClass: "AUTOMATIC_SAVING",
+          label: `review:${couponThenAuto}:2`,
+        });
+        await insertFact(tx, {
+          journeyKey: couponThenAuto,
+          kind: "REVIEW_TO_PAYMENT",
+          sequence: 3,
+          occurredAt: new Date(inside.getTime() + 2_000),
+          label: `rtp:${couponThenAuto}`,
+        });
+
+        const equal1 = await insertEvaluation(tx, {
+          graph,
+          journeyKey: equalThenOther,
+          occurredAt: inside,
+        });
+        await insertFact(tx, {
+          journeyKey: equalThenOther,
+          kind: "REVIEW_PRESENTED",
+          sequence: 1,
+          occurredAt: inside,
+          evaluationId: equal1,
+          presentationClass: "EQUAL_PAYABLE_NOT_SELECTED",
+          label: `review:${equalThenOther}:1`,
+        });
+        const equal2 = await insertEvaluation(tx, {
+          graph,
+          journeyKey: equalThenOther,
+          occurredAt: new Date(inside.getTime() + 500),
+        });
+        await insertFact(tx, {
+          journeyKey: equalThenOther,
+          kind: "REVIEW_PRESENTED",
+          sequence: 2,
+          occurredAt: new Date(inside.getTime() + 500),
+          evaluationId: equal2,
+          presentationClass: "NO_OFFER",
+          label: `review:${equalThenOther}:2`,
+        });
+        await insertFact(tx, {
+          journeyKey: equalThenOther,
+          kind: "DIRECT_ORDER_COMPLETION",
+          sequence: 3,
+          occurredAt: new Date(inside.getTime() + 1_500),
+          label: `done:${equalThenOther}`,
+        });
+
+        const beforeEval = await insertEvaluation(tx, {
+          graph,
+          journeyKey: continuationBefore,
+          occurredAt: new Date(inside.getTime() + 2_000),
+        });
+        await insertFact(tx, {
+          journeyKey: continuationBefore,
+          kind: "REVIEW_TO_PAYMENT",
+          sequence: 1,
+          occurredAt: inside,
+          label: `rtp:${continuationBefore}`,
+        });
+        await insertFact(tx, {
+          journeyKey: continuationBefore,
+          kind: "REVIEW_PRESENTED",
+          sequence: 2,
+          occurredAt: new Date(inside.getTime() + 2_000),
+          evaluationId: beforeEval,
+          presentationClass: "COUPON_VALID_NOT_SELECTED",
+          label: `review:${continuationBefore}:2`,
+        });
+
+        const cutoffEval = await insertEvaluation(tx, {
+          graph,
+          journeyKey: continuationAtCutoff,
+          occurredAt: inside,
+        });
+        await insertFact(tx, {
+          journeyKey: continuationAtCutoff,
+          kind: "REVIEW_PRESENTED",
+          sequence: 1,
+          occurredAt: inside,
+          evaluationId: cutoffEval,
+          presentationClass: "COUPON_VALID_NOT_SELECTED",
+          label: `review:${continuationAtCutoff}:1`,
+        });
+        await insertFact(tx, {
+          journeyKey: continuationAtCutoff,
+          kind: "REVIEW_TO_PAYMENT",
+          sequence: 2,
+          occurredAt: window.reportAsOf,
+          label: `rtp:${continuationAtCutoff}`,
+        });
+      });
+
+      const report = await publishMeasurementReport(persistence, {
+        productionReleaseAnchor: window.windowStart,
+        reportAsOf: window.reportAsOf,
+      });
+      expect(report.validNotSelectedContinuation.status).toBe("RATE");
+      if (report.validNotSelectedContinuation.status !== "RATE") return;
+      expect(report.validNotSelectedContinuation.denominator).toBe(4);
+      expect(report.validNotSelectedContinuation.numerator).toBe(2);
     });
   });
 
@@ -961,7 +1214,336 @@ describe("IMP-036J tranche 7 measurement reporting", () => {
         "window_start",
         "window_end",
         "report_as_of",
+        "published_report",
       ]);
+      const stored = await persistence.withContext((ctx) =>
+        ctx.db.select().from(measurementReportSnapshotsTable),
+      );
+      const payload = JSON.stringify(stored[0]?.publishedReport ?? {});
+      expect(payload).not.toMatch(/T7 User|example\.com|\+91810|coupon-secret|Bearer/i);
+      expect(payload).not.toContain(graph.customerId);
+      expect(payload).not.toMatch(/customerId|email|phone|couponCode/i);
+    });
+  });
+
+  it("T7 production stale recovery writes STALE_RECOVERY and feeds changed-total continuation", async () => {
+    await withCheckoutReadyHarness(async (h) => {
+      const ready = await bringCheckoutToReady(
+        h.persistence,
+        h.actors.customerA,
+        h.cartId,
+        h.addressId,
+      );
+      const lineId = await h.persistence.withContext(async (ctx) => {
+        const r = await ctx.db.execute(sql`
+          select id::text as id from app.cart_lines
+          where cart_id = ${h.cartId}::uuid limit 1
+        `);
+        return r.rows[0]!.id as string;
+      });
+      await setCartLineQuantity(
+        h.persistence,
+        {
+          kind: "customer",
+          actor: h.actors.customerA,
+          brandId: h.actors.tree.brand.id,
+        },
+        {
+          cartLineId: lineId,
+          quantity: 2,
+          expectedRevision: h.cartRevision,
+        },
+      );
+      await expect(
+        prepareCheckoutForPayment(
+          h.persistence,
+          h.actors.customerA,
+          {
+            checkoutId: ready.checkoutId,
+            expectedCheckoutRevision: ready.revision,
+          },
+          checkoutOpts(),
+        ),
+      ).rejects.toMatchObject({ code: "CHECKOUT_REPRICED" });
+      const originCount = await h.persistence.withContext(async (ctx) => {
+        const r = await ctx.db.execute(sql`
+          select count(*)::text as c
+          from app.commercial_command_origins
+          where cart_id = ${h.cartId}::uuid
+            and origin_kind = 'STALE_RECOVERY'
+        `);
+        return Number(r.rows[0]?.c ?? "0");
+      });
+      expect(originCount).toBeGreaterThan(0);
+      const checkout = await h.persistence.withContext(async (ctx) => {
+        const r = await ctx.db.execute(sql`
+          select revision::text as revision, checkout_journey_key::text as journey
+          from app.checkouts where id = ${ready.checkoutId}::uuid
+        `);
+        return r.rows[0] as { revision: string; journey: string };
+      });
+      const recovered = await evaluateCheckout(
+        h.persistence,
+        h.actors.customerA,
+        {
+          checkoutId: ready.checkoutId,
+          expectedCheckoutRevision: BigInt(checkout.revision),
+        },
+        checkoutOpts(),
+      );
+      const changeFact = await h.persistence.withContext(async (ctx) => {
+        const r = await ctx.db.execute(sql`
+          select count(*)::text as c
+          from app.commercial_command_origins o
+          inner join app.checkout_journey_facts f
+            on f.fact_id = o.resolved_change_fact_id
+          where o.cart_id = ${h.cartId}::uuid
+            and o.origin_kind = 'STALE_RECOVERY'
+            and f.fact_kind = 'COMMERCIAL_STATE_CHANGE'
+        `);
+        return Number(r.rows[0]?.c ?? "0");
+      });
+      expect(changeFact).toBeGreaterThan(0);
+      await h.persistence.transaction(async (tx) => {
+        await ensureReviewPresentedThenPaymentFacts({
+          context: tx,
+          journeyKey: checkout.journey,
+          checkoutId: ready.checkoutId,
+          paymentIdempotencyKey: null,
+          continueSourceCommandId: randomUUID(),
+        });
+      });
+      void recovered;
+      const report = await publishMeasurementReport(h.persistence, {
+        productionReleaseAnchor: new Date("2026-10-01T18:30:00.000Z"),
+      });
+      expect(report.changedTotalRecoveryContinuation.status).toBe("RATE");
+      if (report.changedTotalRecoveryContinuation.status !== "RATE") return;
+      expect(report.changedTotalRecoveryContinuation.denominator).toBeGreaterThan(0);
+      expect(report.changedTotalRecoveryContinuation.numerator).toBeGreaterThan(0);
+      expect(report.paymentCompletionAfterRevalidation.status).toBe("RATE");
+    });
+  });
+
+  it("T7 production equivalent prepare resolves STALE_RECOVERY as NO_RESULT_CHANGE", async () => {
+    await withCheckoutReadyHarness(async (h) => {
+      const ready = await bringCheckoutToReady(
+        h.persistence,
+        h.actors.customerA,
+        h.cartId,
+        h.addressId,
+      );
+      await prepareCheckoutForPayment(
+        h.persistence,
+        h.actors.customerA,
+        {
+          checkoutId: ready.checkoutId,
+          expectedCheckoutRevision: ready.revision,
+        },
+        checkoutOpts(),
+      );
+      const origin = await h.persistence.withContext(async (ctx) => {
+        const r = await ctx.db.execute(sql`
+          select resolution, resolved_change_fact_id::text as fact
+          from app.commercial_command_origins
+          where cart_id = ${h.cartId}::uuid
+            and origin_kind = 'STALE_RECOVERY'
+        `);
+        return r.rows as Array<{ resolution: string | null; fact: string | null }>;
+      });
+      expect(origin.length).toBeGreaterThan(0);
+      expect(origin.every((row) => row.resolution === "NO_RESULT_CHANGE")).toBe(true);
+      expect(origin.every((row) => row.fact === null)).toBe(true);
+      const journey = await h.persistence.withContext(async (ctx) => {
+        const r = await ctx.db.execute(sql`
+          select checkout_journey_key::text as journey
+          from app.checkouts where id = ${ready.checkoutId}::uuid
+        `);
+        return r.rows[0]!.journey as string;
+      });
+      await h.persistence.transaction(async (tx) => {
+        await ensureReviewPresentedThenPaymentFacts({
+          context: tx,
+          journeyKey: journey,
+          checkoutId: ready.checkoutId,
+          paymentIdempotencyKey: randomUUID(),
+          continueSourceCommandId: randomUUID(),
+        });
+      });
+      const report = await publishMeasurementReport(h.persistence, {
+        productionReleaseAnchor: new Date("2026-10-01T18:30:00.000Z"),
+      });
+      expect(report.changedTotalRecoveryContinuation.status).toBe(
+        "INSUFFICIENT_EVIDENCE",
+      );
+      expect(report.paymentCompletionAfterRevalidation.denominator).toBeGreaterThan(0);
+    });
+  });
+
+  it("T7 production complimentary unavailable stale recovery feeds the continuation", async () => {
+    await withCheckoutReadyHarness(async (h) => {
+      const gift = await seedActiveStandardVariant(
+        h.persistence,
+        h.actors.tree.brand.id,
+        h.actors.brandAdminActor,
+        "gift",
+      );
+      await includeVariantAtBrand(
+        h.persistence,
+        h.actors.brandAdminActor,
+        h.actors.tree.brand.id,
+        gift.variantId,
+      );
+      await h.persistence.withContext(async (ctx) => {
+        await ctx.db.execute(sql`
+          insert into app.price_book_variant_prices (
+            id, brand_id, price_book_id, variant_id, amount_paise, tax_category_id, created_at
+          )
+          select
+            ${randomUUID()}::uuid,
+            p.brand_id,
+            p.price_book_id,
+            ${gift.variantId}::uuid,
+            2500,
+            p.tax_category_id,
+            now()
+          from app.price_book_variant_prices p
+          inner join app.cart_lines cl on cl.variant_id = p.variant_id
+          where cl.cart_id = ${h.cartId}::uuid
+          limit 1
+        `);
+      });
+      const promotionId = await h.persistence.transaction(async (tx) => {
+        const created = await createPromotionDraft(tx, {
+          actor: h.actors.brandAdminActor,
+          brandId: h.actors.tree.brand.id,
+          code: uniqueCode("gift"),
+          displayName: "Complimentary T7",
+          scopeType: "brand",
+          territoryId: null,
+          organizationId: null,
+          outletId: null,
+          triggerType: "automatic",
+          stackingPolicy: "combinable",
+          startsAt: new Date("2026-01-01T00:00:00Z"),
+          endsAt: null,
+        });
+        await tx.db.execute(sql`
+          insert into app.promotion_benefits (
+            id, promotion_id, benefit_type, complimentary_product_id,
+            complimentary_variant_id, created_at, updated_at
+          ) values (
+            ${randomUUID()}::uuid, ${created.id}::uuid, 'complimentary_item',
+            ${gift.productId}::uuid, ${gift.variantId}::uuid, now(), now()
+          )
+        `);
+        await tx.db.execute(sql`
+          update app.promotions
+          set complimentary_item = true
+          where id = ${created.id}::uuid
+        `);
+        for (const role of ["qualifier", "benefit"] as const) {
+          await setPromotionTargets(tx, {
+            actor: h.actors.brandAdminActor,
+            promotionId: created.id,
+            expectedPromotionRevision: (await getPromotion(tx, created.id))!.revision,
+            targetRole: role,
+            targets: [
+              {
+                targetRole: role,
+                targetType: "all_merchandise",
+                productId: null,
+                variantId: null,
+                chargeDefinitionId: null,
+              },
+            ],
+          });
+        }
+        await activatePromotion(tx, {
+          actor: h.actors.brandAdminActor,
+          promotionId: created.id,
+          expectedPromotionRevision: (await getPromotion(tx, created.id))!.revision,
+        });
+        return created.id;
+      });
+      void promotionId;
+      const ready = await bringCheckoutToReady(
+        h.persistence,
+        h.actors.customerA,
+        h.cartId,
+        h.addressId,
+      );
+      await h.persistence.transaction(async (tx) => {
+        await setVariantAvailability(tx, {
+          actor: h.actors.brandAdminActor,
+          outletId: h.actors.tree.outletA.id,
+          variantId: gift.variantId,
+          state: "sold_out",
+          unavailableUntil: null,
+        });
+      });
+      await expect(
+        prepareCheckoutForPayment(
+          h.persistence,
+          h.actors.customerA,
+          {
+            checkoutId: ready.checkoutId,
+            expectedCheckoutRevision: ready.revision,
+          },
+          checkoutOpts(),
+        ),
+      ).rejects.toMatchObject({ code: "CHECKOUT_REPRICED" });
+      const checkout = await h.persistence.withContext(async (ctx) => {
+        const r = await ctx.db.execute(sql`
+          select revision::text as revision, checkout_journey_key::text as journey
+          from app.checkouts where id = ${ready.checkoutId}::uuid
+        `);
+        return r.rows[0] as { revision: string; journey: string };
+      });
+      const recovered = await evaluateCheckout(
+        h.persistence,
+        h.actors.customerA,
+        {
+          checkoutId: ready.checkoutId,
+          expectedCheckoutRevision: BigInt(checkout.revision),
+        },
+        checkoutOpts(),
+      );
+      const reason = await h.persistence.withContext(async (ctx) => {
+        const r = await ctx.db.execute(sql`
+          select e.explanation_reason_class as reason
+          from app.commercial_evaluations e
+          where e.evaluation_id = ${recovered.evaluationId}::uuid
+        `);
+        return r.rows[0]?.reason as string;
+      });
+      expect(reason).toBe("COMPLIMENTARY_ITEM_UNAVAILABLE");
+      const giftLines = await h.persistence.withContext(async (ctx) => {
+        const r = await ctx.db.execute(sql`
+          select count(*)::text as c
+          from app.checkout_snapshot_lines
+          where snapshot_id = ${recovered.snapshot.id}::uuid
+            and line_origin = 'complimentary_offer'
+        `);
+        return Number(r.rows[0]?.c ?? "0");
+      });
+      expect(giftLines).toBe(0);
+      await h.persistence.transaction(async (tx) => {
+        await ensureReviewPresentedThenPaymentFacts({
+          context: tx,
+          journeyKey: checkout.journey,
+          checkoutId: ready.checkoutId,
+          paymentIdempotencyKey: null,
+          continueSourceCommandId: randomUUID(),
+        });
+      });
+      const report = await publishMeasurementReport(h.persistence, {
+        productionReleaseAnchor: new Date("2026-10-01T18:30:00.000Z"),
+      });
+      expect(report.complimentaryUnavailableContinuation.status).toBe("RATE");
+      if (report.complimentaryUnavailableContinuation.status !== "RATE") return;
+      expect(report.complimentaryUnavailableContinuation.denominator).toBeGreaterThan(0);
+      expect(report.complimentaryUnavailableContinuation.numerator).toBeGreaterThan(0);
     });
   });
 });

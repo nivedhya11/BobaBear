@@ -17,7 +17,10 @@ import {
   measurementReportSnapshotsTable,
   offerResultViewsTable,
 } from "../../../platform/database/schema/measurement";
-import type { Persistence } from "../../persistence/types";
+import type {
+  Persistence,
+  PersistenceTransactionContext,
+} from "../../persistence/types";
 
 import {
   initialMeasurementWindow,
@@ -193,6 +196,77 @@ function assertPrivacy(report: MeasurementReport): void {
   walkPrivacy(report);
 }
 
+type PublishedAggregate = Omit<
+  MeasurementReport,
+  "windowStart" | "windowEnd" | "reportAsOf" | "snapshotInserted"
+>;
+
+function toPublishedAggregate(report: MeasurementReport): PublishedAggregate {
+  return {
+    metric: report.metric,
+    primary: report.primary,
+    segments: report.segments,
+    cartToCheckoutReview: report.cartToCheckoutReview,
+    reviewToPayment: report.reviewToPayment,
+    paymentCompletionAfterRevalidation: report.paymentCompletionAfterRevalidation,
+    couponOutcomeDistribution: report.couponOutcomeDistribution,
+    validNotSelectedContinuation: report.validNotSelectedContinuation,
+    changedTotalRecoveryContinuation: report.changedTotalRecoveryContinuation,
+    complimentaryUnavailableContinuation: report.complimentaryUnavailableContinuation,
+    repeatedInvalidAttempts: report.repeatedInvalidAttempts,
+    supportContacts: report.supportContacts,
+    displayedSavingsIntegrity: report.displayedSavingsIntegrity,
+    offerResultViewCount: report.offerResultViewCount,
+  };
+}
+
+function reportFromPublishedRow(input: {
+  metric: string;
+  windowStart: Date;
+  windowEnd: Date;
+  reportAsOf: Date;
+  publishedReport: unknown;
+  snapshotInserted: boolean;
+}): MeasurementReport {
+  const payload = input.publishedReport;
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    throw new Error("measurement_report_snapshots published_report is missing.");
+  }
+  const report = {
+    ...(payload as PublishedAggregate),
+    metric: PRIMARY_METRIC,
+    windowStart: input.windowStart,
+    windowEnd: input.windowEnd,
+    reportAsOf: input.reportAsOf,
+    snapshotInserted: input.snapshotInserted,
+  } as MeasurementReport;
+  if (report.metric !== input.metric) {
+    throw new Error("measurement_report_snapshots metric does not match payload.");
+  }
+  assertPrivacy(report);
+  return report;
+}
+
+async function lookupPublication(
+  tx: PersistenceTransactionContext,
+  window: MeasurementReportWindow,
+) {
+  return (
+    await tx.db
+      .select()
+      .from(measurementReportSnapshotsTable)
+      .where(
+        and(
+          eq(measurementReportSnapshotsTable.metric, PRIMARY_METRIC),
+          eq(measurementReportSnapshotsTable.windowStart, window.windowStart),
+          eq(measurementReportSnapshotsTable.windowEnd, window.windowEnd),
+          eq(measurementReportSnapshotsTable.reportAsOf, window.reportAsOf),
+        ),
+      )
+      .limit(1)
+  )[0];
+}
+
 type JourneyFact = {
   factId: string;
   checkoutJourneyKey: string;
@@ -263,34 +337,16 @@ export async function publishMeasurementReport(
 ): Promise<MeasurementReport> {
   const window = initialMeasurementWindow(input);
   return persistence.transaction(async (tx) => {
-    const inserted = await tx.db
-      .insert(measurementReportSnapshotsTable)
-      .values({
-        metric: PRIMARY_METRIC,
-        windowStart: window.windowStart,
-        windowEnd: window.windowEnd,
-        reportAsOf: window.reportAsOf,
-      })
-      .onConflictDoNothing()
-      .returning();
-    const existing = inserted[0]
-      ? inserted[0]
-      : (
-          await tx.db
-            .select()
-            .from(measurementReportSnapshotsTable)
-            .where(
-              and(
-                eq(measurementReportSnapshotsTable.metric, PRIMARY_METRIC),
-                eq(measurementReportSnapshotsTable.windowStart, window.windowStart),
-                eq(measurementReportSnapshotsTable.windowEnd, window.windowEnd),
-                eq(measurementReportSnapshotsTable.reportAsOf, window.reportAsOf),
-              ),
-            )
-            .limit(1)
-        )[0];
-    if (!existing) {
-      throw new Error("measurement_report_snapshots lookup failed after insert.");
+    const existingBefore = await lookupPublication(tx, window);
+    if (existingBefore?.publishedReport != null) {
+      return reportFromPublishedRow({
+        metric: existingBefore.metric,
+        windowStart: existingBefore.windowStart,
+        windowEnd: existingBefore.windowEnd,
+        reportAsOf: existingBefore.reportAsOf,
+        publishedReport: existingBefore.publishedReport,
+        snapshotInserted: false,
+      });
     }
 
     const facts = (await tx.db.select().from(checkoutJourneyFactsTable)).map(
@@ -514,31 +570,29 @@ export async function publishMeasurementReport(
 
     for (const journeyKey of denominatorJourneys) {
       const journeyFacts = factsByJourney.get(journeyKey) ?? [];
-      const completion = journeyFacts.find(
+      const qualifyingReviews = reviewsFor(journeyFacts).filter(
         (fact) =>
-          fact.factKind === "DIRECT_ORDER_COMPLETION" &&
+          fact.presentationClass != null &&
+          VALID_NOT_SELECTED_CLASSES.has(fact.presentationClass) &&
           strictlyBefore(fact.occurredAt, window.reportAsOf),
       );
-      const segmentFact = completion
-        ? latestReviewBeforeSequence(journeyFacts, completion.journeySequence)
-        : latestReviewBeforeCutoff(journeyFacts, window.reportAsOf);
-      if (
-        segmentFact?.presentationClass &&
-        VALID_NOT_SELECTED_CLASSES.has(segmentFact.presentationClass)
-      ) {
+      if (qualifyingReviews.length > 0) {
         validNotSelectedDenom += 1;
         if (
-          hasKindBeforeCutoff(
-            journeyFacts,
-            "REVIEW_TO_PAYMENT",
-            window.reportAsOf,
-            segmentFact.journeySequence,
-          ) ||
-          hasKindBeforeCutoff(
-            journeyFacts,
-            "DIRECT_ORDER_COMPLETION",
-            window.reportAsOf,
-            segmentFact.journeySequence,
+          qualifyingReviews.some(
+            (review) =>
+              hasKindBeforeCutoff(
+                journeyFacts,
+                "REVIEW_TO_PAYMENT",
+                window.reportAsOf,
+                review.journeySequence,
+              ) ||
+              hasKindBeforeCutoff(
+                journeyFacts,
+                "DIRECT_ORDER_COMPLETION",
+                window.reportAsOf,
+                review.journeySequence,
+              ),
           )
         ) {
           validNotSelectedNum += 1;
@@ -645,10 +699,10 @@ export async function publishMeasurementReport(
 
     const report: MeasurementReport = {
       metric: PRIMARY_METRIC,
-      windowStart: existing.windowStart,
-      windowEnd: existing.windowEnd,
-      reportAsOf: existing.reportAsOf,
-      snapshotInserted: inserted.length > 0,
+      windowStart: window.windowStart,
+      windowEnd: window.windowEnd,
+      reportAsOf: window.reportAsOf,
+      snapshotInserted: true,
       primary: rateResult(numeratorJourneys.size, denominatorJourneys.length),
       segments,
       cartToCheckoutReview: rateResult(cartNum, cartDenom),
@@ -679,6 +733,40 @@ export async function publishMeasurementReport(
       offerResultViewCount,
     };
     assertPrivacy(report);
-    return report;
+    const publishedReport = toPublishedAggregate(report);
+    walkPrivacy(publishedReport);
+    const inserted = await tx.db
+      .insert(measurementReportSnapshotsTable)
+      .values({
+        metric: PRIMARY_METRIC,
+        windowStart: window.windowStart,
+        windowEnd: window.windowEnd,
+        reportAsOf: window.reportAsOf,
+        publishedReport,
+      })
+      .onConflictDoNothing()
+      .returning();
+    if (inserted[0]?.publishedReport != null) {
+      return reportFromPublishedRow({
+        metric: inserted[0].metric,
+        windowStart: inserted[0].windowStart,
+        windowEnd: inserted[0].windowEnd,
+        reportAsOf: inserted[0].reportAsOf,
+        publishedReport: inserted[0].publishedReport,
+        snapshotInserted: true,
+      });
+    }
+    const existing = await lookupPublication(tx, window);
+    if (existing?.publishedReport != null) {
+      return reportFromPublishedRow({
+        metric: existing.metric,
+        windowStart: existing.windowStart,
+        windowEnd: existing.windowEnd,
+        reportAsOf: existing.reportAsOf,
+        publishedReport: existing.publishedReport,
+        snapshotInserted: false,
+      });
+    }
+    throw new Error("measurement_report_snapshots lookup failed after insert.");
   });
 }

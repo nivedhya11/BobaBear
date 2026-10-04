@@ -182,6 +182,7 @@ export function evaluatePromotions(input: EvaluatePromotionsInput): Omit<
   baselineTotalPaise: bigint;
   thresholdProgress: ThresholdProgress[];
   complimentaryCompetingNoneChosen: boolean;
+  complimentaryItemUnavailable: boolean;
 } {
   for (const p of input.promotions) {
     if (p.status === "active") assertActivePromotionIntegrity(p);
@@ -190,6 +191,7 @@ export function evaluatePromotions(input: EvaluatePromotionsInput): Omit<
   const { result: couponResultDraft, couponPromotion } = evaluateSubmittedCoupon(input);
 
   const eligible: EligiblePromotion[] = [];
+  let complimentaryItemUnavailable = false;
   for (const promotion of input.promotions) {
     if (promotion.triggerType === "coupon") continue; // only via submitted coupon
     if (promotion.status !== "active") continue;
@@ -197,6 +199,11 @@ export function evaluatePromotions(input: EvaluatePromotionsInput): Omit<
     const eligibility = evaluateEligibility(promotion, input.snapshot, input.context);
     if (eligibility.eligible) {
       eligible.push({ promotion });
+    } else if (
+      isComplimentaryPromotion(promotion) &&
+      eligibility.reasonCode === "COMPLIMENTARY_UNAVAILABLE"
+    ) {
+      complimentaryItemUnavailable = true;
     }
   }
   if (couponPromotion) {
@@ -228,6 +235,7 @@ export function evaluatePromotions(input: EvaluatePromotionsInput): Omit<
     candidates,
     thresholdProgress,
     complimentaryCompetingNoneChosen,
+    complimentaryItemUnavailable,
   };
 }
 

@@ -246,6 +246,11 @@
       "tag": "0048_imp036j_tranche2_measurement_persistence",
       "path": "drizzle/0048_imp036j_tranche2_measurement_persistence.sql",
       "sha256": "d7f518115ec0acfe4f69cffa502a697c3135b59378fff59ef7bce5faede8c997"
+    },
+    {
+      "tag": "0049_imp036j_tranche7_immutable_publication",
+      "path": "drizzle/0049_imp036j_tranche7_immutable_publication.sql",
+      "sha256": "1b1fe8e8f42ef7ac646047ddcc9d7aec89ca4bd01d8bba3c2a6d91a2a2ed1382"
     }
   ]
 }

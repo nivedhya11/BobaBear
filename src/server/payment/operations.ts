@@ -41,6 +41,7 @@ import {
 } from "../checkout/repository";
 import { assertScheduledSnapshotStillBindable } from "../checkout/scheduled-bind";
 import { prepareCheckoutForPayment } from "../checkout/prepare";
+import { tryRecordStaleRecoveryOrigin } from "../customer-commerce/measurement/writers";
 import type { Persistence } from "../persistence/types";
 import { systemPaymentClock, type PaymentClock } from "./clock";
 import { bindInitiationIdempotency, lookupInitiationIdempotency } from "./idempotency";
@@ -183,7 +184,13 @@ async function bindOrInvalidate<T>(
       await persistence.transaction(async (tx) => {
         const row = await lockCheckoutForUpdate(tx, checkoutId);
         if (row && row.status === "READY_FOR_PAYMENT") {
-          await invalidateReadyToDraft(tx, row, now);
+          const updated = await invalidateReadyToDraft(tx, row, now);
+          await tryRecordStaleRecoveryOrigin({
+            context: tx,
+            cartId: updated.cartId,
+            checkoutId: updated.id,
+            checkoutJourneyKey: updated.checkoutJourneyKey,
+          });
         }
       });
     }
