@@ -31,23 +31,23 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2260,
-    "executableTestFiles": 493,
-    "sourceTestFiles": 147,
-    "testsTreeExecutableFiles": 271,
+    "trackedPathsConsidered": 2264,
+    "executableTestFiles": 495,
+    "sourceTestFiles": 148,
+    "testsTreeExecutableFiles": 272,
     "scriptTestFiles": 75,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
     "playwrightConfigs": 7,
     "testSupportScripts": 51,
-    "packageTestCommands": 91,
+    "packageTestCommands": 92,
     "packageAuditCommands": 27,
     "packageE2eCommands": 9,
     "packageCheckCommands": 17,
     "packageCoverageCommands": 1,
     "packageInventoryCommands": 2,
     "ciWorkflowFiles": 4,
-    "ciValidationSteps": 124,
+    "ciValidationSteps": 125,
     "protectedEvidenceTrackedFiles": 3,
     "archiveTrackedFiles": 92
   },
@@ -154,6 +154,7 @@
     "src/server/customer-auth/rate-limit/progressive.test.ts",
     "src/server/customer-commerce/http/helpers.test.ts",
     "src/server/customer-commerce/measurement/compare-presentation.test.ts",
+    "src/server/customer-commerce/measurement/report-window.test.ts",
     "src/server/customer-commerce/menu/project-customer-menu.test.ts",
     "src/server/notifications/channels/non-sending.test.ts",
     "src/server/notifications/outbox-events.test.ts",
@@ -326,6 +327,7 @@
     "tests/database/imp036j-tranche4-commercial-commands.integration.test.ts",
     "tests/database/imp036j-tranche5-customer-presentation.integration.test.ts",
     "tests/database/imp036j-tranche6-workforce-authoring.integration.test.ts",
+    "tests/database/imp036j-tranche7-measurement-reporting.integration.test.ts",
     "tests/database/isolation.integration.test.ts",
     "tests/database/menu-import.integration.test.ts",
     "tests/database/migration-cli.integration.test.ts",
@@ -690,6 +692,7 @@
       "test:imp036j:tranche4",
       "test:imp036j:tranche5",
       "test:imp036j:tranche6",
+      "test:imp036j:tranche7",
       "test:menu-import",
       "test:menu-parity",
       "test:operations:http",
@@ -903,6 +906,7 @@
     "test:imp036j:tranche4": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/imp036j-tranche4-commercial-commands.integration.test.ts",
     "test:imp036j:tranche5": "node scripts/run-vitest.mjs run src/server/customer-commerce/measurement/compare-presentation.test.ts src/components/ordering/imp036j-tranche5-presentation.test.tsx src/components/ordering/imp036j-tranche5-checkout-remediation.test.tsx src/components/ordering/committed-presentation-observation.test.ts src/components/ordering/checkout-snapshot-presentation.test.ts src/shared/order/money-summary.test.ts && node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/imp036j-tranche5-customer-presentation.integration.test.ts && node scripts/imp036j-tranche5-responsive-proof.mjs",
     "test:imp036j:tranche6": "node scripts/run-vitest.mjs run tests/administration/PromotionsEditor.test.tsx && node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/imp036j-tranche6-workforce-authoring.integration.test.ts",
+    "test:imp036j:tranche7": "node scripts/run-vitest.mjs run src/server/customer-commerce/measurement/report-window.test.ts && node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/imp036j-tranche7-measurement-reporting.integration.test.ts",
     "test:menu-import": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/menu-import",
     "test:menu-parity": "node scripts/run-vitest.mjs run tests/menu-parity",
     "test:operations:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/operations/store-http.integration.test.ts tests/operations/refunds-http.integration.test.ts tests/operations/orders-read-http.integration.test.ts tests/operations/orders-mutation-http.integration.test.ts tests/operations/notifications-http.integration.test.ts tests/operations/scheduling-http.tranche3.integration.test.ts tests/operations/scheduling-profile-workforce-journey.integration.test.ts",
@@ -1069,6 +1073,10 @@
         {
           "name": "IMP-036J Tranche 6 proof",
           "run": "npm run test:imp036j:tranche6"
+        },
+        {
+          "name": "IMP-036J Tranche 7 proof",
+          "run": "npm run test:imp036j:tranche7"
         },
         {
           "name": "Install dependencies",
@@ -4672,6 +4680,26 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "src/server/customer-commerce/measurement/report-window.test.ts",
+      "runner": "vitest",
+      "domain": "server/customer-commerce",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage",
+        "test:imp036j:tranche7"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "src/server/customer-commerce/menu/project-customer-menu.test.ts",
       "runner": "vitest",
       "domain": "server/customer-commerce",
@@ -7775,6 +7803,24 @@
       "externalProviderSubstitute": "UNKNOWN",
       "packageCommands": [
         "test:imp036j:tranche6"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "4-integration",
+        "5-database-integration"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/database/imp036j-tranche7-measurement-reporting.integration.test.ts",
+      "runner": "vitest",
+      "domain": "database/imp036j-tranche7-measurement-reporting",
+      "testType": "integration",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:imp036j:tranche7"
       ],
       "ciInclusion": "YES",
       "test1Layers": [
