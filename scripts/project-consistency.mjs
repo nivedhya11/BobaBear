@@ -1896,6 +1896,7 @@ export function isSupportedImp030GovernanceCheckpoint(roadmapVersion, stateVersi
   const imp036kDesignReadinessPass = roadmapVersion === "GTM-R183" && stateVersion === "STATE-R181";
   const imp036jTranche3Pass = roadmapVersion === "GTM-R184" && stateVersion === "STATE-R182";
   const imp036jTranche4Pass = roadmapVersion === "GTM-R185" && stateVersion === "STATE-R183";
+  const imp036jTranche6Pass = roadmapVersion === "GTM-R186" && stateVersion === "STATE-R184";
   if (kind === "activation") return activation;
   if (kind === "lock") return lock;
   if (kind === "authorization") return authorization;
@@ -2006,7 +2007,8 @@ export function isSupportedImp030GovernanceCheckpoint(roadmapVersion, stateVersi
   if (kind === "imp036kDesignReadinessPass") return imp036kDesignReadinessPass;
   if (kind === "imp036jTranche3Pass") return imp036jTranche3Pass;
   if (kind === "imp036jTranche4Pass") return imp036jTranche4Pass;
-  return activation || lock || authorization || start || routeAmendment || consistencyRepair || acceptance || imp031Activation || imp031Draft || imp031Lock || imp031Authorization || imp031Start || imp031Completion || imp031Acceptance || imp032Activation || imp032Draft || imp032Lock || imp032Authorization || imp032Start || imp032BoundaryClarification || imp032Completion || imp032Acceptance || imp033Activation || imp033Completion || imp033Acceptance || imp034Completion || imp034Acceptance || imp035Completion || imp035Acceptance || imp036Completion || imp036Acceptance || enterpriseExperiencePlan || imp036aCompletion || imp036aAcceptance || imp036bCompletion || imp036bAcceptance || imp036cCompletion || imp036cAcceptance || imp036dActivation || imp036dLock || imp036dAuthorization || imp036dStart || imp036dCompletion || imp036dAcceptance || imp036eActivation || imp036eLock || imp036eAuthorization || imp036eStart || imp036eCompletion || authorityCompression || imp036eAcceptance || imp036fActivation || imp036fProductDefinitionDraftAuthorized || imp036fProductDefinitionGatePass || imp036fArchitectureLock || imp036fImplementationAuthorization || imp036fImplementationStart || imp036fAcceptance || imp036gActivation || imp036gProductDefinitionDraft || imp036gProductDefinitionGatePass || imp036gArchitectureLock || imp036gImplementationStart || imp036gCompletion || imp036gAcceptance || imp037Activation || imp037ProductDefinitionGatePass || d374CostOptimizedPilotInfrastructure || imp037ArchitectureLock || imp037ImplementationAuthorization || imp037ImplementationStart || imp037PostMergeReconciliation || imp038ControlledContinuationActivation || imp038ArchitectureLock || imp038ImplementationAuthorizeStart || imp036hProductDefinitionActivation || imp036hProductDefinitionGatePass || imp036hArchitectureLock || imp036hImplementationAuthorization || imp036hImplementationStart || imp036hImplementationComplete || imp036hAcceptance || imp036iProductDefinitionActivation || imp036iProductDefinitionDraftReady || imp036iProductDefinitionGatePass || imp036iArchitectureLock || imp036iImplementationAuthorization || imp036iImplementationStart || imp036iTranche2 || imp036iTranche3 || imp036iTranche4 || imp036iTranche5 || imp036iImplementationComplete || imp036iAcceptance || imp036jProductDefinitionActivation || imp036jProductDefinitionDraftReady || imp036jProductDefinitionGatePass || imp036jPd2ExperienceTransition || imp036jExperienceGatePass || imp036jArchitectureLock || imp036jImplementationAuthorization || imp036kParallelDefinition || imp036jImplementationStart || imp036kProductExperienceGate || imp036jTranche1Pass || imp036kArchitectureLock || imp036jTranche2Pass || imp036kDesignReadinessPass || imp036jTranche3Pass || imp036jTranche4Pass;
+  if (kind === "imp036jTranche6Pass") return imp036jTranche6Pass;
+  return activation || lock || authorization || start || routeAmendment || consistencyRepair || acceptance || imp031Activation || imp031Draft || imp031Lock || imp031Authorization || imp031Start || imp031Completion || imp031Acceptance || imp032Activation || imp032Draft || imp032Lock || imp032Authorization || imp032Start || imp032BoundaryClarification || imp032Completion || imp032Acceptance || imp033Activation || imp033Completion || imp033Acceptance || imp034Completion || imp034Acceptance || imp035Completion || imp035Acceptance || imp036Completion || imp036Acceptance || enterpriseExperiencePlan || imp036aCompletion || imp036aAcceptance || imp036bCompletion || imp036bAcceptance || imp036cCompletion || imp036cAcceptance || imp036dActivation || imp036dLock || imp036dAuthorization || imp036dStart || imp036dCompletion || imp036dAcceptance || imp036eActivation || imp036eLock || imp036eAuthorization || imp036eStart || imp036eCompletion || authorityCompression || imp036eAcceptance || imp036fActivation || imp036fProductDefinitionDraftAuthorized || imp036fProductDefinitionGatePass || imp036fArchitectureLock || imp036fImplementationAuthorization || imp036fImplementationStart || imp036fAcceptance || imp036gActivation || imp036gProductDefinitionDraft || imp036gProductDefinitionGatePass || imp036gArchitectureLock || imp036gImplementationStart || imp036gCompletion || imp036gAcceptance || imp037Activation || imp037ProductDefinitionGatePass || d374CostOptimizedPilotInfrastructure || imp037ArchitectureLock || imp037ImplementationAuthorization || imp037ImplementationStart || imp037PostMergeReconciliation || imp038ControlledContinuationActivation || imp038ArchitectureLock || imp038ImplementationAuthorizeStart || imp036hProductDefinitionActivation || imp036hProductDefinitionGatePass || imp036hArchitectureLock || imp036hImplementationAuthorization || imp036hImplementationStart || imp036hImplementationComplete || imp036hAcceptance || imp036iProductDefinitionActivation || imp036iProductDefinitionDraftReady || imp036iProductDefinitionGatePass || imp036iArchitectureLock || imp036iImplementationAuthorization || imp036iImplementationStart || imp036iTranche2 || imp036iTranche3 || imp036iTranche4 || imp036iTranche5 || imp036iImplementationComplete || imp036iAcceptance || imp036jProductDefinitionActivation || imp036jProductDefinitionDraftReady || imp036jProductDefinitionGatePass || imp036jPd2ExperienceTransition || imp036jExperienceGatePass || imp036jArchitectureLock || imp036jImplementationAuthorization || imp036kParallelDefinition || imp036jImplementationStart || imp036kProductExperienceGate || imp036jTranche1Pass || imp036kArchitectureLock || imp036jTranche2Pass || imp036kDesignReadinessPass || imp036jTranche3Pass || imp036jTranche4Pass || imp036jTranche6Pass;
 }
 
 function isImp032ArchitectureActivationCheckpoint(roadmap, state) {
@@ -2623,6 +2625,14 @@ function isImp036jTranche4PassCheckpoint(roadmap, state) {
   );
 }
 
+function isImp036jTranche6PassCheckpoint(roadmap, state) {
+  return isSupportedImp030GovernanceCheckpoint(
+    roadmap?.meta.roadmapVersion,
+    state?.meta.stateVersion,
+    "imp036jTranche6Pass",
+  );
+}
+
 function isImp030ArchitectureCheckpoint(roadmap, state) {
   return isImp030ArchitectureActivationCheckpoint(roadmap, state) || isImp030ArchitectureLockCheckpoint(roadmap, state);
 }
@@ -2738,7 +2748,8 @@ function isImp030GovernanceCheckpoint(roadmap, state) {
     isImp036jTranche2PassCheckpoint(roadmap, state) ||
     isImp036kDesignReadinessPassCheckpoint(roadmap, state) ||
     isImp036jTranche3PassCheckpoint(roadmap, state) ||
-    isImp036jTranche4PassCheckpoint(roadmap, state)
+    isImp036jTranche4PassCheckpoint(roadmap, state) ||
+    isImp036jTranche6PassCheckpoint(roadmap, state)
   );
 }
 
@@ -18177,7 +18188,8 @@ function checkImp028ArchitectureLock(roadmap, state, architecture, decision) {
     } else {
       note("ARCHITECTURE.md records ARCH-G16 / ARCH-G17 / ARCH-G18 / D-365 / D-366 / D-367");
     }
-    const expectedArchitectureVersion = isImp036jTranche4PassCheckpoint(roadmap, state) ||
+    const expectedArchitectureVersion = isImp036jTranche6PassCheckpoint(roadmap, state) ||
+      isImp036jTranche4PassCheckpoint(roadmap, state) ||
       isImp036jTranche3PassCheckpoint(roadmap, state) ||
       isImp036kDesignReadinessPassCheckpoint(roadmap, state) ||
       isImp036jTranche2PassCheckpoint(roadmap, state) ||
@@ -18365,7 +18377,8 @@ function checkImp028ArchitectureLock(roadmap, state, architecture, decision) {
   }
 
   if (decision) {
-    const expectedDecisionRegisterVersion = isImp036jTranche4PassCheckpoint(roadmap, state) ||
+    const expectedDecisionRegisterVersion = isImp036jTranche6PassCheckpoint(roadmap, state) ||
+      isImp036jTranche4PassCheckpoint(roadmap, state) ||
       isImp036jTranche3PassCheckpoint(roadmap, state) ||
       isImp036kDesignReadinessPassCheckpoint(roadmap, state) ||
       isImp036jTranche2PassCheckpoint(roadmap, state) ||
@@ -25460,6 +25473,7 @@ function checkProductDeliveryProcessAuthorities() {
       || (roadmapMeta?.roadmapVersion === "GTM-R183" && stateMeta?.stateVersion === "STATE-R181")
       || (roadmapMeta?.roadmapVersion === "GTM-R184" && stateMeta?.stateVersion === "STATE-R182")
       || (roadmapMeta?.roadmapVersion === "GTM-R185" && stateMeta?.stateVersion === "STATE-R183")
+      || (roadmapMeta?.roadmapVersion === "GTM-R186" && stateMeta?.stateVersion === "STATE-R184")
     );
   const atImp036hProductDefinitionActivationCheckpoint =
     roadmapMeta?.roadmapVersion === "GTM-R141" &&
@@ -26089,7 +26103,8 @@ export function runProjectConsistency() {
       !isImp036jTranche2PassCheckpoint(roadmap, state) &&
       !isImp036kDesignReadinessPassCheckpoint(roadmap, state) &&
       !isImp036jTranche3PassCheckpoint(roadmap, state) &&
-      !isImp036jTranche4PassCheckpoint(roadmap, state)
+      !isImp036jTranche4PassCheckpoint(roadmap, state) &&
+      !isImp036jTranche6PassCheckpoint(roadmap, state)
     ) {
       fail("UNSUPPORTED_GOVERNANCE_CHECKPOINT", "Governance revisions at or beyond GTM-R66 / STATE-R64 require an exact supported canonical checkpoint");
     }
@@ -26249,6 +26264,7 @@ export function runProjectConsistency() {
   checkImp036kDesignReadinessPass(roadmap, state, architecture, decision);
   checkImp036jTranche3Pass(roadmap, state, architecture, decision);
   checkImp036jTranche4Pass(roadmap, state, architecture, decision);
+  checkImp036jTranche6Pass(roadmap, state, architecture, decision);
   checkImp038CurrentImplementationCompleteMarkerConsistency(roadmap, state);
   checkTechnicalInventory();
   checkStaticWeb();
@@ -40861,6 +40877,7 @@ export function evaluateImp036jArchitectureLock(text) {
     IMP036J_FORMAL_LIFECYCLE: "IMPLEMENTATION_IN_PROGRESS",
     IMP036J_TRANCHE_1: "PASS", IMP036J_TRANCHE_2: "PASS",
     IMP036J_TRANCHE_3: "PASS", IMP036J_TRANCHE_4: "PASS", IMP036J_TRANCHE_5: "NOT_STARTED",
+    IMP036J_TRANCHE_6: "PASS", T7_STARTED: "NO", T8_STARTED: "NO",
     QUALITY_TEST_PLAN_FINALIZED: "YES", MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED: "YES",
     IMPLEMENTATION_PLAN: "PASS", GLOBAL_DECISION_REQUIRED: "NO",
     D383_REQUIRED: "NO", ARCH_R24_REQUIRED: "NO", NEW_ADR_REQUIRED: "NO",
@@ -40983,6 +41000,9 @@ export function evaluateImp036jProgrammeLifecycle(roadmapText) {
     "IMP036J_TRANCHE_3: PASS",
     "IMP036J_TRANCHE_4: PASS",
     "IMP036J_TRANCHE_5: NOT_STARTED",
+    "IMP036J_TRANCHE_6: PASS",
+    "T7_STARTED: NO",
+    "T8_STARTED: NO",
     "IMP036J_IMPLEMENTATION_COMPLETE: NO",
     "FOUNDER_UAT: NOT_PERFORMED",
   ]) {
@@ -40990,8 +41010,8 @@ export function evaluateImp036jProgrammeLifecycle(roadmapText) {
       return { ok: false, code: "IMP036J_PROGRAMME", message: `Programme IMP-036J line must record ${token}` };
     }
   }
-  if (/^IMP-036J:\s*PLANNED\b/.test(impLine) || /Fit NOT_PERFORMED/.test(impLine) || /Design Readiness NOT_PERFORMED/.test(impLine) || /IMPLEMENTATION_AUTHORIZED:\s*NO/.test(impLine) || /IMPLEMENTATION_STARTED:\s*NO/.test(impLine) || /IMP036J_TRANCHE_1:\s*IN_REVIEW/.test(impLine) || /IMP036J_TRANCHE_2_STARTED:\s*YES/.test(impLine) || /nextGate IMPLEMENTATION_TRANCHE_4/.test(impLine) || /IMP036J_TRANCHE_4:\s*NOT_STARTED/.test(impLine) || /IMP036J_TRANCHE_5:\s*PASS/.test(impLine) || /IMP036J_IMPLEMENTATION_COMPLETE:\s*YES/.test(impLine) || /IMP036J_ACCEPTED:\s*YES/.test(impLine)) {
-    return { ok: false, code: "IMP036J_PROGRAMME_REGRESSION", message: "Programme IMP-036J line must stay locked, with Tranche 4 passed, Tranche 5 not started, and implementation incomplete" };
+  if (/^IMP-036J:\s*PLANNED\b/.test(impLine) || /Fit NOT_PERFORMED/.test(impLine) || /Design Readiness NOT_PERFORMED/.test(impLine) || /IMPLEMENTATION_AUTHORIZED:\s*NO/.test(impLine) || /IMPLEMENTATION_STARTED:\s*NO/.test(impLine) || /IMP036J_TRANCHE_1:\s*IN_REVIEW/.test(impLine) || /IMP036J_TRANCHE_2_STARTED:\s*YES/.test(impLine) || /nextGate IMPLEMENTATION_TRANCHE_4/.test(impLine) || /IMP036J_TRANCHE_4:\s*NOT_STARTED/.test(impLine) || /IMP036J_TRANCHE_5:\s*PASS/.test(impLine) || /IMP036J_TRANCHE_6:\s*NOT_STARTED/.test(impLine) || /T7_STARTED:\s*YES/.test(impLine) || /T8_STARTED:\s*YES/.test(impLine) || /IMP036J_IMPLEMENTATION_COMPLETE:\s*YES/.test(impLine) || /IMP036J_ACCEPTED:\s*YES/.test(impLine)) {
+    return { ok: false, code: "IMP036J_PROGRAMME_REGRESSION", message: "Programme IMP-036J line must stay locked, with Tranche 6 passed, Tranche 5 not started, T7/T8 not started, and implementation incomplete" };
   }
   return { ok: true };
 }
@@ -41008,8 +41028,9 @@ export function evaluateImp036jProductIdentity(productText) {
   const tipFenceEnd = tipFenceStart < 0 ? -1 : productText.indexOf("```", tipFenceStart + "```text".length);
   const tipFence = tipFenceStart < 0 || tipFenceEnd < 0 ? "" : productText.slice(tipFenceStart, tipFenceEnd);
   if (
-    !anchors.includes("ROADMAP GTM-R185") ||
-    !anchors.includes("STATE STATE-R183") ||
+    !anchors.includes("ROADMAP GTM-R186") ||
+    !anchors.includes("STATE STATE-R184") ||
+    anchors.includes("GTM-R185") ||
     anchors.includes("GTM-R184") ||
     anchors.includes("GTM-R183") ||
     anchors.includes("STATE-R179") ||
@@ -41026,7 +41047,7 @@ export function evaluateImp036jProductIdentity(productText) {
     anchors.includes("STATE-R174") ||
     anchors.includes("STATE-R173")
   ) {
-    return { ok: false, code: "IMP036J_PRODUCT_IDENTITY", message: "Product identity anchors must be GTM-R185 / STATE-R183" };
+    return { ok: false, code: "IMP036J_PRODUCT_IDENTITY", message: "Product identity anchors must be GTM-R186 / STATE-R184" };
   }
   for (const token of [
     "formal lifecycle `IMPLEMENTATION_IN_PROGRESS`",
@@ -41035,6 +41056,9 @@ export function evaluateImp036jProductIdentity(productText) {
     "Tranche 3 `PASS`",
     "Tranche 4 `PASS`",
     "Tranche 5 not started",
+    "Tranche 6 `PASS`",
+    "T7 not started",
+    "T8 not started",
     "Tranche 1 `PASS`",
     "Fit `PASS`",
     "architecture `LOCKED`",
@@ -41070,8 +41094,9 @@ export function evaluateImp036jProductIdentity(productText) {
     return { ok: false, code: "IMP036J_PRODUCT_IDENTITY", message: "Product Definition must preserve Candidate 5 prior-lock review 5347761109" };
   }
   if (
-    !tipFence.includes("ROADMAP = GTM-R185") ||
-    !tipFence.includes("STATE = STATE-R183") ||
+    !tipFence.includes("ROADMAP = GTM-R186") ||
+    !tipFence.includes("STATE = STATE-R184") ||
+    /ROADMAP = GTM-R185/.test(tipFence) ||
     /ROADMAP = GTM-R184/.test(tipFence) ||
     /ROADMAP = GTM-R183/.test(tipFence) ||
     /STATE = STATE-R179/.test(tipFence) ||
@@ -41086,7 +41111,7 @@ export function evaluateImp036jProductIdentity(productText) {
     /ROADMAP = GTM-R176/.test(tipFence) ||
     /STATE = STATE-R174/.test(tipFence)
   ) {
-    return { ok: false, code: "IMP036J_PRODUCT_TIP", message: "Product Definition current tip must be GTM-R185 / STATE-R183" };
+    return { ok: false, code: "IMP036J_PRODUCT_TIP", message: "Product Definition current tip must be GTM-R186 / STATE-R184" };
   }
   const dependencies = productText.split("## 21. Dependencies")[1]?.split("\n## ")[0] ?? "";
   const architectureFitDependency = dependencies
@@ -41096,7 +41121,7 @@ export function evaluateImp036jProductIdentity(productText) {
     return {
       ok: false,
       code: "IMP036J_PRODUCT_DEPENDENCY_TRANCHE",
-      message: "Section 21 Architecture Fit dependency pointer must be Implementation Tranche 5 at GTM-R185 / STATE-R183",
+      message: "Section 21 Architecture Fit dependency pointer must be Implementation Tranche 5 at GTM-R186 / STATE-R184",
     };
   }
   return { ok: true };
@@ -41139,7 +41164,8 @@ export function evaluateImp036jProductReadmePointers(readmeText) {
     !productRow.includes("**STARTED**") ||
     productRow.includes("NOT_STARTED") ||
     productRow.includes("NOT_AUTHORIZED") ||
-    !productRow.includes("tip GTM-R185 / STATE-R183") ||
+    !productRow.includes("tip GTM-R186 / STATE-R184") ||
+    productRow.includes("tip GTM-R185 / STATE-R183") ||
     productRow.includes("tip GTM-R184 / STATE-R182") ||
     productRow.includes("tip GTM-R183 / STATE-R181") ||
     productRow.includes("tip GTM-R180 / STATE-R178") ||
@@ -41155,7 +41181,7 @@ export function evaluateImp036jProductReadmePointers(readmeText) {
     productRow.includes("tip GTM-R175 / STATE-R173") ||
     productRow.includes("(review `5347761109`)")
   ) {
-    return { ok: false, code: "IMP036J_PRODUCT_README", message: "product/README.md IMP-036J Product Definition row must name Candidate 9 and tip GTM-R185 / STATE-R183" };
+    return { ok: false, code: "IMP036J_PRODUCT_README", message: "product/README.md IMP-036J Product Definition row must name Candidate 9 and tip GTM-R186 / STATE-R184" };
   }
   if (!productRow.includes("`IMP-036J-FIT-CANDIDATE-5`") || !productRow.includes("5347761109")) {
     return { ok: false, code: "IMP036J_PRODUCT_README", message: "product/README.md IMP-036J Product Definition row must preserve Candidate 5 prior-lock review 5347761109" };
@@ -41174,9 +41200,12 @@ export function evaluateImp036jProductReadmePointers(readmeText) {
     !experienceRow.includes("Tranche 3 is **PASS**") ||
     !experienceRow.includes("Tranche 4 is **PASS**") ||
     experienceRow.includes("Tranche 4 has not started") ||
+    !experienceRow.includes("Tranche 6 is **PASS**") ||
+    experienceRow.includes("Tranche 6 has not started") ||
     !experienceTranche5Pending ||
     experienceRow.includes("Tranche 5 is **PASS**") ||
     experienceRow.includes("IMP036J_TRANCHE_5: PASS") ||
+    experienceRow.includes("T7 has not started") === false ||
     !experienceRow.includes("**AUTHORIZED**") ||
     !experienceRow.includes("**STARTED**") ||
     experienceRow.includes("NOT_AUTHORIZED") ||
@@ -41196,7 +41225,8 @@ export function evaluateImp036jProductReadmePointers(readmeText) {
 
 /**
  * TEST-1 current lifecycle pointer for the IMP-036J Candidate 9 lock.
- * The live CURRENT tip must be GTM-R185 / STATE-R183. GTM-R184 / STATE-R182
+ * The live CURRENT tip must be GTM-R186 / STATE-R184. GTM-R185 / STATE-R183
+ * remains the Tranche 4 PASS checkpoint, GTM-R184 / STATE-R182
  * remains the Tranche 3 PASS checkpoint, GTM-R183 / STATE-R181
  * remains the IMP-036K Design Readiness PASS checkpoint, GTM-R182 / STATE-R180
  * remains the Tranche 2 PASS checkpoint, GTM-R180 / STATE-R178 remains
@@ -41209,10 +41239,11 @@ export function evaluateImp036jTestingPointer(testingText) {
   const paragraphs = String(testingText ?? "").split(/\n\n/);
   const block = paragraphs.find((paragraph) => paragraph.includes("CURRENT tip GTM-")) ?? "";
   const currentTips = [...block.matchAll(/CURRENT tip GTM-R\d+ \/ STATE-R\d+/g)].map((match) => match[0]);
-  const chain = /CURRENT tip GTM-R185 \/ STATE-R183 \(prior tip GTM-R184 \/ STATE-R182; prior tip GTM-R183 \/ STATE-R181; prior tip GTM-R182 \/ STATE-R180; prior tip GTM-R181 \/ STATE-R179; prior tip GTM-R180 \/ STATE-R178; prior tip GTM-R179 \/ STATE-R177; prior tip GTM-R178 \/ STATE-R176; prior tip GTM-R177 \/ STATE-R175; prior tip GTM-R176 \/ STATE-R174;/;
+  const chain = /CURRENT tip GTM-R186 \/ STATE-R184 \(prior tip GTM-R185 \/ STATE-R183; prior tip GTM-R184 \/ STATE-R182; prior tip GTM-R183 \/ STATE-R181; prior tip GTM-R182 \/ STATE-R180; prior tip GTM-R181 \/ STATE-R179; prior tip GTM-R180 \/ STATE-R178; prior tip GTM-R179 \/ STATE-R177; prior tip GTM-R178 \/ STATE-R176; prior tip GTM-R177 \/ STATE-R175; prior tip GTM-R176 \/ STATE-R174;/;
   if (
     currentTips.length !== 1 ||
-    currentTips[0] !== "CURRENT tip GTM-R185 / STATE-R183" ||
+    currentTips[0] !== "CURRENT tip GTM-R186 / STATE-R184" ||
+    /CURRENT tip GTM-R185 \/ STATE-R183/.test(testingText) ||
     /CURRENT tip GTM-R184 \/ STATE-R182/.test(testingText) ||
     /CURRENT tip GTM-R183 \/ STATE-R181/.test(testingText) ||
     /CURRENT tip GTM-R180 \/ STATE-R178/.test(testingText) ||
@@ -41225,7 +41256,7 @@ export function evaluateImp036jTestingPointer(testingText) {
     return {
       ok: false,
       code: "IMP036J_TESTING_TIP",
-      message: "TESTING.md current tip must be GTM-R185 / STATE-R183 and must retain prior tips GTM-R184 / STATE-R182, GTM-R183 / STATE-R181, GTM-R182 / STATE-R180, GTM-R181 / STATE-R179, GTM-R180 / STATE-R178, and GTM-R179 / STATE-R177",
+      message: "TESTING.md current tip must be GTM-R186 / STATE-R184 and must retain prior tips GTM-R185 / STATE-R183, GTM-R184 / STATE-R182, GTM-R183 / STATE-R181, GTM-R182 / STATE-R180, GTM-R181 / STATE-R179, GTM-R180 / STATE-R178, and GTM-R179 / STATE-R177",
     };
   }
   return { ok: true };
@@ -41291,6 +41322,9 @@ export function evaluateImp036jProductDeliveryTransition(text) {
     "TRANCHE_3 = PASS",
     "TRANCHE_4 = PASS",
     "TRANCHE_5 = NOT_STARTED",
+    "TRANCHE_6 = PASS",
+    "T7_STARTED = NO",
+    "T8_STARTED = NO",
   ];
   for (const token of required) {
     if (!section.includes(token)) {
@@ -41312,6 +41346,10 @@ export function evaluateImp036jProductDeliveryTransition(text) {
     /TRANCHE_3\s*=\s*NOT_STARTED/.test(section) ||
     /TRANCHE_4\s*=\s*NOT_STARTED/.test(section) ||
     /TRANCHE_5\s*=\s*PASS/.test(section) ||
+    /TRANCHE_6\s*=\s*NOT_STARTED/.test(section) ||
+    /T7_STARTED\s*=\s*YES/.test(section) ||
+    /T8_STARTED\s*=\s*YES/.test(section) ||
+    /NEXT_GATE\s*=\s*IMPLEMENTATION_TRANCHE_7/.test(section) ||
     /NEXT_GATE\s*=\s*IMPLEMENTATION_TRANCHE_4/.test(section) ||
     /NEXT_GATE\s*=\s*IMPLEMENTATION_TRANCHE_3/.test(section) ||
     /NEXT_GATE\s*=\s*IMPLEMENTATION_TRANCHE_2/.test(section) ||
@@ -41393,7 +41431,7 @@ export function evaluateImp036jPlatformIndexPointer(indexText) {
     row.includes("source `IMP-036J-FIT-CANDIDATE-5`") ||
     !row.includes("ARCH-R23 unchanged") ||
     !row.includes("Design Readiness PASS") ||
-    !row.includes("next gate IMPLEMENTATION_TRANCHE_5") || !row.includes("Tranche 1 PASS") || !row.includes("Tranche 2 PASS") || !row.includes("Tranche 3 PASS") || !row.includes("Tranche 4 PASS") || row.includes("Tranche 5 PASS") || row.includes("Tranche 1 IN_REVIEW") || row.includes("Tranche 4 not started") || !row.includes("implementation AUTHORIZED / STARTED") || row.includes("implementation NOT_AUTHORIZED")
+    !row.includes("next gate IMPLEMENTATION_TRANCHE_5") || !row.includes("Tranche 1 PASS") || !row.includes("Tranche 2 PASS") || !row.includes("Tranche 3 PASS") || !row.includes("Tranche 4 PASS") || !row.includes("Tranche 6 PASS") || !row.includes("T7 not started") || !row.includes("T8 not started") || row.includes("Tranche 5 PASS") || row.includes("Tranche 1 IN_REVIEW") || row.includes("Tranche 4 not started") || !row.includes("implementation AUTHORIZED / STARTED") || row.includes("implementation NOT_AUTHORIZED")
   ) {
     return { ok: false, code: "IMP036J_LOCK_INDEX", message: "Platform index IMP-036J row must name Candidate 9 as the current Architecture Fit source" };
   }
@@ -43933,6 +43971,226 @@ function checkImp036jTranche4Pass(roadmap, state, architecture, decision) {
     fail("IMP036K_PRESERVED_AT_T4", "IMP-036K Design Readiness artifact must remain PASS with Architect review 5396061135");
   }
   note("IMP-036J Tranche 4 PASS is CURRENT; Tranche 5 is not started; IMP-036K Design Readiness remains PASS with Quality/Test Plan unperformed");
+}
+
+/**
+ * CURRENT checkpoint: IMP-036J Tranche 6 WORKFORCE_AUTHORING PASS (GTM-R186 / STATE-R184).
+ * T6 is a parallel independent workstream PASS. T5 remains NOT_STARTED and remains
+ * the controlling next gate. T7/T8 remain not started. IMP-036K lifecycle is unchanged.
+ * Historical GTM-R185 / STATE-R183 remains Tranche 4 PASS.
+ * @param {Record<string, any>} roadmap
+ * @param {Record<string, any>} state
+ * @param {Record<string, any>} architecture
+ * @param {Record<string, any>} decision
+ */
+function checkImp036jTranche6Pass(roadmap, state, architecture, decision) {
+  if (!isImp036jTranche6PassCheckpoint(roadmap, state)) return;
+  const roadmapText = roadmap?.text ?? "";
+  const stateText = state?.text ?? "";
+  const currentRoadmapSection = roadmapText.split("## 2. Current Position")[1]?.split("\n## ")[0] ?? "";
+  const currentFence = currentRoadmapSection.split("```text").pop()?.split("```")[0] ?? "";
+  const currentMarker = currentRoadmapSection.split("\n**GTM-R185**")[0] || currentRoadmapSection;
+  const stateSection2 = stateText.split("## 2. Current Work Position")[1]?.split("\n## ")[0] ?? "";
+  const futureSliceSection = roadmapText.split("## 5. Future GTM Slices")[1]?.split("\n## ")[0] ?? "";
+  const acceptedSection = roadmapText.split("## 3. Accepted Slices")[1]?.split("\n## ")[0] ?? "";
+  const decisionText = decision?.text ?? "";
+  if (roadmap?.meta.roadmapVersion !== "GTM-R186" || state?.meta.stateVersion !== "STATE-R184") {
+    fail("IMP036J_T6_IDENTITY", "IMP-036J Tranche 6 PASS must be the current GTM-R186 / STATE-R184 checkpoint");
+  }
+  if (roadmap?.meta.supersedes !== "GTM-R185" || state?.meta.supersedes !== "STATE-R183") {
+    fail("IMP036J_T6_SUPERSEDES", "GTM-R186 must supersede GTM-R185 and STATE-R184 must supersede STATE-R183");
+  }
+  if (roadmap?.meta.acceptedThrough !== "IMP-036I" || state?.meta.acceptedThrough !== "IMP-036I") {
+    fail("IMP036J_T6_ACCEPTED_THROUGH", "acceptedThrough must stay IMP-036I");
+  }
+  if (roadmap?.meta.currentProductSlice !== "IMP-036J" || state?.meta.currentProductSlice !== "IMP-036J") {
+    fail("IMP036J_T6_CURRENT_SLICE", "currentProductSlice must stay IMP-036J");
+  }
+  if (roadmap?.meta.nextProductSlice !== "IMP-036K" || state?.meta.nextProductSlice !== "IMP-036K") {
+    fail("IMP036J_T6_NEXT_SLICE", "nextProductSlice must stay IMP-036K");
+  }
+  if (state?.meta.pendingAcceptance !== "NONE") fail("IMP036J_T6_PENDING", "pendingAcceptance must stay NONE");
+  if (architecture?.meta.architectureVersion !== "ARCH-R23" || decision?.meta.decisionRegisterVersion !== "DR-24") {
+    fail("IMP036J_T6_GLOBAL_AUTHORITY", "Tranche 6 PASS persistence must retain ARCH-R23 and DR-24");
+  }
+  const passed = [
+    "IMP-036J: ARCHITECTURE_LOCKED",
+    "IMP036J_IMPLEMENTATION_AUTHORIZATION: APPROVED",
+    "IMP036J_IMPLEMENTATION_AUTHORIZED: YES",
+    "IMP036J_IMPLEMENTATION_STARTED: YES",
+    "IMP036J_IMPLEMENTATION_COMPLETE: NO",
+    "IMP036J_ACCEPTED: NO",
+    "IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_5",
+    "nextGate: IMPLEMENTATION_TRANCHE_5",
+    "IMP036J_STARTED: YES",
+    "IMP036J_FORMAL_LIFECYCLE: IMPLEMENTATION_IN_PROGRESS",
+    "IMP036J_TRANCHE_1: PASS",
+    "IMP036J_TRANCHE_2: PASS",
+    "IMP036J_TRANCHE_3: PASS",
+    "IMP036J_TRANCHE_4: PASS",
+    "IMP036J_TRANCHE_5: NOT_STARTED",
+    "IMP036J_TRANCHE_6: PASS",
+    "T7_STARTED: NO",
+    "T8_STARTED: NO",
+    "FOUNDER_UAT: NOT_PERFORMED",
+    "f1338e30bc49dff41c06449b9e944a65d6b87fe0",
+    "84fa3196cbc04543d67eae6c2520eca67addb606",
+    "5ad8046c6ff2962a9cd09eb9e74caef4ade86aed",
+    "5977274761",
+    "5404591139",
+    "5977374419",
+    "37182861121",
+    "37182861142",
+    "IMP037_HOLD: YES",
+    "IMP038_HOLD: YES",
+    "GAP-EXT-ASSESS-001: NOT_CLOSED",
+  ];
+  for (const token of passed) {
+    if (!currentMarker.includes(token) || !stateText.includes(token)) {
+      fail("IMP036J_T6_POSITION", `IMP-036J Tranche 6 PASS persistence must record ${token}`);
+    }
+  }
+  const forbiddenCurrent = [
+    "IMP036J_TRANCHE_6: NOT_STARTED",
+    "IMP036J_TRANCHE_5: PASS",
+    "nextGate: IMPLEMENTATION_TRANCHE_7",
+    "IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_7",
+    "IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_6",
+    "T7_STARTED: YES",
+    "T8_STARTED: YES",
+    "IMP036J_IMPLEMENTATION_STARTED: NO",
+    "IMP036J_STARTED: NO",
+    "IMP036J_IMPLEMENTATION_COMPLETE: YES",
+    "IMP036J_ACCEPTED: YES",
+    "IMP036K_DESIGN_READINESS: NOT_PERFORMED",
+    "IMP036K_NEXT_GATE: DESIGN_READINESS",
+    "IMP036K_QUALITY_TEST_PLAN_FINALIZED: YES",
+    "IMP036K_MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED: YES",
+    "IMP036K_IMPLEMENTATION_AUTHORIZED: YES",
+    "IMP036K_IMPLEMENTATION_STARTED: YES",
+  ];
+  for (const token of forbiddenCurrent) {
+    if (currentMarker.includes(token) || stateSection2.includes(token)) {
+      fail("IMP036J_T6_REGRESSION", `Current IMP-036J position must not record ${token}`);
+    }
+  }
+  const preservedK = [
+    "IMP-036K: PLANNED",
+    "IMP036K_PRODUCT_DEFINITION_GATE: PASS",
+    "IMP036K_EXPERIENCE_GATE: PASS",
+    "IMP036K_ARCHITECTURE_FIT: PASS",
+    "IMP036K_ARCHITECTURE_LOCKED: YES",
+    "IMP036K_DESIGN_READINESS: PASS",
+    "DESIGN_READINESS_ARCHITECT_REVIEW: 5396061135",
+    "IMP036K_NEXT_GATE: QUALITY / TEST PLAN FINALIZATION",
+    "IMP036K_QUALITY_TEST_PLAN: NOT_PERFORMED",
+    "IMP036K_QUALITY_TEST_PLAN_FINALIZED: NO",
+    "IMP036K_MEASUREMENT_PLAN: NOT_PERFORMED",
+    "IMP036K_MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED: NO",
+    "IMP036K_IMPLEMENTATION_PLAN: NOT_PERFORMED",
+    "IMP036K_IMPLEMENTATION_AUTHORIZED: NO",
+    "IMP036K_IMPLEMENTATION_STARTED: NO",
+    "IMP036K_IMPLEMENTATION_COMPLETE: NO",
+    "IMP036K_ACCEPTED: NO",
+    "5380398013",
+  ];
+  for (const token of preservedK) {
+    if (!currentFence.includes(token) || !stateSection2.includes(token)) {
+      fail("IMP036K_PRESERVED_AT_T6", `Current ROADMAP fence and STATE position must still record ${token}`);
+    }
+  }
+  const roadmapFinalized = evaluateImp036kDesignReadinessPlanFinalizedFlags(currentFence);
+  if (!roadmapFinalized.ok) fail(roadmapFinalized.code, roadmapFinalized.message);
+  const stateFinalized = evaluateImp036kDesignReadinessPlanFinalizedFlags(stateSection2);
+  if (!stateFinalized.ok) fail(stateFinalized.code, stateFinalized.message);
+  if (!stateText.includes("STATE-R184 = IMP036J_TRANCHE_6_PASS")) {
+    fail("IMP036J_T6_RECORD", "STATE-R184 Tranche 6 PASS record missing");
+  }
+  const historicalR183 = stateText.split("## 10. STATE-R183 record")[1]?.split("## 10. STATE-R182")[0] ?? "";
+  if (
+    !historicalR183.includes("STATE-R183 = IMP036J_TRANCHE_4_PASS") ||
+    !historicalR183.includes("IMP036J_TRANCHE_5: NOT_STARTED") ||
+    !historicalR183.includes("IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_5") ||
+    historicalR183.includes("IMP036J_TRANCHE_6: PASS") ||
+    !roadmapText.includes("**GTM-R185** records IMP-036J Tranche 4 PASS")
+  ) {
+    fail("IMP036J_T6_R185_HISTORY", "GTM-R185 / STATE-R183 must remain Tranche 4 PASS with Tranche 6 not recorded as PASS");
+  }
+  if (!stateText.includes("STATE-R182 = IMP036J_TRANCHE_3_PASS") || !roadmapText.includes("**GTM-R184** records IMP-036J Tranche 3 PASS")) {
+    fail("IMP036J_T6_R184_HISTORY", "GTM-R184 / STATE-R182 must remain Tranche 3 PASS");
+  }
+  if (!stateText.includes("STATE-R181 = IMP036K_DESIGN_READINESS_PASS") || !roadmapText.includes("**GTM-R183** records Architect Design Readiness PASS")) {
+    fail("IMP036J_T6_R183_HISTORY", "GTM-R183 / STATE-R181 must remain Design Readiness PASS");
+  }
+  if (!stateText.includes("STATE-R180 = IMP036J_TRANCHE_2_PASS") || !roadmapText.includes("**GTM-R182** records IMP-036J Tranche 2 PASS")) {
+    fail("IMP036J_T6_T2_HISTORY", "GTM-R182 / STATE-R180 must remain the Tranche 2 PASS checkpoint");
+  }
+  if (!stateText.includes("STATE-R179 = IMP036K_ARCHITECTURE_FIT_PASS_AND_LOCK") || !roadmapText.includes("**GTM-R181** records Architect review `5391917727`")) {
+    fail("IMP036J_T6_K_LOCK_HISTORY", "GTM-R181 / STATE-R179 must remain the Architecture Fit PASS / LOCK checkpoint");
+  }
+  if (!stateText.includes("STATE-R178 = IMP036J_TRANCHE_1_PASS") || !roadmapText.includes("**GTM-R180** records IMP-036J Tranche 1 PASS")) {
+    fail("IMP036J_T6_T1_HISTORY", "GTM-R180 / STATE-R178 must remain the Tranche 1 PASS checkpoint");
+  }
+  if (acceptedSection.includes("| IMP-036J |") || acceptedSection.includes("| IMP-036K |")) {
+    fail("IMP036J_T6_NOT_ACCEPTED_LEDGER", "Accepted slice ledger must not include IMP-036J or IMP-036K");
+  }
+  const futureRow = futureSliceSection.split("\n").find((line) => line.includes("| IMP-036J |")) ?? "";
+  if (!futureRow.includes("AUTHORIZED / STARTED") || !futureRow.includes("IMP036J_TRANCHE_1: PASS") || !futureRow.includes("IMP036J_TRANCHE_2: PASS") || !futureRow.includes("IMP036J_TRANCHE_3: PASS") || !futureRow.includes("IMP036J_TRANCHE_4: PASS") || !futureRow.includes("IMP036J_TRANCHE_5: NOT_STARTED") || !futureRow.includes("IMP036J_TRANCHE_6: PASS") || !futureRow.includes("T7_STARTED: NO") || !futureRow.includes("T8_STARTED: NO") || !futureRow.includes("IMPLEMENTATION_TRANCHE_5") || futureRow.includes("IMP036J_TRANCHE_5: PASS") || futureRow.includes("COMPLETE_AND_ACCEPTED") || futureRow.includes("IMP036J_IMPLEMENTATION_COMPLETE: YES")) {
+    fail("IMP036J_FUTURE_LEDGER", "Future GTM slice ledger must record IMP-036J Tranche 6 PASS with next gate IMPLEMENTATION_TRANCHE_5, Tranche 5 not started, and implementation incomplete");
+  }
+  const futureK = futureSliceSection.split("\n").find((line) => line.includes("| IMP-036K |")) ?? "";
+  if (!futureK.includes("DESIGN_READINESS PASS") || !futureK.includes("QUALITY / TEST PLAN FINALIZATION") || !futureK.includes("ARCHITECTURE_FIT PASS") || !futureK.includes("ARCHITECTURE_LOCKED YES") || !futureK.includes("NOT_AUTHORIZED") || futureK.includes("DESIGN_READINESS NOT_PERFORMED") || futureK.includes("COMPLETE_AND_ACCEPTED")) {
+    fail("IMP036K_FUTURE_LEDGER", "Future GTM slice ledger must keep IMP-036K Design Readiness PASS, next gate QUALITY / TEST PLAN FINALIZATION, and implementation unauthorized");
+  }
+  if (!/next ID \*\*D-384\*\*/.test(decisionText) || !/\| D-383 \|/.test(decisionText) || /\| D-384 \|/.test(decisionText)) {
+    fail("IMP036J_T6_D383", "D-383 must remain registered, D-384 must not be created, and the next free ID must stay D-384");
+  }
+  const d383 = evaluateD383Current(decisionText);
+  if (!d383.ok) fail(d383.code, d383.message);
+  const d382 = evaluateD382AmendedByD383(decisionText);
+  if (!d382.ok) fail(d382.code, d382.message);
+  const productReadmeAbs = resolveExactRelativeFile("docs/platform/product/README.md");
+  const productReadmeText = productReadmeAbs ? readFileSync(productReadmeAbs, "utf8") : "";
+  const productReadmePointers = evaluateImp036jProductReadmePointers(productReadmeText);
+  if (!productReadmePointers.ok) fail(productReadmePointers.code, productReadmePointers.message);
+  const productDefAbs = resolveExactRelativeFile("docs/platform/product/IMP-036J/product-definition.md");
+  const productDefinitionText = productDefAbs ? readFileSync(productDefAbs, "utf8") : "";
+  const productIdentity = evaluateImp036jProductIdentity(productDefinitionText);
+  if (!productIdentity.ok) fail(productIdentity.code, productIdentity.message);
+  const testingAbs = resolveExactRelativeFile("docs/platform/TESTING.md");
+  const testingText = testingAbs ? readFileSync(testingAbs, "utf8") : "";
+  const testingPointer = evaluateImp036jTestingPointer(testingText);
+  if (!testingPointer.ok) fail(testingPointer.code, testingPointer.message);
+  const programme = evaluateImp036jProgrammeLifecycle(roadmapText);
+  if (!programme.ok) fail(programme.code, programme.message);
+  const productDeliveryAbs = resolveExactRelativeFile("docs/platform/PRODUCT-DELIVERY.md");
+  const productDeliveryText = productDeliveryAbs ? readFileSync(productDeliveryAbs, "utf8") : "";
+  const transition = evaluateImp036jProductDeliveryTransition(productDeliveryText);
+  if (!transition.ok) fail(transition.code, transition.message);
+  const capabilityAbs = resolveExactRelativeFile("docs/platform/capabilities/IMP-036J-promotions-coupons-offers.md");
+  const capabilityText = capabilityAbs ? readFileSync(capabilityAbs, "utf8") : "";
+  const architectureLock = evaluateImp036jArchitectureLock(capabilityText);
+  if (!architectureLock.ok) fail(architectureLock.code, architectureLock.message);
+  const indexAbs = resolveExactRelativeFile("docs/platform/README.md");
+  const indexText = indexAbs ? readFileSync(indexAbs, "utf8") : "";
+  const indexPointer = evaluateImp036jPlatformIndexPointer(indexText);
+  if (!indexPointer.ok) fail(indexPointer.code, indexPointer.message);
+  const productAbs = resolveExactRelativeFile("docs/platform/product/IMP-036K/product-definition.md");
+  const experienceAbs = resolveExactRelativeFile("docs/platform/product/IMP-036K/experience-definition.md");
+  const designAbs = resolveExactRelativeFile("docs/platform/product/IMP-036K/design-readiness.md");
+  const productText = productAbs ? readFileSync(productAbs, "utf8") : "";
+  const experienceText = experienceAbs ? readFileSync(experienceAbs, "utf8") : "";
+  const designText = designAbs ? readFileSync(designAbs, "utf8") : "";
+  if (!productText.includes("DESIGN_READINESS = PASS") || !productText.includes("IMP036K_NEXT_GATE = QUALITY / TEST PLAN FINALIZATION")) {
+    fail("IMP036K_PRESERVED_AT_T6", "IMP-036K Product Definition must keep Design Readiness PASS and next gate QUALITY / TEST PLAN FINALIZATION");
+  }
+  if (!experienceText.includes("DESIGN_READINESS = PASS") || !experienceText.includes("IMP036K_NEXT_GATE = QUALITY / TEST PLAN FINALIZATION")) {
+    fail("IMP036K_PRESERVED_AT_T6", "IMP-036K Experience Definition must keep Design Readiness PASS and next gate QUALITY / TEST PLAN FINALIZATION");
+  }
+  if (!designText.includes("DESIGN_READINESS = PASS") || !designText.includes("5396061135")) {
+    fail("IMP036K_PRESERVED_AT_T6", "IMP-036K Design Readiness artifact must remain PASS with Architect review 5396061135");
+  }
+  note("IMP-036J Tranche 6 PASS is CURRENT; Tranche 5 remains NOT_STARTED and the next gate; T7/T8 remain not started; IMP-036K Design Readiness remains PASS with Quality/Test Plan unperformed");
 }
 
 function checkImp036iAcceptance(roadmap, state, architecture, decision) {
