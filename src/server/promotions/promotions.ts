@@ -848,6 +848,25 @@ export async function activatePromotion(
         "delivery_fee_waiver benefit target must be the canonical delivery charge.",
       );
     }
+  } else {
+    // Locked V1 slot model: a non-waiver Offer may not target both delivery charge
+    // and merchandise in one benefit set (would classify as dual slot classes).
+    const targetsDelivery = bConfigs.some(
+      (t) =>
+        t.targetType === "charge" && t.chargeDefinitionId === CHARGE_DEFINITION_DELIVERY_ID,
+    );
+    const targetsMerchandise = bConfigs.some(
+      (t) =>
+        t.targetType === "all_merchandise" ||
+        t.targetType === "product" ||
+        t.targetType === "variant",
+    );
+    if (targetsDelivery && targetsMerchandise) {
+      throw new PromotionAdminError(
+        "PROMOTION_BENEFIT_INVALID",
+        "Benefit targets cannot mix delivery charge and merchandise classes.",
+      );
+    }
   }
 
   const fingerprint = computePromotionConfigurationFingerprint({

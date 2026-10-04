@@ -1710,6 +1710,45 @@ describe("IMP-036J Tranche 6 workforce authoring", () => {
         code: "PROMOTION_BENEFIT_INVALID",
       });
 
+      const mixedSlots = await createReadyDraftPromotion(harness, {
+        code: uniqueCode("mx"),
+      });
+      let mixedSlotsRev = mixedSlots.revision;
+      mixedSlotsRev = (
+        await harness.persistence.transaction((tx) =>
+          setPromotionTargets(tx, {
+            actor: harness.brandAdminPrincipal,
+            promotionId: mixedSlots.id,
+            expectedPromotionRevision: mixedSlotsRev,
+            targetRole: "qualifier",
+            targets: [{ targetRole: "qualifier", ...MERCH }],
+          }),
+        )
+      ).revision;
+      mixedSlotsRev = (
+        await harness.persistence.transaction((tx) =>
+          setPromotionTargets(tx, {
+            actor: harness.brandAdminPrincipal,
+            promotionId: mixedSlots.id,
+            expectedPromotionRevision: mixedSlotsRev,
+            targetRole: "benefit",
+            targets: [
+              { targetRole: "benefit", ...MERCH },
+              { targetRole: "benefit", ...DELIVERY_CHARGE_TARGET },
+            ],
+          }),
+        )
+      ).revision;
+      await expect(
+        harness.persistence.transaction((tx) =>
+          activatePromotion(tx, {
+            actor: harness.brandAdminPrincipal,
+            promotionId: mixedSlots.id,
+            expectedPromotionRevision: mixedSlotsRev,
+          }),
+        ),
+      ).rejects.toMatchObject({ code: "PROMOTION_BENEFIT_INVALID" });
+
       await new Promise<void>((resolve, reject) => {
         server.close((err) => (err ? reject(err) : resolve()));
       });

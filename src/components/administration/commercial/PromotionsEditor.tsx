@@ -67,6 +67,14 @@ type PromotionsEditorProps = Readonly<{
   onStatus: (message: string) => void;
 }>;
 
+/** Strict positive integer parse — rejects decimals, suffixes, and empty. */
+function parseStrictPositiveInt(raw: string): number | null {
+  const trimmed = raw.trim();
+  if (!/^[1-9]\d*$/.test(trimmed)) return null;
+  const value = Number(trimmed);
+  return Number.isSafeInteger(value) ? value : null;
+}
+
 type OfferBenefitType =
   | "percentage_discount"
   | "fixed_amount_discount"
@@ -452,13 +460,33 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
     }
     let minimumItemQuantity: number | null = null;
     if (minItemQuantity.trim()) {
-      const parsedQty = Number.parseInt(minItemQuantity, 10);
-      if (!Number.isFinite(parsedQty) || parsedQty < 1) {
+      const parsedQty = parseStrictPositiveInt(minItemQuantity);
+      if (parsedQty === null) {
         setBusy(false);
         props.onStatus("Enter a valid minimum item quantity (positive integer), or leave blank.");
         return;
       }
       minimumItemQuantity = parsedQty;
+    }
+    let maximumRedemptionsValue: number | null = null;
+    if (maxRedemptions.trim()) {
+      maximumRedemptionsValue = parseStrictPositiveInt(maxRedemptions);
+      if (maximumRedemptionsValue === null) {
+        setBusy(false);
+        props.onStatus("Enter a valid maximum redemptions (positive integer), or leave blank.");
+        return;
+      }
+    }
+    let maximumPerCustomerValue: number | null = null;
+    if (maxPerCustomer.trim()) {
+      maximumPerCustomerValue = parseStrictPositiveInt(maxPerCustomer);
+      if (maximumPerCustomerValue === null) {
+        setBusy(false);
+        props.onStatus(
+          "Enter a valid maximum redemptions per customer (positive integer), or leave blank.",
+        );
+        return;
+      }
     }
     const result = await savePromotionDraft(context.brandId, promotion.id, {
       expectedPromotionRevision: promotion.revision,
@@ -471,10 +499,8 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
       firstOrderOnly,
       eligibleFulfilmentModes: modes.length > 0 ? modes : null,
       eligibleFulfilmentTimings: timings.length > 0 ? timings : null,
-      maximumRedemptions: maxRedemptions.trim() ? Number.parseInt(maxRedemptions, 10) : null,
-      maximumRedemptionsPerCustomer: maxPerCustomer.trim()
-        ? Number.parseInt(maxPerCustomer, 10)
-        : null,
+      maximumRedemptions: maximumRedemptionsValue,
+      maximumRedemptionsPerCustomer: maximumPerCustomerValue,
     });
     setBusy(false);
     if (!result.ok) {
@@ -491,8 +517,8 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
     setGiftFieldError(null);
     let result;
     if (benefitType === "percentage_discount") {
-      const bps = Number.parseInt(percentageBps, 10);
-      if (!Number.isFinite(bps)) {
+      const bps = parseStrictPositiveInt(percentageBps);
+      if (bps === null) {
         setBusy(false);
         props.onStatus("Enter percentage in basis points (e.g. 1000 = 10%).");
         return;
@@ -515,21 +541,22 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
         fixedAmountPaise: paise,
       });
     } else if (benefitType === "buy_x_get_y") {
-      const buy = Number.parseInt(buyQuantity, 10);
-      const get = Number.parseInt(getQuantity, 10);
-      if (!Number.isFinite(buy) || buy < 1 || !Number.isFinite(get) || get < 1) {
+      const buy = parseStrictPositiveInt(buyQuantity);
+      const get = parseStrictPositiveInt(getQuantity);
+      if (buy === null || get === null) {
         setBusy(false);
         props.onStatus("Enter valid BOGO buy and get quantities.");
         return;
       }
       let maxReward: number | undefined;
       if (maximumRewardQuantity.trim()) {
-        maxReward = Number.parseInt(maximumRewardQuantity, 10);
-        if (!Number.isFinite(maxReward) || maxReward < 1) {
+        const parsedMax = parseStrictPositiveInt(maximumRewardQuantity);
+        if (parsedMax === null) {
           setBusy(false);
           props.onStatus("Enter a valid maximum reward quantity, or leave blank.");
           return;
         }
+        maxReward = parsedMax;
       }
       result = await savePromotionBenefit(context.brandId, promotion.id, {
         expectedPromotionRevision: promotion.revision,
@@ -681,6 +708,10 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
       setReviewError(msg);
       if (review.kind === "promotion" && review.proposedStatus === "active") {
         setActivationError(msg);
+        if (result.code === "PROMOTION_COMPLIMENTARY_INVALID") {
+          const mapped = fieldErrorFromResult(result);
+          setGiftFieldError(mapped?.message ?? describeAdminFailure(result));
+        }
       }
       return;
     }
