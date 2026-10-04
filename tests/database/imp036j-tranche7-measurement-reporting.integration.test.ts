@@ -1662,6 +1662,56 @@ describe("IMP-036J tranche 7 measurement reporting", () => {
     });
   });
 
+  it("T7 future Cart observation on a CHECKOUT evaluation does not increment CART.unobserved", async () => {
+    await withHarness("futcart", async ({ persistence, graph, window, inside }) => {
+      await persistence.transaction(async (tx) => {
+        const evaluationId = await insertEvaluation(tx, {
+          graph,
+          journeyKey: randomUUID(),
+          surfaceScope: "CHECKOUT",
+          occurredAt: inside,
+        });
+        await tx.db.insert(commercialPresentationObservationsTable).values({
+          evaluationId,
+          surface: "CHECKOUT_REVIEW",
+          observedComponents: [],
+          observedProgressPresent: false,
+          observedProgressRemainingPaise: null,
+          observedCoarseShape: "NONE",
+          observedComplimentaryPresent: false,
+          serverPresentationMatch: true,
+          mismatchFlags: [],
+          occurredAt: inside,
+        });
+        await tx.db.insert(commercialPresentationObservationsTable).values({
+          evaluationId,
+          surface: "CART",
+          observedComponents: [],
+          observedProgressPresent: false,
+          observedProgressRemainingPaise: null,
+          observedCoarseShape: "NONE",
+          observedComplimentaryPresent: false,
+          serverPresentationMatch: true,
+          mismatchFlags: [],
+          occurredAt: window.reportAsOf,
+        });
+      });
+      const report = await publishMeasurementReport(persistence, {
+        productionReleaseAnchor: window.windowStart,
+        reportAsOf: window.reportAsOf,
+      });
+      const cart = report.displayedSavingsIntegrity.find(
+        (row) => row.surface === "CART",
+      );
+      expect(cart).toEqual({
+        surface: "CART",
+        denominator: 0,
+        numerator: 0,
+        unobserved: 0,
+      });
+    });
+  });
+
   it("T7 reused CHECKOUT evaluation observed on Cart counts Cart integrity separately", async () => {
     await withHarness("reuse", async ({ persistence, graph, window, inside }) => {
       await persistence.transaction(async (tx) => {

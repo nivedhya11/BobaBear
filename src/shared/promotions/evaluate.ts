@@ -201,7 +201,7 @@ export function evaluatePromotions(input: EvaluatePromotionsInput): Omit<
   const availability = input.context.complimentaryVariantAvailability;
   const complimentaryItemUnavailable =
     presentedComplimentaryVariantId !== null &&
-    (!availability || availability.get(presentedComplimentaryVariantId) !== true);
+    availability?.get(presentedComplimentaryVariantId) === false;
   for (const promotion of input.promotions) {
     if (promotion.triggerType === "coupon") continue; // only via submitted coupon
     if (promotion.status !== "active") continue;

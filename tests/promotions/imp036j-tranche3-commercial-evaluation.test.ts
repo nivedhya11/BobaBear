@@ -938,6 +938,25 @@ describe("IMP-036J T3 complimentary (AC-036J-013)", () => {
     });
     expect(evaluated.complimentaryItemUnavailable).toBe(true);
   });
+
+  it("missing availability map entry is not complimentary unavailable", () => {
+    const merch = fixedPrimary("m80", BigInt(8000), "exclusive");
+    const evaluated = evaluatePromotions({
+      promotions: [merch],
+      snapshot: merchSnapshot(BigInt(100000), BigInt(0)),
+      context: {
+        at: new Date("2026-06-01T00:00:00Z"),
+        brandId: "brand",
+        territoryId: null,
+        organizationId: null,
+        outletId: "o1",
+        salesChannel: "direct",
+        complimentaryVariantAvailability: new Map(),
+      },
+      previouslyPresentedComplimentaryVariantId: "v1",
+    });
+    expect(evaluated.complimentaryItemUnavailable).toBe(false);
+  });
 });
 
 describe("IMP-036J T3 AR-036J-T3-03 zero-realized delivery coupon identity", () => {

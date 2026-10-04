@@ -732,7 +732,10 @@ export async function publishMeasurementReport(
       const cartObserved = observationByKey.get(
         observationKey(evaluation.evaluationId, "CART"),
       );
-      if (cartObserved) {
+      if (
+        cartObserved &&
+        strictlyBefore(cartObserved.occurredAt, window.reportAsOf)
+      ) {
         recordIntegrity("CART", cartObserved);
       }
     }

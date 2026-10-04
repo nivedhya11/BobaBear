@@ -464,6 +464,23 @@ export async function buildDirectPricingQuote(
     });
   }
 
+  const presentedComplimentaryVariantId =
+    input.previouslyPresentedComplimentaryVariantId ?? null;
+  if (
+    presentedComplimentaryVariantId &&
+    !complimentaryAvailability.has(presentedComplimentaryVariantId)
+  ) {
+    const presentedAvailability = await resolveOutletVariantAvailability(context, {
+      outletId: input.outletId,
+      variantId: presentedComplimentaryVariantId,
+      context: { now: input.at },
+    });
+    complimentaryAvailability.set(
+      presentedComplimentaryVariantId,
+      presentedAvailability.eligible === true,
+    );
+  }
+
   basePaise += complimentaryBasePaise;
   const prePromotionSubtotalWithGifts = prePromotionSubtotalPaise + complimentaryBasePaise;
   const snapshot: PrePromotionSnapshot = { components, units };
