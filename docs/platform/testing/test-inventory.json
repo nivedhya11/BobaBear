@@ -31,9 +31,9 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2256,
-    "executableTestFiles": 491,
-    "sourceTestFiles": 146,
+    "trackedPathsConsidered": 2257,
+    "executableTestFiles": 492,
+    "sourceTestFiles": 147,
     "testsTreeExecutableFiles": 270,
     "scriptTestFiles": 75,
     "playwrightSpecs": 12,
@@ -90,6 +90,7 @@
     "src/components/ordering/cart-presentation.test.ts",
     "src/components/ordering/checkout-snapshot-presentation.test.ts",
     "src/components/ordering/client-action.test.ts",
+    "src/components/ordering/committed-presentation-observation.test.ts",
     "src/components/ordering/financial-document-presentation.test.ts",
     "src/components/ordering/imp036j-tranche5-checkout-remediation.test.tsx",
     "src/components/ordering/imp036j-tranche5-presentation.test.tsx",
@@ -3479,6 +3480,25 @@
       "packageCommands": [
         "test",
         "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/components/ordering/committed-presentation-observation.test.ts",
+      "runner": "vitest",
+      "domain": "components/ordering",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage",
+        "test:imp036j:tranche5"
       ],
       "ciInclusion": "YES",
       "test1Layers": [
