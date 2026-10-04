@@ -498,13 +498,28 @@ export async function insertCommandOrigin(input: {
   });
 }
 
+async function isolateMeasurementWrite(
+  context: PersistenceTransactionContext,
+  work: () => Promise<void>,
+): Promise<void> {
+  const savepoint = `imp036j_meas_${randomUUID().replaceAll("-", "")}`;
+  await context.db.execute(sql.raw(`savepoint ${savepoint}`));
+  try {
+    await work();
+    await context.db.execute(sql.raw(`release savepoint ${savepoint}`));
+  } catch {
+    await context.db.execute(sql.raw(`rollback to savepoint ${savepoint}`));
+    await context.db.execute(sql.raw(`release savepoint ${savepoint}`));
+  }
+}
+
 export async function tryRecordStaleRecoveryOrigin(input: {
   context: PersistenceTransactionContext;
   cartId: string;
   checkoutId: string;
   checkoutJourneyKey: string | null;
 }): Promise<void> {
-  try {
+  await isolateMeasurementWrite(input.context, async () => {
     await insertCommandOrigin({
       context: input.context,
       sourceCommandId: randomUUID(),
@@ -513,9 +528,7 @@ export async function tryRecordStaleRecoveryOrigin(input: {
       checkoutId: input.checkoutId,
       checkoutJourneyKey: input.checkoutJourneyKey,
     });
-  } catch {
-    // Measurement must not redefine checkout/payment commercial outcome.
-  }
+  });
 }
 
 export async function tryResolveEquivalentStaleRecovery(input: {
@@ -524,7 +537,7 @@ export async function tryResolveEquivalentStaleRecovery(input: {
   checkoutId: string;
   checkoutJourneyKey: string | null;
 }): Promise<void> {
-  try {
+  await isolateMeasurementWrite(input.context, async () => {
     if (!input.checkoutJourneyKey) return;
     const latest = await input.context.db
       .select()
@@ -557,9 +570,7 @@ export async function tryResolveEquivalentStaleRecovery(input: {
       reusedExistingEvaluation: true,
       closedJourneyRejectNew: true,
     });
-  } catch {
-    // Measurement must not redefine checkout/payment commercial outcome.
-  }
+  });
 }
 
 export async function insertCommandResult(input: {

@@ -17,6 +17,7 @@ import {
 import {
   ensureReviewPresentedThenPaymentFacts,
   insertCommandOrigin,
+  tryRecordStaleRecoveryOrigin,
 } from "../../src/server/customer-commerce/measurement/writers";
 import { includeVariantAtBrand } from "../assortment-availability/support";
 import { checkoutOpts } from "./support/checkout-fixtures";
@@ -1824,6 +1825,42 @@ describe("IMP-036J tranche 7 measurement reporting", () => {
       });
       expect(new Set(ordinals).size).toBe(ordinals.length);
       expect(ordinals.length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  it("T7 measurement origin failure does not roll back checkout invalidation", async () => {
+    await withCheckoutReadyHarness(async (h) => {
+      const ready = await bringCheckoutToReady(
+        h.persistence,
+        h.actors.customerA,
+        h.cartId,
+        h.addressId,
+      );
+      await h.persistence.transaction(async (tx) => {
+        await lockCartForUpdate(tx, h.cartId);
+        await tx.db.execute(sql`
+          update app.checkouts
+          set status = 'DRAFT',
+              active_snapshot_id = null,
+              revision = revision + 1,
+              updated_at = now()
+          where id = ${ready.checkoutId}::uuid
+            and status = 'READY_FOR_PAYMENT'
+        `);
+        await tryRecordStaleRecoveryOrigin({
+          context: tx,
+          cartId: h.cartId,
+          checkoutId: ready.checkoutId,
+          checkoutJourneyKey: randomUUID(),
+        });
+      });
+      const status = await h.persistence.withContext(async (ctx) => {
+        const r = await ctx.db.execute(sql`
+          select status from app.checkouts where id = ${ready.checkoutId}::uuid
+        `);
+        return r.rows[0]?.status as string;
+      });
+      expect(status).toBe("DRAFT");
     });
   });
 });
