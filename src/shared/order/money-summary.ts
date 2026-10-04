@@ -14,12 +14,38 @@ export type OrderMoneySummaryCharge = Readonly<{
 export type OrderMoneySummary = Readonly<{
   /** Merchandise-only subtotal (excludes itemized charges). */
   prePromotionSubtotalMinor: string;
+  /**
+   * Customer-facing monetary saving from sealed Promotion effects.
+   * Excludes complimentary-item synthetic zeroing allocations.
+   */
   promotionDiscountMinor: string;
   charges: readonly OrderMoneySummaryCharge[];
   taxMinor: string;
   grandTotalMinor: string;
   currency: "INR";
 }>;
+
+/**
+ * Sealed customer monetary saving.
+ * Complimentary gift lines are priced then internally allocated to zero; that
+ * synthetic allocation must not appear as customer "You saved" money.
+ */
+export function customerMonetarySavingPaiseFromSnapshot(
+  snapshot: Pick<CheckoutSnapshot, "promotionDiscountPaise" | "promotionEffects">,
+): bigint {
+  let complimentaryAllocation = BigInt(0);
+  for (const effect of snapshot.promotionEffects) {
+    if (
+      effect.effectKind === "monetary_allocation" &&
+      effect.snapshotLineId != null &&
+      effect.amountPaise != null
+    ) {
+      complimentaryAllocation += effect.amountPaise;
+    }
+  }
+  const customer = snapshot.promotionDiscountPaise - complimentaryAllocation;
+  return customer < BigInt(0) ? BigInt(0) : customer;
+}
 
 export function moneySummaryFromSnapshot(snapshot: CheckoutSnapshot): OrderMoneySummary {
   const merchandisePaise =
@@ -28,7 +54,9 @@ export function moneySummaryFromSnapshot(snapshot: CheckoutSnapshot): OrderMoney
     prePromotionSubtotalMinor: serializeMoneyMinor(
       merchandisePaise < BigInt(0) ? BigInt(0) : merchandisePaise,
     ),
-    promotionDiscountMinor: serializeMoneyMinor(snapshot.promotionDiscountPaise),
+    promotionDiscountMinor: serializeMoneyMinor(
+      customerMonetarySavingPaiseFromSnapshot(snapshot),
+    ),
     charges: Object.freeze(
       snapshot.charges.map((charge) =>
         Object.freeze({

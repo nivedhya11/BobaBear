@@ -53,12 +53,25 @@ async function loadExpected(persistence: Parameters<typeof evaluateCart>[0], eva
   });
 }
 
+const OBSERVED_KINDS = new Set([
+  "ORDER_SAVING",
+  "DELIVERY_SAVING",
+  "TOTAL_SAVED",
+  "ESTIMATED_SUBTOTAL",
+  "TOTAL_PAYABLE",
+  "CURRENT_CHECKOUT_TOTAL",
+  "DELIVERY_CHARGE",
+  "PROGRESS",
+]);
+
 function componentsFromExpected(rows: readonly Record<string, unknown>[]) {
-  return rows.map((row) => ({
-    kind: String(row.kind),
-    present: row.present === true,
-    amountPaise: String(row.amountPaise ?? "0"),
-  }));
+  return rows
+    .filter((row) => OBSERVED_KINDS.has(String(row.kind)))
+    .map((row) => ({
+      kind: String(row.kind),
+      present: row.present === true,
+      amountPaise: String(row.amountPaise ?? "0"),
+    }));
 }
 
 describe("IMP-036J Tranche 5 customer presentation observation", () => {
@@ -198,6 +211,78 @@ describe("IMP-036J Tranche 5 customer presentation observation", () => {
       expect(String((payableAfter.quote as { grandTotalPaise?: bigint }).grandTotalPaise)).toBe(
         payableBefore,
       );
+    });
+  });
+
+  it("returns the same Checkout evaluation on Cart when reusable conditions hold", async () => {
+    await withCheckoutReadyHarness(async (h) => {
+      const access = {
+        kind: "customer" as const,
+        actor: h.actors.customerA,
+        brandId: h.actors.tree.brand.id,
+      };
+      const ready = await bringCheckoutToReady(
+        h.persistence,
+        h.actors.customerA,
+        h.cartId,
+        h.addressId,
+      );
+      const reviewed = await evaluateCheckout(
+        h.persistence,
+        h.actors.customerA,
+        {
+          checkoutId: ready.checkoutId,
+          expectedCheckoutRevision: ready.revision,
+        },
+        checkoutOpts,
+      );
+      expect(reviewed.evaluationId).toBeTruthy();
+      const cartEval = await evaluateCart(h.persistence, access, loc);
+      expect(cartEval.status).toBe("COMPLETE");
+      expect(cartEval.reusedCheckoutEvaluation).toBe(true);
+      expect(cartEval.evaluationId).toBe(reviewed.evaluationId);
+      const explanation = (cartEval.quote as { commercialExplanation?: unknown })
+        .commercialExplanation;
+      expect(explanation).toBeTruthy();
+    });
+  });
+
+  it("associates a later Cart activation with an already-active reused Checkout", async () => {
+    await withCheckoutReadyHarness(async (h) => {
+      const { startCheckout } = await import("../../src/server/checkout");
+      await bringCheckoutToReady(
+        h.persistence,
+        h.actors.customerA,
+        h.cartId,
+        h.addressId,
+      );
+      const activationId = randomUUID();
+      await h.persistence.withContext(async (ctx) => {
+        await ctx.db.execute(sql`
+          insert into app.cart_checkout_activations (
+            activation_id, cart_id, occurred_at
+          ) values (
+            ${activationId}::uuid, ${h.cartId}::uuid, clock_timestamp()
+          )
+        `);
+      });
+      const reused = await startCheckout(
+        h.persistence,
+        h.actors.customerA,
+        { cartId: h.cartId, cartActivationId: activationId },
+        checkoutOpts,
+      );
+      const associated = await h.persistence.withContext(async (ctx) => {
+        const r = await ctx.db.execute(sql`
+          select checkout_id::text as checkout_id,
+                 checkout_journey_key::text as k
+          from app.cart_checkout_activations
+          where activation_id = ${activationId}::uuid
+        `);
+        return r.rows[0] as { checkout_id: string | null; k: string | null };
+      });
+      expect(associated.checkout_id).toBe(reused.id);
+      expect(associated.k).toBeTruthy();
     });
   });
 

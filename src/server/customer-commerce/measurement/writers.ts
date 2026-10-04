@@ -186,10 +186,11 @@ export async function projectedComplimentaryLineSha256(
 ): Promise<{
   variantId: string | null;
   digest: Uint8Array | null;
+  itemName: string | null;
 }> {
   const gift = explanation?.complimentary;
   if (!gift || gift.competingOffers !== "NONE") {
-    return { variantId: null, digest: null };
+    return { variantId: null, digest: null, itemName: null };
   }
   const variantRows = await context.db
     .select()
@@ -197,14 +198,14 @@ export async function projectedComplimentaryLineSha256(
     .where(eq(catalogVariantsTable.id, gift.variantId))
     .limit(1);
   const variant = variantRows[0];
-  if (!variant) return { variantId: gift.variantId, digest: null };
+  if (!variant) return { variantId: gift.variantId, digest: null, itemName: null };
   const productRows = await context.db
     .select()
     .from(catalogProductsTable)
     .where(eq(catalogProductsTable.id, variant.productId))
     .limit(1);
   const product = productRows[0];
-  if (!product) return { variantId: gift.variantId, digest: null };
+  if (!product) return { variantId: gift.variantId, digest: null, itemName: null };
   const productContent = await loadEffectiveProductContent(context, product);
   const variantContent = await loadEffectiveVariantContent(context, variant);
   const itemName = (
@@ -212,15 +213,77 @@ export async function projectedComplimentaryLineSha256(
     productContent?.name ||
     ""
   ).trim();
-  if (!itemName) return { variantId: gift.variantId, digest: null };
+  if (!itemName) return { variantId: gift.variantId, digest: null, itemName: null };
   const canonical = `${itemName}\n${COPY_INCLUDED}\n${formatPaiseCanonical(BigInt(0))}`;
-  return { variantId: gift.variantId, digest: sha256Utf8(canonical) };
+  return { variantId: gift.variantId, digest: sha256Utf8(canonical), itemName };
+}
+
+/** Persisted beside expected observation rows; ignored by integrity comparison. */
+export const COMMERCIAL_EXPLANATION_WIRE_KIND = "COMMERCIAL_EXPLANATION_WIRE";
+
+export function serializeCommercialExplanationWire(
+  explanation: CommercialExplanation | null | undefined,
+  options?: Readonly<{ complimentaryItemName?: string | null }>,
+): Record<string, unknown> | null {
+  if (!explanation) return null;
+  let complimentary: Record<string, unknown> | null = null;
+  if (explanation.complimentary?.competingOffers === "NONE_CHOSEN") {
+    complimentary = { competingOffers: "NONE_CHOSEN" };
+  } else if (explanation.complimentary?.competingOffers === "NONE") {
+    complimentary = {
+      competingOffers: "NONE",
+      promotionId: explanation.complimentary.promotionId,
+      productId: explanation.complimentary.productId,
+      variantId: explanation.complimentary.variantId,
+      quantity: 1,
+      merchandiseChargePaise: "0",
+      ...(options?.complimentaryItemName
+        ? { itemName: options.complimentaryItemName }
+        : {}),
+    };
+  }
+  return {
+    selectedPromotionIds: [...explanation.selectedPromotionIds],
+    appliedCouponId: explanation.appliedCouponId,
+    merchandiseOrOrderSavingPaise: explanation.merchandiseOrOrderSavingPaise.toString(),
+    deliverySavingPaise: explanation.deliverySavingPaise.toString(),
+    totalSavedPaise: explanation.totalSavedPaise.toString(),
+    grandTotalPaise: explanation.grandTotalPaise.toString(),
+    couponPresentationClass: explanation.couponPresentationClass,
+    thresholdProgress: explanation.thresholdProgress
+      ? {
+          remainingAmountPaise:
+            explanation.thresholdProgress.remainingAmountPaise?.toString() ?? null,
+          remainingItemQuantity: explanation.thresholdProgress.remainingItemQuantity,
+          displayName: explanation.thresholdProgress.displayName,
+          benefitType: explanation.thresholdProgress.benefitType,
+        }
+      : null,
+    complimentary,
+    submittedCouponResult: explanation.submittedCouponResult,
+  };
+}
+
+export function extractCommercialExplanationWire(
+  expectedComponentsJson: unknown,
+): Record<string, unknown> | null {
+  if (!Array.isArray(expectedComponentsJson)) return null;
+  for (const item of expectedComponentsJson) {
+    if (typeof item !== "object" || item === null) continue;
+    const row = item as Record<string, unknown>;
+    if (row.kind !== COMMERCIAL_EXPLANATION_WIRE_KIND) continue;
+    if (typeof row.wire === "object" && row.wire !== null) {
+      return row.wire as Record<string, unknown>;
+    }
+  }
+  return null;
 }
 
 function expectedComponents(input: {
   surfaceScope: "CART" | "CHECKOUT";
   quote: DirectPricingQuote;
   explanation: CommercialExplanation | null | undefined;
+  complimentaryItemName?: string | null;
 }): readonly Record<string, unknown>[] {
   const explanation = input.explanation ?? null;
   const orderSaving = explanation?.merchandiseOrOrderSavingPaise ?? BigInt(0);
@@ -238,7 +301,7 @@ function expectedComponents(input: {
   const progressPresent = progress !== null;
   const progressRemaining = progress?.remainingAmountPaise ?? null;
   const payable = input.quote.grandTotalPaise;
-  return [
+  const rows: Record<string, unknown>[] = [
     {
       kind: "ORDER_SAVING",
       present: orderSaving > BigInt(0),
@@ -283,6 +346,18 @@ function expectedComponents(input: {
       amountPaise: progressRemaining !== null ? progressRemaining.toString() : "0",
     },
   ];
+  const wire = serializeCommercialExplanationWire(explanation, {
+    complimentaryItemName: input.complimentaryItemName,
+  });
+  if (wire) {
+    rows.push({
+      kind: COMMERCIAL_EXPLANATION_WIRE_KIND,
+      present: true,
+      amountPaise: "0",
+      wire,
+    });
+  }
+  return rows;
 }
 
 export function computeResultFingerprint(input: {
@@ -726,6 +801,7 @@ export async function persistCommercialEvaluation(input: {
   fingerprint: Uint8Array;
   coarseShape: CoarseShape;
   reusedExistingEvaluation: boolean;
+  complimentaryItemName: string | null;
 }> {
   const explanation = input.quote.commercialExplanation ?? null;
   const coarseShape = deriveCoarseShape({ explanation });
@@ -768,11 +844,21 @@ export async function persistCommercialEvaluation(input: {
     latestRow &&
     Buffer.from(latestRow.resultFingerprint).equals(Buffer.from(fingerprint))
   ) {
+    const existingWire = extractCommercialExplanationWire(latestRow.expectedComponents);
+    const existingComplimentary =
+      existingWire && typeof existingWire.complimentary === "object"
+        ? (existingWire.complimentary as Record<string, unknown>)
+        : null;
+    const existingName =
+      existingComplimentary && typeof existingComplimentary.itemName === "string"
+        ? existingComplimentary.itemName
+        : complimentary.itemName;
     return {
       evaluationId: latestRow.evaluationId,
       fingerprint,
       coarseShape,
       reusedExistingEvaluation: true,
+      complimentaryItemName: existingName,
     };
   }
   const maxOrdinal = latestRow?.occurrenceOrdinal ?? BigInt(0);
@@ -795,6 +881,7 @@ export async function persistCommercialEvaluation(input: {
       surfaceScope: input.surfaceScope,
       quote: input.quote,
       explanation,
+      complimentaryItemName: complimentary.itemName,
     }),
     expectedTotalSavedPaise: explanation?.totalSavedPaise ?? BigInt(0),
     expectedProgressPresent: progress !== null,
@@ -813,6 +900,7 @@ export async function persistCommercialEvaluation(input: {
     fingerprint,
     coarseShape,
     reusedExistingEvaluation: false,
+    complimentaryItemName: complimentary.itemName,
   };
 }
 

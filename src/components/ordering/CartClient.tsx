@@ -12,6 +12,11 @@ import {
   merchandiseSubtotalFromQuote,
   parseCommercialExplanation,
 } from "@/components/ordering/commercial-explanation-presentation";
+import {
+  couponFieldStatusFromExplanation,
+  couponFieldStatusFromMutationFailure,
+  isIncompleteCouponTransport,
+} from "@/components/ordering/coupon-result-presentation";
 import { formatPaise } from "@/components/ordering/format-money";
 import { IMP036J_COPY } from "@/components/ordering/imp036j-copy";
 import {
@@ -79,9 +84,16 @@ export function CartClient(props: { brandId: string }) {
   const [dialogError, setDialogError] = useState<string | null>(null);
   const [couponDraft, setCouponDraft] = useState("");
   const [couponPending, setCouponPending] = useState(false);
-  const [couponRetry, setCouponRetry] = useState(false);
+  const [couponStatusOverride, setCouponStatusOverride] = useState<
+    ReturnType<typeof couponFieldStatusFromMutationFailure> | null
+  >(null);
+  const [couponFocusInputToken, setCouponFocusInputToken] = useState(0);
+  const [couponFocusResultToken, setCouponFocusResultToken] = useState(0);
   const [activeCheckout, setActiveCheckout] = useState<CommerceCheckout | null>(null);
-  const priceSummaryRef = useRef<HTMLDivElement | null>(null);
+  const [observationRoot, setObservationRoot] = useState<"narrow" | "desktop">("desktop");
+  const narrowOfferRef = useRef<HTMLDivElement | null>(null);
+  const desktopOfferRef = useRef<HTMLDivElement | null>(null);
+  const stickyAmountRef = useRef<HTMLDivElement | null>(null);
   /** One delivery-context surface generation for outlet/menu → cart eval. */
   const surfaceGenerationRef = useRef(0);
   /** Latest cart-evaluation epoch within (and across) a delivery generation. */
@@ -301,16 +313,24 @@ export function CartClient(props: { brandId: string }) {
   ): Promise<void> {
     if (!cart || couponPending) return;
     setCouponPending(true);
-    setCouponRetry(false);
+    setCouponStatusOverride(null);
+    const previousCart = cart;
+    const previousDraft = couponDraft;
     const result = await work();
     setCouponPending(false);
     if (!result.ok) {
-      setCouponRetry(true);
-      setError(IMP036J_COPY.RETRY);
+      const status = couponFieldStatusFromMutationFailure(result.code);
+      setCouponStatusOverride(status);
+      if (isIncompleteCouponTransport(result.code)) {
+        setCart(previousCart);
+        setCouponDraft(previousDraft);
+      }
+      if (status.invalid) setCouponFocusInputToken((token) => token + 1);
       return;
     }
     setCouponDraft(result.data.cart.manualCouponCode ?? "");
     await applyCartMutation(result.data.cart);
+    setCouponFocusResultToken((token) => token + 1);
   }
 
   async function handleApplyCoupon(): Promise<void> {
@@ -397,29 +417,42 @@ export function CartClient(props: { brandId: string }) {
     ? resolveCartPresentationEstimate(cart, menuLookups)
     : { complete: false as const, totalPaise: BigInt(0) };
   const explanation = parseCommercialExplanation(evaluation?.quote);
-  const reuseCheckout =
+  const reuseCheckoutEval = evaluation?.reusedCheckoutEvaluation === true;
+  const reuseCheckoutEligible =
     cart != null &&
     canReuseCheckoutEvaluation({
       checkout: activeCheckout,
       cartRevision: cart.revision,
     });
+  const usingCheckoutEvaluation = reuseCheckoutEval && reuseCheckoutEligible;
   const serverMerchandise = merchandiseSubtotalFromQuote(evaluation?.quote);
   const estimatedPaise =
     serverMerchandise ??
     (presentationEstimate.complete ? presentationEstimate.totalPaise.toString() : "0");
-  const reusedTotal = reuseCheckout
-    ? activeCheckout?.activeSnapshot?.grandTotalPaise ?? null
-    : null;
-  const amountKind = reusedTotal ? "current-checkout-total" : "estimated-subtotal";
+  const amountKind = usingCheckoutEvaluation
+    ? "current-checkout-total"
+    : "estimated-subtotal";
   const amountLabel =
     amountKind === "current-checkout-total"
       ? IMP036J_COPY.CURRENT_CHECKOUT_TOTAL
       : IMP036J_COPY.ESTIMATED_SUBTOTAL;
-  const amountPaise = reusedTotal ?? estimatedPaise;
-  const deliveryChargePaise =
-    reuseCheckout && activeCheckout?.activeSnapshot
-      ? snapshotDeliveryChargePaise(activeCheckout.activeSnapshot)
-      : null;
+  const amountPaise = usingCheckoutEvaluation
+    ? explanation?.grandTotalPaise ??
+      activeCheckout?.activeSnapshot?.grandTotalPaise ??
+      estimatedPaise
+    : estimatedPaise;
+  const deliveryChargePaise = usingCheckoutEvaluation
+    ? snapshotDeliveryChargePaise(activeCheckout?.activeSnapshot ?? null)
+    : null;
+  const complimentaryName = resolveComplimentaryCatalogName(explanation, menuLookups);
+  const couponStatus =
+    couponStatusOverride ??
+    couponFieldStatusFromExplanation({
+      explanation,
+      fulfilmentMode: usingCheckoutEvaluation
+        ? activeCheckout?.fulfilmentMode ?? null
+        : null,
+    });
   const serviceabilityNote = cartEvaluationCustomerCopy(
     evaluation,
     Boolean(deliveryContext.coordinates),
@@ -440,11 +473,32 @@ export function CartClient(props: { brandId: string }) {
   }, [cart]);
 
   useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+    const media = window.matchMedia("(min-width: 1024px)");
+    const sync = () => setObservationRoot(media.matches ? "desktop" : "narrow");
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
+
+  useEffect(() => {
     if (!evaluation?.evaluationId || couponPending) return;
-    void postCommittedPresentationObservation(priceSummaryRef.current, {
+    if (observationRoot === "desktop") {
+      const root = desktopOfferRef.current;
+      if (!root || root.closest(".hidden")) return;
+      void postCommittedPresentationObservation(root, {
+        evaluationId: evaluation.evaluationId,
+      });
+      return;
+    }
+    const offer = narrowOfferRef.current;
+    const sticky = stickyAmountRef.current;
+    if (!offer || !sticky) return;
+    // Narrow committed presentation = visible offer stack + sticky amount only.
+    void postCommittedPresentationObservation([offer, sticky], {
       evaluationId: evaluation.evaluationId,
     });
-  }, [evaluation?.evaluationId, amountPaise, couponPending]);
+  }, [evaluation?.evaluationId, amountPaise, couponPending, observationRoot, complimentaryName]);
 
   if (loading) {
     return (
@@ -546,21 +600,49 @@ export function CartClient(props: { brandId: string }) {
         ) : null}
 
         {cart && cart.lines.length > 0 ? (
-          <CouponField
-            code={couponDraft}
-            appliedCode={cart.manualCouponCode}
-            pending={couponPending}
-            disabled={pending}
-            onCodeChange={setCouponDraft}
-            onApply={() => void handleApplyCoupon()}
-            onRemove={() => void handleRemoveCoupon()}
-            statusText={couponRetry ? IMP036J_COPY.RETRY : null}
-            statusTone={couponRetry ? "alert" : null}
-            retryVisible={couponRetry}
-            onRetry={() => void handleApplyCoupon()}
-            showSignIn={explanation?.submittedCouponResult?.status === "CUSTOMER_IDENTITY_REQUIRED"}
-            returnPath="/order/cart/"
-          />
+          <div className="flex flex-col gap-4 lg:hidden" data-testid="cart-narrow-offer">
+            <div ref={narrowOfferRef}>
+              <CommercialOfferStack
+                explanation={explanation}
+                payableLabel={amountLabel}
+                payablePaise={amountPaise}
+                deliveryChargePaise={deliveryChargePaise}
+                fulfilmentMode={
+                  usingCheckoutEvaluation ? activeCheckout?.fulfilmentMode ?? null : null
+                }
+                complimentaryName={complimentaryName}
+                hidePayable
+                waitingText={
+                  couponPending
+                    ? IMP036J_COPY.CHECKING
+                    : evaluation == null
+                      ? IMP036J_COPY.CHECKING_TOTAL
+                      : null
+                }
+              />
+            </div>
+            <CouponField
+              code={couponDraft}
+              appliedCode={cart.manualCouponCode}
+              pending={couponPending}
+              disabled={pending}
+              onCodeChange={(value) => {
+                setCouponDraft(value);
+                setCouponStatusOverride(null);
+              }}
+              onApply={() => void handleApplyCoupon()}
+              onRemove={() => void handleRemoveCoupon()}
+              statusText={couponStatus?.text ?? null}
+              statusTone={couponStatus?.tone ?? null}
+              invalid={couponStatus?.invalid}
+              retryVisible={couponStatus?.retryVisible}
+              onRetry={() => void handleApplyCoupon()}
+              showSignIn={couponStatus?.showSignIn}
+              returnPath="/order/cart/"
+              focusInputToken={couponFocusInputToken || null}
+              focusResultToken={couponFocusResultToken || null}
+            />
+          </div>
         ) : null}
 
         </section>
@@ -573,13 +655,16 @@ export function CartClient(props: { brandId: string }) {
             <h2 className="font-display text-[24px] uppercase tracking-wide text-[var(--text-primary)]">
               Order summary
             </h2>
-            <div className="mt-5" ref={priceSummaryRef}>
+            <div className="mt-5" ref={desktopOfferRef}>
               <CommercialOfferStack
                 explanation={explanation}
                 payableLabel={amountLabel}
                 payablePaise={amountPaise}
                 deliveryChargePaise={deliveryChargePaise}
-                fulfilmentMode={reuseCheckout ? activeCheckout?.fulfilmentMode ?? null : null}
+                fulfilmentMode={
+                  usingCheckoutEvaluation ? activeCheckout?.fulfilmentMode ?? null : null
+                }
+                complimentaryName={complimentaryName}
                 waitingText={
                   couponPending
                     ? IMP036J_COPY.CHECKING
@@ -593,6 +678,29 @@ export function CartClient(props: { brandId: string }) {
                   {IMP036J_COPY.CART_NOT_FINAL}
                 </p>
               ) : null}
+            </div>
+            <div className="mt-5">
+              <CouponField
+                code={couponDraft}
+                appliedCode={cart.manualCouponCode}
+                pending={couponPending}
+                disabled={pending}
+                onCodeChange={(value) => {
+                  setCouponDraft(value);
+                  setCouponStatusOverride(null);
+                }}
+                onApply={() => void handleApplyCoupon()}
+                onRemove={() => void handleRemoveCoupon()}
+                statusText={couponStatus?.text ?? null}
+                statusTone={couponStatus?.tone ?? null}
+                invalid={couponStatus?.invalid}
+                retryVisible={couponStatus?.retryVisible}
+                onRetry={() => void handleApplyCoupon()}
+                showSignIn={couponStatus?.showSignIn}
+                returnPath="/order/cart/"
+                focusInputToken={couponFocusInputToken || null}
+                focusResultToken={couponFocusResultToken || null}
+              />
             </div>
             <Button
               type="button"
@@ -622,9 +730,19 @@ export function CartClient(props: { brandId: string }) {
           className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--border-strong)] bg-[var(--bg-surface-sunken)]/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-10px_28px_rgba(0,0,0,0.24)] backdrop-blur-[12px] lg:hidden"
         >
           <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
+            <div className="min-w-0" ref={stickyAmountRef}>
               <p className="font-body text-[11px] text-[var(--text-tertiary)]">{amountLabel}</p>
-              <p className="font-body text-[18px] font-bold text-[var(--text-primary)]">
+              <p
+                className="font-body text-[18px] font-bold text-[var(--text-primary)]"
+                data-offer-component={
+                  amountKind === "current-checkout-total"
+                    ? "CURRENT_CHECKOUT_TOTAL"
+                    : "ESTIMATED_SUBTOTAL"
+                }
+                data-offer-amount={amountPaise}
+                data-offer-present="true"
+                data-testid="cart-sticky-amount"
+              >
                 {formatPaise(amountPaise)}
               </p>
               {amountKind === "estimated-subtotal" ? (
@@ -687,4 +805,17 @@ function snapshotDeliveryChargePaise(snapshot: CommerceCheckout["activeSnapshot"
     }
   }
   return null;
+}
+
+function resolveComplimentaryCatalogName(
+  explanation: ReturnType<typeof parseCommercialExplanation>,
+  menuLookups: ReturnType<typeof buildCustomerMenuLookups> | null,
+): string | null {
+  const gift = explanation?.complimentary;
+  if (!gift || gift.competingOffers !== "NONE") return null;
+  if (typeof gift.itemName === "string" && gift.itemName.trim().length > 0) {
+    return gift.itemName.trim();
+  }
+  const item = menuLookups?.itemByVariant.get(gift.variantId);
+  return item?.name ?? null;
 }

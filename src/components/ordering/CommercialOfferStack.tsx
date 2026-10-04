@@ -8,6 +8,12 @@ import {
   couponStatusCopy,
   thresholdCopy,
 } from "@/components/ordering/commercial-explanation-presentation";
+import {
+  narrowSnapshotCharges,
+  narrowSnapshotTaxComponents,
+  snapshotMerchandiseSubtotalPaise,
+} from "@/components/ordering/checkout-snapshot-presentation";
+import type { CommerceCheckoutSnapshot } from "@/lib/customer-commerce";
 
 export function CommercialOfferStack(props: {
   explanation: WireCommercialExplanation | null;
@@ -22,6 +28,10 @@ export function CommercialOfferStack(props: {
   dropped?: boolean;
   waitingText?: string | null;
   retainedAutomaticOffer?: boolean;
+  /** When set, compose sealed base/charge/tax rows with Offer savings. */
+  baseSnapshot?: CommerceCheckoutSnapshot | null;
+  /** Narrow Cart: omit amount (sticky bar owns it). */
+  hidePayable?: boolean;
 }) {
   const explanation = props.explanation;
   const orderSaving = explanation ? BigInt(explanation.merchandiseOrOrderSavingPaise) : BigInt(0);
@@ -43,6 +53,20 @@ export function CommercialOfferStack(props: {
   const showConflict =
     props.showGiftConflict === true ||
     explanation?.complimentary?.competingOffers === "NONE_CHOSEN";
+  const base = props.baseSnapshot ?? null;
+  const baseCharges = base ? narrowSnapshotCharges(base.charges) : [];
+  const baseTax = base ? narrowSnapshotTaxComponents(base.taxComponents) : [];
+  const packaging = baseCharges.filter((row) => row.chargeCode === "packaging");
+  const deliveryFromBase = baseCharges.find((row) => row.chargeCode === "delivery");
+  const deliveryAmount =
+    deliveryFromBase?.amountPaise ??
+    (props.deliveryChargePaise && BigInt(props.deliveryChargePaise) > BigInt(0)
+      ? props.deliveryChargePaise
+      : null);
+  const showDeliveryRow =
+    props.fulfilmentMode !== "PICKUP" &&
+    deliveryAmount != null &&
+    BigInt(deliveryAmount) > BigInt(0);
 
   return (
     <section
@@ -88,6 +112,15 @@ export function CommercialOfferStack(props: {
           {status.text}
         </p>
       ) : null}
+      {base ? (
+        <div
+          className="flex justify-between font-body text-[14px]"
+          data-testid="price-summary-subtotal"
+        >
+          <span>Subtotal</span>
+          <span className="tabular-nums">{formatPaise(snapshotMerchandiseSubtotalPaise(base))}</span>
+        </div>
+      ) : null}
       {orderSaving > BigInt(0) ? (
         <div
           className="flex justify-between font-body text-[14px]"
@@ -97,6 +130,27 @@ export function CommercialOfferStack(props: {
         >
           <span>{IMP036J_COPY.ORDER_SAVING_ROW}</span>
           <span className="tabular-nums">{formatPaise(explanation!.merchandiseOrOrderSavingPaise)}</span>
+        </div>
+      ) : null}
+      {packaging.map((row) => (
+        <div
+          key={row.chargeCode}
+          className="flex justify-between font-body text-[14px]"
+          data-testid={`price-summary-charge-${row.chargeCode}`}
+        >
+          <span>{row.name}</span>
+          <span className="tabular-nums">{formatPaise(row.amountPaise)}</span>
+        </div>
+      ))}
+      {showDeliveryRow ? (
+        <div
+          className="flex justify-between font-body text-[14px]"
+          data-offer-component="DELIVERY_CHARGE"
+          data-offer-amount={deliveryAmount!}
+          data-offer-present="true"
+        >
+          <span>{deliveryFromBase?.name ?? IMP036J_COPY.DELIVERY_ROW}</span>
+          <span className="tabular-nums">{formatPaise(deliveryAmount!)}</span>
         </div>
       ) : null}
       {deliverySaving > BigInt(0) && props.fulfilmentMode !== "PICKUP" ? (
@@ -110,6 +164,26 @@ export function CommercialOfferStack(props: {
           <span className="tabular-nums">{formatPaise(explanation!.deliverySavingPaise)}</span>
         </div>
       ) : null}
+      {baseTax.length > 0
+        ? baseTax.map((component) => (
+            <div
+              key={component.taxType}
+              className="flex justify-between font-body text-[14px]"
+              data-testid={`price-summary-tax-${component.taxType}`}
+            >
+              <span>{component.taxType}</span>
+              <span className="tabular-nums">{formatPaise(component.taxAmountPaise)}</span>
+            </div>
+          ))
+        : base && BigInt(base.taxPaise || "0") > BigInt(0) ? (
+            <div
+              className="flex justify-between font-body text-[14px]"
+              data-testid="price-summary-tax"
+            >
+              <span>Tax</span>
+              <span className="tabular-nums">{formatPaise(base.taxPaise)}</span>
+            </div>
+          ) : null}
       {totalSaved > BigInt(0) ? (
         <div
           className="flex justify-between font-body text-[14px]"
@@ -119,17 +193,6 @@ export function CommercialOfferStack(props: {
         >
           <span>{IMP036J_COPY.TOTAL_SAVED_ROW}</span>
           <span className="tabular-nums">{formatPaise(explanation!.totalSavedPaise)}</span>
-        </div>
-      ) : null}
-      {props.deliveryChargePaise && BigInt(props.deliveryChargePaise) > BigInt(0) ? (
-        <div
-          className="flex justify-between font-body text-[14px]"
-          data-offer-component="DELIVERY_CHARGE"
-          data-offer-amount={props.deliveryChargePaise}
-          data-offer-present="true"
-        >
-          <span>{IMP036J_COPY.DELIVERY_ROW}</span>
-          <span className="tabular-nums">{formatPaise(props.deliveryChargePaise)}</span>
         </div>
       ) : null}
       {threshold ? (
@@ -162,22 +225,24 @@ export function CommercialOfferStack(props: {
           {IMP036J_COPY.GIFT_CONFLICT}
         </p>
       ) : null}
-      <div
-        className="mt-2 flex justify-between border-t border-[var(--border-default)] pt-2 font-body text-[15px] font-semibold"
-        data-offer-component={
-          props.payableLabel === IMP036J_COPY.ESTIMATED_SUBTOTAL
-            ? "ESTIMATED_SUBTOTAL"
-            : props.payableLabel === IMP036J_COPY.CURRENT_CHECKOUT_TOTAL
-              ? "CURRENT_CHECKOUT_TOTAL"
-              : "TOTAL_PAYABLE"
-        }
-        data-offer-amount={props.payablePaise}
-        data-offer-present="true"
-        data-testid="price-summary-total"
-      >
-        <span>{props.payableLabel} </span>
-        <span className="tabular-nums">{formatPaise(props.payablePaise)}</span>
-      </div>
+      {props.hidePayable !== true ? (
+        <div
+          className="mt-2 flex justify-between border-t border-[var(--border-default)] pt-2 font-body text-[15px] font-semibold"
+          data-offer-component={
+            props.payableLabel === IMP036J_COPY.ESTIMATED_SUBTOTAL
+              ? "ESTIMATED_SUBTOTAL"
+              : props.payableLabel === IMP036J_COPY.CURRENT_CHECKOUT_TOTAL
+                ? "CURRENT_CHECKOUT_TOTAL"
+                : "TOTAL_PAYABLE"
+          }
+          data-offer-amount={props.payablePaise}
+          data-offer-present="true"
+          data-testid="price-summary-total"
+        >
+          <span>{props.payableLabel} </span>
+          <span className="tabular-nums">{formatPaise(props.payablePaise)}</span>
+        </div>
+      ) : null}
     </section>
   );
 }

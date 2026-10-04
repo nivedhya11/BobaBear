@@ -689,6 +689,7 @@ export function PaymentPanel(props: {
             payableLabel={IMP036J_COPY.TOTAL_PAYABLE}
             payablePaise={props.snapshot.grandTotalPaise}
             fulfilmentMode={props.snapshot.fulfilmentMode}
+            baseSnapshot={props.snapshot}
             complimentaryName={narrowComplimentaryName(props.snapshot.lines)}
           />
         </div>

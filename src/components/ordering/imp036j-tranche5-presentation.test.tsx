@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { CommercialOfferStack } from "./CommercialOfferStack";
@@ -8,6 +8,10 @@ import {
   canReuseCheckoutEvaluation,
   couponStatusCopy,
 } from "./commercial-explanation-presentation";
+import {
+  couponFieldStatusFromMutationFailure,
+  definitiveCouponFailureCopy,
+} from "./coupon-result-presentation";
 import { PaymentReturnClient } from "./PaymentReturnClient";
 import { PaymentPanel } from "./PaymentPanel";
 import type { CommerceCheckout, CommerceCheckoutSnapshot } from "@/lib/customer-commerce";
@@ -386,5 +390,162 @@ describe("PaymentPanel and payment return boundaries", () => {
     expect(screen.queryByTestId("price-summary")).not.toBeInTheDocument();
     expect(screen.queryByLabelText(IMP036J_COPY.COUPON_LABEL)).not.toBeInTheDocument();
     expect(screen.queryByText(IMP036J_COPY.ORDER_SAVING_ROW)).not.toBeInTheDocument();
+  });
+});
+
+describe("AR-036J-T5 remediation contracts", () => {
+  it("maps definitive coupon failures to locked copy and transport failures to retry", () => {
+    expect(definitiveCouponFailureCopy("CART_COUPON_UNKNOWN")).toBe(IMP036J_COPY.INVALID);
+    expect(definitiveCouponFailureCopy("COUPON_EXPIRED")).toBe(IMP036J_COPY.EXPIRED);
+    expect(couponFieldStatusFromMutationFailure("CART_COUPON_UNKNOWN")).toMatchObject({
+      text: IMP036J_COPY.INVALID,
+      invalid: true,
+      retryVisible: false,
+    });
+    expect(couponFieldStatusFromMutationFailure("NETWORK_ERROR")).toMatchObject({
+      text: IMP036J_COPY.RETRY,
+      retryVisible: true,
+      invalid: false,
+    });
+  });
+
+  it("restores Review base breakdown rows with Offer savings and one Total payable", () => {
+    const snapshot = {
+      id: "snap-1",
+      checkoutId: "chk-1",
+      checkoutRevision: "1",
+      sourceCartRevision: "1",
+      selectedOutletId: "outlet-1",
+      evaluatedAt: "2026-08-13T00:00:00.000Z",
+      fulfilmentMode: "DELIVERY",
+      currency: "INR",
+      basePaise: "19900",
+      chargesPaise: "5000",
+      prePromotionSubtotalPaise: "24900",
+      promotionDiscountPaise: "8000",
+      taxablePaise: "16900",
+      taxPaise: "500",
+      grandTotalPaise: "17400",
+      taxInclusionMode: "exclusive",
+      destination: null,
+      pickupLocation: null,
+      lines: [],
+      charges: [
+        { chargeCode: "packaging", name: "Packaging", amountPaise: "1000" },
+        { chargeCode: "delivery", name: "Delivery", amountPaise: "4000" },
+      ],
+      promotionEffects: [],
+      taxComponents: [{ taxType: "GST", taxAmountPaise: "500" }],
+      serviceabilityEvaluatedAt: null,
+    } as unknown as CommerceCheckoutSnapshot;
+
+    render(
+      <CommercialOfferStack
+        explanation={{
+          couponPresentationClass: null,
+          merchandiseOrOrderSavingPaise: "8000",
+          deliverySavingPaise: "4000",
+          totalSavedPaise: "12000",
+          grandTotalPaise: "17400",
+          thresholdProgress: null,
+          complimentary: null,
+          submittedCouponResult: null,
+        }}
+        payableLabel={IMP036J_COPY.TOTAL_PAYABLE}
+        payablePaise="17400"
+        fulfilmentMode="DELIVERY"
+        baseSnapshot={snapshot}
+      />,
+    );
+    expect(screen.getByTestId("price-summary-subtotal")).toBeInTheDocument();
+    expect(screen.getByTestId("price-summary-charge-packaging")).toBeInTheDocument();
+    expect(screen.getByText(IMP036J_COPY.ORDER_SAVING_ROW)).toBeInTheDocument();
+    expect(screen.getByText(IMP036J_COPY.DELIVERY_SAVING_ROW)).toBeInTheDocument();
+    expect(screen.getByTestId("price-summary-tax-GST")).toBeInTheDocument();
+    expect(screen.getAllByText(IMP036J_COPY.TOTAL_PAYABLE)).toHaveLength(1);
+  });
+
+  it("implements coupon aria-invalid / describedby and validation focus", async () => {
+    render(
+      <CouponField
+        code="BAD"
+        appliedCode={null}
+        pending={false}
+        onCodeChange={() => undefined}
+        onApply={() => undefined}
+        onRemove={() => undefined}
+        statusText={IMP036J_COPY.INVALID}
+        statusTone="alert"
+        invalid
+        focusInputToken={1}
+        returnPath="/order/cart/"
+      />,
+    );
+    const input = screen.getByTestId("coupon-input");
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    const describedBy = input.getAttribute("aria-describedby") ?? "";
+    expect(describedBy.length).toBeGreaterThan(0);
+    expect(screen.getByTestId("coupon-hint").id.length).toBeGreaterThan(0);
+    expect(describedBy.split(" ")).toContain(screen.getByTestId("coupon-hint").id);
+    expect(describedBy.split(" ")).toContain(screen.getByTestId("coupon-result").id);
+    await waitFor(() => expect(input).toHaveFocus());
+  });
+
+  it("moves focus to result on successful apply status", async () => {
+    render(
+      <CouponField
+        code="SAVE"
+        appliedCode="SAVE"
+        pending={false}
+        onCodeChange={() => undefined}
+        onApply={() => undefined}
+        onRemove={() => undefined}
+        statusText={IMP036J_COPY.APPLIED_COUPON}
+        statusTone="polite"
+        focusResultToken={2}
+        returnPath="/order/cart/"
+      />,
+    );
+    await waitFor(() => expect(screen.getByTestId("coupon-result")).toHaveFocus());
+    expect(screen.getByTestId("coupon-input")).not.toHaveAttribute("aria-invalid");
+  });
+
+  it("keeps Review primary action before coupon in DOM order", () => {
+    render(
+      <div>
+        <button type="button" data-testid="continue-to-payment">
+          Continue to payment
+        </button>
+        <CouponField
+          code=""
+          appliedCode={null}
+          pending={false}
+          onCodeChange={() => undefined}
+          onApply={() => undefined}
+          onRemove={() => undefined}
+          statusText={null}
+          statusTone={null}
+          returnPath="/order/checkout/"
+        />
+      </div>,
+    );
+    const continueBtn = screen.getByTestId("continue-to-payment");
+    const coupon = screen.getByTestId("coupon-input");
+    expect(
+      continueBtn.compareDocumentPosition(coupon) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("hides payable on narrow offer stack so sticky amount remains once", () => {
+    render(
+      <CommercialOfferStack
+        explanation={null}
+        payableLabel={IMP036J_COPY.ESTIMATED_SUBTOTAL}
+        payablePaise="19900"
+        hidePayable
+      />,
+    );
+    expect(screen.queryByTestId("price-summary-total")).not.toBeInTheDocument();
+    expect(screen.queryByText(IMP036J_COPY.ESTIMATED_SUBTOTAL)).not.toBeInTheDocument();
   });
 });

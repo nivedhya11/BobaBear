@@ -23,7 +23,7 @@ function sha256HexUtf8(value: string): Promise<string> {
   });
 }
 
-export function readCommittedPresentation(root: ParentNode): {
+export function readCommittedPresentation(root: ParentNode | readonly ParentNode[]): {
   components: Array<{ kind: string; present: boolean; amountPaise: string }>;
   progressPresent: boolean;
   progressRemainingPaise: string | null;
@@ -32,23 +32,42 @@ export function readCommittedPresentation(root: ParentNode): {
   observedComplimentaryLineSha256: string | null;
   complimentaryCanonical: string | null;
 } {
-  const nodes = [...root.querySelectorAll("[data-offer-component]")];
+  const roots = Array.isArray(root) ? root : [root];
+  const nodes = roots.flatMap((entry) => [...entry.querySelectorAll("[data-offer-component]")]);
+  // Also allow the root itself to carry the amount component (sticky bar).
+  for (const entry of roots) {
+    if (entry instanceof Element && entry.hasAttribute("data-offer-component")) {
+      nodes.push(entry);
+    }
+  }
   const components: Array<{ kind: string; present: boolean; amountPaise: string }> = [];
+  const seen = new Set<string>();
   for (const node of nodes) {
     const kind = node.getAttribute("data-offer-component");
     const amount = node.getAttribute("data-offer-amount") ?? "0";
     const present = node.getAttribute("data-offer-present") === "true";
     if (!kind) continue;
+    const key = `${kind}:${amount}:${present}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
     components.push({ kind, present, amountPaise: amount });
   }
   const progress = nodes.find((node) => node.getAttribute("data-offer-component") === "PROGRESS");
-  const gift = root.querySelector("[data-complimentary-name]");
+  let gift: Element | null = null;
+  for (const entry of roots) {
+    gift = entry.querySelector("[data-complimentary-name]");
+    if (gift) break;
+  }
   const name = gift?.getAttribute("data-complimentary-name")?.trim() ?? "";
   const included = gift?.getAttribute("data-complimentary-included")?.trim() ?? "";
   const amountText = gift?.getAttribute("data-complimentary-amount")?.trim() ?? "";
   const complimentaryCanonical =
     name && included && amountText ? `${name}\n${included}\n${amountText}` : null;
-  const status = root.querySelector("[data-observed-status]")?.getAttribute("data-observed-status") ?? null;
+  let status: string | null = null;
+  for (const entry of roots) {
+    status = entry.querySelector("[data-observed-status]")?.getAttribute("data-observed-status") ?? null;
+    if (status) break;
+  }
   return {
     components,
     progressPresent: Boolean(progress),
@@ -67,7 +86,7 @@ export function readCommittedPresentation(root: ParentNode): {
 }
 
 export async function postCommittedPresentationObservation(
-  root: ParentNode | null,
+  root: ParentNode | readonly ParentNode[] | null,
   input: CommittedObservation,
 ): Promise<void> {
   if (!root || !input.evaluationId) return;

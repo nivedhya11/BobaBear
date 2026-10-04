@@ -37,6 +37,7 @@ export type CommerceCartEvaluation = Readonly<{
   quote?: unknown;
   evaluationId?: string;
   serviceabilityReason?: string;
+  reusedCheckoutEvaluation?: boolean;
 }>;
 
 export type CommerceAddress = Readonly<{

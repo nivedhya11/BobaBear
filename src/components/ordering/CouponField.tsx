@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useId, useRef } from "react";
+
 import { IMP036J_COPY } from "@/components/ordering/imp036j-copy";
 import { loginUrlWithReturn } from "@/lib/customer-auth/return-to";
 
@@ -13,29 +15,66 @@ export function CouponField(props: {
   onRemove: () => void;
   statusText: string | null;
   statusTone: "polite" | "alert" | null;
+  invalid?: boolean;
   showSignIn?: boolean;
   returnPath: string;
   retryVisible?: boolean;
   onRetry?: () => void;
+  /** When true, move focus to the result after a successful/non-error outcome. */
+  focusResultToken?: string | number | null;
+  /** When true, move focus to the input (validation / definitive failure). */
+  focusInputToken?: string | number | null;
 }) {
   const hasApplied = Boolean(props.appliedCode);
   const busy = props.pending || props.disabled === true;
+  const hintId = useId();
+  const errorId = useId();
+  const resultId = useId();
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const resultRef = useRef<HTMLParagraphElement | null>(null);
+  const invalid = props.invalid === true && Boolean(props.statusText) && !props.pending;
+
+  useEffect(() => {
+    if (props.focusInputToken == null) return;
+    queueMicrotask(() => inputRef.current?.focus());
+  }, [props.focusInputToken]);
+
+  useEffect(() => {
+    if (props.focusResultToken == null) return;
+    queueMicrotask(() => resultRef.current?.focus());
+  }, [props.focusResultToken]);
+
+  const describedBy = [
+    hintId,
+    invalid && props.statusText ? errorId : null,
+    !invalid && props.statusText && !props.pending ? resultId : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <section className="flex flex-col gap-2" data-testid="coupon-field">
       <label className="flex flex-col gap-1">
         <span className="font-body text-[13px] font-semibold text-[var(--text-primary)]">
           {IMP036J_COPY.COUPON_LABEL}
         </span>
-        <span className="font-body text-[12px] text-[var(--text-tertiary)]">
+        <span
+          id={hintId}
+          className="font-body text-[12px] text-[var(--text-tertiary)]"
+          data-testid="coupon-hint"
+        >
           {IMP036J_COPY.COUPON_HINT}
         </span>
         <input
+          ref={inputRef}
           name="coupon"
           autoComplete="off"
           value={props.code}
           disabled={busy}
           onChange={(event) => props.onCodeChange(event.target.value)}
           aria-label={IMP036J_COPY.COUPON_LABEL}
+          aria-describedby={describedBy || undefined}
+          aria-invalid={invalid ? true : undefined}
           data-testid="coupon-input"
           className="min-h-[44px] rounded-lg border border-[var(--border-strong)] bg-[var(--bg-page)] px-3 font-body text-[15px] text-[var(--text-primary)]"
         />
@@ -81,6 +120,8 @@ export function CouponField(props: {
       ) : null}
       {props.statusText && !props.pending ? (
         <p
+          ref={resultRef}
+          id={invalid ? errorId : resultId}
           role={props.statusTone === "alert" ? "alert" : "status"}
           aria-live={props.statusTone === "alert" ? "assertive" : "polite"}
           data-testid="coupon-result"
@@ -93,6 +134,7 @@ export function CouponField(props: {
       {props.showSignIn ? (
         <a
           href={loginUrlWithReturn(props.returnPath)}
+          data-testid="coupon-sign-in"
           className="font-body text-[14px] font-semibold text-[var(--interactive-primary)] underline-offset-2 hover:underline"
         >
           {IMP036J_COPY.SIGN_IN_ACTION}
