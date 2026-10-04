@@ -111,6 +111,11 @@ export type CartEvaluationResult = Readonly<{
   quote?: unknown;
   evaluationId?: string;
   serviceabilityReason?: string;
+  /**
+   * True when this COMPLETE result is the reusable Checkout evaluation
+   * (same evaluation_id Review presents). Not a second calculator.
+   */
+  reusedCheckoutEvaluation?: boolean;
 }>;
 
 export type CartPolicy = Readonly<{

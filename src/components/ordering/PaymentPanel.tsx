@@ -3,7 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
-import { snapshotPayableRows } from "@/components/ordering/checkout-snapshot-presentation";
+import { CommercialOfferStack } from "@/components/ordering/CommercialOfferStack";
+import {
+  sealedPaymentExplanationFromSnapshot,
+  type WireCommercialExplanation,
+} from "@/components/ordering/commercial-explanation-presentation";
+import { IMP036J_COPY } from "@/components/ordering/imp036j-copy";
 import { commerceErrorCopy } from "@/components/ordering/error-copy";
 import { formatPaise } from "@/components/ordering/format-money";
 import { interpretClientAction, isZeroPayableTotal } from "@/components/ordering/client-action";
@@ -107,6 +112,8 @@ export function PaymentPanel(props: {
   activeCartRevision?: string;
   /** Parent adopts the authoritative revision when leaving payment. */
   onBackToReview?: (checkoutRevision: string) => void;
+  onStaleReview?: () => void;
+  explanation?: WireCommercialExplanation | null;
   /** Keep parent checkout revision current after payment mutations. */
   onCheckoutRevisionChange?: (checkoutRevision: string) => void;
   /**
@@ -130,7 +137,7 @@ export function PaymentPanel(props: {
 }) {
   const zeroPayable = isZeroPayableTotal(props.snapshot.grandTotalPaise);
   const payableLabel = formatPaise(props.snapshot.grandTotalPaise);
-  const payableRows = snapshotPayableRows(props.snapshot);
+  const paymentExplanation = sealedPaymentExplanationFromSnapshot(props.snapshot);
   const resumePaymentId = props.resumePaymentId ?? null;
   const cartChangedWhilePending = props.cartChangedWhilePending === true;
   const embeddedRecovery = props.embeddedInPreviousPaymentRecovery === true;
@@ -523,6 +530,13 @@ export function PaymentPanel(props: {
     inflight.current = false;
     if (!started.ok) {
       setError(commerceErrorCopy(started.code));
+      if (
+        started.code === "CHECKOUT_REPRICED" ||
+        started.code === "CHECKOUT_CART_CHANGED"
+      ) {
+        props.onStaleReview?.();
+        return;
+      }
       if (started.code === "NETWORK_ERROR" || started.code === "INVALID_RESPONSE") {
         setScreen("idle");
         return;
@@ -661,16 +675,16 @@ export function PaymentPanel(props: {
         </p>
       )}
       {!embeddedRecovery ? (
-        <dl className="grid grid-cols-2 gap-2 font-body text-[14px]" data-testid="checkout-fee-breakdown">
-          {payableRows.map((row) => (
-            <div key={row.key} className="contents">
-              <dt className={row.key === "total" ? "text-[var(--text-primary)] font-semibold" : "text-[var(--text-tertiary)]"}>
-                {row.label}
-              </dt>
-              <dd className={row.key === "total" ? "font-bold" : undefined}>{formatPaise(row.amountPaise)}</dd>
-            </div>
-          ))}
-        </dl>
+        <div data-testid="checkout-fee-breakdown" className="flex flex-col gap-2">
+          <CommercialOfferStack
+            explanation={paymentExplanation}
+            payableLabel={IMP036J_COPY.TOTAL_PAYABLE}
+            payablePaise={props.snapshot.grandTotalPaise}
+            fulfilmentMode={props.snapshot.fulfilmentMode}
+            baseSnapshot={props.snapshot}
+            complimentaryName={narrowComplimentaryName(props.snapshot.lines)}
+          />
+        </div>
       ) : null}
 
       {cartChangedUnresolved ? (
@@ -853,4 +867,15 @@ export function PaymentPanel(props: {
       ) : null}
     </div>
   );
+}
+
+function narrowComplimentaryName(lines: readonly unknown[]): string | null {
+  for (const raw of lines) {
+    if (typeof raw !== "object" || raw === null) continue;
+    const row = raw as Record<string, unknown>;
+    if (row.lineOrigin === "complimentary_offer" && typeof row.productName === "string") {
+      return row.productName;
+    }
+  }
+  return null;
 }

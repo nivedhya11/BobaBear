@@ -23,12 +23,21 @@ import type { CartAccess } from "./operations";
 import { getActiveCart } from "./operations";
 import { systemCartClock, type CartClock } from "./clock";
 import { lockCartForUpdate } from "./repository";
-import { persistCommercialEvaluation } from "../customer-commerce/measurement/writers";
+import {
+  extractCommercialExplanationWire,
+  persistCommercialEvaluation,
+} from "../customer-commerce/measurement/writers";
 import { loadFirstOrderPurchaseStatus } from "../payment/first-order";
 import {
   catalogModifierGroupOptionsTable,
 } from "../../platform/database/schema/catalog";
-import { eq } from "drizzle-orm";
+import { commercialEvaluationsTable } from "../../platform/database/schema/measurement";
+import {
+  findActiveNonTerminalForCart,
+  loadCheckoutAggregate,
+} from "../checkout/repository";
+import { and, desc, eq } from "drizzle-orm";
+import { CHARGE_DEFINITION_DELIVERY_ID } from "../../shared/pricing";
 
 export type EvaluateCartInput = Readonly<{
   location?: Readonly<{
@@ -264,6 +273,15 @@ export async function evaluateCart(
   }
 
   try {
+    const reused = await tryReusableCheckoutEvaluation({
+      persistence,
+      access,
+      cart,
+      evaluatedAt,
+      selectedOutletId,
+    });
+    if (reused) return reused;
+
     const firstOrderPurchaseStatus = await persistence.withContext((ctx) =>
       loadFirstOrderPurchaseStatus(
         ctx,
@@ -301,10 +319,11 @@ export async function evaluateCart(
     );
 
     let evaluationId: string | undefined;
+    let presentedQuote: unknown = quote;
     try {
-      evaluationId = await persistence.transaction(async (tx) => {
+      const persisted = await persistence.transaction(async (tx) => {
         await lockCartForUpdate(tx, cart.id);
-        const persisted = await persistCommercialEvaluation({
+        return persistCommercialEvaluation({
           context: tx,
           cartId: cart.id,
           checkoutId: null,
@@ -312,8 +331,12 @@ export async function evaluateCart(
           surfaceScope: "CART",
           quote,
         });
-        return persisted.evaluationId;
       });
+      evaluationId = persisted.evaluationId;
+      presentedQuote = enrichQuoteComplimentaryItemName(
+        quote,
+        persisted.complimentaryItemName,
+      );
     } catch {
       evaluationId = undefined;
     }
@@ -324,7 +347,7 @@ export async function evaluateCart(
       evaluatedAt,
       status: "COMPLETE",
       selectedOutletId,
-      quote,
+      quote: presentedQuote,
       ...(evaluationId ? { evaluationId } : {}),
     });
   } catch {
@@ -341,6 +364,104 @@ export async function evaluateCart(
         }),
       ]),
     });
+  }
+}
+
+function enrichQuoteComplimentaryItemName(
+  quote: unknown,
+  itemName: string | null,
+): unknown {
+  if (!itemName || typeof quote !== "object" || quote === null) return quote;
+  const record = quote as Record<string, unknown>;
+  const explanation = record.commercialExplanation;
+  if (typeof explanation !== "object" || explanation === null) return quote;
+  const gift = (explanation as Record<string, unknown>).complimentary;
+  if (typeof gift !== "object" || gift === null) return quote;
+  if ((gift as Record<string, unknown>).competingOffers !== "NONE") return quote;
+  return Object.freeze({
+    ...record,
+    commercialExplanation: Object.freeze({
+      ...(explanation as Record<string, unknown>),
+      complimentary: Object.freeze({
+        ...(gift as Record<string, unknown>),
+        itemName,
+      }),
+    }),
+  });
+}
+
+async function tryReusableCheckoutEvaluation(input: {
+  persistence: Persistence;
+  access: CartAccess;
+  cart: Cart;
+  evaluatedAt: Date;
+  selectedOutletId: string;
+}): Promise<CartEvaluationResult | null> {
+  if (input.access.kind !== "customer") return null;
+  try {
+    return await input.persistence.withContext(async (ctx) => {
+      const row = await findActiveNonTerminalForCart(ctx, input.cart.id);
+      if (!row) return null;
+      if (
+        row.status !== "DRAFT" &&
+        row.status !== "READY_FOR_PAYMENT" &&
+        row.status !== "PAYMENT_PENDING"
+      ) {
+        return null;
+      }
+      if (row.sourceCartRevision !== input.cart.revision) return null;
+      if (row.fulfilmentMode !== "DELIVERY" && row.fulfilmentMode !== "PICKUP") {
+        return null;
+      }
+      const checkout = await loadCheckoutAggregate(ctx, row);
+      if (!checkout.activeSnapshot) return null;
+      const latest = await ctx.db
+        .select()
+        .from(commercialEvaluationsTable)
+        .where(
+          and(
+            eq(commercialEvaluationsTable.checkoutId, checkout.id),
+            eq(commercialEvaluationsTable.surfaceScope, "CHECKOUT"),
+          ),
+        )
+        .orderBy(desc(commercialEvaluationsTable.occurrenceOrdinal))
+        .limit(1);
+      const evaluation = latest[0];
+      if (!evaluation) return null;
+      const wire = extractCommercialExplanationWire(evaluation.expectedComponents);
+      if (!wire) return null;
+      const deliveryCharge =
+        checkout.activeSnapshot.charges.find((charge) => charge.chargeCode === "delivery")
+          ?.amountPaise ?? BigInt(0);
+      const quote = Object.freeze({
+        commercialExplanation: wire,
+        basePaise: checkout.activeSnapshot.basePaise,
+        modifierAdjustmentsPaise: checkout.activeSnapshot.modifierAdjustmentsPaise,
+        bundleAdjustmentsPaise: checkout.activeSnapshot.bundleAdjustmentsPaise,
+        chargesPaise: checkout.activeSnapshot.chargesPaise,
+        grandTotalPaise: checkout.activeSnapshot.grandTotalPaise,
+        chargeLines: Object.freeze([
+          Object.freeze({
+            chargeDefinitionId: CHARGE_DEFINITION_DELIVERY_ID,
+            amountPaise: deliveryCharge,
+          }),
+        ]),
+        reusedCheckoutEvaluation: true,
+      });
+      return Object.freeze({
+        cartId: input.cart.id,
+        cartRevision: input.cart.revision,
+        evaluatedAt: input.evaluatedAt,
+        status: "COMPLETE" as const,
+        selectedOutletId:
+          checkout.activeSnapshot.selectedOutletId || input.selectedOutletId,
+        quote,
+        evaluationId: evaluation.evaluationId,
+        reusedCheckoutEvaluation: true,
+      });
+    });
+  } catch {
+    return null;
   }
 }
 

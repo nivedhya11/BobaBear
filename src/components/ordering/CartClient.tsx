@@ -4,15 +4,30 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { CartLineList } from "@/components/ordering/CartLineList";
-import { CartSummary } from "@/components/ordering/CartSummary";
+import { CouponField } from "@/components/ordering/CouponField";
+import { CommercialOfferStack } from "@/components/ordering/CommercialOfferStack";
+import {
+  postCommittedPresentationObservation,
+  selectVisibleCartObservationRoots,
+} from "@/components/ordering/committed-presentation-observation";
+import {
+  canReuseCheckoutEvaluation,
+  merchandiseSubtotalFromQuote,
+  parseCommercialExplanation,
+} from "@/components/ordering/commercial-explanation-presentation";
+import {
+  couponFieldStatusFromExplanation,
+  couponFieldStatusFromMutationFailure,
+  isIncompleteCouponTransport,
+} from "@/components/ordering/coupon-result-presentation";
+import { formatPaise } from "@/components/ordering/format-money";
+import { IMP036J_COPY } from "@/components/ordering/imp036j-copy";
 import {
   buildCartLinePresentations,
   buildCustomerMenuLookups,
   cartBundleSelectionsToInput,
   cartModifiersToInput,
   cartUnitCount,
-  formatCartEstimatePrimaryLabel,
-  formatPresentationEstimateLabel,
   resolveCartPresentationEstimate,
 } from "@/components/ordering/cart-presentation";
 import { publishCartCount } from "@/components/ordering/cart-count-sync";
@@ -29,16 +44,21 @@ import {
   isCartCheckoutBlocked,
 } from "@/components/ordering/serviceability-copy";
 import {
+  applyCartCoupon,
   clearCart,
   evaluateCart,
   getActiveCart,
+  getActiveCheckout,
   getCustomerMenu,
+  recordCartCheckoutActivation,
+  removeCartCoupon,
   removeCartLine,
   setCartLineQuantity,
   updateCartLineConfiguration,
   type CommerceCart,
   type CommerceCartEvaluation,
   type CommerceCartLine,
+  type CommerceCheckout,
 } from "@/lib/customer-commerce";
 import {
   menuOutletIdFromOrderingContext,
@@ -65,6 +85,18 @@ export function CartClient(props: { brandId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
   const [dialogError, setDialogError] = useState<string | null>(null);
+  const [couponDraft, setCouponDraft] = useState("");
+  const [couponPending, setCouponPending] = useState(false);
+  const [couponStatusOverride, setCouponStatusOverride] = useState<
+    ReturnType<typeof couponFieldStatusFromMutationFailure> | null
+  >(null);
+  const [couponFocusInputToken, setCouponFocusInputToken] = useState(0);
+  const [couponFocusResultToken, setCouponFocusResultToken] = useState(0);
+  const [activeCheckout, setActiveCheckout] = useState<CommerceCheckout | null>(null);
+  const [observationRoot, setObservationRoot] = useState<"narrow" | "desktop" | null>(null);
+  const narrowOfferRef = useRef<HTMLDivElement | null>(null);
+  const desktopOfferRef = useRef<HTMLDivElement | null>(null);
+  const stickyAmountRef = useRef<HTMLDivElement | null>(null);
   /** One delivery-context surface generation for outlet/menu → cart eval. */
   const surfaceGenerationRef = useRef(0);
   /** Latest cart-evaluation epoch within (and across) a delivery generation. */
@@ -84,10 +116,6 @@ export function CartClient(props: { brandId: string }) {
       ),
     [cart, menuLookups, brandId],
   );
-
-  useEffect(() => {
-    cartRef.current = cart;
-  }, [cart]);
 
   const publishEvaluationIfCurrent = useCallback(
     async (generation: number, context: DeliveryContext, currentCart: CommerceCart | null) => {
@@ -159,8 +187,15 @@ export function CartClient(props: { brandId: string }) {
     }
     setCart(cartResult.data.cart);
     cartRef.current = cartResult.data.cart;
+    if (cartResult.data.cart?.manualCouponCode) {
+      setCouponDraft(cartResult.data.cart.manualCouponCode);
+    }
     return cartResult.data.cart;
   }, [brandId]);
+
+  useEffect(() => {
+    cartRef.current = cart;
+  }, [cart]);
 
   useEffect(() => {
     let cancelled = false;
@@ -210,6 +245,7 @@ export function CartClient(props: { brandId: string }) {
   async function applyCartMutation(nextCart: CommerceCart): Promise<void> {
     setCart(nextCart);
     cartRef.current = nextCart;
+    if (nextCart.manualCouponCode) setCouponDraft(nextCart.manualCouponCode);
     publishCartCount(cartUnitCount(nextCart));
     // Evaluate against live delivery authority, not a stale render/async closure.
     const generation = surfaceGenerationRef.current;
@@ -275,15 +311,67 @@ export function CartClient(props: { brandId: string }) {
 
   const checkoutBlocked = isCartCheckoutBlocked(evaluation);
 
+  async function mutateCoupon(
+    work: () => Promise<{ ok: true; data: { cart: CommerceCart } } | { ok: false; code: string }>,
+  ): Promise<void> {
+    if (!cart || couponPending) return;
+    setCouponPending(true);
+    setCouponStatusOverride(null);
+    const previousCart = cart;
+    const previousDraft = couponDraft;
+    const result = await work();
+    setCouponPending(false);
+    if (!result.ok) {
+      const status = couponFieldStatusFromMutationFailure(result.code);
+      setCouponStatusOverride(status);
+      if (isIncompleteCouponTransport(result.code)) {
+        setCart(previousCart);
+        setCouponDraft(previousDraft);
+      }
+      if (status.invalid) setCouponFocusInputToken((token) => token + 1);
+      return;
+    }
+    setCouponDraft(result.data.cart.manualCouponCode ?? "");
+    await applyCartMutation(result.data.cart);
+    setCouponFocusResultToken((token) => token + 1);
+  }
+
+  async function handleApplyCoupon(): Promise<void> {
+    if (!cart) return;
+    await mutateCoupon(() =>
+      applyCartCoupon({
+        brandId,
+        couponCode: couponDraft,
+        expectedRevision: cart.revision,
+        sourceCommandId: crypto.randomUUID(),
+      }),
+    );
+  }
+
+  async function handleRemoveCoupon(): Promise<void> {
+    if (!cart) return;
+    await mutateCoupon(() =>
+      removeCartCoupon({
+        brandId,
+        expectedRevision: cart.revision,
+        sourceCommandId: crypto.randomUUID(),
+      }),
+    );
+  }
+
   async function handleCheckout(): Promise<void> {
-    if (pending || checkoutBlocked || !cart || cart.lines.length === 0) return;
+    if (pending || checkoutBlocked || couponPending || !cart || cart.lines.length === 0) return;
     setPending(true);
     const session = await fetchCustomerSession();
-    setPending(false);
     if (!session.ok || !session.data.authenticated) {
+      setPending(false);
       window.location.assign(loginUrlWithReturn("/order/checkout/"));
       return;
     }
+    const activationId = crypto.randomUUID();
+    window.sessionStorage.setItem("boba.cartActivationId", activationId);
+    await recordCartCheckoutActivation({ brandId, activationId });
+    setPending(false);
     window.location.assign("/order/checkout/");
   }
 
@@ -331,14 +419,107 @@ export function CartClient(props: { brandId: string }) {
   const presentationEstimate = menuLookups
     ? resolveCartPresentationEstimate(cart, menuLookups)
     : { complete: false as const, totalPaise: BigInt(0) };
-  const presentationLabel = formatCartEstimatePrimaryLabel(presentationEstimate);
-  const presentationAmount = presentationEstimate.complete
-    ? formatPresentationEstimateLabel(presentationEstimate.totalPaise)
-    : presentationLabel;
+  const explanation = parseCommercialExplanation(evaluation?.quote);
+  const reuseCheckoutEval = evaluation?.reusedCheckoutEvaluation === true;
+  const reuseCheckoutEligible =
+    cart != null &&
+    canReuseCheckoutEvaluation({
+      checkout: activeCheckout,
+      cartRevision: cart.revision,
+    });
+  const reuseCheckoutPending = reuseCheckoutEval && !reuseCheckoutEligible;
+  const usingCheckoutEvaluation = reuseCheckoutEval && reuseCheckoutEligible;
+  const serverMerchandise = merchandiseSubtotalFromQuote(evaluation?.quote);
+  const estimatedPaise =
+    serverMerchandise ??
+    (presentationEstimate.complete ? presentationEstimate.totalPaise.toString() : "0");
+  const amountKind = reuseCheckoutPending
+    ? "waiting"
+    : usingCheckoutEvaluation
+      ? "current-checkout-total"
+      : "estimated-subtotal";
+  const amountLabel =
+    amountKind === "current-checkout-total"
+      ? IMP036J_COPY.CURRENT_CHECKOUT_TOTAL
+      : amountKind === "waiting"
+        ? IMP036J_COPY.CHECKING_TOTAL
+        : IMP036J_COPY.ESTIMATED_SUBTOTAL;
+  const amountPaise =
+    amountKind === "waiting"
+      ? estimatedPaise
+      : usingCheckoutEvaluation
+        ? explanation?.grandTotalPaise ??
+          activeCheckout?.activeSnapshot?.grandTotalPaise ??
+          estimatedPaise
+        : estimatedPaise;
+  const deliveryChargePaise = usingCheckoutEvaluation
+    ? snapshotDeliveryChargePaise(activeCheckout?.activeSnapshot ?? null)
+    : null;
+  const complimentaryName = resolveComplimentaryCatalogName(explanation, menuLookups);
+  const couponStatus =
+    couponStatusOverride ??
+    couponFieldStatusFromExplanation({
+      explanation,
+      fulfilmentMode: usingCheckoutEvaluation
+        ? activeCheckout?.fulfilmentMode ?? null
+        : null,
+    });
   const serviceabilityNote = cartEvaluationCustomerCopy(
     evaluation,
     Boolean(deliveryContext.coordinates),
   );
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      if (!cart) {
+        setActiveCheckout(null);
+        return;
+      }
+      const active = await getActiveCheckout({ cartId: cart.id });
+      if (cancelled) return;
+      if (!active.ok) {
+        setActiveCheckout(null);
+        return;
+      }
+      setActiveCheckout(active.data.checkout);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [cart]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+    const media = window.matchMedia("(min-width: 1024px)");
+    const sync = () => setObservationRoot(media.matches ? "desktop" : "narrow");
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
+
+  useEffect(() => {
+    if (!evaluation?.evaluationId || couponPending) return;
+    if (reuseCheckoutPending) return;
+    const roots = selectVisibleCartObservationRoots({
+      observationRoot,
+      desktop: desktopOfferRef.current,
+      narrowOffer: narrowOfferRef.current,
+      sticky: stickyAmountRef.current,
+    });
+    if (!roots) return;
+    void postCommittedPresentationObservation(roots, {
+      evaluationId: evaluation.evaluationId,
+    });
+  }, [
+    evaluation?.evaluationId,
+    amountPaise,
+    couponPending,
+    observationRoot,
+    complimentaryName,
+    reuseCheckoutPending,
+    amountKind,
+  ]);
 
   if (loading) {
     return (
@@ -439,6 +620,52 @@ export function CartClient(props: { brandId: string }) {
           </ul>
         ) : null}
 
+        {cart && cart.lines.length > 0 ? (
+          <div className="flex flex-col gap-4 lg:hidden" data-testid="cart-narrow-offer">
+            <div ref={narrowOfferRef}>
+              <CommercialOfferStack
+                explanation={explanation}
+                payableLabel={amountLabel}
+                payablePaise={amountPaise}
+                deliveryChargePaise={deliveryChargePaise}
+                fulfilmentMode={
+                  usingCheckoutEvaluation ? activeCheckout?.fulfilmentMode ?? null : null
+                }
+                complimentaryName={complimentaryName}
+                hidePayable
+                waitingText={
+                  couponPending
+                    ? IMP036J_COPY.CHECKING
+                    : evaluation == null || reuseCheckoutPending
+                      ? IMP036J_COPY.CHECKING_TOTAL
+                      : null
+                }
+              />
+            </div>
+            <CouponField
+              code={couponDraft}
+              appliedCode={cart.manualCouponCode}
+              pending={couponPending}
+              disabled={pending}
+              onCodeChange={(value) => {
+                setCouponDraft(value);
+                setCouponStatusOverride(null);
+              }}
+              onApply={() => void handleApplyCoupon()}
+              onRemove={() => void handleRemoveCoupon()}
+              statusText={couponStatus?.text ?? null}
+              statusTone={couponStatus?.tone ?? null}
+              invalid={couponStatus?.invalid}
+              retryVisible={couponStatus?.retryVisible}
+              onRetry={() => void handleApplyCoupon()}
+              showSignIn={couponStatus?.showSignIn}
+              returnPath="/order/cart/"
+              focusInputToken={couponFocusInputToken || null}
+              focusResultToken={couponFocusResultToken || null}
+            />
+          </div>
+        ) : null}
+
         </section>
 
         {cart && cart.lines.length > 0 ? (
@@ -449,15 +676,59 @@ export function CartClient(props: { brandId: string }) {
             <h2 className="font-display text-[24px] uppercase tracking-wide text-[var(--text-primary)]">
               Order summary
             </h2>
+            <div className="mt-5" ref={desktopOfferRef}>
+              <CommercialOfferStack
+                explanation={explanation}
+                payableLabel={amountLabel}
+                payablePaise={amountPaise}
+                deliveryChargePaise={deliveryChargePaise}
+                fulfilmentMode={
+                  usingCheckoutEvaluation ? activeCheckout?.fulfilmentMode ?? null : null
+                }
+                complimentaryName={complimentaryName}
+                waitingText={
+                  couponPending
+                    ? IMP036J_COPY.CHECKING
+                    : evaluation == null || reuseCheckoutPending
+                      ? IMP036J_COPY.CHECKING_TOTAL
+                      : null
+                }
+              />
+              {amountKind === "estimated-subtotal" ? (
+                <p className="mt-2 font-body text-[12px] text-[var(--text-tertiary)]">
+                  {IMP036J_COPY.CART_NOT_FINAL}
+                </p>
+              ) : null}
+            </div>
             <div className="mt-5">
-              <CartSummary estimate={presentationEstimate} itemCount={lineCount} />
+              <CouponField
+                code={couponDraft}
+                appliedCode={cart.manualCouponCode}
+                pending={couponPending}
+                disabled={pending}
+                onCodeChange={(value) => {
+                  setCouponDraft(value);
+                  setCouponStatusOverride(null);
+                }}
+                onApply={() => void handleApplyCoupon()}
+                onRemove={() => void handleRemoveCoupon()}
+                statusText={couponStatus?.text ?? null}
+                statusTone={couponStatus?.tone ?? null}
+                invalid={couponStatus?.invalid}
+                retryVisible={couponStatus?.retryVisible}
+                onRetry={() => void handleApplyCoupon()}
+                showSignIn={couponStatus?.showSignIn}
+                returnPath="/order/cart/"
+                focusInputToken={couponFocusInputToken || null}
+                focusResultToken={couponFocusResultToken || null}
+              />
             </div>
             <Button
               type="button"
               variant="primary"
               size="lg"
               className="mt-6 min-h-[52px] w-full rounded-lg"
-              disabled={pending || checkoutBlocked}
+              disabled={pending || couponPending || checkoutBlocked}
               onClick={() => void handleCheckout()}
             >
               {pending ? "Continuing…" : "Checkout"}
@@ -480,20 +751,35 @@ export function CartClient(props: { brandId: string }) {
           className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--border-strong)] bg-[var(--bg-surface-sunken)]/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-10px_28px_rgba(0,0,0,0.24)] backdrop-blur-[12px] lg:hidden"
         >
           <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              {presentationEstimate.complete ? (
-                <p className="font-body text-[11px] text-[var(--text-tertiary)]">Estimated subtotal</p>
-              ) : null}
-              <p className="font-body text-[18px] font-bold text-[var(--text-primary)]">
-                {presentationAmount}
+            <div className="min-w-0" ref={stickyAmountRef}>
+              <p className="font-body text-[11px] text-[var(--text-tertiary)]">{amountLabel}</p>
+              <p
+                className="font-body text-[18px] font-bold text-[var(--text-primary)]"
+                data-offer-component={
+                  amountKind === "current-checkout-total"
+                    ? "CURRENT_CHECKOUT_TOTAL"
+                    : amountKind === "waiting"
+                      ? undefined
+                      : "ESTIMATED_SUBTOTAL"
+                }
+                data-offer-amount={amountPaise}
+                data-offer-present="true"
+                data-testid="cart-sticky-amount"
+              >
+                {formatPaise(amountPaise)}
               </p>
+              {amountKind === "estimated-subtotal" ? (
+                <p className="font-body text-[11px] text-[var(--text-tertiary)]">
+                  {IMP036J_COPY.CART_NOT_FINAL}
+                </p>
+              ) : null}
             </div>
             <Button
               type="button"
               variant="primary"
               size="lg"
               className="min-h-[48px] shrink-0 rounded-lg px-6"
-              disabled={pending || checkoutBlocked}
+              disabled={pending || couponPending || checkoutBlocked}
               onClick={() => void handleCheckout()}
             >
               {pending ? "Continuing…" : "Checkout"}
@@ -530,4 +816,29 @@ function emptyMenu(brandId: string): CustomerMenuProjection {
     sections: [],
     items: [],
   };
+}
+
+function snapshotDeliveryChargePaise(snapshot: CommerceCheckout["activeSnapshot"]): string | null {
+  if (!snapshot || !Array.isArray(snapshot.charges)) return null;
+  for (const raw of snapshot.charges) {
+    if (typeof raw !== "object" || raw === null) continue;
+    const row = raw as Record<string, unknown>;
+    if (row.chargeCode === "delivery" && typeof row.amountPaise === "string") {
+      return BigInt(row.amountPaise) > BigInt(0) ? row.amountPaise : null;
+    }
+  }
+  return null;
+}
+
+function resolveComplimentaryCatalogName(
+  explanation: ReturnType<typeof parseCommercialExplanation>,
+  menuLookups: ReturnType<typeof buildCustomerMenuLookups> | null,
+): string | null {
+  const gift = explanation?.complimentary;
+  if (!gift || gift.competingOffers !== "NONE") return null;
+  if (typeof gift.itemName === "string" && gift.itemName.trim().length > 0) {
+    return gift.itemName.trim();
+  }
+  const item = menuLookups?.itemByVariant.get(gift.variantId);
+  return item?.name ?? null;
 }

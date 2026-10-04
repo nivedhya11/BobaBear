@@ -166,6 +166,12 @@ jobs:
       - name: IMP-036J Tranche 4 proof
         run: npm run test:imp036j:tranche4
 
+      - name: Install Playwright Chromium for IMP-036J T5 responsive proof
+        run: npx playwright install --with-deps chromium
+
+      - name: IMP-036J Tranche 5 proof
+        run: npm run test:imp036j:tranche5
+
       - name: IMP-036J Tranche 6 proof
         run: npm run test:imp036j:tranche6
 

@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { fetchCustomerSession } from "@/lib/customer-auth/client";
 import { loginUrlWithReturn } from "@/lib/customer-auth/return-to";
 import {
+  applyCartCoupon,
   claimGuestCart,
   clearGuestCartCredential,
   createOwnAddress,
@@ -19,6 +20,7 @@ import {
   readGuestCartCredential,
   readPaymentRecovery,
   reconcileGuestCart,
+  removeCartCoupon,
   setCheckoutDestination,
   setCheckoutFulfilment,
   setCheckoutFulfilmentTiming,
@@ -51,7 +53,16 @@ import {
   CheckoutSnapshotLineList,
   CheckoutStepIndicator,
 } from "@/components/ordering/CheckoutReviewSections";
-import { OrderMoneySummaryPanel } from "@/components/ordering/OrderMoneySummaryPanel";
+import { CommercialOfferStack } from "@/components/ordering/CommercialOfferStack";
+import { CouponField } from "@/components/ordering/CouponField";
+import { IMP036J_COPY } from "@/components/ordering/imp036j-copy";
+import { parseCommercialExplanation } from "@/components/ordering/commercial-explanation-presentation";
+import {
+  couponFieldStatusFromExplanation,
+  couponFieldStatusFromMutationFailure,
+  isIncompleteCouponTransport,
+} from "@/components/ordering/coupon-result-presentation";
+import { postCommittedPresentationObservation } from "@/components/ordering/committed-presentation-observation";
 import { narrowCheckoutSnapshotLines } from "@/components/ordering/checkout-line-presentation";
 import { PaymentPanel } from "@/components/ordering/PaymentPanel";
 import { PreviousPaymentRecoveryView } from "@/components/ordering/PreviousPaymentRecoveryView";
@@ -110,6 +121,22 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
   const [cart, setCart] = useState<CommerceCart | null>(null);
   const [checkout, setCheckout] = useState<CommerceCheckout | null>(null);
   const [snapshot, setSnapshot] = useState<CommerceCheckoutSnapshot | null>(null);
+  const [evaluationId, setEvaluationId] = useState<string | null>(null);
+  const [reviewSurfaceToken, setReviewSurfaceToken] = useState<string | null>(null);
+  const [reviewQuote, setReviewQuote] = useState<{ commercialExplanation?: unknown } | null>(
+    null,
+  );
+  const [cartActivationId, setCartActivationId] = useState<string | null>(null);
+  const [couponDraft, setCouponDraft] = useState("");
+  const [couponPending, setCouponPending] = useState(false);
+  const [couponStatusOverride, setCouponStatusOverride] = useState<
+    ReturnType<typeof couponFieldStatusFromMutationFailure> | null
+  >(null);
+  const [couponFocusInputToken, setCouponFocusInputToken] = useState(0);
+  const [couponFocusResultToken, setCouponFocusResultToken] = useState(0);
+  const [staleReview, setStaleReview] = useState(false);
+  const [giftGone, setGiftGone] = useState(false);
+  const reviewSummaryRef = useRef<HTMLDivElement | null>(null);
   const [addresses, setAddresses] = useState<readonly CommerceAddress[]>([]);
   const [guestRevision, setGuestRevision] = useState<string | null>(null);
   const [customerRevision, setCustomerRevision] = useState<string | null>(null);
@@ -123,6 +150,234 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
   const [timingLoading, setTimingLoading] = useState(false);
   const [scheduledWindows, setScheduledWindows] = useState<CommerceScheduledWindows | null>(null);
   const [selectedWindowStart, setSelectedWindowStart] = useState<string | null>(null);
+  const reviewExplanation = parseCommercialExplanation(reviewQuote);
+
+  function adoptEvaluated(evaluated: {
+    checkout: CommerceCheckout;
+    snapshot: CommerceCheckoutSnapshot;
+    evaluationId?: string;
+    reviewSurfaceToken?: string;
+    quote?: { commercialExplanation?: unknown };
+  }): void {
+    const hadGift = snapshot?.lines.some((line) => {
+      return (
+        typeof line === "object" &&
+        line !== null &&
+        "lineOrigin" in line &&
+        (line as { lineOrigin?: string }).lineOrigin === "complimentary_offer"
+      );
+    });
+    const hasGift = evaluated.snapshot.lines.some((line) => {
+      return (
+        typeof line === "object" &&
+        line !== null &&
+        "lineOrigin" in line &&
+        (line as { lineOrigin?: string }).lineOrigin === "complimentary_offer"
+      );
+    });
+    if (hadGift && !hasGift) setGiftGone(true);
+    setCheckout(evaluated.checkout);
+    setSnapshot(evaluated.snapshot);
+    setEvaluationId(evaluated.evaluationId ?? null);
+    setReviewSurfaceToken(evaluated.reviewSurfaceToken ?? null);
+    setReviewQuote(evaluated.quote ?? null);
+  }
+
+  useEffect(() => {
+    if (screen !== "review" || !evaluationId || couponPending) return;
+    void postCommittedPresentationObservation(reviewSummaryRef.current, {
+      evaluationId,
+      reviewSurfaceToken,
+      cartActivationId,
+    });
+  }, [screen, evaluationId, reviewSurfaceToken, cartActivationId, snapshot?.id, couponPending]);
+
+  useEffect(() => {
+    if (screen !== "review" || !staleReview) return;
+    document.querySelector<HTMLElement>("[data-testid='copy-stale']")?.focus();
+  }, [screen, staleReview, snapshot?.id]);
+
+  async function recoverStaleReview(): Promise<void> {
+    setStaleReview(true);
+    setScreen("review");
+    const priorSnapshot = snapshot;
+    const priorCheckout = checkout;
+    if (!cart) return;
+    const refreshed = await getActiveCart(brandId, { guestToken: false });
+    if (!refreshed.ok || !refreshed.data.cart) return;
+    setCart(refreshed.data.cart);
+    await rebaseReviewAfterCouponMutation(
+      refreshed.data.cart,
+      priorSnapshot,
+      priorCheckout,
+    );
+    setStaleReview(true);
+    setScreen("review");
+  }
+
+  /**
+   * After Review coupon APPLY/CHANGE/REMOVE advances Cart revision, rebase onto
+   * the canonical T4 successor/reuse Checkout and re-establish fulfilment context.
+   */
+  async function rebaseReviewAfterCouponMutation(
+    nextCart: CommerceCart,
+    priorSnapshot: CommerceCheckoutSnapshot | null,
+    priorCheckout: CommerceCheckout | null,
+  ): Promise<boolean> {
+    const started = await startCheckout({ cartId: nextCart.id });
+    if (!started.ok) {
+      setError(commerceErrorCopy(started.code));
+      return false;
+    }
+    let current = started.data.checkout;
+    setCheckout(current);
+    const mode = priorSnapshot?.fulfilmentMode ?? current.fulfilmentMode;
+    if (mode === "DELIVERY" || mode === "PICKUP") {
+      const fulfilled = await setCheckoutFulfilment({
+        checkoutId: current.id,
+        expectedCheckoutRevision: current.revision,
+        fulfilmentMode: mode,
+        ...(mode === "PICKUP"
+          ? {
+              pickupOutletId:
+                priorCheckout?.pickupOutletId ??
+                current.pickupOutletId ??
+                priorSnapshot?.selectedOutletId ??
+                null,
+            }
+          : { pickupOutletId: null }),
+      });
+      if (!fulfilled.ok) {
+        setError(commerceErrorCopy(fulfilled.code));
+        return false;
+      }
+      current = fulfilled.data.checkout;
+      setCheckout(current);
+    }
+    if (mode === "DELIVERY" && priorSnapshot?.destination) {
+      const dest = priorSnapshot.destination;
+      const destinationInput =
+        dest.sourceSavedAddressId != null && dest.sourceSavedAddressId.length > 0
+          ? {
+              kind: "SAVED_ADDRESS" as const,
+              savedAddressId: dest.sourceSavedAddressId,
+            }
+          : {
+              kind: "ONE_TIME_ADDRESS" as const,
+              recipientName: dest.recipientName,
+              recipientPhone: dest.recipientPhone,
+              addressLine1: dest.addressLine1,
+              addressLine2: dest.addressLine2,
+              landmark: dest.landmark,
+              locality: dest.locality,
+              city: dest.city,
+              stateCode: dest.stateCode,
+              postalCode: dest.postalCode,
+              coordinates: dest.coordinates,
+              label: dest.label,
+            };
+      const setDest = await setCheckoutDestination({
+        checkoutId: current.id,
+        expectedCheckoutRevision: current.revision,
+        destination: destinationInput,
+      });
+      if (!setDest.ok) {
+        setError(commerceErrorCopy(setDest.code));
+        return false;
+      }
+      current = setDest.data.checkout;
+      setCheckout(current);
+    }
+    if (
+      priorSnapshot?.fulfilmentTiming === "SCHEDULED" &&
+      priorSnapshot.scheduledWindowStartAt &&
+      priorSnapshot.scheduledWindowEndAt
+    ) {
+      const timed = await setCheckoutFulfilmentTiming({
+        checkoutId: current.id,
+        expectedCheckoutRevision: current.revision,
+        fulfilmentTiming: "SCHEDULED",
+        scheduledWindowStartAt: priorSnapshot.scheduledWindowStartAt,
+        scheduledWindowEndAt: priorSnapshot.scheduledWindowEndAt,
+      });
+      if (!timed.ok) {
+        setError(commerceErrorCopy(timed.code));
+        return false;
+      }
+      current = timed.data.checkout;
+      setCheckout(current);
+    } else if (priorSnapshot?.fulfilmentTiming === "ASAP" || !priorSnapshot?.fulfilmentTiming) {
+      const timed = await setCheckoutFulfilmentTiming({
+        checkoutId: current.id,
+        expectedCheckoutRevision: current.revision,
+        fulfilmentTiming: "ASAP",
+      });
+      if (timed.ok) {
+        current = timed.data.checkout;
+        setCheckout(current);
+      }
+    }
+    const evaluated = await evaluateCheckout({
+      checkoutId: current.id,
+      expectedCheckoutRevision: current.revision,
+    });
+    if (!evaluated.ok) {
+      setError(commerceErrorCopy(evaluated.code));
+      return false;
+    }
+    adoptEvaluated(evaluated.data);
+    setChosenMode(evaluated.data.snapshot.fulfilmentMode);
+    setScreen("review");
+    return true;
+  }
+
+  async function mutateReviewCoupon(
+    work: () => Promise<{ ok: true; data: { cart: CommerceCart } } | { ok: false; code: string }>,
+  ): Promise<void> {
+    if (!cart || couponPending) return;
+    const priorSnapshot = snapshot;
+    const priorCart = cart;
+    const priorDraft = couponDraft;
+    const priorCheckout = checkout;
+    const priorEvaluationId = evaluationId;
+    const priorToken = reviewSurfaceToken;
+    const priorQuote = reviewQuote;
+    setCouponPending(true);
+    setCouponStatusOverride(null);
+    const result = await work();
+    if (!result.ok) {
+      setCouponPending(false);
+      const status = couponFieldStatusFromMutationFailure(result.code);
+      setCouponStatusOverride(status);
+      if (isIncompleteCouponTransport(result.code)) {
+        setCart(priorCart);
+        setCouponDraft(priorDraft);
+        setCheckout(priorCheckout);
+        setSnapshot(priorSnapshot);
+        setEvaluationId(priorEvaluationId);
+        setReviewSurfaceToken(priorToken);
+        setReviewQuote(priorQuote);
+      }
+      if (status.invalid) setCouponFocusInputToken((token) => token + 1);
+      return;
+    }
+    setCart(result.data.cart);
+    setCouponDraft(result.data.cart.manualCouponCode ?? "");
+    const rebased = await rebaseReviewAfterCouponMutation(
+      result.data.cart,
+      priorSnapshot,
+      priorCheckout,
+    );
+    setCouponPending(false);
+    if (!rebased) {
+      // Mutation succeeded; keep new cart code but surface rebase error without inventing money.
+      setCouponStatusOverride(couponFieldStatusFromMutationFailure("INVALID_RESPONSE"));
+      setCouponFocusInputToken((token) => token + 1);
+      return;
+    }
+    setCouponStatusOverride(null);
+    setCouponFocusResultToken((token) => token + 1);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -255,8 +510,17 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
     }
     setCartChangedWhilePending(false);
     setResumePaymentId(null);
-    if (!current) {
-      const started = await startCheckout({ cartId: ownedCart.id });
+    const activationId = window.sessionStorage.getItem("boba.cartActivationId");
+    if (activationId) {
+      // Consume exactly once for this Cart→Checkout gesture, including reused checkout.
+      window.sessionStorage.removeItem("boba.cartActivationId");
+      setCartActivationId(activationId);
+    }
+    if (!current || activationId) {
+      const started = await startCheckout({
+        cartId: ownedCart.id,
+        ...(activationId ? { cartActivationId: activationId } : {}),
+      });
       if (!started.ok) {
         setScreen("error");
         setError(commerceErrorCopy(started.code));
@@ -419,8 +683,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
       setError(commerceErrorCopy(evaluated.code));
       return;
     }
-    setCheckout(evaluated.data.checkout);
-    setSnapshot(evaluated.data.snapshot);
+    adoptEvaluated(evaluated.data);
     setChosenMode("PICKUP");
     await openTiming(evaluated.data.checkout);
   }
@@ -479,8 +742,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
       }
       return;
     }
-    setCheckout(evaluated.data.checkout);
-    setSnapshot(evaluated.data.snapshot);
+    adoptEvaluated(evaluated.data);
     setScreen("review");
   }
 
@@ -580,8 +842,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
       setError(commerceErrorCopy(evaluated.code));
       return;
     }
-    setCheckout(evaluated.data.checkout);
-    setSnapshot(evaluated.data.snapshot);
+    adoptEvaluated(evaluated.data);
     setChosenMode("DELIVERY");
     await openTiming(evaluated.data.checkout);
   }
@@ -678,8 +939,6 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
       cancelled = true;
       window.clearInterval(timer);
     };
-    // continueWithCart is stable for this poll purpose; keyed by screen/cart.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, cart]);
 
   const recoveryScreens = screen === "cart_changed_unresolved" || screen === "cart_changed_fresh";
@@ -972,10 +1231,118 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
               title="Your items"
               lines={narrowCheckoutSnapshotLines(snapshot.lines)}
             />
-            <OrderMoneySummaryPanel snapshot={snapshot} title="Price summary" />
-            <Button type="button" variant="primary" size="lg" onClick={() => setScreen("payment")}>
+            <div ref={reviewSummaryRef}>
+              <CommercialOfferStack
+                explanation={reviewExplanation}
+                payableLabel={IMP036J_COPY.TOTAL_PAYABLE}
+                payablePaise={snapshot.grandTotalPaise}
+                fulfilmentMode={snapshot.fulfilmentMode}
+                baseSnapshot={snapshot}
+                stale={staleReview}
+                giftGone={giftGone}
+                complimentaryName={
+                  narrowCheckoutSnapshotLines(snapshot.lines).find(
+                    (line) => line.lineOrigin === "complimentary_offer",
+                  )?.productName ?? null
+                }
+                waitingText={couponPending ? IMP036J_COPY.CHECKING : null}
+              />
+            </div>
+            <Button
+              type="button"
+              variant="primary"
+              size="lg"
+              data-testid="continue-to-payment"
+              disabled={pending || couponPending}
+              onClick={() => setScreen("payment")}
+            >
               Continue to payment
             </Button>
+            <CouponField
+              code={couponDraft || cart?.manualCouponCode || ""}
+              appliedCode={cart?.manualCouponCode ?? null}
+              pending={couponPending}
+              disabled={pending}
+              onCodeChange={(value) => {
+                setCouponDraft(value);
+                setCouponStatusOverride(null);
+              }}
+              onApply={() => {
+                if (!cart) return;
+                void mutateReviewCoupon(() =>
+                  applyCartCoupon({
+                    brandId,
+                    couponCode: couponDraft,
+                    expectedRevision: cart.revision,
+                    sourceCommandId: crypto.randomUUID(),
+                    reviewSurfaceToken,
+                  }),
+                );
+              }}
+              onRemove={() => {
+                if (!cart) return;
+                void mutateReviewCoupon(() =>
+                  removeCartCoupon({
+                    brandId,
+                    expectedRevision: cart.revision,
+                    sourceCommandId: crypto.randomUUID(),
+                    reviewSurfaceToken,
+                  }),
+                );
+              }}
+              statusText={
+                (
+                  couponStatusOverride ??
+                  couponFieldStatusFromExplanation({
+                    explanation: reviewExplanation,
+                    fulfilmentMode: snapshot.fulfilmentMode,
+                  })
+                )?.text ?? null
+              }
+              statusTone={
+                (
+                  couponStatusOverride ??
+                  couponFieldStatusFromExplanation({
+                    explanation: reviewExplanation,
+                    fulfilmentMode: snapshot.fulfilmentMode,
+                  })
+                )?.tone ?? null
+              }
+              invalid={
+                (
+                  couponStatusOverride ??
+                  couponFieldStatusFromExplanation({
+                    explanation: reviewExplanation,
+                    fulfilmentMode: snapshot.fulfilmentMode,
+                  })
+                )?.invalid
+              }
+              retryVisible={couponStatusOverride?.retryVisible}
+              onRetry={() => {
+                if (!cart) return;
+                void mutateReviewCoupon(() =>
+                  applyCartCoupon({
+                    brandId,
+                    couponCode: couponDraft,
+                    expectedRevision: cart.revision,
+                    sourceCommandId: crypto.randomUUID(),
+                    reviewSurfaceToken,
+                  }),
+                );
+              }}
+              returnPath="/order/checkout/"
+              showSignIn={
+                (
+                  couponStatusOverride ??
+                  couponFieldStatusFromExplanation({
+                    explanation: reviewExplanation,
+                    fulfilmentMode: snapshot.fulfilmentMode,
+                  })
+                )?.showSignIn
+              }
+              focusInputToken={couponFocusInputToken || null}
+              focusResultToken={couponFocusResultToken || null}
+            />
           </div>
         ) : null}
 
@@ -985,7 +1352,6 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
               title="Your items"
               lines={narrowCheckoutSnapshotLines(snapshot.lines)}
             />
-            <OrderMoneySummaryPanel snapshot={snapshot} title="Price summary" />
             <PaymentPanel
               checkout={checkout}
               snapshot={snapshot}
@@ -996,6 +1362,9 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
               onBackToReview={(revision) => {
                 adoptCheckoutRevision(revision);
                 setScreen("review");
+              }}
+              onStaleReview={() => {
+                void recoverStaleReview();
               }}
               onOrderReady={(orderId) => {
                 window.location.assign(`/order/confirmation/?orderId=${encodeURIComponent(orderId)}`);
