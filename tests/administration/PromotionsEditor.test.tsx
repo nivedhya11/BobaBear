@@ -18,6 +18,9 @@ import {
 const listPromotions = vi.fn();
 const listCoupons = vi.fn();
 const getPromotion = vi.fn();
+const createPromotion = vi.fn();
+const savePromotionDraft = vi.fn();
+const savePromotionBenefit = vi.fn();
 const setPromotionTargets = vi.fn();
 const previewPromotionConsequence = vi.fn();
 const retirePromotion = vi.fn();
@@ -27,10 +30,10 @@ vi.mock("@/lib/administration/commercial-promotions", () => ({
   listPromotions: (...args: unknown[]) => listPromotions(...args),
   listCoupons: (...args: unknown[]) => listCoupons(...args),
   getPromotion: (...args: unknown[]) => getPromotion(...args),
-  createPromotion: vi.fn(),
+  createPromotion: (...args: unknown[]) => createPromotion(...args),
   createCoupon: vi.fn(),
-  savePromotionDraft: vi.fn(),
-  savePromotionBenefit: vi.fn(),
+  savePromotionDraft: (...args: unknown[]) => savePromotionDraft(...args),
+  savePromotionBenefit: (...args: unknown[]) => savePromotionBenefit(...args),
   setPromotionTargets: (...args: unknown[]) => setPromotionTargets(...args),
   previewPromotionConsequence: (...args: unknown[]) => previewPromotionConsequence(...args),
   previewCouponConsequence: vi.fn(),
@@ -134,8 +137,18 @@ beforeEach(() => {
   listPromotions.mockReset();
   listCoupons.mockReset();
   getPromotion.mockReset();
+  createPromotion.mockReset();
+  savePromotionDraft.mockReset();
+  savePromotionBenefit.mockReset();
   setPromotionTargets.mockReset();
-  setPromotionTargets.mockResolvedValue({ ok: true, status: 200, data: {} });
+  setPromotionTargets.mockResolvedValue({ ok: true, status: 200, data: { revision: "2" } });
+  savePromotionDraft.mockResolvedValue({ ok: true, status: 200, data: { revision: "2" } });
+  savePromotionBenefit.mockResolvedValue({ ok: true, status: 200, data: { revision: "2" } });
+  createPromotion.mockResolvedValue({
+    ok: true,
+    status: 200,
+    data: { promotion: { id: "promo-new", revision: "1" } },
+  });
   previewPromotionConsequence.mockReset();
   retirePromotion.mockReset();
   activatePromotion.mockReset();
@@ -244,6 +257,7 @@ describe("PromotionsEditor", () => {
           targetType: "variant",
           variantId: "variant-1",
           productId: null,
+          chargeDefinitionId: null,
         },
       ],
     });
@@ -333,7 +347,10 @@ describe("PromotionsEditor", () => {
     expect(screen.getByText("Fulfilment mode")).toBeInTheDocument();
     expect(screen.getByLabelText("Maximum redemptions")).toBeInTheDocument();
     expect(screen.getByLabelText("Maximum redemptions per customer")).toBeInTheDocument();
+    expect(screen.getByLabelText("Minimum item quantity")).toBeInTheDocument();
+    expect(screen.getByLabelText("Promotion scope")).toBeInTheDocument();
     expect(screen.getByLabelText("Benefit type")).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Buy X get Y" })).toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText("Benefit type"), "complimentary_item");
     expect(screen.getByText(COPY_OP_GIFT)).toBeInTheDocument();
     expect(screen.getByLabelText("Complimentary product id")).toBeInTheDocument();
@@ -341,6 +358,128 @@ describe("PromotionsEditor", () => {
     expect(screen.getByTestId("redemption-counts")).toHaveTextContent("Applications: 0");
     expect(screen.queryByText(/gift catalogue/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/customerId/i)).not.toBeInTheDocument();
+  });
+
+  it("hydrates BOGO without coercing to percentage and saves BOGO fields", async () => {
+    const user = userEvent.setup();
+    const promotion = draftPromotion({ revision: "3" });
+    listPromotions.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: { promotions: [promotion] },
+    });
+    listCoupons.mockResolvedValue({ ok: true, status: 200, data: { coupons: [] } });
+    getPromotion.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        promotion,
+        benefit: {
+          benefitType: "buy_x_get_y",
+          buyQuantity: 2,
+          getQuantity: 1,
+          repeatable: true,
+          maximumRewardQuantity: 4,
+        },
+        qualifierTargets: [],
+        benefitTargets: [],
+        redemptionCounts: {
+          reservedCount: 0,
+          consumedCount: 0,
+          releasedCount: 0,
+          applicationCount: 0,
+        },
+      },
+    });
+    render(
+      <PromotionsEditor
+        context={baseContext}
+        capabilities={capabilities}
+        authoringAllowed
+        onStatus={vi.fn()}
+      />,
+    );
+    await waitFor(() => expect(screen.getByText(/Welcome \(WELCOME\)/)).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: /Welcome \(WELCOME\)/ }));
+    await waitFor(() => expect(screen.getByLabelText("Benefit type")).toHaveValue("buy_x_get_y"));
+    expect(screen.getByLabelText("Buy quantity")).toHaveValue("2");
+    expect(screen.getByLabelText("Get quantity")).toHaveValue("1");
+    expect(screen.getByLabelText("BOGO repeatable")).toBeChecked();
+    expect(screen.getByLabelText("Maximum reward quantity")).toHaveValue("4");
+    await user.click(screen.getByRole("button", { name: /Save benefit/i }));
+    await waitFor(() => expect(savePromotionBenefit).toHaveBeenCalled());
+    expect(savePromotionBenefit.mock.calls[0]?.[2]).toMatchObject({
+      benefitType: "buy_x_get_y",
+      buyQuantity: 2,
+      getQuantity: 1,
+      repeatable: true,
+      maximumRewardQuantity: 4,
+    });
+  });
+
+  it("authors delivery waiver with canonical delivery charge target", async () => {
+    const user = userEvent.setup();
+    mockPromotionDetail(draftPromotion({ revision: "1" }));
+    render(
+      <PromotionsEditor
+        context={baseContext}
+        capabilities={capabilities}
+        authoringAllowed
+        onStatus={vi.fn()}
+      />,
+    );
+    await waitFor(() => expect(screen.getByText(/Welcome \(WELCOME\)/)).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: /Welcome \(WELCOME\)/ }));
+    await waitFor(() => expect(screen.getByLabelText("Benefit type")).toBeInTheDocument());
+    await user.selectOptions(screen.getByLabelText("Benefit type"), "delivery_fee_waiver");
+    await user.click(screen.getByRole("button", { name: /Save benefit/i }));
+    await waitFor(() => expect(savePromotionBenefit).toHaveBeenCalled());
+    expect(savePromotionBenefit.mock.calls[0]?.[2]).toMatchObject({
+      benefitType: "delivery_fee_waiver",
+    });
+    await waitFor(() => expect(setPromotionTargets).toHaveBeenCalled());
+    expect(setPromotionTargets.mock.calls[0]?.[2]).toMatchObject({
+      targetRole: "benefit",
+      targets: [
+        expect.objectContaining({
+          targetType: "charge",
+          chargeDefinitionId: "a0150001-0000-4000-8000-000000000004",
+        }),
+      ],
+    });
+  });
+
+  it("creates promotions with selected scope and saves minimum item quantity", async () => {
+    const user = userEvent.setup();
+    mockPromotionDetail(draftPromotion({ revision: "1" }));
+    render(
+      <PromotionsEditor
+        context={{ ...baseContext, outletId: "outlet-1", outletLabel: "Outlet 1" }}
+        capabilities={capabilities}
+        authoringAllowed
+        onStatus={vi.fn()}
+      />,
+    );
+    await waitFor(() => expect(screen.getByLabelText("Promotion scope")).toBeInTheDocument());
+    await user.selectOptions(screen.getByLabelText("Promotion scope"), "outlet");
+    await user.type(screen.getByLabelText("Promotion code"), "OUT1");
+    await user.type(screen.getByLabelText("Promotion display name"), "Outlet promo");
+    await user.click(screen.getByRole("button", { name: /^Create$/i }));
+    await waitFor(() => expect(createPromotion).toHaveBeenCalled());
+    expect(createPromotion.mock.calls[0]?.[1]).toMatchObject({
+      scopeType: "outlet",
+      outletId: "outlet-1",
+    });
+
+    await user.click(screen.getByRole("button", { name: /Welcome \(WELCOME\)/ }));
+    await waitFor(() => expect(screen.getByLabelText("Minimum item quantity")).toBeInTheDocument());
+    await user.clear(screen.getByLabelText("Minimum item quantity"));
+    await user.type(screen.getByLabelText("Minimum item quantity"), "3");
+    await user.click(screen.getByRole("button", { name: /Save draft/i }));
+    await waitFor(() => expect(savePromotionDraft).toHaveBeenCalled());
+    expect(savePromotionDraft.mock.calls[0]?.[2]).toMatchObject({
+      minimumItemQuantity: 3,
+    });
   });
 
   it("retire confirm is keyboard operable; cancel leaves ACTIVE and confirm retires", async () => {

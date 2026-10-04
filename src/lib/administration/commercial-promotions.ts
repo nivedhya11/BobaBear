@@ -97,7 +97,7 @@ export function createPromotion(
     priority?: number;
     endsAt?: string | null;
     minimumQualifyingAmountPaise?: string | null;
-    minimumItemQuantity?: number;
+    minimumItemQuantity?: number | null;
     firstOrderOnly?: boolean;
     eligibleFulfilmentModes?: readonly string[] | null;
     eligibleFulfilmentTimings?: readonly string[] | null;
@@ -122,7 +122,7 @@ export function savePromotionDraft(
     startsAt?: string;
     endsAt?: string | null;
     minimumQualifyingAmountPaise?: string | null;
-    minimumItemQuantity?: number;
+    minimumItemQuantity?: number | null;
     firstOrderOnly?: boolean;
     eligibleFulfilmentModes?: readonly string[] | null;
     eligibleFulfilmentTimings?: readonly string[] | null;

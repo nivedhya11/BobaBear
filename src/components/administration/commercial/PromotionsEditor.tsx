@@ -41,6 +41,7 @@ import {
 } from "@/lib/administration/commercial-errors";
 import { parseInrToPaise } from "@/lib/administration/commercial-money";
 import { cn } from "@/lib/utils";
+import { CHARGE_DEFINITION_DELIVERY_ID } from "@/shared/pricing/constants";
 import {
   COPY_CANCEL,
   COPY_OP_AUTO,
@@ -69,8 +70,11 @@ type PromotionsEditorProps = Readonly<{
 type OfferBenefitType =
   | "percentage_discount"
   | "fixed_amount_discount"
+  | "buy_x_get_y"
   | "delivery_fee_waiver"
   | "complimentary_item";
+
+type PromotionScopeType = "brand" | "territory" | "organization" | "outlet";
 
 type RedemptionCounts = Readonly<{
   reservedCount: number;
@@ -115,10 +119,18 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
   const [code, setCode] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [triggerType, setTriggerType] = useState<"automatic" | "coupon">("automatic");
+  const [createScopeType, setCreateScopeType] = useState<PromotionScopeType>("brand");
+  const [createTerritoryId, setCreateTerritoryId] = useState("");
+  const [createOrganizationId, setCreateOrganizationId] = useState("");
+  const [createOutletId, setCreateOutletId] = useState("");
   const [draftName, setDraftName] = useState("");
   const [benefitType, setBenefitType] = useState<OfferBenefitType>("percentage_discount");
   const [percentageBps, setPercentageBps] = useState("1000");
   const [fixedInr, setFixedInr] = useState("");
+  const [buyQuantity, setBuyQuantity] = useState("1");
+  const [getQuantity, setGetQuantity] = useState("1");
+  const [bogoRepeatable, setBogoRepeatable] = useState(false);
+  const [maximumRewardQuantity, setMaximumRewardQuantity] = useState("");
   const [firstOrderOnly, setFirstOrderOnly] = useState(false);
   const [modeDelivery, setModeDelivery] = useState(false);
   const [modePickup, setModePickup] = useState(false);
@@ -128,6 +140,7 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
   const [minInr, setMinInr] = useState("");
+  const [minItemQuantity, setMinItemQuantity] = useState("");
   const [maxRedemptions, setMaxRedemptions] = useState("");
   const [maxPerCustomer, setMaxPerCustomer] = useState("");
   const [giftProductId, setGiftProductId] = useState("");
@@ -193,11 +206,20 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
         ? (Number(loaded.minimumQualifyingAmountPaise) / 100).toString()
         : "",
     );
+    setMinItemQuantity(
+      loaded.minimumItemQuantity != null ? loaded.minimumItemQuantity.toString() : "",
+    );
     setMaxRedemptions(loaded.maximumRedemptions?.toString() ?? "");
     setMaxPerCustomer(loaded.maximumRedemptionsPerCustomer?.toString() ?? "");
     const loadedBenefit = promoResult.data.benefit as
       | {
           benefitType?: OfferBenefitType;
+          percentageBps?: number | null;
+          fixedAmountPaise?: string | null;
+          buyQuantity?: number | null;
+          getQuantity?: number | null;
+          repeatable?: boolean | null;
+          maximumRewardQuantity?: number | null;
           complimentaryProductId?: string | null;
           complimentaryVariantId?: string | null;
         }
@@ -206,8 +228,26 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
       setBenefitType("delivery_fee_waiver");
     } else if (loadedBenefit?.benefitType === "complimentary_item") {
       setBenefitType("complimentary_item");
+    } else if (loadedBenefit?.benefitType === "buy_x_get_y") {
+      setBenefitType("buy_x_get_y");
+      setBuyQuantity(loadedBenefit.buyQuantity?.toString() ?? "1");
+      setGetQuantity(loadedBenefit.getQuantity?.toString() ?? "1");
+      setBogoRepeatable(loadedBenefit.repeatable === true);
+      setMaximumRewardQuantity(
+        loadedBenefit.maximumRewardQuantity != null
+          ? loadedBenefit.maximumRewardQuantity.toString()
+          : "",
+      );
     } else if (loadedBenefit?.benefitType === "fixed_amount_discount") {
       setBenefitType("fixed_amount_discount");
+      setFixedInr(
+        loadedBenefit.fixedAmountPaise
+          ? (Number(loadedBenefit.fixedAmountPaise) / 100).toString()
+          : "",
+      );
+    } else if (loadedBenefit?.benefitType === "percentage_discount") {
+      setBenefitType("percentage_discount");
+      setPercentageBps(loadedBenefit.percentageBps?.toString() ?? "1000");
     } else {
       setBenefitType("percentage_discount");
     }
@@ -260,13 +300,36 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
 
   async function handleCreatePromotion() {
     if (!canManagePromo || !context.brandId) return;
+    const outletId =
+      createScopeType === "outlet"
+        ? createOutletId.trim() || context.outletId || ""
+        : "";
+    if (createScopeType === "territory" && !createTerritoryId.trim()) {
+      props.onStatus("Enter a territory id for territory scope.");
+      return;
+    }
+    if (createScopeType === "organization" && !createOrganizationId.trim()) {
+      props.onStatus("Enter an organization id for organization scope.");
+      return;
+    }
+    if (createScopeType === "outlet" && !outletId) {
+      props.onStatus("Select or enter an outlet id for outlet scope.");
+      return;
+    }
     setBusy(true);
     const result = await createPromotion(context.brandId, {
       code: code.trim(),
       displayName: displayName.trim(),
-      scopeType: "brand",
+      scopeType: createScopeType,
       triggerType,
       startsAt: new Date().toISOString(),
+      ...(createScopeType === "territory"
+        ? { territoryId: createTerritoryId.trim() }
+        : {}),
+      ...(createScopeType === "organization"
+        ? { organizationId: createOrganizationId.trim() }
+        : {}),
+      ...(createScopeType === "outlet" ? { outletId } : {}),
     });
     setBusy(false);
     if (!result.ok) {
@@ -276,6 +339,10 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
     setCode("");
     setDisplayName("");
     setTriggerType("automatic");
+    setCreateScopeType("brand");
+    setCreateTerritoryId("");
+    setCreateOrganizationId("");
+    setCreateOutletId("");
     setSelectedId(result.data.promotion.id);
     props.onStatus("Promotion created as draft.");
     await loadList();
@@ -283,9 +350,13 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
 
   async function handleSetTargets(
     targetRole: "qualifier" | "benefit",
-    targetType: "product" | "variant",
+    targetType: "all_merchandise" | "product" | "variant" | "charge",
   ) {
     if (!canManagePromo || !context.brandId || !promotion) return;
+    if (targetRole === "benefit" && benefitType === "delivery_fee_waiver" && targetType !== "charge") {
+      props.onStatus("Delivery fee waiver benefit target must be the canonical delivery charge.");
+      return;
+    }
     if (targetType === "product" && !context.productId) {
       props.onStatus("Select a product in commercial context first.");
       return;
@@ -296,15 +367,41 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
     }
     setBusy(true);
     const targets =
-      targetType === "product"
-        ? [{ targetType: "product" as const, productId: context.productId!, variantId: null }]
-        : [
+      targetType === "all_merchandise"
+        ? [
             {
-              targetType: "variant" as const,
-              variantId: context.variantId!,
+              targetType: "all_merchandise" as const,
               productId: null,
+              variantId: null,
+              chargeDefinitionId: null,
             },
-          ];
+          ]
+        : targetType === "charge"
+          ? [
+              {
+                targetType: "charge" as const,
+                productId: null,
+                variantId: null,
+                chargeDefinitionId: CHARGE_DEFINITION_DELIVERY_ID,
+              },
+            ]
+          : targetType === "product"
+            ? [
+                {
+                  targetType: "product" as const,
+                  productId: context.productId!,
+                  variantId: null,
+                  chargeDefinitionId: null,
+                },
+              ]
+            : [
+                {
+                  targetType: "variant" as const,
+                  variantId: context.variantId!,
+                  productId: null,
+                  chargeDefinitionId: null,
+                },
+              ];
     const result = await setPromotionTargets(context.brandId, promotion.id, {
       expectedPromotionRevision: promotion.revision,
       targetRole,
@@ -353,6 +450,16 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
       props.onStatus("Enter a valid minimum INR amount.");
       return;
     }
+    let minimumItemQuantity: number | null = null;
+    if (minItemQuantity.trim()) {
+      const parsedQty = Number.parseInt(minItemQuantity, 10);
+      if (!Number.isFinite(parsedQty) || parsedQty < 1) {
+        setBusy(false);
+        props.onStatus("Enter a valid minimum item quantity (positive integer), or leave blank.");
+        return;
+      }
+      minimumItemQuantity = parsedQty;
+    }
     const result = await savePromotionDraft(context.brandId, promotion.id, {
       expectedPromotionRevision: promotion.revision,
       displayName: draftName,
@@ -360,6 +467,7 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
       startsAt: startsAt || undefined,
       endsAt: endsAt ? endsAt : null,
       minimumQualifyingAmountPaise: minPaise,
+      minimumItemQuantity,
       firstOrderOnly,
       eligibleFulfilmentModes: modes.length > 0 ? modes : null,
       eligibleFulfilmentTimings: timings.length > 0 ? timings : null,
@@ -406,6 +514,33 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
         benefitType: "fixed_amount_discount",
         fixedAmountPaise: paise,
       });
+    } else if (benefitType === "buy_x_get_y") {
+      const buy = Number.parseInt(buyQuantity, 10);
+      const get = Number.parseInt(getQuantity, 10);
+      if (!Number.isFinite(buy) || buy < 1 || !Number.isFinite(get) || get < 1) {
+        setBusy(false);
+        props.onStatus("Enter valid BOGO buy and get quantities.");
+        return;
+      }
+      let maxReward: number | undefined;
+      if (maximumRewardQuantity.trim()) {
+        maxReward = Number.parseInt(maximumRewardQuantity, 10);
+        if (!Number.isFinite(maxReward) || maxReward < 1) {
+          setBusy(false);
+          props.onStatus("Enter a valid maximum reward quantity, or leave blank.");
+          return;
+        }
+      }
+      result = await savePromotionBenefit(context.brandId, promotion.id, {
+        expectedPromotionRevision: promotion.revision,
+        benefitType: "buy_x_get_y",
+        buyQuantity: buy,
+        getQuantity: get,
+        repeatable: bogoRepeatable,
+        ...(maxReward !== undefined ? { maximumRewardQuantity: maxReward } : {}),
+        includeModifiers: false,
+        includeBundleDeltas: false,
+      });
     } else if (benefitType === "delivery_fee_waiver") {
       result = await savePromotionBenefit(context.brandId, promotion.id, {
         expectedPromotionRevision: promotion.revision,
@@ -427,6 +562,27 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
       }
       props.onStatus(`${result.code}: ${describeAdminFailure(result)}`);
       return;
+    }
+    if (benefitType === "delivery_fee_waiver" && result.ok) {
+      const targetResult = await setPromotionTargets(context.brandId, promotion.id, {
+        expectedPromotionRevision: result.data.revision,
+        targetRole: "benefit",
+        targets: [
+          {
+            targetType: "charge",
+            productId: null,
+            variantId: null,
+            chargeDefinitionId: CHARGE_DEFINITION_DELIVERY_ID,
+          },
+        ],
+      });
+      if (!targetResult.ok) {
+        props.onStatus(
+          `${targetResult.code}: Delivery waiver benefit saved, but canonical delivery charge target failed: ${describeAdminFailure(targetResult)}`,
+        );
+        await loadDetail();
+        return;
+      }
     }
     props.onStatus("Benefit saved on draft.");
     await loadDetail();
@@ -638,6 +794,47 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
                 {triggerType === "automatic" ? COPY_OP_AUTO : COPY_OP_COUPON}
               </span>
             </label>
+            <label className="flex flex-col gap-1 text-sm">
+              <span>Scope</span>
+              <select
+                className={cn(enterpriseFieldClass)}
+                aria-label="Promotion scope"
+                value={createScopeType}
+                onChange={(e) => setCreateScopeType(e.target.value as PromotionScopeType)}
+              >
+                <option value="brand">brand</option>
+                <option value="territory">territory</option>
+                <option value="organization">organization</option>
+                <option value="outlet">outlet</option>
+              </select>
+            </label>
+            {createScopeType === "territory" ? (
+              <input
+                className={cn(enterpriseFieldClass)}
+                placeholder="Territory id"
+                aria-label="Territory id"
+                value={createTerritoryId}
+                onChange={(e) => setCreateTerritoryId(e.target.value)}
+              />
+            ) : null}
+            {createScopeType === "organization" ? (
+              <input
+                className={cn(enterpriseFieldClass)}
+                placeholder="Organization id"
+                aria-label="Organization id"
+                value={createOrganizationId}
+                onChange={(e) => setCreateOrganizationId(e.target.value)}
+              />
+            ) : null}
+            {createScopeType === "outlet" ? (
+              <input
+                className={cn(enterpriseFieldClass)}
+                placeholder={context.outletId ? `Outlet (${context.outletLabel ?? context.outletId})` : "Outlet id"}
+                aria-label="Outlet id"
+                value={createOutletId || context.outletId || ""}
+                onChange={(e) => setCreateOutletId(e.target.value)}
+              />
+            ) : null}
             <Button type="button" onClick={() => void handleCreatePromotion()}>
               Create
             </Button>
@@ -659,6 +856,12 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
             </span>
             <span className="text-xs text-[var(--enterprise-muted,#C4D4A8)]">
               Trigger: {promotion.triggerType}
+            </span>
+            <span className="text-xs text-[var(--enterprise-muted,#C4D4A8)]" data-testid="promotion-scope">
+              Scope: {promotion.scopeType}
+              {promotion.territoryId ? ` · territory ${promotion.territoryId}` : ""}
+              {promotion.organizationId ? ` · organization ${promotion.organizationId}` : ""}
+              {promotion.outletId ? ` · outlet ${promotion.outletId}` : ""}
             </span>
             <span className="text-xs text-[var(--enterprise-muted,#C4D4A8)]">
               Revision {promotion.revision}
@@ -768,6 +971,16 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
                   />
                 </label>
                 <label className="flex flex-col gap-1 text-sm">
+                  <span>Minimum item quantity</span>
+                  <input
+                    className={cn(enterpriseFieldClass)}
+                    aria-label="Minimum item quantity"
+                    inputMode="numeric"
+                    value={minItemQuantity}
+                    onChange={(e) => setMinItemQuantity(e.target.value)}
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm">
                   <span>Maximum redemptions</span>
                   <input
                     className={cn(enterpriseFieldClass)}
@@ -811,6 +1024,14 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
                     type="button"
                     size="sm"
                     variant="outline"
+                    onClick={() => void handleSetTargets("qualifier", "all_merchandise")}
+                  >
+                    Set qualifier to all merchandise
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
                     disabled={!context.productId}
                     onClick={() => void handleSetTargets("qualifier", "product")}
                   >
@@ -825,28 +1046,55 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
                   >
                     Set qualifier to selected variant
                   </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    disabled={!context.productId}
-                    onClick={() => void handleSetTargets("benefit", "product")}
-                  >
-                    Set benefit to selected product
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    disabled={!context.variantId}
-                    onClick={() => void handleSetTargets("benefit", "variant")}
-                  >
-                    Set benefit to selected variant
-                  </Button>
+                  {benefitType === "delivery_fee_waiver" ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => void handleSetTargets("benefit", "charge")}
+                    >
+                      Set benefit to delivery charge
+                    </Button>
+                  ) : (
+                    <>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => void handleSetTargets("benefit", "all_merchandise")}
+                      >
+                        Set benefit to all merchandise
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={!context.productId}
+                        onClick={() => void handleSetTargets("benefit", "product")}
+                      >
+                        Set benefit to selected product
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={!context.variantId}
+                        onClick={() => void handleSetTargets("benefit", "variant")}
+                      >
+                        Set benefit to selected variant
+                      </Button>
+                    </>
+                  )}
                 </div>
-                {!context.productId && !context.variantId ? (
+                {benefitType === "delivery_fee_waiver" ? (
                   <p className="text-xs text-[var(--enterprise-muted,#C4D4A8)]">
-                    Select a product or variant in commercial context to set targets.
+                    Delivery fee waiver benefit target is the canonical delivery charge. Qualifier
+                    targets remain independently configurable.
+                  </p>
+                ) : !context.productId && !context.variantId ? (
+                  <p className="text-xs text-[var(--enterprise-muted,#C4D4A8)]">
+                    Select a product or variant in commercial context to set merchandise targets, or
+                    use all merchandise.
                   </p>
                 ) : null}
               </fieldset>
@@ -861,6 +1109,7 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
                 >
                   <option value="percentage_discount">Percentage discount</option>
                   <option value="fixed_amount_discount">Fixed amount discount</option>
+                  <option value="buy_x_get_y">Buy X get Y</option>
                   <option value="delivery_fee_waiver">Delivery fee waiver</option>
                   <option value="complimentary_item">Complimentary item</option>
                 </select>
@@ -889,8 +1138,56 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
                     <span className="text-xs text-[var(--enterprise-muted,#C4D4A8)]">{COPY_OP_ORDER}</span>
                   </label>
                 ) : null}
+                {benefitType === "buy_x_get_y" ? (
+                  <fieldset className="grid gap-2 sm:grid-cols-2">
+                    <legend className="text-sm">Buy X get Y</legend>
+                    <label className="flex flex-col gap-1 text-sm">
+                      <span>Buy quantity</span>
+                      <input
+                        className={cn(enterpriseFieldClass)}
+                        aria-label="Buy quantity"
+                        inputMode="numeric"
+                        value={buyQuantity}
+                        onChange={(e) => setBuyQuantity(e.target.value)}
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1 text-sm">
+                      <span>Get quantity</span>
+                      <input
+                        className={cn(enterpriseFieldClass)}
+                        aria-label="Get quantity"
+                        inputMode="numeric"
+                        value={getQuantity}
+                        onChange={(e) => setGetQuantity(e.target.value)}
+                      />
+                    </label>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        aria-label="BOGO repeatable"
+                        checked={bogoRepeatable}
+                        onChange={(e) => setBogoRepeatable(e.target.checked)}
+                      />
+                      Repeatable
+                    </label>
+                    <label className="flex flex-col gap-1 text-sm">
+                      <span>Maximum reward quantity</span>
+                      <input
+                        className={cn(enterpriseFieldClass)}
+                        aria-label="Maximum reward quantity"
+                        inputMode="numeric"
+                        value={maximumRewardQuantity}
+                        onChange={(e) => setMaximumRewardQuantity(e.target.value)}
+                        disabled={!bogoRepeatable}
+                      />
+                    </label>
+                  </fieldset>
+                ) : null}
                 {benefitType === "delivery_fee_waiver" ? (
-                  <p className="text-sm text-[var(--enterprise-text-secondary,#EBD9A6)]">{COPY_OP_DELIVERY}</p>
+                  <p className="text-sm text-[var(--enterprise-text-secondary,#EBD9A6)]">
+                    {COPY_OP_DELIVERY}. Saving this benefit binds the canonical delivery charge
+                    target.
+                  </p>
                 ) : null}
                 {benefitType === "complimentary_item" ? (
                   <fieldset className="space-y-2">

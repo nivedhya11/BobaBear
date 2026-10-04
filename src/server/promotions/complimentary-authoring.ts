@@ -1,11 +1,14 @@
 /**
  * Complimentary-item authoring validation (IMP-036J T6).
  *
- * Exact operator-specified Catalog product + variant. Rejects bundles,
- * required customer/modifier choice, positive-price modifier choice, and
+ * Exact operator-specified Catalog product + variant. Uses the same
+ * customer-effective Catalog publication authority as Checkout. Rejects
+ * bundles, required customer/modifier choice (effective min total > 0), and
  * incomplete or unresolvable identity. Does not author a gift catalogue.
+ * Optional paid modifiers are allowed because the granted gift line carries
+ * zero modifier selections.
  */
-import { and, eq, gt, inArray, ne } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 
 import {
   catalogBundleGroupsTable,
@@ -13,7 +16,11 @@ import {
   catalogVariantModifierGroupsTable,
   catalogVariantsTable,
 } from "../../platform/database/schema/catalog";
-import { priceBookModifierPricesTable } from "../../platform/database/schema/pricing";
+import {
+  loadEffectiveProductContent,
+  loadEffectiveVariantContent,
+  loadEffectiveVariantModifierGroupContent,
+} from "../catalog/revisions";
 import type { PersistenceTransactionContext } from "../persistence/types";
 import { assertUuid } from "./assert-role";
 import { PromotionAdminError } from "./errors";
@@ -53,10 +60,17 @@ export async function assertComplimentaryAuthoringSafe(
     .from(catalogProductsTable)
     .where(eq(catalogProductsTable.id, productId))
     .limit(1);
-  if (!product || product.brandId !== input.brandId || product.lifecycleStatus !== "active") {
+  if (!product || product.brandId !== input.brandId) {
     giftInvalid("complimentaryProductId");
   }
   if (product.productKind === "bundle") {
+    giftInvalid("complimentaryProductId");
+  }
+  // Customer-effective publication only — staged activation (active + null
+  // effective) is unpublished; staged retirement (retired + effective set)
+  // remains customer-effective until publication changes.
+  const productEffective = await loadEffectiveProductContent(context, product);
+  if (!productEffective || product.effectiveContentRevision == null) {
     giftInvalid("complimentaryProductId");
   }
 
@@ -68,12 +82,15 @@ export async function assertComplimentaryAuthoringSafe(
   if (
     !variant ||
     variant.brandId !== input.brandId ||
-    variant.productId !== productId ||
-    variant.lifecycleStatus !== "active"
+    variant.productId !== productId
   ) {
     giftInvalid("complimentaryVariantId");
   }
   if (variant.productKind === "bundle") {
+    giftInvalid("complimentaryVariantId");
+  }
+  const variantEffective = await loadEffectiveVariantContent(context, variant);
+  if (!variantEffective || variant.effectiveContentRevision == null) {
     giftInvalid("complimentaryVariantId");
   }
 
@@ -91,31 +108,24 @@ export async function assertComplimentaryAuthoringSafe(
     giftInvalid("complimentaryVariantId");
   }
 
+  // Required-choice truth comes from effective published VMG content, not
+  // staged mutable min totals. Optional groups (effective min total = 0) are
+  // safe because the gift line grants zero modifier selections.
   const modifierLinks = await context.db
     .select()
     .from(catalogVariantModifierGroupsTable)
     .where(
       and(
+        eq(catalogVariantModifierGroupsTable.brandId, input.brandId),
         eq(catalogVariantModifierGroupsTable.variantId, variantId),
-        ne(catalogVariantModifierGroupsTable.lifecycleStatus, "retired"),
       ),
     );
-  if (modifierLinks.some((link) => link.minTotalQuantity >= 1)) {
-    giftInvalid("complimentaryVariantId");
-  }
-  if (modifierLinks.length > 0) {
-    const linkIds = modifierLinks.map((link) => link.id);
-    const paid = await context.db
-      .select({ id: priceBookModifierPricesTable.id })
-      .from(priceBookModifierPricesTable)
-      .where(
-        and(
-          inArray(priceBookModifierPricesTable.variantModifierGroupId, linkIds),
-          gt(priceBookModifierPricesTable.priceDeltaPaise, BigInt(0)),
-        ),
-      )
-      .limit(1);
-    if (paid[0]) {
+  for (const link of modifierLinks) {
+    const effective = await loadEffectiveVariantModifierGroupContent(context, link);
+    if (!effective || effective.lifecycleStatus !== "active") {
+      continue;
+    }
+    if (effective.minTotalQuantity >= 1) {
       giftInvalid("complimentaryVariantId");
     }
   }
