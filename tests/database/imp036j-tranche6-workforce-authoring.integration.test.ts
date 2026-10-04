@@ -1160,6 +1160,38 @@ describe("IMP-036J Tranche 6 workforce authoring", () => {
           }),
         ),
       ).rejects.toMatchObject({ code: "PROMOTION_BENEFIT_INVALID" });
+      await expect(
+        harness.persistence.transaction((tx) =>
+          setPromotionBenefit(tx, {
+            actor,
+            promotionId: bogo.id,
+            expectedPromotionRevision: bogo.revision,
+            benefit: {
+              ...emptyMoneyBenefit("buy_x_get_y"),
+              buyQuantity: 2,
+              getQuantity: 1,
+              repeatable: false,
+              maximumRewardQuantity: 2,
+            },
+          }),
+        ),
+      ).rejects.toMatchObject({ code: "PROMOTION_BENEFIT_INVALID" });
+      await expect(
+        harness.persistence.transaction((tx) =>
+          setPromotionBenefit(tx, {
+            actor,
+            promotionId: bogo.id,
+            expectedPromotionRevision: bogo.revision,
+            benefit: {
+              ...emptyMoneyBenefit("buy_x_get_y"),
+              buyQuantity: 1,
+              getQuantity: 2,
+              repeatable: true,
+              maximumRewardQuantity: 3,
+            },
+          }),
+        ),
+      ).rejects.toMatchObject({ code: "PROMOTION_BENEFIT_INVALID" });
       let rev = (
         await harness.persistence.transaction((tx) =>
           setPromotionBenefit(tx, {

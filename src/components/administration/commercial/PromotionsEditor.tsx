@@ -549,11 +549,16 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
         return;
       }
       let maxReward: number | undefined;
-      if (maximumRewardQuantity.trim()) {
+      if (bogoRepeatable && maximumRewardQuantity.trim()) {
         const parsedMax = parseStrictPositiveInt(maximumRewardQuantity);
         if (parsedMax === null) {
           setBusy(false);
           props.onStatus("Enter a valid maximum reward quantity, or leave blank.");
+          return;
+        }
+        if (parsedMax % get !== 0) {
+          setBusy(false);
+          props.onStatus("Maximum reward quantity must be a multiple of get quantity.");
           return;
         }
         maxReward = parsedMax;
@@ -564,7 +569,7 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
         buyQuantity: buy,
         getQuantity: get,
         repeatable: bogoRepeatable,
-        ...(maxReward !== undefined ? { maximumRewardQuantity: maxReward } : {}),
+        ...(bogoRepeatable && maxReward !== undefined ? { maximumRewardQuantity: maxReward } : {}),
         includeModifiers: false,
         includeBundleDeltas: false,
       });
@@ -1197,7 +1202,11 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
                         type="checkbox"
                         aria-label="BOGO repeatable"
                         checked={bogoRepeatable}
-                        onChange={(e) => setBogoRepeatable(e.target.checked)}
+                        onChange={(e) => {
+                          const next = e.target.checked;
+                          setBogoRepeatable(next);
+                          if (!next) setMaximumRewardQuantity("");
+                        }}
                       />
                       Repeatable
                     </label>

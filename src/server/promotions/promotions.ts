@@ -490,6 +490,21 @@ export async function setPromotionBenefit(
     if (!b.buyQuantity || !b.getQuantity || b.repeatable === null) {
       throw new PromotionAdminError("PROMOTION_BENEFIT_INVALID", "Invalid BOGO fields.");
     }
+    if (b.repeatable === false && b.maximumRewardQuantity !== null) {
+      throw new PromotionAdminError(
+        "PROMOTION_BENEFIT_INVALID",
+        "Non-repeatable BOGO must leave maximum_reward_quantity null.",
+      );
+    }
+    if (
+      b.maximumRewardQuantity !== null &&
+      b.maximumRewardQuantity % b.getQuantity !== 0
+    ) {
+      throw new PromotionAdminError(
+        "PROMOTION_BENEFIT_INVALID",
+        "maximum_reward_quantity must be a multiple of get_quantity.",
+      );
+    }
   } else if (b.benefitType === "delivery_fee_waiver") {
     if (
       b.percentageBps !== null ||

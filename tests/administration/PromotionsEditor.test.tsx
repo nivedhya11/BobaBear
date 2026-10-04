@@ -417,6 +417,71 @@ describe("PromotionsEditor", () => {
     });
   });
 
+  it("does not submit a reward cap for non-repeatable BOGO or an ungrouped cap", async () => {
+    const user = userEvent.setup();
+    const promotion = draftPromotion({ revision: "3" });
+    listPromotions.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: { promotions: [promotion] },
+    });
+    listCoupons.mockResolvedValue({ ok: true, status: 200, data: { coupons: [] } });
+    getPromotion.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        promotion,
+        benefit: {
+          benefitType: "buy_x_get_y",
+          buyQuantity: 2,
+          getQuantity: 2,
+          repeatable: true,
+          maximumRewardQuantity: 4,
+        },
+        qualifierTargets: [],
+        benefitTargets: [],
+        redemptionCounts: {
+          reservedCount: 0,
+          consumedCount: 0,
+          releasedCount: 0,
+          applicationCount: 0,
+        },
+      },
+    });
+    const onStatus = vi.fn();
+    render(
+      <PromotionsEditor
+        context={baseContext}
+        capabilities={capabilities}
+        authoringAllowed
+        onStatus={onStatus}
+      />,
+    );
+    await waitFor(() => expect(screen.getByText(/Welcome \(WELCOME\)/)).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: /Welcome \(WELCOME\)/ }));
+    await waitFor(() => expect(screen.getByLabelText("Benefit type")).toHaveValue("buy_x_get_y"));
+    const cap = screen.getByLabelText("Maximum reward quantity");
+    await user.clear(cap);
+    await user.type(cap, "3");
+    await user.click(screen.getByRole("button", { name: /Save benefit/i }));
+    await waitFor(() =>
+      expect(onStatus).toHaveBeenCalledWith(
+        "Maximum reward quantity must be a multiple of get quantity.",
+      ),
+    );
+    expect(savePromotionBenefit).not.toHaveBeenCalled();
+
+    await user.clear(screen.getByLabelText("Maximum reward quantity"));
+    await user.click(screen.getByLabelText("BOGO repeatable"));
+    await user.click(screen.getByRole("button", { name: /Save benefit/i }));
+    await waitFor(() => expect(savePromotionBenefit).toHaveBeenCalled());
+    expect(savePromotionBenefit.mock.calls[0]?.[2]).toMatchObject({
+      benefitType: "buy_x_get_y",
+      repeatable: false,
+    });
+    expect(savePromotionBenefit.mock.calls[0]?.[2]).not.toHaveProperty("maximumRewardQuantity");
+  });
+
   it("authors delivery waiver with canonical delivery charge target", async () => {
     const user = userEvent.setup();
     mockPromotionDetail(draftPromotion({ revision: "1" }));
