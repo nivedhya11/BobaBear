@@ -51,7 +51,7 @@ import {
   assertScheduledPickupProfile,
   sealEligibleScheduledWindow,
 } from "./scheduled-eligibility";
-import { buildSnapshotCandidate } from "./snapshot";
+import { buildSnapshotCandidate, presentedComplimentaryVariantId } from "./snapshot";
 
 function reconfirm(message: string): never {
   throw new CheckoutError("CHECKOUT_REPRICED", message);
@@ -308,6 +308,9 @@ async function assertCommercialTermsStillAccepted(
             ) ?? undefined)
           : undefined,
       fulfilmentMode: mode,
+      previouslyPresentedComplimentaryVariantId: presentedComplimentaryVariantId(
+        input.snapshot,
+      ),
     });
   } catch (error) {
     if (error instanceof CheckoutError) {

@@ -245,9 +245,8 @@ function factSql(): string {
 describe("IMP-036J tranche 2 measurement persistence", () => {
   it("records migration 0048 as the next journal entry after tranche 1", () => {
     const entries = loadJournalEntries();
-    const tip = entries.at(-1);
-    expect(tip?.idx).toBe(TRANCHE_2_IDX);
-    expect(tip?.tag).toBe(TRANCHE_2_TAG);
+    const t2 = entries.find((entry) => entry.tag === TRANCHE_2_TAG);
+    expect(t2?.idx).toBe(TRANCHE_2_IDX);
     expect(entries.some((entry) => entry.idx === PRE_TRANCHE_IDX)).toBe(true);
     const sql = readFileSync(
       path.join(process.cwd(), "drizzle", `${TRANCHE_2_TAG}.sql`),
@@ -1078,6 +1077,29 @@ describe("IMP-036J tranche 2 measurement persistence", () => {
              AND column_name = 'occurred_at'`,
         );
         expect(origins.rows).toEqual([]);
+        const resolutionTime = await client.pool.query<{
+          column_name: string;
+          is_nullable: string;
+          data_type: string;
+        }>(
+          `SELECT column_name, is_nullable, data_type
+           FROM information_schema.columns
+           WHERE table_schema = 'app' AND table_name = 'commercial_command_origins'
+             AND column_name = 'resolution_occurred_at'`,
+        );
+        expect(resolutionTime.rows).toEqual([
+          {
+            column_name: "resolution_occurred_at",
+            is_nullable: "YES",
+            data_type: "timestamp with time zone",
+          },
+        ]);
+        await client.pool.query(
+          `INSERT INTO app.commercial_command_origins (
+             source_command_id, origin_kind, cart_id, cart_origin_ordinal, resolution
+           ) VALUES ($1::uuid, 'STALE_RECOVERY', $2::uuid, 3, 'NO_RESULT_CHANGE')`,
+          [randomUUID(), graph.cartId],
+        );
         const snapshotColumns = await client.pool.query<{ column_name: string }>(
           `SELECT column_name FROM information_schema.columns
            WHERE table_schema = 'app' AND table_name = 'measurement_report_snapshots'
@@ -1088,6 +1110,7 @@ describe("IMP-036J tranche 2 measurement persistence", () => {
           "window_start",
           "window_end",
           "report_as_of",
+          "published_report",
         ]);
         const triggers = await client.pool.query<{ tgname: string }>(
           `SELECT tgname FROM pg_trigger

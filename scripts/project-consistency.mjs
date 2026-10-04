@@ -25143,22 +25143,22 @@ function checkTechnicalInventory() {
   const journal = JSON.parse(readFileSync(journalPath, "utf8"));
   const entries = journal.entries || [];
   const latest = entries[entries.length - 1];
-  if (!latest || latest.tag !== "0048_imp036j_tranche2_measurement_persistence") {
+  if (!latest || latest.tag !== "0049_imp036j_tranche7_immutable_publication") {
     fail(
       "LATEST_MIGRATION",
-      `Expected latest migration tag 0048_imp036j_tranche2_measurement_persistence, got ${latest && latest.tag}`,
+      `Expected latest migration tag 0049_imp036j_tranche7_immutable_publication, got ${latest && latest.tag}`,
     );
   } else {
-    note("Latest migration tag 0048_imp036j_tranche2_measurement_persistence");
+    note("Latest migration tag 0049_imp036j_tranche7_immutable_publication");
   }
   const sqlFiles = readdirSync(path.join(projectRoot, "drizzle")).filter((f) => f.endsWith(".sql"));
-  if (sqlFiles.length !== 49 || entries.length !== 49) {
+  if (sqlFiles.length !== 50 || entries.length !== 50) {
     fail(
       "MIGRATION_COUNT",
-      `Expected 49 migrations, got sql=${sqlFiles.length} journal=${entries.length}`,
+      `Expected 50 migrations, got sql=${sqlFiles.length} journal=${entries.length}`,
     );
   } else {
-    note("Migration count 49");
+    note("Migration count 50");
   }
 
   // Application tables

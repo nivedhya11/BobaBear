@@ -39,6 +39,11 @@ export type EvaluatePromotionsInput = Readonly<{
     coupon: CouponRecord | null;
     promotion: PromotionDefinition | null;
   }> | null;
+  /**
+   * Complimentary variant previously selected/presented on this checkout
+   * attempt. Absence means no shown complimentary item.
+   */
+  previouslyPresentedComplimentaryVariantId?: string | null;
   /** IMP-022: true when Payment redemption claims can enforce capacity. */
   redemptionEnforcementAvailable?: boolean;
 }>;
@@ -182,6 +187,7 @@ export function evaluatePromotions(input: EvaluatePromotionsInput): Omit<
   baselineTotalPaise: bigint;
   thresholdProgress: ThresholdProgress[];
   complimentaryCompetingNoneChosen: boolean;
+  complimentaryItemUnavailable: boolean;
 } {
   for (const p of input.promotions) {
     if (p.status === "active") assertActivePromotionIntegrity(p);
@@ -190,6 +196,12 @@ export function evaluatePromotions(input: EvaluatePromotionsInput): Omit<
   const { result: couponResultDraft, couponPromotion } = evaluateSubmittedCoupon(input);
 
   const eligible: EligiblePromotion[] = [];
+  const presentedComplimentaryVariantId =
+    input.previouslyPresentedComplimentaryVariantId ?? null;
+  const availability = input.context.complimentaryVariantAvailability;
+  const complimentaryItemUnavailable =
+    presentedComplimentaryVariantId !== null &&
+    availability?.get(presentedComplimentaryVariantId) === false;
   for (const promotion of input.promotions) {
     if (promotion.triggerType === "coupon") continue; // only via submitted coupon
     if (promotion.status !== "active") continue;
@@ -228,6 +240,7 @@ export function evaluatePromotions(input: EvaluatePromotionsInput): Omit<
     candidates,
     thresholdProgress,
     complimentaryCompetingNoneChosen,
+    complimentaryItemUnavailable,
   };
 }
 

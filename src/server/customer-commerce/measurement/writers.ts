@@ -130,6 +130,7 @@ export function deriveCoarseShape(input: {
 export function deriveExplanationReasonClass(input: {
   explanation: CommercialExplanation | null | undefined;
   coarseShape: CoarseShape;
+  complimentaryItemUnavailable?: boolean;
 }): string {
   const explanation = input.explanation ?? null;
   const couponStatus = explanation?.submittedCouponResult?.status ?? null;
@@ -137,6 +138,9 @@ export function deriveExplanationReasonClass(input: {
     return "IDENTITY_REQUIRED";
   }
   if (couponStatus === "INVALID") return "INVALID";
+  if (input.complimentaryItemUnavailable) {
+    return "COMPLIMENTARY_ITEM_UNAVAILABLE";
+  }
   if (couponStatus === "NOT_APPLICABLE") return "NOT_APPLICABLE";
   if (explanation?.complimentary?.competingOffers === "NONE_CHOSEN") {
     return "COMPLIMENTARY_NONE_CHOSEN";
@@ -494,6 +498,81 @@ export async function insertCommandOrigin(input: {
   });
 }
 
+async function isolateMeasurementWrite(
+  context: PersistenceTransactionContext,
+  work: () => Promise<void>,
+): Promise<void> {
+  const savepoint = `imp036j_meas_${randomUUID().replaceAll("-", "")}`;
+  await context.db.execute(sql.raw(`savepoint ${savepoint}`));
+  try {
+    await work();
+    await context.db.execute(sql.raw(`release savepoint ${savepoint}`));
+  } catch {
+    await context.db.execute(sql.raw(`rollback to savepoint ${savepoint}`));
+    await context.db.execute(sql.raw(`release savepoint ${savepoint}`));
+  }
+}
+
+export async function tryRecordStaleRecoveryOrigin(input: {
+  context: PersistenceTransactionContext;
+  cartId: string;
+  checkoutId: string;
+  checkoutJourneyKey: string | null;
+}): Promise<void> {
+  await isolateMeasurementWrite(input.context, async () => {
+    await insertCommandOrigin({
+      context: input.context,
+      sourceCommandId: randomUUID(),
+      originKind: "STALE_RECOVERY",
+      cartId: input.cartId,
+      checkoutId: input.checkoutId,
+      checkoutJourneyKey: input.checkoutJourneyKey,
+    });
+  });
+}
+
+export async function tryResolveEquivalentStaleRecovery(input: {
+  context: PersistenceTransactionContext;
+  cartId: string;
+  checkoutId: string;
+  checkoutJourneyKey: string | null;
+}): Promise<void> {
+  await isolateMeasurementWrite(input.context, async () => {
+    if (!input.checkoutJourneyKey) return;
+    const latest = await input.context.db
+      .select()
+      .from(commercialEvaluationsTable)
+      .where(
+        and(
+          eq(commercialEvaluationsTable.checkoutId, input.checkoutId),
+          eq(commercialEvaluationsTable.surfaceScope, "CHECKOUT"),
+        ),
+      )
+      .orderBy(desc(commercialEvaluationsTable.occurrenceOrdinal))
+      .limit(1);
+    const current = latest[0];
+    if (!current) return;
+    await insertCommandOrigin({
+      context: input.context,
+      sourceCommandId: randomUUID(),
+      originKind: "STALE_RECOVERY",
+      cartId: input.cartId,
+      checkoutId: input.checkoutId,
+      checkoutJourneyKey: input.checkoutJourneyKey,
+    });
+    await resolveCommercialStateChange({
+      context: input.context,
+      cartId: input.cartId,
+      checkoutId: input.checkoutId,
+      journeyKey: input.checkoutJourneyKey,
+      evaluationId: current.evaluationId,
+      fingerprint: current.resultFingerprint,
+      reusedExistingEvaluation: true,
+      closedJourneyRejectNew: true,
+    });
+  });
+}
+
 export async function insertCommandResult(input: {
   context: PersistenceTransactionContext;
   sourceCommandId: string;
@@ -805,7 +884,11 @@ export async function persistCommercialEvaluation(input: {
 }> {
   const explanation = input.quote.commercialExplanation ?? null;
   const coarseShape = deriveCoarseShape({ explanation });
-  const reasonClass = deriveExplanationReasonClass({ explanation, coarseShape });
+  const reasonClass = deriveExplanationReasonClass({
+    explanation,
+    coarseShape,
+    complimentaryItemUnavailable: input.quote.complimentaryItemUnavailable === true,
+  });
   const complimentary = await projectedComplimentaryLineSha256(
     input.context,
     explanation,
@@ -991,11 +1074,17 @@ export async function resolveCommercialStateChange(input: {
     for (const origin of window) {
       await input.context.db
         .update(commercialCommandOriginsTable)
-        .set({ resolution: "NO_RESULT_CHANGE" })
+        .set({
+          resolution: "NO_RESULT_CHANGE",
+          resolutionOccurredAt: sql`clock_timestamp()` as unknown as Date,
+        })
         .where(
-          eq(
-            commercialCommandOriginsTable.sourceCommandId,
-            origin.sourceCommandId,
+          and(
+            eq(
+              commercialCommandOriginsTable.sourceCommandId,
+              origin.sourceCommandId,
+            ),
+            isNull(commercialCommandOriginsTable.resolution),
           ),
         );
     }

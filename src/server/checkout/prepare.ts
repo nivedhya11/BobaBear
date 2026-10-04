@@ -17,7 +17,11 @@ import {
 } from "../../shared/checkout";
 import type { Persistence } from "../persistence/types";
 import { requireCustomerActor } from "../cart/actor";
-import { findCartRowById, loadCartAggregate } from "../cart/repository";
+import {
+  findCartRowById,
+  loadCartAggregate,
+  lockCartForUpdate,
+} from "../cart/repository";
 import { collectAssortmentAvailabilityProblems } from "./adapters/assortment-availability";
 import {
   loadCatalogLabelsForCart,
@@ -33,6 +37,10 @@ import {
 } from "./pickup-eligibility";
 import { loadOutletPickupProfileByOutletId } from "../outlet-pickup-profile/repository";
 import {
+  tryRecordStaleRecoveryOrigin,
+  tryResolveEquivalentStaleRecovery,
+} from "../customer-commerce/measurement/writers";
+import {
   findCheckoutRowById,
   findDestinationByCheckoutId,
   invalidateReadyToDraft,
@@ -40,7 +48,7 @@ import {
   lockCheckoutForUpdate,
   mapDestinationRow,
 } from "./repository";
-import { buildSnapshotCandidate } from "./snapshot";
+import { buildSnapshotCandidate, presentedComplimentaryVariantId } from "./snapshot";
 import { checkoutSnapshotsStructurallyEqual } from "./compare-snapshots";
 import {
   assertScheduledPickupProfile,
@@ -48,15 +56,31 @@ import {
   type ScheduledSnapshotSeal,
 } from "./scheduled-eligibility";
 
+async function lockCartThenCheckout(
+  tx: Parameters<typeof lockCheckoutForUpdate>[0],
+  checkoutId: string,
+) {
+  const peek = await findCheckoutRowById(tx, checkoutId);
+  if (!peek) return null;
+  await lockCartForUpdate(tx, peek.cartId);
+  return lockCheckoutForUpdate(tx, checkoutId);
+}
+
 async function invalidateReady(
   persistence: Persistence,
   checkoutId: string,
   now: Date,
 ): Promise<void> {
   await persistence.transaction(async (tx) => {
-    const row = await lockCheckoutForUpdate(tx, checkoutId);
+    const row = await lockCartThenCheckout(tx, checkoutId);
     if (row && row.status === "READY_FOR_PAYMENT") {
-      await invalidateReadyToDraft(tx, row, now);
+      const updated = await invalidateReadyToDraft(tx, row, now);
+      await tryRecordStaleRecoveryOrigin({
+        context: tx,
+        cartId: updated.cartId,
+        checkoutId: updated.id,
+        checkoutJourneyKey: updated.checkoutJourneyKey,
+      });
     }
   });
 }
@@ -169,9 +193,15 @@ export async function prepareCheckoutForPayment(
 
   if (preload.cart.revision !== preload.row.sourceCartRevision) {
     await persistence.transaction(async (tx) => {
-      const row = await lockCheckoutForUpdate(tx, preload.row.id);
+      const row = await lockCartThenCheckout(tx, preload.row.id);
       if (row && row.status === "READY_FOR_PAYMENT") {
-        await invalidateReadyToDraft(tx, row, now);
+        const updated = await invalidateReadyToDraft(tx, row, now);
+        await tryRecordStaleRecoveryOrigin({
+          context: tx,
+          cartId: updated.cartId,
+          checkoutId: updated.id,
+          checkoutJourneyKey: updated.checkoutJourneyKey,
+        });
       }
     });
     throw new CheckoutError(
@@ -254,9 +284,15 @@ export async function prepareCheckoutForPayment(
         error.code === "PICKUP_NOT_AVAILABLE")
     ) {
       await persistence.transaction(async (tx) => {
-        const row = await lockCheckoutForUpdate(tx, preload.row.id);
+        const row = await lockCartThenCheckout(tx, preload.row.id);
         if (row && row.status === "READY_FOR_PAYMENT") {
-          await invalidateReadyToDraft(tx, row, now);
+          const updated = await invalidateReadyToDraft(tx, row, now);
+          await tryRecordStaleRecoveryOrigin({
+            context: tx,
+            cartId: updated.cartId,
+            checkoutId: updated.id,
+            checkoutJourneyKey: updated.checkoutJourneyKey,
+          });
         }
       });
       throw new CheckoutError(
@@ -287,9 +323,15 @@ export async function prepareCheckoutForPayment(
 
   if (problems.length > 0) {
     await persistence.transaction(async (tx) => {
-      const row = await lockCheckoutForUpdate(tx, preload.row.id);
+      const row = await lockCartThenCheckout(tx, preload.row.id);
       if (row && row.status === "READY_FOR_PAYMENT") {
-        await invalidateReadyToDraft(tx, row, now);
+        const updated = await invalidateReadyToDraft(tx, row, now);
+        await tryRecordStaleRecoveryOrigin({
+          context: tx,
+          cartId: updated.cartId,
+          checkoutId: updated.id,
+          checkoutJourneyKey: updated.checkoutJourneyKey,
+        });
       }
     });
     throw new CheckoutError(
@@ -355,6 +397,9 @@ export async function prepareCheckoutForPayment(
       fulfilmentTiming: (preload.row.fulfilmentTiming ?? "ASAP") as
         | "ASAP"
         | "SCHEDULED",
+      previouslyPresentedComplimentaryVariantId: presentedComplimentaryVariantId(
+        preload.snapshot,
+      ),
     }),
   );
 
@@ -430,18 +475,23 @@ export async function prepareCheckoutForPayment(
   );
 
   if (equivalent) {
+    await persistence.transaction(async (tx) => {
+      const row = await lockCartThenCheckout(tx, preload.row.id);
+      if (!row || row.status !== "READY_FOR_PAYMENT") return;
+      await tryResolveEquivalentStaleRecovery({
+        context: tx,
+        cartId: row.cartId,
+        checkoutId: row.id,
+        checkoutJourneyKey: row.checkoutJourneyKey,
+      });
+    });
     return Object.freeze({
       checkoutId: preload.row.id,
       snapshot: preload.snapshot,
     });
   }
 
-  await persistence.transaction(async (tx) => {
-    const row = await lockCheckoutForUpdate(tx, preload.row.id);
-    if (row && row.status === "READY_FOR_PAYMENT") {
-      await invalidateReadyToDraft(tx, row, now);
-    }
-  });
+  await invalidateReady(persistence, preload.row.id, now);
 
   throw new CheckoutError(
     "CHECKOUT_REPRICED",

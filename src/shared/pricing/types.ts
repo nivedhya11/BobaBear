@@ -72,6 +72,11 @@ export type DirectPricingQuote = Readonly<{
   /** IMP-036J T3 — server-owned commercial explanation projection. */
   commercialExplanation?: CommercialExplanation | null;
   /**
+   * IMP-036J — locked complimentary-unavailable explanation. Measurement only.
+   * Does not change payable, eligibility selection, or customer payment.
+   */
+  complimentaryItemUnavailable?: boolean;
+  /**
    * IMP-036J T4 — selected/coupon payable vs the valid non-coupon alternative
    * from the same T3 candidate set. Null when no valid comparison exists.
    */

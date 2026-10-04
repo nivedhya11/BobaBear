@@ -82,6 +82,11 @@ export type BuildDirectPricingQuoteInput = Readonly<{
    * Absent / UNAVAILABLE fails closed for first-order-only Offers.
    */
   firstOrderPurchaseStatus?: FirstOrderPurchaseStatus | null;
+  /**
+   * Complimentary catalog variant previously selected/presented for this
+   * checkout attempt. Cart quotes omit this.
+   */
+  previouslyPresentedComplimentaryVariantId?: string | null;
 }>;
 
 type InternalTaxableLine = {
@@ -459,6 +464,23 @@ export async function buildDirectPricingQuote(
     });
   }
 
+  const presentedComplimentaryVariantId =
+    input.previouslyPresentedComplimentaryVariantId ?? null;
+  if (
+    presentedComplimentaryVariantId &&
+    !complimentaryAvailability.has(presentedComplimentaryVariantId)
+  ) {
+    const presentedAvailability = await resolveOutletVariantAvailability(context, {
+      outletId: input.outletId,
+      variantId: presentedComplimentaryVariantId,
+      context: { now: input.at },
+    });
+    complimentaryAvailability.set(
+      presentedComplimentaryVariantId,
+      presentedAvailability.eligible === true,
+    );
+  }
+
   basePaise += complimentaryBasePaise;
   const prePromotionSubtotalWithGifts = prePromotionSubtotalPaise + complimentaryBasePaise;
   const snapshot: PrePromotionSnapshot = { components, units };
@@ -482,6 +504,8 @@ export async function buildDirectPricingQuote(
     promotions: automatic,
     submittedCoupon,
     redemptionEnforcementAvailable: true,
+    previouslyPresentedComplimentaryVariantId:
+      input.previouslyPresentedComplimentaryVariantId ?? null,
   });
 
   const promotionsById = new Map<string, (typeof evaluation.eligible)[number]["promotion"]>();
@@ -609,6 +633,7 @@ export async function buildDirectPricingQuote(
     promotionAllocations: winner.allocations,
     submittedCouponResult,
     commercialExplanation,
+    complimentaryItemUnavailable: evaluation.complimentaryItemUnavailable,
     payableChangedVsValidAlternative: payableChanged,
     taxablePaise: winnerTax.taxablePaise,
     taxPaise: winnerTax.taxPaise,

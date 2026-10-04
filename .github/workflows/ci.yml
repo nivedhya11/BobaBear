@@ -175,6 +175,9 @@ jobs:
       - name: IMP-036J Tranche 6 proof
         run: npm run test:imp036j:tranche6
 
+      - name: IMP-036J Tranche 7 proof
+        run: npm run test:imp036j:tranche7
+
   security-smoke:
     name: Security smoke
     runs-on: ubuntu-latest

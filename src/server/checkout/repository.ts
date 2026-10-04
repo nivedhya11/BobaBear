@@ -5,7 +5,7 @@
  * Never reverse.
  */
 
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 
 import {
@@ -983,6 +983,22 @@ export async function loadActiveSnapshot(
     .select()
     .from(checkoutSnapshotsTable)
     .where(eq(checkoutSnapshotsTable.id, snapshotId))
+    .limit(1);
+  const row = rows[0];
+  if (!row) return null;
+  return loadSnapshotAggregate(context, row);
+}
+
+export async function loadLatestSnapshotForCheckout(
+  context: PersistenceQueryContext,
+  checkoutId: string,
+): Promise<CheckoutSnapshot | null> {
+  assertApplicationRole(context, "loadLatestSnapshotForCheckout");
+  const rows = await context.db
+    .select()
+    .from(checkoutSnapshotsTable)
+    .where(eq(checkoutSnapshotsTable.checkoutId, checkoutId))
+    .orderBy(desc(checkoutSnapshotsTable.checkoutRevision))
     .limit(1);
   const row = rows[0];
   if (!row) return null;

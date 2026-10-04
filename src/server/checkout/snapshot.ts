@@ -19,6 +19,15 @@ export type SnapshotCandidate = Readonly<{
   commit: SnapshotCommitPayload;
 }>;
 
+export function presentedComplimentaryVariantId(
+  snapshot: CheckoutSnapshot | null | undefined,
+): string | null {
+  return (
+    snapshot?.lines.find((line) => line.lineOrigin === "complimentary_offer")
+      ?.variantId ?? null
+  );
+}
+
 export function buildSnapshotCandidate(input: {
   checkoutId: string;
   checkoutRevision: bigint;
