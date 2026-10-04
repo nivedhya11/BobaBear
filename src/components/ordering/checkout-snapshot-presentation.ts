@@ -3,6 +3,7 @@
  */
 
 import type { CommerceCheckoutSnapshot } from "@/lib/customer-commerce";
+import { CHARGE_DEFINITION_DELIVERY_ID } from "@/shared/pricing";
 
 export type SnapshotChargeRow = Readonly<{
   chargeCode: "packaging" | "delivery";
@@ -135,6 +136,8 @@ function paiseFromUnknown(value: unknown): bigint {
   return BigInt(0);
 }
 
+const DELIVERY_ALLOCATION_COMPONENT_ID = `charge:${CHARGE_DEFINITION_DELIVERY_ID}`;
+
 /**
  * Sealed snapshot projection of customer monetary savings.
  * Complimentary synthetic allocations are excluded from customer saving rows.
@@ -157,7 +160,7 @@ export function sealedCustomerSavingsFromSnapshot(
       continue;
     }
     const componentId = typeof raw.componentId === "string" ? raw.componentId : "";
-    if (componentId.includes("charge:delivery")) {
+    if (componentId === DELIVERY_ALLOCATION_COMPONENT_ID) {
       deliverySaving += amount;
     }
   }
