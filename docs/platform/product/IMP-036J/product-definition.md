@@ -1294,7 +1294,7 @@ is required. This boundary is not ordinary commercial follow-up.
 
 | `UNRESOLVED_DECISION_REQUIRED` item | Material user/business impact | Decision owner / evidence needed | Affected stories / gate |
 |---|---|---|---|
-| None | `OPEN_FOUNDER_PRODUCT_DECISIONS = 0`; `UNRESOLVED_MATERIAL_PRODUCT_DECISIONS = 0` | FD-036J-01, FD-036J-02, and FD-036J-03 are APPROVED | Product Definition Gate PASS is persisted. Architecture Fit PASS and architecture lock are persisted. Design Readiness PASS and Implementation Plan PASS are persisted. Implementation Authorization is APPROVED and implementation has started. Tranche 1 is PASS. Tranche 2 is PASS. Tranche 3 is PASS. Tranche 4 is PASS. Tranche 5 has not started. Tranche 6 is PASS. Tranche 7 has not started. Tranche 8 has not started. |
+| None | `OPEN_FOUNDER_PRODUCT_DECISIONS = 0`; `UNRESOLVED_MATERIAL_PRODUCT_DECISIONS = 0` | FD-036J-01, FD-036J-02, and FD-036J-03 are APPROVED | Product Definition Gate PASS is persisted. Architecture Fit PASS and architecture lock are persisted. Design Readiness PASS and Implementation Plan PASS are persisted. Implementation Authorization is APPROVED and implementation has started. Tranche 1 is PASS. Tranche 2 is PASS. Tranche 3 is PASS. Tranche 4 is PASS. Tranche 5 is PASS. Tranche 6 is PASS. Tranche 7 has not started. Tranche 8 has not started. |
 
 `FD-036J-01` = `APPROVED` on 2026-09-27.
 `FD-036J-02` = `APPROVED` on 2026-09-27.
@@ -1398,7 +1398,7 @@ READINESS_WHILE_GATE_NOT_PERFORMED = NOT_READY_FOR_IMPLEMENTATION
 AFTER_GATE_PASS_READINESS_MUST_DROP_GATE_BLOCKER = YES
 ```
 
-Stories are `READY_FOR_IMPLEMENTATION`. Product Definition Gate PASS, Design Readiness PASS, Quality/Test Plan and Measurement/Instrumentation Plan finalization, Implementation Plan PASS, and Implementation Authorization APPROVED on 2026-10-01 remove those readiness blockers. Implementation has started. Tranche 1 is PASS. Tranche 2 is PASS. Tranche 3 is PASS. Tranche 4 is PASS. Tranche 5 has not started. Tranche 6 is PASS. Tranche 7 has not started. Tranche 8 has not started. No Sprint is assigned.
+Stories are `READY_FOR_IMPLEMENTATION`. Product Definition Gate PASS, Design Readiness PASS, Quality/Test Plan and Measurement/Instrumentation Plan finalization, Implementation Plan PASS, and Implementation Authorization APPROVED on 2026-10-01 remove those readiness blockers. Implementation has started. Tranche 1 is PASS. Tranche 2 is PASS. Tranche 3 is PASS. Tranche 4 is PASS. Tranche 5 is PASS. Tranche 6 is PASS. Tranche 7 has not started. Tranche 8 has not started. No Sprint is assigned.
 
 ## 27. Product Definition Gate (historical evaluation)
 

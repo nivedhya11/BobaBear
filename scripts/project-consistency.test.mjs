@@ -19119,6 +19119,16 @@ describe("IMP-036J architecture fit remediation candidate 9", () => {
     assert.notEqual(withCanonicalPass, productReadme);
     assert.equal(evaluateImp036jProductReadmePointers(withCanonicalPass).ok, true);
   });
+  it("rejects current-tense Tranche 5 NOT_STARTED summaries in Product Definition and product index", () => {
+    const mutatedProduct = product.replace("Tranche 5 is PASS. Tranche 6 is PASS.", "Tranche 5 has not started. Tranche 6 is PASS.");
+    const mutatedReadme = productReadme.replace("Tranche 5 is PASS.", "Tranche 5 has not started.");
+    assert.notEqual(mutatedProduct, product);
+    assert.notEqual(mutatedReadme, productReadme);
+    assert.equal(evaluateImp036jProductIdentity(mutatedProduct).code, "IMP036J_PRODUCT_T5_SUMMARY");
+    assert.equal(evaluateImp036jProductReadmePointers(mutatedReadme).code, "IMP036J_PRODUCT_README_T5_SUMMARY");
+    assert.equal(evaluateImp036jProductIdentity(product).ok, true);
+    assert.equal(evaluateImp036jProductReadmePointers(productReadme).ok, true);
+  });
   it("rejects a platform index IMP-036J row reverted to Candidate 5", () => {
     const mutated = platformReadme.replace(
       "source `IMP-036J-FIT-CANDIDATE-9`",

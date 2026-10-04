@@ -16,8 +16,8 @@ is owned by [EXPERIENCE.md](../EXPERIENCE.md) (EXP-1). Product language is owned
 [TESTING.md](../TESTING.md) (TEST-1). Historical accepted IMPs are not required to gain Experience
 Definitions. IMP-036J is the first current X3 slice transitioning into PD-2: Product Definition
 Gate PASS stands, Experience Definition is APPROVED, Experience Gate PASS stands, and the next
-gate is Implementation Tranche 5. Architecture Fit is PASS. Architecture is locked.
-Design Readiness is PASS. The Implementation Plan is PASS. Implementation is authorized and started. Tranche 1 is PASS. Tranche 2 is PASS. Tranche 3 is PASS. Tranche 4 is PASS. Tranche 5 has not started.
+gate is Implementation Tranche 7. Architecture Fit is PASS. Architecture is locked.
+Design Readiness is PASS. The Implementation Plan is PASS. Implementation is authorized and started. Tranche 1 is PASS. Tranche 2 is PASS. Tranche 3 is PASS. Tranche 4 is PASS. Tranche 5 is PASS. Tranche 6 is PASS. Tranche 7 has not started. Tranche 8 has not started.
 
 | Artifact | Owns |
 |---|---|
@@ -120,4 +120,4 @@ activation truth is owned only by [`ROADMAP.md`](../ROADMAP.md) / [`STATE.md`](.
 pre-GTM customer experience, product language, and instrumentation audit is required before public
 GTM cutover / IMP-040 acceptance. Adopting PD-2 does not perform that audit or revise prior
 acceptance. Future substantial X2/X3 work requires an Experience Definition and Experience Gate
-before Architecture Fit can finally pass and lock. IMP-036J Experience Gate is `PASS`. IMP-036J Architecture Fit is `PASS` and architecture is `LOCKED`. Design Readiness is `PASS`. The Implementation Plan is `PASS`. Implementation Authorization is `APPROVED`. The next gate is `IMPLEMENTATION_TRANCHE_5`. Implementation is `AUTHORIZED` and `STARTED`. Tranche 1 is `PASS`. Tranche 2 is `PASS`. Tranche 3 is `PASS`. Tranche 4 is `PASS`. Tranche 5 has not started. Tranche 6 is `PASS`. Tranche 7 has not started. Tranche 8 has not started.
+before Architecture Fit can finally pass and lock. IMP-036J Experience Gate is `PASS`. IMP-036J Architecture Fit is `PASS` and architecture is `LOCKED`. Design Readiness is `PASS`. The Implementation Plan is `PASS`. Implementation Authorization is `APPROVED`. The next gate is `IMPLEMENTATION_TRANCHE_7`. Implementation is `AUTHORIZED` and `STARTED`. Tranche 1 is `PASS`. Tranche 2 is `PASS`. Tranche 3 is `PASS`. Tranche 4 is `PASS`. Tranche 5 is `PASS`. Tranche 6 is `PASS`. Tranche 7 has not started. Tranche 8 has not started.

@@ -41142,6 +41142,13 @@ export function evaluateImp036jProductIdentity(productText) {
       message: "Section 21 Architecture Fit dependency pointer must be Implementation Tranche 7 at GTM-R187 / STATE-R185",
     };
   }
+  if (productText.includes("Tranche 5 has not started")) {
+    return {
+      ok: false,
+      code: "IMP036J_PRODUCT_T5_SUMMARY",
+      message: "IMP-036J Product Definition current summaries must not claim Tranche 5 has not started at GTM-R187 / STATE-R185",
+    };
+  }
   return { ok: true };
 }
 
@@ -41238,6 +41245,17 @@ export function evaluateImp036jProductReadmePointers(readmeText) {
   }
   if (readmeText.includes("tip GTM-R177 / STATE-R175") || readmeText.includes("tip GTM-R176 / STATE-R174") || readmeText.includes("CURRENT tip GTM-R176 / STATE-R174") || readmeText.includes("tip GTM-R175 / STATE-R173")) {
     return { ok: false, code: "IMP036J_PRODUCT_README", message: "product/README.md must not describe the live current tip as GTM-R177 / STATE-R175" };
+  }
+  if (
+    readmeText.includes("Tranche 5 has not started") ||
+    /next gate is Implementation Tranche 5/.test(readmeText) ||
+    /next gate is `IMPLEMENTATION_TRANCHE_5`/.test(readmeText)
+  ) {
+    return {
+      ok: false,
+      code: "IMP036J_PRODUCT_README_T5_SUMMARY",
+      message: "product/README.md current summaries must record Tranche 5 PASS and next gate IMPLEMENTATION_TRANCHE_7",
+    };
   }
   return { ok: true };
 }
