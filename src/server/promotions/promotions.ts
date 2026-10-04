@@ -14,6 +14,7 @@ import {
   promotionTargetsTable,
 } from "../../platform/database/schema/promotions";
 import { chargeDefinitionsTable } from "../../platform/database/schema/pricing";
+import { CHARGE_DEFINITION_DELIVERY_ID } from "../../shared/pricing/constants";
 import { lockBrandRowForUpdate } from "../organization/brands";
 import {
   computePromotionConfigurationFingerprint,
@@ -832,6 +833,21 @@ export async function activatePromotion(
       qualifierTargets: qConfigs,
       benefitTargets: bConfigs,
     });
+  }
+
+  if (benefit.benefitType === "delivery_fee_waiver") {
+    const deliveryOnly =
+      bConfigs.length === 1 &&
+      bConfigs[0]?.targetType === "charge" &&
+      bConfigs[0]?.chargeDefinitionId === CHARGE_DEFINITION_DELIVERY_ID &&
+      bConfigs[0]?.productId === null &&
+      bConfigs[0]?.variantId === null;
+    if (!deliveryOnly) {
+      throw new PromotionAdminError(
+        "PROMOTION_BENEFIT_INVALID",
+        "delivery_fee_waiver benefit target must be the canonical delivery charge.",
+      );
+    }
   }
 
   const fingerprint = computePromotionConfigurationFingerprint({

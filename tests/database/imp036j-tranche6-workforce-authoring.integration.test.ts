@@ -1639,6 +1639,77 @@ describe("IMP-036J Tranche 6 workforce authoring", () => {
       });
       expect(deniedCodeProbe).toBe(0);
 
+      const draftForNulls = await createReadyDraftPromotion(harness, {
+        code: uniqueCode("nl"),
+      });
+      const nullSave = await fetch(
+        `${base}/api/admin/v1/brands/${harness.tree.brand.id}/promotions/${draftForNulls.id}/draft`,
+        {
+          method: "POST",
+          headers: {
+            cookie,
+            origin: workforce.baseURL.origin,
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            expectedPromotionRevision: draftForNulls.revision.toString(10),
+            displayName: "Nullables cleared",
+            minimumItemQuantity: null,
+            maximumRedemptions: null,
+            maximumRedemptionsPerCustomer: null,
+            minimumQualifyingAmountPaise: null,
+          }),
+        },
+      );
+      const nullBody = (await nullSave.json()) as { ok: boolean; revision?: string };
+      expect(nullSave.status).toBeLessThan(400);
+      expect(nullBody.ok).toBe(true);
+
+      const badWaiver = await createReadyDraftPromotion(harness, { code: uniqueCode("bw") });
+      let badRev = (
+        await harness.persistence.transaction((tx) =>
+          setPromotionBenefit(tx, {
+            actor: harness.brandAdminPrincipal,
+            promotionId: badWaiver.id,
+            expectedPromotionRevision: badWaiver.revision,
+            benefit: emptyMoneyBenefit("delivery_fee_waiver"),
+          }),
+        )
+      ).revision;
+      badRev = (
+        await harness.persistence.transaction((tx) =>
+          setPromotionTargets(tx, {
+            actor: harness.brandAdminPrincipal,
+            promotionId: badWaiver.id,
+            expectedPromotionRevision: badRev,
+            targetRole: "qualifier",
+            targets: [{ targetRole: "qualifier", ...MERCH }],
+          }),
+        )
+      ).revision;
+      badRev = (
+        await harness.persistence.transaction((tx) =>
+          setPromotionTargets(tx, {
+            actor: harness.brandAdminPrincipal,
+            promotionId: badWaiver.id,
+            expectedPromotionRevision: badRev,
+            targetRole: "benefit",
+            targets: [{ targetRole: "benefit", ...MERCH }],
+          }),
+        )
+      ).revision;
+      await expect(
+        harness.persistence.transaction((tx) =>
+          activatePromotion(tx, {
+            actor: harness.brandAdminPrincipal,
+            promotionId: badWaiver.id,
+            expectedPromotionRevision: badRev,
+          }),
+        ),
+      ).rejects.toMatchObject({
+        code: "PROMOTION_BENEFIT_INVALID",
+      });
+
       await new Promise<void>((resolve, reject) => {
         server.close((err) => (err ? reject(err) : resolve()));
       });

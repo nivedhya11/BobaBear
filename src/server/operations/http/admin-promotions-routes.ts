@@ -162,6 +162,20 @@ function optionalNumber(body: Readonly<Record<string, unknown>>, field: string):
   return value;
 }
 
+/** Absent → undefined (leave unchanged); null → clear; number → set. */
+function optionalNullableNumber(
+  body: Readonly<Record<string, unknown>>,
+  field: string,
+): number | null | undefined {
+  if (!(field in body)) return undefined;
+  if (body[field] === null) return null;
+  const value = body[field];
+  if (typeof value !== "number" || !Number.isSafeInteger(value)) {
+    throw new PromotionValidationError(`${field} must be a safe integer or null.`);
+  }
+  return value;
+}
+
 function optionalPaise(
   body: Readonly<Record<string, unknown>>,
   field: string,
@@ -510,7 +524,7 @@ async function dispatchMutation(
         startsAt: optionalIsoDate(body, "startsAt") ?? undefined,
         endsAt: optionalIsoDate(body, "endsAt"),
         minimumQualifyingAmountPaise: optionalPaise(body, "minimumQualifyingAmountPaise"),
-        minimumItemQuantity: optionalNumber(body, "minimumItemQuantity"),
+        minimumItemQuantity: optionalNullableNumber(body, "minimumItemQuantity"),
         firstOrderOnly: optionalBoolean(body, "firstOrderOnly"),
         eligibleFulfilmentModes: optionalStringList(
           body,
@@ -522,8 +536,11 @@ async function dispatchMutation(
           "eligibleFulfilmentTimings",
           FULFILMENT_TIMINGS,
         ) as readonly FulfilmentTiming[] | null | undefined,
-        maximumRedemptions: optionalNumber(body, "maximumRedemptions"),
-        maximumRedemptionsPerCustomer: optionalNumber(body, "maximumRedemptionsPerCustomer"),
+        maximumRedemptions: optionalNullableNumber(body, "maximumRedemptions"),
+        maximumRedemptionsPerCustomer: optionalNullableNumber(
+          body,
+          "maximumRedemptionsPerCustomer",
+        ),
       });
       return { revision: result.revision.toString(10) };
     }
@@ -612,8 +629,11 @@ async function dispatchMutation(
         expectedCouponRevision: requireExpectedRevision(body, "expectedCouponRevision"),
         startsAt: optionalIsoDate(body, "startsAt"),
         endsAt: optionalIsoDate(body, "endsAt"),
-        maximumRedemptions: optionalNumber(body, "maximumRedemptions"),
-        maximumRedemptionsPerCustomer: optionalNumber(body, "maximumRedemptionsPerCustomer"),
+        maximumRedemptions: optionalNullableNumber(body, "maximumRedemptions"),
+        maximumRedemptionsPerCustomer: optionalNullableNumber(
+          body,
+          "maximumRedemptionsPerCustomer",
+        ),
       });
       return { revision: result.revision.toString(10) };
     }
