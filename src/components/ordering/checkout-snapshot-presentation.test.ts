@@ -7,6 +7,10 @@ import {
   snapshotPayableRows,
 } from "./checkout-snapshot-presentation";
 import type { CommerceCheckoutSnapshot } from "@/lib/customer-commerce";
+import { CHARGE_DEFINITION_DELIVERY_ID } from "@/shared/pricing";
+
+const CANONICAL_DELIVERY_COMPONENT_ID = `charge:${CHARGE_DEFINITION_DELIVERY_ID}`;
+const ORDER_LINE_COMPONENT_ID = "base:line-1";
 
 const snapshot: CommerceCheckoutSnapshot = {
   id: "snap-1",
@@ -91,53 +95,133 @@ describe("checkout snapshot presentation", () => {
     expect(rows.find((row) => row.key === "total")?.amountPaise).toBe("114600");
   });
 
-  it("projects sealed customer savings and excludes complimentary allocation", () => {
-    const giftOnly = sealedCustomerSavingsFromSnapshot({
-      ...snapshot,
-      promotionDiscountPaise: "15000",
-      promotionEffects: [
-        {
-          effectKind: "monetary_allocation",
-          amountPaise: "15000",
-          snapshotLineId: "gift-line",
-          componentId: "base:complimentary:promo-gift",
-        },
-      ],
-    });
-    expect(giftOnly).toEqual({
+  it("A. delivery-only uses the canonical charge definition identity", () => {
+    expect(
+      sealedCustomerSavingsFromSnapshot({
+        ...snapshot,
+        promotionDiscountPaise: "4000",
+        promotionEffects: [
+          {
+            effectKind: "monetary_allocation",
+            amountPaise: "4000",
+            snapshotLineId: null,
+            componentId: CANONICAL_DELIVERY_COMPONENT_ID,
+          },
+        ],
+      }),
+    ).toEqual({
       orderSavingPaise: "0",
-      deliverySavingPaise: "0",
-      totalSavedPaise: "0",
+      deliverySavingPaise: "4000",
+      totalSavedPaise: "4000",
     });
+  });
 
-    const mixed = sealedCustomerSavingsFromSnapshot({
-      ...snapshot,
-      promotionDiscountPaise: "27000",
-      promotionEffects: [
-        {
-          effectKind: "monetary_allocation",
-          amountPaise: "15000",
-          snapshotLineId: "gift-line",
-          componentId: "base:complimentary:promo-gift",
-        },
-        {
-          effectKind: "monetary_allocation",
-          amountPaise: "8000",
-          snapshotLineId: null,
-          componentId: "line:1",
-        },
-        {
-          effectKind: "monetary_allocation",
-          amountPaise: "4000",
-          snapshotLineId: null,
-          componentId: "charge:delivery",
-        },
-      ],
-    });
-    expect(mixed).toEqual({
+  it("B. order plus delivery splits exact sealed allocations", () => {
+    expect(
+      sealedCustomerSavingsFromSnapshot({
+        ...snapshot,
+        promotionDiscountPaise: "12000",
+        promotionEffects: [
+          {
+            effectKind: "monetary_allocation",
+            amountPaise: "8000",
+            snapshotLineId: null,
+            componentId: ORDER_LINE_COMPONENT_ID,
+          },
+          {
+            effectKind: "monetary_allocation",
+            amountPaise: "4000",
+            snapshotLineId: null,
+            componentId: CANONICAL_DELIVERY_COMPONENT_ID,
+          },
+        ],
+      }),
+    ).toEqual({
       orderSavingPaise: "8000",
       deliverySavingPaise: "4000",
       totalSavedPaise: "12000",
+    });
+  });
+
+  it("C. complimentary plus delivery keeps only real delivery saving", () => {
+    expect(
+      sealedCustomerSavingsFromSnapshot({
+        ...snapshot,
+        promotionDiscountPaise: "19000",
+        promotionEffects: [
+          {
+            effectKind: "monetary_allocation",
+            amountPaise: "15000",
+            snapshotLineId: "gift-line",
+            componentId: "base:complimentary:promo-gift",
+          },
+          {
+            effectKind: "monetary_allocation",
+            amountPaise: "4000",
+            snapshotLineId: null,
+            componentId: CANONICAL_DELIVERY_COMPONENT_ID,
+          },
+        ],
+      }),
+    ).toEqual({
+      orderSavingPaise: "0",
+      deliverySavingPaise: "4000",
+      totalSavedPaise: "4000",
+    });
+  });
+
+  it("D. gift plus order plus delivery excludes the synthetic gift allocation", () => {
+    expect(
+      sealedCustomerSavingsFromSnapshot({
+        ...snapshot,
+        promotionDiscountPaise: "27000",
+        promotionEffects: [
+          {
+            effectKind: "monetary_allocation",
+            amountPaise: "15000",
+            snapshotLineId: "gift-line",
+            componentId: "base:complimentary:promo-gift",
+          },
+          {
+            effectKind: "monetary_allocation",
+            amountPaise: "8000",
+            snapshotLineId: null,
+            componentId: ORDER_LINE_COMPONENT_ID,
+          },
+          {
+            effectKind: "monetary_allocation",
+            amountPaise: "4000",
+            snapshotLineId: null,
+            componentId: CANONICAL_DELIVERY_COMPONENT_ID,
+          },
+        ],
+      }),
+    ).toEqual({
+      orderSavingPaise: "8000",
+      deliverySavingPaise: "4000",
+      totalSavedPaise: "12000",
+    });
+  });
+
+  it("does not classify an unrelated component whose text contains delivery", () => {
+    expect(
+      sealedCustomerSavingsFromSnapshot({
+        ...snapshot,
+        promotionDiscountPaise: "8000",
+        promotionEffects: [
+          {
+            effectKind: "monetary_allocation",
+            amountPaise: "8000",
+            snapshotLineId: null,
+            componentId: "base:line-free-delivery-drink",
+            displayName: "Free delivery drink",
+          },
+        ],
+      }),
+    ).toEqual({
+      orderSavingPaise: "8000",
+      deliverySavingPaise: "0",
+      totalSavedPaise: "8000",
     });
   });
 });

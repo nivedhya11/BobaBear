@@ -18,6 +18,14 @@ import {
 import { PaymentReturnClient } from "./PaymentReturnClient";
 import { PaymentPanel } from "./PaymentPanel";
 import type { CommerceCheckout, CommerceCheckoutSnapshot } from "@/lib/customer-commerce";
+import { CHARGE_DEFINITION_DELIVERY_ID } from "@/shared/pricing";
+
+const CANONICAL_DELIVERY_COMPONENT_ID = `charge:${CHARGE_DEFINITION_DELIVERY_ID}`;
+const { liveReevaluation } = vi.hoisted(() => ({
+  liveReevaluation: vi.fn(() => {
+    throw new Error("live promotion evaluation must not reconstruct payment truth");
+  }),
+}));
 
 vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
@@ -43,6 +51,8 @@ vi.mock("@/lib/customer-commerce", async () => {
     listCustomerOrders: vi.fn(async () => ({ ok: true, data: { items: [] } })),
     startPayment: vi.fn(),
     retryPayment: vi.fn(),
+    evaluateCart: liveReevaluation,
+    evaluateCheckout: liveReevaluation,
     readPaymentRecovery: vi.fn(() => null),
     clearPaymentRecovery: vi.fn(),
     readOrCreateStartIdempotencyKey: vi.fn(() => "idem"),
@@ -590,7 +600,8 @@ describe("AR-036J-T5 remediation contracts", () => {
     ).toBe("Add ₹50.00 more to unlock Free delivery.");
   });
 
-  it("AR-036J-T5-16/17 sealed Payment rows render once and exclude complimentary allocation", () => {
+  it("AR-036J-T5-16/17 READY_FOR_PAYMENT reload reads sealed snapshot savings", () => {
+    liveReevaluation.mockClear();
     const snapshot = {
       id: "snap-1",
       checkoutId: "chk-1",
@@ -631,13 +642,13 @@ describe("AR-036J-T5 remediation contracts", () => {
           effectKind: "monetary_allocation",
           amountPaise: "8000",
           snapshotLineId: null,
-          componentId: "line:1",
+          componentId: "base:line-1",
         },
         {
           effectKind: "monetary_allocation",
           amountPaise: "4000",
           snapshotLineId: null,
-          componentId: "charge:delivery",
+          componentId: CANONICAL_DELIVERY_COMPONENT_ID,
         },
       ],
       taxComponents: [{ taxType: "GST", taxAmountPaise: "500" }],
@@ -648,40 +659,54 @@ describe("AR-036J-T5 remediation contracts", () => {
     expect(sealed.merchandiseOrOrderSavingPaise).toBe("8000");
     expect(sealed.deliverySavingPaise).toBe("4000");
     expect(sealed.totalSavedPaise).toBe("12000");
+    expect(sealed.grandTotalPaise).toBe("13400");
 
-    render(
-      <PaymentPanel
-        checkout={{
-          id: "chk-1",
-          customerAuthUserId: "user-1",
-          brandId: "brand-1",
-          cartId: "cart-1",
-          sourceCartRevision: "1",
-          revision: "1",
-          status: "READY_FOR_PAYMENT",
-          expiresAt: "2026-08-13T01:00:00.000Z",
-          fulfilmentMode: "DELIVERY",
-          pickupOutletId: null,
-          activeSnapshotId: "snap-1",
-          createdAt: "2026-08-13T00:00:00.000Z",
-          updatedAt: "2026-08-13T00:00:00.000Z",
-          destination: null,
-          activeSnapshot: snapshot,
-        }}
-        snapshot={snapshot}
-        onOrderReady={() => undefined}
-      />,
+    const checkout = {
+      id: "chk-1",
+      customerAuthUserId: "user-1",
+      brandId: "brand-1",
+      cartId: "cart-1",
+      sourceCartRevision: "1",
+      revision: "1",
+      status: "READY_FOR_PAYMENT" as const,
+      expiresAt: "2026-08-13T01:00:00.000Z",
+      fulfilmentMode: "DELIVERY" as const,
+      pickupOutletId: null,
+      activeSnapshotId: "snap-1",
+      createdAt: "2026-08-13T00:00:00.000Z",
+      updatedAt: "2026-08-13T00:00:00.000Z",
+      destination: null,
+      activeSnapshot: snapshot,
+    };
+
+    function assertReadyPaymentRows(): void {
+      const breakdown = screen.getByTestId("checkout-fee-breakdown");
+      expect(breakdown.querySelectorAll("[data-testid='price-summary-subtotal']")).toHaveLength(1);
+      expect(breakdown.querySelectorAll("[data-testid='price-summary-charge-packaging']")).toHaveLength(1);
+      expect(breakdown.querySelectorAll("[data-offer-component='DELIVERY_CHARGE']")).toHaveLength(1);
+      expect(breakdown.querySelectorAll("[data-offer-component='ORDER_SAVING']")).toHaveLength(1);
+      expect(breakdown.querySelectorAll("[data-offer-component='DELIVERY_SAVING']")).toHaveLength(1);
+      expect(breakdown.querySelectorAll("[data-offer-component='TOTAL_SAVED']")).toHaveLength(1);
+      expect(breakdown.querySelectorAll("[data-testid='price-summary-tax-GST']")).toHaveLength(1);
+      expect(breakdown.querySelectorAll("[data-testid='price-summary-total']")).toHaveLength(1);
+      expect(screen.getByText(IMP036J_COPY.DELIVERY_SAVING_ROW)).toBeInTheDocument();
+      expect(screen.getByText(IMP036J_COPY.ORDER_SAVING_ROW)).toBeInTheDocument();
+      expect(breakdown).toHaveTextContent("₹80.00");
+      expect(breakdown).toHaveTextContent("₹40.00");
+      expect(breakdown).toHaveTextContent("₹120.00");
+      expect(breakdown).toHaveTextContent("₹134.00");
+      expect(breakdown).not.toHaveTextContent("₹150.00");
+      expect(screen.queryByTestId("coupon-input")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("coupon-apply")).not.toBeInTheDocument();
+    }
+
+    const first = render(
+      <PaymentPanel checkout={checkout} snapshot={snapshot} onOrderReady={() => undefined} />,
     );
-    const breakdown = screen.getByTestId("checkout-fee-breakdown");
-    expect(breakdown.querySelectorAll("[data-testid='price-summary-subtotal']")).toHaveLength(1);
-    expect(breakdown.querySelectorAll("[data-testid='price-summary-charge-packaging']")).toHaveLength(1);
-    expect(breakdown.querySelectorAll("[data-offer-component='DELIVERY_CHARGE']")).toHaveLength(1);
-    expect(breakdown.querySelectorAll("[data-offer-component='ORDER_SAVING']")).toHaveLength(1);
-    expect(breakdown.querySelectorAll("[data-offer-component='DELIVERY_SAVING']")).toHaveLength(1);
-    expect(breakdown.querySelectorAll("[data-offer-component='TOTAL_SAVED']")).toHaveLength(1);
-    expect(breakdown.querySelectorAll("[data-testid='price-summary-tax-GST']")).toHaveLength(1);
-    expect(breakdown.querySelectorAll("[data-testid='price-summary-total']")).toHaveLength(1);
-    expect(breakdown).toHaveTextContent("₹134.00");
-    expect(breakdown).not.toHaveTextContent("₹150.00");
+    assertReadyPaymentRows();
+    first.unmount();
+    render(<PaymentPanel checkout={checkout} snapshot={snapshot} onOrderReady={() => undefined} />);
+    assertReadyPaymentRows();
+    expect(liveReevaluation).not.toHaveBeenCalled();
   });
 });

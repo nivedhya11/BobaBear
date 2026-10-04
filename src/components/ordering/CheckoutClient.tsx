@@ -1355,7 +1355,6 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
             <PaymentPanel
               checkout={checkout}
               snapshot={snapshot}
-              explanation={reviewExplanation}
               brandId={brandId}
               activeCartRevision={cart?.revision}
               resumePaymentId={resumePaymentId}

@@ -5,6 +5,7 @@ import {
   moneySummaryFromSnapshot,
 } from "./money-summary";
 import type { CheckoutSnapshot } from "../checkout";
+import { CHARGE_DEFINITION_DELIVERY_ID } from "../pricing";
 
 function snapshot(partial: Partial<CheckoutSnapshot>): CheckoutSnapshot {
   return {
@@ -114,7 +115,7 @@ describe("customerMonetarySavingPaiseFromSnapshot", () => {
             displayName: "Free delivery",
             triggerType: "automatic",
             stackingPolicy: "compatible",
-            componentId: `charge:delivery`,
+            componentId: `charge:${CHARGE_DEFINITION_DELIVERY_ID}`,
             lineId: null,
             amountPaise: BigInt(4000),
             realizedDiscountPaise: null,

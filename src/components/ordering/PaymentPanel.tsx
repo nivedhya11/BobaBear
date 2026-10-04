@@ -137,8 +137,7 @@ export function PaymentPanel(props: {
 }) {
   const zeroPayable = isZeroPayableTotal(props.snapshot.grandTotalPaise);
   const payableLabel = formatPaise(props.snapshot.grandTotalPaise);
-  const paymentExplanation =
-    props.explanation ?? sealedPaymentExplanationFromSnapshot(props.snapshot);
+  const paymentExplanation = sealedPaymentExplanationFromSnapshot(props.snapshot);
   const resumePaymentId = props.resumePaymentId ?? null;
   const cartChangedWhilePending = props.cartChangedWhilePending === true;
   const embeddedRecovery = props.embeddedInPreviousPaymentRecovery === true;
