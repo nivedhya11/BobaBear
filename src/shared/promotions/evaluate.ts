@@ -191,7 +191,8 @@ export function evaluatePromotions(input: EvaluatePromotionsInput): Omit<
   const { result: couponResultDraft, couponPromotion } = evaluateSubmittedCoupon(input);
 
   const eligible: EligiblePromotion[] = [];
-  let complimentaryItemUnavailable = false;
+  let complimentaryItemUnavailable =
+    couponResultDraft?.reasonCode === "COMPLIMENTARY_UNAVAILABLE";
   for (const promotion of input.promotions) {
     if (promotion.triggerType === "coupon") continue; // only via submitted coupon
     if (promotion.status !== "active") continue;

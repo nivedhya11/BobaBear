@@ -9,14 +9,19 @@ import { afterEach, describe, expect, inject, it } from "vitest";
 
 import { setVariantAvailability } from "../../src/server/assortment";
 import { setCartLineQuantity } from "../../src/server/cart";
+import { lockCartForUpdate } from "../../src/server/cart/repository";
 import {
   evaluateCheckout,
   prepareCheckoutForPayment,
 } from "../../src/server/checkout";
-import { ensureReviewPresentedThenPaymentFacts } from "../../src/server/customer-commerce/measurement/writers";
+import {
+  ensureReviewPresentedThenPaymentFacts,
+  insertCommandOrigin,
+} from "../../src/server/customer-commerce/measurement/writers";
 import { includeVariantAtBrand } from "../assortment-availability/support";
 import { checkoutOpts } from "./support/checkout-fixtures";
 import {
+  applyCouponToCustomerCart,
   bringCheckoutToReady,
   withCheckoutReadyHarness,
 } from "./support/payment-fixtures";
@@ -25,8 +30,11 @@ import {
   uniqueCode,
 } from "./support/cart-fixtures";
 import {
+  activateCoupon,
   activatePromotion,
+  createCouponDraft,
   createPromotionDraft,
+  getCoupon,
   getPromotion,
   setPromotionTargets,
 } from "../../src/server/promotions";
@@ -1544,6 +1552,278 @@ describe("IMP-036J tranche 7 measurement reporting", () => {
       if (report.complimentaryUnavailableContinuation.status !== "RATE") return;
       expect(report.complimentaryUnavailableContinuation.denominator).toBeGreaterThan(0);
       expect(report.complimentaryUnavailableContinuation.numerator).toBeGreaterThan(0);
+    });
+  });
+
+  it("T7 late observation after window_end matures into integrity at a later REPORT_AS_OF", async () => {
+    await withHarness("lateobs", async ({ persistence, graph, window, inside }) => {
+      const laterCutoff = new Date(window.windowEnd.getTime() + 60_000);
+      const lateObservedAt = new Date(window.windowEnd.getTime() + 1_000);
+      await persistence.transaction(async (tx) => {
+        const evaluationId = await insertEvaluation(tx, {
+          graph,
+          journeyKey: null,
+          surfaceScope: "CART",
+          occurredAt: inside,
+        });
+        await tx.db.insert(commercialPresentationObservationsTable).values({
+          evaluationId,
+          surface: "CART",
+          observedComponents: [],
+          observedProgressPresent: false,
+          observedProgressRemainingPaise: null,
+          observedCoarseShape: "NONE",
+          observedComplimentaryPresent: false,
+          serverPresentationMatch: true,
+          mismatchFlags: [],
+          occurredAt: lateObservedAt,
+        });
+      });
+      const initial = await publishMeasurementReport(persistence, {
+        productionReleaseAnchor: window.windowStart,
+        reportAsOf: window.reportAsOf,
+      });
+      const initialCart = initial.displayedSavingsIntegrity.find(
+        (row) => row.surface === "CART",
+      );
+      expect(initialCart?.unobserved).toBeGreaterThanOrEqual(1);
+      expect(initialCart?.denominator).toBe(0);
+      const matured = await publishMeasurementReport(persistence, {
+        productionReleaseAnchor: window.windowStart,
+        reportAsOf: laterCutoff,
+      });
+      const maturedCart = matured.displayedSavingsIntegrity.find(
+        (row) => row.surface === "CART",
+      );
+      expect(maturedCart?.unobserved).toBe(0);
+      expect(maturedCart?.denominator).toBe(1);
+      expect(maturedCart?.numerator).toBe(1);
+    });
+  });
+
+  it("T7 production coupon-backed complimentary unavailable feeds the continuation", async () => {
+    await withCheckoutReadyHarness(async (h) => {
+      const gift = await seedActiveStandardVariant(
+        h.persistence,
+        h.actors.tree.brand.id,
+        h.actors.brandAdminActor,
+        "giftc",
+      );
+      await includeVariantAtBrand(
+        h.persistence,
+        h.actors.brandAdminActor,
+        h.actors.tree.brand.id,
+        gift.variantId,
+      );
+      await h.persistence.withContext(async (ctx) => {
+        await ctx.db.execute(sql`
+          insert into app.price_book_variant_prices (
+            id, brand_id, price_book_id, variant_id, amount_paise, tax_category_id, created_at
+          )
+          select
+            ${randomUUID()}::uuid,
+            p.brand_id,
+            p.price_book_id,
+            ${gift.variantId}::uuid,
+            2500,
+            p.tax_category_id,
+            now()
+          from app.price_book_variant_prices p
+          inner join app.cart_lines cl on cl.variant_id = p.variant_id
+          where cl.cart_id = ${h.cartId}::uuid
+          limit 1
+        `);
+      });
+      const couponCode = uniqueCode("GFT");
+      await h.persistence.transaction(async (tx) => {
+        const created = await createPromotionDraft(tx, {
+          actor: h.actors.brandAdminActor,
+          brandId: h.actors.tree.brand.id,
+          code: uniqueCode("giftc"),
+          displayName: "Complimentary coupon T7",
+          scopeType: "brand",
+          territoryId: null,
+          organizationId: null,
+          outletId: null,
+          triggerType: "coupon",
+          stackingPolicy: "combinable",
+          startsAt: new Date("2026-01-01T00:00:00Z"),
+          endsAt: null,
+        });
+        await tx.db.execute(sql`
+          insert into app.promotion_benefits (
+            id, promotion_id, benefit_type, complimentary_product_id,
+            complimentary_variant_id, created_at, updated_at
+          ) values (
+            ${randomUUID()}::uuid, ${created.id}::uuid, 'complimentary_item',
+            ${gift.productId}::uuid, ${gift.variantId}::uuid, now(), now()
+          )
+        `);
+        await tx.db.execute(sql`
+          update app.promotions
+          set complimentary_item = true
+          where id = ${created.id}::uuid
+        `);
+        for (const role of ["qualifier", "benefit"] as const) {
+          await setPromotionTargets(tx, {
+            actor: h.actors.brandAdminActor,
+            promotionId: created.id,
+            expectedPromotionRevision: (await getPromotion(tx, created.id))!.revision,
+            targetRole: role,
+            targets: [
+              {
+                targetRole: role,
+                targetType: "all_merchandise",
+                productId: null,
+                variantId: null,
+                chargeDefinitionId: null,
+              },
+            ],
+          });
+        }
+        await activatePromotion(tx, {
+          actor: h.actors.brandAdminActor,
+          promotionId: created.id,
+          expectedPromotionRevision: (await getPromotion(tx, created.id))!.revision,
+        });
+        const coupon = await createCouponDraft(tx, {
+          actor: h.actors.brandAdminActor,
+          promotionId: created.id,
+          origin: "manual",
+          canonicalCode: couponCode,
+          maximumRedemptions: null,
+          maximumRedemptionsPerCustomer: null,
+        });
+        await activateCoupon(tx, {
+          actor: h.actors.brandAdminActor,
+          couponId: coupon.id,
+          expectedCouponRevision: (await getCoupon(tx, coupon.id))!.revision,
+        });
+      });
+      await applyCouponToCustomerCart(
+        h.persistence,
+        h.actors.customerA,
+        h.actors.tree.brand.id,
+        h.cartRevision,
+        couponCode,
+      );
+      const ready = await bringCheckoutToReady(
+        h.persistence,
+        h.actors.customerA,
+        h.cartId,
+        h.addressId,
+      );
+      await h.persistence.transaction(async (tx) => {
+        await setVariantAvailability(tx, {
+          actor: h.actors.brandAdminActor,
+          outletId: h.actors.tree.outletA.id,
+          variantId: gift.variantId,
+          state: "sold_out",
+          unavailableUntil: null,
+        });
+      });
+      await expect(
+        prepareCheckoutForPayment(
+          h.persistence,
+          h.actors.customerA,
+          {
+            checkoutId: ready.checkoutId,
+            expectedCheckoutRevision: ready.revision,
+          },
+          checkoutOpts(),
+        ),
+      ).rejects.toMatchObject({ code: "CHECKOUT_REPRICED" });
+      const checkout = await h.persistence.withContext(async (ctx) => {
+        const r = await ctx.db.execute(sql`
+          select revision::text as revision, checkout_journey_key::text as journey
+          from app.checkouts where id = ${ready.checkoutId}::uuid
+        `);
+        return r.rows[0] as { revision: string; journey: string };
+      });
+      const recovered = await evaluateCheckout(
+        h.persistence,
+        h.actors.customerA,
+        {
+          checkoutId: ready.checkoutId,
+          expectedCheckoutRevision: BigInt(checkout.revision),
+        },
+        checkoutOpts(),
+      );
+      const reason = await h.persistence.withContext(async (ctx) => {
+        const r = await ctx.db.execute(sql`
+          select e.explanation_reason_class as reason
+          from app.commercial_evaluations e
+          where e.evaluation_id = ${recovered.evaluationId}::uuid
+        `);
+        return r.rows[0]?.reason as string;
+      });
+      expect(reason).toBe("COMPLIMENTARY_ITEM_UNAVAILABLE");
+      await h.persistence.transaction(async (tx) => {
+        await ensureReviewPresentedThenPaymentFacts({
+          context: tx,
+          journeyKey: checkout.journey,
+          checkoutId: ready.checkoutId,
+          paymentIdempotencyKey: null,
+          continueSourceCommandId: randomUUID(),
+        });
+      });
+      const report = await publishMeasurementReport(h.persistence, {
+        productionReleaseAnchor: new Date("2026-10-01T18:30:00.000Z"),
+      });
+      expect(report.complimentaryUnavailableContinuation.status).toBe("RATE");
+      if (report.complimentaryUnavailableContinuation.status !== "RATE") return;
+      expect(report.complimentaryUnavailableContinuation.denominator).toBeGreaterThan(0);
+      expect(report.complimentaryUnavailableContinuation.numerator).toBeGreaterThan(0);
+    });
+  });
+
+  it("T7 stale-recovery origin ordinal serializes under the cart lock", async () => {
+    await withCheckoutReadyHarness(async (h) => {
+      const ready = await bringCheckoutToReady(
+        h.persistence,
+        h.actors.customerA,
+        h.cartId,
+        h.addressId,
+      );
+      let releaseHeld: (() => void) | undefined;
+      const cartLocked = new Promise<void>((resolve) => {
+        releaseHeld = resolve;
+      });
+      const couponOrigin = h.persistence.transaction(async (tx) => {
+        await lockCartForUpdate(tx, h.cartId);
+        releaseHeld?.();
+        await new Promise((resolve) => setTimeout(resolve, 250));
+        await insertCommandOrigin({
+          context: tx,
+          sourceCommandId: randomUUID(),
+          originKind: "COUPON_APPLY",
+          cartId: h.cartId,
+          checkoutId: ready.checkoutId,
+          checkoutJourneyKey: null,
+        });
+      });
+      await cartLocked;
+      const prepare = prepareCheckoutForPayment(
+        h.persistence,
+        h.actors.customerA,
+        {
+          checkoutId: ready.checkoutId,
+          expectedCheckoutRevision: ready.revision,
+        },
+        checkoutOpts(),
+      );
+      await Promise.all([couponOrigin, prepare]);
+      const ordinals = await h.persistence.withContext(async (ctx) => {
+        const r = await ctx.db.execute(sql`
+          select cart_origin_ordinal::text as ordinal
+          from app.commercial_command_origins
+          where cart_id = ${h.cartId}::uuid
+          order by cart_origin_ordinal
+        `);
+        return r.rows.map((row) => String(row.ordinal));
+      });
+      expect(new Set(ordinals).size).toBe(ordinals.length);
+      expect(ordinals.length).toBeGreaterThanOrEqual(2);
     });
   });
 });

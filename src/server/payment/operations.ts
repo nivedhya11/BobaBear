@@ -182,6 +182,9 @@ async function bindOrInvalidate<T>(
   } catch (error) {
     if (isCheckoutError(error) && error.code === "CHECKOUT_REPRICED") {
       await persistence.transaction(async (tx) => {
+        const peek = await findCheckoutRowById(tx, checkoutId);
+        if (!peek) return;
+        await lockCartForUpdate(tx, peek.cartId);
         const row = await lockCheckoutForUpdate(tx, checkoutId);
         if (row && row.status === "READY_FOR_PAYMENT") {
           const updated = await invalidateReadyToDraft(tx, row, now);

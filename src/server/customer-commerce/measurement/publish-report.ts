@@ -675,7 +675,11 @@ export async function publishMeasurementReport(
         const observed = observationByKey.get(
           observationKey(evaluation.evaluationId, surface),
         );
-        if (!observed || !includedOccurrence(observed.occurredAt, window)) {
+        // Evaluation membership is window-qualified. The locked integrity
+        // grain tests the observation only against REPORT_AS_OF, so a later
+        // maturation snapshot can include an observation that arrived after
+        // window_end but still before the later cutoff.
+        if (!observed || !strictlyBefore(observed.occurredAt, window.reportAsOf)) {
           integrity[surface].unobserved += 1;
           continue;
         }

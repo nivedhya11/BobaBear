@@ -19,6 +19,7 @@ import {
   evaluateEligibility,
   projectUnselectedComplimentaryGifts,
   selectBestCandidate,
+  evaluatePromotions,
   type MonetaryComponent,
   type PrePromotionSnapshot,
   type PromotionDefinition,
@@ -822,6 +823,46 @@ describe("IMP-036J T3 complimentary (AC-036J-013)", () => {
     expect(explanation.complimentary).toEqual({ competingOffers: "NONE_CHOSEN" });
     expect(explanation.merchandiseOrOrderSavingPaise).toBe(BigInt(8000));
     expect(explanation.totalSavedPaise).toBe(BigInt(8000));
+  });
+
+  it("coupon-backed complimentary unavailable sets the measurement flag", () => {
+    const gift = {
+      ...complimentaryPromo("g1", "v1", "p1"),
+      triggerType: "coupon" as const,
+    };
+    const evaluated = evaluatePromotions({
+      promotions: [gift],
+      snapshot: merchSnapshot(BigInt(100000), BigInt(0)),
+      context: {
+        at: new Date("2026-06-01T00:00:00Z"),
+        brandId: "brand",
+        territoryId: null,
+        organizationId: null,
+        outletId: "o1",
+        salesChannel: "direct",
+        complimentaryVariantAvailability: new Map([["v1", false]]),
+      },
+      submittedCoupon: {
+        rawCode: "GIFT",
+        coupon: {
+          id: "c1",
+          promotionId: "g1",
+          canonicalCode: "GIFT",
+          origin: "manual",
+          status: "active",
+          startsAt: null,
+          endsAt: null,
+          maximumRedemptions: null,
+          maximumRedemptionsPerCustomer: null,
+        },
+        promotion: gift,
+      },
+    });
+    expect(evaluated.submittedCouponResult?.status).toBe("NOT_APPLICABLE");
+    expect(evaluated.submittedCouponResult?.reasonCode).toBe(
+      "COMPLIMENTARY_UNAVAILABLE",
+    );
+    expect(evaluated.complimentaryItemUnavailable).toBe(true);
   });
 });
 

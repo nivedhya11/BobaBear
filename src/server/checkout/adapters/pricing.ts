@@ -418,7 +418,8 @@ export async function buildCheckoutCommercialResult(
     input.cart.manualCouponCode &&
     quote.submittedCouponResult &&
     quote.submittedCouponResult.status !== "APPLIED" &&
-    quote.submittedCouponResult.status !== "VALID_BUT_NOT_SELECTED"
+    quote.submittedCouponResult.status !== "VALID_BUT_NOT_SELECTED" &&
+    quote.submittedCouponResult.reasonCode !== "COMPLIMENTARY_UNAVAILABLE"
   ) {
     throw new CheckoutError(
       "CHECKOUT_COUPON_INELIGIBLE",

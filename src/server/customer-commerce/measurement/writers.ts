@@ -138,10 +138,10 @@ export function deriveExplanationReasonClass(input: {
     return "IDENTITY_REQUIRED";
   }
   if (couponStatus === "INVALID") return "INVALID";
-  if (couponStatus === "NOT_APPLICABLE") return "NOT_APPLICABLE";
   if (input.complimentaryItemUnavailable) {
     return "COMPLIMENTARY_ITEM_UNAVAILABLE";
   }
+  if (couponStatus === "NOT_APPLICABLE") return "NOT_APPLICABLE";
   if (explanation?.complimentary?.competingOffers === "NONE_CHOSEN") {
     return "COMPLIMENTARY_NONE_CHOSEN";
   }
