@@ -1074,11 +1074,17 @@ export async function resolveCommercialStateChange(input: {
     for (const origin of window) {
       await input.context.db
         .update(commercialCommandOriginsTable)
-        .set({ resolution: "NO_RESULT_CHANGE" })
+        .set({
+          resolution: "NO_RESULT_CHANGE",
+          resolutionOccurredAt: sql`clock_timestamp()` as unknown as Date,
+        })
         .where(
-          eq(
-            commercialCommandOriginsTable.sourceCommandId,
-            origin.sourceCommandId,
+          and(
+            eq(
+              commercialCommandOriginsTable.sourceCommandId,
+              origin.sourceCommandId,
+            ),
+            isNull(commercialCommandOriginsTable.resolution),
           ),
         );
     }

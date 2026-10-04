@@ -721,6 +721,9 @@ These writes are tranche 4, before any customer page depends on them:
   only when the revision changes. Unique `source_command_id`. Same id and same cart
   returns the existing result. Same id and a different cart is denied and writes nothing.
   `cart_origin_ordinal` is allocated under the cart lock and is not `carts.revision`.
+  A `NO_RESULT_CHANGE` resolution stores `resolution_occurred_at = clock_timestamp()`
+  in that same transaction. Replay does not rewrite it. `JOURNEY_BOUNDARY` and
+  unresolved origins leave that timestamp null.
 - `commercial_command_results` for every finished coupon command, including a no-op and
   an invalid attempt. `occurred_at` is `clock_timestamp()` in that insert. A client
   timestamp is rejected.
@@ -915,7 +918,11 @@ calculation. The initial window is the half-open 28 civil days in `Asia/Kolkata`
 starts at the supplied anchor. The initial snapshot uses that window's exclusive end as
 `REPORT_AS_OF`. A fact whose `occurred_at` equals the cutoff is excluded. Occurrence
 time is the stored `clock_timestamp()`, never a client timestamp, ingest time, or
-`transaction_timestamp()`. The function lives in `customer-commerce`. Tests supply the
+`transaction_timestamp()`. Unchanged revalidation cutoff uses
+`commercial_command_origins.resolution_occurred_at` from the `NO_RESULT_CHANGE`
+resolution, not origin creation time, not the reused evaluation time, and not
+`PAYMENT_ATTEMPT`. Changed revalidation cutoff remains
+`COMMERCIAL_STATE_CHANGE.occurred_at`. The function lives in `customer-commerce`. Tests supply the
 two inputs. This tranche adds no scheduler, cron, queue, release table, customer route,
 or operator route.
 

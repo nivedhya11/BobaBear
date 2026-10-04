@@ -528,13 +528,18 @@ export async function publishMeasurementReport(
       } else if (origin.resolution === "NO_RESULT_CHANGE") {
         const journeyKey = origin.checkoutJourneyKey;
         if (!journeyKey || !denominatorJourneys.includes(journeyKey)) continue;
+        if (
+          origin.resolutionOccurredAt == null ||
+          !strictlyBefore(origin.resolutionOccurredAt, window.reportAsOf)
+        ) {
+          continue;
+        }
         const consuming = evaluations
           .filter(
             (row) =>
               row.checkoutJourneyKey === journeyKey &&
               row.cartOriginOrdinalInclusive != null &&
-              row.cartOriginOrdinalInclusive >= origin.cartOriginOrdinal &&
-              strictlyBefore(row.occurredAt, window.reportAsOf),
+              row.cartOriginOrdinalInclusive >= origin.cartOriginOrdinal,
           )
           .sort((a, b) => timeMs(a.occurredAt) - timeMs(b.occurredAt))[0];
         if (!consuming) continue;

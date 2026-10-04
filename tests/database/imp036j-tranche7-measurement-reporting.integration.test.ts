@@ -4,7 +4,7 @@
  */
 import { createHash, randomUUID } from "node:crypto";
 
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { afterEach, describe, expect, inject, it } from "vitest";
 
 import { setVariantAvailability } from "../../src/server/assortment";
@@ -17,6 +17,7 @@ import {
 import {
   ensureReviewPresentedThenPaymentFacts,
   insertCommandOrigin,
+  resolveCommercialStateChange,
   tryRecordStaleRecoveryOrigin,
 } from "../../src/server/customer-commerce/measurement/writers";
 import { includeVariantAtBrand } from "../assortment-availability/support";
@@ -190,6 +191,7 @@ async function insertEvaluation(
     reasonClass?: string;
     occurredAt: Date;
     ordinal?: number;
+    cartOriginOrdinalInclusive?: bigint | null;
   },
 ): Promise<string> {
   if (input.journeyKey) await ensureHead(tx, input.journeyKey);
@@ -213,7 +215,10 @@ async function insertEvaluation(
     serverExplanationIntegrity: true,
     occurrenceOrdinal: BigInt(input.ordinal ?? evaluationOrdinal++),
     occurredAt: input.occurredAt,
-    cartOriginOrdinalInclusive: BigInt(1),
+    cartOriginOrdinalInclusive:
+      input.cartOriginOrdinalInclusive === undefined
+        ? BigInt(1)
+        : input.cartOriginOrdinalInclusive,
   });
   return evaluationId;
 }
@@ -961,6 +966,7 @@ describe("IMP-036J tranche 7 measurement reporting", () => {
           cartOriginOrdinal: BigInt(1),
           resolvedChangeFactId: null,
           resolution: "NO_RESULT_CHANGE",
+          resolutionOccurredAt: inside,
         });
         await insertFact(tx, {
           journeyKey: revalUnchanged,
@@ -1242,6 +1248,340 @@ describe("IMP-036J tranche 7 measurement reporting", () => {
     });
   });
 
+  it("T7 unchanged revalidation before cutoff counts in denom but payment after cutoff is not numerator", async () => {
+    await withHarness("reval-a", async ({ persistence, graph, window, inside }) => {
+      const journey = randomUUID();
+      await persistence.transaction(async (tx) => {
+        await presentedJourney(tx, {
+          graph,
+          journeyKey: journey,
+          occurredAt: inside,
+        });
+        await tx.db.insert(commercialCommandOriginsTable).values({
+          sourceCommandId: randomUUID(),
+          originKind: "STALE_RECOVERY",
+          cartId: graph.cartId,
+          checkoutId: graph.checkoutId,
+          checkoutJourneyKey: journey,
+          cartOriginOrdinal: BigInt(1),
+          resolvedChangeFactId: null,
+          resolution: "NO_RESULT_CHANGE",
+          resolutionOccurredAt: new Date(inside.getTime() + 1_000),
+        });
+        await insertFact(tx, {
+          journeyKey: journey,
+          kind: "PAYMENT_ATTEMPT",
+          sequence: 2,
+          occurredAt: new Date(window.reportAsOf.getTime() + 1_000),
+          label: `pay:${journey}`,
+        });
+        await insertFact(tx, {
+          journeyKey: journey,
+          kind: "DIRECT_ORDER_COMPLETION",
+          sequence: 3,
+          occurredAt: new Date(window.reportAsOf.getTime() + 2_000),
+          label: `done:${journey}`,
+        });
+      });
+      const report = await publishMeasurementReport(persistence, {
+        productionReleaseAnchor: window.windowStart,
+        reportAsOf: window.reportAsOf,
+      });
+      expect(report.paymentCompletionAfterRevalidation.status).toBe("RATE");
+      if (report.paymentCompletionAfterRevalidation.status !== "RATE") return;
+      expect(report.paymentCompletionAfterRevalidation.denominator).toBe(1);
+      expect(report.paymentCompletionAfterRevalidation.numerator).toBe(0);
+    });
+  });
+
+  it("T7 unchanged revalidation after cutoff is excluded even when reused evaluation is old", async () => {
+    await withHarness("reval-b", async ({ persistence, graph, window, inside }) => {
+      const journey = randomUUID();
+      await persistence.transaction(async (tx) => {
+        await presentedJourney(tx, {
+          graph,
+          journeyKey: journey,
+          occurredAt: inside,
+        });
+        await tx.db.insert(commercialCommandOriginsTable).values({
+          sourceCommandId: randomUUID(),
+          originKind: "STALE_RECOVERY",
+          cartId: graph.cartId,
+          checkoutId: graph.checkoutId,
+          checkoutJourneyKey: journey,
+          cartOriginOrdinal: BigInt(1),
+          resolvedChangeFactId: null,
+          resolution: "NO_RESULT_CHANGE",
+          resolutionOccurredAt: new Date(window.reportAsOf.getTime() + 1_000),
+        });
+      });
+      const report = await publishMeasurementReport(persistence, {
+        productionReleaseAnchor: window.windowStart,
+        reportAsOf: window.reportAsOf,
+      });
+      expect(report.paymentCompletionAfterRevalidation.status).toBe(
+        "INSUFFICIENT_EVIDENCE",
+      );
+      expect(report.paymentCompletionAfterRevalidation.denominator).toBe(0);
+    });
+  });
+
+  it("T7 unchanged revalidation exactly at cutoff is excluded", async () => {
+    await withHarness("reval-c", async ({ persistence, graph, window, inside }) => {
+      const journey = randomUUID();
+      await persistence.transaction(async (tx) => {
+        await presentedJourney(tx, {
+          graph,
+          journeyKey: journey,
+          occurredAt: inside,
+        });
+        await tx.db.insert(commercialCommandOriginsTable).values({
+          sourceCommandId: randomUUID(),
+          originKind: "STALE_RECOVERY",
+          cartId: graph.cartId,
+          checkoutId: graph.checkoutId,
+          checkoutJourneyKey: journey,
+          cartOriginOrdinal: BigInt(1),
+          resolvedChangeFactId: null,
+          resolution: "NO_RESULT_CHANGE",
+          resolutionOccurredAt: window.reportAsOf,
+        });
+      });
+      const report = await publishMeasurementReport(persistence, {
+        productionReleaseAnchor: window.windowStart,
+        reportAsOf: window.reportAsOf,
+      });
+      expect(report.paymentCompletionAfterRevalidation.status).toBe(
+        "INSUFFICIENT_EVIDENCE",
+      );
+    });
+  });
+
+  it("T7 changed revalidation still qualifies through COMMERCIAL_STATE_CHANGE.occurred_at", async () => {
+    await withHarness("reval-d", async ({ persistence, graph, window, inside }) => {
+      const journey = randomUUID();
+      await persistence.transaction(async (tx) => {
+        await presentedJourney(tx, {
+          graph,
+          journeyKey: journey,
+          occurredAt: inside,
+        });
+        const changeEval = await insertEvaluation(tx, {
+          graph,
+          journeyKey: journey,
+          occurredAt: new Date(inside.getTime() + 1_500),
+        });
+        const changeFact = await insertFact(tx, {
+          journeyKey: journey,
+          kind: "COMMERCIAL_STATE_CHANGE",
+          sequence: 2,
+          occurredAt: new Date(inside.getTime() + 1_500),
+          evaluationId: changeEval,
+          fingerprint: new Uint8Array(FINGERPRINT),
+          label: `change:${journey}`,
+        });
+        await tx.db.insert(commercialCommandOriginsTable).values({
+          sourceCommandId: randomUUID(),
+          originKind: "STALE_RECOVERY",
+          cartId: graph.cartId,
+          checkoutId: graph.checkoutId,
+          checkoutJourneyKey: journey,
+          cartOriginOrdinal: BigInt(1),
+          resolvedChangeFactId: changeFact,
+          resolution: null,
+        });
+      });
+      const report = await publishMeasurementReport(persistence, {
+        productionReleaseAnchor: window.windowStart,
+        reportAsOf: window.reportAsOf,
+      });
+      expect(report.paymentCompletionAfterRevalidation.status).toBe("RATE");
+      if (report.paymentCompletionAfterRevalidation.status !== "RATE") return;
+      expect(report.paymentCompletionAfterRevalidation.denominator).toBe(1);
+    });
+  });
+
+  it("T7 null historical NO_RESULT_CHANGE resolution time is excluded", async () => {
+    await withHarness("reval-e", async ({ persistence, graph, window, inside }) => {
+      const journey = randomUUID();
+      await persistence.transaction(async (tx) => {
+        await presentedJourney(tx, {
+          graph,
+          journeyKey: journey,
+          occurredAt: inside,
+        });
+        await tx.db.insert(commercialCommandOriginsTable).values({
+          sourceCommandId: randomUUID(),
+          originKind: "STALE_RECOVERY",
+          cartId: graph.cartId,
+          checkoutId: graph.checkoutId,
+          checkoutJourneyKey: journey,
+          cartOriginOrdinal: BigInt(1),
+          resolvedChangeFactId: null,
+          resolution: "NO_RESULT_CHANGE",
+          resolutionOccurredAt: null,
+        });
+      });
+      const report = await publishMeasurementReport(persistence, {
+        productionReleaseAnchor: window.windowStart,
+        reportAsOf: window.reportAsOf,
+      });
+      expect(report.paymentCompletionAfterRevalidation.status).toBe(
+        "INSUFFICIENT_EVIDENCE",
+      );
+    });
+  });
+
+  it("T7 NO_RESULT_CHANGE retry preserves first clock_timestamp and one denominator grain", async () => {
+    await withHarness("reval-f", async ({ persistence, graph, window, inside }) => {
+      const journey = randomUUID();
+      const sourceCommandId = randomUUID();
+      let evaluationId = "";
+      await persistence.transaction(async (tx) => {
+        evaluationId = (
+          await presentedJourney(tx, {
+            graph,
+            journeyKey: journey,
+            occurredAt: inside,
+          })
+        ).evaluationId;
+        await tx.db
+          .update(commercialEvaluationsTable)
+          .set({ cartOriginOrdinalInclusive: null })
+          .where(eq(commercialEvaluationsTable.evaluationId, evaluationId));
+        await insertCommandOrigin({
+          context: tx,
+          sourceCommandId,
+          originKind: "STALE_RECOVERY",
+          cartId: graph.cartId,
+          checkoutId: graph.checkoutId,
+          checkoutJourneyKey: journey,
+        });
+        await resolveCommercialStateChange({
+          context: tx,
+          cartId: graph.cartId,
+          checkoutId: graph.checkoutId,
+          journeyKey: journey,
+          evaluationId,
+          fingerprint: new Uint8Array(FINGERPRINT),
+          reusedExistingEvaluation: true,
+          closedJourneyRejectNew: true,
+        });
+      });
+      const first = await persistence.withContext(async (ctx) => {
+        const r = await ctx.db.execute(sql`
+          select resolution, resolved_change_fact_id::text as fact,
+                 resolution_occurred_at as resolved_at,
+                 count(*) over () as origin_count
+          from app.commercial_command_origins
+          where source_command_id = ${sourceCommandId}::uuid
+        `);
+        return r.rows[0] as {
+          resolution: string;
+          fact: string | null;
+          resolved_at: Date | string;
+          origin_count: string;
+        };
+      });
+      expect(first.resolution).toBe("NO_RESULT_CHANGE");
+      expect(first.fact).toBeNull();
+      expect(first.resolved_at).toBeTruthy();
+      expect(first.origin_count).toBe("1");
+      await persistence.transaction(async (tx) => {
+        await resolveCommercialStateChange({
+          context: tx,
+          cartId: graph.cartId,
+          checkoutId: graph.checkoutId,
+          journeyKey: journey,
+          evaluationId,
+          fingerprint: new Uint8Array(FINGERPRINT),
+          reusedExistingEvaluation: true,
+          closedJourneyRejectNew: true,
+        });
+      });
+      const second = await persistence.withContext(async (ctx) => {
+        const r = await ctx.db.execute(sql`
+          select resolution_occurred_at as resolved_at
+          from app.commercial_command_origins
+          where source_command_id = ${sourceCommandId}::uuid
+        `);
+        const counts = await ctx.db.execute(sql`
+          select
+            (select count(*)::text from app.commercial_command_origins
+              where cart_id = ${graph.cartId}::uuid) as origin_count,
+            (select count(*)::text from app.checkout_journey_facts
+              where checkout_journey_key = ${journey}::uuid
+                and fact_kind = 'COMMERCIAL_STATE_CHANGE') as change_facts
+        `);
+        return {
+          resolved_at: (r.rows[0] as { resolved_at: Date | string }).resolved_at,
+          origin_count: String((counts.rows[0] as { origin_count: string }).origin_count),
+          change_facts: String((counts.rows[0] as { change_facts: string }).change_facts),
+        };
+      });
+      expect(String(second.resolved_at)).toBe(String(first.resolved_at));
+      expect(second.origin_count).toBe("1");
+      expect(second.change_facts).toBe("0");
+      const report = await publishMeasurementReport(persistence, {
+        productionReleaseAnchor: window.windowStart,
+        reportAsOf: window.reportAsOf,
+      });
+      expect(report.paymentCompletionAfterRevalidation.status).toBe("RATE");
+      if (report.paymentCompletionAfterRevalidation.status !== "RATE") return;
+      expect(report.paymentCompletionAfterRevalidation.denominator).toBe(1);
+    });
+  });
+
+  it("T7 later REPORT_AS_OF can include unchanged revalidation while earlier snapshot stays", async () => {
+    await withHarness("reval-g", async ({ persistence, graph, window, inside }) => {
+      const journey = randomUUID();
+      const resolutionAt = new Date(window.reportAsOf.getTime() + 60_000);
+      await persistence.transaction(async (tx) => {
+        await presentedJourney(tx, {
+          graph,
+          journeyKey: journey,
+          occurredAt: inside,
+        });
+        await tx.db.insert(commercialCommandOriginsTable).values({
+          sourceCommandId: randomUUID(),
+          originKind: "STALE_RECOVERY",
+          cartId: graph.cartId,
+          checkoutId: graph.checkoutId,
+          checkoutJourneyKey: journey,
+          cartOriginOrdinal: BigInt(1),
+          resolvedChangeFactId: null,
+          resolution: "NO_RESULT_CHANGE",
+          resolutionOccurredAt: resolutionAt,
+        });
+      });
+      const first = await publishMeasurementReport(persistence, {
+        productionReleaseAnchor: window.windowStart,
+        reportAsOf: window.reportAsOf,
+      });
+      expect(first.snapshotInserted).toBe(true);
+      expect(first.paymentCompletionAfterRevalidation.status).toBe(
+        "INSUFFICIENT_EVIDENCE",
+      );
+      const laterAsOf = new Date(resolutionAt.getTime() + 1_000);
+      const matured = await publishMeasurementReport(persistence, {
+        productionReleaseAnchor: window.windowStart,
+        reportAsOf: laterAsOf,
+      });
+      expect(matured.snapshotInserted).toBe(true);
+      expect(matured.paymentCompletionAfterRevalidation.status).toBe("RATE");
+      if (matured.paymentCompletionAfterRevalidation.status !== "RATE") return;
+      expect(matured.paymentCompletionAfterRevalidation.denominator).toBe(1);
+      const originalRetry = await publishMeasurementReport(persistence, {
+        productionReleaseAnchor: window.windowStart,
+        reportAsOf: window.reportAsOf,
+      });
+      expect(originalRetry.snapshotInserted).toBe(false);
+      expect(originalRetry.paymentCompletionAfterRevalidation).toEqual(
+        first.paymentCompletionAfterRevalidation,
+      );
+    });
+  });
+
   it("T7 production stale recovery writes STALE_RECOVERY and feeds changed-total continuation", async () => {
     await withCheckoutReadyHarness(async (h) => {
       const ready = await bringCheckoutToReady(
@@ -1360,16 +1700,22 @@ describe("IMP-036J tranche 7 measurement reporting", () => {
       );
       const origin = await h.persistence.withContext(async (ctx) => {
         const r = await ctx.db.execute(sql`
-          select resolution, resolved_change_fact_id::text as fact
+          select resolution, resolved_change_fact_id::text as fact,
+                 resolution_occurred_at as resolved_at
           from app.commercial_command_origins
           where cart_id = ${h.cartId}::uuid
             and origin_kind = 'STALE_RECOVERY'
         `);
-        return r.rows as Array<{ resolution: string | null; fact: string | null }>;
+        return r.rows as Array<{
+          resolution: string | null;
+          fact: string | null;
+          resolved_at: Date | string | null;
+        }>;
       });
       expect(origin.length).toBeGreaterThan(0);
       expect(origin.every((row) => row.resolution === "NO_RESULT_CHANGE")).toBe(true);
       expect(origin.every((row) => row.fact === null)).toBe(true);
+      expect(origin.every((row) => row.resolved_at != null)).toBe(true);
       const journey = await h.persistence.withContext(async (ctx) => {
         const r = await ctx.db.execute(sql`
           select checkout_journey_key::text as journey

@@ -509,6 +509,14 @@ export const commercialCommandOriginsTable = appSchema.table(
     cartOriginOrdinal: bigint("cart_origin_ordinal", { mode: "bigint" }).notNull(),
     resolvedChangeFactId: uuid("resolved_change_fact_id"),
     resolution: text("resolution"),
+    /**
+     * Authoritative server occurrence of a NO_RESULT_CHANGE resolution.
+     * Null until that resolution, and remains null for JOURNEY_BOUNDARY
+     * and unresolved origins. Not origin creation time.
+     */
+    resolutionOccurredAt: timestamp("resolution_occurred_at", {
+      withTimezone: true,
+    }),
   },
   (table) => [
     foreignKey({

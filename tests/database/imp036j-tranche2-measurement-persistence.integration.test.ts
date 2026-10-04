@@ -1077,6 +1077,29 @@ describe("IMP-036J tranche 2 measurement persistence", () => {
              AND column_name = 'occurred_at'`,
         );
         expect(origins.rows).toEqual([]);
+        const resolutionTime = await client.pool.query<{
+          column_name: string;
+          is_nullable: string;
+          data_type: string;
+        }>(
+          `SELECT column_name, is_nullable, data_type
+           FROM information_schema.columns
+           WHERE table_schema = 'app' AND table_name = 'commercial_command_origins'
+             AND column_name = 'resolution_occurred_at'`,
+        );
+        expect(resolutionTime.rows).toEqual([
+          {
+            column_name: "resolution_occurred_at",
+            is_nullable: "YES",
+            data_type: "timestamp with time zone",
+          },
+        ]);
+        await client.pool.query(
+          `INSERT INTO app.commercial_command_origins (
+             source_command_id, origin_kind, cart_id, cart_origin_ordinal, resolution
+           ) VALUES ($1::uuid, 'STALE_RECOVERY', $2::uuid, 3, 'NO_RESULT_CHANGE')`,
+          [randomUUID(), graph.cartId],
+        );
         const snapshotColumns = await client.pool.query<{ column_name: string }>(
           `SELECT column_name FROM information_schema.columns
            WHERE table_schema = 'app' AND table_name = 'measurement_report_snapshots'

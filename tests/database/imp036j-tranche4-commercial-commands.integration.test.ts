@@ -2376,19 +2376,51 @@ describe("IMP-036J T4 architect remediations AR-036J-T4-01..06", () => {
       expect(bAgain.evaluationId).toBe(b.evaluationId);
       const extras = await h.persistence.withContext(async (ctx) => {
         const r = await ctx.db.execute(sql`
-          select resolution, resolved_change_fact_id::text as fact
+          select resolution, resolved_change_fact_id::text as fact,
+                 resolution_occurred_at as resolved_at
           from app.commercial_command_origins
           where source_command_id in (
             ${extraIds[0]}::uuid, ${extraIds[1]}::uuid, ${extraIds[2]}::uuid
           )
         `);
-        return r.rows as Array<{ resolution: string | null; fact: string | null }>;
+        return r.rows as Array<{
+          resolution: string | null;
+          fact: string | null;
+          resolved_at: Date | string | null;
+        }>;
       });
       expect(extras).toHaveLength(3);
       expect(extras.every((row) => row.resolution === "NO_RESULT_CHANGE")).toBe(
         true,
       );
       expect(extras.every((row) => row.fact === null)).toBe(true);
+      expect(extras.every((row) => row.resolved_at != null)).toBe(true);
+      const firstTimes = extras.map((row) => String(row.resolved_at));
+      const bRetry = await evaluateCheckout(
+        h.persistence,
+        h.actors.customerA,
+        {
+          checkoutId: successor.id,
+          expectedCheckoutRevision: b.checkout.revision,
+        },
+        checkoutOpts,
+      );
+      expect(bRetry.evaluationId).toBe(b.evaluationId);
+      const retried = await h.persistence.withContext(async (ctx) => {
+        const r = await ctx.db.execute(sql`
+          select source_command_id::text as id, resolution_occurred_at as resolved_at
+          from app.commercial_command_origins
+          where source_command_id in (
+            ${extraIds[0]}::uuid, ${extraIds[1]}::uuid, ${extraIds[2]}::uuid
+          )
+          order by source_command_id
+        `);
+        return r.rows as Array<{ id: string; resolved_at: Date | string | null }>;
+      });
+      expect(retried).toHaveLength(3);
+      expect(retried.map((row) => String(row.resolved_at)).sort()).toEqual(
+        [...firstTimes].sort(),
+      );
       const watermark = await h.persistence.withContext(async (ctx) => {
         const r = await ctx.db.execute(sql`
           select cart_origin_ordinal_inclusive::text as w,

@@ -12966,6 +12966,12 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "resolution_occurred_at": {
+          "name": "resolution_occurred_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
