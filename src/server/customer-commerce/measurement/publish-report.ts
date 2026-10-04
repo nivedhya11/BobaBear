@@ -5,7 +5,7 @@
  * Does not write commercial truth, mint a second analytics model, or
  * expose a reporting route.
  */
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 
 import {
   cartCheckoutActivationsTable,
@@ -17,6 +17,7 @@ import {
   measurementReportSnapshotsTable,
   offerResultViewsTable,
 } from "../../../platform/database/schema/measurement";
+import { PersistenceOperationError } from "../../persistence/errors";
 import type {
   Persistence,
   PersistenceTransactionContext,
@@ -168,10 +169,23 @@ function reportingSegment(presentationClass: string): {
   return { reportingSegment: presentationClass, subsegment: null };
 }
 
-function expectedSurfaces(
+function requiredSurfaces(
   surfaceScope: string,
 ): readonly ("CART" | "CHECKOUT_REVIEW")[] {
-  return surfaceScope === "CART" ? ["CART"] : ["CART", "CHECKOUT_REVIEW"];
+  return surfaceScope === "CART" ? ["CART"] : ["CHECKOUT_REVIEW"];
+}
+
+function isRetryablePublicationIsolation(error: unknown): boolean {
+  const code =
+    error instanceof PersistenceOperationError
+      ? error.code
+      : typeof error === "object" &&
+          error !== null &&
+          "code" in error &&
+          typeof (error as { code?: unknown }).code === "string"
+        ? (error as { code: string }).code
+        : undefined;
+  return code === "40001" || code === "40P01";
 }
 
 function walkPrivacy(value: unknown, key?: string): void {
@@ -334,20 +348,33 @@ export async function publishMeasurementReport(
     productionReleaseAnchor: Date;
     reportAsOf?: Date;
   },
+  proof?: Readonly<{
+    afterFactsLoaded?: () => Promise<void>;
+  }>,
 ): Promise<MeasurementReport> {
   const window = initialMeasurementWindow(input);
-  return persistence.transaction(async (tx) => {
-    const existingBefore = await lookupPublication(tx, window);
-    if (existingBefore?.publishedReport != null) {
-      return reportFromPublishedRow({
-        metric: existingBefore.metric,
-        windowStart: existingBefore.windowStart,
-        windowEnd: existingBefore.windowEnd,
-        reportAsOf: existingBefore.reportAsOf,
-        publishedReport: existingBefore.publishedReport,
-        snapshotInserted: false,
-      });
-    }
+  const maxAttempts = 3;
+  let lastError: unknown;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      const outcome = await persistence.transaction(async (tx) => {
+        await tx.db.execute(
+          sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ`,
+        );
+        const existingBefore = await lookupPublication(tx, window);
+        if (existingBefore?.publishedReport != null) {
+          return {
+            kind: "done" as const,
+            report: reportFromPublishedRow({
+              metric: existingBefore.metric,
+              windowStart: existingBefore.windowStart,
+              windowEnd: existingBefore.windowEnd,
+              reportAsOf: existingBefore.reportAsOf,
+              publishedReport: existingBefore.publishedReport,
+              snapshotInserted: false,
+            }),
+          };
+        }
 
     const facts = (await tx.db.select().from(checkoutJourneyFactsTable)).map(
       (row) => ({
@@ -369,6 +396,9 @@ export async function publishMeasurementReport(
     }
     for (const list of factsByJourney.values()) {
       list.sort(bySequenceThenTime);
+    }
+    if (proof?.afterFactsLoaded) {
+      await proof.afterFactsLoaded();
     }
 
     const denominatorJourneys: string[] = [];
@@ -667,26 +697,43 @@ export async function publishMeasurementReport(
       CART: { denominator: 0, numerator: 0, unobserved: 0 },
       CHECKOUT_REVIEW: { denominator: 0, numerator: 0, unobserved: 0 },
     };
+    const recordIntegrity = (
+      surface: "CART" | "CHECKOUT_REVIEW",
+      observed:
+        | (typeof observations)[number]
+        | undefined,
+    ): void => {
+      // Evaluation membership is window-qualified. The locked integrity
+      // grain tests the observation only against REPORT_AS_OF, so a later
+      // maturation snapshot can include an observation that arrived after
+      // window_end but still before the later cutoff.
+      if (!observed || !strictlyBefore(observed.occurredAt, window.reportAsOf)) {
+        integrity[surface].unobserved += 1;
+        return;
+      }
+      integrity[surface].denominator += 1;
+      if (observed.serverPresentationMatch === true) {
+        integrity[surface].numerator += 1;
+      }
+    };
     for (const evaluation of evaluations
       .slice()
       .sort((a, b) => a.evaluationId.localeCompare(b.evaluationId))) {
       if (!includedOccurrence(evaluation.occurredAt, window)) continue;
-      for (const surface of expectedSurfaces(evaluation.surfaceScope)) {
-        const observed = observationByKey.get(
-          observationKey(evaluation.evaluationId, surface),
+      for (const surface of requiredSurfaces(evaluation.surfaceScope)) {
+        recordIntegrity(
+          surface,
+          observationByKey.get(
+            observationKey(evaluation.evaluationId, surface),
+          ),
         );
-        // Evaluation membership is window-qualified. The locked integrity
-        // grain tests the observation only against REPORT_AS_OF, so a later
-        // maturation snapshot can include an observation that arrived after
-        // window_end but still before the later cutoff.
-        if (!observed || !strictlyBefore(observed.occurredAt, window.reportAsOf)) {
-          integrity[surface].unobserved += 1;
-          continue;
-        }
-        integrity[surface].denominator += 1;
-        if (observed.serverPresentationMatch === true) {
-          integrity[surface].numerator += 1;
-        }
+      }
+      if (evaluation.surfaceScope !== "CHECKOUT") continue;
+      const cartObserved = observationByKey.get(
+        observationKey(evaluation.evaluationId, "CART"),
+      );
+      if (cartObserved) {
+        recordIntegrity("CART", cartObserved);
       }
     }
 
@@ -739,38 +786,66 @@ export async function publishMeasurementReport(
     assertPrivacy(report);
     const publishedReport = toPublishedAggregate(report);
     walkPrivacy(publishedReport);
-    const inserted = await tx.db
-      .insert(measurementReportSnapshotsTable)
-      .values({
-        metric: PRIMARY_METRIC,
-        windowStart: window.windowStart,
-        windowEnd: window.windowEnd,
-        reportAsOf: window.reportAsOf,
-        publishedReport,
-      })
-      .onConflictDoNothing()
-      .returning();
-    if (inserted[0]?.publishedReport != null) {
-      return reportFromPublishedRow({
-        metric: inserted[0].metric,
-        windowStart: inserted[0].windowStart,
-        windowEnd: inserted[0].windowEnd,
-        reportAsOf: inserted[0].reportAsOf,
-        publishedReport: inserted[0].publishedReport,
-        snapshotInserted: true,
+        const inserted = await tx.db
+          .insert(measurementReportSnapshotsTable)
+          .values({
+            metric: PRIMARY_METRIC,
+            windowStart: window.windowStart,
+            windowEnd: window.windowEnd,
+            reportAsOf: window.reportAsOf,
+            publishedReport,
+          })
+          .onConflictDoNothing()
+          .returning();
+        if (inserted[0]?.publishedReport != null) {
+          return {
+            kind: "done" as const,
+            report: reportFromPublishedRow({
+              metric: inserted[0].metric,
+              windowStart: inserted[0].windowStart,
+              windowEnd: inserted[0].windowEnd,
+              reportAsOf: inserted[0].reportAsOf,
+              publishedReport: inserted[0].publishedReport,
+              snapshotInserted: true,
+            }),
+          };
+        }
+        return { kind: "conflict" as const };
       });
-    }
-    const existing = await lookupPublication(tx, window);
-    if (existing?.publishedReport != null) {
-      return reportFromPublishedRow({
-        metric: existing.metric,
-        windowStart: existing.windowStart,
-        windowEnd: existing.windowEnd,
-        reportAsOf: existing.reportAsOf,
-        publishedReport: existing.publishedReport,
-        snapshotInserted: false,
+      if (outcome.kind === "done") return outcome.report;
+      const recovered = await persistence.transaction(async (tx) => {
+        return lookupPublication(tx, window);
       });
+      if (recovered?.publishedReport != null) {
+        return reportFromPublishedRow({
+          metric: recovered.metric,
+          windowStart: recovered.windowStart,
+          windowEnd: recovered.windowEnd,
+          reportAsOf: recovered.reportAsOf,
+          publishedReport: recovered.publishedReport,
+          snapshotInserted: false,
+        });
+      }
+      throw new Error("measurement_report_snapshots lookup failed after insert.");
+    } catch (error) {
+      lastError = error;
+      if (!isRetryablePublicationIsolation(error) || attempt + 1 >= maxAttempts) {
+        const recovered = await persistence
+          .transaction(async (tx) => lookupPublication(tx, window))
+          .catch(() => undefined);
+        if (recovered?.publishedReport != null) {
+          return reportFromPublishedRow({
+            metric: recovered.metric,
+            windowStart: recovered.windowStart,
+            windowEnd: recovered.windowEnd,
+            reportAsOf: recovered.reportAsOf,
+            publishedReport: recovered.publishedReport,
+            snapshotInserted: false,
+          });
+        }
+        throw error;
+      }
     }
-    throw new Error("measurement_report_snapshots lookup failed after insert.");
-  });
+  }
+  throw lastError;
 }

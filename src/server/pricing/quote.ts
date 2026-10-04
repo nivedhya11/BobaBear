@@ -82,6 +82,11 @@ export type BuildDirectPricingQuoteInput = Readonly<{
    * Absent / UNAVAILABLE fails closed for first-order-only Offers.
    */
   firstOrderPurchaseStatus?: FirstOrderPurchaseStatus | null;
+  /**
+   * Complimentary catalog variant previously selected/presented for this
+   * checkout attempt. Cart quotes omit this.
+   */
+  previouslyPresentedComplimentaryVariantId?: string | null;
 }>;
 
 type InternalTaxableLine = {
@@ -482,6 +487,8 @@ export async function buildDirectPricingQuote(
     promotions: automatic,
     submittedCoupon,
     redemptionEnforcementAvailable: true,
+    previouslyPresentedComplimentaryVariantId:
+      input.previouslyPresentedComplimentaryVariantId ?? null,
   });
 
   const promotionsById = new Map<string, (typeof evaluation.eligible)[number]["promotion"]>();

@@ -825,13 +825,61 @@ describe("IMP-036J T3 complimentary (AC-036J-013)", () => {
     expect(explanation.totalSavedPaise).toBe(BigInt(8000));
   });
 
-  it("coupon-backed complimentary unavailable sets the measurement flag", () => {
+  it("coupon-backed complimentary unavailable sets the measurement flag only when previously presented", () => {
     const gift = {
       ...complimentaryPromo("g1", "v1", "p1"),
       triggerType: "coupon" as const,
     };
-    const evaluated = evaluatePromotions({
+    const input = {
       promotions: [gift],
+      snapshot: merchSnapshot(BigInt(100000), BigInt(0)),
+      context: {
+        at: new Date("2026-06-01T00:00:00Z"),
+        brandId: "brand",
+        territoryId: null,
+        organizationId: null,
+        outletId: "o1",
+        salesChannel: "direct" as const,
+        complimentaryVariantAvailability: new Map([["v1", false]]),
+      },
+      submittedCoupon: {
+        rawCode: "GIFT",
+        coupon: {
+          id: "c1",
+          promotionId: "g1",
+          canonicalCode: "GIFT",
+          origin: "manual" as const,
+          status: "active" as const,
+          startsAt: null,
+          endsAt: null,
+          maximumRedemptions: null,
+          maximumRedemptionsPerCustomer: null,
+        },
+        promotion: gift,
+      },
+    };
+    const firstApply = evaluatePromotions(input);
+    expect(firstApply.submittedCouponResult?.status).toBe("NOT_APPLICABLE");
+    expect(firstApply.submittedCouponResult?.reasonCode).toBe(
+      "COMPLIMENTARY_UNAVAILABLE",
+    );
+    expect(firstApply.complimentaryItemUnavailable).toBe(false);
+
+    const recovered = evaluatePromotions({
+      ...input,
+      previouslyPresentedComplimentaryVariantId: "v1",
+    });
+    expect(recovered.submittedCouponResult?.reasonCode).toBe(
+      "COMPLIMENTARY_UNAVAILABLE",
+    );
+    expect(recovered.complimentaryItemUnavailable).toBe(true);
+  });
+
+  it("unrelated unavailable complimentary does not classify shown-item recovery", () => {
+    const gift = complimentaryPromo("g1", "v1", "p1");
+    const merch = fixedPrimary("m80", BigInt(8000), "exclusive");
+    const evaluated = evaluatePromotions({
+      promotions: [gift, merch],
       snapshot: merchSnapshot(BigInt(100000), BigInt(0)),
       context: {
         at: new Date("2026-06-01T00:00:00Z"),
@@ -842,26 +890,52 @@ describe("IMP-036J T3 complimentary (AC-036J-013)", () => {
         salesChannel: "direct",
         complimentaryVariantAvailability: new Map([["v1", false]]),
       },
-      submittedCoupon: {
-        rawCode: "GIFT",
-        coupon: {
-          id: "c1",
-          promotionId: "g1",
-          canonicalCode: "GIFT",
-          origin: "manual",
-          status: "active",
-          startsAt: null,
-          endsAt: null,
-          maximumRedemptions: null,
-          maximumRedemptionsPerCustomer: null,
-        },
-        promotion: gift,
+    });
+    expect(evaluated.complimentaryItemUnavailable).toBe(false);
+    expect(evaluated.eligiblePromotionIds).toEqual(["m80"]);
+  });
+
+  it("competing complimentary none chosen does not become shown-item unavailable", () => {
+    const g1 = complimentaryPromo("g1", "v1", "p1");
+    const g2 = complimentaryPromo("g2", "v2", "p2");
+    const merch = fixedPrimary("m80", BigInt(8000), "exclusive");
+    const evaluated = evaluatePromotions({
+      promotions: [g1, g2, merch],
+      snapshot: merchSnapshot(BigInt(100000), BigInt(0)),
+      context: {
+        at: new Date("2026-06-01T00:00:00Z"),
+        brandId: "brand",
+        territoryId: null,
+        organizationId: null,
+        outletId: "o1",
+        salesChannel: "direct",
+        complimentaryVariantAvailability: new Map([
+          ["v1", true],
+          ["v2", true],
+        ]),
       },
     });
-    expect(evaluated.submittedCouponResult?.status).toBe("NOT_APPLICABLE");
-    expect(evaluated.submittedCouponResult?.reasonCode).toBe(
-      "COMPLIMENTARY_UNAVAILABLE",
-    );
+    expect(evaluated.complimentaryCompetingNoneChosen).toBe(true);
+    expect(evaluated.complimentaryItemUnavailable).toBe(false);
+  });
+
+  it("previously presented complimentary variant unavailable classifies recovery", () => {
+    const gift = complimentaryPromo("g1", "v1", "p1");
+    const merch = fixedPrimary("m80", BigInt(8000), "exclusive");
+    const evaluated = evaluatePromotions({
+      promotions: [gift, merch],
+      snapshot: merchSnapshot(BigInt(100000), BigInt(0)),
+      context: {
+        at: new Date("2026-06-01T00:00:00Z"),
+        brandId: "brand",
+        territoryId: null,
+        organizationId: null,
+        outletId: "o1",
+        salesChannel: "direct",
+        complimentaryVariantAvailability: new Map([["v1", false]]),
+      },
+      previouslyPresentedComplimentaryVariantId: "v1",
+    });
     expect(evaluated.complimentaryItemUnavailable).toBe(true);
   });
 });

@@ -48,7 +48,7 @@ import {
   lockCheckoutForUpdate,
   mapDestinationRow,
 } from "./repository";
-import { buildSnapshotCandidate } from "./snapshot";
+import { buildSnapshotCandidate, presentedComplimentaryVariantId } from "./snapshot";
 import { checkoutSnapshotsStructurallyEqual } from "./compare-snapshots";
 import {
   assertScheduledPickupProfile,
@@ -397,6 +397,9 @@ export async function prepareCheckoutForPayment(
       fulfilmentTiming: (preload.row.fulfilmentTiming ?? "ASAP") as
         | "ASAP"
         | "SCHEDULED",
+      previouslyPresentedComplimentaryVariantId: presentedComplimentaryVariantId(
+        preload.snapshot,
+      ),
     }),
   );
 

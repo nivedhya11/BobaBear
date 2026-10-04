@@ -55,11 +55,12 @@ import {
   findCheckoutRowById,
   findDestinationByCheckoutId,
   loadCheckoutAggregate,
+  loadLatestSnapshotForCheckout,
   lockCheckoutForUpdate,
   mapDestinationRow,
   newSnapshotId,
 } from "./repository";
-import { buildSnapshotCandidate } from "./snapshot";
+import { buildSnapshotCandidate, presentedComplimentaryVariantId } from "./snapshot";
 import {
   assertScheduledPickupProfile,
   sealEligibleScheduledWindow,
@@ -271,6 +272,11 @@ export async function evaluateCheckout(
   const labels = await persistence.withContext((ctx) =>
     loadCatalogLabelsForCart(ctx, preload.cart),
   );
+  const previousSnapshot =
+    preload.checkout.activeSnapshot ??
+    (await persistence.withContext((ctx) =>
+      loadLatestSnapshotForCheckout(ctx, preload.row.id),
+    ));
 
   const commercial = await persistence.withContext((ctx) =>
     buildCheckoutCommercialResult(ctx, {
@@ -288,6 +294,9 @@ export async function evaluateCheckout(
       fulfilmentTiming: (preload.row.fulfilmentTiming ?? "ASAP") as
         | "ASAP"
         | "SCHEDULED",
+      previouslyPresentedComplimentaryVariantId: presentedComplimentaryVariantId(
+        previousSnapshot,
+      ),
     }),
   );
 

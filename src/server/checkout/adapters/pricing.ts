@@ -259,6 +259,7 @@ export async function buildCheckoutCommercialResult(
     /** IMP-036H — defaults DELIVERY. PICKUP structurally omits delivery charge. */
     fulfilmentMode?: FulfilmentMode;
     fulfilmentTiming?: "ASAP" | "SCHEDULED";
+    previouslyPresentedComplimentaryVariantId?: string | null;
   },
 ): Promise<CheckoutCommercialResult> {
   assertApplicationRole(context, "buildCheckoutCommercialResult");
@@ -296,6 +297,8 @@ export async function buildCheckoutCommercialResult(
       fulfilmentMode,
       fulfilmentTiming: input.fulfilmentTiming ?? null,
       firstOrderPurchaseStatus,
+      previouslyPresentedComplimentaryVariantId:
+        input.previouslyPresentedComplimentaryVariantId ?? null,
       charges: packagingDefs.map((c) => ({
         chargeDefinitionId: c.chargeDefinitionId,
         calculationMode: c.calculationMode,
@@ -361,6 +364,8 @@ export async function buildCheckoutCommercialResult(
       fulfilmentMode,
       fulfilmentTiming: input.fulfilmentTiming ?? null,
       firstOrderPurchaseStatus,
+      previouslyPresentedComplimentaryVariantId:
+        input.previouslyPresentedComplimentaryVariantId ?? null,
       charges: finalCharges.map((c) => ({
         chargeDefinitionId: c.chargeDefinitionId,
         calculationMode: c.calculationMode,

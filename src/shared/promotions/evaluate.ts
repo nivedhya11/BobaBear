@@ -39,6 +39,11 @@ export type EvaluatePromotionsInput = Readonly<{
     coupon: CouponRecord | null;
     promotion: PromotionDefinition | null;
   }> | null;
+  /**
+   * Complimentary variant previously selected/presented on this checkout
+   * attempt. Absence means no shown complimentary item.
+   */
+  previouslyPresentedComplimentaryVariantId?: string | null;
   /** IMP-022: true when Payment redemption claims can enforce capacity. */
   redemptionEnforcementAvailable?: boolean;
 }>;
@@ -191,8 +196,12 @@ export function evaluatePromotions(input: EvaluatePromotionsInput): Omit<
   const { result: couponResultDraft, couponPromotion } = evaluateSubmittedCoupon(input);
 
   const eligible: EligiblePromotion[] = [];
-  let complimentaryItemUnavailable =
-    couponResultDraft?.reasonCode === "COMPLIMENTARY_UNAVAILABLE";
+  const presentedComplimentaryVariantId =
+    input.previouslyPresentedComplimentaryVariantId ?? null;
+  const availability = input.context.complimentaryVariantAvailability;
+  const complimentaryItemUnavailable =
+    presentedComplimentaryVariantId !== null &&
+    (!availability || availability.get(presentedComplimentaryVariantId) !== true);
   for (const promotion of input.promotions) {
     if (promotion.triggerType === "coupon") continue; // only via submitted coupon
     if (promotion.status !== "active") continue;
@@ -200,11 +209,6 @@ export function evaluatePromotions(input: EvaluatePromotionsInput): Omit<
     const eligibility = evaluateEligibility(promotion, input.snapshot, input.context);
     if (eligibility.eligible) {
       eligible.push({ promotion });
-    } else if (
-      isComplimentaryPromotion(promotion) &&
-      eligibility.reasonCode === "COMPLIMENTARY_UNAVAILABLE"
-    ) {
-      complimentaryItemUnavailable = true;
     }
   }
   if (couponPromotion) {
