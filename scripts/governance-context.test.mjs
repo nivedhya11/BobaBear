@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
+import { deriveExecutionProjection } from "./governance-context.mjs";
 import {
   EXTRACTION_SOURCES,
   GOVERNANCE_CONTEXT_NOTICE,
@@ -141,6 +142,38 @@ describe("governance context snapshot", () => {
       readFileSync(path.join(projectRoot, SNAPSHOT_REL), "utf8"),
       serializeGovernanceContext(buildGovernanceContext(projectRoot)),
     );
+  });
+
+  it("derives execution fields from canonical GOV-2 state rather than contracts", () => {
+    const parsed = buildGovernanceContext(projectRoot);
+    const stateText = readFileSync(path.join(projectRoot, "docs/platform/STATE.md"), "utf8");
+    const block = JSON.parse(stateText.match(/<!--\s*gov2-state\s*([\s\S]*?)-->/)[1]);
+    assert.equal(block.contracts.implementationAuthorized, undefined);
+    assert.equal(block.contracts.started, undefined);
+    assert.equal(block.contracts.implementationStarted, undefined);
+    assert.equal(block.contracts.implementationComplete, undefined);
+    assert.equal(block.contracts.accepted, undefined);
+    const derived = deriveExecutionProjection(block);
+    assert.equal(parsed.currentSliceGates.implementationAuthorized, derived.implementationAuthorized);
+    assert.equal(parsed.currentSliceGates.implementationStarted, derived.implementationStarted);
+    assert.equal(parsed.currentSliceGates.implementationComplete, derived.implementationComplete);
+    assert.equal(parsed.currentSliceGates.accepted, derived.accepted);
+    assert.equal(derived.implementationAuthorized, "YES");
+    assert.equal(derived.implementationStarted, "YES");
+    assert.equal(derived.implementationComplete, "NO");
+    assert.equal(derived.accepted, "NO");
+  });
+
+  it("cannot diverge from canonical state when contracts omit execution copies", () => {
+    const flipped = {
+      implementation: { authorized: false, complete: true, trancheStatuses: { T1: "PASS" } },
+      accepted: true,
+    };
+    const derived = deriveExecutionProjection(flipped);
+    assert.equal(derived.implementationAuthorized, "NO");
+    assert.equal(derived.implementationComplete, "YES");
+    assert.equal(derived.accepted, "YES");
+    assert.equal(derived.implementationStarted, "YES");
   });
 
   it("reports the first drifted line and does not treat a byte change as equal", () => {

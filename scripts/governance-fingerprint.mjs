@@ -67,6 +67,8 @@ const REQUIRED_HISTORY_MARKDOWN = [
   "docs/platform/history/README.md",
   "docs/platform/history/ROADMAP-GTM-R113-pre-compression.md",
   "docs/platform/history/STATE-STATE-R111-pre-compression.md",
+  "docs/platform/history/ROADMAP-GTM-R188-pre-gov2.md",
+  "docs/platform/history/STATE-STATE-R186-pre-gov2.md",
 ];
 
 /**

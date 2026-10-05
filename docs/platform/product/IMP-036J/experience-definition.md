@@ -11,8 +11,7 @@
   "experienceGate": "PASS",
   "architectureFit": "PASS",
   "architectureLocked": "YES",
-  "designReadiness": "PASS",
-  "implementationAuthorized": true
+  "designReadiness": "PASS"
 }
 -->
 
@@ -40,8 +39,6 @@ EXPERIENCE_GATE_EVALUATED_GOVERNANCE_FINGERPRINT = f7288bc395a2c46ef754bcc344eae
 ARCHITECTURE_FIT = PASS
 ARCHITECTURE_LOCKED = YES
 DESIGN_READINESS = PASS
-IMPLEMENTATION_AUTHORIZED = YES
-IMPLEMENTATION_STARTED = NO
 PRODUCT_DECISION_REQUIRED = NO
 EXPERIENCE_GATE_RESULT = PASS
 
@@ -50,7 +47,6 @@ X_SCALE_ORTHOGONAL_TO_CR_SCALE = YES
 X_SCALE_ORTHOGONAL_TO_AGENTS_R0_R3 = YES
 RAW_BACKEND_LANGUAGE_TO_CUSTOMER = PROHIBITED
 FOUNDER_UAT_REQUIRED = YES
-FOUNDER_EXPERIENCE_UAT = NOT_PERFORMED
 ```
 
 This document is the approved Experience Definition for IMP-036J. Independent Experience Gate
@@ -59,7 +55,7 @@ review `5342581233` returned PASS for `XD-IMP-036J-DRAFT-6`. The version stays
 Architecture Fit current source is `IMP-036J-FIT-CANDIDATE-9`. Architecture Fit is PASS.
 Architecture is LOCKED. Prior lock history: `IMP-036J-FIT-CANDIDATE-5` (independent review
 `5347761109`). Design Readiness is PASS. The Implementation Plan is PASS for
-`IMP-036J-PLAN-CANDIDATE-1`. Implementation Authorization is APPROVED on 2026-10-01 (pull request #332 comment `5926464685`). The next gate is Implementation Tranche 1. Implementation is AUTHORIZED and NOT_STARTED. This record does not change
+`IMP-036J-PLAN-CANDIDATE-1`. Implementation Authorization APPROVED on 2026-10-01 (pull request #332 comment `5926464685`) is immutable authorization provenance. Current execution/lifecycle is owned by [`STATE.md`](../../STATE.md). This record does not change
 [`product-definition.md`](./product-definition.md). Lifecycle truth remains
 [`ROADMAP.md`](../../ROADMAP.md) and [`STATE.md`](../../STATE.md).
 
@@ -1179,7 +1175,7 @@ An experience requirement that Fit cannot support safely remains a Fit STOP unde
 DESIGN_READINESS = PASS
 ```
 
-Design Readiness PASS is recorded in [`design-readiness.md`](./design-readiness.md) for `IMP-036J-DESIGN-CANDIDATE-2`. The Implementation Plan is PASS. This Experience Definition does not change. Implementation Authorization is APPROVED. The next gate is Implementation Tranche 1. Implementation is AUTHORIZED and NOT_STARTED.
+Design Readiness PASS is recorded in [`design-readiness.md`](./design-readiness.md) for `IMP-036J-DESIGN-CANDIDATE-2`. The Implementation Plan is PASS. This Experience Definition does not change. Implementation Authorization APPROVED is immutable provenance. Current execution/lifecycle is owned by STATE.md.
 
 ---
 
@@ -1198,7 +1194,7 @@ When implementation later exists, evidence under TEST-1 separates:
 Founder Experience UAT, when that human gate is reached, looks at discoverability, first impression, hesitation, clarity, trust, friction, recovery, content, mobile behaviour, brand coherence, and the Experience Intent in section 2. Only the Founder gives that verdict.
 
 ```text
-FOUNDER_EXPERIENCE_UAT = NOT_PERFORMED
+FOUNDER_UAT_REQUIRED = YES
 FOUNDER_UAT = NOT_PASSED_BY_THIS_CANDIDATE
 ```
 
@@ -1444,11 +1440,8 @@ INDEPENDENT_EXPERIENCE_GATE_REVIEW_ID = 5342581233
 EXPERIENCE_GATE_EVALUATED_HEAD = 1fbabd2fb80851912815efe4e0ebe331a1318557
 ARCHITECTURE_FIT = PASS
 DESIGN_READINESS = PASS
-IMPLEMENTATION_AUTHORIZED = YES
-IMPLEMENTATION_STARTED = NO
 ```
 
 Independent Experience Gate PASS is persisted. Architecture Fit current source is `IMP-036J-FIT-CANDIDATE-9`. Architecture Fit is PASS and architecture is LOCKED. Prior lock history: independent review `5347761109` passed `IMP-036J-FIT-CANDIDATE-5`. `ARCHITECTURE_MECHANISM_CHOSEN = YES`
-records that choice by locked Architecture Fit, not by this Experience Definition. Implementation Authorization is APPROVED on 2026-10-01. The next gate is Implementation Tranche 1. The Implementation Plan is PASS.
-Implementation is AUTHORIZED and NOT_STARTED.
+records that choice by locked Architecture Fit, not by this Experience Definition. Implementation Authorization APPROVED on 2026-10-01 is immutable authorization provenance. Current execution/lifecycle is owned by STATE.md.
 Experience semantics and Experience Gate provenance are unchanged.

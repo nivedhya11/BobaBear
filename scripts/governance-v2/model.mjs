@@ -1,9 +1,9 @@
 /**
  * GOV-2 generic governance model.
  *
- * TEST_ONLY fixtures and this module are NON_AUTHORITATIVE in PR A.
- * ROADMAP.md and STATE.md remain the live lifecycle authorities.
- * GOV2_CUTOVER = NO
+ * TEST_ONLY fixtures and this module are used by engine tests.
+ * Live current execution is validated from ROADMAP/STATE GOV-2 blocks.
+ * GOV2_CUTOVER_ACCEPTANCE = NO
  */
 import { evaluateCapabilityLifecycle } from "../project-consistency.mjs";
 
@@ -23,7 +23,7 @@ export const LAST_TRANSITION_TYPE = Object.freeze({
   TRANCHE_PASS: "TRANCHE_PASS",
 });
 
-/** Eventual GOV-2 delivery overlay. PR A does not cut over AGENTS.md. */
+/** Delivery overlay recorded in AGENTS.md. */
 export const DELIVERY_RISK_TIER = Object.freeze({
   GREEN: "GREEN",
   AMBER: "AMBER",
@@ -48,11 +48,20 @@ export function aggregate(findings) {
  * @param {unknown} lastTransition
  * @param {Iterable<string>} trancheIds
  */
-export function validateLastTransitionShape(lastTransition, trancheIds) {
+export function validateLastTransitionShape(lastTransition, trancheIds, statuses) {
+  const passed =
+    statuses != null && typeof statuses === "object" && !Array.isArray(statuses)
+      ? Object.values(statuses).filter((status) => status === TRANCHE_STATUS.PASS)
+      : [];
   if (lastTransition == null) {
+    if (passed.length > 0) {
+      return aggregate([
+        finding("INVALID_LAST_TRANSITION", "lastTransition", "passed tranches require lastTransition evidence"),
+      ]);
+    }
     return { ok: true, findings: [] };
   }
-  if (typeof lastTransition !== "object") {
+  if (typeof lastTransition !== "object" || Array.isArray(lastTransition)) {
     return aggregate([finding("INVALID_LAST_TRANSITION", "lastTransition", "lastTransition must be an object")]);
   }
   const findings = [];
@@ -66,13 +75,36 @@ export function validateLastTransitionShape(lastTransition, trancheIds) {
       finding("INVALID_LAST_TRANSITION", "lastTransition.tranche", `lastTransition.tranche ${JSON.stringify(lastTransition.tranche)} is not in the tranche plan`),
     );
   }
-  if (lastTransition.sourcePr != null && !Number.isInteger(lastTransition.sourcePr)) {
-    findings.push(finding("INVALID_LAST_TRANSITION", "lastTransition.sourcePr", "sourcePr must be an integer pull-request number"));
+  if (type === LAST_TRANSITION_TYPE.TRANCHE_PASS) {
+    if (!isPositiveSourcePr(lastTransition.sourcePr) && !isValidMergeCommit(lastTransition.mergeCommit)) {
+      findings.push(
+        finding(
+          "INVALID_LAST_TRANSITION",
+          "lastTransition",
+          "TRANCHE_PASS requires a positive integer sourcePr or a valid mergeCommit",
+        ),
+      );
+    }
   }
-  if (lastTransition.mergeCommit != null && !SHA1_RE.test(String(lastTransition.mergeCommit))) {
+  if (lastTransition.sourcePr != null && !isPositiveSourcePr(lastTransition.sourcePr)) {
+    findings.push(
+      finding("INVALID_LAST_TRANSITION", "lastTransition.sourcePr", "sourcePr must be a positive integer pull-request number"),
+    );
+  }
+  if (lastTransition.mergeCommit != null && !isValidMergeCommit(lastTransition.mergeCommit)) {
     findings.push(finding("INVALID_LAST_TRANSITION", "lastTransition.mergeCommit", "mergeCommit must be a 40-character lowercase SHA-1"));
   }
   return aggregate(findings);
+}
+
+/** @param {unknown} value */
+export function isPositiveSourcePr(value) {
+  return Number.isInteger(value) && value > 0;
+}
+
+/** @param {unknown} value */
+export function isValidMergeCommit(value) {
+  return typeof value === "string" && SHA1_RE.test(value);
 }
 
 /**

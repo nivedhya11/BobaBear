@@ -95,6 +95,14 @@ jobs:
       - name: Script tests
         run: npm run test:scripts
 
+      - name: Governance v2 current
+        run: npm run governance:v2:current
+
+      - name: Governance v2 transition
+        env:
+          GOV2_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: npm run governance:v2:transition -- "$GOV2_BASE_SHA"
+
   commerce-core:
     name: Commerce core
     runs-on: ubuntu-latest

@@ -1,0 +1,5120 @@
+<!-- governance-meta
+{
+  "status": "CURRENT",
+  "authority": "ACCEPTED_STATE",
+  "stateVersion": "STATE-R186",
+  "acceptedThrough": "IMP-036I",
+  "currentProductSlice": "IMP-036J",
+  "nextProductSlice": "IMP-036K",
+  "pendingAcceptance": "NONE",
+  "gtmBoundary": "IMP-040",
+  "governanceHealth": "ALIGNED",
+  "lastReviewed": "2026-10-05",
+  "supersedes": "STATE-R185"
+}
+-->
+
+# BOBA Bear — Accepted State
+
+Coding-agent completion does **not** equal acceptance. This document is the independently accepted
+current-reality authority.
+
+Historical STATE evidence through STATE-R111 is preserved byte-for-byte in
+[`history/STATE-STATE-R111-pre-compression.md`](./history/STATE-STATE-R111-pre-compression.md).
+Do not infer current lifecycle from that snapshot.
+
+## 1. Accepted Position
+
+```text
+Accepted Through:          IMP-036I — Scheduled Fulfilment
+Accepted Inserted Slice:   IMP-005A — Dockerized local application runtime; IMP-026C — Pilot Customer-Commerce UX Hardening; IMP-028A — Food Direct UX Foundation; IMP-028B — Customer Menu Projection + Discovery; IMP-028C — Food Customization; IMP-028D — Desktop Ordering Continuity
+Accepted Range:            IMP-001 → IMP-036I (including IMP-005A and IMP-026C)
+```
+
+## 2. Current Work Position
+
+```text
+Current Product Implementation: IMP-037 (unresolved held predecessor; provider-blocked; not acceptance)
+Pending Acceptance:             NONE
+Current Product Slice:          IMP-036J — Promotions, Coupons & Offers
+Next Product Slice:             IMP-036K — Revenue Recommendations
+Unresolved Predecessor:         IMP-037 — Backup, Restore & Migration Readiness
+Current Governance Activity:    IMP-036J PRODUCT_DEFINITION APPROVED / GATE PASS
+                              IMP-036J EXPERIENCE_DEFINITION APPROVED / GATE PASS
+                              IMP-036J ARCHITECTURE_FIT PASS / ARCHITECTURE_LOCKED
+                              (formal lifecycle IMPLEMENTATION_IN_PROGRESS;
+                              nextGate: IMPLEMENTATION_TRANCHE_8;
+                              PRODUCT_DELIVERY_PROCESS: PD-2;
+                              EXPERIENCE_STANDARD: EXP-1;
+                              PRODUCT_LANGUAGE_STANDARD: LANG-1;
+                              IMP036J_EXPERIENCE_CRITICALITY: X3;
+                              IMP036J_CHANGE_RISK: CR2;
+                              IMP036J_EXPERIENCE_DEFINITION: APPROVED;
+                              IMP036J_EXPERIENCE_DEFINITION_VERSION: XD-IMP-036J-DRAFT-6;
+                              IMP036J_EXPERIENCE_GATE: PASS;
+                              INDEPENDENT_EXPERIENCE_GATE_REVIEW_ID: 5342581233;
+                              EXPERIENCE_GATE_EVALUATED_HEAD: 1fbabd2fb80851912815efe4e0ebe331a1318557;
+                              EXPERIENCE_GATE_EVALUATED_TREE: 4eb6aa5e5a1588ef64527d7f38f7c5f07339d701;
+                              EXPERIENCE_GATE_EVALUATED_WORKING_TREE_FINGERPRINT: 060269654ee36f130f8f8e4cc47fc6b3116466c6a56e2a29e061af1da725632d;
+                              IMP036J_ARCHITECTURE_FIT: PASS;
+                              IMP036J_ARCHITECTURE_LOCKED: YES;
+                              ARCHITECTURE_FIT_SOURCE_CANDIDATE: IMP-036J-FIT-CANDIDATE-9;
+                              INDEPENDENT_ARCHITECTURE_FIT_REVIEW: PASS;
+                              ARCHITECTURE_FIT_EVALUATED_HEAD: 052289471cfc2424879932e16fd88d6c16696de8;
+                              ARCHITECTURE_FIT_EVALUATED_TREE: ed6d0b4c7e82eef4fd764c0fe3f73539f8e1858b;
+                              ARCHITECTURE_FIT_EVALUATED_GOVERNANCE_FINGERPRINT: 5be074e0736c097b6d68f18a3b71cd26cc69c03600eac0cf956bf74d0b6834b0;
+                              ARCHITECTURE_FIT_EVALUATED_CI_RUN: 36611527090;
+                              ARCHITECTURE_FIT_EVALUATED_CI_ATTEMPT: 2;
+                              ARCHITECTURE_FIT_EVALUATED_CODEQL_RUN: 36611527053;
+                              ARCHITECTURE_FIT_EVALUATED_CODEX_EVIDENCE: 5896150834;
+                              HISTORICAL_CANDIDATE_5_ARCHITECTURE_FIT: PASS;
+                              HISTORICAL_CANDIDATE_6_ARCHITECTURE_FIT_REVIEW: STOP;
+                              HISTORICAL_CANDIDATE_7_ARCHITECTURE_FIT_REVIEW: STOP;
+                              HISTORICAL_CANDIDATE_8_ARCHITECTURE_FIT_REVIEW: STOP;
+                              QUALITY_TEST_PLAN_FINALIZED: YES;
+                              MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED: YES;
+                              IMPLEMENTATION_PLAN: PASS;
+                              IMPLEMENTATION_PLAN_FINALIZED: YES;
+                              IMPLEMENTATION_PLAN_SOURCE: IMP-036J-PLAN-CANDIDATE-1;
+                              READY_FOR_IMPLEMENTATION_AUTHORIZATION: YES;
+                              IMP036J_IMPLEMENTATION_PLAN: PASS;
+                              IMPLEMENTATION_PLAN_ARCHITECT_REVIEW: 5925360293;
+                              IMPLEMENTATION_PLAN_EVALUATED_HEAD: 2cf349b10ecb3dd326818fd401662ed37817b603;
+                              IMPLEMENTATION_PLAN_EVALUATED_TREE: 11e0a46f7b19bf5b7b7e17cfe2f0656c3b5f8bdb;
+                              IMP036J_DESIGN_READINESS: PASS;
+                              DESIGN_READINESS_SOURCE_CANDIDATE: IMP-036J-DESIGN-CANDIDATE-2;
+                              QUALITY_TEST_PLAN_SOURCE_CANDIDATE: IMP-036J-QUALITY-CANDIDATE-2;
+                              MEASUREMENT_PLAN_SOURCE_CANDIDATE: IMP-036J-MEASUREMENT-CANDIDATE-2;
+                              IMP036J_DESIGN_READINESS_REVIEW: PASS;
+                              IMP036J_QUALITY_TEST_PLAN_REVIEW: PASS;
+                              IMP036J_MEASUREMENT_PLAN_REVIEW: PASS;
+                              DESIGN_READINESS_EVALUATED_HEAD: aa41c3744995a68ca9d435670be408b99cb6827d;
+                              DESIGN_READINESS_EVALUATED_TREE: be25a6ac7054e5dcc472b6ede37185c144eea6ed;
+                              DESIGN_READINESS_EVALUATED_GOVERNANCE_FINGERPRINT: 923025dc1618f978e5ba7ab11658c4f34a98de4910cd4788dd5062d60bcb1227;
+                              DESIGN_READINESS_EVALUATED_CI_RUN: 36760479246;
+                              DESIGN_READINESS_EVALUATED_CODEQL_RUN: 36760479256;
+                              DESIGN_READINESS_ARCHITECT_REVIEW: 5917691904;
+                              DESIGN_READINESS_ENGINEERING_REVIEWER: d308a8d9-92e3-42b3-88f7-9649101eb4db;
+                              IMP036J_IMPLEMENTATION_AUTHORIZATION: APPROVED;
+                              IMP036J_IMPLEMENTATION_AUTHORIZATION_DATE: 2026-10-01;
+                              IMPLEMENTATION_AUTHORIZATION_EVIDENCE: PR#332/5926464685;
+                              IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_8;
+                              FOUNDER_UAT: NOT_PERFORMED;
+                              GTM-R188 / STATE-R186;
+                              prior tip GTM-R187 / STATE-R185;
+                              prior tip GTM-R186 / STATE-R184;
+                              prior tip GTM-R185 / STATE-R183;
+                              prior tip GTM-R184 / STATE-R182;
+                              prior tip GTM-R183 / STATE-R181;
+                              prior tip GTM-R182 / STATE-R180;
+                              prior tip GTM-R181 / STATE-R179;
+                              prior tip GTM-R180 / STATE-R178;
+                              prior tip GTM-R179 / STATE-R177;
+                              prior tip GTM-R178 / STATE-R176;
+                              prior tip GTM-R177 / STATE-R175;
+                              prior tip GTM-R176 / STATE-R174;
+                              prior tip GTM-R175 / STATE-R173;
+                              prior tip GTM-R174 / STATE-R172;
+                              prior tip GTM-R173 / STATE-R171;
+                              prior tip GTM-R172 / STATE-R170;
+                              prior tip GTM-R171 / STATE-R169;
+                              prior tip GTM-R170 / STATE-R168;
+                              prior tip GTM-R169 / STATE-R167;
+                              prior tip GTM-R168 / STATE-R166;
+                              prior tip GTM-R167 / STATE-R165;
+                              prior tip GTM-R166 / STATE-R164;
+                              prior tip GTM-R165 / STATE-R163;
+                              IMP-036I remains COMPLETE_AND_ACCEPTED;
+                              IMP036J_ACTIVATED: YES;
+                              IMP036J_PRODUCT_DEFINITION: APPROVED
+                              IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-6;
+                              FD-036J-01: APPROVED 2026-09-27;
+                              FD-036J-02: APPROVED 2026-09-27;
+                              FD-036J-03: APPROVED 2026-09-28;
+                              OPEN_FOUNDER_PRODUCT_DECISIONS: 0;
+                              UNRESOLVED_MATERIAL_PRODUCT_DECISIONS: 0;
+                              IMP036J_PRODUCT_DEFINITION_GATE: PASS;
+                              IMP036J_IMPLEMENTATION_AUTHORIZED: YES;
+                              IMP036J_STARTED: YES;
+                              IMP036J_IMPLEMENTATION_STARTED: YES;
+                              IMP036J_IMPLEMENTATION_COMPLETE: NO;
+                              IMP036J_FORMAL_LIFECYCLE: IMPLEMENTATION_IN_PROGRESS;
+                              IMP036J_TRANCHE_1: PASS;
+                              IMP036J_TRANCHE_2: PASS;
+                              IMP036J_TRANCHE_3: PASS;
+                              IMP036J_TRANCHE_4: PASS;
+                              IMP036J_TRANCHE_5: PASS;
+                              IMP036J_TRANCHE_6: PASS;
+                              IMP036J_TRANCHE_7: PASS;
+                              T7_STARTED: YES;
+                              T8_STARTED: NO;
+                              IMP036J_ACCEPTED: NO;
+                              D-382 AMENDED by D-383 for Revenue Recommendations identity, activation, and sequencing only;
+                              D-382 Promotions-first remainder binding;
+                              D-383 CURRENT parallel definition preparation;
+                              D-377 remains CURRENT program pause;
+                              prior tip GTM-R160 / STATE-R158;
+                              prior tip GTM-R159 / STATE-R157;
+                              prior tip GTM-R158 / STATE-R156;
+                              prior tip GTM-R157 / STATE-R155;
+                              prior tip GTM-R156 / STATE-R154;
+                              prior tip GTM-R154 / STATE-R152;
+                              IMP036I_ACTIVATED: YES; formal lifecycle COMPLETE_AND_ACCEPTED;
+                              IMP036I_PRODUCT_DEFINITION: APPROVED
+                              (PD-IMP-036I-DRAFT-4);
+                              READY_FOR_PRODUCT_DEFINITION_GATE: NO;
+                              OPEN_FOUNDER_DECISIONS: 0;
+                              UNRESOLVED_MATERIAL_PRODUCT_DECISIONS: 0;
+                              historical PD-IMP-036I-DRAFT-1 Gate: PERFORMED / STOP
+                              (review 5305796113);
+                              historical PD-IMP-036I-DRAFT-2 Gate: PERFORMED / STOP
+                              (review 5306341697);
+                              historical PD-IMP-036I-DRAFT-3 Gate: PERFORMED / STOP
+                              (review 5306868578);
+                              IMP036I_PRODUCT_DEFINITION_GATE: PASS;
+                              INDEPENDENT_PRODUCT_DEFINITION_GATE_REVIEW: 5307761142;
+                              gateEvaluatedHead: 1c4be04b6d6b51bdedebfea0485099dede3c7923;
+                              gateEvaluatedTree: a0774c9b2cb256f8d329fc49cea1c9859a39d1d7;
+                              gateEvaluatedFingerprint:
+                              07720d20f1e285ef46e6bd3be6d710be383baacde4facab7651482547b6dc15d;
+                              IMP036I_ARCHITECTURE_FIT: PASS;
+                              IMP036I_ARCHITECTURE_LOCKED: YES;
+                              INDEPENDENT_ARCHITECTURE_FIT_REVIEW: PASS;
+                              INDEPENDENT_ARCHITECTURE_FIT_REVIEW_ID: 5312653831;
+                              ARCHITECTURE_LOCK_PERSISTENCE_VERIFICATION: 5313026804;
+                              ARCHITECTURE_FIT_EVALUATED_HEAD:
+                              42e854b931e216fadc64b479371cebca4c38d17e;
+                              ARCHITECTURE_FIT_EVALUATED_TREE:
+                              279e0e1b0e8f52c96cfd12fc89b329f73281e38f;
+                              ARCHITECTURE_FIT_EVALUATED_WORKING_TREE_FINGERPRINT:
+                              b65f40b9e568a6d0188f1d031f41db3a072cb3b4683d2d966c2a994283575068;
+                              IMP036I_IMPLEMENTATION_AUTHORIZED: YES;
+                              IMP036I_IMPLEMENTATION_AUTHORIZATION: APPROVED;
+                              IMP036I_IMPLEMENTATION_AUTHORIZATION_DATE: 2026-09-25;
+                              IMP036I_STARTED: YES;
+                              IMP036I_IMPLEMENTATION_STARTED: YES;
+                              IMP036I_IMPLEMENTATION_COMPLETE: YES;
+                              IMP036I_ACCEPTED: YES;
+                              IMP036I_FOUNDER_UAT_REQUIRED: YES;
+                              IMP036I_FOUNDER_UAT: PASS;
+                              FOUNDER_UAT: PASS;
+                              IMP036I_FORMAL_ACCEPTANCE: ACCEPTED;
+                              IMP036I_INDEPENDENT_TECHNICAL_ACCEPTANCE: PASS;
+                              IMP036I_ACCEPTED_MAIN_SHA: 44f4d7d84af07c3226da606476844d8f05454b28;
+                              IMP036I_ACCEPTED_TREE: 3ec8a7714c25e6066453b47b7d006ef127abddbb;
+                              IMP036I_FOUNDER_UAT_CANDIDATE_FINGERPRINT:
+                              85fe93db116bfe86b7f5ba4c266c829433d44401ffd03bdec536b5f61be9c27c;
+                              IMP036I_FOUNDER_UAT_DECISION_DATE: 2026-09-27;
+                              IMP036I_FOUNDER_UAT_FINDING_001: RESOLVED;
+                              BLOCKING_FINDINGS_AT_ACCEPTANCE: NONE;
+                              IMP036I_TRANCHE5_INDEPENDENT_VERIFICATION: PASS;
+                              TRANCHE_1: PASS;
+                              TRANCHE_2: PASS;
+                              TRANCHE_3: PASS;
+                              TRANCHE_4: PASS;
+                              TRANCHE_5: PASS;
+                              FINANCIAL_DOCUMENT_NON_REGRESSION: PASS;
+                              IMP036I_INDEPENDENT_IMPLEMENTATION_REVIEW: PASS;
+                              IMP036I_IMPLEMENTATION_REVIEWED_HEAD:
+                              335e8b55c74b81d745e923b3d078d6af9ec0b5cc;
+                              IMP036I_IMPLEMENTATION_REVIEWED_TREE:
+                              4b75582d1726e552bdc1e45da15cf667b05de8e0;
+                              IMP036I_IMPLEMENTATION_REVIEWED_FINGERPRINT:
+                              5d79b21381f190682d3cb3f0a2f7e99d43919476f5384c3e1d74d3904218409b;
+                              nextGate: NONE;
+                              D-379: CURRENT; D-380: CURRENT; D-378: AMENDED; D-381: CURRENT;
+                              IMP-036H remains COMPLETE_AND_ACCEPTED;
+                              prior tip GTM-R153 / STATE-R151 (Product Definition Gate PASS);
+                              prior tip GTM-R152 / STATE-R150 (DRAFT-4 DRAFT_READY);
+                              prior tip GTM-R151 / STATE-R149 (DRAFT-3 DRAFT_READY; later Gate STOP);
+                              prior tip GTM-R150 / STATE-R148 (DRAFT-2 DRAFT_READY; later Gate STOP);
+                              prior tip GTM-R149 / STATE-R147 (DRAFT-1 DRAFT_READY; later Gate STOP);
+                              prior tip GTM-R148 / STATE-R146 (PRE_GATE activation);
+                              prior tip GTM-R147 / STATE-R145;
+                              PROGRAM_PAUSE: PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED;
+                              PROGRAM_PAUSE_AUTHORITY: D-377;
+                              IMP036H_ACTIVATED: YES; formal lifecycle
+                              COMPLETE_AND_ACCEPTED;
+                              IMP036H_PRODUCT_DEFINITION: APPROVED
+                              (PD-IMP-036H-DRAFT-1);
+                              IMP036H_PRODUCT_DEFINITION_GATE: PASS;
+                              IMP036H_ARCHITECTURE_FIT: PASS;
+                              IMP036H_ARCHITECTURE_LOCKED: YES;
+                              INDEPENDENT_ARCHITECTURE_FIT_REVIEW: PASS;
+                              IMP036H_IMPLEMENTATION_AUTHORIZED: YES;
+                              Implementation AUTHORIZED / STARTED / COMPLETE;
+                              IMP036H_STARTED: YES;
+                              IMP036H_IMPLEMENTATION_STARTED: YES;
+                              IMP036H_IMPLEMENTATION_COMPLETE: YES;
+                              IMP-036H_IMPLEMENTATION_COMPLETE: YES;
+                              IMP036H_ACCEPTED: YES;
+                              IMP036H_FOUNDER_UAT_REQUIRED: YES;
+                              IMP036H_FOUNDER_UAT: PASS;
+                              IMP036H_FORMAL_ACCEPTANCE: ACCEPTED;
+                              IMP036H_INDEPENDENT_TECHNICAL_ACCEPTANCE: PASS;
+                              IMP036H_INDEPENDENT_IMPLEMENTATION_REVIEW: PASS;
+                              IMP036H_INDEPENDENT_IMPLEMENTATION_REVIEW_ID: 5302239433;
+                              IMP036H_IMPLEMENTATION_REVIEWED_HEAD:
+                              649b7848f99918f927da4a77e98cd81cdc146e6b;
+                              IMP036H_IMPLEMENTATION_REVIEWED_TREE:
+                              b272adf40f89b0011fff07bf4d6b6d0d735df68a;
+                              IMP036H_IMPLEMENTATION_REVIEWED_FINGERPRINT:
+                              c2bc6a91ce536329bec0ad4af4d3264a5a39904d035af28442071b4e96e2f56a;
+                              IMP036H_IMPLEMENTATION_EVIDENCE: PR#246 comment 5810833593;
+                              IMP036H_AUTOMATED_ACCEPTANCE: 42/42 PASS;
+                              IMP036I_ACTIVATED: YES;
+                              HISTORICAL_CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038;
+                              CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038;
+                              CONTINUATION_EXCEPTION_AUTHORITY: PR#179/5771367844;
+                              HISTORICAL_IMP026_TO_IMP028_CONTINUATION: CLOSED;
+                              IMP037_HOLD: YES; IMP-037 IMPLEMENTATION_IN_PROGRESS;
+                              PHASE1_BLOCK_STATUS: BLOCKED_PROVIDER_ACCESS;
+                              IMP037_IMPLEMENTATION_COMPLETE: NO; IMP037_ACCEPTED: NO;
+                              IMP038_HOLD: YES;
+                              IMP-038 IMPLEMENTATION_IN_PROGRESS
+                              (HOLD — IMPLEMENTATION_COMPLETE / NOT_ACCEPTED);
+                              IMP038_IMPLEMENTATION_COMPLETE: YES; IMP038_ACCEPTED: NO;
+                              IMP038_ACCEPTANCE_BLOCKED_BY_IMP037: YES;
+                              IMP038_EXTERNAL_ASSESSMENT:
+                              DEFERRED_UNTIL_PRE_GTM_APPLICATION_SCOPE_STABILIZES;
+                              IMP038_FROZEN_RUNTIME_HEAD:
+                              dc6b19e6f88d4084e424d927e6467c374596fb0a;
+                              IMP038_FROZEN_RUNTIME_TREE:
+                              c3aefb57f3f6c941d7f14907b6c095c4aa7f0547;
+                              IMP038_FROZEN_RUNTIME_FINGERPRINT:
+                              2800fe11397ee2a01e9decf572f85adf5c3a8b244ca34b1f53d579e05feac589;
+                              GAP-EXT-ASSESS-001: NOT_CLOSED;
+                              IMP039_ACTIVATED: NO; IMP040_ACTIVATED: NO;
+                              historical IMP-037/038 progression preserved
+                              (APPROVED PD; Gate PASS; Fit PASS; architecture LOCKED;
+                              implementation AUTHORIZED / STARTED);
+                              Architecture tip ARCH-R23 / D-379 CURRENT / D-380 CURRENT
+                              (D-378 AMENDED; preserves ARCH-R22 / D-378 mode remainder;
+                              ARCH-R21 / D-375; pilot base ARCH-R20 / D-374);
+                              D-374_CREATED: YES; ARCH_R20_CREATED: YES;
+                              D-375_CREATED: YES; ARCH_R21_CREATED: YES;
+                              D-377_CREATED: YES; D-378_CREATED: YES; ARCH_R22_CREATED: YES;
+                              D-379_CREATED: YES; D-380_CREATED: YES; ARCH_R23_CREATED: YES;
+                              historical IMP-036G decision-register tip DR-21;
+                              nextGate: FOUNDER_UAT
+                              Founder UAT PASS 2026-09-24 on runtime candidate
+                              37bae964f964bddd317e4c290dc146097e4c8f57;
+                              governance reconciliation is NOT a new UAT candidate;
+                              IMP-036G remains COMPLETE_AND_ACCEPTED
+                              (GTM-R130 / STATE-R128);
+                              Founder UAT PASS 2026-09-18; formal acceptance recorded;
+                              accepted UAT candidate fbf690a67cda51bd6bbc1bad4a9d26f574c4286e /
+                              tree 84b6a502fcec646cb5a65f3257f19b85c64f49e1 /
+                              fingerprint 9f472ce6e1ccaa2fe914006c846fb3018d668b718f569b6d0cb4fa64c3013f9b;
+                              exact-main CI 35366698302 SUCCESS;
+                              post-acceptance exact-main CI 35376477139 SUCCESS;
+                              IMP036G_ACCEPTED: YES; IMP036G_FOUNDER_UAT: PASS;
+                              IMP036G_FORMAL_ACCEPTANCE: ACCEPTED;
+                              IMP036G_INDEPENDENT_TECHNICAL_ACCEPTANCE: PASS
+IMP-036G:                 COMPLETE_AND_ACCEPTED
+IMP036G_ACTIVATED:        YES
+IMP036G_ACCEPTED:         YES
+IMP036G_FOUNDER_UAT:      PASS
+IMP036G_FORMAL_ACCEPTANCE: ACCEPTED
+IMP-036H:                 COMPLETE_AND_ACCEPTED
+IMP036H_ACTIVATED:        YES
+IMP036H_PRODUCT_DEFINITION: APPROVED
+IMP036H_PRODUCT_DEFINITION_VERSION: PD-IMP-036H-DRAFT-1
+IMP036H_PRODUCT_DEFINITION_GATE: PASS
+IMP036H_ARCHITECTURE_FIT: PASS
+IMP036H_ARCHITECTURE_LOCKED: YES
+IMP036H_IMPLEMENTATION:   AUTHORIZED / STARTED / COMPLETE
+IMP036H_IMPLEMENTATION_AUTHORIZED: YES
+IMP036H_STARTED:          YES
+IMP036H_IMPLEMENTATION_STARTED: YES
+IMP036H_IMPLEMENTATION_COMPLETE: YES
+IMP-036H_IMPLEMENTATION_COMPLETE: YES
+IMP036H_ACCEPTED:         YES
+IMP036H_FOUNDER_UAT_REQUIRED: YES
+IMP036H_FOUNDER_UAT:      PASS
+IMP036H_FORMAL_ACCEPTANCE: ACCEPTED
+IMP036H_INDEPENDENT_IMPLEMENTATION_REVIEW: PASS
+IMP036H_INDEPENDENT_IMPLEMENTATION_REVIEW_ID: 5302239433
+IMP036H_INDEPENDENT_TECHNICAL_ACCEPTANCE: PASS
+IMP036H_AUTOMATED_ACCEPTANCE: 42/42 PASS
+IMP036H_IMPLEMENTATION_REVIEWED_HEAD: 649b7848f99918f927da4a77e98cd81cdc146e6b
+IMP036H_IMPLEMENTATION_REVIEWED_TREE: b272adf40f89b0011fff07bf4d6b6d0d735df68a
+IMP036H_IMPLEMENTATION_REVIEWED_FINGERPRINT: c2bc6a91ce536329bec0ad4af4d3264a5a39904d035af28442071b4e96e2f56a
+IMP036H_IMPLEMENTATION_EVIDENCE: PR#246 comment 5810833593
+IMP036H_ACCEPTED_MAIN_SHA: 37bae964f964bddd317e4c290dc146097e4c8f57
+IMP036H_ACCEPTED_TREE: f52cd6279deb22c251062880087a2078fc7bce3b
+IMP036H_ACCEPTED_CANDIDATE: 37bae964f964bddd317e4c290dc146097e4c8f57
+IMP036H_FOUNDER_UAT_CANDIDATE_BRANCH: main
+IMP036H_FOUNDER_UAT_CANDIDATE_HEAD: 37bae964f964bddd317e4c290dc146097e4c8f57
+IMP036H_FOUNDER_UAT_CANDIDATE_TREE: f52cd6279deb22c251062880087a2078fc7bce3b
+IMP036H_FOUNDER_UAT_CANDIDATE_FINGERPRINT: e49d860c721d2524b248738750530a416f8418d02d10b64e69531f8548fcfb79
+IMP036H_FOUNDER_UAT_DECISION_DATE: 2026-09-24
+IMP036H_FOUNDER_UAT_ACCEPTANCE_AUTHORITY: Founder
+IMP036H_FOUNDER_UAT_CHECKMARKS: pickup_profile=PASS; customer_pickup=PASS; payment=PASS; operations_handover=PASS; customer_order_history=PASS; mode_switching=PASS; unavailable_state=PASS; mobile=PASS; overall=PASS; findings=NONE_BLOCKING
+IMP-036I:                 COMPLETE_AND_ACCEPTED
+IMP036I_ACTIVATED:        YES
+IMP036I_PRODUCT_DEFINITION: APPROVED
+IMP036I_PRODUCT_DEFINITION_VERSION: PD-IMP-036I-DRAFT-4
+IMP036I_PRODUCT_DEFINITION_GATE: PASS
+IMP036I_ARCHITECTURE_FIT: PASS
+IMP036I_ARCHITECTURE_LOCKED: YES
+IMP036I_IMPLEMENTATION_AUTHORIZED: YES
+IMP036I_IMPLEMENTATION_AUTHORIZATION: APPROVED
+IMP036I_IMPLEMENTATION_AUTHORIZATION_DATE: 2026-09-25
+IMP036I_STARTED:          YES
+IMP036I_IMPLEMENTATION_STARTED: YES
+IMP036I_IMPLEMENTATION_COMPLETE: YES
+IMP-036I_IMPLEMENTATION_COMPLETE: YES
+IMP036I_ACCEPTED:         YES
+IMP036I_FOUNDER_UAT_REQUIRED: YES
+IMP036I_FOUNDER_UAT: PASS
+FOUNDER_UAT: PASS
+IMP036I_FORMAL_ACCEPTANCE: ACCEPTED
+IMP036I_INDEPENDENT_TECHNICAL_ACCEPTANCE: PASS
+IMP036I_INDEPENDENT_IMPLEMENTATION_REVIEW: PASS
+IMP036I_ACCEPTED_MAIN_SHA: 44f4d7d84af07c3226da606476844d8f05454b28
+IMP036I_ACCEPTED_TREE: 3ec8a7714c25e6066453b47b7d006ef127abddbb
+IMP036I_ACCEPTED_CANDIDATE: 44f4d7d84af07c3226da606476844d8f05454b28
+IMP036I_FOUNDER_UAT_CANDIDATE_BRANCH: main
+IMP036I_FOUNDER_UAT_CANDIDATE_HEAD: 44f4d7d84af07c3226da606476844d8f05454b28
+IMP036I_FOUNDER_UAT_CANDIDATE_TREE: 3ec8a7714c25e6066453b47b7d006ef127abddbb
+IMP036I_FOUNDER_UAT_CANDIDATE_FINGERPRINT: 85fe93db116bfe86b7f5ba4c266c829433d44401ffd03bdec536b5f61be9c27c
+IMP036I_FOUNDER_UAT_DECISION_DATE: 2026-09-27
+IMP036I_FOUNDER_UAT_ACCEPTANCE_AUTHORITY: Founder
+IMP036I_FOUNDER_UAT_CHECKMARKS: configuration=PASS; finding_001_recovery=PASS; pickup_asap=PASS; pickup_scheduled=PASS; delivery_scheduled=PASS; operations_visibility=PASS; derived_timing_cues=PASS; pickup_boundary=PASS; delivery_manual_dispatch=PASS; commercial_recovery=PASS; delivery_asap_fresh=NOT_REEXECUTED; customer_cancel_manual=NOT_REEXECUTED; mobile_final_spotcheck=NOT_REEXECUTED; overall=PASS_BY_FOUNDER; findings=NONE_BLOCKING
+IMP036I_FOUNDER_UAT_FINDING_001: RESOLVED
+BLOCKING_FINDINGS_AT_ACCEPTANCE: NONE
+IMP036I_FOUNDER_STAGING_PROJECT: boba-staging
+IMP036I_FOUNDER_STAGING_CANDIDATE_MATCH: YES
+IMP036I_FOUNDER_STAGING_STATUS: FOUNDER_UAT_COMPLETE
+IMP036I_FOUNDER_STAGING_RUNNING_SHA: 44f4d7d84af07c3226da606476844d8f05454b28
+nextGate: NONE
+INDEPENDENT_PRODUCT_DEFINITION_GATE_REVIEW: 5307761142
+IMP-037:                  IMPLEMENTATION_IN_PROGRESS
+IMP037_HOLD:              YES
+IMP037_ACTIVATED:         YES
+IMP037_PRODUCT_DEFINITION: APPROVED
+IMP037_PRODUCT_DEFINITION_VERSION: PD-IMP-037-DRAFT-1
+IMP037_PRODUCT_DEFINITION_GATE: PASS
+IMP037_ARCHITECTURE_FIT:  PASS
+IMP037_ARCHITECTURE_LOCKED: YES
+IMP037_IMPLEMENTATION_AUTHORIZED: YES
+IMP037_STARTED:           YES
+IMP037_REPOSITORY_IMPLEMENTATION_MERGED: YES
+IMP037_IMPLEMENTATION_PR: 174
+IMP037_IMPLEMENTATION_REVIEWED_HEAD: ae7328efe1add11a9a4299150251fe14c71b2730
+IMP037_IMPLEMENTATION_REVIEWED_TREE: 4ff19a31db947cafadf690cf6bf1b6d2f1de14ac
+IMP037_INDEPENDENT_IMPLEMENTATION_REVIEW: PASS
+IMP037_INDEPENDENT_IMPLEMENTATION_REVIEW_ID: 5265354130
+IMP037_IMPLEMENTATION_MERGE_SHA: f77a54819f51ad5648dda8acb3a7c93345cd5d6c
+IMP037_IMPLEMENTATION_MERGE_TREE: 4ff19a31db947cafadf690cf6bf1b6d2f1de14ac
+IMP037_POST_MERGE_CI: 35587376968
+IMP037_POST_MERGE_CI_RESULT: SUCCESS
+IMP037_REPOSITORY_IMPLEMENTATION: MERGED
+IMP037_EXTERNAL_RECOVERY_PROOF: NOT_PERFORMED
+IMP037_IMPLEMENTATION_COMPLETE: NO
+IMP037_ACCEPTED:          NO
+IMP037_FOUNDER_UAT_REQUIRED: YES
+IMP037_FOUNDER_UAT:       NOT_PERFORMED
+PHASE1_BLOCK_STATUS:      BLOCKED_PROVIDER_ACCESS
+PROVIDER_DEPENDENT_PROOF: DEFERRED_PENDING_PROVIDER_ACCESS
+IMP-038:                  IMPLEMENTATION_IN_PROGRESS (HOLD — IMPLEMENTATION_COMPLETE / NOT_ACCEPTED)
+IMP038_HOLD:              YES
+IMP038_ACTIVATED:         YES
+IMP038_PRODUCT_DEFINITION: APPROVED
+IMP038_PRODUCT_DEFINITION_VERSION: PD-IMP-038-DRAFT-2
+IMP038_PRODUCT_DEFINITION_GATE: PASS
+IMP038_ARCHITECTURE_FIT:  PASS
+IMP038_ARCHITECTURE_LOCKED: YES
+IMP038_IMPLEMENTATION_AUTHORIZED: YES
+IMP038_STARTED:           YES
+FOUNDER_IMP038_IMPLEMENTATION_AUTHORIZATION: CURSOR_SESSION_MANDATE
+IMP038_IMPLEMENTATION_AUTHORIZATION_BASE_HEAD: d14c3678b92a87052682b9559764654f5f9d3851
+IMP038_IMPLEMENTATION_AUTHORIZATION_BASE_TREE: 682f1597a6f991cddde7d41e9e6705c1bed335b1
+IMP038_IMPLEMENTATION_COMPLETE: YES
+IMP038_ACCEPTED:          NO
+IMP038_ACCEPTANCE_BLOCKED_BY_IMP037: YES
+IMP038_EXTERNAL_ASSESSMENT: DEFERRED_UNTIL_PRE_GTM_APPLICATION_SCOPE_STABILIZES
+IMP038_FROZEN_RUNTIME_HEAD: dc6b19e6f88d4084e424d927e6467c374596fb0a
+IMP038_FROZEN_RUNTIME_TREE: c3aefb57f3f6c941d7f14907b6c095c4aa7f0547
+IMP038_FROZEN_RUNTIME_FINGERPRINT: 2800fe11397ee2a01e9decf572f85adf5c3a8b244ca34b1f53d579e05feac589
+GAP-EXT-ASSESS-001:       NOT_CLOSED
+IMP038_FOUNDER_UAT_REQUIRED: YES
+IMP038_FOUNDER_UAT:       NOT_PERFORMED
+IMP038_INDEPENDENT_ARCHITECTURE_FIT_REVIEW: PASS
+IMP038_INDEPENDENT_ARCHITECTURE_FIT_REVIEWED_HEAD: 3b03164d6581c5a98a893c24e92eaddece004e90
+IMP038_INDEPENDENT_ARCHITECTURE_FIT_REVIEWED_TREE: 5bb499fa84a5bf02682b30518f2bf898ddb23540
+IMP038_INDEPENDENT_ARCHITECTURE_FIT_REVIEW_ID: 5279884548
+IMP038_ARCHITECTURE_FIT_EVALUATED_HEAD: 43007808849f093d84cbe710f32a728b41a9e5a2
+IMP038_ARCHITECTURE_FIT_EVALUATED_TREE: 581fb23631df40044ec7b9c449545959a90b9998
+IMP038_ARCHITECTURE_FIT_EVALUATED_WORKING_TREE_FINGERPRINT: ab00d1ab23f3c7d8b140feefcd1a0787f1fedf90ab08a9934c9a892a77c8184d
+INDEPENDENT_ARCHITECTURE_FIT_REVIEW: PASS
+INDEPENDENT_ARCHITECTURE_FIT_REVIEWED_HEAD: aab814c238c499367ee921e9f8ffb03ff7b1b373
+INDEPENDENT_ARCHITECTURE_FIT_REVIEWED_TREE: 93d4e83d4a73c61c9439bcaae2799920fcca46db
+INDEPENDENT_ARCHITECTURE_FIT_REVIEW_ID: 5295149318
+ARCHITECTURE_FIT_EVALUATED_HEAD: aab814c238c499367ee921e9f8ffb03ff7b1b373
+ARCHITECTURE_FIT_EVALUATED_TREE: 93d4e83d4a73c61c9439bcaae2799920fcca46db
+ARCHITECTURE_FIT_EVALUATED_WORKING_TREE_FINGERPRINT: 74b1254f22c9131a6e073522cf9310f264866e442cc074775ad5f4b214f0e51e
+IMP-039:                  PLANNED / NOT_ACTIVATED / NOT_AUTHORIZED / NOT_STARTED
+IMP039_ACTIVATED:         NO
+IMP-040:                  PLANNED / NOT_ACTIVATED / NOT_AUTHORIZED / NOT_STARTED
+IMP040_ACTIVATED:         NO
+PROGRAM_PAUSE:            PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED
+PROGRAM_PAUSE_AUTHORITY:  D-377
+HISTORICAL_CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038
+CONTINUATION_EXCEPTION:   IMP037_PROVIDER_BLOCKED_TO_IMP038
+CONTINUATION_EXCEPTION_AUTHORITY: PR#179/5771367844
+IMP037_PROVIDER_BLOCKED_TO_IMP038: YES
+HISTORICAL_IMP026_TO_IMP028_CONTINUATION: CLOSED
+D-374_CREATED:            YES
+ARCH_R20_CREATED:         YES
+D-375_CREATED:            YES
+ARCH_R21_CREATED:         YES
+D-377_CREATED:            YES
+D-378_CREATED:            YES
+ARCH_R22_CREATED:         YES
+D-379_CREATED:            YES
+D-380_CREATED:            YES
+ARCH_R23_CREATED:         YES
+IMP-036J: ARCHITECTURE_LOCKED
+IMP-036I: COMPLETE_AND_ACCEPTED
+IMP036I_ACCEPTED:         YES
+ADDITIONAL_SEQUENCING_AUTHORITY: D-382
+IMP036J_PRODUCT_DEFINITION: APPROVED
+IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-6
+IMP036J_PRODUCT_DEFINITION_GATE: PASS
+IMP036J_EXPERIENCE_DEFINITION: APPROVED
+IMP036J_EXPERIENCE_GATE: PASS
+IMP036J_ARCHITECTURE_FIT: PASS
+IMP036J_ARCHITECTURE_LOCKED: YES
+ARCHITECTURE_FIT_SOURCE_CANDIDATE: IMP-036J-FIT-CANDIDATE-9
+ARCHITECTURE_FIT_EVALUATED_HEAD: 052289471cfc2424879932e16fd88d6c16696de8
+ARCHITECTURE_FIT_EVALUATED_TREE: ed6d0b4c7e82eef4fd764c0fe3f73539f8e1858b
+ARCHITECTURE_FIT_EVALUATED_GOVERNANCE_FINGERPRINT: 5be074e0736c097b6d68f18a3b71cd26cc69c03600eac0cf956bf74d0b6834b0
+ARCHITECTURE_FIT_EVALUATED_CI_RUN: 36611527090
+ARCHITECTURE_FIT_EVALUATED_CODEQL_RUN: 36611527053
+IMP036J_DESIGN_READINESS: PASS
+QUALITY_TEST_PLAN_FINALIZED: YES
+MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED: YES
+IMPLEMENTATION_PLAN: PASS
+IMPLEMENTATION_PLAN_FINALIZED: YES
+IMPLEMENTATION_PLAN_SOURCE: IMP-036J-PLAN-CANDIDATE-1
+READY_FOR_IMPLEMENTATION_AUTHORIZATION: YES
+IMP036J_IMPLEMENTATION_PLAN: PASS
+IMPLEMENTATION_PLAN_ARCHITECT_REVIEW: 5925360293
+IMPLEMENTATION_PLAN_EVALUATED_HEAD: 2cf349b10ecb3dd326818fd401662ed37817b603
+IMPLEMENTATION_PLAN_EVALUATED_TREE: 11e0a46f7b19bf5b7b7e17cfe2f0656c3b5f8bdb
+IMP036J_IMPLEMENTATION_AUTHORIZATION: APPROVED
+IMP036J_IMPLEMENTATION_AUTHORIZATION_DATE: 2026-10-01
+IMPLEMENTATION_AUTHORIZATION_EVIDENCE: PR#332/5926464685
+IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_8
+nextGate: IMPLEMENTATION_TRANCHE_8
+IMP036J_IMPLEMENTATION_AUTHORIZED: YES
+IMP036J_IMPLEMENTATION_STARTED: YES
+FOUNDER_UAT: NOT_PERFORMED
+IMP036J_STARTED: YES
+IMP036J_FORMAL_LIFECYCLE: IMPLEMENTATION_IN_PROGRESS
+IMP036J_TRANCHE_1: PASS
+IMP036J_TRANCHE_2: PASS
+IMP036J_TRANCHE_3: PASS
+IMP036J_TRANCHE_4: PASS
+IMP036J_TRANCHE_5: PASS
+IMP036J_TRANCHE_6: PASS
+IMP036J_TRANCHE_7: PASS
+T7_STARTED: YES
+T8_STARTED: NO
+IMP036J_IMPLEMENTATION_COMPLETE: NO
+IMP036J_ACCEPTED: NO
+IMP-036K: PLANNED
+IMP036K_FORMAL_IDENTITY: YES
+IMP036K_ACTIVATED: YES
+IMP036K_PRODUCT_DEFINITION: PD-IMP-036K-DRAFT-1
+IMP036K_PRODUCT_DEFINITION_STATUS: APPROVED
+IMP036K_PRODUCT_DEFINITION_GATE: PASS
+IMP036K_EXPERIENCE_CRITICALITY: X3
+IMP036K_CHANGE_RISK: CR2
+IMP036K_EXPERIENCE_DEFINITION: XD-IMP-036K-DRAFT-1
+IMP036K_EXPERIENCE_DEFINITION_STATUS: APPROVED
+IMP036K_EXPERIENCE_GATE: PASS
+IMP036K_ARCHITECTURE_FIT: PASS
+IMP036K_ARCHITECTURE_LOCKED: YES
+IMP036K_ARCHITECTURE_FIT_SOURCE: IMP-036K-FIT-CANDIDATE-1
+IMP036K_ARCHITECTURE_FIT_REVIEW: 5391917727
+ARCHITECTURE_FIT_EVALUATED_BRANCH: docs/imp036k-architecture-fit-candidate
+ARCHITECTURE_FIT_EVALUATED_HEAD: 71cfd352f41f933072b583c7e914f93afb91a235
+ARCHITECTURE_FIT_EVALUATED_TREE: 90431caf3d26114a3ed81f6c6fd71b18c34fb930
+ARCHITECTURE_FIT_EVALUATED_WORKING_TREE_FINGERPRINT: db07f54f174c646de5de56ee7ae7a30c90f7f03de167b18ca0a6fa122a9f2ff7
+PRIOR_ARCHITECTURE_FIT_REVIEW: 5383814980
+PRIOR_ARCHITECTURE_FIT_VERDICT: STOP
+EARLIER_REPAIRED_ARCHITECTURE_FIT_REVIEW: 5383371804
+HISTORICAL_ARCHITECTURE_FIT_PASS_REVIEW: 5384137705
+ARCHITECTURE_FIT_REOPEN_REVIEW: 5385458836
+CURRENT_ARCHITECTURE_FIT_PASS_REVIEW: 5391917727
+PRIOR_STOP_REWRITTEN_AS_PASS: NO
+HISTORICAL_REVIEWS_REWRITTEN: NO
+IMP036K_DESIGN_READINESS: PASS
+DESIGN_READINESS_SOURCE_CANDIDATE: IMP-036K-DESIGN-CANDIDATE-1
+INDEPENDENT_DESIGN_READINESS_REVIEW: PASS
+DESIGN_READINESS_ARCHITECT_REVIEW: 5396061135
+DESIGN_READINESS_EVALUATED_HEAD: 8a15403091569d1be5f3f44b3b4362b46eba425f
+DESIGN_READINESS_EVALUATED_TREE: d3106dd6e8c94e062bc7c33015171da1e06b9203
+DESIGN_READINESS_EVALUATED_WORKING_TREE_FINGERPRINT: 4aadf87243f0a221bcc1289d27d4bc83a86a6953d3e7939eef97053872290481
+DESIGN_READINESS_EVALUATED_CI_RUN: 37053735361
+DESIGN_READINESS_EVALUATED_CODEQL_RUN: 37053735365
+HISTORICAL_DESIGN_READINESS_REVIEW_5394618739: STOP
+HISTORICAL_DESIGN_READINESS_REVIEW_5395779537: STOP
+IMP036K_QUALITY_TEST_PLAN: NOT_PERFORMED
+IMP036K_QUALITY_TEST_PLAN_FINALIZED: NO
+IMP036K_MEASUREMENT_PLAN: NOT_PERFORMED
+IMP036K_MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED: NO
+IMP036K_IMPLEMENTATION_PLAN: NOT_PERFORMED
+IMP036K_IMPLEMENTATION_AUTHORIZED: NO
+IMP036K_IMPLEMENTATION_STARTED: NO
+IMP036K_IMPLEMENTATION_COMPLETE: NO
+IMP036K_ACCEPTED: NO
+IMP036K_NEXT_GATE: QUALITY / TEST PLAN FINALIZATION
+PRODUCT_DEFINITION_GATE_ARCHITECT_REVIEW: 5380398013
+EXPERIENCE_GATE_ARCHITECT_REVIEW: 5380398013
+GATE_EVALUATED_HEAD: 072932df00c445c8215c61f19f81971bf657b160
+GATE_EVALUATED_TREE: a4912e6c649cad25094412ac07a005fbb441567e
+CANONICAL_PATH: /home/ajoshi/repos/boba-bear-platform
+EVALUATED_BRANCH: docs/imp036k-product-experience-definition
+EVALUATED_HEAD: 072932df00c445c8215c61f19f81971bf657b160
+EVALUATED_TREE: a4912e6c649cad25094412ac07a005fbb441567e
+EVALUATED_WORKING_TREE_FINGERPRINT: f2886ed726c77301589ba36dccd602da6d44daadd7a0f2dec4e59aada3162c46
+DEALS_ROADMAP_IDENTITY: NONE
+CAMPAIGNS_ROADMAP_IDENTITY: NONE
+REVENUE_RECOMMENDATIONS_ROADMAP_IDENTITY: IMP-036K
+PARALLEL_DEFINITION_ONLY: YES
+PARALLEL_PRODUCT_DEFINITION_PREPARATION: AUTHORIZED
+PARALLEL_EXPERIENCE_DEFINITION_PREPARATION: AUTHORIZED
+D-383_CREATED: YES
+D-382_STATUS: AMENDED
+D-382_AMENDED_BY: D-383
+D-382_AMENDMENT_SCOPE: Revenue Recommendations identity, activation, and sequencing
+SHARED_GOVERNANCE_PERSISTENCE: SERIALIZED
+PROGRAM_PAUSE_AUTHORITY:  D-377
+```
+
+Active Product Definition (IMP-036I; APPROVED / PD-IMP-036I-DRAFT-4; Gate PASS for CURRENT DRAFT-4 — review 5307761142; historical DRAFT-1, DRAFT-2, and DRAFT-3 Gate STOP; Architecture Fit PASS review 5312653831; architecture LOCKED; implementation AUTHORIZED / STARTED / NOT_COMPLETE):
+[`product/IMP-036I/product-definition.md`](./product/IMP-036I/product-definition.md).
+Accepted Product Definition (IMP-036H; APPROVED; Gate PASS; Fit PASS; architecture LOCKED; COMPLETE_AND_ACCEPTED):
+[`product/IMP-036H/product-definition.md`](./product/IMP-036H/product-definition.md).
+Locked capability architecture (IMP-036H; Fit PASS; LOCKED; COMPLETE_AND_ACCEPTED):
+[`capabilities/IMP-036H-customer-pickup-takeaway.md`](./capabilities/IMP-036H-customer-pickup-takeaway.md).
+Held locked capability architecture (IMP-038; IMPLEMENTATION_COMPLETE / NOT_ACCEPTED; `IMP038_HOLD: YES`; external assessment deferred):
+[`capabilities/IMP-038-security-privacy-hardening.md`](./capabilities/IMP-038-security-privacy-hardening.md).
+Held locked capability architecture (IMP-037; provider-blocked; `IMP037_HOLD: YES`):
+[`capabilities/IMP-037-backup-restore-migration-readiness.md`](./capabilities/IMP-037-backup-restore-migration-readiness.md).
+Latest accepted locked capability architecture (IMP-036G; architecture LOCKED; implementation AUTHORIZED / STARTED / COMPLETE; COMPLETE_AND_ACCEPTED):
+[`capabilities/IMP-036G-administration-console-v2.md`](./capabilities/IMP-036G-administration-console-v2.md).
+Prior accepted locked capability architecture:
+[`capabilities/IMP-036F-catalog-menu-pricing-promotions-management.md`](./capabilities/IMP-036F-catalog-menu-pricing-promotions-management.md).
+Earlier accepted locked capability architecture:
+[`capabilities/IMP-036E-store-operations-management.md`](./capabilities/IMP-036E-store-operations-management.md).
+Architecture tip ARCH-R23 / D-379 CURRENT / D-380 CURRENT (`D-379_CREATED: YES`; `D-380_CREATED: YES`; `ARCH_R23_CREATED: YES`; D-378 AMENDED; preserves ARCH-R22 mode remainder, ARCH-R21 / D-375, and ARCH-R20 / D-374). Decision register tip: DR-24.
+Detailed accepted-slice marker inventories for IMP-024…IMP-036F remain in the historical STATE
+snapshot and capability/acceptance artifacts.
+
+## 3. Accepted Technical Inventory
+
+Independently verified from repository evidence on 2026-08-18 (authority path
+`/home/ajoshi/repos/boba-bear-website-acceptance`), including IMP-026, IMP-027, IMP-028, and
+IMP-028A independent acceptance.
+Speculative values are forbidden here.
+
+| Metric | Verified value | How verified |
+|---|---|---|
+| Latest migration | `0029_refund_statutory_issuance_allocation` | `drizzle/meta/_journal.json` entry tag; `drizzle/0029_refund_statutory_issuance_allocation.sql` present |
+| Migration count | `30` | Count of accepted migrations through IMP-028 (0000–0029) |
+| Application tables | `108` | Count of `appSchema.table(` declarations under `src/platform/database/schema/` bounded to accepted IMP-028 schema |
+| Workforce permissions | `57` | `PERMISSION_KEYS.length` in `src/shared/access-control/catalog.ts` |
+| System roles | `7` | `ROLE_KEYS.length` in `src/shared/access-control/catalog.ts` |
+| Default Docker services | `5` | Compose services without `profiles: ["tools"]`: `postgres`, `app`, `customer-auth`, `workforce-auth`, `customer-commerce` |
+| Order-owned tables | `1` | `orders` in `src/platform/database/schema/order.ts` |
+| Order snapshot/history tables | `0` | No additional Order snapshot/event tables in schema |
+| IMP-023 new production runtime dependencies | `0` | No Order-domain production dependency addition beyond prior accepted baseline |
+| IMP-026 new production runtime dependencies | `0` | Razorpay adapter behind existing `PaymentProvider`; no new deployable service |
+| Payment provider event inbox table | `1` | `payment_provider_event_inbox` in `src/platform/database/schema/payment.ts` |
+| Public web mode | Next.js static export → Nginx | `next.config.ts` `output: "export"`; `docker/nginx/nginx.conf`; no production `src/app/api` commerce tree |
+| IMP-024 architecture artifact | present | `docs/platform/capabilities/IMP-024-customer-ordering-transport.md` |
+| IMP-024 runtime Compose service | present | `customer-commerce` internal `:8083`; Nginx `/api/v1/*` (D-359) |
+| IMP-025 architecture artifact | present | `docs/platform/capabilities/IMP-025-customer-ordering-ux.md` |
+| IMP-025 static ordering catalog | present | `src/data/ordering-catalog.json` deterministic projection from existing-menu-v1; retained for legitimate transitional/import/test purposes, not the customer storefront runtime source |
+| IMP-026 architecture artifact | present | `docs/platform/capabilities/IMP-026-razorpay-productionization.md` |
+| IMP-026 payment inbox migration | `0018_payment_provider_event_inbox` | `drizzle/0018_payment_provider_event_inbox.sql` present in accepted journal |
+| IMP-026C architecture artifact | present | `docs/platform/capabilities/IMP-026C-pilot-customer-commerce-ux-hardening.md` |
+| IMP-027 architecture artifact | present | `docs/platform/capabilities/IMP-027-refund-foundation.md` |
+| IMP-027 refund migration | `0019_refund` | `drizzle/0019_refund.sql` present in accepted journal |
+| IMP-028 architecture artifact | present | `docs/platform/capabilities/IMP-028-invoice-tax-receipt-credit-note.md` |
+| IMP-028 financial-document / statutory migrations | `0020`–`0029` | Journal tags `0020_financial_document` through `0029_refund_statutory_issuance_allocation` |
+| IMP-028A architecture artifact | present | `docs/platform/capabilities/IMP-028A-food-direct-ux-foundation.md` |
+| IMP-028B canonical capability artifact | present | `docs/platform/capabilities/IMP-028B-customer-menu-projection-and-discovery.md` |
+
+Default Docker topology (accepted runtime inventory):
+
+```text
+postgres
+app
+customer-auth
+workforce-auth
+customer-commerce
+```
+
+Accepted IMP-024 transport (D-359):
+
+```text
+customer-commerce   (internal :8083; Nginx /api/v1/*)
+```
+
+Domain authority chain (accepted):
+
+```text
+Cart → Checkout → Payment → Order
+(+ Refund; + Financial Document / RefundStatutoryDecision / SignatureArtifact)
+```
+
+| Domain | Authority |
+|---|---|
+| Cart | Mutable shopping intent |
+| Checkout Snapshot | Immutable accepted commercial transaction |
+| Payment | Original financial collection truth |
+| Order | Post-purchase business lifecycle truth (`PLACED` \| `ACCEPTED` \| `FULFILLED` \| `CANCELLED`) |
+| Refund | Financial reversal truth for returned funds (D-364) |
+| Financial Document | Immutable issued statutory / financial-document truth (D-365) |
+| RefundStatutoryDecision | Durable statutory-reversal classification for a PROCESSED Refund (D-366) |
+| SignatureArtifact | Durable signature state and exact-byte signed statutory artifact (D-367) |
+| Customer Menu Projection | CURRENT storefront READ MODEL (D-368); implemented and accepted under IMP-028B; not a new commercial authority |
+| Customer paid-modifier purchase intent | CURRENT policy (D-369); positive-price modifier requires explicit current-interaction selection; implementation authorized only for IMP-028C; live import `modifier_groups: 0` |
+| Cart identity transition | CURRENT policy (D-370); guest→customer compatible merge and logout customer-cart isolation; implementation not authorized |
+## 4. Accepted Capability Ledger
+
+| IMP | Capability | Status |
+|---|---|---|
+| IMP-001 | Behaviour-preserving `src/` migration | COMPLETE_AND_ACCEPTED |
+| IMP-002 | Test and quality-tooling foundation | COMPLETE_AND_ACCEPTED |
+| IMP-003 | Configuration and startup foundation | COMPLETE_AND_ACCEPTED |
+| IMP-004 | PostgreSQL + Drizzle foundation | COMPLETE_AND_ACCEPTED |
+| IMP-005 | Database test and migration validation | COMPLETE_AND_ACCEPTED |
+| IMP-005A | Dockerized local application runtime | COMPLETE_AND_ACCEPTED |
+| IMP-006 | Shared persistence primitives | COMPLETE_AND_ACCEPTED |
+| IMP-007 | Transactional outbox and idempotency foundation | COMPLETE_AND_ACCEPTED |
+| IMP-008 | Better Auth persistence and sessions | COMPLETE_AND_ACCEPTED |
+| IMP-009 | Customer phone OTP authentication | COMPLETE_AND_ACCEPTED |
+| IMP-010 | Workforce authentication + MFA | COMPLETE_AND_ACCEPTED |
+| IMP-011 | Organization / Territory / Outlet / scoped RBAC | COMPLETE_AND_ACCEPTED |
+| IMP-012 | Canonical catalog | COMPLETE_AND_ACCEPTED |
+| IMP-013 | Existing menu import + menu presentation | COMPLETE_AND_ACCEPTED |
+| IMP-014 | Assortment + operational availability | COMPLETE_AND_ACCEPTED |
+| IMP-015 | Pricing, charges and GST/tax engine | COMPLETE_AND_ACCEPTED |
+| IMP-016 | Promotions | COMPLETE_AND_ACCEPTED |
+| IMP-017 | Customer Profiles | COMPLETE_AND_ACCEPTED |
+| IMP-018 | Saved Customer Addresses | COMPLETE_AND_ACCEPTED |
+| IMP-019 | Serviceability | COMPLETE_AND_ACCEPTED |
+| IMP-020 | Cart | COMPLETE_AND_ACCEPTED |
+| IMP-021 | Checkout | COMPLETE_AND_ACCEPTED |
+| IMP-022 | Payment | COMPLETE_AND_ACCEPTED |
+| IMP-023 | Order | COMPLETE_AND_ACCEPTED |
+| IMP-024 | Customer Ordering Transport / API | COMPLETE_AND_ACCEPTED |
+| IMP-025 | Customer Ordering UX | COMPLETE_AND_ACCEPTED |
+| IMP-026 | Razorpay Productionization & Payment GTM Readiness | COMPLETE_AND_ACCEPTED |
+| IMP-026C | Pilot Customer-Commerce UX Hardening | COMPLETE_AND_ACCEPTED |
+| IMP-027 | Refund Foundation | COMPLETE_AND_ACCEPTED |
+| IMP-028 | Invoice / Tax Receipt / Credit Note | COMPLETE_AND_ACCEPTED |
+| IMP-028A | Food Direct UX Foundation | COMPLETE_AND_ACCEPTED |
+| IMP-028B | Customer Menu Projection + Discovery | COMPLETE_AND_ACCEPTED |
+| IMP-028C | Food Customization | COMPLETE_AND_ACCEPTED |
+| IMP-028D | Desktop Ordering Continuity | COMPLETE_AND_ACCEPTED |
+| IMP-029 | Operations Console API | COMPLETE_AND_ACCEPTED |
+| IMP-030 | Operations Console UI | COMPLETE_AND_ACCEPTED |
+| IMP-031 | Provider-Neutral Delivery Foundation | COMPLETE_AND_ACCEPTED |
+| IMP-032 | Dehradun Delivery Operating Mode | COMPLETE_AND_ACCEPTED |
+| IMP-033 | Notification Foundation | COMPLETE_AND_ACCEPTED |
+| IMP-034 | Meta WhatsApp Cloud API Adapter | COMPLETE_AND_ACCEPTED |
+| IMP-035 | Initial Administration Capabilities | COMPLETE_AND_ACCEPTED |
+| IMP-036 | Observability & Operational Controls | COMPLETE_AND_ACCEPTED |
+| IMP-036A | Multi-Portal Experience Foundation | COMPLETE_AND_ACCEPTED |
+| IMP-036B | Customer Account, Onboarding, Address & Location Experience | COMPLETE_AND_ACCEPTED |
+| IMP-036C | Customer Commerce Experience V2 | COMPLETE_AND_ACCEPTED |
+| IMP-036D | Workforce & Franchise Operations Portal V2 | COMPLETE_AND_ACCEPTED |
+| IMP-036E | Store Operations Management | COMPLETE_AND_ACCEPTED |
+| IMP-036F | Catalog, Menu, Pricing & Promotions Management | COMPLETE_AND_ACCEPTED |
+| IMP-036G | Administration Console V2 | COMPLETE_AND_ACCEPTED |
+| IMP-036H | Customer Pickup / Takeaway | COMPLETE_AND_ACCEPTED |
+| IMP-036I | Scheduled Fulfilment | COMPLETE_AND_ACCEPTED |
+
+## 5. Acceptance Position
+
+```text
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-036K — Revenue Recommendations
+PROGRAM_PAUSE: PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED
+PROGRAM_PAUSE_AUTHORITY: D-377
+ADDITIONAL_SEQUENCING_AUTHORITY: D-382 (AMENDED by D-383 only for Revenue Recommendations identity, activation, and sequencing)
+IMP-036F: COMPLETE_AND_ACCEPTED
+IMP-036F_ARCHITECTURE: LOCKED
+IMP036F_ARCHITECTURE_LOCKED: YES
+IMP036F_IMPLEMENTATION: AUTHORIZED / STARTED / COMPLETE
+IMP036F_IMPLEMENTATION_AUTHORIZED: YES
+IMP036F_STARTED: YES
+IMP036F_IMPLEMENTATION_COMPLETE: YES
+IMP036F_ACCEPTED: YES
+IMP036F_FOUNDER_UAT_REQUIRED: YES
+IMP036F_FOUNDER_UAT: PASS
+IMP036F_FORMAL_ACCEPTANCE: ACCEPTED
+IMP036F_INDEPENDENT_ACCEPTANCE_EVIDENCE: ACCEPTED
+IMP036F_PRODUCT_DEFINITION: APPROVED
+IMP036F_PRODUCT_DEFINITION_GATE: PASS
+IMP036F_ARCHITECTURE_FIT: PASS
+IMP036F_ACTIVATED: YES
+IMP036F_ACCEPTED_MAIN_SHA: 91d0b5e5e5815da6bf0bb325a3c6ab884dc06652
+IMP036F_ACCEPTED_TREE: ab41fc7f2bf6d0a52c3ea6c2b69ed331ca9540cf
+IMP036F_ACCEPTED_CANDIDATE: 91d0b5e5e5815da6bf0bb325a3c6ab884dc06652
+IMP036F_FOUNDER_UAT_CANDIDATE_BRANCH: main
+IMP036F_FOUNDER_UAT_CANDIDATE_HEAD: 91d0b5e5e5815da6bf0bb325a3c6ab884dc06652
+IMP036F_FOUNDER_UAT_CANDIDATE_TREE: ab41fc7f2bf6d0a52c3ea6c2b69ed331ca9540cf
+IMP036F_FOUNDER_UAT_CANDIDATE_FINGERPRINT: c689630cb9a4d002fda3376f949a1f324015776d392abfd2abde7b6f5b91f973
+IMP036F_FOUNDER_UAT_DECISION_DATE: 2026-09-15
+IMP036F_FOUNDER_UAT_ACCEPTANCE_AUTHORITY: Founder
+IMP036F_EXACT_MAIN_CI: 34991901136
+IMP036F_EXACT_MAIN_CI_RESULT: SUCCESS
+IMP036F_F6A_PR: 149
+IMP036F_F6A_REVIEWED_HEAD: 429923f182d22d960052f5ca840bc367d4fd9078
+IMP036F_F6A_MERGE_MAIN: 611d6e7707f561c581118873d58214e92faf75bb
+IMP036F_F6B_PR: 150
+IMP036F_F6B_REVIEWED_HEAD: 240cb4ee20cd468280198304e96efecb7ecaf895
+IMP036F_F6B_INDEPENDENT_REVIEW: 5210814689
+IMP036F_F6B_MERGE: 07f15d5a2eab1a86d7a9412622554db4b0117f49
+IMP036F_POST_MERGE_AUDIT_PR: 151
+IMP036F_POST_MERGE_AUDIT_REVIEWED_HEAD: b95fe1d1cd20290bcd92f82b072258d7d9ec7bce
+IMP036F_POST_MERGE_AUDIT_INDEPENDENT_REVIEW: 5212370227
+IMP036F_POST_MERGE_AUDIT_MERGE: 91d0b5e5e5815da6bf0bb325a3c6ab884dc06652
+IMP036F_CRITICAL_POST_MERGE_PERSISTENCE_AUDIT: PASS
+FOUNDER_STAGING_PROJECT: boba-staging
+FOUNDER_STAGING_CANDIDATE_MATCH: YES
+FOUNDER_STAGING_STATUS: FOUNDER_UAT_COMPLETE
+FOUNDER_STAGING_UAT_ROUTE: /workforce/admin/commercial
+NON_BLOCKING_UAT_OBSERVATIONS: Menu-only-effective empty until draft mutation; Pricing Proposed preview occasional `—`; Founder staging UAT side-effects expected
+IMP-036E: COMPLETE_AND_ACCEPTED
+IMP-036E_ARCHITECTURE: LOCKED
+IMP-036E_ARCHITECTURE_LOCKED: YES
+IMP-036E_IMPLEMENTATION: AUTHORIZED / STARTED / COMPLETE
+IMP-036E_IMPLEMENTATION_AUTHORIZED: YES
+IMP-036E_STARTED: YES
+IMP-036E_IMPLEMENTATION_COMPLETE: YES
+IMP-036E_ACCEPTED: YES
+IMP-036E_FOUNDER_UAT_REQUIRED: YES
+IMP-036E_FOUNDER_UAT: PASS
+IMP036E_FOUNDER_UAT: PASS
+IMP036E_FORMAL_ACCEPTANCE: ACCEPTED
+IMP036E_INDEPENDENT_ACCEPTANCE_EVIDENCE: ACCEPTED
+IMP036E_ACCEPTED_MAIN_SHA: 05c534bac3d077f5ab89928495568bb63faf78df
+IMP036E_ACCEPTED_TREE: 55b28977ee9860c2c07cb25f751c9f48ef4a2aa6
+IMP036E_ACCEPTED_CANDIDATE: 05c534bac3d077f5ab89928495568bb63faf78df
+IMP036E_FOUNDER_UAT_CANDIDATE_REPOSITORY: /home/ajoshi/repos/boba-bear-platform
+IMP036E_FOUNDER_UAT_CANDIDATE_BRANCH: main
+IMP036E_FOUNDER_UAT_CANDIDATE_HEAD: 05c534bac3d077f5ab89928495568bb63faf78df
+IMP036E_FOUNDER_UAT_CANDIDATE_TREE: 55b28977ee9860c2c07cb25f751c9f48ef4a2aa6
+IMP036E_FOUNDER_UAT_CANDIDATE_FINGERPRINT: 1a97d3a4c80394804e19398e4f3684067aefb0d42a01a7899e8777d1a07cb289
+IMP036E_FOUNDER_UAT_DECISION_DATE: 2026-09-10
+IMP036E_FOUNDER_UAT_ACCEPTANCE_AUTHORITY: Founder
+FOUNDER_STAGING_INTERMEDIATE_CANDIDATE_SHA: e9821271a29ae35ba6c921008b976cd2e8d15c50
+FOUNDER_STAGING_INTERMEDIATE_CANDIDATE_TREE: 8259d30f662e6668f2208788f2e95faaea831384
+IMP036E_IMPLEMENTATION_EVIDENCE: COMPLETE
+IMP_036E_INDEPENDENT_IMPLEMENTATION_REVIEW: PASS
+IMP036E_IMPLEMENTATION_MERGE_SHA: 0ebb5e937cd7ac14bb3e39e9d1d494e32c9d2739
+IMP036E_IMPLEMENTATION_TREE: 0def59ce9bcab4575a7b43b7c3c07c85ac575428
+IMP036E_REVIEWED_CANDIDATE_HEAD: b2ffaa5bc2b5c6f58ff5241c226b583160132837
+IMP036E_REVIEWED_CANDIDATE_TREE: 0def59ce9bcab4575a7b43b7c3c07c85ac575428
+IMP036E_ASSORTMENT_AUTHORITY: BRAND
+OUTLET_MANAGER_OUTLET_SCOPE_ASSORTMENT_MANAGE: NO
+OUTLET_EFFECTIVE_ASSORTMENT_PRESENTATION: AUTHORIZED_READ_OR_ESCALATE
+IMP036E_ASSORTMENT_WORKFORCE_TRANSPORT: READ_ONLY_OPERATIONS_PROJECTION
+ASSORTMENT_AUTHORIZATION_RESOURCE: BRAND_DERIVED_FROM_OUTLET
+ASSORTMENT_MANAGE_ROUTE_IMP036E: NO
+IMP036E_BULK_AVAILABILITY: DEFERRED
+SERVICEABILITY_MODEL: OUTLET_DISTANCE_SERVICEABILITY_V1
+SERVICEABILITY_COORDINATE_AUTHORITY: YES
+SERVICEABILITY_POSTAL_PIN_RUNTIME_AUTHORITY: NO
+SERVICEABILITY_MAP_IS_PROJECTION_ONLY: YES
+IMP036E_SERVICEABILITY_ROUTING_PRIORITY_UI: HIDDEN_PREREQUISITE
+IMP036E_SESSION_CAPABILITY_PROJECTION_EXTENSION: EXISTING_PERMISSION_KEYS_ONLY
+IMP036E_GLOBAL_SESSION_CAPS_ARE_RESOURCE_AUTHORITY: NO
+IMP036E_GLOBAL_SESSION_CAPS_PURPOSE: COARSE_NAVIGATION_ONLY
+IMP036E_RESOURCE_SCOPED_CONTROL_VISIBILITY: REQUIRED
+IMP036E_SERVER_AUTHORIZATION_REMAINS_AUTHORITATIVE: YES
+SCHEMA_CHANGE_REQUIRED: NO
+NEW_PERMISSION: NO
+NEW_ROLE: NO
+NEW_SCOPE_MODEL: NO
+D374_REQUIRED_FOR_IMP036E_LOCK: NO
+D-374_CREATED: YES
+ARCH_R20_REQUIRED_FOR_IMP036E_LOCK: NO
+ARCH_R20_CREATED: YES
+IMP-036D: COMPLETE_AND_ACCEPTED
+IMP-036D_ACCEPTED: YES
+IMP-036D_FOUNDER_UAT: PASS
+IMP-036G: COMPLETE_AND_ACCEPTED
+IMP036G_ACTIVATED: YES
+IMP036G_PRODUCT_DEFINITION: APPROVED
+IMP036G_PRODUCT_DEFINITION_VERSION: PD-IMP-036G-DRAFT-2
+IMP036G_PRODUCT_DECISIONS: RESOLVED
+IMP036G_PRODUCT_DECISION_COUNT: 7
+IMP036G_PRODUCT_DECISION_AUTHORITY: Founder
+IMP036G_PRODUCT_DECISION_DATE: 2026-09-16
+IMP036G_PRODUCT_DEFINITION_GATE: PASS
+IMP036G_ARCHITECTURE_FIT: PASS
+IMP036G_ARCHITECTURE_LOCKED: YES
+IMP036G_IMPLEMENTATION: AUTHORIZED / STARTED / COMPLETE
+IMP036G_IMPLEMENTATION_AUTHORIZED: YES
+IMP036G_STARTED: YES
+IMP036G_IMPLEMENTATION_COMPLETE: YES
+IMP-036G_IMPLEMENTATION_COMPLETE: YES
+IMP036G_ACCEPTED: YES
+IMP036G_FOUNDER_UAT_REQUIRED: YES
+IMP036G_FOUNDER_UAT: PASS
+IMP036G_FORMAL_ACCEPTANCE: ACCEPTED
+IMP036G_INDEPENDENT_ACCEPTANCE_EVIDENCE: ACCEPTED
+IMP036G_INDEPENDENT_TECHNICAL_ACCEPTANCE: PASS
+IMP036G_ACCEPTED_MAIN_SHA: fbf690a67cda51bd6bbc1bad4a9d26f574c4286e
+IMP036G_ACCEPTED_TREE: 84b6a502fcec646cb5a65f3257f19b85c64f49e1
+IMP036G_ACCEPTED_CANDIDATE: fbf690a67cda51bd6bbc1bad4a9d26f574c4286e
+IMP036G_FOUNDER_UAT_CANDIDATE_BRANCH: main
+IMP036G_FOUNDER_UAT_CANDIDATE_HEAD: fbf690a67cda51bd6bbc1bad4a9d26f574c4286e
+IMP036G_FOUNDER_UAT_CANDIDATE_TREE: 84b6a502fcec646cb5a65f3257f19b85c64f49e1
+IMP036G_FOUNDER_UAT_CANDIDATE_FINGERPRINT: 9f472ce6e1ccaa2fe914006c846fb3018d668b718f569b6d0cb4fa64c3013f9b
+IMP036G_FOUNDER_UAT_DECISION_DATE: 2026-09-18
+IMP036G_FOUNDER_UAT_ACCEPTANCE_AUTHORITY: Founder
+IMP036G_EXACT_MAIN_CI: 35366698302
+IMP036G_EXACT_MAIN_CI_RESULT: SUCCESS
+IMP036G_IMPLEMENTATION_EXACT_MAIN_CI: 35214215500
+IMP036G_IMPLEMENTATION_EXACT_MAIN_CI_RESULT: SUCCESS
+IMP036G_MANUAL_TECHNICAL_VALIDATION: PASS
+IMP036G_MANUAL_VALIDATION_CANDIDATE_SHA: c35c9eab6a30ec6ce745cefd75c523181326f360
+IMP036G_MANUAL_VALIDATION_CANDIDATE_TREE: 266fe3b07811f6942e76cac155d58ba07daabe56
+IMP036G_MANUAL_VALIDATION_DATE: 2026-09-18
+IMP036G_MANUAL_VALIDATION_TESTER: Ashutosh
+IMP036G_MANUAL_VALIDATION_DEFECTS: NONE
+IMP036G_IMPLEMENTATION_EVIDENCE: COMPLETE
+IMP_036G_INDEPENDENT_IMPLEMENTATION_REVIEW: PASS
+IMP036G_IMPLEMENTATION_MERGE_SHA: c35c9eab6a30ec6ce745cefd75c523181326f360
+IMP036G_IMPLEMENTATION_TREE: 266fe3b07811f6942e76cac155d58ba07daabe56
+IMP036G_REVIEWED_CANDIDATE_HEAD: 7a013155a98529d4527e7b6c0358642e5cd9d806
+IMP036G_REVIEWED_CANDIDATE_TREE: 266fe3b07811f6942e76cac155d58ba07daabe56
+IMP036G_PR_159: 159
+IMP036G_PR_159_REVIEWED_HEAD: 7a013155a98529d4527e7b6c0358642e5cd9d806
+IMP036G_PR_159_MERGE: c35c9eab6a30ec6ce745cefd75c523181326f360
+IMP036G_PR_161_MERGE: 9994dc47
+IMP036G_PR_163: 163
+IMP036G_PR_163_REVIEWED_HEAD: da4bd82d
+IMP036G_PR_163_MERGE: 2beec2aa
+IMP036G_PR_164: 164
+IMP036G_PR_164_REVIEWED_HEAD: 9cf5f790
+IMP036G_PR_164_INDEPENDENT_REVIEW: 5249475938
+IMP036G_PR_164_MERGE: 7ec7e51a
+IMP036G_PR_165: 165
+IMP036G_PR_165_REVIEWED_HEAD: de82fbf5
+IMP036G_PR_165_INDEPENDENT_REVIEW: 5249952268
+IMP036G_PR_165_MERGE: fbf690a67cda51bd6bbc1bad4a9d26f574c4286e
+FOUNDER_STAGING_PROJECT: boba-staging
+IMP036G_FOUNDER_STAGING_CANDIDATE_MATCH: YES
+IMP036G_FOUNDER_STAGING_BASELINE_STATE: COMPLETE_COMPATIBLE
+IMP036G_FOUNDER_STAGING_BOOTSTRAP_ACTION: PRESERVE
+IMP036G_FOUNDER_STAGING_RUNNING_SHA: fbf690a67cda51bd6bbc1bad4a9d26f574c4286e
+IMP036G_FOUNDER_STAGING_STATUS: FOUNDER_UAT_COMPLETE
+IMP036G_FOUNDER_STAGING_UAT_ROUTE: /workforce/admin/
+IMP-036H: COMPLETE_AND_ACCEPTED
+IMP036H_ACTIVATED: YES
+IMP036H_PRODUCT_DEFINITION: APPROVED
+IMP036H_PRODUCT_DEFINITION_VERSION: PD-IMP-036H-DRAFT-1
+IMP036H_PRODUCT_DEFINITION_GATE: PASS
+IMP036H_ARCHITECTURE_FIT: PASS
+IMP036H_ARCHITECTURE_LOCKED: YES
+IMP036H_IMPLEMENTATION: AUTHORIZED / STARTED / COMPLETE
+IMP036H_IMPLEMENTATION_AUTHORIZED: YES
+IMP036H_STARTED: YES
+IMP036H_IMPLEMENTATION_STARTED: YES
+IMP036H_IMPLEMENTATION_COMPLETE: YES
+IMP-036H_IMPLEMENTATION_COMPLETE: YES
+IMP036H_ACCEPTED: YES
+IMP036H_FOUNDER_UAT_REQUIRED: YES
+IMP036H_FOUNDER_UAT: PASS
+IMP036H_FORMAL_ACCEPTANCE: ACCEPTED
+IMP036H_INDEPENDENT_IMPLEMENTATION_REVIEW: PASS
+IMP036H_INDEPENDENT_IMPLEMENTATION_REVIEW_ID: 5302239433
+IMP036H_INDEPENDENT_TECHNICAL_ACCEPTANCE: PASS
+IMP036H_AUTOMATED_ACCEPTANCE: 42/42 PASS
+IMP036H_IMPLEMENTATION_REVIEWED_HEAD: 649b7848f99918f927da4a77e98cd81cdc146e6b
+IMP036H_IMPLEMENTATION_REVIEWED_TREE: b272adf40f89b0011fff07bf4d6b6d0d735df68a
+IMP036H_IMPLEMENTATION_REVIEWED_FINGERPRINT: c2bc6a91ce536329bec0ad4af4d3264a5a39904d035af28442071b4e96e2f56a
+IMP036H_IMPLEMENTATION_EVIDENCE: PR#246 comment 5810833593
+IMP036H_ACCEPTED_MAIN_SHA: 37bae964f964bddd317e4c290dc146097e4c8f57
+IMP036H_ACCEPTED_TREE: f52cd6279deb22c251062880087a2078fc7bce3b
+IMP036H_ACCEPTED_CANDIDATE: 37bae964f964bddd317e4c290dc146097e4c8f57
+IMP036H_FOUNDER_UAT_CANDIDATE_BRANCH: main
+IMP036H_FOUNDER_UAT_CANDIDATE_HEAD: 37bae964f964bddd317e4c290dc146097e4c8f57
+IMP036H_FOUNDER_UAT_CANDIDATE_TREE: f52cd6279deb22c251062880087a2078fc7bce3b
+IMP036H_FOUNDER_UAT_CANDIDATE_FINGERPRINT: e49d860c721d2524b248738750530a416f8418d02d10b64e69531f8548fcfb79
+IMP036H_FOUNDER_UAT_DECISION_DATE: 2026-09-24
+IMP036H_FOUNDER_UAT_ACCEPTANCE_AUTHORITY: Founder
+IMP036H_FOUNDER_UAT_CHECKMARKS: pickup_profile=PASS; customer_pickup=PASS; payment=PASS; operations_handover=PASS; customer_order_history=PASS; mode_switching=PASS; unavailable_state=PASS; mobile=PASS; overall=PASS; findings=NONE_BLOCKING
+IMP036H_INDEPENDENT_ARCHITECTURE_FIT_REVIEW: PASS
+IMP036H_INDEPENDENT_ARCHITECTURE_FIT_REVIEWED_HEAD: aab814c238c499367ee921e9f8ffb03ff7b1b373
+IMP036H_INDEPENDENT_ARCHITECTURE_FIT_REVIEWED_TREE: 93d4e83d4a73c61c9439bcaae2799920fcca46db
+IMP036H_INDEPENDENT_ARCHITECTURE_FIT_REVIEW_ID: 5295149318
+IMP-036I: COMPLETE_AND_ACCEPTED
+IMP036I_ACTIVATED: YES
+IMP036I_PRODUCT_DEFINITION: APPROVED
+IMP036I_PRODUCT_DEFINITION_VERSION: PD-IMP-036I-DRAFT-4
+IMP036I_PRODUCT_DEFINITION_GATE: PASS
+IMP036I_ARCHITECTURE_FIT: PASS
+IMP036I_ARCHITECTURE_LOCKED: YES
+IMP036I_IMPLEMENTATION_AUTHORIZED: YES
+IMP036I_IMPLEMENTATION_AUTHORIZATION: APPROVED
+IMP036I_IMPLEMENTATION_AUTHORIZATION_DATE: 2026-09-25
+IMP036I_STARTED: YES
+IMP036I_IMPLEMENTATION_STARTED: YES
+IMP036I_IMPLEMENTATION_COMPLETE: YES
+IMP036I_ACCEPTED: YES
+IMP036I_FOUNDER_UAT_REQUIRED: YES
+IMP036I_FOUNDER_UAT: PASS
+FOUNDER_UAT: PASS
+IMP036I_FORMAL_ACCEPTANCE: ACCEPTED
+IMP036I_INDEPENDENT_TECHNICAL_ACCEPTANCE: PASS
+IMP036I_INDEPENDENT_IMPLEMENTATION_REVIEW: PASS
+IMP036I_ACCEPTED_MAIN_SHA: 44f4d7d84af07c3226da606476844d8f05454b28
+IMP036I_ACCEPTED_TREE: 3ec8a7714c25e6066453b47b7d006ef127abddbb
+IMP036I_FOUNDER_UAT_CANDIDATE_BRANCH: main
+IMP036I_FOUNDER_UAT_CANDIDATE_HEAD: 44f4d7d84af07c3226da606476844d8f05454b28
+IMP036I_FOUNDER_UAT_CANDIDATE_TREE: 3ec8a7714c25e6066453b47b7d006ef127abddbb
+IMP036I_FOUNDER_UAT_CANDIDATE_FINGERPRINT: 85fe93db116bfe86b7f5ba4c266c829433d44401ffd03bdec536b5f61be9c27c
+IMP036I_FOUNDER_UAT_DECISION_DATE: 2026-09-27
+IMP036I_FOUNDER_UAT_ACCEPTANCE_AUTHORITY: Founder
+IMP036I_FOUNDER_UAT_FINDING_001: RESOLVED
+BLOCKING_FINDINGS_AT_ACCEPTANCE: NONE
+nextGate: NONE
+INDEPENDENT_PRODUCT_DEFINITION_GATE_REVIEW: 5307761142
+IMP-037: IMPLEMENTATION_IN_PROGRESS
+IMP037_HOLD: YES
+IMP037_ACTIVATED: YES
+IMP037_PRODUCT_DEFINITION: APPROVED
+IMP037_PRODUCT_DEFINITION_VERSION: PD-IMP-037-DRAFT-1
+IMP037_PRODUCT_DECISIONS: RESOLVED
+IMP037_PRODUCT_DECISION_COUNT: 7
+IMP037_PRODUCT_DEFINITION_GATE: PASS
+IMP037_ARCHITECTURE_FIT: PASS
+IMP037_ARCHITECTURE_LOCKED: YES
+IMP037_IMPLEMENTATION_AUTHORIZED: YES
+IMP037_STARTED: YES
+IMP037_REPOSITORY_IMPLEMENTATION_MERGED: YES
+IMP037_IMPLEMENTATION_PR: 174
+IMP037_IMPLEMENTATION_REVIEWED_HEAD: ae7328efe1add11a9a4299150251fe14c71b2730
+IMP037_IMPLEMENTATION_REVIEWED_TREE: 4ff19a31db947cafadf690cf6bf1b6d2f1de14ac
+IMP037_INDEPENDENT_IMPLEMENTATION_REVIEW: PASS
+IMP037_INDEPENDENT_IMPLEMENTATION_REVIEW_ID: 5265354130
+IMP037_IMPLEMENTATION_MERGE_SHA: f77a54819f51ad5648dda8acb3a7c93345cd5d6c
+IMP037_IMPLEMENTATION_MERGE_TREE: 4ff19a31db947cafadf690cf6bf1b6d2f1de14ac
+IMP037_POST_MERGE_CI: 35587376968
+IMP037_POST_MERGE_CI_RESULT: SUCCESS
+IMP037_REPOSITORY_IMPLEMENTATION: MERGED
+IMP037_EXTERNAL_RECOVERY_PROOF: NOT_PERFORMED
+IMP037_IMPLEMENTATION_COMPLETE: NO
+IMP037_ACCEPTED: NO
+IMP037_FOUNDER_UAT_REQUIRED: YES
+IMP037_FOUNDER_UAT: NOT_PERFORMED
+PHASE1_BLOCK_STATUS: BLOCKED_PROVIDER_ACCESS
+PROVIDER_DEPENDENT_PROOF: DEFERRED_PENDING_PROVIDER_ACCESS
+IMP-038: IMPLEMENTATION_IN_PROGRESS (HOLD — IMPLEMENTATION_COMPLETE / NOT_ACCEPTED)
+IMP038_HOLD: YES
+IMP038_ACTIVATED: YES
+IMP038_PRODUCT_DEFINITION: APPROVED
+IMP038_PRODUCT_DEFINITION_VERSION: PD-IMP-038-DRAFT-2
+IMP038_PRODUCT_DEFINITION_GATE: PASS
+IMP038_ARCHITECTURE_FIT: PASS
+IMP038_ARCHITECTURE_LOCKED: YES
+IMP038_IMPLEMENTATION_AUTHORIZED: YES
+IMP038_STARTED: YES
+FOUNDER_IMP038_IMPLEMENTATION_AUTHORIZATION: CURSOR_SESSION_MANDATE
+IMP038_IMPLEMENTATION_COMPLETE: YES
+IMP038_ACCEPTED: NO
+INDEPENDENT_ARCHITECTURE_FIT_REVIEW: PASS
+INDEPENDENT_ARCHITECTURE_FIT_REVIEWED_HEAD: 3b03164d6581c5a98a893c24e92eaddece004e90
+INDEPENDENT_ARCHITECTURE_FIT_REVIEWED_TREE: 5bb499fa84a5bf02682b30518f2bf898ddb23540
+INDEPENDENT_ARCHITECTURE_FIT_REVIEW_ID: 5279884548
+D-375_CREATED: YES
+ARCH_R21_CREATED: YES
+IMP038_ACCEPTANCE_BLOCKED_BY_IMP037: YES
+IMP038_EXTERNAL_ASSESSMENT: DEFERRED_UNTIL_PRE_GTM_APPLICATION_SCOPE_STABILIZES
+IMP038_FROZEN_RUNTIME_HEAD: dc6b19e6f88d4084e424d927e6467c374596fb0a
+IMP038_FROZEN_RUNTIME_TREE: c3aefb57f3f6c941d7f14907b6c095c4aa7f0547
+IMP038_FROZEN_RUNTIME_FINGERPRINT: 2800fe11397ee2a01e9decf572f85adf5c3a8b244ca34b1f53d579e05feac589
+GAP-EXT-ASSESS-001: NOT_CLOSED
+IMP038_FOUNDER_UAT_REQUIRED: YES
+IMP038_FOUNDER_UAT: NOT_PERFORMED
+IMP-039: PLANNED / NOT_ACTIVATED / NOT_AUTHORIZED / NOT_STARTED
+IMP039_ACTIVATED: NO
+IMP-040: PLANNED / NOT_ACTIVATED / NOT_AUTHORIZED / NOT_STARTED
+IMP040_ACTIVATED: NO
+PROGRAM_PAUSE: PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED
+PROGRAM_PAUSE_AUTHORITY: D-377
+HISTORICAL_CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038
+CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038
+CONTINUATION_EXCEPTION_AUTHORITY: PR#179/5771367844
+IMP037_PROVIDER_BLOCKED_TO_IMP038: YES
+HISTORICAL_IMP026_TO_IMP028_CONTINUATION: CLOSED
+D-374_CREATED: YES
+ARCH_R20_CREATED: YES
+D-375_CREATED: YES
+ARCH_R21_CREATED: YES
+D-377_CREATED: YES
+architectureVersion: ARCH-R21
+decisionRegisterVersion: DR-19
+fitEvaluatedHead: 43007808849f093d84cbe710f32a728b41a9e5a2
+fitEvaluatedTree: 581fb23631df40044ec7b9c449545959a90b9998
+fitEvaluatedFingerprint: ab00d1ab23f3c7d8b140feefcd1a0787f1fedf90ab08a9934c9a892a77c8184d
+fitDate: 2026-09-22
+fitResult: PASS
+independentArchitectureFitReview: PASS
+independentArchitectureFitReviewedHead: 3b03164d6581c5a98a893c24e92eaddece004e90
+independentArchitectureFitReviewedTree: 5bb499fa84a5bf02682b30518f2bf898ddb23540
+independentArchitectureFitReviewId: 5279884548
+```
+
+Detailed per-accepted-IMP marker inventories, SHA/tree/UAT histories, and closed progression
+narratives remain in
+[`history/STATE-STATE-R111-pre-compression.md`](./history/STATE-STATE-R111-pre-compression.md)
+and the corresponding capability / acceptance artifacts.
+
+## 6. Known Governance Conflicts
+
+No current unresolved governance conflicts. `governanceHealth = ALIGNED`.
+
+Closed historical conflicts and prior STATE-Rxx progression narratives remain in
+[`history/STATE-STATE-R111-pre-compression.md`](./history/STATE-STATE-R111-pre-compression.md).
+
+## 7. Acceptance Provenance
+
+Accepted product through IMP-036G is independently accepted after Founder UAT PASS on 2026-09-18 for
+exact candidate SHA `fbf690a67cda51bd6bbc1bad4a9d26f574c4286e` / tree
+`84b6a502fcec646cb5a65f3257f19b85c64f49e1` (fingerprint
+`9f472ce6e1ccaa2fe914006c846fb3018d668b718f569b6d0cb4fa64c3013f9b`; exact-main CI run
+`35366698302` SUCCESS; post-acceptance exact-main CI `35376477139` SUCCESS). Founder staging
+`boba-staging` recorded `CANDIDATE_MATCH: YES`; UAT route `/workforce/admin/`. Formal Founder
+acceptance: `ACCEPT IMP-036G`. Locked capability architecture:
+[`capabilities/IMP-036G-administration-console-v2.md`](./capabilities/IMP-036G-administration-console-v2.md).
+
+Prior accepted product through IMP-036F remains independently accepted after Founder UAT PASS on
+2026-09-15 for exact candidate SHA `91d0b5e5e5815da6bf0bb325a3c6ab884dc06652` / tree
+`ab41fc7f2bf6d0a52c3ea6c2b69ed331ca9540cf` (fingerprint
+`c689630cb9a4d002fda3376f949a1f324015776d392abfd2abde7b6f5b91f973`; exact-main CI run
+`34991901136` SUCCESS). Founder staging `boba-staging` recorded `CANDIDATE_MATCH: YES`, healthy,
+UAT route `/workforce/admin/commercial`. Formal Founder acceptance: `ACCEPT IMP-036F`.
+Critical post-merge persistence audit: PASS. Implementation/review provenance: F6A PR #149 reviewed
+head `429923f182d22d960052f5ca840bc367d4fd9078` merge/main
+`611d6e7707f561c581118873d58214e92faf75bb`; F6B PR #150 final independently reviewed head
+`240cb4ee20cd468280198304e96efecb7ecaf895` (independent PASS `5210814689`) merge
+`07f15d5a2eab1a86d7a9412622554db4b0117f49`; post-merge audit correction PR #151 reviewed head
+`b95fe1d1cd20290bcd92f82b072258d7d9ec7bce` (independent PASS `5212370227`) final accepted merge
+`91d0b5e5…`. Governance docs reconciliation after that product SHA is not a new product UAT
+candidate.
+
+```text
+NON_BLOCKING_UAT_OBSERVATIONS (NOT acceptance blockers):
+1. Menu with only effective Menu can initially appear empty until a draft-creating mutation
+2. Pricing activation consequence preview can occasionally show Proposed `—` while effect/result is correct
+3. Founder staging contains expected UAT test side-effects
+```
+
+IMP-036E remains independently accepted after Founder UAT PASS on 2026-09-10 for exact candidate SHA
+`05c534bac3d077f5ab89928495568bb63faf78df` / tree `55b28977ee9860c2c07cb25f751c9f48ef4a2aa6`
+(PR #135; main CI run `34389543060` 12/12 PASS). Implementation/review provenance for IMP-036E
+remains recorded in
+[`capabilities/IMP-036E-store-operations-management.md`](./capabilities/IMP-036E-store-operations-management.md).
+
+Detailed per-slice evidence for earlier accepted IMPs remains in repository tests, audits, Docker
+runtime proof, capability artifacts, and
+[`history/STATE-STATE-R111-pre-compression.md`](./history/STATE-STATE-R111-pre-compression.md).
+Implementation/review provenance for IMP-036F is recorded in
+[`capabilities/IMP-036F-catalog-menu-pricing-promotions-management.md`](./capabilities/IMP-036F-catalog-menu-pricing-promotions-management.md).
+
+## 8. Explicitly Not Yet Accepted
+
+- IMP-036K — Revenue Recommendations (`PLANNED`; `IMP036K_ACTIVATED: YES`; formal identity allocated by D-383 on 2026-10-01; `"IMP-036K"` was previously only a working label; `IMP036K_PRODUCT_DEFINITION: PD-IMP-036K-DRAFT-1`; `IMP036K_PRODUCT_DEFINITION_STATUS: APPROVED`; `IMP036K_PRODUCT_DEFINITION_GATE: PASS`; Architect review `5380398013`; `IMP036K_EXPERIENCE_CRITICALITY: X3`; `IMP036K_CHANGE_RISK: CR2`; `IMP036K_EXPERIENCE_DEFINITION: XD-IMP-036K-DRAFT-1`; `IMP036K_EXPERIENCE_DEFINITION_STATUS: APPROVED`; `IMP036K_EXPERIENCE_GATE: PASS`; `IMP036K_ARCHITECTURE_FIT: PASS`; `IMP036K_ARCHITECTURE_LOCKED: YES`; source `IMP-036K-FIT-CANDIDATE-1`; Architect review `5391917727`; historical PASS `5384137705` later reopened by `5385458836`; `IMP036K_DESIGN_READINESS: PASS`; source `IMP-036K-DESIGN-CANDIDATE-1`; Architect review `5396061135`; `IMP036K_NEXT_GATE: QUALITY / TEST PLAN FINALIZATION`; `IMP036K_QUALITY_TEST_PLAN: NOT_PERFORMED`; `IMP036K_MEASUREMENT_PLAN: NOT_PERFORMED`; `IMP036K_IMPLEMENTATION_PLAN: NOT_PERFORMED`; `IMP036K_IMPLEMENTATION_AUTHORIZED: NO`; `IMP036K_IMPLEMENTATION_STARTED: NO`; `IMP036K_IMPLEMENTATION_COMPLETE: NO`; `IMP036K_ACCEPTED: NO`; RRD-01 through RRD-08 remain discovery source material only; not the current implementation slice)
+- IMP-036J — Promotions, Coupons & Offers (`ARCHITECTURE_LOCKED`; `IMP036J_ACTIVATED: YES`; Product Definition `PD-IMP-036J-DRAFT-6` = `APPROVED`; Product Definition Gate `PASS`; Experience Criticality `X3`; Change Risk `CR2`; Experience Definition `XD-IMP-036J-DRAFT-6` = `APPROVED`; Experience Gate `PASS`; independent review `5342581233`; Architecture Fit `PASS`; source candidate `IMP-036J-FIT-CANDIDATE-9`; evaluated head `052289471cfc2424879932e16fd88d6c16696de8`; prior Candidate 5 Architecture Fit review `5347761109` remains history; architecture LOCKED; Design Readiness `PASS`; source candidate `IMP-036J-DESIGN-CANDIDATE-2`; architect review `5917691904`; Quality/Test Plan finalized; Measurement/Instrumentation Plan finalized; Implementation Plan `PASS`; source `IMP-036J-PLAN-CANDIDATE-1`; architect review `5925360293`; `READY_FOR_IMPLEMENTATION_AUTHORIZATION: YES`; `IMP036J_IMPLEMENTATION_AUTHORIZATION: APPROVED`; `IMP036J_IMPLEMENTATION_AUTHORIZED: YES`; `IMP036J_IMPLEMENTATION_AUTHORIZATION_DATE: 2026-10-01`; `IMP036J_STARTED: YES`; `IMP036J_IMPLEMENTATION_STARTED: YES`; `IMP036J_FORMAL_LIFECYCLE: IMPLEMENTATION_IN_PROGRESS`; `IMP036J_TRANCHE_1: PASS`; `IMP036J_TRANCHE_2: PASS`; `IMP036J_TRANCHE_3: PASS`; `IMP036J_TRANCHE_4: PASS`; `IMP036J_TRANCHE_5: PASS`; `IMP036J_TRANCHE_6: PASS`; `IMP036J_TRANCHE_7: PASS`; `T7_STARTED: YES`; `T8_STARTED: NO`; `IMP036J_IMPLEMENTATION_COMPLETE: NO`; `IMP036J_ACCEPTED: NO`; `FOUNDER_UAT: NOT_PERFORMED`; nextGate `IMPLEMENTATION_TRANCHE_8`; activated for Product Definition under D-382; FD-036J-01 APPROVED 2026-09-27; FD-036J-02 APPROVED 2026-09-27; FD-036J-03 APPROVED 2026-09-28; historical DRAFT-5 Product Definition Gate STOP was not persisted; historical Experience Gate PASS events for DRAFT-2 and DRAFT-3 were not persisted; historical Candidates 6, 7, and 8 remain STOP)
+- IMP-037 — Backup, Restore & Migration Readiness (`IMPLEMENTATION_IN_PROGRESS`; `IMP037_HOLD: YES`; `IMP037_ACTIVATED: YES`; Product Definition APPROVED / `PD-IMP-037-DRAFT-1`; Gate PASS; Architecture Fit PASS; architecture LOCKED; implementation AUTHORIZED / STARTED; `IMP037_IMPLEMENTATION_COMPLETE: NO`; `IMP037_ACCEPTED: NO`; independent Architecture Fit review PASS; authorization evidence PR#171/5743814105; start evidence PR#172/5744869269; `PHASE1_BLOCK_STATUS: BLOCKED_PROVIDER_ACCESS`; held under D-377 program pause)
+- IMP-038 — Security & Privacy Hardening (`IMPLEMENTATION_IN_PROGRESS (HOLD — IMPLEMENTATION_COMPLETE / NOT_ACCEPTED)`; `IMP038_HOLD: YES`; `IMP038_ACTIVATED: YES`; historical `CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038` preserved; Product Definition APPROVED / `PD-IMP-038-DRAFT-2`; Gate PASS; Architecture Fit PASS; architecture LOCKED; independent Architecture Fit review PASS (reviewed head `3b03164d6581c5a98a893c24e92eaddece004e90`); implementation AUTHORIZED / STARTED / COMPLETE (`FOUNDER_IMP038_IMPLEMENTATION_AUTHORIZATION: CURSOR_SESSION_MANDATE`); `IMP038_IMPLEMENTATION_COMPLETE: YES`; `IMP038_ACCEPTED: NO`; `IMP038_ACCEPTANCE_BLOCKED_BY_IMP037: YES`; `IMP038_EXTERNAL_ASSESSMENT: DEFERRED_UNTIL_PRE_GTM_APPLICATION_SCOPE_STABILIZES`; frozen runtime `dc6b19e6f88d4084e424d927e6467c374596fb0a` / tree `c3aefb57f3f6c941d7f14907b6c095c4aa7f0547` / fingerprint `2800fe11397ee2a01e9decf572f85adf5c3a8b244ca34b1f53d579e05feac589`; `GAP-EXT-ASSESS-001: NOT_CLOSED`; held under D-377 program pause; `D-375_CREATED: YES`; `ARCH_R21_CREATED: YES`)
+- IMP-039 — Production Infrastructure & Release Pipeline (`PLANNED` / `NOT_ACTIVATED`; `IMP039_ACTIVATED: NO`)
+- IMP-040 — Launch Validation & Cutover (`PLANNED` / `NOT_ACTIVATED`; `IMP040_ACTIVATED: NO`)
+
+## 9. Authority Boundaries
+
+| Question | Authority |
+|---|---|
+| What is independently accepted now | **This document (`STATE.md`)** |
+| What comes next / IMP meanings | [`ROADMAP.md`](./ROADMAP.md) |
+| Historical STATE evidence | [`history/STATE-STATE-R111-pre-compression.md`](./history/STATE-STATE-R111-pre-compression.md) |
+| Why / Non-Goals | [`VISION.md`](./VISION.md) |
+| Durable architecture | [`ARCHITECTURE.md`](./ARCHITECTURE.md) |
+| Binding decision status | [`decision-register.md`](./decision-register.md) |
+| IMP-036I Product Definition (APPROVED; Gate PASS; Fit PASS; architecture LOCKED; COMPLETE_AND_ACCEPTED; Founder UAT PASS) | [`product/IMP-036I/product-definition.md`](./product/IMP-036I/product-definition.md) |
+| IMP-036H Product Definition (APPROVED; Gate PASS; Fit PASS; LOCKED; AUTHORIZED / STARTED / COMPLETE; COMPLETE_AND_ACCEPTED) | [`product/IMP-036H/product-definition.md`](./product/IMP-036H/product-definition.md) |
+| IMP-038 locked capability architecture (Fit PASS; independent Architecture Fit review PASS; IMPLEMENTATION_COMPLETE / NOT_ACCEPTED; `IMP038_HOLD: YES`; external assessment deferred) | [`capabilities/IMP-038-security-privacy-hardening.md`](./capabilities/IMP-038-security-privacy-hardening.md) |
+| IMP-037 locked capability architecture (Fit PASS; independent Architecture Fit review PASS; repository implementation MERGED; external proof NOT_PERFORMED; `IMP037_HOLD: YES`) | [`capabilities/IMP-037-backup-restore-migration-readiness.md`](./capabilities/IMP-037-backup-restore-migration-readiness.md) |
+| IMP-036G locked capability architecture (latest accepted) | [`capabilities/IMP-036G-administration-console-v2.md`](./capabilities/IMP-036G-administration-console-v2.md) |
+| IMP-036F locked capability architecture | [`capabilities/IMP-036F-catalog-menu-pricing-promotions-management.md`](./capabilities/IMP-036F-catalog-menu-pricing-promotions-management.md) |
+| IMP-036E locked capability architecture | [`capabilities/IMP-036E-store-operations-management.md`](./capabilities/IMP-036E-store-operations-management.md) |
+| IMP-036D locked capability architecture | [`capabilities/IMP-036D-workforce-franchise-operations-v2.md`](./capabilities/IMP-036D-workforce-franchise-operations-v2.md) |
+
+Agents may propose a STATE delta in their report. Only independent acceptance updates this file's
+accepted position and may promote `governanceHealth` to `ALIGNED`.
+
+## 10. STATE-R186 record
+
+```text
+STATE-R186 = IMP036J_TRANCHE_7_PASS
+supersedes: STATE-R185
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-036K
+nextGate: IMPLEMENTATION_TRANCHE_8
+formalLifecycle: IMPLEMENTATION_IN_PROGRESS
+IMP036J_STARTED: YES
+IMP036J_IMPLEMENTATION_STARTED: YES
+IMP036J_IMPLEMENTATION_COMPLETE: NO
+IMP036J_ACCEPTED: NO
+FOUNDER_UAT: NOT_PERFORMED
+IMP036J_TRANCHE_1: PASS
+IMP036J_TRANCHE_2: PASS
+IMP036J_TRANCHE_3: PASS
+IMP036J_TRANCHE_4: PASS
+IMP036J_TRANCHE_5: PASS
+IMP036J_TRANCHE_6: PASS
+IMP036J_TRANCHE_7: PASS
+T7_STARTED: YES
+T8_STARTED: NO
+IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_8
+TRANCHE_7: MEASUREMENT_REPORTING
+IMPLEMENTATION_TRANCHE: 7 / MEASUREMENT_REPORTING
+IMPLEMENTATION_PR: #357
+IMPLEMENTATION_REVIEWED_HEAD: 0bd2734c51b88e5f9e6025389f23920e7a3c805d
+IMPLEMENTATION_REVIEWED_TREE: 42ba8ba7fd99892df2b2e2ca2e466114bdf65ea9
+IMPLEMENTATION_ARCHITECT_REVIEW: 5407550500
+IMPLEMENTATION_MERGE_MAIN: 323f5917995441d7096ddb17dd6168e0e98ce405
+IMPLEMENTATION_MERGE_MAIN_TREE: 42ba8ba7fd99892df2b2e2ca2e466114bdf65ea9
+IMPLEMENTATION_MERGE_TREE_DRIFT: NONE
+IMPLEMENTATION_EXACT_MAIN_CI: 37225606813
+IMPLEMENTATION_EXACT_MAIN_CODEQL: 37225606739
+IMPLEMENTATION_POST_MERGE_CLOSURE: 5983294615
+CURRENT_SOURCE_MAIN: 323f5917995441d7096ddb17dd6168e0e98ce405
+CURRENT_SOURCE_MAIN_TREE: 42ba8ba7fd99892df2b2e2ca2e466114bdf65ea9
+CURRENT_SOURCE_EXACT_MAIN_CI: 37225606813
+CURRENT_SOURCE_EXACT_MAIN_CODEQL: 37225606739
+CURRENT_SOURCE_SECURITY_SDLC: PASS
+CURRENT_SOURCE_SCA: PASS
+CURRENT_SOURCE_GITLEAKS: PASS
+CURRENT_SOURCE_TRIVY: PASS
+CURRENT_SOURCE_QUALITY: PASS
+CURRENT_SOURCE_TYPECHECK: PASS
+CURRENT_SOURCE_LINT: PASS
+CURRENT_SOURCE_PROJECT_CONSISTENCY: PASS
+CURRENT_SOURCE_T1_NAMED_PROOF: PASS
+CURRENT_SOURCE_T2_NAMED_PROOF: PASS
+CURRENT_SOURCE_T3_NAMED_PROOF: PASS
+CURRENT_SOURCE_T4_NAMED_PROOF: PASS
+CURRENT_SOURCE_T5_NAMED_PROOF: PASS
+CURRENT_SOURCE_T6_NAMED_PROOF: PASS
+CURRENT_SOURCE_T7_NAMED_PROOF: PASS
+SCHEMA_CHANGED: YES
+MIGRATION_CHANGED: YES
+MIGRATION: 0049_imp036j_tranche7_immutable_publication
+NEW_MIGRATION_BEYOND_0049: NO
+NEW_SERVICE: NO
+NEW_QUEUE: NO
+NEW_SCHEDULER: NO
+NEW_PERMISSION: NO
+NEW_ROLE: NO
+COMMERCIAL_BEHAVIOR_CHANGED: NO
+PR357: MERGED
+IMP036K_DESIGN_READINESS: PASS
+DESIGN_READINESS_SOURCE_CANDIDATE: IMP-036K-DESIGN-CANDIDATE-1
+DESIGN_READINESS_ARCHITECT_REVIEW: 5396061135
+IMP036K_NEXT_GATE: QUALITY / TEST PLAN FINALIZATION
+IMP036K_QUALITY_TEST_PLAN: NOT_PERFORMED
+IMP036K_QUALITY_TEST_PLAN_FINALIZED: NO
+IMP036K_MEASUREMENT_PLAN: NOT_PERFORMED
+IMP036K_MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED: NO
+IMP036K_IMPLEMENTATION_PLAN: NOT_PERFORMED
+IMP036K_IMPLEMENTATION_AUTHORIZED: NO
+IMP036K_IMPLEMENTATION_STARTED: NO
+IMP036K_IMPLEMENTATION_COMPLETE: NO
+IMP036K_ACCEPTED: NO
+IMP036K_ARCHITECTURE_FIT: PASS
+IMP036K_ARCHITECTURE_LOCKED: YES
+D-383: CURRENT
+ARCH-R23: UNCHANGED
+DECISION_REGISTER: DR-24
+```
+
+IMP-036J Tranche 7 MEASUREMENT_REPORTING is `PASS`. Reviewed implementation head
+`0bd2734c51b88e5f9e6025389f23920e7a3c805d` merged in pull request #357 at
+`323f5917995441d7096ddb17dd6168e0e98ce405`. Architect review `5407550500`,
+post-merge closure `5983294615`, exact-main CI `37225606813`, and
+exact-main CodeQL `37225606739` succeeded. Exact-main Security SDLC, SCA,
+Gitleaks, Trivy, Quality, Typecheck, Lint, and Project Consistency passed.
+Exact main tree `42ba8ba7fd99892df2b2e2ca2e466114bdf65ea9` matches the
+reviewed implementation tree. Merge-tree drift is NONE. Named IMP-036J
+Tranche 1 through 7 proofs passed on exact main. Schema and migration
+changed: `0049_imp036j_tranche7_immutable_publication`. No migration
+beyond 0049. No new service, queue, scheduler, permission, or role.
+Commercial behaviour is unchanged. The next gate is
+`IMPLEMENTATION_TRANCHE_8`. Tranche 7 identity is `MEASUREMENT_REPORTING`.
+`T7_STARTED` is `YES`. Tranche 8 has not started. Tranche 1 stays `PASS`.
+Tranche 2 stays `PASS`. Tranche 3 stays `PASS`. Tranche 4 stays `PASS`.
+Tranche 5 stays `PASS`. Tranche 6 stays `PASS`. Formal lifecycle stays
+`IMPLEMENTATION_IN_PROGRESS`. Implementation stays started and incomplete.
+`IMP036J_ACCEPTED` stays `NO`. `FOUNDER_UAT` stays `NOT_PERFORMED`.
+`acceptedThrough` stays IMP-036I. `currentProductSlice` stays IMP-036J.
+`nextProductSlice` stays IMP-036K. IMP-036K Design Readiness stays `PASS`.
+`IMP036K_NEXT_GATE` stays `QUALITY / TEST PLAN FINALIZATION`. Quality/Test
+Plan and Measurement/Instrumentation Plan remain `NOT_PERFORMED` / not
+finalized. Implementation Plan remains `NOT_PERFORMED`. IMP-036K
+implementation stays unauthorized and unstarted. GTM-R187 / STATE-R185
+remains the Tranche 5 PASS checkpoint, where Tranche 7 was still not
+started and the next gate was still `IMPLEMENTATION_TRANCHE_7`.
+GTM-R186 / STATE-R184 remains the Tranche 6 PASS checkpoint.
+GTM-R185 / STATE-R183 remains the Tranche 4 PASS checkpoint. GTM-R184 /
+STATE-R182 remains the Tranche 3 PASS checkpoint. GTM-R183 / STATE-R181
+remains the Design Readiness PASS checkpoint. GTM-R182 / STATE-R180 remains
+the Tranche 2 PASS checkpoint. GTM-R181 / STATE-R179 remains the Architecture
+Fit PASS / LOCK checkpoint. GTM-R180 / STATE-R178 remains the Tranche 1 PASS
+checkpoint. ARCH-R23 and DR-24 stay unchanged. D-383 stays CURRENT. This
+record does not start Tranche 8, complete implementation, accept IMP-036J,
+perform Founder UAT, advance `acceptedThrough`, finalize IMP-036K
+Quality/Test Plan or Measurement Plan, or authorize IMP-036K implementation.
+
+## 10. STATE-R185 record (historical prior tip)
+
+```text
+STATE-R185 = IMP036J_TRANCHE_5_PASS
+supersedes: STATE-R184
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-036K
+nextGate: IMPLEMENTATION_TRANCHE_7
+formalLifecycle: IMPLEMENTATION_IN_PROGRESS
+IMP036J_STARTED: YES
+IMP036J_IMPLEMENTATION_STARTED: YES
+IMP036J_IMPLEMENTATION_COMPLETE: NO
+IMP036J_ACCEPTED: NO
+FOUNDER_UAT: NOT_PERFORMED
+IMP036J_TRANCHE_1: PASS
+IMP036J_TRANCHE_2: PASS
+IMP036J_TRANCHE_3: PASS
+IMP036J_TRANCHE_4: PASS
+IMP036J_TRANCHE_5: PASS
+IMP036J_TRANCHE_6: PASS
+T7_STARTED: NO
+T8_STARTED: NO
+IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_7
+TRANCHE_7: MEASUREMENT_REPORTING
+IMPLEMENTATION_TRANCHE: 5 / CUSTOMER_PRESENTATION
+IMPLEMENTATION_PR: #353
+IMPLEMENTATION_REVIEWED_HEAD: 7118ae2dbecee82289a6258e3809533d9a6cdd0f
+IMPLEMENTATION_REVIEWED_TREE: 869415986cc86ac3d3f458bc8657943d8b2b80cc
+IMPLEMENTATION_ARCHITECT_AUTHORIZATION: 5972836628
+IMPLEMENTATION_ARCHITECT_REVIEW: 5405431455
+IMPLEMENTATION_INDEPENDENT_REVIEW: 5405268332
+IMPLEMENTATION_MERGE_MAIN: a6f523574b9548c5759095aa98243c35173081a7
+IMPLEMENTATION_MERGE_MAIN_TREE: 869415986cc86ac3d3f458bc8657943d8b2b80cc
+IMPLEMENTATION_EXACT_HEAD_CI: 37191557217
+IMPLEMENTATION_EXACT_HEAD_CODEQL: 37191557229
+IMPLEMENTATION_EXACT_MAIN_CI: 37194118181
+IMPLEMENTATION_EXACT_MAIN_CODEQL: 37194118164
+IMPLEMENTATION_POST_MERGE_CLOSURE: 5978958943
+CURRENT_SOURCE_MAIN: a6f523574b9548c5759095aa98243c35173081a7
+CURRENT_SOURCE_MAIN_TREE: 869415986cc86ac3d3f458bc8657943d8b2b80cc
+CURRENT_SOURCE_EXACT_MAIN_CI: 37194118181
+CURRENT_SOURCE_EXACT_MAIN_CODEQL: 37194118164
+CURRENT_SOURCE_SECURITY_SDLC: PASS
+CURRENT_SOURCE_SCA: PASS
+CURRENT_SOURCE_GITLEAKS: PASS
+CURRENT_SOURCE_TRIVY: PASS
+CURRENT_SOURCE_T5_NAMED_PROOF: PASS
+CURRENT_SOURCE_T5_NAMED_PROOF_COMMAND: npm run test:imp036j:tranche5
+CURRENT_SOURCE_T6_NAMED_PROOF: PASS
+CURRENT_SOURCE_T6_NAMED_PROOF_COMMAND: npm run test:imp036j:tranche6
+AR-036J-T5-01: FIXED
+AR-036J-T5-02: FIXED
+AR-036J-T5-03: FIXED
+AR-036J-T5-04: FIXED
+AR-036J-T5-05: FIXED
+AR-036J-T5-06: FIXED
+AR-036J-T5-07: FIXED
+AR-036J-T5-08: FIXED
+AR-036J-T5-09: FIXED
+AR-036J-T5-10: FIXED
+AR-036J-T5-11: FIXED
+AR-036J-T5-12: FIXED
+AR-036J-T5-13: FIXED
+AR-036J-T5-14: FIXED
+AR-036J-T5-15: FIXED
+AR-036J-T5-16: FIXED
+AR-036J-T5-17: FIXED
+AR-036J-T5-18: FIXED
+CANONICAL_DELIVERY_COMPONENT: FIXED
+READY_PAYMENT_RELOAD_SAVINGS: FIXED
+SEALED_GRAND_TOTAL_UNCHANGED: PASS
+LIVE_REEVALUATION_ON_PURCHASED_TRUTH: NO
+BROWSER_MONEY_AUTHORITY: NO
+SERVER_MONEY_AUTHORITY: YES
+SCHEMA_CHANGED: NO
+MIGRATION_CHANGED: NO
+PR353: MERGED
+IMP036K_DESIGN_READINESS: PASS
+DESIGN_READINESS_SOURCE_CANDIDATE: IMP-036K-DESIGN-CANDIDATE-1
+DESIGN_READINESS_ARCHITECT_REVIEW: 5396061135
+IMP036K_NEXT_GATE: QUALITY / TEST PLAN FINALIZATION
+IMP036K_QUALITY_TEST_PLAN: NOT_PERFORMED
+IMP036K_QUALITY_TEST_PLAN_FINALIZED: NO
+IMP036K_MEASUREMENT_PLAN: NOT_PERFORMED
+IMP036K_MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED: NO
+IMP036K_IMPLEMENTATION_PLAN: NOT_PERFORMED
+IMP036K_IMPLEMENTATION_AUTHORIZED: NO
+IMP036K_IMPLEMENTATION_STARTED: NO
+IMP036K_IMPLEMENTATION_COMPLETE: NO
+IMP036K_ACCEPTED: NO
+IMP036K_ARCHITECTURE_FIT: PASS
+IMP036K_ARCHITECTURE_LOCKED: YES
+D-383: CURRENT
+ARCH-R23: UNCHANGED
+DECISION_REGISTER: DR-24
+```
+
+IMP-036J Tranche 5 CUSTOMER_PRESENTATION is `PASS`. Reviewed implementation head
+`7118ae2dbecee82289a6258e3809533d9a6cdd0f` merged in pull request #353 at
+`a6f523574b9548c5759095aa98243c35173081a7`. Architect execution authorization
+`5972836628`, Architect review `5405431455`, independent review `5405268332`,
+post-merge closure `5978958943`, exact-main CI `37194118181`, and
+exact-main CodeQL `37194118164` succeeded. Exact-main Security SDLC, SCA,
+Gitleaks, and Trivy passed. Exact main tree
+`869415986cc86ac3d3f458bc8657943d8b2b80cc` matches the reviewed implementation
+tree. The named IMP-036J Tranche 5 proof `npm run test:imp036j:tranche5`
+passed on exact main. The named IMP-036J Tranche 6 proof
+`npm run test:imp036j:tranche6` also passed on exact main. `AR-036J-T5-01`
+through `AR-036J-T5-18` are FIXED. Schema and migration did not change.
+Customer presentation runtime changed in the already-merged Tranche 5
+implementation on source main. Browser money authority remains `NO`. Server
+money authority remains `YES`. Live reevaluation on purchased truth remains
+`NO`. Sealed grand total remains unchanged. The next gate is
+`IMPLEMENTATION_TRANCHE_7`. Tranche 7 identity remains `MEASUREMENT_REPORTING`.
+T7 depends on T2, T4, and T5; those dependencies are now satisfied. Tranche 7
+has not started. Tranche 8 has not started and remains blocked until T7
+passes. Tranche 1 stays `PASS`. Tranche 2 stays `PASS`. Tranche 3 stays
+`PASS`. Tranche 4 stays `PASS`. Tranche 6 stays `PASS`. Formal lifecycle stays
+`IMPLEMENTATION_IN_PROGRESS`. Implementation stays started and incomplete.
+`IMP036J_ACCEPTED` stays `NO`. `FOUNDER_UAT` stays `NOT_PERFORMED`.
+`acceptedThrough` stays IMP-036I. `currentProductSlice` stays IMP-036J.
+`nextProductSlice` stays IMP-036K. IMP-036K Design Readiness stays `PASS`.
+`IMP036K_NEXT_GATE` stays `QUALITY / TEST PLAN FINALIZATION`. Quality/Test
+Plan and Measurement/Instrumentation Plan remain `NOT_PERFORMED` / not
+finalized. Implementation Plan remains `NOT_PERFORMED`. IMP-036K
+implementation stays unauthorized and unstarted. GTM-R186 / STATE-R184 remains
+the Tranche 6 PASS checkpoint, where IMP-036J Tranche 5 was still
+`NOT_STARTED` and the next gate was still `IMPLEMENTATION_TRANCHE_5`.
+GTM-R185 / STATE-R183 remains the Tranche 4 PASS checkpoint. GTM-R184 /
+STATE-R182 remains the Tranche 3 PASS checkpoint. GTM-R183 / STATE-R181
+remains the Design Readiness PASS checkpoint. GTM-R182 / STATE-R180 remains
+the Tranche 2 PASS checkpoint. GTM-R181 / STATE-R179 remains the Architecture
+Fit PASS / LOCK checkpoint. GTM-R180 / STATE-R178 remains the Tranche 1 PASS
+checkpoint. ARCH-R23 and DR-24 stay unchanged. D-383 stays CURRENT. This
+record does not start Tranche 7, start Tranche 8, complete implementation,
+accept IMP-036J, perform Founder UAT, finalize IMP-036K Quality/Test Plan or
+Measurement Plan, or authorize IMP-036K implementation.
+
+## 10. STATE-R184 record (historical prior tip)
+
+```text
+STATE-R184 = IMP036J_TRANCHE_6_PASS
+supersedes: STATE-R183
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-036K
+nextGate: IMPLEMENTATION_TRANCHE_5
+formalLifecycle: IMPLEMENTATION_IN_PROGRESS
+IMP036J_STARTED: YES
+IMP036J_IMPLEMENTATION_STARTED: YES
+IMP036J_IMPLEMENTATION_COMPLETE: NO
+IMP036J_ACCEPTED: NO
+FOUNDER_UAT: NOT_PERFORMED
+IMP036J_TRANCHE_1: PASS
+IMP036J_TRANCHE_2: PASS
+IMP036J_TRANCHE_3: PASS
+IMP036J_TRANCHE_4: PASS
+IMP036J_TRANCHE_5: NOT_STARTED
+IMP036J_TRANCHE_6: PASS
+T7_STARTED: NO
+T8_STARTED: NO
+IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_5
+IMPLEMENTATION_TRANCHE: 6 / WORKFORCE_AUTHORING
+IMPLEMENTATION_PR: #352
+IMPLEMENTATION_REVIEWED_HEAD: f1338e30bc49dff41c06449b9e944a65d6b87fe0
+IMPLEMENTATION_REVIEWED_TREE: 5ad8046c6ff2962a9cd09eb9e74caef4ade86aed
+IMPLEMENTATION_ARCHITECT_AUTHORIZATION: 5972906824
+IMPLEMENTATION_ARCHITECT_REVIEW: 5977274761
+IMPLEMENTATION_INDEPENDENT_REVIEW: 5404591139
+IMPLEMENTATION_MERGE_MAIN: 84fa3196cbc04543d67eae6c2520eca67addb606
+IMPLEMENTATION_MERGE_MAIN_TREE: 5ad8046c6ff2962a9cd09eb9e74caef4ade86aed
+IMPLEMENTATION_EXACT_HEAD_CI: 37181604488
+IMPLEMENTATION_EXACT_HEAD_CODEQL: 37181604539
+IMPLEMENTATION_EXACT_MAIN_CI: 37182861121
+IMPLEMENTATION_EXACT_MAIN_CODEQL: 37182861142
+IMPLEMENTATION_POST_MERGE_CLOSURE: 5977374419
+CURRENT_SOURCE_MAIN: 84fa3196cbc04543d67eae6c2520eca67addb606
+CURRENT_SOURCE_MAIN_TREE: 5ad8046c6ff2962a9cd09eb9e74caef4ade86aed
+CURRENT_SOURCE_EXACT_MAIN_CI: 37182861121
+CURRENT_SOURCE_EXACT_MAIN_CODEQL: 37182861142
+CURRENT_SOURCE_SECURITY_SDLC: PASS
+CURRENT_SOURCE_SCA: PASS
+CURRENT_SOURCE_TRIVY: PASS
+CURRENT_SOURCE_T6_NAMED_PROOF: PASS
+CURRENT_SOURCE_T6_NAMED_PROOF_COMMAND: npm run test:imp036j:tranche6
+AR-036J-T6-01: FIXED
+AR-036J-T6-02: FIXED
+AR-036J-T6-03: FIXED
+AR-036J-T6-04: FIXED
+AR-036J-T6-05: FIXED
+AR-036J-T6-06: FIXED
+SCHEMA_CHANGED: NO
+MIGRATION_CHANGED: NO
+RUNTIME_CHANGED: NO
+PR352: MERGED
+PR353: UNCHANGED
+IMP036K_DESIGN_READINESS: PASS
+DESIGN_READINESS_SOURCE_CANDIDATE: IMP-036K-DESIGN-CANDIDATE-1
+DESIGN_READINESS_ARCHITECT_REVIEW: 5396061135
+IMP036K_NEXT_GATE: QUALITY / TEST PLAN FINALIZATION
+IMP036K_QUALITY_TEST_PLAN: NOT_PERFORMED
+IMP036K_QUALITY_TEST_PLAN_FINALIZED: NO
+IMP036K_MEASUREMENT_PLAN: NOT_PERFORMED
+IMP036K_MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED: NO
+IMP036K_IMPLEMENTATION_PLAN: NOT_PERFORMED
+IMP036K_IMPLEMENTATION_AUTHORIZED: NO
+IMP036K_IMPLEMENTATION_STARTED: NO
+IMP036K_IMPLEMENTATION_COMPLETE: NO
+IMP036K_ACCEPTED: NO
+IMP036K_ARCHITECTURE_FIT: PASS
+IMP036K_ARCHITECTURE_LOCKED: YES
+D-383: CURRENT
+ARCH-R23: UNCHANGED
+DECISION_REGISTER: DR-24
+```
+
+IMP-036J Tranche 6 WORKFORCE_AUTHORING is `PASS`. Reviewed implementation head
+`f1338e30bc49dff41c06449b9e944a65d6b87fe0` merged in pull request #352 at
+`84fa3196cbc04543d67eae6c2520eca67addb606`. Architect execution authorization
+`5972906824`, Architect review `5977274761`, independent review `5404591139`,
+post-merge closure `5977374419`, exact-main CI `37182861121`, and
+exact-main CodeQL `37182861142` succeeded. Exact-main Security SDLC, SCA,
+and Trivy passed. Exact main tree
+`5ad8046c6ff2962a9cd09eb9e74caef4ade86aed` matches the reviewed implementation
+tree. The named IMP-036J Tranche 6 proof `npm run test:imp036j:tranche6`
+passed on exact main. `AR-036J-T6-01` through `AR-036J-T6-06` are FIXED.
+Schema, migration, and runtime did not change. T6 was authorized and executed
+as a parallel independent workstream. The next gate remains
+`IMPLEMENTATION_TRANCHE_5`. Tranche 5 remains `NOT_STARTED` and is not claimed
+PASS. Tranche 7 has not started. Tranche 8 has not started. Pull request #353
+is unchanged. Tranche 1 stays `PASS`. Tranche 2 stays `PASS`. Tranche 3 stays
+`PASS`. Tranche 4 stays `PASS`. Formal lifecycle stays
+`IMPLEMENTATION_IN_PROGRESS`. Implementation stays started and incomplete.
+`IMP036J_ACCEPTED` stays `NO`. `FOUNDER_UAT` stays `NOT_PERFORMED`.
+`acceptedThrough` stays IMP-036I. `currentProductSlice` stays IMP-036J.
+`nextProductSlice` stays IMP-036K. IMP-036K Design Readiness stays `PASS`.
+`IMP036K_NEXT_GATE` stays `QUALITY / TEST PLAN FINALIZATION`. Quality/Test
+Plan and Measurement/Instrumentation Plan remain `NOT_PERFORMED` / not
+finalized. Implementation Plan remains `NOT_PERFORMED`. IMP-036K
+implementation stays unauthorized and unstarted. GTM-R185 / STATE-R183 remains
+the Tranche 4 PASS checkpoint, where IMP-036J Tranche 6 was not yet recorded.
+GTM-R184 / STATE-R182 remains the Tranche 3 PASS checkpoint. GTM-R183 /
+STATE-R181 remains the Design Readiness PASS checkpoint. GTM-R182 /
+STATE-R180 remains the Tranche 2 PASS checkpoint. GTM-R181 / STATE-R179
+remains the Architecture Fit PASS / LOCK checkpoint. GTM-R180 / STATE-R178
+remains the Tranche 1 PASS checkpoint. ARCH-R23 and DR-24 stay unchanged.
+D-383 stays CURRENT. This record does not claim T5 PASS, merge or alter pull
+request #353, start Tranche 7, start Tranche 8, complete implementation,
+accept IMP-036J, perform Founder UAT, finalize IMP-036K Quality/Test Plan or
+Measurement Plan, or authorize IMP-036K implementation.
+
+## 10. STATE-R183 record (historical prior tip)
+
+```text
+STATE-R183 = IMP036J_TRANCHE_4_PASS
+supersedes: STATE-R182
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-036K
+nextGate: IMPLEMENTATION_TRANCHE_5
+formalLifecycle: IMPLEMENTATION_IN_PROGRESS
+IMP036J_STARTED: YES
+IMP036J_IMPLEMENTATION_STARTED: YES
+IMP036J_IMPLEMENTATION_COMPLETE: NO
+IMP036J_ACCEPTED: NO
+FOUNDER_UAT: NOT_PERFORMED
+IMP036J_TRANCHE_1: PASS
+IMP036J_TRANCHE_2: PASS
+IMP036J_TRANCHE_3: PASS
+IMP036J_TRANCHE_4: PASS
+IMP036J_TRANCHE_5: NOT_STARTED
+IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_5
+IMPLEMENTATION_TRANCHE: 4 / COMMERCIAL_COMMANDS
+IMPLEMENTATION_PR: #350
+IMPLEMENTATION_REVIEWED_HEAD: aac5a1d37d9a8f54a3247dc27292df2be97dc542
+IMPLEMENTATION_REVIEWED_TREE: 4c74b8494f4e86cf319133581b759761077377bb
+IMPLEMENTATION_ARCHITECT_REVIEW: 5972154990
+IMPLEMENTATION_INDEPENDENT_REVIEW: 5972085655
+IMPLEMENTATION_MERGE_MAIN: df4949d83bff6c4f9e29f571b8abf6113c214291
+IMPLEMENTATION_MERGE_MAIN_TREE: 4c74b8494f4e86cf319133581b759761077377bb
+IMPLEMENTATION_EXACT_MAIN_CI: 37144203381
+IMPLEMENTATION_EXACT_MAIN_CODEQL: 37144203373
+IMPLEMENTATION_POST_MERGE_CLOSURE: 5972239946
+CURRENT_SOURCE_MAIN: df4949d83bff6c4f9e29f571b8abf6113c214291
+CURRENT_SOURCE_MAIN_TREE: 4c74b8494f4e86cf319133581b759761077377bb
+CURRENT_SOURCE_EXACT_MAIN_CI: 37144203381
+CURRENT_SOURCE_EXACT_MAIN_CODEQL: 37144203373
+CURRENT_SOURCE_T4_NAMED_PROOF: PASS
+CURRENT_SOURCE_T4_NAMED_PROOF_COMMAND: npm run test:imp036j:tranche4
+CURRENT_SOURCE_T4_NAMED_PROOF_TEST_COUNT: 49
+AR-036J-T4-01: FIXED
+AR-036J-T4-02: FIXED
+AR-036J-T4-03: FIXED
+AR-036J-T4-04: FIXED
+AR-036J-T4-05: FIXED
+AR-036J-T4-06: FIXED
+AR-036J-T4-07: FIXED
+AR-036J-T4-08: FIXED
+AR-036J-T4-09: FIXED
+AR-036J-T4-10: FIXED
+AR-036J-T4-11: FIXED
+AR-036J-T4-12: FIXED
+AR-036J-T4-13: FIXED
+AR-036J-T4-14: FIXED
+AR-036J-T4-15: FIXED
+SCHEMA_CHANGED: NO
+MIGRATION_CHANGED: NO
+PR350: MERGED
+IMP036K_DESIGN_READINESS: PASS
+DESIGN_READINESS_SOURCE_CANDIDATE: IMP-036K-DESIGN-CANDIDATE-1
+DESIGN_READINESS_ARCHITECT_REVIEW: 5396061135
+IMP036K_NEXT_GATE: QUALITY / TEST PLAN FINALIZATION
+IMP036K_QUALITY_TEST_PLAN: NOT_PERFORMED
+IMP036K_QUALITY_TEST_PLAN_FINALIZED: NO
+IMP036K_MEASUREMENT_PLAN: NOT_PERFORMED
+IMP036K_MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED: NO
+IMP036K_IMPLEMENTATION_PLAN: NOT_PERFORMED
+IMP036K_IMPLEMENTATION_AUTHORIZED: NO
+IMP036K_IMPLEMENTATION_STARTED: NO
+IMP036K_IMPLEMENTATION_COMPLETE: NO
+IMP036K_ACCEPTED: NO
+IMP036K_ARCHITECTURE_FIT: PASS
+IMP036K_ARCHITECTURE_LOCKED: YES
+D-383: CURRENT
+ARCH-R23: UNCHANGED
+DECISION_REGISTER: DR-24
+```
+
+IMP-036J Tranche 4 is `PASS`. Reviewed implementation head
+`aac5a1d37d9a8f54a3247dc27292df2be97dc542` merged in pull request #350 at
+`df4949d83bff6c4f9e29f571b8abf6113c214291`. Architect review `5972154990`, independent
+review `5972085655`, post-merge closure
+`5972239946`, exact-main CI `37144203381`, and
+exact-main CodeQL `37144203373` succeeded. Exact main tree
+`4c74b8494f4e86cf319133581b759761077377bb` matches the reviewed implementation
+tree. The named IMP-036J Tranche 4 proof `npm run test:imp036j:tranche4`
+passed on exact main (49 tests). `AR-036J-T4-01` through `AR-036J-T4-15`
+are FIXED. Schema and migration did not change. The next gate is
+`IMPLEMENTATION_TRANCHE_5`. Tranche 5 has not started.
+Tranche 1 stays `PASS`. Tranche 2 stays `PASS`. Tranche 3 stays `PASS`.
+Formal lifecycle stays `IMPLEMENTATION_IN_PROGRESS`. Implementation stays
+started and incomplete. `IMP036J_ACCEPTED` stays `NO`. `FOUNDER_UAT` stays
+`NOT_PERFORMED`. `acceptedThrough` stays IMP-036I. `currentProductSlice`
+stays IMP-036J. `nextProductSlice` stays IMP-036K. IMP-036K Design
+Readiness stays `PASS`. `IMP036K_NEXT_GATE` stays
+`QUALITY / TEST PLAN FINALIZATION`. Quality/Test Plan and
+Measurement/Instrumentation Plan remain `NOT_PERFORMED` / not finalized.
+Implementation Plan remains `NOT_PERFORMED`. IMP-036K implementation stays
+unauthorized and unstarted. GTM-R184 / STATE-R182 remains the Tranche 3
+PASS checkpoint, where IMP-036J Tranche 4 was still `NOT_STARTED`.
+GTM-R183 / STATE-R181 remains the Design Readiness PASS checkpoint.
+GTM-R182 / STATE-R180 remains the Tranche 2 PASS checkpoint.
+GTM-R181 / STATE-R179 remains the Architecture Fit PASS / LOCK checkpoint.
+GTM-R180 / STATE-R178 remains the Tranche 1 PASS checkpoint. ARCH-R23 and
+DR-24 stay unchanged. D-383 stays CURRENT. This record does not start
+Tranche 5, complete implementation, accept IMP-036J, perform Founder UAT,
+finalize IMP-036K Quality/Test Plan or Measurement Plan, or authorize
+IMP-036K implementation.
+
+## 10. STATE-R182 record (historical prior tip)
+
+```text
+STATE-R182 = IMP036J_TRANCHE_3_PASS
+supersedes: STATE-R181
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-036K
+nextGate: IMPLEMENTATION_TRANCHE_4
+formalLifecycle: IMPLEMENTATION_IN_PROGRESS
+IMP036J_STARTED: YES
+IMP036J_IMPLEMENTATION_STARTED: YES
+IMP036J_IMPLEMENTATION_COMPLETE: NO
+IMP036J_ACCEPTED: NO
+FOUNDER_UAT: NOT_PERFORMED
+IMP036J_TRANCHE_1: PASS
+IMP036J_TRANCHE_2: PASS
+IMP036J_TRANCHE_3: PASS
+IMP036J_TRANCHE_4: NOT_STARTED
+IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_4
+IMPLEMENTATION_TRANCHE: 3 / COMMERCIAL_EVALUATION
+IMPLEMENTATION_PR: #344
+IMPLEMENTATION_REVIEWED_HEAD: fa02c6152d01b494a6f1cd45bcb8164ff5e5bfb2
+IMPLEMENTATION_REVIEWED_TREE: c8c59d22b7c99aa29598b948898c7fa550b645ba
+IMPLEMENTATION_ARCHITECT_REVIEW: 5396697862
+IMPLEMENTATION_INDEPENDENT_REVIEW: 5961204791
+IMPLEMENTATION_MERGE_MAIN: c98ff524c286cf67305b7233c9028fffa2300f00
+IMPLEMENTATION_EXACT_MAIN_CI: 37063266966
+IMPLEMENTATION_EXACT_MAIN_CODEQL: 37063266951
+IMPLEMENTATION_POST_MERGE_CLOSURE: 5961423809
+CURRENT_SOURCE_MAIN: 43f280d9e42c159910d6f916b7db255e748e1c1e
+CURRENT_SOURCE_MAIN_TREE: a455b530743a5a8383c6936170e01025052c30ef
+CURRENT_SOURCE_EXACT_MAIN_CI: 37116839745
+CURRENT_SOURCE_EXACT_MAIN_CODEQL: 37116839762
+CURRENT_SOURCE_SECURITY_SDLC: PASS
+CURRENT_SOURCE_SCA: PASS
+CURRENT_SOURCE_TRIVY: PASS
+CURRENT_SOURCE_T3_NAMED_PROOF: PASS
+CURRENT_SOURCE_SECURITY_CHECKPOINT_PR: 349
+CURRENT_SOURCE_SECURITY_CLOSURE: 5968401737
+HISTORICAL_PRE_SECURITY_SOURCE_MAIN: 8e4221f27d3e9c930dca4544382a038a58f0f93a
+HISTORICAL_PRE_SECURITY_SOURCE_TREE: 3492b4eaf95ab4f0cbab89b6de08c1e6c9d147fb
+HISTORICAL_PRE_SECURITY_SOURCE_CI: 37071608421
+HISTORICAL_PRE_SECURITY_SOURCE_CODEQL: 37071608405
+PR346_PROVENANCE_REPAIR_MERGE_CHECKPOINT: 51cc0b3c3964e2d5e4d301b1b43c80d5132b7210
+PR346_PROVENANCE_REPAIR_MERGE_CHECKPOINT_CI: 37070367757
+PR346_PROVENANCE_REPAIR_MERGE_CHECKPOINT_CODEQL: 37070367671
+PR344: MERGED
+IMP036K_DESIGN_READINESS: PASS
+DESIGN_READINESS_SOURCE_CANDIDATE: IMP-036K-DESIGN-CANDIDATE-1
+DESIGN_READINESS_ARCHITECT_REVIEW: 5396061135
+IMP036K_NEXT_GATE: QUALITY / TEST PLAN FINALIZATION
+IMP036K_QUALITY_TEST_PLAN: NOT_PERFORMED
+IMP036K_QUALITY_TEST_PLAN_FINALIZED: NO
+IMP036K_MEASUREMENT_PLAN: NOT_PERFORMED
+IMP036K_MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED: NO
+IMP036K_IMPLEMENTATION_PLAN: NOT_PERFORMED
+IMP036K_IMPLEMENTATION_AUTHORIZED: NO
+IMP036K_IMPLEMENTATION_STARTED: NO
+IMP036K_IMPLEMENTATION_COMPLETE: NO
+IMP036K_ACCEPTED: NO
+IMP036K_ARCHITECTURE_FIT: PASS
+IMP036K_ARCHITECTURE_LOCKED: YES
+D-383: CURRENT
+ARCH-R23: UNCHANGED
+DECISION_REGISTER: DR-24
+```
+
+IMP-036J Tranche 3 is `PASS`. Reviewed implementation head
+`fa02c6152d01b494a6f1cd45bcb8164ff5e5bfb2` merged in pull request #344 at
+`c98ff524c286cf67305b7233c9028fffa2300f00`. Architect review `5396697862`, independent
+review `5961204791`, post-merge closure
+`5961423809`, exact-main CI `37063266966`, and
+exact-main CodeQL `37063266951` succeeded. Current source main
+`43f280d9e42c159910d6f916b7db255e748e1c1e` (tree `a455b530743a5a8383c6936170e01025052c30ef`) also reran the named
+IMP-036J Tranche 3 proof successfully (exact-main CI
+`37116839745` / CodeQL `37116839762`; Security SDLC PASS;
+SCA PASS; Trivy PASS). Security checkpoint PR #349 merged at that
+source (post-merge closure `5968401737`). Historical pre-security
+source `8e4221f27d3e9c930dca4544382a038a58f0f93a` (tree
+`3492b4eaf95ab4f0cbab89b6de08c1e6c9d147fb`; CI `37071608421` /
+CodeQL `37071608405`) and historical
+`PR346_PROVENANCE_REPAIR_MERGE_CHECKPOINT`
+`51cc0b3c3964e2d5e4d301b1b43c80d5132b7210` (CI `37070367757` /
+CodeQL `37070367671`) are retained as prior source evidence only.
+The next gate is `IMPLEMENTATION_TRANCHE_4`. Tranche 4 has not started.
+Tranche 1 stays `PASS`. Tranche 2 stays `PASS`. Formal lifecycle stays
+`IMPLEMENTATION_IN_PROGRESS`. Implementation stays started and incomplete.
+`IMP036J_ACCEPTED` stays `NO`. `FOUNDER_UAT` stays `NOT_PERFORMED`.
+`acceptedThrough` stays IMP-036I. `currentProductSlice` stays IMP-036J.
+`nextProductSlice` stays IMP-036K. IMP-036K Design Readiness stays `PASS`.
+`IMP036K_NEXT_GATE` stays `QUALITY / TEST PLAN FINALIZATION`. Quality/Test
+Plan and Measurement/Instrumentation Plan remain `NOT_PERFORMED` / not
+finalized. Implementation Plan remains `NOT_PERFORMED`. IMP-036K
+implementation stays unauthorized and unstarted. GTM-R183 / STATE-R181 remains
+the Design Readiness PASS checkpoint, where IMP-036J Tranche 3 was still
+`NOT_STARTED`. GTM-R182 / STATE-R180 remains the Tranche 2 PASS checkpoint.
+GTM-R181 / STATE-R179 remains the Architecture Fit PASS / LOCK checkpoint.
+GTM-R180 / STATE-R178 remains the Tranche 1 PASS checkpoint. ARCH-R23 and
+DR-24 stay unchanged. D-383 stays CURRENT. This record does not start
+Tranche 4, accept IMP-036J, perform Founder UAT, finalize IMP-036K
+Quality/Test Plan or Measurement Plan, or authorize IMP-036K implementation.
+
+## 10. STATE-R181 record (historical prior tip)
+
+
+```text
+STATE-R181 = IMP036K_DESIGN_READINESS_PASS
+supersedes: STATE-R180
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-036K
+IMP036J_TRANCHE_1: PASS
+IMP036J_TRANCHE_2: PASS
+IMP036J_TRANCHE_3: NOT_STARTED
+IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_3
+IMP036K_ARCHITECTURE_FIT: PASS
+IMP036K_ARCHITECTURE_LOCKED: YES
+IMP036K_ARCHITECTURE_FIT_SOURCE: IMP-036K-FIT-CANDIDATE-1
+IMP036K_ARCHITECTURE_FIT_REVIEW: 5391917727
+IMP036K_DESIGN_READINESS: PASS
+DESIGN_READINESS_SOURCE_CANDIDATE: IMP-036K-DESIGN-CANDIDATE-1
+INDEPENDENT_DESIGN_READINESS_REVIEW: PASS
+DESIGN_READINESS_ARCHITECT_REVIEW: 5396061135
+DESIGN_READINESS_EVALUATED_BRANCH: docs/imp036k-design-readiness
+DESIGN_READINESS_EVALUATED_HEAD: 8a15403091569d1be5f3f44b3b4362b46eba425f
+DESIGN_READINESS_EVALUATED_TREE: d3106dd6e8c94e062bc7c33015171da1e06b9203
+DESIGN_READINESS_EVALUATED_WORKING_TREE_FINGERPRINT: 4aadf87243f0a221bcc1289d27d4bc83a86a6953d3e7939eef97053872290481
+DESIGN_READINESS_EVALUATED_CI_RUN: 37053735361
+DESIGN_READINESS_EVALUATED_CODEQL_RUN: 37053735365
+HISTORICAL_DESIGN_READINESS_REVIEW_5394618739: STOP
+HISTORICAL_DESIGN_READINESS_REVIEW_5395779537: STOP
+IMP036K_NEXT_GATE: QUALITY / TEST PLAN FINALIZATION
+IMP036K_QUALITY_TEST_PLAN: NOT_PERFORMED
+IMP036K_QUALITY_TEST_PLAN_FINALIZED: NO
+IMP036K_MEASUREMENT_PLAN: NOT_PERFORMED
+IMP036K_MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED: NO
+IMP036K_IMPLEMENTATION_PLAN: NOT_PERFORMED
+IMP036K_IMPLEMENTATION_AUTHORIZED: NO
+IMP036K_IMPLEMENTATION_STARTED: NO
+IMP036K_IMPLEMENTATION_COMPLETE: NO
+IMP036K_ACCEPTED: NO
+FOUNDER_UAT: NOT_PERFORMED
+D-383: CURRENT
+ARCH-R23: UNCHANGED
+DECISION_REGISTER: DR-24
+```
+
+Architect Design Readiness PASS is recorded for `IMP-036K-DESIGN-CANDIDATE-1`.
+Architect review `5396061135` passed exact evaluated head
+`8a15403091569d1be5f3f44b3b4362b46eba425f`, tree
+`d3106dd6e8c94e062bc7c33015171da1e06b9203`, and working-tree fingerprint
+`4aadf87243f0a221bcc1289d27d4bc83a86a6953d3e7939eef97053872290481`. Candidate
+exact-head CI `37053735361` and CodeQL `37053735365` succeeded. Historical STOP
+reviews `5394618739` and `5395779537` remain preserved and are not rewritten.
+`IMP036K_DESIGN_READINESS` is `PASS`. The next gate is
+`QUALITY / TEST PLAN FINALIZATION`. Quality/Test Plan and
+Measurement/Instrumentation Plan remain `NOT_PERFORMED` / not finalized.
+Implementation Plan remains `NOT_PERFORMED`. Implementation stays unauthorized and
+unstarted. `IMP036K_ACCEPTED` stays `NO`. `acceptedThrough` stays IMP-036I.
+`currentProductSlice` stays IMP-036J. `nextProductSlice` stays IMP-036K.
+IMP-036J Tranche 1 stays `PASS`. Tranche 2 stays `PASS`. Tranche 3 stays
+`NOT_STARTED`. `IMP036J_NEXT_GATE` stays `IMPLEMENTATION_TRANCHE_3`. Architecture
+Fit stays `PASS` and architecture stays `LOCKED`. GTM-R182 / STATE-R180 remains
+the Tranche 2 PASS checkpoint. GTM-R181 / STATE-R179 remains the Architecture Fit
+PASS / LOCK checkpoint. ARCH-R23 and DR-24 stay unchanged. D-383 stays CURRENT.
+This record does not invent Quality/Test Plan or Measurement Plan content, does
+not authorize implementation, and does not start Tranche 3.
+
+## 10. STATE-R180 record (historical prior tip)
+
+
+```text
+STATE-R180 = IMP036J_TRANCHE_2_PASS
+supersedes: STATE-R179
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-036K
+nextGate: IMPLEMENTATION_TRANCHE_3
+formalLifecycle: IMPLEMENTATION_IN_PROGRESS
+IMP036J_STARTED: YES
+IMP036J_IMPLEMENTATION_STARTED: YES
+IMP036J_IMPLEMENTATION_COMPLETE: NO
+IMP036J_ACCEPTED: NO
+FOUNDER_UAT: NOT_PERFORMED
+IMP036J_TRANCHE_1: PASS
+IMP036J_TRANCHE_2: PASS
+IMP036J_TRANCHE_3: NOT_STARTED
+IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_3
+REVIEWED_T2_HEAD: 471955b5e30c1e6f2c8c8cbe94374addb3ffa610
+T2_MERGE_SHA: 676f7da7bbc78dbc31fc251e4a46d8357ee1e25b
+ARCHITECT_REVIEW: 5391853439
+POST_MERGE_CLOSURE: 5391955368
+EXACT_MAIN_CI: 37008078269
+EXACT_MAIN_CODEQL: 37008078105
+MIGRATION: 0048_imp036j_tranche2_measurement_persistence
+MIGRATION_SHA256: d7f518115ec0acfe4f69cffa502a697c3135b59378fff59ef7bce5faede8c997
+PR340: MERGED
+IMP036K_ARCHITECTURE_FIT: PASS
+IMP036K_ARCHITECTURE_LOCKED: YES
+IMP036K_ARCHITECTURE_FIT_SOURCE: IMP-036K-FIT-CANDIDATE-1
+IMP036K_ARCHITECTURE_FIT_REVIEW: 5391917727
+IMP036K_NEXT_GATE: DESIGN_READINESS
+IMP036K_DESIGN_READINESS: NOT_PERFORMED
+IMP036K_IMPLEMENTATION_AUTHORIZED: NO
+IMP036K_IMPLEMENTATION_STARTED: NO
+IMP036K_IMPLEMENTATION_COMPLETE: NO
+IMP036K_ACCEPTED: NO
+D-383: CURRENT
+ARCH-R23: UNCHANGED
+DECISION_REGISTER: DR-24
+```
+
+IMP-036J Tranche 2 is `PASS`. Reviewed implementation head
+`471955b5e30c1e6f2c8c8cbe94374addb3ffa610` merged in pull request #340 at
+`676f7da7bbc78dbc31fc251e4a46d8357ee1e25b`. Architect review `5391853439`,
+post-merge closure `5391955368`, exact-main CI `37008078269`, and exact-main
+CodeQL `37008078105` succeeded. Migration
+`0048_imp036j_tranche2_measurement_persistence` is unchanged by this record.
+The next gate is `IMPLEMENTATION_TRANCHE_3`. Tranche 3 has not started.
+Tranche 1 stays `PASS`. Formal lifecycle stays `IMPLEMENTATION_IN_PROGRESS`.
+Implementation stays started and incomplete. `IMP036J_ACCEPTED` stays `NO`.
+`FOUNDER_UAT` stays `NOT_PERFORMED`. `acceptedThrough` stays IMP-036I.
+`currentProductSlice` stays IMP-036J. `nextProductSlice` stays IMP-036K.
+IMP-036K Architecture Fit stays `PASS` and the capability architecture stays
+`LOCKED`. `IMP036K_NEXT_GATE` stays `DESIGN_READINESS`. IMP-036K implementation
+stays unauthorized and unstarted. GTM-R178 / STATE-R176 remains the
+implementation-start checkpoint. GTM-R179 / STATE-R177 remains the IMP-036K
+Product and Experience Gate checkpoint. GTM-R180 / STATE-R178 remains the
+Tranche 1 PASS checkpoint. GTM-R181 / STATE-R179 remains the IMP-036K
+Architecture Fit PASS / LOCK checkpoint. ARCH-R23 and DR-24 stay unchanged.
+D-383 stays CURRENT. This record does not start Tranche 3, accept IMP-036J,
+perform Founder UAT, or begin IMP-036K Design Readiness.
+
+## 10. STATE-R179 record (historical prior tip)
+
+```text
+STATE-R179 = IMP036K_ARCHITECTURE_FIT_PASS_AND_LOCK
+supersedes: STATE-R178
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-036K
+IMP036K_ARCHITECTURE_FIT_SOURCE: IMP-036K-FIT-CANDIDATE-1
+IMP036K_ARCHITECTURE_FIT_REVIEW: 5391917727
+IMP036K_ARCHITECTURE_FIT: PASS
+IMP036K_ARCHITECTURE_LOCKED: YES
+IMP036K_NEXT_GATE: DESIGN_READINESS
+IMP036K_DESIGN_READINESS: NOT_PERFORMED
+IMP036K_QUALITY_TEST_PLAN: NOT_PERFORMED
+IMP036K_MEASUREMENT_PLAN: NOT_PERFORMED
+IMP036K_IMPLEMENTATION_PLAN: NOT_PERFORMED
+IMP036K_IMPLEMENTATION_AUTHORIZED: NO
+IMP036K_IMPLEMENTATION_STARTED: NO
+IMP036K_IMPLEMENTATION_COMPLETE: NO
+IMP036K_ACCEPTED: NO
+ARCHITECTURE_FIT_EVALUATED_BRANCH: docs/imp036k-architecture-fit-candidate
+ARCHITECTURE_FIT_EVALUATED_HEAD: 71cfd352f41f933072b583c7e914f93afb91a235
+ARCHITECTURE_FIT_EVALUATED_TREE: 90431caf3d26114a3ed81f6c6fd71b18c34fb930
+ARCHITECTURE_FIT_EVALUATED_WORKING_TREE_FINGERPRINT: db07f54f174c646de5de56ee7ae7a30c90f7f03de167b18ca0a6fa122a9f2ff7
+PRIOR_ARCHITECTURE_FIT_REVIEW: 5383814980
+PRIOR_ARCHITECTURE_FIT_VERDICT: STOP
+EARLIER_REPAIRED_ARCHITECTURE_FIT_REVIEW: 5383371804
+HISTORICAL_ARCHITECTURE_FIT_PASS_REVIEW: 5384137705
+ARCHITECTURE_FIT_REOPEN_REVIEW: 5385458836
+CURRENT_ARCHITECTURE_FIT_PASS_REVIEW: 5391917727
+PRIOR_STOP_REWRITTEN_AS_PASS: NO
+HISTORICAL_REVIEWS_REWRITTEN: NO
+IMP036J_TRANCHE_1: PASS
+IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_2
+IMP036J_TRANCHE_2_STARTED: NO
+D-383: CURRENT
+ARCH-R23: UNCHANGED
+DECISION_REGISTER: DR-24
+NEW_ADR_REQUIRED: NO
+D-384_CREATED: NO
+```
+
+Architect review `5391917727` is the sole current Architecture Fit PASS and locks
+`IMP-036K-FIT-CANDIDATE-1` from head `71cfd352f41f933072b583c7e914f93afb91a235`.
+The next gate is `DESIGN_READINESS`. Design Readiness, the Quality/Test Plan, the
+Measurement Plan, and the Implementation Plan stay unperformed. Implementation stays
+unauthorized and unstarted. `acceptedThrough` stays IMP-036I. `currentProductSlice`
+stays IMP-036J. `nextProductSlice` stays IMP-036K. IMP-036J Tranche 1 stays `PASS`
+and Tranche 2 stays unstarted. Review history is preserved: `5383371804` STOP,
+`5383814980` STOP, `5384137705` historical PASS later reopened, `5385458836`
+STOP / REOPEN, and `5391917727` the current PASS. Persistence re-anchors on
+canonical main `676f7da7bbc78dbc31fc251e4a46d8357ee1e25b` while the superseded
+version identities remain GTM-R180 / STATE-R178. GTM-R180 / STATE-R178 remains the
+Tranche 1 PASS checkpoint, where IMP-036K Architecture Fit was still `NOT_PERFORMED`.
+GTM-R179 / STATE-R177 remains the Product and Experience Gate checkpoint. ARCH-R23
+and DR-24 stay unchanged. D-383 stays CURRENT. No ADR and no D-384 is created. This
+record does not begin Design Readiness or implementation.
+
+## 10. STATE-R178 record (historical prior tip)
+
+```text
+STATE-R178 = IMP036J_TRANCHE_1_PASS
+supersedes: STATE-R177
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-036K
+nextGate: IMPLEMENTATION_TRANCHE_2
+formalLifecycle: IMPLEMENTATION_IN_PROGRESS
+IMP036J_STARTED: YES
+IMP036J_IMPLEMENTATION_STARTED: YES
+IMP036J_IMPLEMENTATION_COMPLETE: NO
+IMP036J_ACCEPTED: NO
+FOUNDER_UAT: NOT_PERFORMED
+IMP036J_TRANCHE_1: PASS
+IMP036J_TRANCHE_2_STARTED: NO
+IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_2
+REVIEWED_T1_HEAD: 406e772ae1d63d911b069884205dc5b94f5cc190
+T1_MERGE_SHA: bd4ce6edfde83f22a9fb7bfc1d933fa8c52cd4d3
+ARCHITECT_REVIEW: 5380765557
+POST_MERGE_CLOSURE: 5934371551
+EXACT_MAIN_CI: 36877849530
+EXACT_MAIN_CODEQL: 36877849547
+MIGRATION: 0047_imp036j_tranche1_commercial_persistence
+PR336: MERGED
+IMP036K_PRODUCT_DEFINITION_GATE: PASS
+IMP036K_EXPERIENCE_GATE: PASS
+IMP036K_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036K_IMPLEMENTATION_AUTHORIZED: NO
+IMP036K_IMPLEMENTATION_STARTED: NO
+IMP036K_ACCEPTED: NO
+IMP036K_NEXT_GATE: ARCHITECTURE_FIT
+D-383: CURRENT
+ARCH-R23: UNCHANGED
+DECISION_REGISTER: DR-24
+```
+
+IMP-036J Tranche 1 is `PASS`. Reviewed implementation head
+`406e772ae1d63d911b069884205dc5b94f5cc190` merged in pull request #336 at
+`bd4ce6edfde83f22a9fb7bfc1d933fa8c52cd4d3`. Architect review `5380765557`,
+post-merge closure `5934371551`, exact-main CI `36877849530`, and exact-main
+CodeQL `36877849547` succeeded. Migration
+`0047_imp036j_tranche1_commercial_persistence` is unchanged by this record.
+The next gate is `IMPLEMENTATION_TRANCHE_2`. Tranche 2 has not started.
+Formal lifecycle stays `IMPLEMENTATION_IN_PROGRESS`. Implementation stays
+started and incomplete. `IMP036J_ACCEPTED` stays `NO`. `FOUNDER_UAT` stays
+`NOT_PERFORMED`. `acceptedThrough` stays IMP-036I. `currentProductSlice` stays
+IMP-036J. `nextProductSlice` stays IMP-036K. IMP-036K Product Definition Gate
+and Experience Gate stay `PASS`. IMP-036K Architecture Fit stays
+`NOT_PERFORMED`. GTM-R178 / STATE-R176 remains the implementation-start
+checkpoint. GTM-R179 / STATE-R177 remains the IMP-036K Product and Experience
+Gate checkpoint. ARCH-R23 and DR-24 stay unchanged. D-383 stays CURRENT. This
+record does not start Tranche 2, accept IMP-036J, or perform IMP-036K
+Architecture Fit.
+
+## 10. STATE-R177 record (historical prior tip)
+
+```text
+STATE-R177 = IMP036K_PRODUCT_EXPERIENCE_GATE_PASS
+supersedes: STATE-R176
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-036K
+nextGate: IMPLEMENTATION_TRANCHE_1
+formalLifecycle: IMPLEMENTATION_IN_PROGRESS
+IMP036J_STARTED: YES
+IMP036J_IMPLEMENTATION_STARTED: YES
+IMP036J_IMPLEMENTATION_COMPLETE: NO
+IMP036J_ACCEPTED: NO
+FOUNDER_UAT: NOT_PERFORMED
+IMP036J_TRANCHE_1: IN_REVIEW
+IMP036J_TRANCHE_2_STARTED: NO
+IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_1
+IMP036K_FORMAL_IDENTITY: YES
+IMP036K_ACTIVATED: YES
+IMP036K_PRODUCT_DEFINITION: PD-IMP-036K-DRAFT-1
+IMP036K_PRODUCT_DEFINITION_STATUS: APPROVED
+IMP036K_PRODUCT_DEFINITION_GATE: PASS
+IMP036K_EXPERIENCE_CRITICALITY: X3
+IMP036K_CHANGE_RISK: CR2
+IMP036K_EXPERIENCE_DEFINITION: XD-IMP-036K-DRAFT-1
+IMP036K_EXPERIENCE_DEFINITION_STATUS: APPROVED
+IMP036K_EXPERIENCE_GATE: PASS
+IMP036K_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036K_ARCHITECTURE_LOCKED: NO
+IMP036K_DESIGN_READINESS: NOT_PERFORMED
+IMP036K_QUALITY_TEST_PLAN: NOT_PERFORMED
+IMP036K_MEASUREMENT_PLAN: NOT_PERFORMED
+IMP036K_IMPLEMENTATION_PLAN: NOT_PERFORMED
+IMP036K_IMPLEMENTATION_AUTHORIZED: NO
+IMP036K_IMPLEMENTATION_STARTED: NO
+IMP036K_IMPLEMENTATION_COMPLETE: NO
+IMP036K_ACCEPTED: NO
+IMP036K_NEXT_GATE: ARCHITECTURE_FIT
+PRODUCT_DEFINITION_GATE_ARCHITECT_REVIEW: 5380398013
+EXPERIENCE_GATE_ARCHITECT_REVIEW: 5380398013
+GATE_EVALUATED_HEAD: 072932df00c445c8215c61f19f81971bf657b160
+GATE_EVALUATED_TREE: a4912e6c649cad25094412ac07a005fbb441567e
+CANONICAL_PATH: /home/ajoshi/repos/boba-bear-platform
+EVALUATED_BRANCH: docs/imp036k-product-experience-definition
+EVALUATED_HEAD: 072932df00c445c8215c61f19f81971bf657b160
+EVALUATED_TREE: a4912e6c649cad25094412ac07a005fbb441567e
+EVALUATED_WORKING_TREE_FINGERPRINT: f2886ed726c77301589ba36dccd602da6d44daadd7a0f2dec4e59aada3162c46
+PARALLEL_PRODUCT_DEFINITION_PREPARATION: AUTHORIZED
+PARALLEL_EXPERIENCE_DEFINITION_PREPARATION: AUTHORIZED
+PARALLEL_DEFINITION_ONLY: YES
+D-383: CURRENT
+D-382: AMENDED
+D-382_AMENDED_BY: D-383
+D-382_AMENDMENT_SCOPE: Revenue Recommendations identity, activation, and sequencing
+SHARED_GOVERNANCE_PERSISTENCE: SERIALIZED
+IMP037_HOLD: YES
+IMP038_HOLD: YES
+ARCH-R23: UNCHANGED
+DECISION_REGISTER: DR-24
+```
+
+Architect review `5380398013` records Product Definition Gate PASS for `PD-IMP-036K-DRAFT-1`
+and Experience Gate PASS for `XD-IMP-036K-DRAFT-1` on evaluated branch
+`docs/imp036k-product-experience-definition`, HEAD
+`072932df00c445c8215c61f19f81971bf657b160`, tree `a4912e6c649cad25094412ac07a005fbb441567e`,
+and working-tree fingerprint `f2886ed726c77301589ba36dccd602da6d44daadd7a0f2dec4e59aada3162c46`.
+That fingerprint belongs to the evaluated candidate, not to this persistence pull request.
+Persistence is re-anchored on main
+`bd4ce6edfde83f22a9fb7bfc1d933fa8c52cd4d3` after IMP-036J Tranche 1 consumed GTM-R178 /
+STATE-R176. `currentProductSlice` stays IMP-036J. `acceptedThrough` stays IMP-036I. The next
+IMP-036K gate is `ARCHITECTURE_FIT`. Architecture Fit, Design Readiness, the Quality/Test Plan,
+the Measurement Plan, and the Implementation Plan stay unperformed. IMP-036K implementation stays
+unauthorized and unstarted. IMP-036J stays started at Tranche 1 `IN_REVIEW`, with formal
+lifecycle `IMPLEMENTATION_IN_PROGRESS` and next gate `IMPLEMENTATION_TRANCHE_1`. D-383 stays the
+sequencing authority and is not amended. D-382 is not amended again. DR-24 and ARCH-R23 stay
+unchanged. This record does not pass Tranche 1, perform Architecture Fit, or accept either slice.
+
+## 10. STATE-R176 record (historical prior tip)
+
+```text
+STATE-R176 = IMP036J_IMPLEMENTATION_STARTED
+supersedes: STATE-R175
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-036K
+nextGate: IMPLEMENTATION_TRANCHE_1
+formalLifecycle: IMPLEMENTATION_IN_PROGRESS
+IMP036J_STARTED: YES
+IMP036J_IMPLEMENTATION_STARTED: YES
+IMP036J_IMPLEMENTATION_COMPLETE: NO
+IMP036J_ACCEPTED: NO
+FOUNDER_UAT: NOT_PERFORMED
+IMP036J_TRANCHE_1: IN_REVIEW
+IMP036J_TRANCHE_2_STARTED: NO
+ARCH-R23: UNCHANGED
+DECISION_REGISTER: DR-24
+D-383: CURRENT
+```
+
+IMP-036J implementation has started at Tranche 1 commercial persistence. Tranche 1 is
+`IN_REVIEW` and is not `PASS`. Tranche 2 has not started. `acceptedThrough` stays
+IMP-036I. `currentProductSlice` stays IMP-036J. `nextProductSlice` stays IMP-036K.
+Architecture remains locked. ARCH-R23 and DR-24 are unchanged.
+
+## 10. STATE-R175 record (historical prior tip)
+
+```text
+STATE-R175 = IMP036K_PARALLEL_DEFINITION_AUTHORIZATION
+supersedes: STATE-R174
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-036K
+nextGate: IMPLEMENTATION_TRANCHE_1
+formalLifecycle: ARCHITECTURE_LOCKED
+IMP036J_IMPLEMENTATION_AUTHORIZATION: APPROVED
+IMP036J_IMPLEMENTATION_AUTHORIZED: YES
+IMP036J_IMPLEMENTATION_STARTED: NO
+IMP036J_IMPLEMENTATION_COMPLETE: NO
+IMP036J_ACCEPTED: NO
+IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_1
+IMP036K_FORMAL_IDENTITY: YES
+IMP036K_ACTIVATED: YES
+IMP036K_PRODUCT_DEFINITION: NOT_CREATED
+IMP036K_PRODUCT_DEFINITION_GATE: NOT_PERFORMED
+IMP036K_EXPERIENCE_CRITICALITY: X3
+IMP036K_CHANGE_RISK: CR2
+IMP036K_EXPERIENCE_DEFINITION: NOT_CREATED
+IMP036K_EXPERIENCE_GATE: NOT_PERFORMED
+IMP036K_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036K_ARCHITECTURE_LOCKED: NO
+IMP036K_DESIGN_READINESS: NOT_PERFORMED
+IMP036K_IMPLEMENTATION_PLAN: NOT_PERFORMED
+IMP036K_IMPLEMENTATION_AUTHORIZED: NO
+IMP036K_IMPLEMENTATION_STARTED: NO
+IMP036K_IMPLEMENTATION_COMPLETE: NO
+IMP036K_ACCEPTED: NO
+PARALLEL_PRODUCT_DEFINITION_PREPARATION: AUTHORIZED
+PARALLEL_EXPERIENCE_DEFINITION_PREPARATION: AUTHORIZED
+PARALLEL_DEFINITION_ONLY: YES
+D-383: CURRENT
+D-382: AMENDED
+D-382_AMENDED_BY: D-383
+D-382_AMENDMENT_SCOPE: Revenue Recommendations identity, activation, and sequencing
+SHARED_GOVERNANCE_PERSISTENCE: SERIALIZED
+IMP037_HOLD: YES
+IMP038_HOLD: YES
+ARCH-R23: UNCHANGED
+DECISION_REGISTER: DR-24
+```
+
+D-383 allocates formal identity **IMP-036K — Revenue Recommendations** on 2026-10-01.
+`"IMP-036K"` was previously only a working label. Authorization is parallel Product Definition
+preparation and Experience Definition preparation only. Product Definition, Experience
+Definition, Architecture Fit, Design Readiness, and the Implementation Plan are not performed.
+Implementation is unauthorized and unstarted. `currentProductSlice` stays IMP-036J.
+`acceptedThrough` stays IMP-036I. IMP-036J implementation authorization stays APPROVED and
+not started, with next gate `IMPLEMENTATION_TRANCHE_1`. D-383 amends D-382 only for Revenue
+Recommendations identity, activation, and sequencing. D-382's Promotions-first decisions remain
+binding. Shared ROADMAP, STATE, and decision-register persistence remains serialized. This
+record does not start IMP-036J Tranche 1, perform Architecture Fit, or accept either slice.
+
+## 10. STATE-R174 record (historical prior tip)
+
+```text
+STATE-R174 = IMP036J_IMPLEMENTATION_AUTHORIZATION
+supersedes: STATE-R173
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-037
+nextGate: IMPLEMENTATION_TRANCHE_1
+formalLifecycle: ARCHITECTURE_LOCKED
+PRODUCT_DELIVERY_PROCESS: PD-2
+EXPERIENCE_STANDARD: EXP-1
+PRODUCT_LANGUAGE_STANDARD: LANG-1
+IMP036J_EXPERIENCE_CRITICALITY: X3
+IMP036J_CHANGE_RISK: CR2
+IMP036J_EXPERIENCE_DEFINITION: APPROVED
+IMP036J_EXPERIENCE_DEFINITION_VERSION: XD-IMP-036J-DRAFT-6
+IMP036J_EXPERIENCE_GATE: PASS
+IMP036J_PRODUCT_DEFINITION: APPROVED
+IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-6
+IMP036J_PRODUCT_DEFINITION_GATE: PASS
+IMP036J_ARCHITECTURE_FIT: PASS
+IMP036J_ARCHITECTURE_LOCKED: YES
+ARCHITECTURE_FIT_SOURCE_CANDIDATE: IMP-036J-FIT-CANDIDATE-9
+IMP036J_DESIGN_READINESS: PASS
+DESIGN_READINESS_SOURCE_CANDIDATE: IMP-036J-DESIGN-CANDIDATE-2
+QUALITY_TEST_PLAN_FINALIZED: YES
+MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED: YES
+IMPLEMENTATION_PLAN: PASS
+IMPLEMENTATION_PLAN_FINALIZED: YES
+IMPLEMENTATION_PLAN_SOURCE: IMP-036J-PLAN-CANDIDATE-1
+READY_FOR_IMPLEMENTATION_AUTHORIZATION: YES
+IMP036J_IMPLEMENTATION_PLAN: PASS
+IMP036J_IMPLEMENTATION_AUTHORIZATION: APPROVED
+IMP036J_IMPLEMENTATION_AUTHORIZED: YES
+IMP036J_IMPLEMENTATION_AUTHORIZATION_DATE: 2026-10-01
+IMPLEMENTATION_AUTHORIZATION_EVIDENCE: PR#332/5926464685
+AUTHORIZED_PLAN: IMP-036J-PLAN-CANDIDATE-1
+IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_1
+IMP036J_STARTED: NO
+IMP036J_IMPLEMENTATION_STARTED: NO
+IMP036J_IMPLEMENTATION_COMPLETE: NO
+IMP036J_ACCEPTED: NO
+FOUNDER_UAT: NOT_PERFORMED
+IMP037_HOLD: YES
+IMP038_HOLD: YES
+D-377: CURRENT
+D-382: CURRENT
+D-383: NOT_CREATED
+ARCH-R23: UNCHANGED
+DECISION_REGISTER: DR-23
+```
+
+Founder Implementation Authorization is recorded from pull request #332 comment
+`5926464685` on 2026-10-01. `IMP036J_IMPLEMENTATION_AUTHORIZED` is `YES`.
+Implementation has not started. Formal lifecycle stays `ARCHITECTURE_LOCKED`.
+`nextGate` is `IMPLEMENTATION_TRANCHE_1`. `acceptedThrough` stays IMP-036I.
+This record does not start runtime work, write a migration, perform Founder UAT,
+or accept IMP-036J.
+
+## 10. STATE-R173 record (historical prior tip)
+
+```text
+STATE-R173 = IMP036J_IMPLEMENTATION_PLAN_PASS
+supersedes: STATE-R172
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-037
+nextGate: IMPLEMENTATION_AUTHORIZATION
+formalLifecycle: ARCHITECTURE_LOCKED
+PRODUCT_DELIVERY_PROCESS: PD-2
+EXPERIENCE_STANDARD: EXP-1
+PRODUCT_LANGUAGE_STANDARD: LANG-1
+IMP036J_EXPERIENCE_CRITICALITY: X3
+IMP036J_CHANGE_RISK: CR2
+IMP036J_EXPERIENCE_DEFINITION: APPROVED
+IMP036J_EXPERIENCE_DEFINITION_VERSION: XD-IMP-036J-DRAFT-6
+IMP036J_EXPERIENCE_GATE: PASS
+INDEPENDENT_EXPERIENCE_GATE_REVIEW_ID: 5342581233
+IMP036J_PRODUCT_DEFINITION: APPROVED
+IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-6
+IMP036J_PRODUCT_DEFINITION_GATE: PASS
+IMP036J_ARCHITECTURE_FIT: PASS
+IMP036J_ARCHITECTURE_LOCKED: YES
+ARCHITECTURE_FIT_SOURCE_CANDIDATE: IMP-036J-FIT-CANDIDATE-9
+IMP036J_DESIGN_READINESS: PASS
+DESIGN_READINESS_SOURCE_CANDIDATE: IMP-036J-DESIGN-CANDIDATE-2
+QUALITY_TEST_PLAN_SOURCE_CANDIDATE: IMP-036J-QUALITY-CANDIDATE-2
+MEASUREMENT_PLAN_SOURCE_CANDIDATE: IMP-036J-MEASUREMENT-CANDIDATE-2
+QUALITY_TEST_PLAN_FINALIZED: YES
+MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED: YES
+IMPLEMENTATION_PLAN: PASS
+IMPLEMENTATION_PLAN_FINALIZED: YES
+IMPLEMENTATION_PLAN_SOURCE: IMP-036J-PLAN-CANDIDATE-1
+READY_FOR_IMPLEMENTATION_AUTHORIZATION: YES
+IMP036J_IMPLEMENTATION_PLAN: PASS
+IMPLEMENTATION_PLAN_ARCHITECT_REVIEW: 5925360293
+IMPLEMENTATION_PLAN_EVALUATED_HEAD: 2cf349b10ecb3dd326818fd401662ed37817b603
+IMPLEMENTATION_PLAN_EVALUATED_TREE: 11e0a46f7b19bf5b7b7e17cfe2f0656c3b5f8bdb
+IMP036J_NEXT_GATE: IMPLEMENTATION_AUTHORIZATION
+IMP036J_IMPLEMENTATION_AUTHORIZED: NO
+IMP036J_STARTED: NO
+IMP036J_IMPLEMENTATION_STARTED: NO
+IMP036J_IMPLEMENTATION_COMPLETE: NO
+IMP036J_ACCEPTED: NO
+IMP037_HOLD: YES
+IMP038_HOLD: YES
+```
+
+Independent Architect review comment `5925360293` returned Implementation Plan PASS for
+`IMP-036J-PLAN-CANDIDATE-1` at evaluated head
+`2cf349b10ecb3dd326818fd401662ed37817b603` and tree
+`11e0a46f7b19bf5b7b7e17cfe2f0656c3b5f8bdb`. This record persists that PASS.
+`READY_FOR_IMPLEMENTATION_AUTHORIZATION` is `YES`. Implementation stays unauthorized.
+`acceptedThrough` stays IMP-036I. Formal lifecycle stays `ARCHITECTURE_LOCKED`.
+`nextGate` is `IMPLEMENTATION_AUTHORIZATION`.
+
+## 10. STATE-R172 record (historical prior tip)
+
+```text
+STATE-R172 = IMP036J_DESIGN_READINESS_PASS
+supersedes: STATE-R171
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-037
+nextGate: IMPLEMENTATION_PLAN
+formalLifecycle: ARCHITECTURE_LOCKED
+PRODUCT_DELIVERY_PROCESS: PD-2
+EXPERIENCE_STANDARD: EXP-1
+PRODUCT_LANGUAGE_STANDARD: LANG-1
+IMP036J_EXPERIENCE_CRITICALITY: X3
+IMP036J_CHANGE_RISK: CR2
+IMP036J_EXPERIENCE_DEFINITION: APPROVED
+IMP036J_EXPERIENCE_DEFINITION_VERSION: XD-IMP-036J-DRAFT-6
+IMP036J_EXPERIENCE_GATE: PASS
+INDEPENDENT_EXPERIENCE_GATE_REVIEW_ID: 5342581233
+IMP036J_PRODUCT_DEFINITION: APPROVED
+IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-6
+IMP036J_PRODUCT_DEFINITION_GATE: PASS
+IMP036J_ARCHITECTURE_FIT: PASS
+IMP036J_ARCHITECTURE_LOCKED: YES
+ARCHITECTURE_FIT_SOURCE_CANDIDATE: IMP-036J-FIT-CANDIDATE-9
+IMP036J_DESIGN_READINESS: PASS
+DESIGN_READINESS_SOURCE_CANDIDATE: IMP-036J-DESIGN-CANDIDATE-2
+QUALITY_TEST_PLAN_SOURCE_CANDIDATE: IMP-036J-QUALITY-CANDIDATE-2
+MEASUREMENT_PLAN_SOURCE_CANDIDATE: IMP-036J-MEASUREMENT-CANDIDATE-2
+IMP036J_DESIGN_READINESS_REVIEW: PASS
+IMP036J_QUALITY_TEST_PLAN_REVIEW: PASS
+IMP036J_MEASUREMENT_PLAN_REVIEW: PASS
+DESIGN_READINESS_EVALUATED_HEAD: aa41c3744995a68ca9d435670be408b99cb6827d
+DESIGN_READINESS_EVALUATED_TREE: be25a6ac7054e5dcc472b6ede37185c144eea6ed
+DESIGN_READINESS_EVALUATED_GOVERNANCE_FINGERPRINT: 923025dc1618f978e5ba7ab11658c4f34a98de4910cd4788dd5062d60bcb1227
+DESIGN_READINESS_EVALUATED_CI_RUN: 36760479246
+DESIGN_READINESS_EVALUATED_CODEQL_RUN: 36760479256
+DESIGN_READINESS_ARCHITECT_REVIEW: 5917691904
+DESIGN_READINESS_ENGINEERING_REVIEWER: d308a8d9-92e3-42b3-88f7-9649101eb4db
+QUALITY_TEST_PLAN_FINALIZED: YES
+MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED: YES
+IMPLEMENTATION_PLAN: NOT_PERFORMED
+IMP036J_NEXT_GATE: IMPLEMENTATION_PLAN
+IMP036J_IMPLEMENTATION_AUTHORIZED: NO
+IMP036J_STARTED: NO
+IMP036J_IMPLEMENTATION_STARTED: NO
+IMP036J_IMPLEMENTATION_COMPLETE: NO
+IMP036J_ACCEPTED: NO
+IMP037_HOLD: YES
+IMP038_HOLD: YES
+```
+
+Independent Architect review comment `5917691904` returned Design Readiness PASS for
+`IMP-036J-DESIGN-CANDIDATE-2`, Quality/Test Plan PASS for `IMP-036J-QUALITY-CANDIDATE-2`,
+and Measurement Plan PASS for `IMP-036J-MEASUREMENT-CANDIDATE-2` at evaluated head
+`aa41c3744995a68ca9d435670be408b99cb6827d`. This record persists that PASS and finalizes
+those two plans. Exact-head CI run `36760479246` and CodeQL run `36760479256` passed.
+The Implementation Plan stays unperformed. Implementation stays unauthorized.
+`acceptedThrough` stays IMP-036I. Formal lifecycle stays `ARCHITECTURE_LOCKED`.
+
+## 10. STATE-R171 record (historical prior tip)
+
+```text
+STATE-R171 = IMP036J_CANDIDATE_9_ARCHITECTURE_FIT_PASS_AND_LOCK
+supersedes: STATE-R170
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-037
+nextGate: DESIGN_READINESS
+formalLifecycle: ARCHITECTURE_LOCKED
+PRODUCT_DELIVERY_PROCESS: PD-2
+EXPERIENCE_STANDARD: EXP-1
+PRODUCT_LANGUAGE_STANDARD: LANG-1
+IMP036J_EXPERIENCE_CRITICALITY: X3
+IMP036J_CHANGE_RISK: CR2
+IMP036J_EXPERIENCE_DEFINITION: APPROVED
+IMP036J_EXPERIENCE_DEFINITION_VERSION: XD-IMP-036J-DRAFT-6
+IMP036J_EXPERIENCE_GATE: PASS
+INDEPENDENT_EXPERIENCE_GATE_REVIEW_ID: 5342581233
+IMP036J_PRODUCT_DEFINITION: APPROVED
+IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-6
+IMP036J_PRODUCT_DEFINITION_GATE: PASS
+IMP036J_ARCHITECTURE_FIT: PASS
+IMP036J_ARCHITECTURE_LOCKED: YES
+ARCHITECTURE_FIT_SOURCE_CANDIDATE: IMP-036J-FIT-CANDIDATE-9
+INDEPENDENT_ARCHITECTURE_FIT_REVIEW: PASS
+ARCHITECTURE_FIT_EVALUATED_HEAD: 052289471cfc2424879932e16fd88d6c16696de8
+ARCHITECTURE_FIT_EVALUATED_TREE: ed6d0b4c7e82eef4fd764c0fe3f73539f8e1858b
+ARCHITECTURE_FIT_EVALUATED_GOVERNANCE_FINGERPRINT: 5be074e0736c097b6d68f18a3b71cd26cc69c03600eac0cf956bf74d0b6834b0
+ARCHITECTURE_FIT_EVALUATED_CI_RUN: 36611527090
+ARCHITECTURE_FIT_EVALUATED_CI_ATTEMPT: 2
+ARCHITECTURE_FIT_EVALUATED_CODEQL_RUN: 36611527053
+ARCHITECTURE_FIT_EVALUATED_CODEX_EVIDENCE: 5896150834
+HISTORICAL_CANDIDATE_5_ARCHITECTURE_FIT: PASS
+HISTORICAL_CANDIDATE_6_ARCHITECTURE_FIT_REVIEW: STOP
+HISTORICAL_CANDIDATE_7_ARCHITECTURE_FIT_REVIEW: STOP
+HISTORICAL_CANDIDATE_8_ARCHITECTURE_FIT_REVIEW: STOP
+IMP036J_DESIGN_READINESS: NOT_PERFORMED
+QUALITY_TEST_PLAN_FINALIZED: NO
+MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED: NO
+IMPLEMENTATION_PLAN: NOT_PERFORMED
+IMP036J_NEXT_GATE: DESIGN_READINESS
+IMP036J_IMPLEMENTATION_AUTHORIZED: NO
+IMP036J_STARTED: NO
+IMP036J_IMPLEMENTATION_STARTED: NO
+IMP036J_IMPLEMENTATION_COMPLETE: NO
+IMP036J_ACCEPTED: NO
+IMP037_HOLD: YES
+IMP038_HOLD: YES
+```
+
+Independent Architecture Fit review returned PASS for `IMP-036J-FIT-CANDIDATE-9` at evaluated
+head `052289471cfc2424879932e16fd88d6c16696de8`. This record persists that PASS and locks the
+capability architecture to Candidate 9. Exact-head CI run `36611527090` attempt 2 and CodeQL
+run `36611527053` passed. Fresh Codex issue comment `5896150834` reported no major issues. No
+numeric independent ChatGPT review identifier was available. Candidate 5 remains historical
+PASS and the prior lock. Candidates 6, 7, and 8 remain historical STOP results. Architecture
+Fit remediation does not perform Design Readiness, finalize the Quality/Test Plan, finalize the
+Measurement/Instrumentation Plan, authorize implementation, start implementation, or accept
+IMP-036J. Formal lifecycle is `ARCHITECTURE_LOCKED`. `acceptedThrough` stays IMP-036I.
+
+## 10. STATE-R170 record (historical prior tip)
+
+```text
+STATE-R170 = IMP036J_ARCHITECTURE_FIT_PASS_AND_LOCK
+supersedes: STATE-R169
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-037
+nextGate: DESIGN_READINESS
+formalLifecycle: ARCHITECTURE_LOCKED
+PRODUCT_DELIVERY_PROCESS: PD-2
+EXPERIENCE_STANDARD: EXP-1
+PRODUCT_LANGUAGE_STANDARD: LANG-1
+IMP036J_EXPERIENCE_CRITICALITY: X3
+IMP036J_CHANGE_RISK: CR2
+IMP036J_EXPERIENCE_DEFINITION: APPROVED
+IMP036J_EXPERIENCE_DEFINITION_VERSION: XD-IMP-036J-DRAFT-6
+IMP036J_EXPERIENCE_GATE: PASS
+INDEPENDENT_EXPERIENCE_GATE_REVIEW_ID: 5342581233
+IMP036J_PRODUCT_DEFINITION: APPROVED
+IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-6
+IMP036J_PRODUCT_DEFINITION_GATE: PASS
+IMP036J_ARCHITECTURE_FIT: PASS
+IMP036J_ARCHITECTURE_LOCKED: YES
+ARCHITECTURE_FIT_SOURCE_CANDIDATE: IMP-036J-FIT-CANDIDATE-5
+INDEPENDENT_ARCHITECTURE_FIT_REVIEW: PASS
+INDEPENDENT_ARCHITECTURE_FIT_REVIEW_ID: 5347761109
+ARCHITECTURE_FIT_EVALUATED_HEAD: 49912f35f2871ff77b9af267589d49666fc975ec
+ARCHITECTURE_FIT_EVALUATED_TREE: 7046d5bb78012524972505f555226205199a58d0
+ARCHITECTURE_FIT_EVALUATED_GOVERNANCE_FINGERPRINT: ac6510d315148763069f06374a243a75a312a7693cf3e7c1d0eac71bc1026870
+ARCHITECTURE_FIT_EVALUATED_CODEX_REVIEW: 5883601198
+ARCHITECTURE_FIT_EVALUATED_CI_RUN: 36521141717
+ARCHITECTURE_FIT_EVALUATED_CODEQL_RUN: 36521141714
+IMP036J_DESIGN_READINESS: NOT_PERFORMED
+QUALITY_TEST_PLAN_FINALIZED: NO
+MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED: NO
+IMPLEMENTATION_PLAN: NOT_PERFORMED
+IMP036J_NEXT_GATE: DESIGN_READINESS
+IMP036J_IMPLEMENTATION_AUTHORIZED: NO
+IMP036J_STARTED: NO
+IMP036J_IMPLEMENTATION_STARTED: NO
+IMP036J_IMPLEMENTATION_COMPLETE: NO
+IMP036J_ACCEPTED: NO
+IMP037_HOLD: YES
+IMP038_HOLD: YES
+```
+
+Independent Architecture Fit review `5347761109` returned PASS for `IMP-036J-FIT-CANDIDATE-5` at
+evaluated head `49912f35f2871ff77b9af267589d49666fc975ec`. This record persists that PASS and locks
+the capability architecture. GTM-R173 / STATE-R171 later supersedes this lock source with
+Candidate 9. This Candidate 5 PASS is not rewritten as a failure. The lock persistence head is a later commit and is not the evaluated
+head. Architecture lock does not perform Design Readiness, finalize the Quality/Test Plan, finalize
+the Measurement/Instrumentation Plan, authorize implementation, start implementation, or accept
+IMP-036J. Formal lifecycle is `ARCHITECTURE_LOCKED`. `acceptedThrough` stays IMP-036I.
+
+## 10. STATE-R169 record (historical prior tip)
+
+```text
+STATE-R169 = IMP036J_EXPERIENCE_GATE_PASS
+supersedes: STATE-R168
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-037
+nextGate: ARCHITECTURE_FIT
+PRODUCT_DELIVERY_PROCESS: PD-2
+EXPERIENCE_STANDARD: EXP-1
+PRODUCT_LANGUAGE_STANDARD: LANG-1
+IMP036J_EXPERIENCE_CRITICALITY: X3
+IMP036J_CHANGE_RISK: CR2
+IMP036J_EXPERIENCE_DEFINITION: APPROVED
+IMP036J_EXPERIENCE_DEFINITION_VERSION: XD-IMP-036J-DRAFT-6
+IMP036J_EXPERIENCE_GATE: PASS
+INDEPENDENT_EXPERIENCE_GATE_REVIEW_ID: 5342581233
+EXPERIENCE_GATE_EVALUATED_HEAD: 1fbabd2fb80851912815efe4e0ebe331a1318557
+EXPERIENCE_GATE_EVALUATED_TREE: 4eb6aa5e5a1588ef64527d7f38f7c5f07339d701
+EXPERIENCE_GATE_EVALUATED_WORKING_TREE_FINGERPRINT: 060269654ee36f130f8f8e4cc47fc6b3116466c6a56e2a29e061af1da725632d
+IMP036J_DESIGN_READINESS: NOT_PERFORMED
+IMP036J_NEXT_GATE: ARCHITECTURE_FIT
+IMP036J_PRODUCT_DEFINITION: APPROVED
+IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-6
+IMP036J_PRODUCT_DEFINITION_GATE: PASS
+IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036J_ARCHITECTURE_LOCKED: NO
+IMP036J_ARCHITECTURE_FIT_CANDIDATE_AUTHORITY: NOT_PERSISTED
+IMP036J_IMPLEMENTATION_AUTHORIZED: NO
+IMP036J_STARTED: NO
+IMP036J_IMPLEMENTATION_STARTED: NO
+IMP036J_IMPLEMENTATION_COMPLETE: NO
+IMP036J_ACCEPTED: NO
+IMP037_HOLD: YES
+IMP038_HOLD: YES
+```
+
+Independent Experience Gate review `5342581233` returned PASS for `XD-IMP-036J-DRAFT-6` at evaluated
+head `1fbabd2fb80851912815efe4e0ebe331a1318557`. Experience Gate PASS does not perform Architecture
+Fit, lock architecture, perform Design Readiness, or authorize implementation. Formal lifecycle
+remains `PLANNED`. `acceptedThrough` remains IMP-036I. Historical STATE-R168 remains the PD-2
+transition record. Accepted IMPs stay accepted. No D-383 is created. ARCH-R23 is unchanged.
+
+## 11. STATE-R168 record (historical prior tip)
+
+```text
+STATE-R168 = IMP036J_PD2_EXPERIENCE_TRANSITION
+supersedes: STATE-R167
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-037
+nextGate: EXPERIENCE_GATE
+PRODUCT_DELIVERY_PROCESS: PD-2
+EXPERIENCE_STANDARD: EXP-1
+PRODUCT_LANGUAGE_STANDARD: LANG-1
+IMP036J_EXPERIENCE_CRITICALITY: X3
+IMP036J_CHANGE_RISK: CR2
+IMP036J_EXPERIENCE_DEFINITION: REQUIRED / NOT_PERFORMED
+IMP036J_EXPERIENCE_GATE: NOT_PERFORMED
+IMP036J_DESIGN_READINESS: NOT_PERFORMED
+IMP036J_NEXT_GATE: EXPERIENCE_GATE
+IMP036J_PRODUCT_DEFINITION: APPROVED
+IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-6
+IMP036J_PRODUCT_DEFINITION_GATE: PASS
+IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036J_ARCHITECTURE_LOCKED: NO
+IMP036J_ARCHITECTURE_FIT_CANDIDATE_AUTHORITY: NOT_PERSISTED
+IMP036J_IMPLEMENTATION_AUTHORIZED: NO
+IMP036J_STARTED: NO
+IMP036J_ACCEPTED: NO
+IMP037_HOLD: YES
+IMP038_HOLD: YES
+```
+
+PD-2, EXP-1, and LANG-1 are process and experience authorities. They do not change IMP-036J product
+semantics, pass Architecture Fit, authorize implementation, create D-383, or change ARCH-R23.
+`CR2` is Change Risk for customer-payable promotion outcomes. It is not AGENTS execution risk.
+Historical STATE-R167 Gate PASS remains historical. Accepted IMPs stay accepted.
+
+## 11. STATE-R167 record (historical prior tip)
+
+```text
+STATE-R167 = IMP036J_PRODUCT_DEFINITION_APPROVED
+supersedes: STATE-R166
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-037
+nextGate: ARCHITECTURE_FIT
+Current Governance Activity: IMP-036J PRODUCT_DEFINITION APPROVED / GATE PASS under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377) with additional sequencing authority D-382; formal lifecycle PLANNED; PD-IMP-036J-DRAFT-6 APPROVED; FD-036J-01 APPROVED 2026-09-27; FD-036J-02 APPROVED 2026-09-27; FD-036J-03 APPROVED 2026-09-28; OPEN_FOUNDER_PRODUCT_DECISIONS: 0; UNRESOLVED_MATERIAL_PRODUCT_DECISIONS: 0; IMP036J_ACTIVATED: YES; IMP036J_PRODUCT_DEFINITION: APPROVED; IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-6; IMP036J_PRODUCT_DEFINITION_GATE: PASS; IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED; IMP036J_ARCHITECTURE_LOCKED: NO; IMP036J_IMPLEMENTATION_AUTHORIZED: NO; IMP036J_STARTED: NO; IMP036J_IMPLEMENTATION_STARTED: NO; IMP036J_IMPLEMENTATION_COMPLETE: NO; IMP036J_ACCEPTED: NO; IMP-036I remains COMPLETE_AND_ACCEPTED; ARCH-R23 unchanged; DR-23; D-382 CURRENT; next decision ID D-383; D-383 not created; FOUNDER_PRODUCT_DEFINITION_APPROVAL: YES on 2026-09-28; INDEPENDENT_PRODUCT_DEFINITION_GATE: PASS; GATE_EVALUATED_HEAD: 24aa3ced280dbfc18ac52275ed97ae919904481d; GATE_EVALUATED_TREE: e7fd72f2af3b0267f438bf9b65e7f7f23bf43f27; GATE_EVALUATED_FINGERPRINT: 9f9c708306a76e140ea4143feaf8e007ca975f03c3dc418f65e30aaf8bbbd1e1
+IMP036J_ACTIVATED: YES
+IMP036J_PRODUCT_DEFINITION: APPROVED
+IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-6
+IMP036J_PRODUCT_DEFINITION_GATE: PASS
+IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036J_ARCHITECTURE_LOCKED: NO
+IMP036J_IMPLEMENTATION_AUTHORIZED: NO
+IMP036J_STARTED: NO
+IMP036J_IMPLEMENTATION_COMPLETE: NO
+IMP036J_ACCEPTED: NO
+```
+
+Product Definition Gate PASS approves `PD-IMP-036J-DRAFT-6`. It does not perform Architecture Fit, lock architecture, authorize implementation, create D-383, create FD-036J-04, unhold IMP-037 or IMP-038, or change ARCH-R23. `Architecture Conflicts: NONE IDENTIFIED` is not Architecture Fit PASS. FD-036J-03 remains the complimentary-item product authority and is not D-383. Historical DRAFT-5 Gate STOP was not persisted as PASS. Deals, Campaigns, and Revenue Recommendations remain parked and are not activated.
+
+## 11. STATE-R166 record (historical prior tip)
+
+```text
+STATE-R166 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY
+supersedes: STATE-R165
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-037
+Current Governance Activity: IMP-036J PRODUCT_DEFINITION DRAFT_READY_FOR_GATE under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377) with additional sequencing authority D-382; formal lifecycle PLANNED; PD-IMP-036J-DRAFT-6 DRAFT / PRE_GATE_DRAFT / DRAFT_READY_FOR_GATE; FD-036J-01 APPROVED 2026-09-27; FD-036J-02 APPROVED 2026-09-27; FD-036J-03 APPROVED 2026-09-28; OPEN_FOUNDER_PRODUCT_DECISIONS: 0; UNRESOLVED_MATERIAL_PRODUCT_DECISIONS: 0; IMP036J_ACTIVATED: YES; IMP036J_PRODUCT_DEFINITION: DRAFT_READY_FOR_GATE; IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-6; IMP036J_PRODUCT_DEFINITION_GATE: NOT_PERFORMED; IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED; IMP036J_ARCHITECTURE_LOCKED: NO; IMP036J_IMPLEMENTATION_AUTHORIZED: NO; IMP036J_STARTED: NO; IMP036J_IMPLEMENTATION_STARTED: NO; IMP036J_IMPLEMENTATION_COMPLETE: NO; IMP036J_ACCEPTED: NO; IMP-036I remains COMPLETE_AND_ACCEPTED; ARCH-R23 unchanged; DR-23; D-382 CURRENT; next decision ID D-383; D-383 not created; FD-036J-04 not created; D-377 remains CURRENT; D-381 remains CURRENT; no ARCH-R24; IMP-037 and IMP-038 remain HOLD; Deals PARKED_DISCOVERY not rejected; Campaigns PARKED_DISCOVERY not rejected; Revenue Recommendations PARKED_DISCOVERY; second money engine prohibited; GAP-EXT-ASSESS-001 NOT_CLOSED; IMP-039 and IMP-040 not activated; historical PD-IMP-036J-DRAFT-5 was ready for Gate; Founder decisions FD-036J-01 FD-036J-02 and FD-036J-03 were approved; an independent Product Definition Gate returned STOP because acceptance and concurrency completeness did not prove overlapping complimentary-item activation; no new Founder decision was required; Gate PASS was not persisted; Architecture Fit was not performed; implementation was not authorized; DRAFT-6 supersedes DRAFT-5; DRAFT-5 history is not rewritten as Gate PASS
+IMP036J_ACTIVATED: YES
+IMP036J_PRODUCT_DEFINITION: DRAFT_READY_FOR_GATE
+IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-6
+IMP036J_PRODUCT_DEFINITION_GATE: NOT_PERFORMED
+IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036J_ARCHITECTURE_LOCKED: NO
+IMP036J_IMPLEMENTATION_AUTHORIZED: NO
+IMP036J_STARTED: NO
+IMP036J_IMPLEMENTATION_COMPLETE: NO
+IMP036J_ACCEPTED: NO
+```
+
+`DRAFT_READY_FOR_GATE` is not Product Definition Gate PASS and is not approval. This record does not execute the Gate, perform Architecture Fit, authorize implementation, create D-383, create FD-036J-04, unhold IMP-037 or IMP-038, or change ARCH-R23. FD-036J-03 remains the complimentary-item product authority and is not D-383. Historical DRAFT-5 Gate STOP was not persisted as PASS.
+
+## 11. STATE-R165 record (historical prior tip)
+
+```text
+STATE-R165 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY
+supersedes: STATE-R164
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-037
+Current Governance Activity: IMP-036J PRODUCT_DEFINITION DRAFT_READY_FOR_GATE under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377) with additional sequencing authority D-382; formal lifecycle PLANNED; PD-IMP-036J-DRAFT-5 DRAFT / PRE_GATE_DRAFT / DRAFT_READY_FOR_GATE; FD-036J-01 APPROVED 2026-09-27; FD-036J-02 APPROVED 2026-09-27; FD-036J-03 APPROVED 2026-09-28; OPEN_FOUNDER_PRODUCT_DECISIONS: 0; UNRESOLVED_MATERIAL_PRODUCT_DECISIONS: 0; IMP036J_ACTIVATED: YES; IMP036J_PRODUCT_DEFINITION: DRAFT_READY_FOR_GATE; IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-5; IMP036J_PRODUCT_DEFINITION_GATE: NOT_PERFORMED; IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED; IMP036J_ARCHITECTURE_LOCKED: NO; IMP036J_IMPLEMENTATION_AUTHORIZED: NO; IMP036J_STARTED: NO; IMP036J_IMPLEMENTATION_STARTED: NO; IMP036J_IMPLEMENTATION_COMPLETE: NO; IMP036J_ACCEPTED: NO; IMP-036I remains COMPLETE_AND_ACCEPTED; ARCH-R23 unchanged; DR-23; D-382 CURRENT; next decision ID D-383; D-383 not created; D-377 remains CURRENT; D-381 remains CURRENT; no ARCH-R24; IMP-037 and IMP-038 remain HOLD; Deals PARKED_DISCOVERY not rejected; Campaigns PARKED_DISCOVERY not rejected; Revenue Recommendations PARKED_DISCOVERY; second money engine prohibited; GAP-EXT-ASSESS-001 NOT_CLOSED; IMP-039 and IMP-040 not activated; historical PD-IMP-036J-DRAFT-4 was ready for Gate; an independent Product Definition Gate review returned DECISION_REQUIRED because FD-036J-03 lacked Founder product authority; Gate PASS was not persisted; Architecture Fit was not performed; implementation was not authorized; canonical main never recorded DRAFT-4 as APPROVED; DRAFT-5 supersedes DRAFT-4 after Founder approval of FD-036J-03 on 2026-09-28
+IMP036J_ACTIVATED: YES
+IMP036J_PRODUCT_DEFINITION: DRAFT_READY_FOR_GATE
+IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-5
+IMP036J_PRODUCT_DEFINITION_GATE: NOT_PERFORMED
+IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036J_ARCHITECTURE_LOCKED: NO
+IMP036J_IMPLEMENTATION_AUTHORIZED: NO
+IMP036J_STARTED: NO
+IMP036J_IMPLEMENTATION_COMPLETE: NO
+IMP036J_ACCEPTED: NO
+```
+
+`DRAFT_READY_FOR_GATE` is not Product Definition Gate PASS and is not approval. This record does not execute the Gate, perform Architecture Fit, authorize implementation, create D-383, unhold IMP-037 or IMP-038, or change ARCH-R23. FD-036J-03 is a Product Definition decision, not D-383. FD-036J-02 remains the general stacking policy. Historical DRAFT-4 is not accepted and its Gate PASS was not persisted.
+
+## 11. STATE-R164 record (historical prior tip)
+
+```text
+STATE-R164 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY
+supersedes: STATE-R163
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-037
+Current Governance Activity: IMP-036J PRODUCT_DEFINITION DRAFT_READY_FOR_GATE under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377) with additional sequencing authority D-382; formal lifecycle PLANNED; PD-IMP-036J-DRAFT-4 DRAFT / PRE_GATE_DRAFT / DRAFT_READY_FOR_GATE; FD-036J-01 APPROVED 2026-09-27; FD-036J-02 APPROVED 2026-09-27; OPEN_FOUNDER_PRODUCT_DECISIONS: 0; UNRESOLVED_MATERIAL_PRODUCT_DECISIONS: 0; IMP036J_ACTIVATED: YES; IMP036J_PRODUCT_DEFINITION: DRAFT_READY_FOR_GATE; IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-4; IMP036J_PRODUCT_DEFINITION_GATE: NOT_PERFORMED; IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED; IMP036J_IMPLEMENTATION_AUTHORIZED: NO; IMP036J_STARTED: NO; IMP036J_IMPLEMENTATION_STARTED: NO; IMP036J_IMPLEMENTATION_COMPLETE: NO; IMP036J_ACCEPTED: NO; IMP-036I remains COMPLETE_AND_ACCEPTED; ARCH-R23 unchanged; DR-23; D-382 CURRENT; next decision ID D-383; D-383 not created; D-377 remains CURRENT; D-381 remains CURRENT; no ARCH-R24; IMP-037 and IMP-038 remain HOLD; Deals PARKED_DISCOVERY not rejected; Campaigns PARKED_DISCOVERY not rejected; Revenue Recommendations PARKED_DISCOVERY; second money engine prohibited; GAP-EXT-ASSESS-001 NOT_CLOSED; IMP-039 and IMP-040 not activated; historical PD-IMP-036J-DRAFT-3 was ready for Gate; an independent Gate evaluation initially returned PASS; PR #312 findings 4115981679 and 4115981682 reopened the acceptance slice; Gate PASS was not persisted; canonical main never recorded DRAFT-3 as APPROVED; DRAFT-4 supersedes DRAFT-3
+IMP036J_ACTIVATED: YES
+IMP036J_PRODUCT_DEFINITION: DRAFT_READY_FOR_GATE
+IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-4
+IMP036J_PRODUCT_DEFINITION_GATE: NOT_PERFORMED
+IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036J_IMPLEMENTATION_AUTHORIZED: NO
+IMP036J_STARTED: NO
+IMP036J_IMPLEMENTATION_COMPLETE: NO
+IMP036J_ACCEPTED: NO
+```
+
+`DRAFT_READY_FOR_GATE` is not Product Definition Gate PASS and is not approval. This record does not execute the Gate, perform Architecture Fit, authorize implementation, create D-383, unhold IMP-037 or IMP-038, or change ARCH-R23. FD-036J-02 is a Product Definition decision, not D-383. Historical DRAFT-3 is not accepted.
+
+## 11. STATE-R163 record (historical prior tip)
+
+```text
+STATE-R163 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY
+supersedes: STATE-R162
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-037
+Current Governance Activity: IMP-036J PRODUCT_DEFINITION DRAFT_READY_FOR_GATE under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377) with additional sequencing authority D-382; formal lifecycle PLANNED; PD-IMP-036J-DRAFT-3 DRAFT / PRE_GATE_DRAFT / DRAFT_READY_FOR_GATE; FD-036J-01 APPROVED 2026-09-27; FD-036J-02 APPROVED 2026-09-27; OPEN_FOUNDER_PRODUCT_DECISIONS: 0; UNRESOLVED_MATERIAL_PRODUCT_DECISIONS: 0; IMP036J_ACTIVATED: YES; IMP036J_PRODUCT_DEFINITION: DRAFT_READY_FOR_GATE; IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-3; IMP036J_PRODUCT_DEFINITION_GATE: NOT_PERFORMED; IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED; IMP036J_IMPLEMENTATION_AUTHORIZED: NO; IMP036J_STARTED: NO; IMP036J_IMPLEMENTATION_STARTED: NO; IMP036J_IMPLEMENTATION_COMPLETE: NO; IMP036J_ACCEPTED: NO; IMP-036I remains COMPLETE_AND_ACCEPTED; ARCH-R23 unchanged; DR-23; D-382 CURRENT; next decision ID D-383; D-383 not created; D-377 remains CURRENT; D-381 remains CURRENT; no ARCH-R24; IMP-037 and IMP-038 remain HOLD; Deals PARKED_DISCOVERY not rejected; Campaigns PARKED_DISCOVERY not rejected; Revenue Recommendations PARKED_DISCOVERY; second money engine prohibited; GAP-EXT-ASSESS-001 NOT_CLOSED; IMP-039 and IMP-040 not activated; historical PD-IMP-036J-DRAFT-2 Gate persistence not merged; canonical DRAFT-2 was not APPROVED
+IMP036J_ACTIVATED: YES
+IMP036J_PRODUCT_DEFINITION: DRAFT_READY_FOR_GATE
+IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-3
+IMP036J_PRODUCT_DEFINITION_GATE: NOT_PERFORMED
+IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036J_IMPLEMENTATION_AUTHORIZED: NO
+IMP036J_STARTED: NO
+IMP036J_IMPLEMENTATION_COMPLETE: NO
+IMP036J_ACCEPTED: NO
+```
+
+`DRAFT_READY_FOR_GATE` is not Product Definition Gate PASS and is not approval. This record does not execute the Gate, perform Architecture Fit, authorize implementation, create D-383, unhold IMP-037 or IMP-038, or change ARCH-R23. FD-036J-02 is a Product Definition decision, not D-383.
+
+## 11. STATE-R162 record (historical prior tip)
+
+```text
+STATE-R162 = IMP036J_PRODUCT_DEFINITION_DRAFT_READY
+supersedes: STATE-R161
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-037
+Current Governance Activity: IMP-036J PRODUCT_DEFINITION DRAFT_READY_FOR_GATE under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377) with additional sequencing authority D-382; formal lifecycle PLANNED; PD-IMP-036J-DRAFT-2 DRAFT / PRE_GATE_DRAFT / DRAFT_READY_FOR_GATE; FD-036J-01 APPROVED 2026-09-27; OPEN_FOUNDER_PRODUCT_DECISIONS: 0; IMP036J_ACTIVATED: YES; IMP036J_PRODUCT_DEFINITION: DRAFT_READY_FOR_GATE; IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-2; IMP036J_PRODUCT_DEFINITION_GATE: NOT_PERFORMED; IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED; IMP036J_IMPLEMENTATION_AUTHORIZED: NO; IMP036J_STARTED: NO; IMP036J_IMPLEMENTATION_STARTED: NO; IMP036J_IMPLEMENTATION_COMPLETE: NO; IMP036J_ACCEPTED: NO; IMP-036I remains COMPLETE_AND_ACCEPTED; ARCH-R23 unchanged; DR-23; D-382 CURRENT; next decision ID D-383; D-383 not created; D-377 remains CURRENT; D-381 remains CURRENT; no ARCH-R24; IMP-037 and IMP-038 remain HOLD; Deals PARKED_DISCOVERY not rejected; Campaigns PARKED_DISCOVERY not rejected; Revenue Recommendations PARKED_DISCOVERY; second money engine prohibited; GAP-EXT-ASSESS-001 NOT_CLOSED; IMP-039 and IMP-040 not activated
+IMP036J_ACTIVATED: YES
+IMP036J_PRODUCT_DEFINITION: DRAFT_READY_FOR_GATE
+IMP036J_PRODUCT_DEFINITION_VERSION: PD-IMP-036J-DRAFT-2
+IMP036J_PRODUCT_DEFINITION_GATE: NOT_PERFORMED
+IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036J_IMPLEMENTATION_AUTHORIZED: NO
+IMP036J_STARTED: NO
+IMP036J_IMPLEMENTATION_COMPLETE: NO
+IMP036J_ACCEPTED: NO
+```
+
+`DRAFT_READY_FOR_GATE` is not Product Definition Gate PASS and is not approval. This record does not execute the Gate, perform Architecture Fit, authorize implementation, create D-383, unhold IMP-037 or IMP-038, or change ARCH-R23.
+
+## 11. STATE-R161 record (historical prior tip)
+
+```text
+STATE-R161 = IMP036J_PRODUCT_DEFINITION_ACTIVATION
+supersedes: STATE-R160
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-037
+Current Governance Activity: IMP-036J PRODUCT_DEFINITION_IN_PROGRESS under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377) with additional sequencing authority D-382; formal lifecycle PLANNED; PD-IMP-036J-DRAFT-1 DRAFT / PRE_GATE_DRAFT; IMP036J_ACTIVATED: YES; IMP036J_PRODUCT_DEFINITION: DRAFT_IN_PROGRESS; IMP036J_PRODUCT_DEFINITION_GATE: NOT_PERFORMED; IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED; IMP036J_IMPLEMENTATION_AUTHORIZED: NO; IMP036J_STARTED: NO; IMP036J_IMPLEMENTATION_STARTED: NO; IMP036J_IMPLEMENTATION_COMPLETE: NO; IMP036J_ACCEPTED: NO; IMP-036I remains COMPLETE_AND_ACCEPTED; ARCH-R23 unchanged; DR-23; D-382 CURRENT; D-377 remains CURRENT; D-381 remains CURRENT; no ARCH-R24; IMP-037 and IMP-038 remain HOLD; Deals PARKED_DISCOVERY; Campaigns PARKED_DISCOVERY; Revenue Recommendations PARKED_DISCOVERY; GAP-EXT-ASSESS-001 NOT_CLOSED; IMP-039 and IMP-040 not activated
+governanceHealth: ALIGNED
+IMP036J_ACTIVATED: YES
+IMP036J_PRODUCT_DEFINITION: DRAFT_IN_PROGRESS
+IMP036J_PRODUCT_DEFINITION_GATE: NOT_PERFORMED
+IMP036J_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036J_IMPLEMENTATION_AUTHORIZED: NO
+IMP036J_IMPLEMENTATION_COMPLETE: NO
+IMP036J_ACCEPTED: NO
+```
+
+## 11. STATE-R160 record
+
+```text
+STATE-R160 = IMP036I_ACCEPTANCE
+supersedes: STATE-R159
+acceptedThrough: IMP-036I
+pendingAcceptance: NONE
+currentProductSlice: NONE
+nextProductSlice: IMP-037
+Current Governance Activity: IMP-036I COMPLETE_AND_ACCEPTED under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377); formal lifecycle COMPLETE_AND_ACCEPTED; Founder UAT PASS on 2026-09-27 against accepted UAT candidate main 44f4d7d84af07c3226da606476844d8f05454b28 / tree 3ec8a7714c25e6066453b47b7d006ef127abddbb / fingerprint 85fe93db116bfe86b7f5ba4c266c829433d44401ffd03bdec536b5f61be9c27c; IMP036I_FOUNDER_UAT: PASS; IMP036I_FORMAL_ACCEPTANCE: ACCEPTED; IMP036I_ACCEPTED: YES; IMP036I_INDEPENDENT_TECHNICAL_ACCEPTANCE: PASS; no numeric independent implementation review ID; Finding 001 RESOLVED; BLOCKING_FINDINGS_AT_ACCEPTANCE: NONE; ARCH-R23; DR-22; D-379 CURRENT; D-380 CURRENT; D-378 AMENDED; D-381 CURRENT; no D-382; no ARCH-R24; IMP-037 and IMP-038 remain HOLD; GAP-EXT-ASSESS-001 NOT_CLOSED; next slice not advanced
+governanceHealth: ALIGNED
+IMP036I_ACCEPTED: YES
+IMP036I_FOUNDER_UAT_REQUIRED: YES
+IMP036I_FOUNDER_UAT: PASS
+FOUNDER_UAT: PASS
+IMP036I_FORMAL_ACCEPTANCE: ACCEPTED
+```
+
+Founder UAT PASS and formal acceptance are recorded. The accepted application candidate remains `44f4d7d84af07c3226da606476844d8f05454b28`. Governance reconciliation is not a new UAT candidate. `acceptedThrough` advances to IMP-036I. `currentProductSlice` is NONE. `pendingAcceptance` is NONE. `nextProductSlice` remains IMP-037 and is not unheld. Architecture and the decision register are unchanged.
+
+## 10. STATE-R159 record
+
+```text
+STATE-R159 = IMP036I_IMPLEMENTATION_COMPLETE_PENDING_ACCEPTANCE
+acceptedThrough: IMP-036H
+pendingAcceptance: IMP-036I
+currentProductSlice: IMP-036I
+nextProductSlice: IMP-037
+Current Governance Activity: IMP-036I IMPLEMENTATION_COMPLETE_PENDING_ACCEPTANCE under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377); formal lifecycle IMPLEMENTATION_COMPLETE_PENDING_ACCEPTANCE; integrated Tranche 5 independent verification PASS against reviewed main 335e8b55c74b81d745e923b3d078d6af9ec0b5cc / tree 4b75582d1726e552bdc1e45da15cf667b05de8e0 / fingerprint 5d79b21381f190682d3cb3f0a2f7e99d43919476f5384c3e1d74d3904218409b; no numeric independent implementation review ID; ARCH-R23; DR-21; D-379 CURRENT; D-380 CURRENT; D-378 AMENDED; implementation AUTHORIZED / STARTED / COMPLETE; IMP036I_IMPLEMENTATION_COMPLETE: YES; IMP036I_INDEPENDENT_IMPLEMENTATION_REVIEW: PASS; IMP036I_ACCEPTED: NO; FOUNDER_UAT_REQUIRED: YES; Founder UAT NOT_PERFORMED; nextGate: FOUNDER_UAT
+IMP036I_IMPLEMENTATION_AUTHORIZED: YES
+IMP036I_IMPLEMENTATION_STARTED: YES
+IMP036I_IMPLEMENTATION_COMPLETE: YES
+IMP036I_ACCEPTED: NO
+IMP036I_FOUNDER_UAT_REQUIRED: YES
+FOUNDER_UAT: NOT_PERFORMED
+NEXT_ACTION: FOUNDER_UAT
+TRANCHE_1: PASS
+TRANCHE_2: PASS
+TRANCHE_3: PASS
+TRANCHE_4: PASS
+TRANCHE_5: PASS
+IMP036I_TRANCHE5_INDEPENDENT_VERIFICATION: PASS
+FINANCIAL_DOCUMENT_NON_REGRESSION: PASS
+IMP036I_INDEPENDENT_IMPLEMENTATION_REVIEW: PASS
+IMP036I_IMPLEMENTATION_REVIEWED_HEAD: 335e8b55c74b81d745e923b3d078d6af9ec0b5cc
+IMP036I_IMPLEMENTATION_REVIEWED_TREE: 4b75582d1726e552bdc1e45da15cf667b05de8e0
+IMP036I_IMPLEMENTATION_REVIEWED_FINGERPRINT: 5d79b21381f190682d3cb3f0a2f7e99d43919476f5384c3e1d74d3904218409b
+TRANCHE_5_IMPLEMENTATION_MERGE: d50cd50971c39a623f6653d2e98353aae88eade9
+FINANCIAL_DOCUMENT_REMEDIATION_MAIN: 335e8b55c74b81d745e923b3d078d6af9ec0b5cc
+EXACT_HEAD_REMEDIATION_CI: 36238210541 PASS
+EXACT_HEAD_REMEDIATION_CODEQL: 36238210619 PASS
+POST_MERGE_MAIN_CI: 36238620688 PASS
+POST_MERGE_MAIN_CODEQL: 36238620716 PASS
+FINANCIAL_DOCUMENT_PROOF: tests/database/scheduled-financial-document-continuity.integration.test.ts
+T5_COMMAND: npm run test:imp036i:tranche5
+```
+
+Integrated Tranche 5 independent verification is PASS. IMP-036I implementation is complete and pending acceptance. Founder UAT is not performed. IMP-036I is not accepted. `acceptedThrough` remains IMP-036H. Do not set `FOUNDER_UAT` to PASS or `IMP036I_ACCEPTED` to YES in this record.
+
+## 10. STATE-R158 record (historical prior tip)
+
+```text
+STATE-R158 = IMP036I_TRANCHE_5
+acceptedThrough: IMP-036H
+pendingAcceptance: NONE
+currentProductSlice: IMP-036I
+nextProductSlice: IMP-037
+Current Governance Activity: IMP-036I IMPLEMENTATION_IN_PROGRESS under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377); formal lifecycle IMPLEMENTATION_IN_PROGRESS; independent Tranche 4 verification PASS against reviewed implementation c71047a17630ccb35afe7d49b18a234ce9fc6039 / tree cd06ddd4f87abfee15df25c07c052c2a5265f5f6; no numeric independent Tranche 4 review ID; ARCH-R23; DR-21; D-379 CURRENT; D-380 CURRENT; D-378 AMENDED; implementation AUTHORIZED / STARTED; IMP036I_IMPLEMENTATION_COMPLETE: NO; IMP036I_ACCEPTED: NO; Founder UAT NOT_PERFORMED; nextGate: INDEPENDENT_TRANCHE_5_VERIFICATION
+IMP036I_IMPLEMENTATION_AUTHORIZED: YES
+IMP036I_IMPLEMENTATION_STARTED: YES
+IMP036I_IMPLEMENTATION_COMPLETE: NO
+IMP036I_ACCEPTED: NO
+FOUNDER_UAT: NOT_PERFORMED
+NEXT_ACTION: INDEPENDENT_TRANCHE_5_VERIFICATION
+TRANCHE_4_INDEPENDENT_VERIFICATION: PASS
+TRANCHE_5_SELF_CLAIMED_INDEPENDENT_PASS: NO
+```
+
+Independent Tranche 4 verification is PASS. Tranche 5 integration proof is implemented as a candidate and is not independently verified, not implementation-complete, and not accepted. Do not mark Tranche 5 independently PASS. Do not set IMP036I_IMPLEMENTATION_COMPLETE to YES until later independent proof.
+
+## 10. STATE-R157 record (historical prior tip)
+
+```text
+STATE-R157 = IMP036I_TRANCHE_4
+acceptedThrough: IMP-036H
+pendingAcceptance: NONE
+currentProductSlice: IMP-036I
+nextProductSlice: IMP-037
+Current Governance Activity: IMP-036I IMPLEMENTATION_IN_PROGRESS under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377); formal lifecycle IMPLEMENTATION_IN_PROGRESS; independent Tranche 3 verification PASS against main 9b1c73b39f6d709e3e8f9adf7c772564285234e7 / tree adea96bff22f54c6aa57d68721d658cfc24e5d73; ARCH-R23; DR-21; D-379 CURRENT; D-380 CURRENT; D-378 AMENDED; implementation AUTHORIZED / STARTED; IMP036I_IMPLEMENTATION_COMPLETE: NO; IMP036I_ACCEPTED: NO; Founder UAT NOT_PERFORMED; nextGate: INDEPENDENT_TRANCHE_4_VERIFICATION
+IMP036I_IMPLEMENTATION_AUTHORIZED: YES
+IMP036I_IMPLEMENTATION_STARTED: YES
+IMP036I_IMPLEMENTATION_COMPLETE: NO
+IMP036I_ACCEPTED: NO
+FOUNDER_UAT: NOT_PERFORMED
+NEXT_ACTION: INDEPENDENT_TRANCHE_4_VERIFICATION
+TRANCHE_5: NOT_STARTED
+```
+
+Independent Tranche 3 verification is PASS. Tranche 4 cancellation and reminder are implemented and are not independently verified, not implementation-complete, and not accepted. Tranche 5 hardening remains open. Do not start Tranche 5 until independent Tranche 4 verification passes.
+
+## 10. STATE-R156 record (historical prior tip)
+
+```text
+STATE-R156 = IMP036I_TRANCHE_3
+acceptedThrough: IMP-036H
+pendingAcceptance: NONE
+currentProductSlice: IMP-036I
+nextProductSlice: IMP-037
+Current Governance Activity: IMP-036I IMPLEMENTATION_IN_PROGRESS under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377); formal lifecycle IMPLEMENTATION_IN_PROGRESS; independent Tranche 2 verification PASS against main 557db375545c5f0853ec894919fd1e0d6f696770 / tree 35b19c62c080c9c1b432b0dea8937c717d015b72; ARCH-R23; DR-21; D-379 CURRENT; D-380 CURRENT; D-378 AMENDED; implementation AUTHORIZED / STARTED; IMP036I_IMPLEMENTATION_COMPLETE: NO; IMP036I_ACCEPTED: NO; Founder UAT NOT_PERFORMED; nextGate: INDEPENDENT_TRANCHE_3_VERIFICATION
+IMP036I_IMPLEMENTATION_AUTHORIZED: YES
+IMP036I_IMPLEMENTATION_STARTED: YES
+IMP036I_IMPLEMENTATION_COMPLETE: NO
+IMP036I_ACCEPTED: NO
+FOUNDER_UAT: NOT_PERFORMED
+NEXT_ACTION: INDEPENDENT_TRANCHE_3_VERIFICATION
+```
+
+Independent Tranche 2 verification is PASS. Tranche 3 surfaces are implemented and are not independently verified, not implementation-complete, and not accepted. Proactive reminder runtime remains Tranche 4. Do not start Tranche 4 until independent Tranche 3 verification passes.
+
+## 10. STATE-R155 record (historical prior tip)
+
+```text
+STATE-R155 = IMP036I_TRANCHE_2
+acceptedThrough: IMP-036H
+pendingAcceptance: NONE
+currentProductSlice: IMP-036I
+nextProductSlice: IMP-037
+Current Governance Activity: IMP-036I IMPLEMENTATION_IN_PROGRESS under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377); formal lifecycle IMPLEMENTATION_IN_PROGRESS; PD-IMP-036I-DRAFT-4 APPROVED; Gate PASS; Architecture Fit PASS; independent Tranche 1 verification PASS against main d45c8c586652160bfc8793f5fa16c274d402411a / tree a1cfa5cfe6e82974ef1d5daf9d4d2bc851f5bc67; ARCH-R23; DR-21; D-379 CURRENT; D-380 CURRENT; D-378 AMENDED; implementation AUTHORIZED / STARTED; IMP036I_IMPLEMENTATION_COMPLETE: NO; IMP036I_ACCEPTED: NO; Founder UAT NOT_PERFORMED; nextGate: INDEPENDENT_TRANCHE_2_VERIFICATION
+IMP036I_IMPLEMENTATION_AUTHORIZED: YES
+IMP036I_IMPLEMENTATION_STARTED: YES
+IMP036I_IMPLEMENTATION_COMPLETE: NO
+IMP036I_ACCEPTED: NO
+FOUNDER_UAT: NOT_PERFORMED
+NEXT_ACTION: INDEPENDENT_TRANCHE_2_VERIFICATION
+```
+
+Independent Tranche 1 verification is PASS. Tranche 2 runtime is implemented and is not independently verified, not implementation-complete, and not accepted. Do not start Tranche 3 until independent Tranche 2 verification passes.
+
+## 10. STATE-R154 record (historical prior tip)
+
+```text
+STATE-R154 = IMP036I_IMPLEMENTATION_START
+acceptedThrough: IMP-036H
+pendingAcceptance: NONE
+currentProductSlice: IMP-036I
+nextProductSlice: IMP-037
+Current Governance Activity: IMP-036I IMPLEMENTATION_IN_PROGRESS under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377); formal lifecycle IMPLEMENTATION_IN_PROGRESS; PD-IMP-036I-DRAFT-4 APPROVED; Gate PASS; Architecture Fit PASS; independent review 5312653831; architecture-lock persistence verification 5313026804; implementation start after authorization date 2026-09-25; ARCH-R23; DR-21; D-379 CURRENT; D-380 CURRENT; D-378 AMENDED; implementation AUTHORIZED / STARTED; IMP036I_IMPLEMENTATION_COMPLETE: NO; IMP036I_ACCEPTED: NO; Founder UAT NOT_PERFORMED; nextGate: IMPLEMENTATION_TRANCHE_1
+IMP036I_IMPLEMENTATION_AUTHORIZED: YES
+IMP036I_IMPLEMENTATION_AUTHORIZATION: APPROVED
+IMP036I_STARTED: YES
+IMP036I_IMPLEMENTATION_STARTED: YES
+IMP036I_IMPLEMENTATION_COMPLETE: NO
+IMP036I_ACCEPTED: NO
+PRE_EXISTING_DELIVERY_CONFORMANCE_DEBT: CLOSED
+PRE_EXISTING_DELIVERY_CONFORMANCE_DEBT_CORRECTION_AUTHORIZED: YES
+PRE_EXISTING_DELIVERY_CONFORMANCE_DEBT_RUNTIME_FIXED: YES
+FOUNDER_UAT: NOT_PERFORMED
+```
+
+## 11. STATE-R153 record (historical prior tip)
+
+```text
+STATE-R153 = IMP036I_IMPLEMENTATION_AUTHORIZED
+acceptedThrough: IMP-036H
+pendingAcceptance: NONE
+currentProductSlice: IMP-036I
+nextProductSlice: IMP-037
+Current Governance Activity: IMP-036I IMPLEMENTATION_AUTHORIZED under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377); formal lifecycle ARCHITECTURE_LOCKED; PD-IMP-036I-DRAFT-4 APPROVED; Gate PASS; Architecture Fit PASS; independent review 5312653831; architecture-lock persistence verification 5313026804; authorization date 2026-09-25; ARCH-R23; DR-21; D-379 CURRENT; D-380 CURRENT; D-378 AMENDED; implementation AUTHORIZED / NOT started; IMP036I_ACCEPTED: NO; Founder UAT NOT_PERFORMED; nextGate: IMPLEMENTATION_TRANCHE_1
+IMP036I_IMPLEMENTATION_AUTHORIZED: YES
+IMP036I_IMPLEMENTATION_AUTHORIZATION: APPROVED
+IMP036I_STARTED: NO
+IMP036I_IMPLEMENTATION_STARTED: NO
+IMP036I_IMPLEMENTATION_COMPLETE: NO
+IMP036I_ACCEPTED: NO
+PRE_EXISTING_DELIVERY_CONFORMANCE_DEBT: OPEN
+PRE_EXISTING_DELIVERY_CONFORMANCE_DEBT_CORRECTION_AUTHORIZED: YES
+PRE_EXISTING_DELIVERY_CONFORMANCE_DEBT_FIXED_IN_AUTHORIZATION_PERSISTENCE: NO
+```
+
+## 11. STATE-R152 record (historical prior tip)
+
+```text
+STATE-R152 = IMP036I_ARCHITECTURE_LOCKED
+acceptedThrough: IMP-036H
+pendingAcceptance: NONE
+currentProductSlice: IMP-036I
+nextProductSlice: IMP-037
+Current Governance Activity: IMP-036I ARCHITECTURE_LOCKED under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377); PD-IMP-036I-DRAFT-4 APPROVED; Gate PASS; Architecture Fit PASS; independent review 5312653831; ARCH-R23; DR-21; D-379 CURRENT; D-380 CURRENT; D-378 AMENDED; architecture LOCKED; implementation NOT authorized / NOT started; formal lifecycle ARCHITECTURE_LOCKED; IMP036I_ACCEPTED: NO; nextGate: IMPLEMENTATION_AUTHORIZATION
+IMP036I_ARCHITECTURE_FIT: PASS
+IMP036I_ARCHITECTURE_LOCKED: YES
+IMP036I_IMPLEMENTATION_AUTHORIZED: NO
+IMP036I_STARTED: NO
+IMP036I_IMPLEMENTATION_STARTED: NO
+IMP036I_IMPLEMENTATION_COMPLETE: NO
+IMP036I_ACCEPTED: NO
+```
+
+## 12. STATE-R151 record (historical prior tip)
+
+```text
+STATE-R151 = IMP036I_PRODUCT_DEFINITION_GATE_PASS
+acceptedThrough: IMP-036H
+pendingAcceptance: NONE
+currentProductSlice: IMP-036I
+nextProductSlice: IMP-037
+Current Product Implementation: IMP-037 (unresolved held predecessor; provider-blocked)
+Unresolved Predecessor: IMP-037
+Current Governance Activity: IMP-036I PRODUCT_DEFINITION_GATE_PASS under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377); PD-IMP-036I-DRAFT-4 APPROVED; Gate PASS; READY_FOR_PRODUCT_DEFINITION_GATE NO; OPEN_FOUNDER_DECISIONS 0; UNRESOLVED_MATERIAL_PRODUCT_DECISIONS 0; INDEPENDENT_PRODUCT_DEFINITION_GATE_REVIEW 5307761142; gateEvaluatedHead 1c4be04b6d6b51bdedebfea0485099dede3c7923; gateEvaluatedTree a0774c9b2cb256f8d329fc49cea1c9859a39d1d7; gateEvaluatedFingerprint 07720d20f1e285ef46e6bd3be6d710be383baacde4facab7651482547b6dc15d; historical PD-IMP-036I-DRAFT-1 Gate PERFORMED / STOP (review 5305796113); historical PD-IMP-036I-DRAFT-2 Gate PERFORMED / STOP (review 5306341697); historical PD-IMP-036I-DRAFT-3 Gate PERFORMED / STOP (review 5306868578); Fit NOT_PERFORMED; architecture NOT locked; implementation NOT authorized / NOT started; IMP036I_ACTIVATED: YES; formal lifecycle PLANNED; IMP036I_ACCEPTED: NO; IMP-036H remains COMPLETE_AND_ACCEPTED (acceptedThrough unchanged); ARCH-R22 / DR-20 / D-378 unchanged; no new D-number; no ARCH revision; HISTORICAL_CONTINUATION_EXCEPTION IMP037_PROVIDER_BLOCKED_TO_IMP038 preserved; HISTORICAL_IMP026_TO_IMP028_CONTINUATION: CLOSED; nextGate: Architecture Fit (NOT_PERFORMED)
+IMP-036H: COMPLETE_AND_ACCEPTED
+IMP036H_ACCEPTED: YES
+IMP036H_FOUNDER_UAT: PASS
+IMP036H_FORMAL_ACCEPTANCE: ACCEPTED
+IMP036H_ACCEPTED_MAIN_SHA: 37bae964f964bddd317e4c290dc146097e4c8f57
+IMP036H_ACCEPTED_TREE: f52cd6279deb22c251062880087a2078fc7bce3b
+IMP036H_ACCEPTED_CANDIDATE: 37bae964f964bddd317e4c290dc146097e4c8f57
+IMP036H_FOUNDER_UAT_CANDIDATE_FINGERPRINT: e49d860c721d2524b248738750530a416f8418d02d10b64e69531f8548fcfb79
+IMP-036I: PLANNED
+IMP036I_ACTIVATED: YES
+IMP036I_PRODUCT_DEFINITION: APPROVED
+IMP036I_PRODUCT_DEFINITION_VERSION: PD-IMP-036I-DRAFT-4
+IMP036I_PRODUCT_DEFINITION_GATE: PASS
+IMP036I_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036I_ARCHITECTURE_LOCKED: NO
+IMP036I_IMPLEMENTATION_AUTHORIZED: NO
+IMP036I_STARTED: NO
+IMP036I_IMPLEMENTATION_STARTED: NO
+IMP036I_IMPLEMENTATION_COMPLETE: NO
+IMP036I_ACCEPTED: NO
+INDEPENDENT_PRODUCT_DEFINITION_GATE_REVIEW: 5307761142
+gateEvaluatedHead: 1c4be04b6d6b51bdedebfea0485099dede3c7923
+gateEvaluatedTree: a0774c9b2cb256f8d329fc49cea1c9859a39d1d7
+gateEvaluatedFingerprint: 07720d20f1e285ef46e6bd3be6d710be383baacde4facab7651482547b6dc15d
+IMP-037: IMPLEMENTATION_IN_PROGRESS
+IMP037_HOLD: YES
+IMP037_IMPLEMENTATION_COMPLETE: NO
+IMP037_ACCEPTED: NO
+IMP-038: IMPLEMENTATION_IN_PROGRESS (HOLD — IMPLEMENTATION_COMPLETE / NOT_ACCEPTED)
+IMP038_HOLD: YES
+IMP038_IMPLEMENTATION_COMPLETE: YES
+IMP038_ACCEPTED: NO
+IMP038_EXTERNAL_ASSESSMENT: DEFERRED_UNTIL_PRE_GTM_APPLICATION_SCOPE_STABILIZES
+IMP038_FROZEN_RUNTIME_HEAD: dc6b19e6f88d4084e424d927e6467c374596fb0a
+IMP038_FROZEN_RUNTIME_TREE: c3aefb57f3f6c941d7f14907b6c095c4aa7f0547
+IMP038_FROZEN_RUNTIME_FINGERPRINT: 2800fe11397ee2a01e9decf572f85adf5c3a8b244ca34b1f53d579e05feac589
+GAP-EXT-ASSESS-001: NOT_CLOSED
+IMP039_ACTIVATED: NO
+IMP040_ACTIVATED: NO
+D-377_CREATED: YES
+D-378_CREATED: YES
+ARCH_R22_CREATED: YES
+```
+
+Historical prior tip (superseded as CURRENT by STATE-R151):
+
+```text
+STATE-R150 = IMP036I_PRODUCT_DEFINITION_DRAFT_READY
+acceptedThrough: IMP-036H
+pendingAcceptance: NONE
+currentProductSlice: IMP-036I
+nextProductSlice: IMP-037
+IMP036I_ACTIVATED: YES
+IMP036I_PRODUCT_DEFINITION: DRAFT_READY_FOR_GATE
+IMP036I_PRODUCT_DEFINITION_VERSION: PD-IMP-036I-DRAFT-4
+```
+
+## 10a. STATE-R150 record (historical prior tip — DRAFT-4 DRAFT_READY)
+
+```text
+STATE-R150 = IMP036I_PRODUCT_DEFINITION_DRAFT_READY
+acceptedThrough: IMP-036H
+pendingAcceptance: NONE
+currentProductSlice: IMP-036I
+nextProductSlice: IMP-037
+Current Product Implementation: IMP-037 (unresolved held predecessor; provider-blocked)
+Unresolved Predecessor: IMP-037
+Current Governance Activity: IMP-036I PRODUCT_DEFINITION_DRAFT_READY under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377); PD-IMP-036I-DRAFT-4 DRAFT_READY_FOR_GATE; READY_FOR_PRODUCT_DEFINITION_GATE YES; OPEN_FOUNDER_DECISIONS 0; UNRESOLVED_MATERIAL_PRODUCT_DECISIONS 0; Founder FD-036I-09 sealing amendment 2026-09-24 (Pickup 30 / Delivery 60; Brand-level; 0–240; no Outlet override; no fee; per-Order sealed from payment-bound Checkout Snapshot; later Brand changes affect future purchases only; stale checkout revalidation); historical PD-IMP-036I-DRAFT-1 Gate PERFORMED / STOP (review 5305796113); historical PD-IMP-036I-DRAFT-2 Gate PERFORMED / STOP (review 5306341697); historical PD-IMP-036I-DRAFT-3 Gate PERFORMED / STOP (review 5306868578; HEAD 0af84959edbe910183797b76d4d2228835d9040f); CURRENT DRAFT-4 Gate NOT_PERFORMED; Fit NOT_PERFORMED; architecture NOT locked; implementation NOT authorized / NOT started; IMP036I_ACTIVATED: YES; formal lifecycle PLANNED; IMP036I_ACCEPTED: NO; IMP-036H remains COMPLETE_AND_ACCEPTED (acceptedThrough unchanged); ARCH-R22 / DR-20 / D-378 unchanged; no new D-number; no ARCH revision; HISTORICAL_CONTINUATION_EXCEPTION IMP037_PROVIDER_BLOCKED_TO_IMP038 preserved; HISTORICAL_IMP026_TO_IMP028_CONTINUATION: CLOSED; nextGate: Independent Product Definition Gate review of DRAFT-4 (NOT_PERFORMED)
+IMP-036H: COMPLETE_AND_ACCEPTED
+IMP036H_ACCEPTED: YES
+IMP036H_FOUNDER_UAT: PASS
+IMP036H_FORMAL_ACCEPTANCE: ACCEPTED
+IMP036H_ACCEPTED_MAIN_SHA: 37bae964f964bddd317e4c290dc146097e4c8f57
+IMP036H_ACCEPTED_TREE: f52cd6279deb22c251062880087a2078fc7bce3b
+IMP036H_ACCEPTED_CANDIDATE: 37bae964f964bddd317e4c290dc146097e4c8f57
+IMP036H_FOUNDER_UAT_CANDIDATE_FINGERPRINT: e49d860c721d2524b248738750530a416f8418d02d10b64e69531f8548fcfb79
+IMP-036I: PLANNED
+IMP036I_ACTIVATED: YES
+IMP036I_PRODUCT_DEFINITION: DRAFT_READY_FOR_GATE
+IMP036I_PRODUCT_DEFINITION_VERSION: PD-IMP-036I-DRAFT-4
+IMP036I_PRODUCT_DEFINITION_GATE: NOT_PERFORMED
+IMP036I_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036I_ARCHITECTURE_LOCKED: NO
+IMP036I_IMPLEMENTATION_AUTHORIZED: NO
+IMP036I_STARTED: NO
+IMP036I_IMPLEMENTATION_STARTED: NO
+IMP036I_IMPLEMENTATION_COMPLETE: NO
+IMP036I_ACCEPTED: NO
+IMP-037: IMPLEMENTATION_IN_PROGRESS
+IMP037_HOLD: YES
+IMP037_IMPLEMENTATION_COMPLETE: NO
+IMP037_ACCEPTED: NO
+IMP-038: IMPLEMENTATION_IN_PROGRESS (HOLD — IMPLEMENTATION_COMPLETE / NOT_ACCEPTED)
+IMP038_HOLD: YES
+IMP038_IMPLEMENTATION_COMPLETE: YES
+IMP038_ACCEPTED: NO
+IMP038_EXTERNAL_ASSESSMENT: DEFERRED_UNTIL_PRE_GTM_APPLICATION_SCOPE_STABILIZES
+IMP038_FROZEN_RUNTIME_HEAD: dc6b19e6f88d4084e424d927e6467c374596fb0a
+IMP038_FROZEN_RUNTIME_TREE: c3aefb57f3f6c941d7f14907b6c095c4aa7f0547
+IMP038_FROZEN_RUNTIME_FINGERPRINT: 2800fe11397ee2a01e9decf572f85adf5c3a8b244ca34b1f53d579e05feac589
+GAP-EXT-ASSESS-001: NOT_CLOSED
+IMP039_ACTIVATED: NO
+IMP040_ACTIVATED: NO
+D-377_CREATED: YES
+D-378_CREATED: YES
+ARCH_R22_CREATED: YES
+```
+
+Historical prior tip (superseded as CURRENT by STATE-R150; later superseded by STATE-R151):
+
+```text
+STATE-R149 = IMP036I_PRODUCT_DEFINITION_DRAFT_READY
+acceptedThrough: IMP-036H
+pendingAcceptance: NONE
+currentProductSlice: IMP-036I
+nextProductSlice: IMP-037
+IMP036I_ACTIVATED: YES
+IMP036I_PRODUCT_DEFINITION: DRAFT_READY_FOR_GATE
+IMP036I_PRODUCT_DEFINITION_VERSION: PD-IMP-036I-DRAFT-3
+```
+
+## 10b. STATE-R149 record (historical prior tip — DRAFT-3 DRAFT_READY; later Gate STOP)
+
+```text
+STATE-R149 = IMP036I_PRODUCT_DEFINITION_DRAFT_READY
+acceptedThrough: IMP-036H
+pendingAcceptance: NONE
+currentProductSlice: IMP-036I
+nextProductSlice: IMP-037
+Current Product Implementation: IMP-037 (unresolved held predecessor; provider-blocked)
+Unresolved Predecessor: IMP-037
+Current Governance Activity: IMP-036I PRODUCT_DEFINITION_DRAFT_READY under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377); PD-IMP-036I-DRAFT-3 DRAFT_READY_FOR_GATE; READY_FOR_PRODUCT_DEFINITION_GATE YES; OPEN_FOUNDER_DECISIONS 0; UNRESOLVED_MATERIAL_PRODUCT_DECISIONS 0; Founder FD-036I-09 sealing amendment 2026-09-24 (Pickup 30 / Delivery 60; Brand-level; 0–240; no Outlet override; no fee; per-Order sealed from payment-bound Checkout Snapshot; later Brand changes affect future purchases only; stale checkout revalidation); historical PD-IMP-036I-DRAFT-1 Gate PERFORMED / STOP (review 5305796113); historical PD-IMP-036I-DRAFT-2 Gate PERFORMED / STOP (review 5306341697; HEAD 421fc76869812384df2018b9ffae86de4c33cdc3); Gate NOT_PERFORMED at this tip (independent Gate later STOPPED under review 5306868578; remediated as DRAFT-4 under STATE-R150); Fit NOT_PERFORMED; architecture NOT locked; implementation NOT authorized / NOT started; IMP036I_ACTIVATED: YES; formal lifecycle PLANNED; IMP036I_ACCEPTED: NO; IMP-036H remains COMPLETE_AND_ACCEPTED (acceptedThrough unchanged); ARCH-R22 / DR-20 / D-378 unchanged; no new D-number; no ARCH revision; HISTORICAL_CONTINUATION_EXCEPTION IMP037_PROVIDER_BLOCKED_TO_IMP038 preserved; HISTORICAL_IMP026_TO_IMP028_CONTINUATION: CLOSED; nextGate: Independent Product Definition Gate (later STOP)
+IMP-036H: COMPLETE_AND_ACCEPTED
+IMP036H_ACCEPTED: YES
+IMP036H_FOUNDER_UAT: PASS
+IMP036H_FORMAL_ACCEPTANCE: ACCEPTED
+IMP036H_ACCEPTED_MAIN_SHA: 37bae964f964bddd317e4c290dc146097e4c8f57
+IMP036H_ACCEPTED_TREE: f52cd6279deb22c251062880087a2078fc7bce3b
+IMP036H_ACCEPTED_CANDIDATE: 37bae964f964bddd317e4c290dc146097e4c8f57
+IMP036H_FOUNDER_UAT_CANDIDATE_FINGERPRINT: e49d860c721d2524b248738750530a416f8418d02d10b64e69531f8548fcfb79
+IMP-036I: PLANNED
+IMP036I_ACTIVATED: YES
+IMP036I_PRODUCT_DEFINITION: DRAFT_READY_FOR_GATE
+IMP036I_PRODUCT_DEFINITION_VERSION: PD-IMP-036I-DRAFT-3
+IMP036I_PRODUCT_DEFINITION_GATE: NOT_PERFORMED
+IMP036I_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036I_ARCHITECTURE_LOCKED: NO
+IMP036I_IMPLEMENTATION_AUTHORIZED: NO
+IMP036I_STARTED: NO
+IMP036I_IMPLEMENTATION_STARTED: NO
+IMP036I_IMPLEMENTATION_COMPLETE: NO
+IMP036I_ACCEPTED: NO
+IMP-037: IMPLEMENTATION_IN_PROGRESS
+IMP037_HOLD: YES
+IMP037_IMPLEMENTATION_COMPLETE: NO
+IMP037_ACCEPTED: NO
+IMP-038: IMPLEMENTATION_IN_PROGRESS (HOLD — IMPLEMENTATION_COMPLETE / NOT_ACCEPTED)
+IMP038_HOLD: YES
+IMP038_IMPLEMENTATION_COMPLETE: YES
+IMP038_ACCEPTED: NO
+IMP038_EXTERNAL_ASSESSMENT: DEFERRED_UNTIL_PRE_GTM_APPLICATION_SCOPE_STABILIZES
+IMP038_FROZEN_RUNTIME_HEAD: dc6b19e6f88d4084e424d927e6467c374596fb0a
+IMP038_FROZEN_RUNTIME_TREE: c3aefb57f3f6c941d7f14907b6c095c4aa7f0547
+IMP038_FROZEN_RUNTIME_FINGERPRINT: 2800fe11397ee2a01e9decf572f85adf5c3a8b244ca34b1f53d579e05feac589
+GAP-EXT-ASSESS-001: NOT_CLOSED
+IMP039_ACTIVATED: NO
+IMP040_ACTIVATED: NO
+D-377_CREATED: YES
+D-378_CREATED: YES
+ARCH_R22_CREATED: YES
+```
+
+Historical prior tip (superseded as CURRENT by STATE-R149; later superseded by STATE-R150):
+
+```text
+STATE-R148 = IMP036I_PRODUCT_DEFINITION_DRAFT_READY
+acceptedThrough: IMP-036H
+pendingAcceptance: NONE
+currentProductSlice: IMP-036I
+nextProductSlice: IMP-037
+IMP036I_ACTIVATED: YES
+IMP036I_PRODUCT_DEFINITION: DRAFT_READY_FOR_GATE
+IMP036I_PRODUCT_DEFINITION_VERSION: PD-IMP-036I-DRAFT-2
+```
+
+## 10b. STATE-R148 record (historical prior tip — DRAFT-2 DRAFT_READY; later Gate STOP)
+
+```text
+STATE-R148 = IMP036I_PRODUCT_DEFINITION_DRAFT_READY
+acceptedThrough: IMP-036H
+pendingAcceptance: NONE
+currentProductSlice: IMP-036I
+nextProductSlice: IMP-037
+Current Product Implementation: IMP-037 (unresolved held predecessor; provider-blocked)
+Unresolved Predecessor: IMP-037
+Current Governance Activity: IMP-036I PRODUCT_DEFINITION_DRAFT_READY under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377); PD-IMP-036I-DRAFT-2 DRAFT_READY_FOR_GATE; READY_FOR_PRODUCT_DEFINITION_GATE YES; OPEN_FOUNDER_DECISIONS 0; UNRESOLVED_MATERIAL_PRODUCT_DECISIONS 0; Founder FD-036I-09 amendment 2026-09-24 (Pickup 30 / Delivery 60; Brand-level; 0–240; no Outlet override; no fee); historical PD-IMP-036I-DRAFT-1 Gate PERFORMED / STOP (review 5305796113; HEAD b0dd82c053520cd888b469666e1dc0c3a08dff4d); Gate NOT_PERFORMED at this tip (independent Gate later STOPPED under review 5306341697; remediated as DRAFT-3 under STATE-R149); Fit NOT_PERFORMED; architecture NOT locked; implementation NOT authorized / NOT started; IMP036I_ACTIVATED: YES; formal lifecycle PLANNED; IMP036I_ACCEPTED: NO; IMP-036H remains COMPLETE_AND_ACCEPTED (acceptedThrough unchanged); ARCH-R22 / DR-20 / D-378 unchanged; no new D-number; no ARCH revision; HISTORICAL_CONTINUATION_EXCEPTION IMP037_PROVIDER_BLOCKED_TO_IMP038 preserved; HISTORICAL_IMP026_TO_IMP028_CONTINUATION: CLOSED; nextGate: Independent Product Definition Gate (later STOP)
+IMP-036H: COMPLETE_AND_ACCEPTED
+IMP036H_ACCEPTED: YES
+IMP036H_FOUNDER_UAT: PASS
+IMP036H_FORMAL_ACCEPTANCE: ACCEPTED
+IMP036H_ACCEPTED_MAIN_SHA: 37bae964f964bddd317e4c290dc146097e4c8f57
+IMP036H_ACCEPTED_TREE: f52cd6279deb22c251062880087a2078fc7bce3b
+IMP036H_ACCEPTED_CANDIDATE: 37bae964f964bddd317e4c290dc146097e4c8f57
+IMP036H_FOUNDER_UAT_CANDIDATE_FINGERPRINT: e49d860c721d2524b248738750530a416f8418d02d10b64e69531f8548fcfb79
+IMP-036I: PLANNED
+IMP036I_ACTIVATED: YES
+IMP036I_PRODUCT_DEFINITION: DRAFT_READY_FOR_GATE
+IMP036I_PRODUCT_DEFINITION_VERSION: PD-IMP-036I-DRAFT-2
+IMP036I_PRODUCT_DEFINITION_GATE: NOT_PERFORMED
+IMP036I_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036I_ARCHITECTURE_LOCKED: NO
+IMP036I_IMPLEMENTATION_AUTHORIZED: NO
+IMP036I_STARTED: NO
+IMP036I_IMPLEMENTATION_STARTED: NO
+IMP036I_IMPLEMENTATION_COMPLETE: NO
+IMP036I_ACCEPTED: NO
+IMP-037: IMPLEMENTATION_IN_PROGRESS
+IMP037_HOLD: YES
+IMP037_IMPLEMENTATION_COMPLETE: NO
+IMP037_ACCEPTED: NO
+IMP-038: IMPLEMENTATION_IN_PROGRESS (HOLD — IMPLEMENTATION_COMPLETE / NOT_ACCEPTED)
+IMP038_HOLD: YES
+IMP038_IMPLEMENTATION_COMPLETE: YES
+IMP038_ACCEPTED: NO
+IMP038_EXTERNAL_ASSESSMENT: DEFERRED_UNTIL_PRE_GTM_APPLICATION_SCOPE_STABILIZES
+IMP038_FROZEN_RUNTIME_HEAD: dc6b19e6f88d4084e424d927e6467c374596fb0a
+IMP038_FROZEN_RUNTIME_TREE: c3aefb57f3f6c941d7f14907b6c095c4aa7f0547
+IMP038_FROZEN_RUNTIME_FINGERPRINT: 2800fe11397ee2a01e9decf572f85adf5c3a8b244ca34b1f53d579e05feac589
+GAP-EXT-ASSESS-001: NOT_CLOSED
+IMP039_ACTIVATED: NO
+IMP040_ACTIVATED: NO
+D-377_CREATED: YES
+D-378_CREATED: YES
+ARCH_R22_CREATED: YES
+```
+
+Historical prior tip (superseded as CURRENT by STATE-R148; later superseded by STATE-R149 / STATE-R150):
+
+```text
+STATE-R147 = IMP036I_PRODUCT_DEFINITION_DRAFT_READY
+acceptedThrough: IMP-036H
+pendingAcceptance: NONE
+currentProductSlice: IMP-036I
+nextProductSlice: IMP-037
+IMP036I_ACTIVATED: YES
+IMP036I_PRODUCT_DEFINITION: DRAFT_READY_FOR_GATE
+IMP036I_PRODUCT_DEFINITION_VERSION: PD-IMP-036I-DRAFT-1
+```
+
+## 10c. STATE-R147 record (historical prior tip — DRAFT-1 DRAFT_READY; later Gate STOP)
+
+```text
+STATE-R147 = IMP036I_PRODUCT_DEFINITION_DRAFT_READY
+acceptedThrough: IMP-036H
+pendingAcceptance: NONE
+currentProductSlice: IMP-036I
+nextProductSlice: IMP-037
+Current Product Implementation: IMP-037 (unresolved held predecessor; provider-blocked)
+Unresolved Predecessor: IMP-037
+Current Governance Activity: IMP-036I PRODUCT_DEFINITION_DRAFT_READY under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377); PD-IMP-036I-DRAFT-1 DRAFT_READY_FOR_GATE; READY_FOR_PRODUCT_DEFINITION_GATE YES; OPEN_FOUNDER_DECISIONS 0; UNRESOLVED_MATERIAL_PRODUCT_DECISIONS 0; Founder FD-036I-01…15 RESOLVED 2026-09-24; Gate NOT_PERFORMED at this tip (independent Gate later STOPPED under review 5305796113; remediated as DRAFT-2 under STATE-R148); Fit NOT_PERFORMED; architecture NOT locked; implementation NOT authorized / NOT started; IMP036I_ACTIVATED: YES; formal lifecycle PLANNED; IMP036I_ACCEPTED: NO; IMP-036H remains COMPLETE_AND_ACCEPTED (acceptedThrough unchanged); ARCH-R22 / DR-20 / D-378 unchanged; no new D-number; no ARCH revision; HISTORICAL_CONTINUATION_EXCEPTION IMP037_PROVIDER_BLOCKED_TO_IMP038 preserved; HISTORICAL_IMP026_TO_IMP028_CONTINUATION: CLOSED; nextGate: Independent Product Definition Gate (later STOP)
+IMP-036H: COMPLETE_AND_ACCEPTED
+IMP036H_ACCEPTED: YES
+IMP036H_FOUNDER_UAT: PASS
+IMP036H_FORMAL_ACCEPTANCE: ACCEPTED
+IMP036H_ACCEPTED_MAIN_SHA: 37bae964f964bddd317e4c290dc146097e4c8f57
+IMP036H_ACCEPTED_TREE: f52cd6279deb22c251062880087a2078fc7bce3b
+IMP036H_ACCEPTED_CANDIDATE: 37bae964f964bddd317e4c290dc146097e4c8f57
+IMP036H_FOUNDER_UAT_CANDIDATE_FINGERPRINT: e49d860c721d2524b248738750530a416f8418d02d10b64e69531f8548fcfb79
+IMP-036I: PLANNED
+IMP036I_ACTIVATED: YES
+IMP036I_PRODUCT_DEFINITION: DRAFT_READY_FOR_GATE
+IMP036I_PRODUCT_DEFINITION_VERSION: PD-IMP-036I-DRAFT-1
+IMP036I_PRODUCT_DEFINITION_GATE: NOT_PERFORMED
+IMP036I_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036I_ARCHITECTURE_LOCKED: NO
+IMP036I_IMPLEMENTATION_AUTHORIZED: NO
+IMP036I_STARTED: NO
+IMP036I_IMPLEMENTATION_STARTED: NO
+IMP036I_IMPLEMENTATION_COMPLETE: NO
+IMP036I_ACCEPTED: NO
+IMP-037: IMPLEMENTATION_IN_PROGRESS
+IMP037_HOLD: YES
+IMP037_IMPLEMENTATION_COMPLETE: NO
+IMP037_ACCEPTED: NO
+IMP-038: IMPLEMENTATION_IN_PROGRESS (HOLD — IMPLEMENTATION_COMPLETE / NOT_ACCEPTED)
+IMP038_HOLD: YES
+IMP038_IMPLEMENTATION_COMPLETE: YES
+IMP038_ACCEPTED: NO
+IMP038_EXTERNAL_ASSESSMENT: DEFERRED_UNTIL_PRE_GTM_APPLICATION_SCOPE_STABILIZES
+IMP038_FROZEN_RUNTIME_HEAD: dc6b19e6f88d4084e424d927e6467c374596fb0a
+IMP038_FROZEN_RUNTIME_TREE: c3aefb57f3f6c941d7f14907b6c095c4aa7f0547
+IMP038_FROZEN_RUNTIME_FINGERPRINT: 2800fe11397ee2a01e9decf572f85adf5c3a8b244ca34b1f53d579e05feac589
+GAP-EXT-ASSESS-001: NOT_CLOSED
+IMP039_ACTIVATED: NO
+IMP040_ACTIVATED: NO
+D-377_CREATED: YES
+D-378_CREATED: YES
+ARCH_R22_CREATED: YES
+```
+
+Historical prior tip (superseded as CURRENT by then-STATE-R147):
+
+```text
+STATE-R146 = IMP036I_PRODUCT_DEFINITION_ACTIVATION
+acceptedThrough: IMP-036H
+pendingAcceptance: NONE
+currentProductSlice: IMP-036I
+nextProductSlice: IMP-037
+IMP036I_ACTIVATED: YES
+IMP036I_PRODUCT_DEFINITION: PRE_GATE_DRAFT
+```
+
+## 10b. STATE-R146 record (historical prior tip — PRE_GATE activation)
+
+```text
+STATE-R146 = IMP036I_PRODUCT_DEFINITION_ACTIVATION
+acceptedThrough: IMP-036H
+pendingAcceptance: NONE
+currentProductSlice: IMP-036I
+nextProductSlice: IMP-037
+Current Product Implementation: IMP-037 (unresolved held predecessor; provider-blocked)
+Unresolved Predecessor: IMP-037
+Current Governance Activity: IMP-036I PRODUCT_DEFINITION_ACTIVATION under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377); PD-IMP-036I-DRAFT-1 PRE_GATE_DRAFT; Gate NOT_PERFORMED; Fit NOT_PERFORMED; architecture NOT locked; implementation NOT authorized / NOT started; IMP036I_ACTIVATED: YES; formal lifecycle PLANNED; IMP036I_ACCEPTED: NO; IMP-036H remains COMPLETE_AND_ACCEPTED (acceptedThrough unchanged); ARCH-R22 / DR-20 / D-378 unchanged; no new D-number; no ARCH revision; HISTORICAL_CONTINUATION_EXCEPTION IMP037_PROVIDER_BLOCKED_TO_IMP038 preserved; HISTORICAL_IMP026_TO_IMP028_CONTINUATION: CLOSED
+IMP-036H: COMPLETE_AND_ACCEPTED
+IMP036H_ACCEPTED: YES
+IMP036H_FOUNDER_UAT: PASS
+IMP036H_FORMAL_ACCEPTANCE: ACCEPTED
+IMP036H_ACCEPTED_MAIN_SHA: 37bae964f964bddd317e4c290dc146097e4c8f57
+IMP036H_ACCEPTED_TREE: f52cd6279deb22c251062880087a2078fc7bce3b
+IMP036H_ACCEPTED_CANDIDATE: 37bae964f964bddd317e4c290dc146097e4c8f57
+IMP036H_FOUNDER_UAT_CANDIDATE_FINGERPRINT: e49d860c721d2524b248738750530a416f8418d02d10b64e69531f8548fcfb79
+IMP-036I: PLANNED
+IMP036I_ACTIVATED: YES
+IMP036I_PRODUCT_DEFINITION: PRE_GATE_DRAFT
+IMP036I_PRODUCT_DEFINITION_VERSION: PD-IMP-036I-DRAFT-1
+IMP036I_PRODUCT_DEFINITION_GATE: NOT_PERFORMED
+IMP036I_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036I_ARCHITECTURE_LOCKED: NO
+IMP036I_IMPLEMENTATION_AUTHORIZED: NO
+IMP036I_STARTED: NO
+IMP036I_IMPLEMENTATION_STARTED: NO
+IMP036I_IMPLEMENTATION_COMPLETE: NO
+IMP036I_ACCEPTED: NO
+IMP-037: IMPLEMENTATION_IN_PROGRESS
+IMP037_HOLD: YES
+IMP037_IMPLEMENTATION_COMPLETE: NO
+IMP037_ACCEPTED: NO
+IMP-038: IMPLEMENTATION_IN_PROGRESS (HOLD — IMPLEMENTATION_COMPLETE / NOT_ACCEPTED)
+IMP038_HOLD: YES
+IMP038_IMPLEMENTATION_COMPLETE: YES
+IMP038_ACCEPTED: NO
+IMP038_EXTERNAL_ASSESSMENT: DEFERRED_UNTIL_PRE_GTM_APPLICATION_SCOPE_STABILIZES
+IMP038_FROZEN_RUNTIME_HEAD: dc6b19e6f88d4084e424d927e6467c374596fb0a
+IMP038_FROZEN_RUNTIME_TREE: c3aefb57f3f6c941d7f14907b6c095c4aa7f0547
+IMP038_FROZEN_RUNTIME_FINGERPRINT: 2800fe11397ee2a01e9decf572f85adf5c3a8b244ca34b1f53d579e05feac589
+GAP-EXT-ASSESS-001: NOT_CLOSED
+IMP039_ACTIVATED: NO
+IMP040_ACTIVATED: NO
+D-377_CREATED: YES
+D-378_CREATED: YES
+ARCH_R22_CREATED: YES
+```
+
+Historical prior tip (superseded as CURRENT by STATE-R146):
+
+```text
+STATE-R145 = IMP036H_ACCEPTANCE
+acceptedThrough: IMP-036H
+pendingAcceptance: NONE
+currentProductSlice: NONE
+nextProductSlice: IMP-036I
+IMP036I_ACTIVATED: NO
+```
+
+## 10a. STATE-R144 record (historical prior tip)
+
+```text
+STATE-R144 = IMP036H_IMPLEMENTATION_COMPLETE
+acceptedThrough: IMP-036G
+pendingAcceptance: IMP-036H
+currentProductSlice: IMP-036H
+nextProductSlice: IMP-036I
+Current Product Implementation: IMP-037 (unresolved held predecessor; provider-blocked)
+Unresolved Predecessor: IMP-037
+Current Governance Activity: IMP-036H IMPLEMENTATION_COMPLETE_PENDING_ACCEPTANCE under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377); PD-IMP-036H-DRAFT-1 APPROVED; Gate PASS; Fit PASS; architecture LOCKED; IMP036H_IMPLEMENTATION_AUTHORIZED: YES; IMP036H_STARTED: YES; IMP036H_IMPLEMENTATION_STARTED: YES; IMP036H_IMPLEMENTATION_COMPLETE: YES; IMP036H_ACCEPTED: NO; IMP036H_FOUNDER_UAT: NOT_PERFORMED; IMP036H_FORMAL_ACCEPTANCE: NOT_PERFORMED; formal lifecycle IMPLEMENTATION_COMPLETE_PENDING_ACCEPTANCE; independent implementation review PASS (5302239433; reviewed HEAD 649b7848f99918f927da4a77e98cd81cdc146e6b / tree b272adf40f89b0011fff07bf4d6b6d0d735df68a / fingerprint c2bc6a91ce536329bec0ad4af4d3264a5a39904d035af28442071b4e96e2f56a; evidence PR#246 comment 5810833593; automated acceptance 42/42 PASS); D-378 CURRENT; ADR-018 Accepted; ARCH-R22 / ARCH-G28; DR-20 unchanged; no new D-number; no ARCH revision; HISTORICAL_CONTINUATION_EXCEPTION IMP037_PROVIDER_BLOCKED_TO_IMP038 preserved; HISTORICAL_IMP026_TO_IMP028_CONTINUATION: CLOSED
+Current Governance Activity: IMP-036H IMPLEMENTATION_COMPLETE_PENDING_ACCEPTANCE under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377); PD-IMP-036H-DRAFT-1 APPROVED; Gate PASS; Fit PASS; architecture LOCKED; IMP036H_IMPLEMENTATION_AUTHORIZED: YES; IMP036H_STARTED: YES; IMP036H_IMPLEMENTATION_STARTED: YES; IMP-036H_IMPLEMENTATION_COMPLETE: YES; IMP036H_ACCEPTED: NO; IMP036H_FOUNDER_UAT: NOT_PERFORMED; IMP036H_FORMAL_ACCEPTANCE: NOT_PERFORMED; formal lifecycle IMPLEMENTATION_COMPLETE_PENDING_ACCEPTANCE; independent implementation review PASS (5302239433; reviewed HEAD 649b7848f99918f927da4a77e98cd81cdc146e6b / tree b272adf40f89b0011fff07bf4d6b6d0d735df68a / fingerprint c2bc6a91ce536329bec0ad4af4d3264a5a39904d035af28442071b4e96e2f56a; evidence PR#246 comment 5810833593; automated acceptance 42/42 PASS); D-378 CURRENT; ADR-018 Accepted; ARCH-R22 / ARCH-G28; DR-20 unchanged; no new D-number; no ARCH revision; HISTORICAL_CONTINUATION_EXCEPTION IMP037_PROVIDER_BLOCKED_TO_IMP038 preserved; HISTORICAL_IMP026_TO_IMP028_CONTINUATION: CLOSED
+fitEvaluatedHead: aab814c238c499367ee921e9f8ffb03ff7b1b373
+fitEvaluatedTree: 93d4e83d4a73c61c9439bcaae2799920fcca46db
+fitEvaluatedFingerprint: 74b1254f22c9131a6e073522cf9310f264866e442cc074775ad5f4b214f0e51e
+independentArchitectureFit: PASS
+independentArchitectureFitEvidence: PR#239/5295149318
+IMP036H_INDEPENDENT_IMPLEMENTATION_REVIEW: PASS
+IMP036H_INDEPENDENT_IMPLEMENTATION_REVIEW_ID: 5302239433
+IMP036H_IMPLEMENTATION_REVIEWED_HEAD: 649b7848f99918f927da4a77e98cd81cdc146e6b
+IMP036H_IMPLEMENTATION_REVIEWED_TREE: b272adf40f89b0011fff07bf4d6b6d0d735df68a
+IMP036H_IMPLEMENTATION_REVIEWED_FINGERPRINT: c2bc6a91ce536329bec0ad4af4d3264a5a39904d035af28442071b4e96e2f56a
+IMP036H_IMPLEMENTATION_EVIDENCE: PR#246 comment 5810833593
+IMP036H_AUTOMATED_ACCEPTANCE: 42/42 PASS
+IMP-036G: COMPLETE_AND_ACCEPTED
+IMP036G_ACCEPTED: YES
+IMP036G_FOUNDER_UAT: PASS
+IMP036G_FORMAL_ACCEPTANCE: ACCEPTED
+IMP-036H: IMPLEMENTATION_COMPLETE_PENDING_ACCEPTANCE
+IMP036H_ACTIVATED: YES
+IMP036H_PRODUCT_DEFINITION: APPROVED
+IMP036H_PRODUCT_DEFINITION_VERSION: PD-IMP-036H-DRAFT-1
+IMP036H_PRODUCT_DEFINITION_GATE: PASS
+IMP036H_ARCHITECTURE_FIT: PASS
+IMP036H_ARCHITECTURE_LOCKED: YES
+IMP036H_IMPLEMENTATION: AUTHORIZED / STARTED / COMPLETE
+IMP036H_IMPLEMENTATION_AUTHORIZED: YES
+IMP036H_STARTED: YES
+IMP036H_IMPLEMENTATION_STARTED: YES
+IMP036H_IMPLEMENTATION_COMPLETE: YES
+IMP-036H_IMPLEMENTATION_COMPLETE: YES
+IMP036H_ACCEPTED: NO
+IMP036H_FOUNDER_UAT_REQUIRED: YES
+IMP036H_FOUNDER_UAT: NOT_PERFORMED
+IMP036H_FORMAL_ACCEPTANCE: NOT_PERFORMED
+IMP-036I: PLANNED
+IMP036I_ACTIVATED: YES
+IMP036I_PRODUCT_DEFINITION: PRE_GATE_DRAFT
+IMP036I_PRODUCT_DEFINITION_VERSION: PD-IMP-036I-DRAFT-1
+IMP036I_PRODUCT_DEFINITION_GATE: NOT_PERFORMED
+IMP036I_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036I_ARCHITECTURE_LOCKED: NO
+IMP036I_IMPLEMENTATION_AUTHORIZED: NO
+IMP036I_STARTED: NO
+IMP036I_IMPLEMENTATION_STARTED: NO
+IMP036I_IMPLEMENTATION_COMPLETE: NO
+IMP036I_ACCEPTED: NO
+IMP-037: IMPLEMENTATION_IN_PROGRESS
+IMP037_HOLD: YES
+IMP037_ACTIVATED: YES
+IMP037_PRODUCT_DEFINITION: APPROVED
+IMP037_PRODUCT_DEFINITION_VERSION: PD-IMP-037-DRAFT-1
+IMP037_PRODUCT_DEFINITION_GATE: PASS
+IMP037_ARCHITECTURE_FIT: PASS
+IMP037_ARCHITECTURE_LOCKED: YES
+IMP037_IMPLEMENTATION_AUTHORIZED: YES
+IMP037_STARTED: YES
+IMP037_REPOSITORY_IMPLEMENTATION_MERGED: YES
+IMP037_EXTERNAL_RECOVERY_PROOF: NOT_PERFORMED
+IMP037_IMPLEMENTATION_COMPLETE: NO
+IMP037_ACCEPTED: NO
+IMP037_FOUNDER_UAT_REQUIRED: YES
+IMP037_FOUNDER_UAT: NOT_PERFORMED
+PHASE1_BLOCK_STATUS: BLOCKED_PROVIDER_ACCESS
+PROVIDER_DEPENDENT_PROOF: DEFERRED_PENDING_PROVIDER_ACCESS
+IMP-038: IMPLEMENTATION_IN_PROGRESS (HOLD — IMPLEMENTATION_COMPLETE / NOT_ACCEPTED)
+IMP038_HOLD: YES
+IMP038_ACTIVATED: YES
+IMP038_PRODUCT_DEFINITION: APPROVED
+IMP038_PRODUCT_DEFINITION_VERSION: PD-IMP-038-DRAFT-2
+IMP038_PRODUCT_DEFINITION_GATE: PASS
+IMP038_ARCHITECTURE_FIT: PASS
+IMP038_ARCHITECTURE_LOCKED: YES
+IMP038_IMPLEMENTATION_AUTHORIZED: YES
+IMP038_STARTED: YES
+IMP038_IMPLEMENTATION_COMPLETE: YES
+IMP038_ACCEPTED: NO
+IMP038_ACCEPTANCE_BLOCKED_BY_IMP037: YES
+IMP038_EXTERNAL_ASSESSMENT: DEFERRED_UNTIL_PRE_GTM_APPLICATION_SCOPE_STABILIZES
+IMP038_FROZEN_RUNTIME_HEAD: dc6b19e6f88d4084e424d927e6467c374596fb0a
+IMP038_FROZEN_RUNTIME_TREE: c3aefb57f3f6c941d7f14907b6c095c4aa7f0547
+IMP038_FROZEN_RUNTIME_FINGERPRINT: 2800fe11397ee2a01e9decf572f85adf5c3a8b244ca34b1f53d579e05feac589
+GAP-EXT-ASSESS-001: NOT_CLOSED
+IMP039_ACTIVATED: NO
+IMP040_ACTIVATED: NO
+PROGRAM_PAUSE: PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED
+PROGRAM_PAUSE_AUTHORITY: D-377
+HISTORICAL_CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038
+CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038
+CONTINUATION_EXCEPTION_AUTHORITY: PR#179/5771367844
+HISTORICAL_IMP026_TO_IMP028_CONTINUATION: CLOSED
+D-374_CREATED: YES
+ARCH_R20_CREATED: YES
+D-375_CREATED: YES
+ARCH_R21_CREATED: YES
+D-377_CREATED: YES
+D-378_CREATED: YES
+ARCH_R22_CREATED: YES
+architectureVersion: ARCH-R22
+decisionRegisterVersion: DR-20
+nextGate: independent technical acceptance → UAT deployment → Founder UAT → acceptance reconciliation
+```
+
+## 11. STATE-R143 record (historical prior tip; superseded by STATE-R144)
+
+```text
+STATE-R143 = IMP036H_IMPLEMENTATION_START
+acceptedThrough: IMP-036G
+pendingAcceptance: NONE
+currentProductSlice: IMP-036H
+nextProductSlice: IMP-036I
+Current Product Implementation: IMP-037 (unresolved held predecessor; provider-blocked)
+Unresolved Predecessor: IMP-037
+Current Governance Activity: IMP-036H Implementation AUTHORIZED / STARTED under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377); PD-IMP-036H-DRAFT-1 APPROVED; Gate PASS; Fit PASS; architecture LOCKED; IMP036H_IMPLEMENTATION_AUTHORIZED: YES; IMP036H_STARTED: YES; IMP036H_IMPLEMENTATION_STARTED: YES; IMP036H_IMPLEMENTATION_COMPLETE: NO; formal lifecycle IMPLEMENTATION_IN_PROGRESS; D-378 CURRENT; ADR-018 Accepted; ARCH-R22 / ARCH-G28; DR-20 unchanged; no new D-number; no ARCH revision; HISTORICAL_CONTINUATION_EXCEPTION IMP037_PROVIDER_BLOCKED_TO_IMP038 preserved; HISTORICAL_IMP026_TO_IMP028_CONTINUATION: CLOSED
+fitEvaluatedHead: aab814c238c499367ee921e9f8ffb03ff7b1b373
+fitEvaluatedTree: 93d4e83d4a73c61c9439bcaae2799920fcca46db
+fitEvaluatedFingerprint: 74b1254f22c9131a6e073522cf9310f264866e442cc074775ad5f4b214f0e51e
+independentArchitectureFit: PASS
+independentArchitectureFitEvidence: PR#239/5295149318
+IMP-036G: COMPLETE_AND_ACCEPTED
+IMP036G_ACCEPTED: YES
+IMP036G_FOUNDER_UAT: PASS
+IMP036G_FORMAL_ACCEPTANCE: ACCEPTED
+IMP-036H: IMPLEMENTATION_IN_PROGRESS
+IMP036H_ACTIVATED: YES
+IMP036H_PRODUCT_DEFINITION: APPROVED
+IMP036H_PRODUCT_DEFINITION_VERSION: PD-IMP-036H-DRAFT-1
+IMP036H_PRODUCT_DEFINITION_GATE: PASS
+IMP036H_ARCHITECTURE_FIT: PASS
+IMP036H_ARCHITECTURE_LOCKED: YES
+IMP036H_IMPLEMENTATION_AUTHORIZED: YES
+IMP036H_STARTED: YES
+IMP036H_IMPLEMENTATION_STARTED: YES
+IMP036H_IMPLEMENTATION_COMPLETE: NO
+IMP036H_ACCEPTED: NO
+IMP036H_FOUNDER_UAT_REQUIRED: YES
+IMP-036I: PLANNED
+IMP036I_ACTIVATED: YES
+IMP036I_PRODUCT_DEFINITION: PRE_GATE_DRAFT
+IMP036I_PRODUCT_DEFINITION_VERSION: PD-IMP-036I-DRAFT-1
+IMP036I_PRODUCT_DEFINITION_GATE: NOT_PERFORMED
+IMP036I_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036I_ARCHITECTURE_LOCKED: NO
+IMP036I_IMPLEMENTATION_AUTHORIZED: NO
+IMP036I_STARTED: NO
+IMP036I_IMPLEMENTATION_STARTED: NO
+IMP036I_IMPLEMENTATION_COMPLETE: NO
+IMP036I_ACCEPTED: NO
+IMP-037: IMPLEMENTATION_IN_PROGRESS
+IMP037_HOLD: YES
+IMP037_ACTIVATED: YES
+IMP037_PRODUCT_DEFINITION: APPROVED
+IMP037_PRODUCT_DEFINITION_VERSION: PD-IMP-037-DRAFT-1
+IMP037_PRODUCT_DEFINITION_GATE: PASS
+IMP037_ARCHITECTURE_FIT: PASS
+IMP037_ARCHITECTURE_LOCKED: YES
+IMP037_IMPLEMENTATION_AUTHORIZED: YES
+IMP037_STARTED: YES
+IMP037_REPOSITORY_IMPLEMENTATION_MERGED: YES
+IMP037_EXTERNAL_RECOVERY_PROOF: NOT_PERFORMED
+IMP037_IMPLEMENTATION_COMPLETE: NO
+IMP037_ACCEPTED: NO
+IMP037_FOUNDER_UAT_REQUIRED: YES
+IMP037_FOUNDER_UAT: NOT_PERFORMED
+PHASE1_BLOCK_STATUS: BLOCKED_PROVIDER_ACCESS
+PROVIDER_DEPENDENT_PROOF: DEFERRED_PENDING_PROVIDER_ACCESS
+IMP-038: IMPLEMENTATION_IN_PROGRESS (HOLD — IMPLEMENTATION_COMPLETE / NOT_ACCEPTED)
+IMP038_HOLD: YES
+IMP038_ACTIVATED: YES
+IMP038_PRODUCT_DEFINITION: APPROVED
+IMP038_PRODUCT_DEFINITION_VERSION: PD-IMP-038-DRAFT-2
+IMP038_PRODUCT_DEFINITION_GATE: PASS
+IMP038_ARCHITECTURE_FIT: PASS
+IMP038_ARCHITECTURE_LOCKED: YES
+IMP038_IMPLEMENTATION_AUTHORIZED: YES
+IMP038_STARTED: YES
+IMP038_IMPLEMENTATION_COMPLETE: YES
+IMP038_ACCEPTED: NO
+IMP038_ACCEPTANCE_BLOCKED_BY_IMP037: YES
+IMP038_EXTERNAL_ASSESSMENT: DEFERRED_UNTIL_PRE_GTM_APPLICATION_SCOPE_STABILIZES
+IMP038_FROZEN_RUNTIME_HEAD: dc6b19e6f88d4084e424d927e6467c374596fb0a
+IMP038_FROZEN_RUNTIME_TREE: c3aefb57f3f6c941d7f14907b6c095c4aa7f0547
+IMP038_FROZEN_RUNTIME_FINGERPRINT: 2800fe11397ee2a01e9decf572f85adf5c3a8b244ca34b1f53d579e05feac589
+GAP-EXT-ASSESS-001: NOT_CLOSED
+IMP039_ACTIVATED: NO
+IMP040_ACTIVATED: NO
+PROGRAM_PAUSE: PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED
+PROGRAM_PAUSE_AUTHORITY: D-377
+HISTORICAL_CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038
+CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038
+CONTINUATION_EXCEPTION_AUTHORITY: PR#179/5771367844
+HISTORICAL_IMP026_TO_IMP028_CONTINUATION: CLOSED
+D-374_CREATED: YES
+ARCH_R20_CREATED: YES
+D-375_CREATED: YES
+ARCH_R21_CREATED: YES
+D-377_CREATED: YES
+D-378_CREATED: YES
+ARCH_R22_CREATED: YES
+architectureVersion: ARCH-R22
+decisionRegisterVersion: DR-20
+nextGate: Continue authorized IMP-036H implementation — NOT acceptance
+```
+
+## 12. STATE-R142 record
+
+```text
+STATE-R142 = IMP036H_IMPLEMENTATION_AUTHORIZED
+acceptedThrough: IMP-036G
+pendingAcceptance: NONE
+currentProductSlice: IMP-036H
+nextProductSlice: IMP-036I
+Current Product Implementation: IMP-037 (unresolved held predecessor; provider-blocked)
+Unresolved Predecessor: IMP-037
+Current Governance Activity: IMP-036H Implementation AUTHORIZED / NOT_STARTED under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377); PD-IMP-036H-DRAFT-1 APPROVED; Gate PASS; Fit PASS; architecture LOCKED; IMP036H_IMPLEMENTATION_AUTHORIZED: YES; IMP036H_STARTED: NO; IMP036H_IMPLEMENTATION_STARTED: NO; IMP036H_IMPLEMENTATION_COMPLETE: NO; formal lifecycle remains ARCHITECTURE_LOCKED; D-378 CURRENT; ADR-018 Accepted; ARCH-R22 / ARCH-G28; DR-20 unchanged; no new D-number; no ARCH revision; HISTORICAL_CONTINUATION_EXCEPTION IMP037_PROVIDER_BLOCKED_TO_IMP038 preserved; HISTORICAL_IMP026_TO_IMP028_CONTINUATION: CLOSED
+fitEvaluatedHead: aab814c238c499367ee921e9f8ffb03ff7b1b373
+fitEvaluatedTree: 93d4e83d4a73c61c9439bcaae2799920fcca46db
+fitEvaluatedFingerprint: 74b1254f22c9131a6e073522cf9310f264866e442cc074775ad5f4b214f0e51e
+independentArchitectureFit: PASS
+independentArchitectureFitEvidence: PR#239/5295149318
+IMP-036G: COMPLETE_AND_ACCEPTED
+IMP036G_ACCEPTED: YES
+IMP036G_FOUNDER_UAT: PASS
+IMP036G_FORMAL_ACCEPTANCE: ACCEPTED
+IMP-036H: ARCHITECTURE_LOCKED
+IMP036H_ACTIVATED: YES
+IMP036H_PRODUCT_DEFINITION: APPROVED
+IMP036H_PRODUCT_DEFINITION_VERSION: PD-IMP-036H-DRAFT-1
+IMP036H_PRODUCT_DEFINITION_GATE: PASS
+IMP036H_ARCHITECTURE_FIT: PASS
+IMP036H_ARCHITECTURE_LOCKED: YES
+IMP036H_IMPLEMENTATION_AUTHORIZED: YES
+IMP036H_STARTED: NO
+IMP036H_IMPLEMENTATION_STARTED: NO
+IMP036H_IMPLEMENTATION_COMPLETE: NO
+IMP036H_ACCEPTED: NO
+IMP036H_FOUNDER_UAT_REQUIRED: YES
+IMP-036I: PLANNED
+IMP036I_ACTIVATED: YES
+IMP036I_PRODUCT_DEFINITION: PRE_GATE_DRAFT
+IMP036I_PRODUCT_DEFINITION_VERSION: PD-IMP-036I-DRAFT-1
+IMP036I_PRODUCT_DEFINITION_GATE: NOT_PERFORMED
+IMP036I_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036I_ARCHITECTURE_LOCKED: NO
+IMP036I_IMPLEMENTATION_AUTHORIZED: NO
+IMP036I_STARTED: NO
+IMP036I_IMPLEMENTATION_STARTED: NO
+IMP036I_IMPLEMENTATION_COMPLETE: NO
+IMP036I_ACCEPTED: NO
+IMP-037: IMPLEMENTATION_IN_PROGRESS
+IMP037_HOLD: YES
+IMP037_ACTIVATED: YES
+IMP037_PRODUCT_DEFINITION: APPROVED
+IMP037_PRODUCT_DEFINITION_VERSION: PD-IMP-037-DRAFT-1
+IMP037_PRODUCT_DEFINITION_GATE: PASS
+IMP037_ARCHITECTURE_FIT: PASS
+IMP037_ARCHITECTURE_LOCKED: YES
+IMP037_IMPLEMENTATION_AUTHORIZED: YES
+IMP037_STARTED: YES
+IMP037_REPOSITORY_IMPLEMENTATION_MERGED: YES
+IMP037_EXTERNAL_RECOVERY_PROOF: NOT_PERFORMED
+IMP037_IMPLEMENTATION_COMPLETE: NO
+IMP037_ACCEPTED: NO
+IMP037_FOUNDER_UAT_REQUIRED: YES
+IMP037_FOUNDER_UAT: NOT_PERFORMED
+PHASE1_BLOCK_STATUS: BLOCKED_PROVIDER_ACCESS
+PROVIDER_DEPENDENT_PROOF: DEFERRED_PENDING_PROVIDER_ACCESS
+IMP-038: IMPLEMENTATION_IN_PROGRESS (HOLD — IMPLEMENTATION_COMPLETE / NOT_ACCEPTED)
+IMP038_HOLD: YES
+IMP038_ACTIVATED: YES
+IMP038_PRODUCT_DEFINITION: APPROVED
+IMP038_PRODUCT_DEFINITION_VERSION: PD-IMP-038-DRAFT-2
+IMP038_PRODUCT_DEFINITION_GATE: PASS
+IMP038_ARCHITECTURE_FIT: PASS
+IMP038_ARCHITECTURE_LOCKED: YES
+IMP038_IMPLEMENTATION_AUTHORIZED: YES
+IMP038_STARTED: YES
+IMP038_IMPLEMENTATION_COMPLETE: YES
+IMP038_ACCEPTED: NO
+IMP038_ACCEPTANCE_BLOCKED_BY_IMP037: YES
+IMP038_EXTERNAL_ASSESSMENT: DEFERRED_UNTIL_PRE_GTM_APPLICATION_SCOPE_STABILIZES
+IMP038_FROZEN_RUNTIME_HEAD: dc6b19e6f88d4084e424d927e6467c374596fb0a
+IMP038_FROZEN_RUNTIME_TREE: c3aefb57f3f6c941d7f14907b6c095c4aa7f0547
+IMP038_FROZEN_RUNTIME_FINGERPRINT: 2800fe11397ee2a01e9decf572f85adf5c3a8b244ca34b1f53d579e05feac589
+GAP-EXT-ASSESS-001: NOT_CLOSED
+IMP039_ACTIVATED: NO
+IMP040_ACTIVATED: NO
+PROGRAM_PAUSE: PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED
+PROGRAM_PAUSE_AUTHORITY: D-377
+HISTORICAL_CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038
+CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038
+CONTINUATION_EXCEPTION_AUTHORITY: PR#179/5771367844
+HISTORICAL_IMP026_TO_IMP028_CONTINUATION: CLOSED
+D-374_CREATED: YES
+ARCH_R20_CREATED: YES
+D-375_CREATED: YES
+ARCH_R21_CREATED: YES
+D-377_CREATED: YES
+D-378_CREATED: YES
+ARCH_R22_CREATED: YES
+architectureVersion: ARCH-R22
+decisionRegisterVersion: DR-20
+nextGate: Implementation Start — NOT automatic start; authorization does NOT mean implementation started
+```
+
+## 13. STATE-R141 record
+
+```text
+STATE-R141 = IMP036H_ARCHITECTURE_FIT_PASS_AND_LOCK
+acceptedThrough: IMP-036G
+pendingAcceptance: NONE
+currentProductSlice: IMP-036H
+nextProductSlice: IMP-036I
+Current Product Implementation: IMP-037 (unresolved held predecessor; provider-blocked)
+Unresolved Predecessor: IMP-037
+Current Governance Activity: IMP-036H Architecture Fit PASS + architecture lock under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377); PD-IMP-036H-DRAFT-1 APPROVED; Gate PASS; Fit PASS; architecture LOCKED; implementation NOT_AUTHORIZED / NOT_STARTED; D-378 CURRENT; ADR-018 Accepted; ARCH-R22 / ARCH-G28; DR-20; HISTORICAL_CONTINUATION_EXCEPTION IMP037_PROVIDER_BLOCKED_TO_IMP038 preserved; HISTORICAL_IMP026_TO_IMP028_CONTINUATION: CLOSED
+fitEvaluatedHead: aab814c238c499367ee921e9f8ffb03ff7b1b373
+fitEvaluatedTree: 93d4e83d4a73c61c9439bcaae2799920fcca46db
+fitEvaluatedFingerprint: 74b1254f22c9131a6e073522cf9310f264866e442cc074775ad5f4b214f0e51e
+independentArchitectureFit: PASS
+independentArchitectureFitEvidence: PR#239/5295149318
+IMP-036G: COMPLETE_AND_ACCEPTED
+IMP036G_ACCEPTED: YES
+IMP036G_FOUNDER_UAT: PASS
+IMP036G_FORMAL_ACCEPTANCE: ACCEPTED
+IMP-036H: ARCHITECTURE_LOCKED
+IMP036H_ACTIVATED: YES
+IMP036H_PRODUCT_DEFINITION: APPROVED
+IMP036H_PRODUCT_DEFINITION_VERSION: PD-IMP-036H-DRAFT-1
+IMP036H_PRODUCT_DEFINITION_GATE: PASS
+IMP036H_ARCHITECTURE_FIT: PASS
+IMP036H_ARCHITECTURE_LOCKED: YES
+IMP036H_IMPLEMENTATION_AUTHORIZED: NO
+IMP036H_STARTED: YES
+IMP036H_ACCEPTED: NO
+IMP036H_FOUNDER_UAT_REQUIRED: YES
+IMP-036I: PLANNED
+IMP036I_ACTIVATED: YES
+IMP036I_PRODUCT_DEFINITION: PRE_GATE_DRAFT
+IMP036I_PRODUCT_DEFINITION_VERSION: PD-IMP-036I-DRAFT-1
+IMP036I_PRODUCT_DEFINITION_GATE: NOT_PERFORMED
+IMP036I_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036I_ARCHITECTURE_LOCKED: NO
+IMP036I_IMPLEMENTATION_AUTHORIZED: NO
+IMP036I_STARTED: NO
+IMP036I_IMPLEMENTATION_STARTED: NO
+IMP036I_IMPLEMENTATION_COMPLETE: NO
+IMP036I_ACCEPTED: NO
+IMP-037: IMPLEMENTATION_IN_PROGRESS
+IMP037_HOLD: YES
+IMP037_ACTIVATED: YES
+IMP037_PRODUCT_DEFINITION: APPROVED
+IMP037_PRODUCT_DEFINITION_VERSION: PD-IMP-037-DRAFT-1
+IMP037_PRODUCT_DEFINITION_GATE: PASS
+IMP037_ARCHITECTURE_FIT: PASS
+IMP037_ARCHITECTURE_LOCKED: YES
+IMP037_IMPLEMENTATION_AUTHORIZED: YES
+IMP037_STARTED: YES
+IMP037_REPOSITORY_IMPLEMENTATION_MERGED: YES
+IMP037_EXTERNAL_RECOVERY_PROOF: NOT_PERFORMED
+IMP037_IMPLEMENTATION_COMPLETE: NO
+IMP037_ACCEPTED: NO
+IMP037_FOUNDER_UAT_REQUIRED: YES
+IMP037_FOUNDER_UAT: NOT_PERFORMED
+PHASE1_BLOCK_STATUS: BLOCKED_PROVIDER_ACCESS
+PROVIDER_DEPENDENT_PROOF: DEFERRED_PENDING_PROVIDER_ACCESS
+IMP-038: IMPLEMENTATION_IN_PROGRESS (HOLD — IMPLEMENTATION_COMPLETE / NOT_ACCEPTED)
+IMP038_HOLD: YES
+IMP038_ACTIVATED: YES
+IMP038_PRODUCT_DEFINITION: APPROVED
+IMP038_PRODUCT_DEFINITION_VERSION: PD-IMP-038-DRAFT-2
+IMP038_PRODUCT_DEFINITION_GATE: PASS
+IMP038_ARCHITECTURE_FIT: PASS
+IMP038_ARCHITECTURE_LOCKED: YES
+IMP038_IMPLEMENTATION_AUTHORIZED: YES
+IMP038_STARTED: YES
+IMP038_IMPLEMENTATION_COMPLETE: YES
+IMP038_ACCEPTED: NO
+IMP038_ACCEPTANCE_BLOCKED_BY_IMP037: YES
+IMP038_EXTERNAL_ASSESSMENT: DEFERRED_UNTIL_PRE_GTM_APPLICATION_SCOPE_STABILIZES
+IMP038_FROZEN_RUNTIME_HEAD: dc6b19e6f88d4084e424d927e6467c374596fb0a
+IMP038_FROZEN_RUNTIME_TREE: c3aefb57f3f6c941d7f14907b6c095c4aa7f0547
+IMP038_FROZEN_RUNTIME_FINGERPRINT: 2800fe11397ee2a01e9decf572f85adf5c3a8b244ca34b1f53d579e05feac589
+GAP-EXT-ASSESS-001: NOT_CLOSED
+IMP039_ACTIVATED: NO
+IMP040_ACTIVATED: NO
+PROGRAM_PAUSE: PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED
+PROGRAM_PAUSE_AUTHORITY: D-377
+HISTORICAL_CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038
+CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038
+CONTINUATION_EXCEPTION_AUTHORITY: PR#179/5771367844
+HISTORICAL_IMP026_TO_IMP028_CONTINUATION: CLOSED
+D-374_CREATED: YES
+ARCH_R20_CREATED: YES
+D-375_CREATED: YES
+ARCH_R21_CREATED: YES
+D-377_CREATED: YES
+D-378_CREATED: YES
+ARCH_R22_CREATED: YES
+architectureVersion: ARCH-R22
+decisionRegisterVersion: DR-20
+nextGate: Implementation Authorization for IMP-036H — NOT implementation start by default
+```
+
+## 12. STATE-R140 record
+
+```text
+STATE-R140 = IMP036H_PRODUCT_DEFINITION_GATE_PASS
+acceptedThrough: IMP-036G
+pendingAcceptance: NONE
+currentProductSlice: IMP-036H
+nextProductSlice: IMP-036I
+Current Product Implementation: IMP-037 (unresolved held predecessor; provider-blocked)
+Unresolved Predecessor: IMP-037
+Current Governance Activity: IMP-036H Product Definition Gate PASS under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377); PD-IMP-036H-DRAFT-1 APPROVED; Gate PASS; Fit NOT_PERFORMED; architecture NOT_LOCKED; implementation NOT_AUTHORIZED / NOT_STARTED; HISTORICAL_CONTINUATION_EXCEPTION IMP037_PROVIDER_BLOCKED_TO_IMP038 preserved; HISTORICAL_IMP026_TO_IMP028_CONTINUATION: CLOSED
+gateEvaluatedHead: 91d3714a9efba59c309db159d112fdbb6c46dc72
+gateEvaluatedTree: 3f8459cfc88c97f4267528fe5b8c3e8773692245
+gateEvaluatedFingerprint: 81395a83ca492a791ee1faca3fdbf627b985c30adf00d2163693b3ccd6523664
+independentProductDefinitionGate: PASS
+independentProductDefinitionGateEvidence: PR#238/5797812536
+IMP-036G: COMPLETE_AND_ACCEPTED
+IMP036G_ACCEPTED: YES
+IMP036G_FOUNDER_UAT: PASS
+IMP036G_FORMAL_ACCEPTANCE: ACCEPTED
+IMP-036H: PLANNED
+IMP036H_ACTIVATED: YES
+IMP036H_PRODUCT_DEFINITION: APPROVED
+IMP036H_PRODUCT_DEFINITION_VERSION: PD-IMP-036H-DRAFT-1
+IMP036H_PRODUCT_DEFINITION_GATE: PASS
+IMP036H_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036H_ARCHITECTURE_LOCKED: NO
+IMP036H_IMPLEMENTATION_AUTHORIZED: NO
+IMP036H_STARTED: YES
+IMP036H_ACCEPTED: NO
+IMP036H_FOUNDER_UAT_REQUIRED: YES
+IMP-036I: PLANNED
+IMP036I_ACTIVATED: YES
+IMP036I_PRODUCT_DEFINITION: PRE_GATE_DRAFT
+IMP036I_PRODUCT_DEFINITION_VERSION: PD-IMP-036I-DRAFT-1
+IMP036I_PRODUCT_DEFINITION_GATE: NOT_PERFORMED
+IMP036I_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036I_ARCHITECTURE_LOCKED: NO
+IMP036I_IMPLEMENTATION_AUTHORIZED: NO
+IMP036I_STARTED: NO
+IMP036I_IMPLEMENTATION_STARTED: NO
+IMP036I_IMPLEMENTATION_COMPLETE: NO
+IMP036I_ACCEPTED: NO
+IMP-037: IMPLEMENTATION_IN_PROGRESS
+IMP037_HOLD: YES
+IMP037_ACTIVATED: YES
+IMP037_PRODUCT_DEFINITION: APPROVED
+IMP037_PRODUCT_DEFINITION_VERSION: PD-IMP-037-DRAFT-1
+IMP037_PRODUCT_DEFINITION_GATE: PASS
+IMP037_ARCHITECTURE_FIT: PASS
+IMP037_ARCHITECTURE_LOCKED: YES
+IMP037_IMPLEMENTATION_AUTHORIZED: YES
+IMP037_STARTED: YES
+IMP037_REPOSITORY_IMPLEMENTATION_MERGED: YES
+IMP037_EXTERNAL_RECOVERY_PROOF: NOT_PERFORMED
+IMP037_IMPLEMENTATION_COMPLETE: NO
+IMP037_ACCEPTED: NO
+IMP037_FOUNDER_UAT_REQUIRED: YES
+IMP037_FOUNDER_UAT: NOT_PERFORMED
+PHASE1_BLOCK_STATUS: BLOCKED_PROVIDER_ACCESS
+PROVIDER_DEPENDENT_PROOF: DEFERRED_PENDING_PROVIDER_ACCESS
+IMP-038: IMPLEMENTATION_IN_PROGRESS (HOLD — IMPLEMENTATION_COMPLETE / NOT_ACCEPTED)
+IMP038_HOLD: YES
+IMP038_ACTIVATED: YES
+IMP038_PRODUCT_DEFINITION: APPROVED
+IMP038_PRODUCT_DEFINITION_VERSION: PD-IMP-038-DRAFT-2
+IMP038_PRODUCT_DEFINITION_GATE: PASS
+IMP038_ARCHITECTURE_FIT: PASS
+IMP038_ARCHITECTURE_LOCKED: YES
+IMP038_IMPLEMENTATION_AUTHORIZED: YES
+IMP038_STARTED: YES
+FOUNDER_IMP038_IMPLEMENTATION_AUTHORIZATION: CURSOR_SESSION_MANDATE
+IMP038_IMPLEMENTATION_AUTHORIZATION_BASE_HEAD: d14c3678b92a87052682b9559764654f5f9d3851
+IMP038_IMPLEMENTATION_AUTHORIZATION_BASE_TREE: 682f1597a6f991cddde7d41e9e6705c1bed335b1
+IMP038_IMPLEMENTATION_COMPLETE: YES
+IMP038_ACCEPTED: NO
+IMP038_ACCEPTANCE_BLOCKED_BY_IMP037: YES
+IMP038_EXTERNAL_ASSESSMENT: DEFERRED_UNTIL_PRE_GTM_APPLICATION_SCOPE_STABILIZES
+IMP038_FROZEN_RUNTIME_HEAD: dc6b19e6f88d4084e424d927e6467c374596fb0a
+IMP038_FROZEN_RUNTIME_TREE: c3aefb57f3f6c941d7f14907b6c095c4aa7f0547
+IMP038_FROZEN_RUNTIME_FINGERPRINT: 2800fe11397ee2a01e9decf572f85adf5c3a8b244ca34b1f53d579e05feac589
+GAP-EXT-ASSESS-001: NOT_CLOSED
+IMP038_FOUNDER_UAT_REQUIRED: YES
+IMP038_FOUNDER_UAT: NOT_PERFORMED
+INDEPENDENT_ARCHITECTURE_FIT_REVIEW: PASS
+INDEPENDENT_ARCHITECTURE_FIT_REVIEWED_HEAD: 3b03164d6581c5a98a893c24e92eaddece004e90
+INDEPENDENT_ARCHITECTURE_FIT_REVIEWED_TREE: 5bb499fa84a5bf02682b30518f2bf898ddb23540
+INDEPENDENT_ARCHITECTURE_FIT_REVIEW_ID: 5279884548
+fitEvaluatedHead: 43007808849f093d84cbe710f32a728b41a9e5a2
+fitEvaluatedTree: 581fb23631df40044ec7b9c449545959a90b9998
+fitEvaluatedFingerprint: ab00d1ab23f3c7d8b140feefcd1a0787f1fedf90ab08a9934c9a892a77c8184d
+IMP-039: PLANNED / NOT_ACTIVATED
+IMP039_ACTIVATED: NO
+IMP-040: PLANNED / NOT_ACTIVATED
+IMP040_ACTIVATED: NO
+PROGRAM_PAUSE: PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED
+PROGRAM_PAUSE_AUTHORITY: D-377
+HISTORICAL_CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038
+CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038
+CONTINUATION_EXCEPTION_AUTHORITY: PR#179/5771367844
+HISTORICAL_IMP026_TO_IMP028_CONTINUATION: CLOSED
+D-374_CREATED: YES
+ARCH_R20_CREATED: YES
+D-375_CREATED: YES
+ARCH_R21_CREATED: YES
+D-377_CREATED: YES
+nextGate: Architecture Fit for PD-IMP-036H-DRAFT-1 — NOT implementation
+```
+
+Historical prior tip record (STATE-R139; superseded as CURRENT tip by STATE-R140; preserved):
+
+## 10a. STATE-R139 record
+
+```text
+STATE-R139 = IMP036H_PRODUCT_DEFINITION_ACTIVATION
+acceptedThrough: IMP-036G
+pendingAcceptance: NONE
+currentProductSlice: IMP-036H
+nextProductSlice: IMP-036I
+Current Product Implementation: IMP-037 (unresolved held predecessor; provider-blocked)
+Unresolved Predecessor: IMP-037
+Current Governance Activity: IMP-036H Product Definition activation under PROGRAM_PAUSE PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED (D-377); PD-IMP-036H-DRAFT-1 DRAFT_READY_FOR_GATE; Gate NOT_PERFORMED; Fit NOT_PERFORMED; architecture NOT_LOCKED; implementation NOT_AUTHORIZED / NOT_STARTED; HISTORICAL_CONTINUATION_EXCEPTION IMP037_PROVIDER_BLOCKED_TO_IMP038 preserved; HISTORICAL_IMP026_TO_IMP028_CONTINUATION: CLOSED
+IMP-036G: COMPLETE_AND_ACCEPTED
+IMP036G_ACCEPTED: YES
+IMP036G_FOUNDER_UAT: PASS
+IMP036G_FORMAL_ACCEPTANCE: ACCEPTED
+IMP-036H: PLANNED
+IMP036H_ACTIVATED: YES
+IMP036H_PRODUCT_DEFINITION: DRAFT_READY_FOR_GATE
+IMP036H_PRODUCT_DEFINITION_VERSION: PD-IMP-036H-DRAFT-1
+IMP036H_PRODUCT_DEFINITION_GATE: NOT_PERFORMED
+IMP036H_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036H_ARCHITECTURE_LOCKED: NO
+IMP036H_IMPLEMENTATION_AUTHORIZED: NO
+IMP036H_STARTED: YES
+IMP036H_ACCEPTED: NO
+IMP036H_FOUNDER_UAT_REQUIRED: YES
+IMP-036I: PLANNED
+IMP036I_ACTIVATED: YES
+IMP036I_PRODUCT_DEFINITION: PRE_GATE_DRAFT
+IMP036I_PRODUCT_DEFINITION_VERSION: PD-IMP-036I-DRAFT-1
+IMP036I_PRODUCT_DEFINITION_GATE: NOT_PERFORMED
+IMP036I_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036I_ARCHITECTURE_LOCKED: NO
+IMP036I_IMPLEMENTATION_AUTHORIZED: NO
+IMP036I_STARTED: NO
+IMP036I_IMPLEMENTATION_STARTED: NO
+IMP036I_IMPLEMENTATION_COMPLETE: NO
+IMP036I_ACCEPTED: NO
+IMP-037: IMPLEMENTATION_IN_PROGRESS
+IMP037_HOLD: YES
+IMP037_ACTIVATED: YES
+IMP037_PRODUCT_DEFINITION: APPROVED
+IMP037_PRODUCT_DEFINITION_VERSION: PD-IMP-037-DRAFT-1
+IMP037_PRODUCT_DEFINITION_GATE: PASS
+IMP037_ARCHITECTURE_FIT: PASS
+IMP037_ARCHITECTURE_LOCKED: YES
+IMP037_IMPLEMENTATION_AUTHORIZED: YES
+IMP037_STARTED: YES
+IMP037_REPOSITORY_IMPLEMENTATION_MERGED: YES
+IMP037_EXTERNAL_RECOVERY_PROOF: NOT_PERFORMED
+IMP037_IMPLEMENTATION_COMPLETE: NO
+IMP037_ACCEPTED: NO
+IMP037_FOUNDER_UAT_REQUIRED: YES
+IMP037_FOUNDER_UAT: NOT_PERFORMED
+PHASE1_BLOCK_STATUS: BLOCKED_PROVIDER_ACCESS
+PROVIDER_DEPENDENT_PROOF: DEFERRED_PENDING_PROVIDER_ACCESS
+IMP-038: IMPLEMENTATION_IN_PROGRESS (HOLD — IMPLEMENTATION_COMPLETE / NOT_ACCEPTED)
+IMP038_HOLD: YES
+IMP038_ACTIVATED: YES
+IMP038_PRODUCT_DEFINITION: APPROVED
+IMP038_PRODUCT_DEFINITION_VERSION: PD-IMP-038-DRAFT-2
+IMP038_PRODUCT_DEFINITION_GATE: PASS
+IMP038_ARCHITECTURE_FIT: PASS
+IMP038_ARCHITECTURE_LOCKED: YES
+IMP038_IMPLEMENTATION_AUTHORIZED: YES
+IMP038_STARTED: YES
+FOUNDER_IMP038_IMPLEMENTATION_AUTHORIZATION: CURSOR_SESSION_MANDATE
+IMP038_IMPLEMENTATION_AUTHORIZATION_BASE_HEAD: d14c3678b92a87052682b9559764654f5f9d3851
+IMP038_IMPLEMENTATION_AUTHORIZATION_BASE_TREE: 682f1597a6f991cddde7d41e9e6705c1bed335b1
+IMP038_IMPLEMENTATION_COMPLETE: YES
+IMP038_ACCEPTED: NO
+IMP038_ACCEPTANCE_BLOCKED_BY_IMP037: YES
+IMP038_EXTERNAL_ASSESSMENT: DEFERRED_UNTIL_PRE_GTM_APPLICATION_SCOPE_STABILIZES
+IMP038_FROZEN_RUNTIME_HEAD: dc6b19e6f88d4084e424d927e6467c374596fb0a
+IMP038_FROZEN_RUNTIME_TREE: c3aefb57f3f6c941d7f14907b6c095c4aa7f0547
+IMP038_FROZEN_RUNTIME_FINGERPRINT: 2800fe11397ee2a01e9decf572f85adf5c3a8b244ca34b1f53d579e05feac589
+GAP-EXT-ASSESS-001: NOT_CLOSED
+IMP038_FOUNDER_UAT_REQUIRED: YES
+IMP038_FOUNDER_UAT: NOT_PERFORMED
+INDEPENDENT_ARCHITECTURE_FIT_REVIEW: PASS
+INDEPENDENT_ARCHITECTURE_FIT_REVIEWED_HEAD: 3b03164d6581c5a98a893c24e92eaddece004e90
+INDEPENDENT_ARCHITECTURE_FIT_REVIEWED_TREE: 5bb499fa84a5bf02682b30518f2bf898ddb23540
+INDEPENDENT_ARCHITECTURE_FIT_REVIEW_ID: 5279884548
+fitEvaluatedHead: 43007808849f093d84cbe710f32a728b41a9e5a2
+fitEvaluatedTree: 581fb23631df40044ec7b9c449545959a90b9998
+fitEvaluatedFingerprint: ab00d1ab23f3c7d8b140feefcd1a0787f1fedf90ab08a9934c9a892a77c8184d
+IMP-039: PLANNED / NOT_ACTIVATED
+IMP039_ACTIVATED: NO
+IMP-040: PLANNED / NOT_ACTIVATED
+IMP040_ACTIVATED: NO
+PROGRAM_PAUSE: PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED
+PROGRAM_PAUSE_AUTHORITY: D-377
+HISTORICAL_CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038
+CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038
+CONTINUATION_EXCEPTION_AUTHORITY: PR#179/5771367844
+HISTORICAL_IMP026_TO_IMP028_CONTINUATION: CLOSED
+D-374_CREATED: YES
+ARCH_R20_CREATED: YES
+D-375_CREATED: YES
+ARCH_R21_CREATED: YES
+D-377_CREATED: YES
+nextGate: Product Definition Gate for PD-IMP-036H-DRAFT-1 — NOT Architecture Fit / implementation
+```
+
+Historical prior tip record (STATE-R138; superseded as CURRENT tip by STATE-R139; preserved):
+
+## 10b. STATE-R138 record
+
+```text
+STATE-R138 = IMP038_IMPLEMENTATION_AUTHORIZE_AND_START
+acceptedThrough: IMP-036G
+pendingAcceptance: NONE
+currentProductSlice: IMP-038
+nextProductSlice: IMP-039
+Current Product Implementation: IMP-037 (unresolved predecessor; provider-blocked)
+Unresolved Predecessor: IMP-037
+Current Governance Activity: IMP-038 combined implementation AUTHORIZE + START (FOUNDER_IMP038_IMPLEMENTATION_AUTHORIZATION: CURSOR_SESSION_MANDATE; base main d14c3678b92a87052682b9559764654f5f9d3851 / tree 682f1597a6f991cddde7d41e9e6705c1bed335b1; capability IMP-038-security-privacy-hardening.md; D-375 / ADR-017 / ARCH-R21); CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038; CONTINUATION_EXCEPTION_AUTHORITY: PR#179/5771367844; HISTORICAL_IMP026_TO_IMP028_CONTINUATION: CLOSED
+IMP-036G: COMPLETE_AND_ACCEPTED
+IMP036G_ACCEPTED: YES
+IMP036G_FOUNDER_UAT: PASS
+IMP036G_FORMAL_ACCEPTANCE: ACCEPTED
+IMP-037: IMPLEMENTATION_IN_PROGRESS
+IMP037_ACTIVATED: YES
+IMP037_PRODUCT_DEFINITION: APPROVED
+IMP037_PRODUCT_DEFINITION_VERSION: PD-IMP-037-DRAFT-1
+IMP037_PRODUCT_DEFINITION_GATE: PASS
+IMP037_ARCHITECTURE_FIT: PASS
+IMP037_ARCHITECTURE_LOCKED: YES
+IMP037_IMPLEMENTATION_AUTHORIZED: YES
+IMP037_STARTED: YES
+IMP037_REPOSITORY_IMPLEMENTATION_MERGED: YES
+IMP037_EXTERNAL_RECOVERY_PROOF: NOT_PERFORMED
+IMP037_IMPLEMENTATION_COMPLETE: NO
+IMP037_ACCEPTED: NO
+IMP037_FOUNDER_UAT_REQUIRED: YES
+IMP037_FOUNDER_UAT: NOT_PERFORMED
+PHASE1_BLOCK_STATUS: BLOCKED_PROVIDER_ACCESS
+PROVIDER_DEPENDENT_PROOF: DEFERRED_PENDING_PROVIDER_ACCESS
+IMP-038: IMPLEMENTATION_IN_PROGRESS
+IMP038_ACTIVATED: YES
+IMP038_PRODUCT_DEFINITION: APPROVED
+IMP038_PRODUCT_DEFINITION_VERSION: PD-IMP-038-DRAFT-2
+IMP038_PRODUCT_DEFINITION_GATE: PASS
+IMP038_ARCHITECTURE_FIT: PASS
+IMP038_ARCHITECTURE_LOCKED: YES
+IMP038_IMPLEMENTATION_AUTHORIZED: YES
+IMP038_STARTED: YES
+FOUNDER_IMP038_IMPLEMENTATION_AUTHORIZATION: CURSOR_SESSION_MANDATE
+IMP038_IMPLEMENTATION_AUTHORIZATION_BASE_HEAD: d14c3678b92a87052682b9559764654f5f9d3851
+IMP038_IMPLEMENTATION_AUTHORIZATION_BASE_TREE: 682f1597a6f991cddde7d41e9e6705c1bed335b1
+IMP038_IMPLEMENTATION_COMPLETE: NO
+IMP038_ACCEPTED: NO
+IMP038_ACCEPTANCE_BLOCKED_BY_IMP037: YES
+IMP038_FOUNDER_UAT_REQUIRED: YES
+IMP038_FOUNDER_UAT: NOT_PERFORMED
+INDEPENDENT_ARCHITECTURE_FIT_REVIEW: PASS
+INDEPENDENT_ARCHITECTURE_FIT_REVIEWED_HEAD: 3b03164d6581c5a98a893c24e92eaddece004e90
+INDEPENDENT_ARCHITECTURE_FIT_REVIEWED_TREE: 5bb499fa84a5bf02682b30518f2bf898ddb23540
+INDEPENDENT_ARCHITECTURE_FIT_REVIEW_ID: 5279884548
+fitEvaluatedHead: 43007808849f093d84cbe710f32a728b41a9e5a2
+fitEvaluatedTree: 581fb23631df40044ec7b9c449545959a90b9998
+fitEvaluatedFingerprint: ab00d1ab23f3c7d8b140feefcd1a0787f1fedf90ab08a9934c9a892a77c8184d
+independentArchitectureFitReview: PASS
+independentArchitectureFitReviewedHead: 3b03164d6581c5a98a893c24e92eaddece004e90
+independentArchitectureFitReviewedTree: 5bb499fa84a5bf02682b30518f2bf898ddb23540
+independentArchitectureFitReviewId: 5279884548
+IMP-039: PLANNED / NOT_ACTIVATED
+IMP039_ACTIVATED: NO
+CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038
+CONTINUATION_EXCEPTION_AUTHORITY: PR#179/5771367844
+D-374_CREATED: YES
+ARCH_R20_CREATED: YES
+D-375_CREATED: YES
+ARCH_R21_CREATED: YES
+nextGate: continue locked IMP-038 implementation under Founder delivery authorization — NOT acceptance
+```
+
+Historical prior tip record (STATE-R137; superseded as CURRENT tip by STATE-R138; preserved):
+
+## 10b. STATE-R137 record
+
+
+```text
+STATE-R137 = IMP038_ARCHITECTURE_FIT_PASS_AND_LOCK
+acceptedThrough: IMP-036G
+pendingAcceptance: NONE
+currentProductSlice: IMP-038
+nextProductSlice: IMP-039
+Current Product Implementation: IMP-037 (unresolved predecessor; provider-blocked)
+Unresolved Predecessor: IMP-037
+Current Governance Activity: IMP-038 Architecture Fit PASS + architecture LOCK (capability IMP-038-security-privacy-hardening.md; D-375 / ADR-017 / ARCH-R21); CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038; CONTINUATION_EXCEPTION_AUTHORITY: PR#179/5771367844; HISTORICAL_IMP026_TO_IMP028_CONTINUATION: CLOSED
+IMP-036G: COMPLETE_AND_ACCEPTED
+IMP036G_ACCEPTED: YES
+IMP036G_FOUNDER_UAT: PASS
+IMP036G_FORMAL_ACCEPTANCE: ACCEPTED
+IMP-037: IMPLEMENTATION_IN_PROGRESS
+IMP037_ACTIVATED: YES
+IMP037_PRODUCT_DEFINITION: APPROVED
+IMP037_PRODUCT_DEFINITION_VERSION: PD-IMP-037-DRAFT-1
+IMP037_PRODUCT_DEFINITION_GATE: PASS
+IMP037_ARCHITECTURE_FIT: PASS
+IMP037_ARCHITECTURE_LOCKED: YES
+IMP037_IMPLEMENTATION_AUTHORIZED: YES
+IMP037_STARTED: YES
+IMP037_REPOSITORY_IMPLEMENTATION_MERGED: YES
+IMP037_EXTERNAL_RECOVERY_PROOF: NOT_PERFORMED
+IMP037_IMPLEMENTATION_COMPLETE: NO
+IMP037_ACCEPTED: NO
+IMP037_FOUNDER_UAT_REQUIRED: YES
+IMP037_FOUNDER_UAT: NOT_PERFORMED
+PHASE1_BLOCK_STATUS: BLOCKED_PROVIDER_ACCESS
+PROVIDER_DEPENDENT_PROOF: DEFERRED_PENDING_PROVIDER_ACCESS
+IMP-038: ARCHITECTURE_LOCKED
+IMP038_ACTIVATED: YES
+IMP038_PRODUCT_DEFINITION: APPROVED
+IMP038_PRODUCT_DEFINITION_VERSION: PD-IMP-038-DRAFT-2
+IMP038_PRODUCT_DEFINITION_GATE: PASS
+IMP038_ARCHITECTURE_FIT: PASS
+IMP038_ARCHITECTURE_LOCKED: YES
+IMP038_IMPLEMENTATION_AUTHORIZED: NO
+IMP038_STARTED: NO
+IMP038_IMPLEMENTATION_COMPLETE: NO
+IMP038_ACCEPTED: NO
+IMP038_ACCEPTANCE_BLOCKED_BY_IMP037: YES
+IMP038_FOUNDER_UAT_REQUIRED: YES
+IMP038_FOUNDER_UAT: NOT_PERFORMED
+INDEPENDENT_ARCHITECTURE_FIT_REVIEW: PASS
+INDEPENDENT_ARCHITECTURE_FIT_REVIEWED_HEAD: 3b03164d6581c5a98a893c24e92eaddece004e90
+INDEPENDENT_ARCHITECTURE_FIT_REVIEWED_TREE: 5bb499fa84a5bf02682b30518f2bf898ddb23540
+INDEPENDENT_ARCHITECTURE_FIT_REVIEW_ID: 5279884548
+fitEvaluatedHead: 43007808849f093d84cbe710f32a728b41a9e5a2
+fitEvaluatedTree: 581fb23631df40044ec7b9c449545959a90b9998
+fitEvaluatedFingerprint: ab00d1ab23f3c7d8b140feefcd1a0787f1fedf90ab08a9934c9a892a77c8184d
+independentArchitectureFitReview: PASS
+independentArchitectureFitReviewedHead: 3b03164d6581c5a98a893c24e92eaddece004e90
+independentArchitectureFitReviewedTree: 5bb499fa84a5bf02682b30518f2bf898ddb23540
+independentArchitectureFitReviewId: 5279884548
+IMP-039: PLANNED / NOT_ACTIVATED
+IMP039_ACTIVATED: NO
+CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038
+CONTINUATION_EXCEPTION_AUTHORITY: PR#179/5771367844
+D-374_CREATED: YES
+ARCH_R20_CREATED: YES
+D-375_CREATED: YES
+ARCH_R21_CREATED: YES
+nextGate: human R3 merge decision for architecture-lock PR #182 — NOT implementation authorization
+```
+
+Historical prior tip record (STATE-R136; superseded as CURRENT tip by STATE-R137; preserved):
+
+## 10c. STATE-R136 record
+
+```text
+STATE-R136 = IMP038_CONTROLLED_CONTINUATION_ACTIVATION_AND_PRODUCT_DEFINITION_GATE_PASS
+acceptedThrough: IMP-036G
+pendingAcceptance: NONE
+currentProductSlice: IMP-038
+nextProductSlice: IMP-039
+Current Product Implementation: IMP-037 (unresolved predecessor; provider-blocked)
+Unresolved Predecessor: IMP-037
+Current Governance Activity: IMP-038 controlled-continuation activation + Product Definition Gate PASS (PD-IMP-038-DRAFT-2; approval PR#180/5773885848; Founder decisions PR#180/5773472988); CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038; CONTINUATION_EXCEPTION_AUTHORITY: PR#179/5771367844; HISTORICAL_IMP026_TO_IMP028_CONTINUATION: CLOSED
+IMP-036G: COMPLETE_AND_ACCEPTED
+IMP036G_ACCEPTED: YES
+IMP036G_FOUNDER_UAT: PASS
+IMP036G_FORMAL_ACCEPTANCE: ACCEPTED
+IMP-037: IMPLEMENTATION_IN_PROGRESS
+IMP037_ACTIVATED: YES
+IMP037_PRODUCT_DEFINITION: APPROVED
+IMP037_PRODUCT_DEFINITION_VERSION: PD-IMP-037-DRAFT-1
+IMP037_PRODUCT_DEFINITION_GATE: PASS
+IMP037_ARCHITECTURE_FIT: PASS
+IMP037_ARCHITECTURE_LOCKED: YES
+IMP037_IMPLEMENTATION_AUTHORIZED: YES
+IMP037_STARTED: YES
+IMP037_REPOSITORY_IMPLEMENTATION_MERGED: YES
+IMP037_EXTERNAL_RECOVERY_PROOF: NOT_PERFORMED
+IMP037_IMPLEMENTATION_COMPLETE: NO
+IMP037_ACCEPTED: NO
+IMP037_FOUNDER_UAT_REQUIRED: YES
+IMP037_FOUNDER_UAT: NOT_PERFORMED
+PHASE1_BLOCK_STATUS: BLOCKED_PROVIDER_ACCESS
+PROVIDER_DEPENDENT_PROOF: DEFERRED_PENDING_PROVIDER_ACCESS
+IMP-038: PLANNED
+IMP038_ACTIVATED: YES
+IMP038_PRODUCT_DEFINITION: APPROVED
+IMP038_PRODUCT_DEFINITION_VERSION: PD-IMP-038-DRAFT-2
+IMP038_PRODUCT_DEFINITION_GATE: PASS
+IMP038_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP038_ARCHITECTURE_LOCKED: NO
+IMP038_IMPLEMENTATION_AUTHORIZED: NO
+IMP038_STARTED: NO
+IMP038_IMPLEMENTATION_COMPLETE: NO
+IMP038_ACCEPTED: NO
+IMP038_ACCEPTANCE_BLOCKED_BY_IMP037: YES
+IMP038_FOUNDER_UAT_REQUIRED: YES
+IMP038_FOUNDER_UAT: NOT_PERFORMED
+IMP-039: PLANNED / NOT_ACTIVATED
+IMP039_ACTIVATED: NO
+CONTINUATION_EXCEPTION: IMP037_PROVIDER_BLOCKED_TO_IMP038
+CONTINUATION_EXCEPTION_AUTHORITY: PR#179/5771367844
+IMP037_PROVIDER_BLOCKED_TO_IMP038: YES
+D-374_CREATED: YES
+ARCH_R20_CREATED: YES
+D-375_CREATED: NO
+ARCH_R21_CREATED: NO
+architectureVersion: ARCH-R20
+decisionRegisterVersion: DR-16
+productDeliveryVersion: PD-1
+testingPolicyVersion: TEST-1
+nextGate: IMP-038 Architecture Fit (Product Definition Gate PASS already recorded; Architecture Fit NOT_PERFORMED; not architecture lock; not implementation authorization; not Founder UAT; not acceptance)
+```
+
+Historical prior tip record (STATE-R135; superseded as CURRENT tip by STATE-R136; preserved):
+
+```text
+STATE-R135 = IMP-037_POST_MERGE_REPOSITORY_IMPLEMENTATION_RECONCILIATION
+acceptedThrough: IMP-036G
+pendingAcceptance: NONE
+currentProductSlice: IMP-037
+nextProductSlice: IMP-038
+Current Product Implementation: IMP-037
+Current Governance Activity: IMP-037 post-merge repository implementation reconciliation; IMPLEMENTATION_IN_PROGRESS; REPOSITORY_IMPLEMENTATION: MERGED; EXTERNAL_RECOVERY_PROOF: NOT_PERFORMED; IMPLEMENTATION_COMPLETE: NO
+IMP-036G: COMPLETE_AND_ACCEPTED
+IMP036G_ACCEPTED: YES
+IMP036G_FOUNDER_UAT: PASS
+IMP036G_FORMAL_ACCEPTANCE: ACCEPTED
+IMP-037: IMPLEMENTATION_IN_PROGRESS
+IMP037_ACTIVATED: YES
+IMP037_PRODUCT_DEFINITION: APPROVED
+IMP037_PRODUCT_DEFINITION_VERSION: PD-IMP-037-DRAFT-1
+IMP037_PRODUCT_DECISIONS: RESOLVED
+IMP037_PRODUCT_DECISION_COUNT: 7
+IMP037_PRODUCT_DEFINITION_GATE: PASS
+IMP037_ARCHITECTURE_FIT: PASS
+IMP037_ARCHITECTURE_LOCKED: YES
+IMP037_IMPLEMENTATION_AUTHORIZED: YES
+IMP037_STARTED: YES
+IMP037_REPOSITORY_IMPLEMENTATION_MERGED: YES
+IMP037_IMPLEMENTATION_PR: 174
+IMP037_IMPLEMENTATION_REVIEWED_HEAD: ae7328efe1add11a9a4299150251fe14c71b2730
+IMP037_IMPLEMENTATION_REVIEWED_TREE: 4ff19a31db947cafadf690cf6bf1b6d2f1de14ac
+IMP037_INDEPENDENT_IMPLEMENTATION_REVIEW: PASS
+IMP037_INDEPENDENT_IMPLEMENTATION_REVIEW_ID: 5265354130
+IMP037_IMPLEMENTATION_MERGE_SHA: f77a54819f51ad5648dda8acb3a7c93345cd5d6c
+IMP037_IMPLEMENTATION_MERGE_TREE: 4ff19a31db947cafadf690cf6bf1b6d2f1de14ac
+IMP037_POST_MERGE_CI: 35587376968
+IMP037_POST_MERGE_CI_RESULT: SUCCESS
+IMP037_REPOSITORY_IMPLEMENTATION: MERGED
+IMP037_EXTERNAL_RECOVERY_PROOF: NOT_PERFORMED
+IMP037_IMPLEMENTATION_COMPLETE: NO
+IMP037_ACCEPTED: NO
+IMP037_FOUNDER_UAT_REQUIRED: YES
+IMP037_FOUNDER_UAT: NOT_PERFORMED
+IMP-038: PLANNED / NOT_ACTIVATED / NOT_AUTHORIZED / NOT_STARTED
+IMP038_ACTIVATED: NO
+D-374_CREATED: YES
+ARCH_R20_CREATED: YES
+D-375_CREATED: NO
+ARCH_R21_CREATED: NO
+architectureVersion: ARCH-R20
+decisionRegisterVersion: DR-16
+productDeliveryVersion: PD-1
+implementationAuthorizationGate: PASS
+implementationAuthorizationEvidence: PR#171/5743814105
+implementationStartEvidence: PR#172/5744869269
+authorizationAppliesTo: PD-IMP-037-DRAFT-1 + locked IMP-037 capability architecture
+nextGate: ChatGPT batch review of reconciliation + external-proof readiness, then explicit R3 external proof (not acceptance)
+fitEvaluatedHead: 28e6dd15c48b8c19abbc7057c4dc7e0a7d7cc7ea
+fitEvaluatedTree: 5792c963166e8589751d2ba8c8928728e2c83526
+fitEvaluatedFingerprint: 56fa9b5459fd8acceb2ccc3ab73c5d7d9583dbf4539b10a1ef75553dd5aff8ba
+fitDate: 2026-09-19
+fitResult: PASS
+independentArchitectureFitReview: PASS
+independentArchitectureFitReviewedHead: d74ca9a30096fb14bca80643b75aa19d33093dde
+independentArchitectureFitReviewedTree: 09c7e3bd6b7832944d07d527c149752ed3bbeb4d
+independentArchitectureFitReviewId: 5256273904
+PR169_NOTE: NON_AUTHORITATIVE / SUPERSEDED for ARCH-R20 Fit
+supersedes: STATE-R134
+```
+
+STATE-R135 records IMP-037 repository implementation merged to `main` after independent
+implementation review PASS and post-merge CI SUCCESS. Formal lifecycle remains
+`IMPLEMENTATION_IN_PROGRESS`. It does **not** claim implementation complete, external recovery
+proof, acceptance, IMP-038 activation, production resource creation, Founder UAT, or RPO/RTO proof.
+
+## 11. STATE-R134 record
+
+```text
+STATE-R134 = IMP-037_IMPLEMENTATION_START
+acceptedThrough: IMP-036G
+pendingAcceptance: NONE
+currentProductSlice: IMP-037
+nextProductSlice: IMP-038
+Current Product Implementation: IMP-037
+Current Governance Activity: IMP-037 Implementation START; IMPLEMENTATION_IN_PROGRESS; start evidence PR#172/5744869269; authorization evidence PR#171/5743814105
+IMP-036G: COMPLETE_AND_ACCEPTED
+IMP036G_ACCEPTED: YES
+IMP036G_FOUNDER_UAT: PASS
+IMP036G_FORMAL_ACCEPTANCE: ACCEPTED
+IMP-037: IMPLEMENTATION_IN_PROGRESS
+IMP037_ACTIVATED: YES
+IMP037_PRODUCT_DEFINITION: APPROVED
+IMP037_PRODUCT_DEFINITION_VERSION: PD-IMP-037-DRAFT-1
+IMP037_PRODUCT_DECISIONS: RESOLVED
+IMP037_PRODUCT_DECISION_COUNT: 7
+IMP037_PRODUCT_DEFINITION_GATE: PASS
+IMP037_ARCHITECTURE_FIT: PASS
+IMP037_ARCHITECTURE_LOCKED: YES
+IMP037_IMPLEMENTATION_AUTHORIZED: YES
+IMP037_STARTED: YES
+IMP037_ACCEPTED: NO
+IMP037_FOUNDER_UAT_REQUIRED: YES
+IMP-038: PLANNED / NOT_ACTIVATED / NOT_AUTHORIZED / NOT_STARTED
+IMP038_ACTIVATED: NO
+D-374_CREATED: YES
+ARCH_R20_CREATED: YES
+D-375_CREATED: NO
+ARCH_R21_CREATED: NO
+architectureVersion: ARCH-R20
+decisionRegisterVersion: DR-16
+productDeliveryVersion: PD-1
+implementationAuthorizationGate: PASS
+implementationAuthorizationEvidence: PR#171/5743814105
+implementationStartEvidence: PR#172/5744869269
+authorizationAppliesTo: PD-IMP-037-DRAFT-1 + locked IMP-037 capability architecture
+implementationAccompanied: YES (recovery foundation tranche only)
+nextGate: continued bounded IMP-037 implementation / independent implementation review (not acceptance)
+fitEvaluatedHead: 28e6dd15c48b8c19abbc7057c4dc7e0a7d7cc7ea
+fitEvaluatedTree: 5792c963166e8589751d2ba8c8928728e2c83526
+fitEvaluatedFingerprint: 56fa9b5459fd8acceb2ccc3ab73c5d7d9583dbf4539b10a1ef75553dd5aff8ba
+fitDate: 2026-09-19
+fitResult: PASS
+independentArchitectureFitReview: PASS
+independentArchitectureFitReviewedHead: d74ca9a30096fb14bca80643b75aa19d33093dde
+independentArchitectureFitReviewedTree: 09c7e3bd6b7832944d07d527c149752ed3bbeb4d
+independentArchitectureFitReviewId: 5256273904
+PR169_NOTE: NON_AUTHORITATIVE / SUPERSEDED for ARCH-R20 Fit
+supersedes: STATE-R133
+```
+
+STATE-R134 records IMP-037 implementation START. Formal lifecycle is
+`IMPLEMENTATION_IN_PROGRESS`. It does **not** claim implementation complete, acceptance,
+IMP-038 activation, production resource creation, Founder UAT, or RPO/RTO proof.
+(Superseded as CURRENT tip by STATE-R135 for repository-merge provenance; external proof remains
+outstanding.)
+
+## 12. STATE-R133 record
+
+```text
+STATE-R133 = IMP-037_IMPLEMENTATION_AUTHORIZATION
+acceptedThrough: IMP-036G
+pendingAcceptance: NONE
+currentProductSlice: IMP-037
+nextProductSlice: IMP-038
+Current Product Implementation: NONE
+Current Governance Activity: IMP-037 Implementation Authorization Gate PASS; AUTHORIZED / NOT_STARTED; evidence PR#171/5743814105
+IMP-036G: COMPLETE_AND_ACCEPTED
+IMP036G_ACCEPTED: YES
+IMP036G_FOUNDER_UAT: PASS
+IMP036G_FORMAL_ACCEPTANCE: ACCEPTED
+IMP-037: ARCHITECTURE_LOCKED / AUTHORIZED / NOT_STARTED
+IMP037_ACTIVATED: YES
+IMP037_PRODUCT_DEFINITION: APPROVED
+IMP037_PRODUCT_DEFINITION_VERSION: PD-IMP-037-DRAFT-1
+IMP037_PRODUCT_DECISIONS: RESOLVED
+IMP037_PRODUCT_DECISION_COUNT: 7
+IMP037_PRODUCT_DEFINITION_GATE: PASS
+IMP037_ARCHITECTURE_FIT: PASS
+IMP037_ARCHITECTURE_LOCKED: YES
+IMP037_IMPLEMENTATION_AUTHORIZED: YES
+IMP037_STARTED: NO
+IMP037_ACCEPTED: NO
+IMP037_FOUNDER_UAT_REQUIRED: YES
+IMP-038: PLANNED / NOT_ACTIVATED / NOT_AUTHORIZED / NOT_STARTED
+IMP038_ACTIVATED: NO
+D-374_CREATED: YES
+ARCH_R20_CREATED: YES
+D-375_CREATED: NO
+ARCH_R21_CREATED: NO
+architectureVersion: ARCH-R20
+decisionRegisterVersion: DR-16
+productDeliveryVersion: PD-1
+implementationAuthorizationGate: PASS
+implementationAuthorizationEvidence: PR#171/5743814105
+authorizationAppliesTo: PD-IMP-037-DRAFT-1 + locked IMP-037 capability architecture
+implementationAccompanied: NO
+nextGate: explicit implementation start / execution authorization
+fitEvaluatedHead: 28e6dd15c48b8c19abbc7057c4dc7e0a7d7cc7ea
+fitEvaluatedTree: 5792c963166e8589751d2ba8c8928728e2c83526
+fitEvaluatedFingerprint: 56fa9b5459fd8acceb2ccc3ab73c5d7d9583dbf4539b10a1ef75553dd5aff8ba
+fitDate: 2026-09-19
+fitResult: PASS
+independentArchitectureFitReview: PASS
+independentArchitectureFitReviewedHead: d74ca9a30096fb14bca80643b75aa19d33093dde
+independentArchitectureFitReviewedTree: 09c7e3bd6b7832944d07d527c149752ed3bbeb4d
+independentArchitectureFitReviewId: 5256273904
+PR169_NOTE: NON_AUTHORITATIVE / SUPERSEDED for ARCH-R20 Fit
+supersedes: STATE-R132
+```
+
+STATE-R133 records IMP-037 Implementation Authorization Gate PASS. Implementation is
+`AUTHORIZED` / `NOT_STARTED`. It does **not** claim implementation start, acceptance, IMP-038
+activation, production resource creation, or `IMPLEMENTATION_IN_PROGRESS`.
+
+## 11. STATE-R132 record
+
+
+```text
+STATE-R132 = IMP-037_ARCHITECTURE_LOCK
+acceptedThrough: IMP-036G
+pendingAcceptance: NONE
+currentProductSlice: IMP-037
+nextProductSlice: IMP-038
+Current Product Implementation: NONE
+Current Governance Activity: IMP-037 Architecture Fit PASS; capability architecture LOCKED; independent Architecture Fit review PASS; implementation NOT_AUTHORIZED / NOT_STARTED
+IMP-036G: COMPLETE_AND_ACCEPTED
+IMP036G_ACCEPTED: YES
+IMP036G_FOUNDER_UAT: PASS
+IMP036G_FORMAL_ACCEPTANCE: ACCEPTED
+IMP-037: ARCHITECTURE_LOCKED / NOT_AUTHORIZED / NOT_STARTED
+IMP037_ACTIVATED: YES
+IMP037_PRODUCT_DEFINITION: APPROVED
+IMP037_PRODUCT_DEFINITION_VERSION: PD-IMP-037-DRAFT-1
+IMP037_PRODUCT_DECISIONS: RESOLVED
+IMP037_PRODUCT_DECISION_COUNT: 7
+IMP037_PRODUCT_DEFINITION_GATE: PASS
+IMP037_ARCHITECTURE_FIT: PASS
+IMP037_ARCHITECTURE_LOCKED: YES
+IMP037_IMPLEMENTATION_AUTHORIZED: NO
+IMP037_STARTED: NO
+IMP037_ACCEPTED: NO
+IMP037_FOUNDER_UAT_REQUIRED: YES
+IMP-038: PLANNED / NOT_ACTIVATED / NOT_AUTHORIZED / NOT_STARTED
+IMP038_ACTIVATED: NO
+D-374_CREATED: YES
+ARCH_R20_CREATED: YES
+architectureVersion: ARCH-R20
+decisionRegisterVersion: DR-16
+productDeliveryVersion: PD-1
+fitEvaluatedHead: 28e6dd15c48b8c19abbc7057c4dc7e0a7d7cc7ea
+fitEvaluatedTree: 5792c963166e8589751d2ba8c8928728e2c83526
+fitEvaluatedFingerprint: 56fa9b5459fd8acceb2ccc3ab73c5d7d9583dbf4539b10a1ef75553dd5aff8ba
+fitDate: 2026-09-19
+fitResult: PASS
+independentArchitectureFitReview: PASS
+independentArchitectureFitReviewedHead: d74ca9a30096fb14bca80643b75aa19d33093dde
+independentArchitectureFitReviewedTree: 09c7e3bd6b7832944d07d527c149752ed3bbeb4d
+independentArchitectureFitReviewId: 5256273904
+PR169_NOTE: NON_AUTHORITATIVE / SUPERSEDED for ARCH-R20 Fit
+supersedes: STATE-R131
+```
+
+STATE-R132 records IMP-037 Architecture Fit PASS, architecture lock, and independent Architecture
+Fit review PASS against ARCH-R20 / D-374. It does **not** claim implementation authorization/start,
+acceptance, IMP-038 activation, or production resource creation.
+
+## 12. STATE-R131 record
+
+
+```text
+STATE-R131 = GLOBAL_ARCHITECTURE_DECISION_D374
+acceptedThrough: IMP-036G
+pendingAcceptance: NONE
+currentProductSlice: IMP-037
+nextProductSlice: IMP-038
+Current Product Implementation: NONE
+Current Governance Activity: GLOBAL_ARCHITECTURE_DECISION_D374; D-374 / ADR-016 / ARCH-R20 / DR-16; Architecture Fit NOT_PERFORMED (reopened)
+IMP-036G: COMPLETE_AND_ACCEPTED
+IMP036G_ACCEPTED: YES
+IMP036G_FOUNDER_UAT: PASS
+IMP036G_FORMAL_ACCEPTANCE: ACCEPTED
+IMP-037: PLANNED / NOT_AUTHORIZED / NOT_STARTED
+IMP037_ACTIVATED: YES
+IMP037_PRODUCT_DEFINITION: APPROVED
+IMP037_PRODUCT_DEFINITION_VERSION: PD-IMP-037-DRAFT-1
+IMP037_PRODUCT_DECISIONS: RESOLVED
+IMP037_PRODUCT_DECISION_COUNT: 7
+IMP037_PRODUCT_DEFINITION_GATE: PASS
+IMP037_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP037_ARCHITECTURE_LOCKED: NO
+IMP037_IMPLEMENTATION_AUTHORIZED: NO
+IMP037_STARTED: NO
+IMP037_ACCEPTED: NO
+IMP037_FOUNDER_UAT_REQUIRED: YES
+ARCHITECTURE_FIT_REOPEN_REASON: D-374 / ARCH-R20 replaces managed PostgreSQL/App Platform pilot infrastructure assumptions
+IMP-038: PLANNED / NOT_ACTIVATED / NOT_AUTHORIZED / NOT_STARTED
+IMP038_ACTIVATED: NO
+D-374_CREATED: YES
+ARCH_R20_CREATED: YES
+architectureVersion: ARCH-R20
+decisionRegisterVersion: DR-16
+productDeliveryVersion: PD-1
+PR169_NOTE: predates D-374 / ARCH-R20; Architecture Fit/lock candidate not valid against new infrastructure authority
+supersedes: STATE-R130
+```
+
+STATE-R131 records global architecture decision D-374 only. It does **not** claim IMP-037
+Architecture Fit, lock, implementation authorization/start, acceptance, or IMP-038 activation.
+
+## 13. STATE-R130 record
+
+```text
+STATE-R130 = IMP-037_PRODUCT_DEFINITION_GATE_PASS
+acceptedThrough: IMP-036G
+pendingAcceptance: NONE
+currentProductSlice: IMP-037
+nextProductSlice: IMP-038
+Current Product Implementation: NONE
+Current Governance Activity: IMP-037 Product Definition Gate PASS; PD-IMP-037-DRAFT-1 APPROVED; Architecture Fit NOT_PERFORMED
+IMP-036G: COMPLETE_AND_ACCEPTED
+IMP036G_ACCEPTED: YES
+IMP036G_FOUNDER_UAT: PASS
+IMP036G_FORMAL_ACCEPTANCE: ACCEPTED
+IMP-037: PLANNED / NOT_AUTHORIZED / NOT_STARTED
+IMP037_ACTIVATED: YES
+IMP037_PRODUCT_DEFINITION: APPROVED
+IMP037_PRODUCT_DEFINITION_VERSION: PD-IMP-037-DRAFT-1
+IMP037_PRODUCT_DECISIONS: RESOLVED
+IMP037_PRODUCT_DECISION_COUNT: 7
+IMP037_PRODUCT_DEFINITION_GATE: PASS
+IMP037_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP037_ARCHITECTURE_LOCKED: NO
+IMP037_IMPLEMENTATION_AUTHORIZED: NO
+IMP037_STARTED: NO
+IMP037_ACCEPTED: NO
+IMP037_FOUNDER_UAT_REQUIRED: YES
+IMP-038: PLANNED / NOT_ACTIVATED / NOT_AUTHORIZED / NOT_STARTED
+IMP038_ACTIVATED: NO
+architectureVersion: ARCH-R19
+decisionRegisterVersion: DR-15
+productDeliveryVersion: PD-1
+gateEvaluatedHead: fccdf7ef606ca906bcdcd706a6de97f693bb88b4
+gateEvaluatedTree: 1477d12b5c5b3b0ccb8d488757516d5b6e637674
+gateEvaluatedProductDefinitionBlob: eb792d02dbfede862a0bb104a754d14d875141aa
+gateEvaluatedFingerprint: 9be2a43fe3881ccd28f169f60209cef3c78c991524e5e9d34a8b657e1b1f0c19
+gateExactMainCi: 35382560066
+gateDate: 2026-09-19
+gateApprovalAuthority: Founder / product governance human authority
+independentPreGateReview: PASS
+supersedes: STATE-R129
+```
+
+## 11. STATE-R129 record
+
+```text
+STATE-R129 = IMP-037_PRODUCT_SLICE_ACTIVATION
+acceptedThrough: IMP-036G
+pendingAcceptance: NONE
+currentProductSlice: IMP-037
+nextProductSlice: IMP-038
+Current Product Implementation: NONE
+Current Governance Activity: IMP-037 activated as CURRENT product slice
+IMP-036G: COMPLETE_AND_ACCEPTED
+IMP036G_ACCEPTED: YES
+IMP036G_FOUNDER_UAT: PASS
+IMP036G_FORMAL_ACCEPTANCE: ACCEPTED
+IMP-037: PLANNED / NOT_AUTHORIZED / NOT_STARTED
+IMP037_ACTIVATED: YES
+IMP037_PRODUCT_DEFINITION: PRE_GATE_DRAFT
+IMP037_PRODUCT_DEFINITION_VERSION: PD-IMP-037-DRAFT-1
+IMP037_PRODUCT_DEFINITION_GATE: NOT_PERFORMED
+IMP037_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP037_ARCHITECTURE_LOCKED: NO
+IMP037_IMPLEMENTATION_AUTHORIZED: NO
+IMP037_STARTED: NO
+IMP037_ACCEPTED: NO
+IMP037_FOUNDER_UAT_REQUIRED: YES
+IMP-038: PLANNED / NOT_ACTIVATED / NOT_AUTHORIZED / NOT_STARTED
+IMP038_ACTIVATED: NO
+architectureVersion: ARCH-R19
+decisionRegisterVersion: DR-15
+productDeliveryVersion: PD-1
+supersedes: STATE-R128
+```
+
+## 12. STATE-R128 record
+
+```text
+STATE-R128 = IMP-036G_COMPLETE_AND_ACCEPTED
+acceptedThrough: IMP-036G
+currentProductSlice: NONE
+nextProductSlice: IMP-037
+pendingAcceptance: NONE
+Current Product Implementation: NONE
+Current Governance Activity: IMP-036G COMPLETE_AND_ACCEPTED
+IMP-036F: COMPLETE_AND_ACCEPTED
+IMP-036G: COMPLETE_AND_ACCEPTED
+IMP036G_ACTIVATED: YES
+IMP036G_PRODUCT_DEFINITION: APPROVED
+IMP036G_PRODUCT_DEFINITION_VERSION: PD-IMP-036G-DRAFT-2
+IMP036G_PRODUCT_DECISIONS: RESOLVED
+IMP036G_PRODUCT_DECISION_COUNT: 7
+IMP036G_PRODUCT_DECISION_AUTHORITY: Founder
+IMP036G_PRODUCT_DECISION_DATE: 2026-09-16
+IMP036G_PRODUCT_DEFINITION_GATE: PASS
+IMP036G_ARCHITECTURE_FIT: PASS
+IMP036G_ARCHITECTURE_LOCKED: YES
+IMP036G_IMPLEMENTATION: AUTHORIZED / STARTED / COMPLETE
+IMP036G_IMPLEMENTATION_AUTHORIZED: YES
+IMP036G_STARTED: YES
+IMP036G_IMPLEMENTATION_COMPLETE: YES
+IMP-036G_IMPLEMENTATION_COMPLETE: YES
+IMP036G_ACCEPTED: YES
+IMP036G_FOUNDER_UAT_REQUIRED: YES
+IMP036G_FOUNDER_UAT: PASS
+IMP036G_FORMAL_ACCEPTANCE: ACCEPTED
+IMP036G_INDEPENDENT_ACCEPTANCE_EVIDENCE: ACCEPTED
+IMP036G_INDEPENDENT_TECHNICAL_ACCEPTANCE: PASS
+IMP036G_ACCEPTED_MAIN_SHA: fbf690a67cda51bd6bbc1bad4a9d26f574c4286e
+IMP036G_ACCEPTED_TREE: 84b6a502fcec646cb5a65f3257f19b85c64f49e1
+IMP036G_ACCEPTED_CANDIDATE: fbf690a67cda51bd6bbc1bad4a9d26f574c4286e
+IMP036G_FOUNDER_UAT_CANDIDATE_BRANCH: main
+IMP036G_FOUNDER_UAT_CANDIDATE_HEAD: fbf690a67cda51bd6bbc1bad4a9d26f574c4286e
+IMP036G_FOUNDER_UAT_CANDIDATE_TREE: 84b6a502fcec646cb5a65f3257f19b85c64f49e1
+IMP036G_FOUNDER_UAT_CANDIDATE_FINGERPRINT: 9f472ce6e1ccaa2fe914006c846fb3018d668b718f569b6d0cb4fa64c3013f9b
+IMP036G_FOUNDER_UAT_DECISION_DATE: 2026-09-18
+IMP036G_FOUNDER_UAT_ACCEPTANCE_AUTHORITY: Founder
+IMP036G_EXACT_MAIN_CI: 35366698302
+IMP036G_EXACT_MAIN_CI_RESULT: SUCCESS
+IMP036G_IMPLEMENTATION_EXACT_MAIN_CI: 35214215500
+IMP036G_IMPLEMENTATION_EXACT_MAIN_CI_RESULT: SUCCESS
+IMP036G_MANUAL_TECHNICAL_VALIDATION: PASS
+IMP036G_MANUAL_VALIDATION_CANDIDATE_SHA: c35c9eab6a30ec6ce745cefd75c523181326f360
+IMP036G_MANUAL_VALIDATION_CANDIDATE_TREE: 266fe3b07811f6942e76cac155d58ba07daabe56
+IMP036G_MANUAL_VALIDATION_DATE: 2026-09-18
+IMP036G_MANUAL_VALIDATION_TESTER: Ashutosh
+IMP036G_MANUAL_VALIDATION_DEFECTS: NONE
+IMP036G_IMPLEMENTATION_EVIDENCE: COMPLETE
+IMP_036G_INDEPENDENT_IMPLEMENTATION_REVIEW: PASS
+IMP036G_IMPLEMENTATION_MERGE_SHA: c35c9eab6a30ec6ce745cefd75c523181326f360
+IMP036G_IMPLEMENTATION_TREE: 266fe3b07811f6942e76cac155d58ba07daabe56
+IMP036G_REVIEWED_CANDIDATE_HEAD: 7a013155a98529d4527e7b6c0358642e5cd9d806
+IMP036G_REVIEWED_CANDIDATE_TREE: 266fe3b07811f6942e76cac155d58ba07daabe56
+IMP037_ACTIVATED: NO
+capability: docs/platform/capabilities/IMP-036G-administration-console-v2.md
+D374_REQUIRED_FOR_LOCK: NO
+D-374_CREATED: NO
+ARCH_R20_REQUIRED: NO
+ARCH_R20_CREATED: NO
+architectureVersion: ARCH-R19
+decisionRegisterVersion: DR-15
+productDeliveryVersion: PD-1
+supersedes: STATE-R127
+```
+
+Formal acceptance is recorded at GTM-R130 / STATE-R128 after Founder UAT PASS. This record does
+**not** activate IMP-037. Accepted UAT product candidate `fbf690a67cda51bd6bbc1bad4a9d26f574c4286e` is distinct from
+implementation merge `c35c9eab6a30ec6ce745cefd75c523181326f360`. Historical completion predecessor is GTM-R129 / STATE-R127.
+
+## 13. STATE-R127 record
+
+
+```text
+STATE-R127 = IMP-036G_IMPLEMENTATION_COMPLETE_PENDING_ACCEPTANCE
+acceptedThrough: IMP-036F
+currentProductSlice: IMP-036G
+nextProductSlice: IMP-037
+pendingAcceptance: IMP-036G
+Current Product Implementation: IMP-036G
+Current Governance Activity: IMP-036G IMPLEMENTATION_COMPLETE_PENDING_ACCEPTANCE
+IMP-036F: COMPLETE_AND_ACCEPTED
+IMP-036G: IMPLEMENTATION_COMPLETE_PENDING_ACCEPTANCE
+IMP036G_ACTIVATED: YES
+IMP036G_PRODUCT_DEFINITION: APPROVED
+IMP036G_PRODUCT_DEFINITION_VERSION: PD-IMP-036G-DRAFT-2
+IMP036G_PRODUCT_DECISIONS: RESOLVED
+IMP036G_PRODUCT_DECISION_COUNT: 7
+IMP036G_PRODUCT_DECISION_AUTHORITY: Founder
+IMP036G_PRODUCT_DECISION_DATE: 2026-09-16
+IMP036G_PRODUCT_DEFINITION_GATE: PASS
+IMP036G_ARCHITECTURE_FIT: PASS
+IMP036G_ARCHITECTURE_LOCKED: YES
+IMP036G_IMPLEMENTATION: AUTHORIZED / STARTED / COMPLETE
+IMP036G_IMPLEMENTATION_AUTHORIZED: YES
+IMP036G_STARTED: YES
+IMP036G_IMPLEMENTATION_COMPLETE: YES
+IMP-036G_IMPLEMENTATION_COMPLETE: YES
+IMP036G_ACCEPTED: NO
+IMP036G_FOUNDER_UAT_REQUIRED: YES
+IMP036G_FOUNDER_UAT: NOT_PERFORMED
+IMP036G_MANUAL_TECHNICAL_VALIDATION: PASS
+IMP036G_MANUAL_VALIDATION_CANDIDATE_SHA: c35c9eab6a30ec6ce745cefd75c523181326f360
+IMP036G_MANUAL_VALIDATION_CANDIDATE_TREE: 266fe3b07811f6942e76cac155d58ba07daabe56
+IMP036G_MANUAL_VALIDATION_DATE: 2026-09-18
+IMP036G_MANUAL_VALIDATION_TESTER: Ashutosh
+IMP036G_MANUAL_VALIDATION_DEFECTS: NONE
+IMP036G_IMPLEMENTATION_EVIDENCE: COMPLETE
+IMP_036G_INDEPENDENT_IMPLEMENTATION_REVIEW: PASS
+IMP036G_IMPLEMENTATION_MERGE_SHA: c35c9eab6a30ec6ce745cefd75c523181326f360
+IMP036G_IMPLEMENTATION_TREE: 266fe3b07811f6942e76cac155d58ba07daabe56
+IMP036G_REVIEWED_CANDIDATE_HEAD: 7a013155a98529d4527e7b6c0358642e5cd9d806
+IMP036G_REVIEWED_CANDIDATE_TREE: 266fe3b07811f6942e76cac155d58ba07daabe56
+IMP036G_EXACT_MAIN_CI: 35214215500
+IMP036G_EXACT_MAIN_CI_RESULT: SUCCESS
+IMP036G_INDEPENDENT_TECHNICAL_ACCEPTANCE: READY
+IMP037_ACTIVATED: NO
+capability: docs/platform/capabilities/IMP-036G-administration-console-v2.md
+D374_REQUIRED_FOR_LOCK: NO
+D-374_CREATED: NO
+ARCH_R20_REQUIRED: NO
+ARCH_R20_CREATED: NO
+architectureVersion: ARCH-R19
+decisionRegisterVersion: DR-15
+productDeliveryVersion: PD-1
+supersedes: STATE-R126
+```
+
+Implementation completion is recorded at GTM-R129 / STATE-R127. This record does **not** accept
+IMP-036G, does **not** perform Founder UAT, does **not** record a Founder UAT verdict, and does
+**not** activate IMP-037. Completion is not acceptance. Next gates remain independent technical
+acceptance → UAT deployment → Founder UAT → acceptance reconciliation. Historical start predecessor
+is GTM-R128 / STATE-R126.
+
+## 13. STATE-R126 record
+
+```text
+STATE-R126 = IMP-036G_IMPLEMENTATION_AUTHORIZATION_AND_START
+acceptedThrough: IMP-036F
+currentProductSlice: IMP-036G
+nextProductSlice: IMP-037
+pendingAcceptance: NONE
+Current Product Implementation: IMP-036G
+Current Governance Activity: IMP-036G implementation AUTHORIZED / STARTED (bounded autonomous implementation sprint)
+IMP-036F: COMPLETE_AND_ACCEPTED
+IMP-036G: IMPLEMENTATION_IN_PROGRESS
+IMP036G_ACTIVATED: YES
+IMP036G_PRODUCT_DEFINITION: APPROVED
+IMP036G_PRODUCT_DEFINITION_VERSION: PD-IMP-036G-DRAFT-2
+IMP036G_PRODUCT_DECISIONS: RESOLVED
+IMP036G_PRODUCT_DECISION_COUNT: 7
+IMP036G_PRODUCT_DECISION_AUTHORITY: Founder
+IMP036G_PRODUCT_DECISION_DATE: 2026-09-16
+IMP036G_PRODUCT_DEFINITION_GATE: PASS
+IMP036G_ARCHITECTURE_FIT: PASS
+IMP036G_ARCHITECTURE_LOCKED: YES
+IMP036G_IMPLEMENTATION: AUTHORIZED / STARTED
+IMP036G_IMPLEMENTATION_AUTHORIZED: YES
+IMP036G_STARTED: YES
+IMP036G_IMPLEMENTATION_COMPLETE: NO
+IMP036G_ACCEPTED: NO
+IMP036G_FOUNDER_UAT_REQUIRED: YES
+IMP036G_FOUNDER_UAT: NOT_PERFORMED
+IMP037_ACTIVATED: NO
+capability: docs/platform/capabilities/IMP-036G-administration-console-v2.md
+D374_REQUIRED_FOR_LOCK: NO
+D-374_CREATED: NO
+ARCH_R20_REQUIRED: NO
+ARCH_R20_CREATED: NO
+architectureVersion: ARCH-R19
+decisionRegisterVersion: DR-15
+productDeliveryVersion: PD-1
+supersedes: STATE-R125
+```
+
+Implementation authorization and implementation start are recorded together at GTM-R128 /
+STATE-R126. This record does **not** claim implementation completion or acceptance, does **not**
+record a Founder UAT verdict, and does **not** activate IMP-037. Architecture remains
+`ARCHITECTURE_LOCKED` from the historical GTM-R127 / STATE-R125 predecessor tip.
+
+## 13. STATE-R125 record
+
+```text
+STATE-R125 = IMP-036G_ARCHITECTURE_FIT_PASS_AND_LOCK
+acceptedThrough: IMP-036F
+currentProductSlice: IMP-036G
+nextProductSlice: IMP-037
+pendingAcceptance: NONE
+Current Product Implementation: NONE
+Current Governance Activity: IMP-036G Architecture Fit PASS; capability architecture LOCKED; implementation authorization NOT_GRANTED
+IMP-036F: COMPLETE_AND_ACCEPTED
+IMP-036G: ARCHITECTURE_LOCKED / NOT_AUTHORIZED / NOT_STARTED
+IMP036G_ACTIVATED: YES
+IMP036G_PRODUCT_DEFINITION: APPROVED
+IMP036G_PRODUCT_DEFINITION_VERSION: PD-IMP-036G-DRAFT-2
+IMP036G_PRODUCT_DECISIONS: RESOLVED
+IMP036G_PRODUCT_DECISION_COUNT: 7
+IMP036G_PRODUCT_DECISION_AUTHORITY: Founder
+IMP036G_PRODUCT_DECISION_DATE: 2026-09-16
+IMP036G_PRODUCT_DEFINITION_GATE: PASS
+IMP036G_ARCHITECTURE_FIT: PASS
+IMP036G_ARCHITECTURE_LOCKED: YES
+IMP036G_IMPLEMENTATION_AUTHORIZED: NO
+IMP036G_STARTED: NO
+IMP036G_ACCEPTED: NO
+IMP036G_FOUNDER_UAT_REQUIRED: YES
+IMP037_ACTIVATED: NO
+ARCHITECTURE_FIT_EVALUATED_HEAD: 386a245cde223d87c19742753130113b21b4bb2f
+ARCHITECTURE_FIT_EVALUATED_TREE: c4ef07bbd00bbbb964a9551b1d04d2fe140170b3
+ARCHITECTURE_FIT_EVALUATED_WORKING_TREE_FINGERPRINT: e8eb68ebf06aea7ab50305f8e8700d450f9c5e9fd1ae24c91d4d81cfd157eb2c
+ARCHITECTURE_FIT_DATE: 2026-09-17
+INDEPENDENT_ARCHITECTURE_FIT_REVIEW: PASS
+capability: docs/platform/capabilities/IMP-036G-administration-console-v2.md
+D374_REQUIRED_FOR_LOCK: NO
+D-374_CREATED: NO
+ARCH_R20_REQUIRED: NO
+ARCH_R20_CREATED: NO
+architectureVersion: ARCH-R19
+decisionRegisterVersion: DR-15
+supersedes: STATE-R124
+```
+
+
+## 14. STATE-R124 record
+
+```text
+STATE-R124 = IMP-036G_PRODUCT_DEFINITION_GATE_PASS
+acceptedThrough: IMP-036F
+pendingAcceptance: NONE
+currentProductSlice: IMP-036G
+nextProductSlice: IMP-037
+IMP-036F: COMPLETE_AND_ACCEPTED
+IMP036F_ACCEPTED: YES
+IMP036F_FOUNDER_UAT: PASS
+IMP036F_FORMAL_ACCEPTANCE: ACCEPTED
+IMP-036G: PLANNED / NOT_AUTHORIZED / NOT_STARTED
+IMP036G_ACTIVATED: YES
+IMP036G_PRODUCT_DEFINITION: APPROVED
+IMP036G_PRODUCT_DEFINITION_VERSION: PD-IMP-036G-DRAFT-2
+IMP036G_PRODUCT_DECISIONS: RESOLVED
+IMP036G_PRODUCT_DECISION_COUNT: 7
+IMP036G_PRODUCT_DECISION_AUTHORITY: Founder
+IMP036G_PRODUCT_DECISION_DATE: 2026-09-16
+IMP036G_PRODUCT_DEFINITION_GATE: PASS
+IMP036G_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036G_ARCHITECTURE_LOCKED: NO
+IMP036G_IMPLEMENTATION_AUTHORIZED: NO
+IMP036G_STARTED: NO
+IMP036G_ACCEPTED: NO
+IMP036G_FOUNDER_UAT_REQUIRED: YES
+IMP-037: PLANNED / NOT_ACTIVATED / NOT_AUTHORIZED / NOT_STARTED
+IMP037_ACTIVATED: NO
+architectureVersion: ARCH-R19
+decisionRegisterVersion: DR-15
+productDeliveryVersion: PD-1
+gateEvaluatedHead: 1fe1737d8f05d6069b2073d9faf1142d21b91970
+gateEvaluatedTree: 25412cbadf224ef709687fe067f2427784a414cc
+gateDate: 2026-09-16
+gateApprovalAuthority: Founder / product governance human authority
+independentPreGateReview: PASS
+supersedes: STATE-R123
+```
+
+## 15. STATE-R123 record
+
+```text
+STATE-R123 = IMP-036G_PRODUCT_DECISIONS_RESOLVED_DRAFT_2
+acceptedThrough: IMP-036F
+pendingAcceptance: NONE
+currentProductSlice: IMP-036G
+nextProductSlice: IMP-037
+IMP-036F: COMPLETE_AND_ACCEPTED
+IMP036F_ACCEPTED: YES
+IMP036F_FOUNDER_UAT: PASS
+IMP036F_FORMAL_ACCEPTANCE: ACCEPTED
+IMP-036G: PLANNED / NOT_AUTHORIZED / NOT_STARTED
+IMP036G_ACTIVATED: YES
+IMP036G_PRODUCT_DEFINITION: DRAFT
+IMP036G_PRODUCT_DEFINITION_VERSION: PD-IMP-036G-DRAFT-2
+IMP036G_PRODUCT_DECISIONS: RESOLVED
+IMP036G_PRODUCT_DECISION_COUNT: 7
+IMP036G_PRODUCT_DECISION_AUTHORITY: Founder
+IMP036G_PRODUCT_DECISION_DATE: 2026-09-16
+IMP036G_PRODUCT_DEFINITION_GATE: NOT_PERFORMED
+IMP036G_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036G_ARCHITECTURE_LOCKED: NO
+IMP036G_IMPLEMENTATION_AUTHORIZED: NO
+IMP036G_STARTED: NO
+IMP036G_ACCEPTED: NO
+IMP036G_FOUNDER_UAT_REQUIRED: YES
+IMP-037: PLANNED / NOT_ACTIVATED / NOT_AUTHORIZED / NOT_STARTED
+IMP037_ACTIVATED: NO
+architectureVersion: ARCH-R19
+decisionRegisterVersion: DR-15
+productDeliveryVersion: PD-1
+supersedes: STATE-R122
+```
+
+## 16. STATE-R122 record
+
+```text
+STATE-R122 = IMP-036G_PRODUCT_DEFINITION_DRAFT
+acceptedThrough: IMP-036F
+pendingAcceptance: NONE
+currentProductSlice: IMP-036G
+nextProductSlice: IMP-037
+IMP-036F: COMPLETE_AND_ACCEPTED
+IMP036F_ACCEPTED: YES
+IMP036F_FOUNDER_UAT: PASS
+IMP036F_FORMAL_ACCEPTANCE: ACCEPTED
+IMP-036G: PLANNED / NOT_AUTHORIZED / NOT_STARTED
+IMP036G_ACTIVATED: YES
+IMP036G_PRODUCT_DEFINITION: DRAFT
+IMP036G_PRODUCT_DEFINITION_VERSION: PD-IMP-036G-DRAFT-1
+IMP036G_PRODUCT_DEFINITION_GATE: NOT_PERFORMED
+IMP036G_ARCHITECTURE_FIT: NOT_PERFORMED
+IMP036G_ARCHITECTURE_LOCKED: NO
+IMP036G_IMPLEMENTATION_AUTHORIZED: NO
+IMP036G_STARTED: NO
+IMP036G_ACCEPTED: NO
+IMP036G_FOUNDER_UAT_REQUIRED: YES
+IMP-037: PLANNED / NOT_ACTIVATED / NOT_AUTHORIZED / NOT_STARTED
+IMP037_ACTIVATED: NO
+architectureVersion: ARCH-R19
+decisionRegisterVersion: DR-15
+productDeliveryVersion: PD-1
+supersedes: STATE-R121
+```
+
+## 17. STATE-R121 record
+
+```text
+STATE-R121 = IMP-036G_PRODUCT_SLICE_ACTIVATION
+acceptedThrough: IMP-036F
+pendingAcceptance: NONE
+currentProductSlice: IMP-036G
+nextProductSlice: IMP-037
+IMP-036F: COMPLETE_AND_ACCEPTED
+IMP036F_ACCEPTED: YES
+IMP036F_FOUNDER_UAT: PASS
+IMP036F_FORMAL_ACCEPTANCE: ACCEPTED
+IMP-036G: PLANNED / NOT_AUTHORIZED / NOT_STARTED
+IMP036G_ACTIVATED: YES
+IMP036G_PRODUCT_DEFINITION: NOT_CREATED
+IMP036G_ARCHITECTURE_LOCKED: NO
+IMP036G_IMPLEMENTATION_AUTHORIZED: NO
+IMP036G_STARTED: NO
+IMP036G_ACCEPTED: NO
+IMP036G_FOUNDER_UAT_REQUIRED: YES
+IMP-037: PLANNED / NOT_ACTIVATED / NOT_AUTHORIZED / NOT_STARTED
+IMP037_ACTIVATED: NO
+architectureVersion: ARCH-R19
+decisionRegisterVersion: DR-15
+productDeliveryVersion: PD-1
+supersedes: STATE-R120
+```
+
+## 18. STATE-R120 record
+
+```text
+STATE-R120 = IMP-036F_FORMAL_ACCEPTANCE
+acceptedThrough: IMP-036F
+pendingAcceptance: NONE
+currentProductSlice: NONE
+nextProductSlice: IMP-036G
+IMP-036F: COMPLETE_AND_ACCEPTED
+IMP036F_ACCEPTED: YES
+IMP036F_FOUNDER_UAT: PASS
+IMP036F_FORMAL_ACCEPTANCE: ACCEPTED
+IMP036F_IMPLEMENTATION_COMPLETE: YES
+IMP036F_ACCEPTED_MAIN_SHA: 91d0b5e5e5815da6bf0bb325a3c6ab884dc06652
+IMP036F_ACCEPTED_TREE: ab41fc7f2bf6d0a52c3ea6c2b69ed331ca9540cf
+IMP036F_FOUNDER_UAT_CANDIDATE_FINGERPRINT: c689630cb9a4d002fda3376f949a1f324015776d392abfd2abde7b6f5b91f973
+IMP036F_FOUNDER_UAT_DECISION_DATE: 2026-09-15
+IMP036F_FOUNDER_UAT_ACCEPTANCE_AUTHORITY: Founder
+IMP036F_EXACT_MAIN_CI: 34991901136
+IMP036G_ACTIVATED: NO
+architectureVersion: ARCH-R19
+decisionRegisterVersion: DR-15
+productDeliveryVersion: PD-1
+supersedes: STATE-R119
+```
+
+## 19. STATE-R119 record
+
+```text
+STATE-R119 = IMP-036F_IMPLEMENTATION_START
+acceptedThrough: IMP-036E
+currentProductSlice: IMP-036F
+pendingAcceptance: NONE
+nextProductSlice: IMP-036G
+Current Product Implementation: IMP-036F
+IMP-036F: IMPLEMENTATION_IN_PROGRESS
+IMP036F_ACTIVATED: YES
+IMP036F_PRODUCT_DEFINITION: APPROVED
+IMP036F_PRODUCT_DEFINITION_GATE: PASS
+IMP036F_ARCHITECTURE_FIT: PASS
+IMP036F_ARCHITECTURE_LOCKED: YES
+IMP036F_IMPLEMENTATION_AUTHORIZED: YES
+IMP036F_STARTED: YES
+IMP036F_ACCEPTED: NO
+IMP036F_FOUNDER_UAT_REQUIRED: YES
+IMP036G_ACTIVATED: NO
+architectureVersion: ARCH-R19
+decisionRegisterVersion: DR-15
+productDeliveryVersion: PD-1
+supersedes: STATE-R118
+```
+
+STATE-R119 records IMP-036F implementation start. Implementation is in progress; not complete;
+not accepted. Authorization provenance remains GTM-R120 / STATE-R118.
+
+## 20. STATE-R118 record
+
+```text
+STATE-R118 = IMP-036F_IMPLEMENTATION_AUTHORIZATION
+acceptedThrough: IMP-036E
+pendingAcceptance: NONE
+currentProductSlice: IMP-036F
+nextProductSlice: IMP-036G
+IMP-036E: COMPLETE_AND_ACCEPTED
+IMP-036E_ACCEPTED: YES
+IMP-036E_FOUNDER_UAT: PASS
+IMP-036F: ARCHITECTURE_LOCKED / AUTHORIZED / NOT_STARTED
+IMP036F_ACTIVATED: YES
+IMP036F_PRODUCT_DEFINITION: APPROVED
+IMP036F_PRODUCT_DEFINITION_GATE: PASS
+IMP036F_ARCHITECTURE_FIT: PASS
+IMP036F_ARCHITECTURE_LOCKED: YES
+IMP036F_IMPLEMENTATION_AUTHORIZED: YES
+IMP036F_STARTED: NO
+IMP036F_ACCEPTED: NO
+IMP036F_FOUNDER_UAT_REQUIRED: YES
+IMP-036G: PLANNED / NOT_ACTIVATED / NOT_AUTHORIZED / NOT_STARTED
+IMP036G_ACTIVATED: NO
+architectureVersion: ARCH-R19
+decisionRegisterVersion: DR-15
+productDeliveryVersion: PD-1
+implementationAuthorizationGate: PASS
+implementationAuthorizationEvidence: PR#141/5622858455
+authorizationAppliesTo: locked PD-IMP-036F-DRAFT-1 + locked capability architecture
+implementationAccompanied: NO
+schemaDesignLocked: YES
+migrationExecutionStarted: NO
+D374_REQUIRED_FOR_IMP036F_AUTHORIZATION: NO
+ARCH_R20_REQUIRED_FOR_IMP036F_AUTHORIZATION: NO
+nextGate: explicit implementation start / execution authorization
+lockedCapabilityArchitecture: docs/platform/capabilities/IMP-036F-catalog-menu-pricing-promotions-management.md
+supersedes: STATE-R117
+```
+
+## 21. STATE-R117 record
+
+```text
+STATE-R117 = IMP-036F_ARCHITECTURE_LOCK
+acceptedThrough: IMP-036E
+pendingAcceptance: NONE
+currentProductSlice: IMP-036F
+nextProductSlice: IMP-036G
+IMP-036E: COMPLETE_AND_ACCEPTED
+IMP-036E_ACCEPTED: YES
+IMP-036E_FOUNDER_UAT: PASS
+IMP-036F: ARCHITECTURE_LOCKED / NOT_AUTHORIZED / NOT_STARTED
+IMP036F_ACTIVATED: YES
+IMP036F_PRODUCT_DEFINITION: APPROVED
+IMP036F_PRODUCT_DEFINITION_GATE: PASS
+IMP036F_ARCHITECTURE_FIT: PASS
+IMP036F_ARCHITECTURE_LOCKED: YES
+IMP036F_IMPLEMENTATION_AUTHORIZED: NO
+IMP036F_STARTED: NO
+IMP036F_ACCEPTED: NO
+IMP036F_FOUNDER_UAT_REQUIRED: YES
+IMP-036G: PLANNED / NOT_ACTIVATED / NOT_AUTHORIZED / NOT_STARTED
+IMP036G_ACTIVATED: NO
+architectureVersion: ARCH-R19
+decisionRegisterVersion: DR-15
+productDeliveryVersion: PD-1
+architectureReviewedCandidateHead: 9ae06d6267e997223b1995124540974215ee17fd
+architectureReviewedCandidateTree: 55adb287bb0eb77240a6becdc16fed2d504ba144
+independentArchitectureReview: 5169723968
+independentArchitectureReviewResult: PASS
+exactHeadCiRun: 34501448266
+exactHeadCiResult: SUCCESS
+architectureLockDate: 2026-09-10
+lockedCapabilityArchitecture: docs/platform/capabilities/IMP-036F-catalog-menu-pricing-promotions-management.md
+D374_REQUIRED_FOR_IMP036F_LOCK: NO
+ARCH_R20_REQUIRED_FOR_IMP036F_LOCK: NO
+supersedes: STATE-R116
+```
+
+## 22. STATE-R116 record
+
+```text
+STATE-R116 = IMP-036F_PRODUCT_DEFINITION_GATE_PASS
+acceptedThrough: IMP-036E
+pendingAcceptance: NONE
+currentProductSlice: IMP-036F
+nextProductSlice: IMP-036G
+IMP-036E: COMPLETE_AND_ACCEPTED
+IMP-036E_ACCEPTED: YES
+IMP-036E_FOUNDER_UAT: PASS
+IMP-036F: PLANNED / NOT_AUTHORIZED / NOT_STARTED
+IMP036F_ACTIVATED: YES
+IMP036F_PRODUCT_DEFINITION: APPROVED
+IMP036F_PRODUCT_DEFINITION_GATE: PASS
+IMP036F_ARCHITECTURE_LOCKED: NO
+IMP036F_IMPLEMENTATION_AUTHORIZED: NO
+IMP036F_STARTED: NO
+IMP036F_ACCEPTED: NO
+IMP036F_FOUNDER_UAT_REQUIRED: YES
+IMP-036G: PLANNED / NOT_ACTIVATED / NOT_AUTHORIZED / NOT_STARTED
+IMP036G_ACTIVATED: NO
+architectureVersion: ARCH-R19
+decisionRegisterVersion: DR-15
+productDeliveryVersion: PD-1
+gateEvaluatedContentSha: 014e0f935f193f54718d6afd5e7991508088f9bc
+gateDurableReviewRecord: PR#140/5166877450
+gateDate: 2026-09-10
+supersedes: STATE-R115
+```
+
+## 23. STATE-R115 record
+
+```text
+STATE-R115 = IMP-036F_PRODUCT_DEFINITION_DRAFT_AUTHORIZED
+acceptedThrough: IMP-036E
+pendingAcceptance: NONE
+currentProductSlice: IMP-036F
+nextProductSlice: IMP-036G
+IMP-036E: COMPLETE_AND_ACCEPTED
+IMP-036E_ACCEPTED: YES
+IMP-036E_FOUNDER_UAT: PASS
+IMP-036F: PLANNED / NOT_AUTHORIZED / NOT_STARTED
+IMP036F_ACTIVATED: YES
+IMP036F_PRODUCT_DEFINITION: DRAFT_AUTHORIZED
+IMP036F_PRODUCT_DEFINITION_GATE: NOT_PERFORMED
+IMP036F_ARCHITECTURE_LOCKED: NO
+IMP036F_IMPLEMENTATION_AUTHORIZED: NO
+IMP036F_STARTED: NO
+IMP036F_ACCEPTED: NO
+IMP036F_FOUNDER_UAT_REQUIRED: YES
+IMP-036G: PLANNED / NOT_ACTIVATED / NOT_AUTHORIZED / NOT_STARTED
+IMP036G_ACTIVATED: NO
+architectureVersion: ARCH-R19
+decisionRegisterVersion: DR-15
+productDeliveryVersion: PD-1
+supersedes: STATE-R114
+```
+
+## 24. STATE-R114 record
+
+```text
+STATE-R114 = IMP-036F_PRODUCT_SLICE_ACTIVATION
+acceptedThrough: IMP-036E
+pendingAcceptance: NONE
+currentProductSlice: IMP-036F
+nextProductSlice: IMP-036G
+IMP-036E: COMPLETE_AND_ACCEPTED
+IMP-036E_ACCEPTED: YES
+IMP-036E_FOUNDER_UAT: PASS
+IMP-036F: PLANNED / NOT_AUTHORIZED / NOT_STARTED
+IMP036F_ACTIVATED: YES
+IMP036F_PRODUCT_DEFINITION: NOT_CREATED
+IMP036F_ARCHITECTURE_LOCKED: NO
+IMP036F_IMPLEMENTATION_AUTHORIZED: NO
+IMP036F_STARTED: NO
+IMP036F_ACCEPTED: NO
+IMP036F_FOUNDER_UAT_REQUIRED: YES
+IMP-036G: PLANNED / NOT_ACTIVATED / NOT_AUTHORIZED / NOT_STARTED
+IMP036G_ACTIVATED: NO
+architectureVersion: ARCH-R19
+decisionRegisterVersion: DR-15
+productDeliveryVersion: PD-1
+supersedes: STATE-R113
+```
+
+## 25. STATE-R113 record
+
+
+```text
+STATE-R113 = IMP-036E_FORMAL_ACCEPTANCE
+acceptedThrough: IMP-036E
+pendingAcceptance: NONE
+currentProductSlice: NONE
+nextProductSlice: IMP-036F
+IMP-036E: COMPLETE_AND_ACCEPTED
+IMP-036E_ACCEPTED: YES
+IMP-036E_FOUNDER_UAT: PASS
+IMP036E_FORMAL_ACCEPTANCE: ACCEPTED
+IMP036E_INDEPENDENT_ACCEPTANCE_EVIDENCE: ACCEPTED
+IMP036E_ACCEPTED_MAIN_SHA: 05c534bac3d077f5ab89928495568bb63faf78df
+IMP036E_ACCEPTED_TREE: 55b28977ee9860c2c07cb25f751c9f48ef4a2aa6
+IMP036E_FOUNDER_UAT_DECISION_DATE: 2026-09-10
+IMP036F_ACTIVATED: NO
+architectureVersion: ARCH-R19
+decisionRegisterVersion: DR-15
+supersedes: STATE-R112
+```
+
+## 26. STATE-R112 record (historical compression)
+
+```text
+STATE-R112 = CANONICAL_AUTHORITY_CONTEXT_COMPRESSION_ONLY
+source snapshot exact: YES (blob 748c3b615fe9b93f91ff573f88548223b9ba1d0d)
+source commit: 33a226a18e4e9428c07233990d026541418f0860
+acceptance change: NO
+acceptedThrough: IMP-036D (unchanged at that revision)
+pendingAcceptance: IMP-036E (unchanged at that revision)
+currentProductSlice: IMP-036E (unchanged at that revision)
+nextProductSlice: IMP-036F (unchanged at that revision)
+IMP-036E_ACCEPTED: NO
+IMP036F_ACTIVATED: NO
+```

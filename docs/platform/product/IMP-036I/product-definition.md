@@ -201,10 +201,7 @@ Lifecycle truth remains ROADMAP/STATE only. CURRENT tip after explicit implement
 authorization (this Product Definition is **not** lifecycle authority):
 
 ```text
-acceptedThrough = IMP-036I
-currentProductSlice = IMP-036J
-pendingAcceptance = NONE
-nextProductSlice = IMP-036K
+CURRENT_LIFECYCLE_AUTHORITY = ROADMAP.md / STATE.md
 
 IMP036H: COMPLETE_AND_ACCEPTED
 IMP036I_ACTIVATED: YES
@@ -233,8 +230,7 @@ IMP040: NOT_ACTIVATED / HOLD
 
 PROGRAM_PAUSE_AUTHORITY = D-377
 ADDITIONAL_SEQUENCING_AUTHORITY = D-382 (AMENDED by D-383 only for Revenue Recommendations identity, activation, and sequencing)
-ROADMAP = GTM-R188
-STATE = STATE-R186
+CURRENT_LIFECYCLE_AUTHORITY = ROADMAP.md / STATE.md
 ARCHITECTURE = ARCH-R23
 decision-register = DR-24
 ```

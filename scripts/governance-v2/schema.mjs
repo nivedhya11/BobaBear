@@ -148,6 +148,7 @@ export function validateRoadmapSchema(roadmap) {
 
   const ids = new Set();
   const sequences = new Set();
+  let previousSequence = null;
   for (const [index, capability] of capabilities.entries()) {
     const path = `capabilities[${index}]`;
     if (capability == null || typeof capability !== "object" || Array.isArray(capability)) {
@@ -169,6 +170,16 @@ export function validateRoadmapSchema(roadmap) {
       );
     } else {
       sequences.add(capability.sequence);
+      if (previousSequence != null && capability.sequence <= previousSequence) {
+        findings.push(
+          finding(
+            "INVALID_CAPABILITY_SEQUENCE_ORDER",
+            `${path}.sequence`,
+            `capability.sequence must increase in declared ledger order (saw ${capability.sequence} after ${previousSequence})`,
+          ),
+        );
+      }
+      previousSequence = capability.sequence;
     }
     if (typeof capability.accepted !== "boolean") {
       findings.push(finding("INVALID_CAPABILITY_ACCEPTED", `${path}.accepted`, "capability.accepted must be a boolean"));
@@ -188,6 +199,8 @@ export function validateRoadmapSchema(roadmap) {
     findings.push(
       finding("ACCEPTED_THROUGH_MISSING", "acceptedThrough", `acceptedThrough ${roadmap.acceptedThrough} is not in the roadmap`),
     );
+  } else if (typeof roadmap.acceptedThrough === "string") {
+    findings.push(...acceptedPrefixFindings(capabilities, roadmap.acceptedThrough));
   }
   if (typeof roadmap.currentSlice === "string" && roadmap.currentSlice.length > 0 && !ids.has(roadmap.currentSlice)) {
     findings.push(finding("CURRENT_SLICE_MISSING", "currentSlice", `currentSlice ${roadmap.currentSlice} is not in the roadmap`));
@@ -307,10 +320,47 @@ export function validateStateSchema(state, plan, roadmap) {
   }
 
   const trancheIds = Array.isArray(plan?.tranches) ? plan.tranches.map((tranche) => tranche?.id).filter(Boolean) : [];
-  findings.push(...validateLastTransitionShape(state.lastTransition, trancheIds).findings);
+  findings.push(
+    ...validateLastTransitionShape(state.lastTransition, trancheIds, state.implementation?.trancheStatuses).findings,
+  );
   findings.push(...validateCurrentReferences(state, roadmap));
+  findings.push(...contractExecutionDuplicationFindings(state.contracts));
 
   return aggregate(findings);
+}
+
+const CONTRACT_EXECUTION_KEYS = Object.freeze([
+  "started",
+  "implementationStarted",
+  "implementationComplete",
+  "accepted",
+  "implementationAuthorized",
+]);
+
+/**
+ * `contracts` may hold independent semantic gate references only.
+ * Execution copies of canonical implementation/accepted fields are forbidden.
+ * @param {unknown} contracts
+ */
+export function contractExecutionDuplicationFindings(contracts) {
+  if (contracts == null) return [];
+  if (typeof contracts !== "object" || Array.isArray(contracts)) {
+    return [finding("INVALID_CONTRACTS", "contracts", "contracts must be an object when present")];
+  }
+  /** @type {ReturnType<typeof finding>[]} */
+  const findings = [];
+  for (const key of CONTRACT_EXECUTION_KEYS) {
+    if (Object.hasOwn(contracts, key)) {
+      findings.push(
+        finding(
+          "CONTRACT_EXECUTION_DUPLICATION",
+          `contracts.${key}`,
+          `contracts.${key} duplicates canonical execution state and must be derived, not persisted`,
+        ),
+      );
+    }
+  }
+  return findings;
 }
 
 /**
@@ -345,6 +395,31 @@ export function validateRoadmapStateAlignment(roadmap, state) {
       );
     }
   }
+
+  if (state.accepted === true) {
+    const slice = typeof state.slice === "string" ? state.slice : state.currentSlice;
+    const capability = Array.isArray(roadmap.capabilities)
+      ? roadmap.capabilities.find((item) => item && item.id === slice)
+      : null;
+    if (capability && capability.accepted !== true) {
+      findings.push(
+        finding(
+          "STATE_ACCEPTED_ROADMAP_MISMATCH",
+          "accepted",
+          `STATE accepted ${slice} while ROADMAP capability.accepted is ${JSON.stringify(capability.accepted)}`,
+        ),
+      );
+    }
+    if (typeof slice === "string" && state.acceptedThrough !== slice) {
+      findings.push(
+        finding(
+          "ACCEPTED_THROUGH_SLICE_MISMATCH",
+          "acceptedThrough",
+          `accepted STATE slice ${slice} requires acceptedThrough ${slice}`,
+        ),
+      );
+    }
+  }
   return aggregate(findings);
 }
 
@@ -375,6 +450,12 @@ function lifecyclePhaseCoherenceFindings(state) {
         "lifecyclePhase",
         "accepted requires lifecyclePhase COMPLETE_AND_ACCEPTED",
       ),
+    );
+  }
+
+  if (accepted === true && state.founderUat !== FOUNDER_UAT.PASS) {
+    findings.push(
+      finding("ACCEPTED_WITHOUT_UAT", "founderUat", "accepted requires founderUat PASS"),
     );
   }
 
@@ -557,6 +638,45 @@ function uniqueStringList(list, path, duplicateCode) {
       findings.push(finding(duplicateCode, `${path}[${index}]`, `duplicate reference ${value}`));
     }
     seen.add(value);
+  }
+  return findings;
+}
+
+function acceptedPrefixFindings(capabilities, acceptedThrough) {
+  const findings = [];
+  const boundary = capabilities.find((capability) => capability?.id === acceptedThrough);
+  if (!boundary || !Number.isInteger(boundary.sequence)) return findings;
+  for (const [index, capability] of capabilities.entries()) {
+    if (capability == null || typeof capability !== "object" || Array.isArray(capability)) continue;
+    if (!Number.isInteger(capability.sequence) || typeof capability.id !== "string") continue;
+    const path = `capabilities[${index}]`;
+    if (capability.sequence <= boundary.sequence) {
+      if (capability.accepted !== true) {
+        findings.push(
+          finding(
+            "ACCEPTED_PREFIX_GAP",
+            `${path}.accepted`,
+            `${capability.id} precedes or equals acceptedThrough ${acceptedThrough} and must be accepted`,
+          ),
+        );
+      } else if (capability.implementationComplete !== true) {
+        findings.push(
+          finding(
+            "ACCEPTED_INCOMPLETE",
+            `${path}.implementationComplete`,
+            `accepted capability ${capability.id} must be implementation-complete`,
+          ),
+        );
+      }
+    } else if (capability.accepted === true) {
+      findings.push(
+        finding(
+          "ACCEPTED_BEYOND_BOUNDARY",
+          `${path}.accepted`,
+          `${capability.id} is after acceptedThrough ${acceptedThrough} and cannot be accepted`,
+        ),
+      );
+    }
   }
   return findings;
 }

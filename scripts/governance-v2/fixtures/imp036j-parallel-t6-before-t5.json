@@ -26,5 +26,11 @@
   "currentReferences": {
     "architecture": ["ARCH-R23"],
     "decisions": ["D-383"]
+  },
+  "lastTransition": {
+    "type": "TRANCHE_PASS",
+    "tranche": "T6",
+    "sourcePr": 1,
+    "mergeCommit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
   }
 }

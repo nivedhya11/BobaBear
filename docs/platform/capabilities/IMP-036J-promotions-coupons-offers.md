@@ -51,14 +51,11 @@
   "historicalCandidate5EvaluatedHead": "49912f35f2871ff77b9af267589d49666fc975ec",
   "historicalCandidate5EvaluatedTree": "7046d5bb78012524972505f555226205199a58d0",
   "historicalCandidate5GovernanceFingerprint": "ac6510d315148763069f06374a243a75a312a7693cf3e7c1d0eac71bc1026870",
-  "implementationAuthorized": true,
-  "implementationStarted": true,
   "schemaChangeRequired": true,
   "globalDecisionRequired": false,
   "d383Required": false,
   "archR24Required": false,
   "founderUatRequired": true,
-  "founderUat": "NOT_STARTED",
   "lastReviewed": "2026-10-01",
   "bindingDecisions": ["D-382", "ADR-007", "ADR-008"],
   "dependsOn": ["IMP-016", "IMP-021", "IMP-036F", "IMP-036H", "IMP-036I"]
@@ -110,28 +107,9 @@ HISTORICAL_CANDIDATE_5_ARCHITECTURE_LOCK = LOCKED
 IMP036J_ARCHITECTURE_FIT = PASS
 IMP036J_ARCHITECTURE_LOCKED = YES
 IMP036J_DESIGN_READINESS = PASS
-IMP036J_NEXT_GATE = IMPLEMENTATION_TRANCHE_8
-QUALITY_TEST_PLAN_FINALIZED = YES
-MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = YES
 IMPLEMENTATION_PLAN = PASS
-IMPLEMENTATION_AUTHORIZED = YES
-IMP036J_IMPLEMENTATION_AUTHORIZED = YES
-IMP036J_IMPLEMENTATION_AUTHORIZATION = APPROVED
-IMP036J_IMPLEMENTATION_AUTHORIZATION_DATE = 2026-10-01
+IMPLEMENTATION_AUTHORIZATION = APPROVED
 IMPLEMENTATION_AUTHORIZATION_EVIDENCE = PR#332/5926464685
-IMP036J_STARTED = YES
-IMP036J_IMPLEMENTATION_STARTED = YES
-IMP036J_FORMAL_LIFECYCLE = IMPLEMENTATION_IN_PROGRESS
-IMP036J_TRANCHE_1 = PASS
-IMP036J_TRANCHE_2 = PASS
-IMP036J_TRANCHE_3 = PASS
-IMP036J_TRANCHE_4 = PASS
-IMP036J_TRANCHE_5 = PASS
-IMP036J_TRANCHE_6 = PASS
-IMP036J_TRANCHE_7 = PASS
-T7_STARTED = YES
-T8_STARTED = NO
-FOUNDER_UAT = NOT_PERFORMED
 GLOBAL_DECISION_REQUIRED = NO
 D383_REQUIRED = NO
 ARCH_R24_REQUIRED = NO
@@ -2219,7 +2197,6 @@ Current `npm run test:promotions`, `test:promotion-coupons`, and `test:promotion
 
 ```text
 FOUNDER_UAT_REQUIRED = YES
-FOUNDER_UAT = NOT_STARTED
 ```
 
 UAT stays a later R3 gate against an exact accepted implementation candidate. This document does not deploy one.
@@ -2320,17 +2297,14 @@ IMP036J_DESIGN_READINESS = PASS
 QUALITY_TEST_PLAN_FINALIZED = YES
 MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = YES
 IMPLEMENTATION_PLAN = PASS
-IMP036J_IMPLEMENTATION_AUTHORIZED = YES
-IMP036J_STARTED = NO
-IMP036J_IMPLEMENTATION_STARTED = NO
-IMP036J_NEXT_GATE = IMPLEMENTATION_TRANCHE_1
+IMP036J_IMPLEMENTATION_AUTHORIZATION = APPROVED
 ```
 
 Design Readiness PASS and the finalized Quality/Test Plan and Measurement/Instrumentation Plan
 are persisted in their own documents. This architecture record does not itself grant implementation authority.
 Those plans remain part of Design Readiness. Implementation Plan PASS is persisted separately.
-Founder Implementation Authorization is recorded in ROADMAP/STATE as APPROVED and NOT_STARTED.
-Architecture Fit PASS does not start implementation. Architecture Fit PASS is not Design Readiness and is not a finalized
+Founder Implementation Authorization APPROVED is immutable provenance recorded with the plan.
+Architecture Fit PASS does not start implementation. Current execution/lifecycle is owned by STATE.md. Architecture Fit PASS is not Design Readiness and is not a finalized
 Measurement/Instrumentation Plan.
 
 ```text
@@ -2341,5 +2315,4 @@ D-383 = NOT_CREATED
 NEW_ADR = NO
 ROADMAP_CHANGED = YES
 STATE_CHANGED = YES
-IMPLEMENTATION_STARTED = NO
 ```
