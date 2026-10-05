@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
+import { readdirSync, readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -110,12 +110,14 @@ describe("GOV-2 bootstrap execution extraction", () => {
     assert.ok(findings.some((item) => item.path === "lastTransition"));
   });
 
-  it("matches live GOV-2 execution to origin/main pre-GOV2 current execution", () => {
-    const main = spawnSync("git", ["-C", root, "show", "origin/main:docs/platform/STATE.md"], { encoding: "utf8" });
-    assert.equal(main.status, 0, main.stderr);
+  it("matches live GOV-2 execution to the unique pre-GOV2 STATE snapshot", () => {
+    const history = path.join(root, "docs/platform/history");
+    const matches = readdirSync(history).filter((name) => /^STATE-.*-pre-gov2\.md$/.test(name));
+    assert.equal(matches.length, 1, JSON.stringify(matches));
+    const snapshot = readFileSync(path.join(history, matches[0]), "utf8");
     const loaded = loadLiveAuthorities(root);
     assert.equal(loaded.ok, true, JSON.stringify(loaded.findings, null, 2));
-    const base = extractPreGov2CurrentExecution(main.stdout, loaded.plan);
+    const base = extractPreGov2CurrentExecution(snapshot, loaded.plan);
     const head = extractGov2Execution(loaded.state, loaded.plan);
     assert.equal(base.ok, true, JSON.stringify(base.findings, null, 2));
     assert.equal(head.ok, true, JSON.stringify(head.findings, null, 2));
