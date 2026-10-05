@@ -118,6 +118,8 @@ import {
   evaluateImp036jTestingPointer,
   evaluateImp036jTranche7CurrentStatePayload,
   evaluateImp036jTranche7CurrentRoadmapFence,
+  extractImp036jStateR186Record,
+  evaluateImp036jTranche7StateR186Record,
   evaluateImp036kGateCandidateProvenance,
   evaluateImp036kDesignReadinessPlanFinalizedFlags,
   evaluateImp036jProductDeliveryTransition,
@@ -6798,6 +6800,7 @@ describe("canonical authority history compression", () => {
       assert.match(historicalR185, /IMP036J_TRANCHE_5:\s*PASS/);
       assert.match(historicalR185, /T7_STARTED:\s*NO/);
       assert.match(historicalR185, /IMP036J_NEXT_GATE:\s*IMPLEMENTATION_TRANCHE_7/);
+      assert.deepEqual(evaluateImp036jTranche7StateR186Record(extractImp036jStateR186Record(state)), { ok: true });
       assert.match(roadmap, /0bd2734c51b88e5f9e6025389f23920e7a3c805d/);
       assert.match(roadmap, /5407550500/);
       assert.match(roadmap, /5983294615/);
@@ -19405,5 +19408,132 @@ describe("IMP-036K Design Readiness plan-finalized flags", () => {
     const result = evaluateImp036kDesignReadinessPlanFinalizedFlags(mutated);
     assert.equal(result.ok, false);
     assert.equal(result.code, "IMP036K_DR_MEASUREMENT_FINALIZED");
+  });
+});
+
+describe("IMP-036J Tranche 7 STATE-R186 structured provenance", () => {
+  const state = readFileSync(new URL("../docs/platform/STATE.md", import.meta.url), "utf8");
+  const stateSection2 = state.split("## 2. Current Work Position")[1]?.split("\n## ")[0] ?? "";
+  const historicalR185 = state.split("## 10. STATE-R185 record")[1]?.split("## 10. STATE-R184")[0] ?? "";
+  const liveRecord = extractImp036jStateR186Record(state);
+
+  /**
+   * @param {string} field
+   * @param {string} from
+   * @param {string} to
+   */
+  function replaceStateR186FenceField(field, from, to) {
+    const heading = "## 10. STATE-R186 record";
+    const start = state.indexOf(heading);
+    const end = state.indexOf("## 10. STATE-R185", start);
+    assert.notEqual(start, -1);
+    assert.notEqual(end, -1);
+    const section = state.slice(start, end);
+    const fenceOpen = section.indexOf("```text");
+    const fenceClose = section.indexOf("```", fenceOpen + "```text".length);
+    assert.notEqual(fenceOpen, -1);
+    assert.notEqual(fenceClose, -1);
+    const fence = section.slice(fenceOpen, fenceClose);
+    const needle = `${field}: ${from}`;
+    const mutatedFence = fence.replace(needle, `${field}: ${to}`);
+    assert.notEqual(mutatedFence, fence);
+    assert.equal(mutatedFence.includes(needle), false);
+    return state.slice(0, start) + section.slice(0, fenceOpen) + mutatedFence + section.slice(fenceClose) + state.slice(end);
+  }
+
+  it("accepts the live STATE-R186 structured record", () => {
+    assert.deepEqual(evaluateImp036jTranche7StateR186Record(liveRecord), { ok: true });
+    assert.deepEqual(evaluateImp036jTranche7CurrentStatePayload(stateSection2), { ok: true });
+    assert.match(historicalR185, /STATE-R185\s*=\s*IMP036J_TRANCHE_5_PASS/);
+    assert.match(stateSection2, /IMP036K_DESIGN_READINESS:\s*PASS/);
+    assert.match(stateSection2, /IMP036K_NEXT_GATE:\s*QUALITY \/ TEST PLAN FINALIZATION/);
+    assert.match(stateSection2, /IMP036K_IMPLEMENTATION_AUTHORIZED:\s*NO/);
+  });
+
+  it("fails when IMPLEMENTATION_REVIEWED_HEAD is corrupted inside STATE-R186 while narrative still has the SHA", () => {
+    const mutated = replaceStateR186FenceField(
+      "IMPLEMENTATION_REVIEWED_HEAD",
+      "0bd2734c51b88e5f9e6025389f23920e7a3c805d",
+      "0000000000000000000000000000000000000000",
+    );
+    assert.match(mutated, /0bd2734c51b88e5f9e6025389f23920e7a3c805d/);
+    const result = evaluateImp036jTranche7StateR186Record(extractImp036jStateR186Record(mutated));
+    assert.equal(result.ok, false);
+    assert.equal(result.code, "IMP036J_T7_R186_RECORD");
+    assert.match(result.message ?? "", /IMPLEMENTATION_REVIEWED_HEAD/);
+    assert.deepEqual(evaluateImp036jTranche7CurrentStatePayload(mutated.split("## 2. Current Work Position")[1]?.split("\n## ")[0] ?? ""), { ok: true });
+    assert.equal(mutated.split("## 10. STATE-R185 record")[1]?.split("## 10. STATE-R184")[0], historicalR185);
+    assert.match(mutated.split("## 2. Current Work Position")[1]?.split("\n## ")[0] ?? "", /IMP036K_DESIGN_READINESS:\s*PASS/);
+  });
+
+  it("fails when IMPLEMENTATION_ARCHITECT_REVIEW is corrupted inside STATE-R186 while narrative still has the id", () => {
+    const mutated = replaceStateR186FenceField(
+      "IMPLEMENTATION_ARCHITECT_REVIEW",
+      "5407550500",
+      "0000000000",
+    );
+    assert.match(mutated, /5407550500/);
+    const result = evaluateImp036jTranche7StateR186Record(extractImp036jStateR186Record(mutated));
+    assert.equal(result.ok, false);
+    assert.equal(result.code, "IMP036J_T7_R186_RECORD");
+    assert.match(result.message ?? "", /IMPLEMENTATION_ARCHITECT_REVIEW/);
+    assert.deepEqual(evaluateImp036jTranche7CurrentStatePayload(mutated.split("## 2. Current Work Position")[1]?.split("\n## ")[0] ?? ""), { ok: true });
+    assert.equal(mutated.split("## 10. STATE-R185 record")[1]?.split("## 10. STATE-R184")[0], historicalR185);
+  });
+
+  it("fails when IMPLEMENTATION_EXACT_MAIN_CI is corrupted inside STATE-R186 while narrative still has the run id", () => {
+    const mutated = replaceStateR186FenceField(
+      "IMPLEMENTATION_EXACT_MAIN_CI",
+      "37225606813",
+      "00000000000",
+    );
+    assert.match(mutated, /37225606813/);
+    const result = evaluateImp036jTranche7StateR186Record(extractImp036jStateR186Record(mutated));
+    assert.equal(result.ok, false);
+    assert.equal(result.code, "IMP036J_T7_R186_RECORD");
+    assert.match(result.message ?? "", /IMPLEMENTATION_EXACT_MAIN_CI/);
+  });
+
+  it("fails when IMPLEMENTATION_POST_MERGE_CLOSURE is corrupted inside STATE-R186 while narrative still has the id", () => {
+    const mutated = replaceStateR186FenceField(
+      "IMPLEMENTATION_POST_MERGE_CLOSURE",
+      "5983294615",
+      "0000000000",
+    );
+    assert.match(mutated, /5983294615/);
+    const result = evaluateImp036jTranche7StateR186Record(extractImp036jStateR186Record(mutated));
+    assert.equal(result.ok, false);
+    assert.equal(result.code, "IMP036J_T7_R186_RECORD");
+    assert.match(result.message ?? "", /IMPLEMENTATION_POST_MERGE_CLOSURE/);
+  });
+
+  it("fails when IMPLEMENTATION_MERGE_MAIN_TREE is corrupted inside STATE-R186 while narrative tree text is unchanged", () => {
+    const mutated = replaceStateR186FenceField(
+      "IMPLEMENTATION_MERGE_MAIN_TREE",
+      "42ba8ba7fd99892df2b2e2ca2e466114bdf65ea9",
+      "0000000000000000000000000000000000000000",
+    );
+    assert.match(mutated, /Exact main tree `42ba8ba7fd99892df2b2e2ca2e466114bdf65ea9`/);
+    assert.match(extractImp036jStateR186Record(mutated), /IMPLEMENTATION_REVIEWED_TREE: 42ba8ba7fd99892df2b2e2ca2e466114bdf65ea9/);
+    const result = evaluateImp036jTranche7StateR186Record(extractImp036jStateR186Record(mutated));
+    assert.equal(result.ok, false);
+    assert.equal(result.code, "IMP036J_T7_R186_RECORD");
+    assert.match(result.message ?? "", /IMPLEMENTATION_MERGE_MAIN_TREE/);
+    assert.equal(mutated.split("## 10. STATE-R185 record")[1]?.split("## 10. STATE-R184")[0], historicalR185);
+  });
+
+  it("still passes if only the STATE-R186 narrative SHA is removed", () => {
+    const heading = "## 10. STATE-R186 record";
+    const start = state.indexOf(heading);
+    const end = state.indexOf("## 10. STATE-R185", start);
+    const section = state.slice(start, end);
+    const fenceClose = section.indexOf("```", section.indexOf("```text") + "```text".length);
+    const narrative = section.slice(fenceClose);
+    const mutatedNarrative = narrative.replaceAll("0bd2734c51b88e5f9e6025389f23920e7a3c805d", "omitted-reviewed-head");
+    assert.notEqual(mutatedNarrative, narrative);
+    const mutated = state.slice(0, start) + section.slice(0, fenceClose) + mutatedNarrative + state.slice(end);
+    assert.deepEqual(evaluateImp036jTranche7StateR186Record(extractImp036jStateR186Record(mutated)), { ok: true });
+    assert.deepEqual(evaluateImp036jTranche7CurrentStatePayload(mutated.split("## 2. Current Work Position")[1]?.split("\n## ")[0] ?? ""), { ok: true });
+    assert.equal(mutated.split("## 10. STATE-R185 record")[1]?.split("## 10. STATE-R184")[0], historicalR185);
   });
 });

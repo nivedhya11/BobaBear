@@ -44623,6 +44623,67 @@ export function evaluateImp036jTranche7CurrentRoadmapFence(currentFence) {
 }
 
 /**
+ * Machine-readable STATE-R186 checkpoint record. Narrative after the fence is
+ * explanatory only and must not satisfy missing structured provenance.
+ * @param {string} stateText
+ * @returns {string}
+ */
+export function extractImp036jStateR186Record(stateText) {
+  const section = String(stateText ?? "").split("## 10. STATE-R186 record")[1]?.split("## 10. STATE-R185")[0] ?? "";
+  const fenced = section.split("```text")[1]?.split("```")[0];
+  return typeof fenced === "string" ? fenced : section;
+}
+
+/**
+ * Structured T7 provenance/evidence carried by the STATE-R186 record itself.
+ * @param {string} record
+ * @returns {{ ok: true } | { ok: false, code: string, message: string }}
+ */
+export function evaluateImp036jTranche7StateR186Record(record) {
+  const source = String(record ?? "");
+  const required = [
+    "STATE-R186 = IMP036J_TRANCHE_7_PASS",
+    "supersedes: STATE-R185",
+    "IMPLEMENTATION_PR: #357",
+    "IMPLEMENTATION_REVIEWED_HEAD: 0bd2734c51b88e5f9e6025389f23920e7a3c805d",
+    "IMPLEMENTATION_REVIEWED_TREE: 42ba8ba7fd99892df2b2e2ca2e466114bdf65ea9",
+    "IMPLEMENTATION_ARCHITECT_REVIEW: 5407550500",
+    "IMPLEMENTATION_MERGE_MAIN: 323f5917995441d7096ddb17dd6168e0e98ce405",
+    "IMPLEMENTATION_MERGE_MAIN_TREE: 42ba8ba7fd99892df2b2e2ca2e466114bdf65ea9",
+    "IMPLEMENTATION_MERGE_TREE_DRIFT: NONE",
+    "IMPLEMENTATION_EXACT_MAIN_CI: 37225606813",
+    "IMPLEMENTATION_EXACT_MAIN_CODEQL: 37225606739",
+    "IMPLEMENTATION_POST_MERGE_CLOSURE: 5983294615",
+    "CURRENT_SOURCE_MAIN: 323f5917995441d7096ddb17dd6168e0e98ce405",
+    "CURRENT_SOURCE_MAIN_TREE: 42ba8ba7fd99892df2b2e2ca2e466114bdf65ea9",
+    "CURRENT_SOURCE_EXACT_MAIN_CI: 37225606813",
+    "CURRENT_SOURCE_EXACT_MAIN_CODEQL: 37225606739",
+    "CURRENT_SOURCE_T7_NAMED_PROOF: PASS",
+    "SCHEMA_CHANGED: YES",
+    "MIGRATION_CHANGED: YES",
+    "MIGRATION: 0049_imp036j_tranche7_immutable_publication",
+    "NEW_MIGRATION_BEYOND_0049: NO",
+  ];
+  for (const token of required) {
+    if (!source.includes(token)) {
+      return {
+        ok: false,
+        code: "IMP036J_T7_R186_RECORD",
+        message: `STATE-R186 structured record must contain ${token}`,
+      };
+    }
+  }
+  if (source.includes("SCHEMA_CHANGED: NO")) {
+    return {
+      ok: false,
+      code: "IMP036J_T7_SCHEMA",
+      message: "STATE-R186 must record T7 schema/migration 0049 and must not claim schema-neutral T7",
+    };
+  }
+  return { ok: true };
+}
+
+/**
  * CURRENT checkpoint: IMP-036J Tranche 7 MEASUREMENT_REPORTING PASS (GTM-R188 / STATE-R186).
  * T1–T7 are PASS. Next gate is IMPLEMENTATION_TRANCHE_8. T8 remains not started.
  * Historical GTM-R187 / STATE-R185 remains Tranche 5 PASS with T7 not started.
@@ -44665,7 +44726,7 @@ function checkImp036jTranche7Pass(roadmap, state, architecture, decision) {
   if (!currentStatePayload.ok) fail(currentStatePayload.code, currentStatePayload.message);
   const currentFencePayload = evaluateImp036jTranche7CurrentRoadmapFence(currentFence);
   if (!currentFencePayload.ok) fail(currentFencePayload.code, currentFencePayload.message);
-  const passed = [
+  const currentLifecycle = [
     "IMP-036J: ARCHITECTURE_LOCKED",
     "IMP036J_IMPLEMENTATION_AUTHORIZATION: APPROVED",
     "IMP036J_IMPLEMENTATION_AUTHORIZED: YES",
@@ -44686,6 +44747,23 @@ function checkImp036jTranche7Pass(roadmap, state, architecture, decision) {
     "T7_STARTED: YES",
     "T8_STARTED: NO",
     "FOUNDER_UAT: NOT_PERFORMED",
+  ];
+  for (const token of currentLifecycle) {
+    if (!currentMarker.includes(token) || !stateSection2.includes(token)) {
+      fail("IMP036J_T7_POSITION", `IMP-036J Tranche 7 PASS persistence must record ${token}`);
+    }
+  }
+  const programmeState = [
+    "IMP037_HOLD: YES",
+    "IMP038_HOLD: YES",
+    "GAP-EXT-ASSESS-001: NOT_CLOSED",
+  ];
+  for (const token of programmeState) {
+    if (!currentMarker.includes(token) || !stateSection2.includes(token)) {
+      fail("IMP036J_T7_PROGRAMME", `Current ROADMAP/STATE position must still record ${token}`);
+    }
+  }
+  const roadmapProvenance = [
     "0bd2734c51b88e5f9e6025389f23920e7a3c805d",
     "323f5917995441d7096ddb17dd6168e0e98ce405",
     "42ba8ba7fd99892df2b2e2ca2e466114bdf65ea9",
@@ -44694,15 +44772,15 @@ function checkImp036jTranche7Pass(roadmap, state, architecture, decision) {
     "37225606813",
     "37225606739",
     "0049_imp036j_tranche7_immutable_publication",
-    "IMP037_HOLD: YES",
-    "IMP038_HOLD: YES",
-    "GAP-EXT-ASSESS-001: NOT_CLOSED",
   ];
-  for (const token of passed) {
-    if (!currentMarker.includes(token) || !stateText.includes(token)) {
-      fail("IMP036J_T7_POSITION", `IMP-036J Tranche 7 PASS persistence must record ${token}`);
+  for (const token of roadmapProvenance) {
+    if (!currentMarker.includes(token)) {
+      fail("IMP036J_T7_ROADMAP_PROVENANCE", `Current ROADMAP marker must record ${token}`);
     }
   }
+  const stateR186Record = extractImp036jStateR186Record(stateText);
+  const stateR186Payload = evaluateImp036jTranche7StateR186Record(stateR186Record);
+  if (!stateR186Payload.ok) fail(stateR186Payload.code, stateR186Payload.message);
   const forbiddenCurrent = [
     "IMP036J_TRANCHE_7: NOT_STARTED",
     "nextGate: IMPLEMENTATION_TRANCHE_7",
@@ -44848,16 +44926,6 @@ function checkImp036jTranche7Pass(roadmap, state, architecture, decision) {
   }
   if (!designText.includes("DESIGN_READINESS = PASS") || !designText.includes("5396061135")) {
     fail("IMP036K_PRESERVED_AT_T7", "IMP-036K Design Readiness artifact must remain PASS with Architect review 5396061135");
-  }
-  const schemaRecord = stateText.split("## 10. STATE-R186 record")[1]?.split("## 10. STATE-R185")[0] ?? "";
-  if (
-    !schemaRecord.includes("SCHEMA_CHANGED: YES") ||
-    !schemaRecord.includes("MIGRATION_CHANGED: YES") ||
-    !schemaRecord.includes("MIGRATION: 0049_imp036j_tranche7_immutable_publication") ||
-    !schemaRecord.includes("NEW_MIGRATION_BEYOND_0049: NO") ||
-    schemaRecord.includes("SCHEMA_CHANGED: NO")
-  ) {
-    fail("IMP036J_T7_SCHEMA", "STATE-R186 must record T7 schema/migration 0049 and must not claim schema-neutral T7");
   }
   note("IMP-036J Tranche 7 PASS is CURRENT; next gate is IMPLEMENTATION_TRANCHE_8; T8 remains not started; IMP-036K Design Readiness remains PASS with Quality/Test Plan unperformed");
 }
