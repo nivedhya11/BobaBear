@@ -430,7 +430,7 @@ adopting PD-2.
 ## IMP-036J transition
 
 IMP-036J is the first current X3 capability transitioning into PD-2. Experience Definition and
-Experience Gate were not performed under PD-1. The current transition is authorized, implementation has started, Tranche 1, Tranche 2, Tranche 3, Tranche 4, Tranche 5, and Tranche 6 have passed, and Tranche 7 remains the next unresolved gate:
+Experience Gate were not performed under PD-1. The current transition is authorized, implementation has started, Tranche 1, Tranche 2, Tranche 3, Tranche 4, Tranche 5, Tranche 6, and Tranche 7 have passed, and Tranche 8 remains the next unresolved gate:
 
 ```text
 PRODUCT_DEFINITION = PD-IMP-036J-DRAFT-6 APPROVED / PASS
@@ -448,7 +448,7 @@ IMPLEMENTATION_AUTHORIZED = YES
 IMPLEMENTATION_STARTED = YES
 IMPLEMENTATION_COMPLETE = NO
 IMP036J_ACCEPTED = NO
-NEXT_GATE = IMPLEMENTATION_TRANCHE_7
+NEXT_GATE = IMPLEMENTATION_TRANCHE_8
 FORMAL_LIFECYCLE = IMPLEMENTATION_IN_PROGRESS
 TRANCHE_1 = PASS
 TRANCHE_2 = PASS
@@ -456,7 +456,8 @@ TRANCHE_3 = PASS
 TRANCHE_4 = PASS
 TRANCHE_5 = PASS
 TRANCHE_6 = PASS
-T7_STARTED = NO
+TRANCHE_7 = PASS
+T7_STARTED = YES
 T8_STARTED = NO
 ```
 
@@ -465,9 +466,9 @@ Experience Definition `XD-IMP-036J-DRAFT-6` is `APPROVED` and Experience Gate is
 Architecture Fit is `PASS` and architecture is locked on `IMP-036J-FIT-CANDIDATE-9`. Design
 Readiness is `PASS`. The Quality/Test Plan and the Measurement/Instrumentation Plan are finalized.
 The Implementation Plan is `PASS` and finalized. Implementation Authorization is `APPROVED`.
-Implementation is authorized and has started. Tranche 1 is PASS. Tranche 2 is PASS. Tranche 3 is PASS. Tranche 4 is PASS. Tranche 5 is PASS. Tranche 6 is PASS. Tranche 7 has not started. Tranche 8 has not started.
+Implementation is authorized and has started. Tranche 1 is PASS. Tranche 2 is PASS. Tranche 3 is PASS. Tranche 4 is PASS. Tranche 5 is PASS. Tranche 6 is PASS. Tranche 7 is PASS. Tranche 8 has not started.
 Implementation is not complete, and IMP-036J is not accepted. The next gate is
-`IMPLEMENTATION_TRANCHE_7`. Formal lifecycle is `IMPLEMENTATION_IN_PROGRESS`. Architecture
+`IMPLEMENTATION_TRANCHE_8`. Formal lifecycle is `IMPLEMENTATION_IN_PROGRESS`. Architecture
 remains locked. Change Risk is recorded in ROADMAP/STATE and is not an AGENTS risk level.
 
 ## IMP-036K Design Readiness PASS
