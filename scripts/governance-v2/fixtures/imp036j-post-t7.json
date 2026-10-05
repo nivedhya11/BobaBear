@@ -24,6 +24,10 @@
   "acceptedThrough": "IMP-036I",
   "currentSlice": "IMP-036J",
   "nextSlice": "IMP-036K",
+  "currentReferences": {
+    "architecture": ["ARCH-R23"],
+    "decisions": ["D-383"]
+  },
   "lastTransition": {
     "type": "TRANCHE_PASS",
     "tranche": "T7",

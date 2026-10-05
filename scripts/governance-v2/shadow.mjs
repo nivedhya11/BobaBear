@@ -14,7 +14,8 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
-import { DELIVERY_RISK_TIER, parseGovernanceMeta } from "./model.mjs";
+import { DELIVERY_RISK_TIER } from "./model.mjs";
+import { CURRENT_AUTHORITY_KIND, parseCurrentGovernanceMeta, validateLiveRoadmapStateAlignment } from "./schema.mjs";
 import { validateCurrentState } from "./invariants.mjs";
 import { loadFixture } from "./load-fixture.mjs";
 
@@ -24,8 +25,9 @@ const DEFAULT_ROOT = path.resolve(SCRIPT_DIR, "../..");
 export function runShadow(root = DEFAULT_ROOT) {
   const roadmapLive = readFileSync(path.join(root, "docs/platform/ROADMAP.md"), "utf8");
   const stateLive = readFileSync(path.join(root, "docs/platform/STATE.md"), "utf8");
-  const roadmapMeta = parseGovernanceMeta(roadmapLive);
-  const stateMeta = parseGovernanceMeta(stateLive);
+  const roadmapMeta = parseCurrentGovernanceMeta(roadmapLive, CURRENT_AUTHORITY_KIND.ROADMAP);
+  const stateMeta = parseCurrentGovernanceMeta(stateLive, CURRENT_AUTHORITY_KIND.STATE);
+  const liveAlignment = validateLiveRoadmapStateAlignment(roadmapMeta, stateMeta);
 
   const fixtureRoadmap = loadFixture(root, "roadmap.json");
   const plan = loadFixture(root, "imp036j-tranche-plan.json");
@@ -45,14 +47,16 @@ export function runShadow(root = DEFAULT_ROOT) {
     NON_AUTHORITATIVE: true,
     liveRoadmapMeta: roadmapMeta.ok ? roadmapMeta.meta : roadmapMeta,
     liveStateMeta: stateMeta.ok ? stateMeta.meta : stateMeta,
+    LIVE_CURRENT_META_VALID: liveAlignment.LIVE_CURRENT_META_VALID,
+    LIVE_ROADMAP_STATE_ALIGNMENT: liveAlignment.LIVE_ROADMAP_STATE_ALIGNMENT,
     STATE_VALID: validation.ok ? "PASS" : "FAIL",
     DERIVED_NEXT_GATE: validation.nextGate,
     REAL_T8_STARTED: derivedT8Started ? "YES" : "NO",
     ALL_REQUIRED_TRANCHES_PASS: validation.allRequiredTranchesPass ? "YES" : "NO",
-    findings: validation.findings,
+    findings: [...validation.findings, ...liveAlignment.findings],
     deliveryRiskTiers: DELIVERY_RISK_TIER,
     prBPrerequisites: prB.mainBranchProtection,
-    ok: validation.ok && roadmapMeta.ok && stateMeta.ok && derivedT8Started === false,
+    ok: validation.ok && liveAlignment.ok && derivedT8Started === false,
   };
 }
 

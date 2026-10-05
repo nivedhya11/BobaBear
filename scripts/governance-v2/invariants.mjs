@@ -7,8 +7,8 @@ import {
   aggregate,
   evaluatePositionLifecycle,
   finding,
-  validateLastTransitionShape,
 } from "./model.mjs";
+import { validateRoadmapSchema, validateStateSchema } from "./schema.mjs";
 import {
   allRequiredTranchesPass,
   dependenciesSatisfied,
@@ -23,15 +23,18 @@ import {
  */
 export function validateCurrentState(state, plan, roadmap) {
   const findings = [];
+  findings.push(...validateRoadmapSchema(roadmap).findings);
+  findings.push(...validateStateSchema(state, plan, roadmap).findings);
+
   const capabilities = capabilityMap(roadmap);
   const sequence = capabilitySequence(roadmap);
 
   findings.push(...graphAndStatusFindings(plan, state));
   findings.push(...passWithoutDependencyFindings(plan, state));
 
-  const currentSlice = state.currentSlice;
-  const nextSlice = state.nextSlice;
-  const acceptedThrough = state.acceptedThrough;
+  const currentSlice = state?.currentSlice;
+  const nextSlice = state?.nextSlice;
+  const acceptedThrough = state?.acceptedThrough;
 
   if (!capabilities.has(currentSlice)) {
     findings.push(finding("CURRENT_SLICE_MISSING", "currentSlice", `currentSlice ${currentSlice} is not in the roadmap`));
@@ -48,7 +51,7 @@ export function validateCurrentState(state, plan, roadmap) {
     findings.push(finding("CURRENT_SLICE_ACCEPTED", "currentSlice", `currentSlice ${currentSlice} is already accepted`));
   }
 
-  const pending = state.pendingAcceptance;
+  const pending = state?.pendingAcceptance;
   if (pending != null && pending !== "NONE") {
     if (!capabilities.has(pending)) {
       findings.push(finding("PENDING_ACCEPTANCE_INVALID", "pendingAcceptance", `pendingAcceptance ${pending} is not in the roadmap`));
@@ -59,14 +62,14 @@ export function validateCurrentState(state, plan, roadmap) {
     }
   }
 
-  const implementationComplete = Boolean(state.implementation?.complete);
-  if (state.accepted === true && !implementationComplete) {
+  const implementationComplete = state?.implementation?.complete === true;
+  if (state?.accepted === true && !implementationComplete) {
     findings.push(finding("ACCEPTED_BEFORE_COMPLETE", "accepted", "accepted requires implementationComplete"));
   }
-  if (state.founderUat === FOUNDER_UAT.PASS && !implementationComplete) {
+  if (state?.founderUat === FOUNDER_UAT.PASS && !implementationComplete) {
     findings.push(finding("UAT_BEFORE_COMPLETE", "founderUat", "founderUat PASS requires implementationComplete"));
   }
-  if (implementationComplete && !allRequiredTranchesPass(plan, state.implementation?.trancheStatuses)) {
+  if (implementationComplete && Array.isArray(plan?.tranches) && !allRequiredTranchesPass(plan, state.implementation?.trancheStatuses)) {
     findings.push(
       finding(
         "COMPLETE_WITH_REQUIRED_TRANCHE_MISSING",
@@ -76,17 +79,17 @@ export function validateCurrentState(state, plan, roadmap) {
     );
   }
 
-  const position = evaluatePositionLifecycle(roadmap, {
-    ...state,
-    pendingAcceptance: pending ?? "NONE",
-  });
-  if (position.ok === false) {
-    findings.push(finding(position.code, "lifecycle", position.message));
+  if (roadmap && state && Array.isArray(roadmap.capabilities)) {
+    const position = evaluatePositionLifecycle(roadmap, {
+      ...state,
+      pendingAcceptance: pending ?? "NONE",
+    });
+    if (position.ok === false) {
+      findings.push(finding(position.code, "lifecycle", position.message));
+    }
   }
 
-  findings.push(...validateLastTransitionShape(state.lastTransition, (plan.tranches ?? []).map((tranche) => tranche.id)).findings);
-
-  for (const hold of roadmap.holds ?? []) {
+  for (const hold of roadmap?.holds ?? []) {
     if (hold?.capability && !capabilities.has(hold.capability)) {
       findings.push(finding("UNKNOWN_HOLD", "roadmap.holds", `hold ${hold.capability} is not in the roadmap`));
     }
@@ -98,11 +101,13 @@ export function validateCurrentState(state, plan, roadmap) {
     }
   }
 
+  const statuses = state?.implementation?.trancheStatuses ?? {};
+  const usablePlan = Array.isArray(plan?.tranches) ? plan : { tranches: [] };
   return {
     ...aggregate(findings),
-    nextGate: deriveNextGate(plan, state.implementation?.trancheStatuses ?? {}),
-    allRequiredTranchesPass: allRequiredTranchesPass(plan, state.implementation?.trancheStatuses ?? {}),
-    derivedStarted: derivedStarted(state.implementation?.trancheStatuses ?? {}),
+    nextGate: deriveNextGate(usablePlan, statuses),
+    allRequiredTranchesPass: allRequiredTranchesPass(usablePlan, statuses),
+    derivedStarted: derivedStarted(statuses),
   };
 }
 
@@ -115,7 +120,7 @@ export function derivedStarted(statuses) {
 }
 
 function graphAndStatusFindings(plan, state) {
-  return validateTrancheStatuses(plan, state.implementation?.trancheStatuses ?? {}).findings;
+  return validateTrancheStatuses(plan ?? {}, state?.implementation?.trancheStatuses ?? {}).findings;
 }
 
 function passWithoutDependencyFindings(plan, state) {
@@ -137,13 +142,19 @@ function passWithoutDependencyFindings(plan, state) {
 }
 
 function capabilityMap(roadmap) {
-  return new Map((roadmap.capabilities ?? []).map((capability) => [capability.id, capability]));
+  const capabilities = Array.isArray(roadmap?.capabilities) ? roadmap.capabilities : [];
+  return new Map(capabilities.filter((capability) => capability?.id).map((capability) => [capability.id, capability]));
 }
 
 function capabilitySequence(roadmap) {
-  return new Map((roadmap.capabilities ?? []).map((capability, index) => [capability.id, capability.sequence ?? index]));
+  const capabilities = Array.isArray(roadmap?.capabilities) ? roadmap.capabilities : [];
+  return new Map(
+    capabilities
+      .filter((capability) => capability?.id)
+      .map((capability, index) => [capability.id, capability.sequence ?? index]),
+  );
 }
 
 function isHeldException(roadmap, capabilityId) {
-  return (roadmap.holds ?? []).some((hold) => hold.capability === capabilityId);
+  return (Array.isArray(roadmap?.holds) ? roadmap.holds : []).some((hold) => hold.capability === capabilityId);
 }

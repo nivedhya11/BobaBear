@@ -45,33 +45,6 @@ export function aggregate(findings) {
 }
 
 /**
- * Parse CURRENT governance-meta JSON only. Does not search historical prose.
- * @param {string} text
- * @returns {{ ok: true, meta: Record<string, unknown> } | { ok: false, code: string, path: string, message: string }}
- */
-export function parseGovernanceMeta(text) {
-  const start = String(text ?? "").indexOf("<!-- governance-meta");
-  if (start < 0) {
-    return finding("GOVERNANCE_META_MISSING", "governance-meta", "governance-meta block is missing");
-  }
-  const open = text.indexOf("{", start);
-  const closeComment = text.indexOf("-->", start);
-  if (open < 0 || closeComment < 0 || open > closeComment) {
-    return finding("GOVERNANCE_META_INVALID", "governance-meta", "governance-meta JSON is not bounded");
-  }
-  const jsonText = text.slice(open, closeComment).trim();
-  try {
-    return { ok: true, meta: JSON.parse(jsonText) };
-  } catch (error) {
-    return finding(
-      "GOVERNANCE_META_INVALID",
-      "governance-meta",
-      `governance-meta JSON is invalid: ${error instanceof Error ? error.message : String(error)}`,
-    );
-  }
-}
-
-/**
  * @param {unknown} lastTransition
  * @param {Iterable<string>} trancheIds
  */

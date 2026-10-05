@@ -26,8 +26,10 @@ export function validateTranchePlan(plan) {
       findings.push(finding("DUPLICATE_TRANCHE_ID", `${path}.id`, `duplicate tranche id ${tranche.id}`));
     }
     ids.add(tranche.id);
-    if (!Number.isInteger(tranche.order)) {
-      findings.push(finding("INVALID_TRANCHE_ORDER", `${path}.order`, `tranche ${tranche.id} is missing declared order`));
+    if (!Number.isInteger(tranche.order) || tranche.order < 1) {
+      findings.push(
+        finding("INVALID_TRANCHE_ORDER", `${path}.order`, `tranche ${tranche.id} must declare a unique positive integer order`),
+      );
     }
     if (tranche.required !== true && tranche.required !== false) {
       findings.push(finding("INVALID_TRANCHE_REQUIRED", `${path}.required`, `tranche ${tranche.id} must be required or optional`));
@@ -37,10 +39,49 @@ export function validateTranchePlan(plan) {
     }
   }
 
+  const orders = new Map();
+  for (const [index, tranche] of tranches.entries()) {
+    if (!Number.isInteger(tranche?.order) || tranche.order < 1) continue;
+    const prior = orders.get(tranche.order);
+    if (prior != null) {
+      findings.push(
+        finding(
+          "DUPLICATE_TRANCHE_ORDER",
+          `tranches[${index}].order`,
+          `duplicate declared order ${tranche.order} for ${prior} and ${tranche.id}`,
+        ),
+      );
+    } else {
+      orders.set(tranche.order, tranche.id);
+    }
+  }
+
   const known = new Set(tranches.map((tranche) => tranche.id).filter(Boolean));
   for (const tranche of tranches) {
     if (!Array.isArray(tranche?.dependencies)) continue;
+    const seenDeps = new Set();
     for (const dependency of tranche.dependencies) {
+      if (typeof dependency !== "string" || dependency.length === 0) {
+        findings.push(
+          finding(
+            "INVALID_DEPENDENCY",
+            `tranches.${tranche.id}.dependencies`,
+            `tranche ${tranche.id} has a malformed dependency`,
+          ),
+        );
+        continue;
+      }
+      if (seenDeps.has(dependency)) {
+        findings.push(
+          finding(
+            "DUPLICATE_DEPENDENCY",
+            `tranches.${tranche.id}.dependencies`,
+            `tranche ${tranche.id} declares duplicate dependency ${dependency}`,
+          ),
+        );
+        continue;
+      }
+      seenDeps.add(dependency);
       if (dependency === tranche.id) {
         findings.push(finding("SELF_DEPENDENCY", `tranches.${tranche.id}.dependencies`, `tranche ${tranche.id} depends on itself`));
       } else if (!known.has(dependency)) {

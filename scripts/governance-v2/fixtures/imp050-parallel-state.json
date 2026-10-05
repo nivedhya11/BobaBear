@@ -17,5 +17,9 @@
   "pendingAcceptance": "NONE",
   "acceptedThrough": "IMP-036I",
   "currentSlice": "IMP-050",
-  "nextSlice": "NONE"
+  "nextSlice": "NONE",
+  "currentReferences": {
+    "architecture": ["ARCH-SYNTH-050"],
+    "decisions": ["D-SYNTH-050"]
+  }
 }

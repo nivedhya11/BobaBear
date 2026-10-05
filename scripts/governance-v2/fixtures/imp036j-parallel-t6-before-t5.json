@@ -22,5 +22,9 @@
   "pendingAcceptance": "NONE",
   "acceptedThrough": "IMP-036I",
   "currentSlice": "IMP-036J",
-  "nextSlice": "IMP-036K"
+  "nextSlice": "IMP-036K",
+  "currentReferences": {
+    "architecture": ["ARCH-R23"],
+    "decisions": ["D-383"]
+  }
 }

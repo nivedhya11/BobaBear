@@ -5,6 +5,10 @@
   "currentSlice": "IMP-036J",
   "nextSlice": "IMP-036K",
   "gtmBoundary": "IMP-040",
+  "referenceIndex": {
+    "architectures": ["ARCH-R23", "ARCH-SYNTH-050"],
+    "decisions": ["D-383", "D-SYNTH-050"]
+  },
   "holds": [
     { "capability": "IMP-037", "reason": "PROGRAM_PAUSE" },
     { "capability": "IMP-038", "reason": "PROGRAM_PAUSE" }

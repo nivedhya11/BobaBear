@@ -210,11 +210,128 @@ describe("GOV-2 generic engine", () => {
     const result = validateTransition(base, head, plan036j(), roadmap());
     assert.ok(codes(result).includes("ACCEPTED_THROUGH_REGRESSION") || codes(result).includes("SEQUENCE_REVERSED"));
   });
+
+  it("rejects core state schema corruption with generic codes", () => {
+    const missingPhase = structuredState(postT7());
+    delete missingPhase.lifecyclePhase;
+    assert.ok(codes(validateCurrentState(missingPhase, plan036j(), roadmap())).includes("MISSING_LIFECYCLE_PHASE"));
+
+    const invalidPhase = structuredState(postT7());
+    invalidPhase.lifecyclePhase = "BROKEN";
+    assert.ok(codes(validateCurrentState(invalidPhase, plan036j(), roadmap())).includes("INVALID_LIFECYCLE_PHASE"));
+
+    const missingAuthorized = structuredState(postT7());
+    delete missingAuthorized.implementation.authorized;
+    assert.ok(codes(validateCurrentState(missingAuthorized, plan036j(), roadmap())).includes("MISSING_IMPLEMENTATION_AUTHORIZED"));
+
+    const stringAuthorized = structuredState(postT7());
+    stringAuthorized.implementation.authorized = "true";
+    assert.ok(codes(validateCurrentState(stringAuthorized, plan036j(), roadmap())).includes("INVALID_IMPLEMENTATION_AUTHORIZED"));
+
+    const stringComplete = structuredState(postT7());
+    stringComplete.implementation.complete = "false";
+    assert.ok(codes(validateCurrentState(stringComplete, plan036j(), roadmap())).includes("INVALID_IMPLEMENTATION_COMPLETE"));
+
+    const missingUat = structuredState(postT7());
+    delete missingUat.founderUat;
+    assert.ok(codes(validateCurrentState(missingUat, plan036j(), roadmap())).includes("MISSING_FOUNDER_UAT"));
+
+    const invalidUat = structuredState(postT7());
+    invalidUat.founderUat = "BANANA";
+    assert.ok(codes(validateCurrentState(invalidUat, plan036j(), roadmap())).includes("INVALID_FOUNDER_UAT"));
+
+    const stringAccepted = structuredState(postT7());
+    stringAccepted.accepted = "yes";
+    assert.ok(codes(validateCurrentState(stringAccepted, plan036j(), roadmap())).includes("INVALID_ACCEPTED"));
+
+    const sliceMismatch = structuredState(postT7());
+    sliceMismatch.slice = "IMP-050";
+    sliceMismatch.currentSlice = "IMP-036J";
+    assert.ok(codes(validateCurrentState(sliceMismatch, plan036j(), roadmap())).includes("SLICE_CURRENT_SLICE_MISMATCH"));
+  });
+
+  it("rejects plan/state slice mismatch even when tranche ids match", () => {
+    const mismatchedPlan = structuredState(plan036j());
+    mismatchedPlan.slice = "IMP-050";
+    const result = validateCurrentState(postT7(), mismatchedPlan, roadmap());
+    assert.equal(result.ok, false);
+    assert.ok(codes(result).includes("TRANCHE_PLAN_SLICE_MISMATCH"));
+  });
+
+  it("rejects duplicate roadmap capability ids and sequences without Map overwrite", () => {
+    const duplicateId = structuredState(roadmap());
+    duplicateId.capabilities.push({
+      id: "IMP-036I",
+      sequence: 99,
+      accepted: false,
+      implementationComplete: false,
+    });
+    const idResult = validateCurrentState(postT7(), plan036j(), duplicateId);
+    assert.equal(idResult.ok, false);
+    assert.ok(codes(idResult).includes("DUPLICATE_CAPABILITY_ID"));
+
+    const duplicateSequence = structuredState(roadmap());
+    duplicateSequence.capabilities.push({
+      id: "IMP-099",
+      sequence: 1,
+      accepted: false,
+      implementationComplete: false,
+    });
+    const sequenceResult = validateCurrentState(postT7(), plan036j(), duplicateSequence);
+    assert.equal(sequenceResult.ok, false);
+    assert.ok(codes(sequenceResult).includes("DUPLICATE_CAPABILITY_SEQUENCE"));
+  });
+
+  it("rejects duplicate declared tranche order instead of lexical fallback", () => {
+    const duplicateOrder = validateTranchePlan({
+      slice: "IMP-036J",
+      tranches: [
+        { id: "A", order: 2, required: true, dependencies: [] },
+        { id: "B", order: 2, required: true, dependencies: [] },
+      ],
+    });
+    assert.equal(duplicateOrder.ok, false);
+    assert.ok(codes(duplicateOrder).includes("DUPLICATE_TRANCHE_ORDER"));
+
+    const duplicateDep = validateTranchePlan({
+      slice: "IMP-036J",
+      tranches: [
+        { id: "A", order: 1, required: true, dependencies: [] },
+        { id: "B", order: 2, required: true, dependencies: ["A", "A"] },
+      ],
+    });
+    assert.ok(codes(duplicateDep).includes("DUPLICATE_DEPENDENCY"));
+  });
+
+  it("rejects unknown architecture and decision references generically", () => {
+    const unknownArch = structuredState(postT7());
+    unknownArch.currentReferences.architecture = ["ARCH-UNKNOWN"];
+    assert.ok(codes(validateCurrentState(unknownArch, plan036j(), roadmap())).includes("UNKNOWN_ARCHITECTURE_REFERENCE"));
+
+    const unknownDecision = structuredState(postT7());
+    unknownDecision.currentReferences.decisions = ["D-UNKNOWN"];
+    assert.ok(codes(validateCurrentState(unknownDecision, plan036j(), roadmap())).includes("UNKNOWN_DECISION_REFERENCE"));
+  });
+
+  it("validates synthetic references without encoding specific live ids", () => {
+    const syntheticRoadmap = structuredState(roadmap());
+    syntheticRoadmap.referenceIndex = {
+      architectures: ["ARCH-ZZZ"],
+      decisions: ["D-ZZZ"],
+    };
+    const syntheticState = structuredState(postT7());
+    syntheticState.currentReferences = {
+      architecture: ["ARCH-ZZZ"],
+      decisions: ["D-ZZZ"],
+    };
+    const result = validateCurrentState(syntheticState, plan036j(), syntheticRoadmap);
+    assert.equal(result.ok, true, JSON.stringify(result.findings, null, 2));
+  });
 });
 
 describe("GOV-2 source hygiene", () => {
   it("keeps generic modules free of checkpoint and capability special cases", () => {
-    const files = ["model.mjs", "tranche-graph.mjs", "invariants.mjs", "transition.mjs"];
+    const files = ["model.mjs", "schema.mjs", "tranche-graph.mjs", "invariants.mjs", "transition.mjs"];
     for (const name of files) {
       const source = readFileSync(path.join(root, "scripts/governance-v2", name), "utf8");
       assert.doesNotMatch(source, /IMP-036J/);
