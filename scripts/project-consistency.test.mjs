@@ -117,6 +117,7 @@ import {
   evaluateImp036jExperienceFitPointer,
   evaluateImp036jTestingPointer,
   evaluateImp036jTranche7CurrentStatePayload,
+  evaluateImp036jTranche7CurrentRoadmapFence,
   evaluateImp036kGateCandidateProvenance,
   evaluateImp036kDesignReadinessPlanFinalizedFlags,
   evaluateImp036jProductDeliveryTransition,
@@ -6776,6 +6777,12 @@ describe("canonical authority history compression", () => {
       assert.notEqual(droppedCurrentT7, stateSection2);
       assert.equal(evaluateImp036jTranche7CurrentStatePayload(droppedCurrentT7).ok, false);
       assert.equal(evaluateImp036jTranche7CurrentStatePayload(droppedCurrentT7).code, "IMP036J_T7_CURRENT_STATE");
+      const currentFence = currentMarker.split("```text").pop()?.split("```")[0] ?? "";
+      assert.deepEqual(evaluateImp036jTranche7CurrentRoadmapFence(currentFence), { ok: true });
+      const droppedFenceT7 = currentFence.replaceAll("IMP036J_TRANCHE_7: PASS", "IMP036J_TRANCHE_7: OMITTED");
+      assert.notEqual(droppedFenceT7, currentFence);
+      assert.equal(evaluateImp036jTranche7CurrentRoadmapFence(droppedFenceT7).ok, false);
+      assert.equal(evaluateImp036jTranche7CurrentRoadmapFence(droppedFenceT7).code, "IMP036J_T7_CURRENT_FENCE");
       assert.match(currentMarker, /IMP036K_DESIGN_READINESS:\s*PASS/);
       assert.match(currentMarker, /IMP036K_NEXT_GATE:\s*QUALITY \/ TEST PLAN FINALIZATION/);
       assert.match(currentMarker, /IMP036K_QUALITY_TEST_PLAN_FINALIZED:\s*NO/);
@@ -19314,6 +19321,17 @@ describe("IMP-036J architecture fit remediation candidate 9", () => {
     assert.equal(evaluateImp036jTestingPointer(complete).code, "IMP036J_TESTING_LIFECYCLE");
     assert.equal(evaluateImp036jTestingPointer(accepted).ok, false);
     assert.equal(evaluateImp036jTestingPointer(accepted).code, "IMP036J_TESTING_LIFECYCLE");
+  });
+  it("rejects claiming implementation NOT_AUTHORIZED / NOT_STARTED in the current TESTING.md IMP-036J summary", () => {
+    const unauthorized = testing.replace(
+      "implementation `AUTHORIZED` / `STARTED`",
+      "implementation `NOT_AUTHORIZED` / `NOT_STARTED`",
+    );
+    assert.notEqual(unauthorized, testing);
+    assert.match(unauthorized, /CURRENT tip GTM-R188 \/ STATE-R186/);
+    const result = evaluateImp036jTestingPointer(unauthorized);
+    assert.equal(result.ok, false);
+    assert.equal(result.code, "IMP036J_TESTING_LIFECYCLE");
   });
 });
 

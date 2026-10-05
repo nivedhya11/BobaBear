@@ -41367,6 +41367,7 @@ export function evaluateImp036jTestingPointer(testingText) {
     "next gate `IMPLEMENTATION_TRANCHE_8`",
     "Tranche 7 `PASS`",
     "T8 not started",
+    "implementation `AUTHORIZED` / `STARTED`",
     "`IMP036J_IMPLEMENTATION_COMPLETE: NO`",
     "`FOUNDER_UAT: NOT_PERFORMED`",
     "`IMP036J_ACCEPTED: NO`",
@@ -41391,13 +41392,15 @@ export function evaluateImp036jTestingPointer(testingText) {
     /IMP036J_NEXT_GATE(?::|\s*=)\s*IMPLEMENTATION_TRANCHE_7/.test(currentJ) ||
     /T8_STARTED(?::|\s*=)\s*YES/.test(currentJ) ||
     (/\bT8 started\b/.test(currentJ) && !/\bT8 not started\b/.test(currentJ)) ||
+    /implementation `NOT_AUTHORIZED`/.test(currentJ) ||
+    /implementation `AUTHORIZED` \/ `NOT_STARTED`/.test(currentJ) ||
     /IMP036J_IMPLEMENTATION_COMPLETE(?::|\s*=)\s*YES/.test(currentJ) ||
     /IMP036J_ACCEPTED(?::|\s*=)\s*YES/.test(currentJ)
   ) {
     return {
       ok: false,
       code: "IMP036J_TESTING_LIFECYCLE",
-      message: "TESTING.md current IMP-036J summary must not regress to Tranche 7 as next gate, T8 started, implementation complete, or IMP-036J accepted",
+      message: "TESTING.md current IMP-036J summary must not regress to Tranche 7 as next gate, T8 started, unauthorized/unstarted implementation, implementation complete, or IMP-036J accepted",
     };
   }
   return { ok: true };
@@ -44590,6 +44593,36 @@ export function evaluateImp036jTranche7CurrentStatePayload(stateSection2) {
 }
 
 /**
+ * CURRENT ROADMAP machine-readable fence for IMP-036J Tranche 7 PASS.
+ * Narrative outside the fence may repeat tokens; the live fence must still contain them.
+ * @param {string} currentFence
+ * @returns {{ ok: true } | { ok: false, code: string, message: string }}
+ */
+export function evaluateImp036jTranche7CurrentRoadmapFence(currentFence) {
+  const source = String(currentFence ?? "");
+  const required = [
+    "IMP036J_TRANCHE_7: PASS",
+    "T7_STARTED: YES",
+    "T8_STARTED: NO",
+    "IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_8",
+    "nextGate: IMPLEMENTATION_TRANCHE_8",
+    "IMP036J_IMPLEMENTATION_COMPLETE: NO",
+    "IMP036J_ACCEPTED: NO",
+    "FOUNDER_UAT: NOT_PERFORMED",
+  ];
+  for (const token of required) {
+    if (!source.includes(token)) {
+      return {
+        ok: false,
+        code: "IMP036J_T7_CURRENT_FENCE",
+        message: `Current ROADMAP fence must record ${token}`,
+      };
+    }
+  }
+  return { ok: true };
+}
+
+/**
  * CURRENT checkpoint: IMP-036J Tranche 7 MEASUREMENT_REPORTING PASS (GTM-R188 / STATE-R186).
  * T1–T7 are PASS. Next gate is IMPLEMENTATION_TRANCHE_8. T8 remains not started.
  * Historical GTM-R187 / STATE-R185 remains Tranche 5 PASS with T7 not started.
@@ -44630,6 +44663,8 @@ function checkImp036jTranche7Pass(roadmap, state, architecture, decision) {
   }
   const currentStatePayload = evaluateImp036jTranche7CurrentStatePayload(stateSection2);
   if (!currentStatePayload.ok) fail(currentStatePayload.code, currentStatePayload.message);
+  const currentFencePayload = evaluateImp036jTranche7CurrentRoadmapFence(currentFence);
+  if (!currentFencePayload.ok) fail(currentFencePayload.code, currentFencePayload.message);
   const passed = [
     "IMP-036J: ARCHITECTURE_LOCKED",
     "IMP036J_IMPLEMENTATION_AUTHORIZATION: APPROVED",
