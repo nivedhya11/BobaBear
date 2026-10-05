@@ -19569,6 +19569,22 @@ describe("IMP-036J Tranche 7 STATE-R186 structured provenance", () => {
     assert.match(extractImp036jStateR186Record(mutated), /CURRENT_SOURCE_T7_NAMED_PROOF: PASS/);
   });
 
+  it("fails when the STATE-R186 fence delimiters are removed while narrative still has the tokens", () => {
+    const heading = "## 10. STATE-R186 record";
+    const start = state.indexOf(heading);
+    const end = state.indexOf("## 10. STATE-R185", start);
+    const section = state.slice(start, end);
+    const unfenced = section.replace("```text\n", "").replace("\n```\n", "\n");
+    assert.notEqual(unfenced, section);
+    const mutated = state.slice(0, start) + unfenced + state.slice(end);
+    assert.equal(extractImp036jStateR186Record(mutated), "");
+    assert.match(mutated, /IMPLEMENTATION_REVIEWED_HEAD: 0bd2734c51b88e5f9e6025389f23920e7a3c805d/);
+    const result = evaluateImp036jTranche7StateR186Record(extractImp036jStateR186Record(mutated));
+    assert.equal(result.ok, false);
+    assert.equal(result.code, "IMP036J_T7_R186_RECORD");
+    assert.deepEqual(evaluateImp036jTranche7CurrentStatePayload(mutated.split("## 2. Current Work Position")[1]?.split("\n## ")[0] ?? ""), { ok: true });
+  });
+
   it("still passes if only the STATE-R186 narrative SHA is removed", () => {
     const heading = "## 10. STATE-R186 record";
     const start = state.indexOf(heading);

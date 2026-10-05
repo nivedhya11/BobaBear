@@ -44636,8 +44636,11 @@ export function evaluateImp036jTranche7CurrentRoadmapFence(currentFence) {
  */
 export function extractImp036jStateR186Record(stateText) {
   const section = String(stateText ?? "").split("## 10. STATE-R186 record")[1]?.split("## 10. STATE-R185")[0] ?? "";
-  const fenced = section.split("```text")[1]?.split("```")[0];
-  return typeof fenced === "string" ? fenced : section;
+  const afterOpen = section.split("```text")[1];
+  if (typeof afterOpen !== "string") return "";
+  const close = afterOpen.indexOf("```");
+  if (close < 0) return "";
+  return afterOpen.slice(0, close);
 }
 
 /**
