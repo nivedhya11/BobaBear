@@ -113,6 +113,34 @@ describe("GOV-2 generic engine", () => {
     assert.ok(codes(result).includes("LAST_TRANSITION_TRANCHE_MISMATCH"));
   });
 
+  it("rejects rewriting accepted ledger identity or relaxing a required tranche", () => {
+    const base = postT7();
+    const renamed = structuredState(roadmap());
+    renamed.capabilities = renamed.capabilities.map((capability) =>
+      capability.id === "IMP-036I" ? { ...capability, id: "IMP-999" } : capability,
+    );
+    const renamedResult = validateTransition(base, base, plan036j(), renamed, plan036j(), roadmap());
+    assert.equal(renamedResult.ok, false);
+    assert.ok(codes(renamedResult).includes("ACCEPTED_CAPABILITY_REMOVED"), JSON.stringify(renamedResult.findings));
+
+    const relaxed = structuredState(plan036j());
+    relaxed.tranches = relaxed.tranches.map((tranche) =>
+      tranche.id === "T8" ? { ...tranche, required: false } : tranche,
+    );
+    const relaxedResult = validateTransition(base, base, relaxed, roadmap(), plan036j(), roadmap());
+    assert.equal(relaxedResult.ok, false);
+    assert.ok(codes(relaxedResult).includes("REQUIRED_TRANCHE_RELAXED"), JSON.stringify(relaxedResult.findings));
+  });
+
+  it("rejects deleting lastTransition evidence without a new tranche PASS", () => {
+    const base = postT7();
+    const head = structuredState(base);
+    head.lastTransition = { type: "TRANCHE_PASS", tranche: "T7" };
+    const result = validateTransition(base, head, plan036j(), roadmap());
+    assert.equal(result.ok, false);
+    assert.ok(codes(result).includes("INVALID_LAST_TRANSITION"));
+  });
+
   it("rejects malformed lastTransition evidence when a tranche newly PASSes", () => {
     const base = postT7();
     const cases = [

@@ -378,8 +378,15 @@ function validateGov2ToGov2Transition({ baseSha, headSha, baseRoadmap, baseState
   findings.push(...baseCurrent.findings.map((item) => ({ ...item, path: `base.${item.path}` })));
   findings.push(...headCurrent.findings.map((item) => ({ ...item, path: `head.${item.path}` })));
 
-  if (baseLoaded.ok && headLoaded.ok && baseLoaded.state && headLoaded.state && headLoaded.plan && headLoaded.roadmap) {
-    const transition = validateTransition(baseLoaded.state, headLoaded.state, headLoaded.plan, headLoaded.roadmap);
+  if (baseLoaded.ok && headLoaded.ok && baseLoaded.state && headLoaded.state && headLoaded.plan && headLoaded.roadmap && baseLoaded.plan && baseLoaded.roadmap) {
+    const transition = validateTransition(
+      baseLoaded.state,
+      headLoaded.state,
+      headLoaded.plan,
+      headLoaded.roadmap,
+      baseLoaded.plan,
+      baseLoaded.roadmap,
+    );
     findings.push(...transition.findings);
     const material = findings.filter((item) => item && item.ok === false);
     return {

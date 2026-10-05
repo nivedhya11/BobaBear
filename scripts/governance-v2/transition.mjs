@@ -18,8 +18,10 @@ import { dependenciesSatisfied, deriveNextGate, allRequiredTranchesPass, tranche
  * @param {object} headState
  * @param {object} tranchePlan
  * @param {object} roadmap
+ * @param {object} [basePlan]
+ * @param {object} [baseRoadmap]
  */
-export function validateTransition(baseState, headState, tranchePlan, roadmap) {
+export function validateTransition(baseState, headState, tranchePlan, roadmap, basePlan = tranchePlan, baseRoadmap = roadmap) {
   const shapeFindings = [];
   if (baseState == null || typeof baseState !== "object" || Array.isArray(baseState)) {
     shapeFindings.push(finding("INVALID_STATE", "base", "base state must be an object"));
@@ -42,10 +44,12 @@ export function validateTransition(baseState, headState, tranchePlan, roadmap) {
     };
   }
 
-  const base = validateCurrentState(baseState, tranchePlan, roadmap);
+  const base = validateCurrentState(baseState, basePlan, baseRoadmap);
   const head = validateCurrentState(headState, tranchePlan, roadmap);
   const findings = [...base.findings.map(prefix("base")), ...head.findings.map(prefix("head"))];
 
+  findings.push(...roadmapLedgerTransitionFindings(baseRoadmap, roadmap));
+  findings.push(...tranchePlanTransitionFindings(basePlan, tranchePlan));
   findings.push(...sequenceRegressionFindings(baseState, headState, roadmap));
   findings.push(...trancheTransitionFindings(baseState, headState, tranchePlan));
 
@@ -60,6 +64,70 @@ export function validateTransition(baseState, headState, tranchePlan, roadmap) {
 
 function prefix(scope) {
   return (item) => ({ ...item, path: `${scope}.${item.path}` });
+}
+
+function capabilityById(roadmap) {
+  const capabilities = Array.isArray(roadmap?.capabilities) ? roadmap.capabilities : [];
+  return new Map(
+    capabilities
+      .filter((capability) => capability && typeof capability === "object" && typeof capability.id === "string")
+      .map((capability) => [capability.id, capability]),
+  );
+}
+
+export function roadmapLedgerTransitionFindings(baseRoadmap, headRoadmap) {
+  const findings = [];
+  const base = capabilityById(baseRoadmap);
+  const head = capabilityById(headRoadmap);
+  for (const [id, capability] of base) {
+    if (capability.accepted !== true) continue;
+    const next = head.get(id);
+    if (!next) {
+      findings.push(finding("ACCEPTED_CAPABILITY_REMOVED", `capabilities.${id}`, `accepted capability ${id} cannot be removed or renamed`));
+      continue;
+    }
+    if (next.accepted !== true) {
+      findings.push(finding("ACCEPTED_HISTORY_REWRITTEN", `capabilities.${id}.accepted`, `accepted capability ${id} cannot be un-accepted`));
+    }
+    if (next.implementationComplete !== true) {
+      findings.push(finding("ACCEPTED_INCOMPLETE", `capabilities.${id}.implementationComplete`, `accepted capability ${id} must remain implementation-complete`));
+    }
+    if (capability.sequence != null && next.sequence !== capability.sequence) {
+      findings.push(
+        finding("ACCEPTED_SEQUENCE_CHANGED", `capabilities.${id}.sequence`, `accepted capability ${id} cannot change sequence`),
+      );
+    }
+  }
+  return findings;
+}
+
+export function tranchePlanTransitionFindings(basePlan, headPlan) {
+  const findings = [];
+  const base = new Map(trancheList(basePlan).filter((tranche) => tranche?.id).map((tranche) => [tranche.id, tranche]));
+  const head = new Map(trancheList(headPlan).filter((tranche) => tranche?.id).map((tranche) => [tranche.id, tranche]));
+  for (const [id, tranche] of base) {
+    const next = head.get(id);
+    if (!next) {
+      findings.push(finding("TRANCHE_REMOVED", `tranches.${id}`, `tranche ${id} cannot be removed`));
+      continue;
+    }
+    if (tranche.required === true && next.required !== true) {
+      findings.push(finding("REQUIRED_TRANCHE_RELAXED", `tranches.${id}.required`, `required tranche ${id} cannot become optional`));
+    }
+    if (tranche.order != null && next.order !== tranche.order) {
+      findings.push(finding("TRANCHE_ORDER_CHANGED", `tranches.${id}.order`, `tranche ${id} cannot change declared order`));
+    }
+    const baseDeps = new Set(Array.isArray(tranche.dependencies) ? tranche.dependencies : []);
+    const headDeps = new Set(Array.isArray(next.dependencies) ? next.dependencies : []);
+    for (const dep of baseDeps) {
+      if (!headDeps.has(dep)) {
+        findings.push(
+          finding("TRANCHE_DEPENDENCY_REMOVED", `tranches.${id}.dependencies`, `tranche ${id} cannot drop dependency ${dep}`),
+        );
+      }
+    }
+  }
+  return findings;
 }
 
 function trancheTransitionFindings(baseState, headState, plan) {

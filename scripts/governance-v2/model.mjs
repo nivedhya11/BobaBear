@@ -66,6 +66,17 @@ export function validateLastTransitionShape(lastTransition, trancheIds) {
       finding("INVALID_LAST_TRANSITION", "lastTransition.tranche", `lastTransition.tranche ${JSON.stringify(lastTransition.tranche)} is not in the tranche plan`),
     );
   }
+  if (type === LAST_TRANSITION_TYPE.TRANCHE_PASS) {
+    if (!isPositiveSourcePr(lastTransition.sourcePr) && !isValidMergeCommit(lastTransition.mergeCommit)) {
+      findings.push(
+        finding(
+          "INVALID_LAST_TRANSITION",
+          "lastTransition",
+          "TRANCHE_PASS requires a positive integer sourcePr or a valid mergeCommit",
+        ),
+      );
+    }
+  }
   if (lastTransition.sourcePr != null && !isPositiveSourcePr(lastTransition.sourcePr)) {
     findings.push(
       finding("INVALID_LAST_TRANSITION", "lastTransition.sourcePr", "sourcePr must be a positive integer pull-request number"),
