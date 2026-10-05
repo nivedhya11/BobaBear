@@ -1,0 +1,38 @@
+{
+  "TEST_ONLY": true,
+  "NON_AUTHORITATIVE": true,
+  "REAL_T8_STARTED": false,
+  "REAL_STATE_CHANGED": false,
+  "slice": "IMP-036J",
+  "lifecyclePhase": "IMPLEMENTATION_IN_PROGRESS",
+  "implementation": {
+    "authorized": true,
+    "complete": false,
+    "trancheStatuses": {
+      "T1": "PASS",
+      "T2": "PASS",
+      "T3": "PASS",
+      "T4": "PASS",
+      "T5": "PASS",
+      "T6": "PASS",
+      "T7": "PASS",
+      "T8": "PASS"
+    }
+  },
+  "founderUat": "NOT_PERFORMED",
+  "accepted": false,
+  "pendingAcceptance": "NONE",
+  "acceptedThrough": "IMP-036I",
+  "currentSlice": "IMP-036J",
+  "nextSlice": "IMP-036K",
+  "currentReferences": {
+    "architecture": ["ARCH-R23"],
+    "decisions": ["D-383"]
+  },
+  "lastTransition": {
+    "type": "TRANCHE_PASS",
+    "tranche": "T8",
+    "sourcePr": 0,
+    "mergeCommit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  }
+}

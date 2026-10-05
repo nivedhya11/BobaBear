@@ -1,0 +1,13 @@
+{
+  "TEST_ONLY": true,
+  "NON_AUTHORITATIVE": true,
+  "note": "Human repository-administration prerequisite for GOV-2 PR B. Not an authority and not enforceable in source.",
+  "mainBranchProtection": {
+    "force_push": "prohibited",
+    "deletion": "prohibited",
+    "pr_based_integration": "required",
+    "required_checks_and_review": "enabled",
+    "currentMainProtected": false,
+    "workaroundInSource": false
+  }
+}

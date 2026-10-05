@@ -43,6 +43,9 @@ jobs:
       - name: Project consistency
         run: npm run project:consistency
 
+      - name: Governance v2 shadow
+        run: npm run governance:v2:test && npm run governance:v2:shadow
+
       - name: Governance fingerprint
         run: npm run governance:fingerprint
 

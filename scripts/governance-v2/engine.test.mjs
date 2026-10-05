@@ -1,0 +1,433 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { describe, it } from "node:test";
+import { fileURLToPath } from "node:url";
+import { deriveNextGate, validateTranchePlan, validateTrancheStatuses } from "./tranche-graph.mjs";
+import { validateCurrentState } from "./invariants.mjs";
+import { validateTransition } from "./transition.mjs";
+import { loadFixture, structuredState } from "./load-fixture.mjs";
+import { FOUNDER_UAT, TRANCHE_STATUS } from "./model.mjs";
+import { validateRoadmapSchema, validateRoadmapStateAlignment } from "./schema.mjs";
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+
+function roadmap() {
+  return loadFixture(root, "roadmap.json");
+}
+
+function plan036j() {
+  return loadFixture(root, "imp036j-tranche-plan.json");
+}
+
+function postT7() {
+  return loadFixture(root, "imp036j-post-t7.json");
+}
+
+function codes(result) {
+  return result.findings.map((item) => item.code);
+}
+
+describe("GOV-2 generic engine", () => {
+  it("validates the generic roadmap and current-state models", () => {
+    const result = validateCurrentState(postT7(), plan036j(), roadmap());
+    assert.equal(result.ok, true, JSON.stringify(result.findings, null, 2));
+    assert.equal(result.nextGate, "T8");
+    assert.equal(result.derivedStarted.T7, true);
+    assert.equal(result.derivedStarted.T8, false);
+  });
+
+  it("rejects duplicate ids, unknown deps, self-deps, cycles, undeclared/missing/invalid statuses", () => {
+    const duplicate = validateTranchePlan({
+      tranches: [
+        { id: "A", order: 1, required: true, dependencies: [] },
+        { id: "A", order: 2, required: true, dependencies: [] },
+      ],
+    });
+    assert.equal(duplicate.ok, false);
+    assert.ok(codes(duplicate).includes("DUPLICATE_TRANCHE_ID"));
+
+    const unknown = validateTranchePlan({
+      tranches: [{ id: "A", order: 1, required: true, dependencies: ["Z"] }],
+    });
+    assert.ok(codes(unknown).includes("UNKNOWN_DEPENDENCY"));
+
+    const self = validateTranchePlan({
+      tranches: [{ id: "A", order: 1, required: true, dependencies: ["A"] }],
+    });
+    assert.ok(codes(self).includes("SELF_DEPENDENCY"));
+
+    const cycle = validateTranchePlan({
+      tranches: [
+        { id: "A", order: 1, required: true, dependencies: ["B"] },
+        { id: "B", order: 2, required: true, dependencies: ["A"] },
+      ],
+    });
+    assert.ok(codes(cycle).includes("DEPENDENCY_CYCLE"));
+
+    const statuses = validateTrancheStatuses(plan036j(), {
+      T1: TRANCHE_STATUS.PASS,
+      T9: TRANCHE_STATUS.PASS,
+    });
+    assert.ok(codes(statuses).includes("UNDECLARED_TRANCHE_STATUS"));
+    assert.ok(codes(statuses).includes("MISSING_REQUIRED_TRANCHE_STATUS"));
+
+    const invalid = validateTrancheStatuses(plan036j(), {
+      T1: "IN_PROGRESS",
+      T2: TRANCHE_STATUS.NOT_STARTED,
+      T3: TRANCHE_STATUS.NOT_STARTED,
+      T4: TRANCHE_STATUS.NOT_STARTED,
+      T5: TRANCHE_STATUS.NOT_STARTED,
+      T6: TRANCHE_STATUS.NOT_STARTED,
+      T7: TRANCHE_STATUS.NOT_STARTED,
+      T8: TRANCHE_STATUS.NOT_STARTED,
+    });
+    assert.ok(codes(invalid).includes("INVALID_TRANCHE_STATUS"));
+  });
+
+  it("derives next gate from declared order, not dependency eligibility", () => {
+    const parallel = loadFixture(root, "imp036j-parallel-t6-before-t5.json");
+    const result = validateCurrentState(parallel, plan036j(), roadmap());
+    assert.equal(result.ok, true, JSON.stringify(result.findings, null, 2));
+    assert.equal(result.nextGate, "T5");
+    assert.equal(deriveNextGate(plan036j(), parallel.implementation.trancheStatuses), "T5");
+  });
+
+  it("simulates T8 PASS without mutating live state", () => {
+    const base = postT7();
+    const head = loadFixture(root, "imp036j-t8-pass-simulated.json");
+    const result = validateTransition(base, head, plan036j(), roadmap());
+    assert.equal(result.ok, true, JSON.stringify(result.findings, null, 2));
+    assert.equal(result.allRequiredTranchesPass, true);
+    assert.equal(head.REAL_T8_STARTED, false);
+    assert.equal(head.REAL_STATE_CHANGED, false);
+    assert.equal(base.implementation.trancheStatuses.T8, "NOT_STARTED");
+  });
+
+  it("rejects PASS when a required dependency is unresolved", () => {
+    const base = loadFixture(root, "imp036j-parallel-t6-before-t5.json");
+    const head = structuredState(base);
+    head.implementation.trancheStatuses.T7 = TRANCHE_STATUS.PASS;
+    const result = validateTransition(base, head, plan036j(), roadmap());
+    assert.equal(result.ok, false);
+    assert.ok(codes(result).includes("DEPENDENCY_NOT_SATISFIED"));
+  });
+
+  it("rejects PASS regression", () => {
+    const base = postT7();
+    const head = structuredState(base);
+    head.implementation.trancheStatuses.T6 = TRANCHE_STATUS.NOT_STARTED;
+    const result = validateTransition(base, head, plan036j(), roadmap());
+    assert.equal(result.ok, false);
+    assert.ok(codes(result).includes("TRANCHE_STATUS_REGRESSION"));
+  });
+
+  it("rejects PASS becoming missing or invalid", () => {
+    const base = postT7();
+    const missing = structuredState(base);
+    delete missing.implementation.trancheStatuses.T6;
+    const missingResult = validateTransition(base, missing, plan036j(), roadmap());
+    assert.ok(codes(missingResult).includes("TRANCHE_STATUS_REGRESSION"));
+
+    const invalid = structuredState(base);
+    invalid.implementation.trancheStatuses.T6 = "IN_PROGRESS";
+    const invalidResult = validateTransition(base, invalid, plan036j(), roadmap());
+    assert.ok(
+      codes(invalidResult).includes("INVALID_TRANCHE_STATUS") || codes(invalidResult).includes("TRANCHE_STATUS_REGRESSION"),
+    );
+  });
+
+  it("validates a future capability with the same engine", () => {
+    const plan = loadFixture(root, "imp050-tranche-plan.json");
+    const graph = validateTranchePlan(plan);
+    assert.equal(graph.ok, true, JSON.stringify(graph.findings, null, 2));
+
+    const parallel = loadFixture(root, "imp050-parallel-state.json");
+    const futureRoadmap = structuredState(roadmap());
+    futureRoadmap.currentSlice = parallel.currentSlice;
+    futureRoadmap.nextSlice = parallel.nextSlice;
+    const current = validateCurrentState(parallel, plan, futureRoadmap);
+    assert.equal(current.ok, true, JSON.stringify(current.findings, null, 2));
+    assert.equal(current.nextGate, "WORKFLOW");
+
+    const validHead = structuredState(parallel);
+    validHead.implementation.trancheStatuses.WORKFLOW = TRANCHE_STATUS.PASS;
+    const allowed = validateTransition(parallel, validHead, plan, futureRoadmap);
+    assert.equal(allowed.ok, true, JSON.stringify(allowed.findings, null, 2));
+
+    const blocked = structuredState(parallel);
+    blocked.implementation.trancheStatuses.FOUNDATION = TRANCHE_STATUS.NOT_STARTED;
+    blocked.implementation.trancheStatuses.WORKFLOW = TRANCHE_STATUS.PASS;
+    const fromNotStarted = structuredState(parallel);
+    fromNotStarted.implementation.trancheStatuses.FOUNDATION = TRANCHE_STATUS.NOT_STARTED;
+    fromNotStarted.implementation.trancheStatuses.MEASUREMENT = TRANCHE_STATUS.NOT_STARTED;
+    const depFail = validateTransition(fromNotStarted, blocked, plan, futureRoadmap);
+    assert.ok(codes(depFail).includes("DEPENDENCY_NOT_SATISFIED"));
+
+    const regressionHead = structuredState(parallel);
+    regressionHead.implementation.trancheStatuses.MEASUREMENT = TRANCHE_STATUS.NOT_STARTED;
+    const regression = validateTransition(parallel, regressionHead, plan, futureRoadmap);
+    assert.ok(codes(regression).includes("TRANCHE_STATUS_REGRESSION"));
+  });
+
+  it("rejects acceptance, UAT, and complete invariants generically", () => {
+    const accepted = structuredState(postT7());
+    accepted.accepted = true;
+    const acceptedResult = validateCurrentState(accepted, plan036j(), roadmap());
+    assert.ok(codes(acceptedResult).includes("ACCEPTED_BEFORE_COMPLETE"));
+
+    const uat = structuredState(postT7());
+    uat.founderUat = FOUNDER_UAT.PASS;
+    const uatResult = validateCurrentState(uat, plan036j(), roadmap());
+    assert.ok(codes(uatResult).includes("UAT_BEFORE_COMPLETE"));
+
+    const complete = structuredState(postT7());
+    complete.implementation.complete = true;
+    const completeResult = validateCurrentState(complete, plan036j(), roadmap());
+    assert.ok(codes(completeResult).includes("COMPLETE_WITH_REQUIRED_TRANCHE_MISSING"));
+  });
+
+  it("does not let historical prose rescue invalid structured state", () => {
+    const invalid = structuredState(postT7());
+    invalid.accepted = true;
+    invalid.narrative = [
+      "IMP036J_ACCEPTED: NO",
+      "IMP036J_IMPLEMENTATION_COMPLETE: NO",
+      "IMP036J_TRANCHE_8: NOT_STARTED",
+      "T8_STARTED: NO",
+      "GTM-R188",
+      "STATE-R186",
+    ].join("\n");
+    const cleaned = structuredState(invalid);
+    assert.equal("narrative" in cleaned, false);
+    const result = validateCurrentState(cleaned, plan036j(), roadmap());
+    assert.equal(result.ok, false);
+    assert.ok(codes(result).includes("ACCEPTED_BEFORE_COMPLETE"));
+    assert.equal(validateCurrentState.length, 3);
+  });
+
+  it("rejects acceptedThrough regression and silent sequence reversal", () => {
+    const base = postT7();
+    const head = structuredState(base);
+    head.acceptedThrough = "IMP-036J";
+    head.currentSlice = "IMP-036I";
+    const result = validateTransition(base, head, plan036j(), roadmap());
+    assert.ok(codes(result).includes("ACCEPTED_THROUGH_REGRESSION") || codes(result).includes("SEQUENCE_REVERSED"));
+  });
+
+  it("rejects core state schema corruption with generic codes", () => {
+    const missingPhase = structuredState(postT7());
+    delete missingPhase.lifecyclePhase;
+    assert.ok(codes(validateCurrentState(missingPhase, plan036j(), roadmap())).includes("MISSING_LIFECYCLE_PHASE"));
+
+    const invalidPhase = structuredState(postT7());
+    invalidPhase.lifecyclePhase = "BROKEN";
+    assert.ok(codes(validateCurrentState(invalidPhase, plan036j(), roadmap())).includes("INVALID_LIFECYCLE_PHASE"));
+
+    const missingAuthorized = structuredState(postT7());
+    delete missingAuthorized.implementation.authorized;
+    assert.ok(codes(validateCurrentState(missingAuthorized, plan036j(), roadmap())).includes("MISSING_IMPLEMENTATION_AUTHORIZED"));
+
+    const stringAuthorized = structuredState(postT7());
+    stringAuthorized.implementation.authorized = "true";
+    assert.ok(codes(validateCurrentState(stringAuthorized, plan036j(), roadmap())).includes("INVALID_IMPLEMENTATION_AUTHORIZED"));
+
+    const stringComplete = structuredState(postT7());
+    stringComplete.implementation.complete = "false";
+    assert.ok(codes(validateCurrentState(stringComplete, plan036j(), roadmap())).includes("INVALID_IMPLEMENTATION_COMPLETE"));
+
+    const missingUat = structuredState(postT7());
+    delete missingUat.founderUat;
+    assert.ok(codes(validateCurrentState(missingUat, plan036j(), roadmap())).includes("MISSING_FOUNDER_UAT"));
+
+    const invalidUat = structuredState(postT7());
+    invalidUat.founderUat = "BANANA";
+    assert.ok(codes(validateCurrentState(invalidUat, plan036j(), roadmap())).includes("INVALID_FOUNDER_UAT"));
+
+    const stringAccepted = structuredState(postT7());
+    stringAccepted.accepted = "yes";
+    assert.ok(codes(validateCurrentState(stringAccepted, plan036j(), roadmap())).includes("INVALID_ACCEPTED"));
+
+    const sliceMismatch = structuredState(postT7());
+    sliceMismatch.slice = "IMP-050";
+    sliceMismatch.currentSlice = "IMP-036J";
+    assert.ok(codes(validateCurrentState(sliceMismatch, plan036j(), roadmap())).includes("SLICE_CURRENT_SLICE_MISMATCH"));
+  });
+
+  it("rejects plan/state slice mismatch even when tranche ids match", () => {
+    const mismatchedPlan = structuredState(plan036j());
+    mismatchedPlan.slice = "IMP-050";
+    const result = validateCurrentState(postT7(), mismatchedPlan, roadmap());
+    assert.equal(result.ok, false);
+    assert.ok(codes(result).includes("TRANCHE_PLAN_SLICE_MISMATCH"));
+  });
+
+  it("rejects duplicate roadmap capability ids and sequences without Map overwrite", () => {
+    const duplicateId = structuredState(roadmap());
+    duplicateId.capabilities.push({
+      id: "IMP-036I",
+      sequence: 99,
+      accepted: false,
+      implementationComplete: false,
+    });
+    const idResult = validateCurrentState(postT7(), plan036j(), duplicateId);
+    assert.equal(idResult.ok, false);
+    assert.ok(codes(idResult).includes("DUPLICATE_CAPABILITY_ID"));
+
+    const duplicateSequence = structuredState(roadmap());
+    duplicateSequence.capabilities.push({
+      id: "IMP-099",
+      sequence: 1,
+      accepted: false,
+      implementationComplete: false,
+    });
+    const sequenceResult = validateCurrentState(postT7(), plan036j(), duplicateSequence);
+    assert.equal(sequenceResult.ok, false);
+    assert.ok(codes(sequenceResult).includes("DUPLICATE_CAPABILITY_SEQUENCE"));
+  });
+
+  it("rejects duplicate declared tranche order instead of lexical fallback", () => {
+    const duplicateOrder = validateTranchePlan({
+      slice: "IMP-036J",
+      tranches: [
+        { id: "A", order: 2, required: true, dependencies: [] },
+        { id: "B", order: 2, required: true, dependencies: [] },
+      ],
+    });
+    assert.equal(duplicateOrder.ok, false);
+    assert.ok(codes(duplicateOrder).includes("DUPLICATE_TRANCHE_ORDER"));
+
+    const duplicateDep = validateTranchePlan({
+      slice: "IMP-036J",
+      tranches: [
+        { id: "A", order: 1, required: true, dependencies: [] },
+        { id: "B", order: 2, required: true, dependencies: ["A", "A"] },
+      ],
+    });
+    assert.ok(codes(duplicateDep).includes("DUPLICATE_DEPENDENCY"));
+  });
+
+  it("rejects ROADMAP and STATE pointer mismatches even when both ids are valid", () => {
+    const acceptedMismatch = structuredState(postT7());
+    acceptedMismatch.acceptedThrough = "IMP-050";
+    const acceptedResult = validateCurrentState(acceptedMismatch, plan036j(), roadmap());
+    assert.equal(acceptedResult.ok, false);
+    assert.ok(codes(acceptedResult).includes("ROADMAP_STATE_ACCEPTED_THROUGH_MISMATCH"));
+    assert.equal(validateRoadmapStateAlignment(roadmap(), acceptedMismatch).ok, false);
+
+    const currentMismatch = structuredState(postT7());
+    currentMismatch.currentSlice = "IMP-050";
+    currentMismatch.slice = "IMP-050";
+    const currentPlan = structuredState(plan036j());
+    currentPlan.slice = "IMP-050";
+    const currentResult = validateCurrentState(currentMismatch, currentPlan, roadmap());
+    assert.equal(currentResult.ok, false);
+    assert.ok(codes(currentResult).includes("ROADMAP_STATE_CURRENT_SLICE_MISMATCH"));
+
+    const nextMismatch = structuredState(postT7());
+    nextMismatch.nextSlice = "IMP-050";
+    const nextResult = validateCurrentState(nextMismatch, plan036j(), roadmap());
+    assert.equal(nextResult.ok, false);
+    assert.ok(codes(nextResult).includes("ROADMAP_STATE_NEXT_SLICE_MISMATCH"));
+  });
+
+  it("requires ROADMAP gtmBoundary to be a declared capability", () => {
+    const missing = structuredState(roadmap());
+    delete missing.gtmBoundary;
+    assert.ok(codes(validateRoadmapSchema(missing)).includes("INVALID_GTM_BOUNDARY"));
+
+    const unknown = structuredState(roadmap());
+    unknown.gtmBoundary = "IMP-UNDECLARED";
+    assert.ok(codes(validateRoadmapSchema(unknown)).includes("UNKNOWN_GTM_BOUNDARY"));
+
+    const known = validateRoadmapSchema(roadmap());
+    assert.equal(known.ok, true, JSON.stringify(known.findings, null, 2));
+    assert.equal(typeof roadmap().gtmBoundary, "string");
+    assert.ok(roadmap().capabilities.some((capability) => capability.id === roadmap().gtmBoundary));
+  });
+
+  it("rejects contradictory lifecyclePhase, accepted, and complete combinations", () => {
+    const acceptedPhase = structuredState(postT7());
+    acceptedPhase.lifecyclePhase = "COMPLETE_AND_ACCEPTED";
+    acceptedPhase.accepted = false;
+    acceptedPhase.implementation.complete = false;
+    assert.ok(
+      codes(validateCurrentState(acceptedPhase, plan036j(), roadmap())).includes(
+        "COMPLETE_AND_ACCEPTED_PHASE_CONTRADICTION",
+      ),
+    );
+
+    const acceptedInProgress = structuredState(postT7());
+    acceptedInProgress.accepted = true;
+    acceptedInProgress.lifecyclePhase = "IMPLEMENTATION_IN_PROGRESS";
+    assert.ok(
+      codes(validateCurrentState(acceptedInProgress, plan036j(), roadmap())).includes("ACCEPTED_PHASE_CONTRADICTION"),
+    );
+
+    const completeInProgress = structuredState(postT7());
+    completeInProgress.implementation.complete = true;
+    completeInProgress.accepted = false;
+    completeInProgress.lifecyclePhase = "IMPLEMENTATION_IN_PROGRESS";
+    assert.ok(
+      codes(validateCurrentState(completeInProgress, plan036j(), roadmap())).includes("COMPLETE_PHASE_CONTRADICTION"),
+    );
+
+    const earlyPhase = structuredState(postT7());
+    earlyPhase.lifecyclePhase = "PRODUCT_DEFINITION";
+    earlyPhase.implementation.complete = false;
+    assert.equal(earlyPhase.implementation.trancheStatuses.T1, TRANCHE_STATUS.PASS);
+    assert.ok(codes(validateCurrentState(earlyPhase, plan036j(), roadmap())).includes("PASS_TRANCHE_EARLY_PHASE"));
+  });
+
+  it("keeps the post-T7 fixture in IMPLEMENTATION_IN_PROGRESS", () => {
+    const current = postT7();
+    const result = validateCurrentState(current, plan036j(), roadmap());
+    assert.equal(result.ok, true, JSON.stringify(result.findings, null, 2));
+    assert.equal(current.lifecyclePhase, "IMPLEMENTATION_IN_PROGRESS");
+    assert.equal(current.implementation.authorized, true);
+    assert.equal(current.implementation.complete, false);
+    assert.equal(current.implementation.trancheStatuses.T8, TRANCHE_STATUS.NOT_STARTED);
+    for (const id of ["T1", "T2", "T3", "T4", "T5", "T6", "T7"]) {
+      assert.equal(current.implementation.trancheStatuses[id], TRANCHE_STATUS.PASS);
+    }
+  });
+
+  it("rejects unknown architecture and decision references generically", () => {
+    const unknownArch = structuredState(postT7());
+    unknownArch.currentReferences.architecture = ["ARCH-UNKNOWN"];
+    assert.ok(codes(validateCurrentState(unknownArch, plan036j(), roadmap())).includes("UNKNOWN_ARCHITECTURE_REFERENCE"));
+
+    const unknownDecision = structuredState(postT7());
+    unknownDecision.currentReferences.decisions = ["D-UNKNOWN"];
+    assert.ok(codes(validateCurrentState(unknownDecision, plan036j(), roadmap())).includes("UNKNOWN_DECISION_REFERENCE"));
+  });
+
+  it("validates synthetic references without encoding specific live ids", () => {
+    const syntheticRoadmap = structuredState(roadmap());
+    syntheticRoadmap.referenceIndex = {
+      architectures: ["ARCH-ZZZ"],
+      decisions: ["D-ZZZ"],
+    };
+    const syntheticState = structuredState(postT7());
+    syntheticState.currentReferences = {
+      architecture: ["ARCH-ZZZ"],
+      decisions: ["D-ZZZ"],
+    };
+    const result = validateCurrentState(syntheticState, plan036j(), syntheticRoadmap);
+    assert.equal(result.ok, true, JSON.stringify(result.findings, null, 2));
+  });
+});
+
+describe("GOV-2 source hygiene", () => {
+  it("keeps generic modules free of checkpoint and capability special cases", () => {
+    const files = ["model.mjs", "schema.mjs", "tranche-graph.mjs", "invariants.mjs", "transition.mjs"];
+    for (const name of files) {
+      const source = readFileSync(path.join(root, "scripts/governance-v2", name), "utf8");
+      assert.doesNotMatch(source, /IMP-036J/);
+      assert.doesNotMatch(source, /GTM-R\d+/);
+      assert.doesNotMatch(source, /STATE-R\d+/);
+      assert.doesNotMatch(source, /isImp036j/);
+      assert.doesNotMatch(source, /\.includes\(\s*expected/);
+    }
+  });
+});

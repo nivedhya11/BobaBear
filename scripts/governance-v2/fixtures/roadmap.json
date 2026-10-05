@@ -1,0 +1,25 @@
+{
+  "TEST_ONLY": true,
+  "NON_AUTHORITATIVE": true,
+  "acceptedThrough": "IMP-036I",
+  "currentSlice": "IMP-036J",
+  "nextSlice": "IMP-036K",
+  "gtmBoundary": "IMP-040",
+  "referenceIndex": {
+    "architectures": ["ARCH-R23", "ARCH-SYNTH-050"],
+    "decisions": ["D-383", "D-SYNTH-050"]
+  },
+  "holds": [
+    { "capability": "IMP-037", "reason": "PROGRAM_PAUSE" },
+    { "capability": "IMP-038", "reason": "PROGRAM_PAUSE" }
+  ],
+  "capabilities": [
+    { "id": "IMP-036I", "sequence": 0, "accepted": true, "implementationComplete": true },
+    { "id": "IMP-036J", "sequence": 1, "accepted": false, "implementationComplete": false },
+    { "id": "IMP-036K", "sequence": 2, "accepted": false, "implementationComplete": false },
+    { "id": "IMP-037", "sequence": 3, "accepted": false, "implementationComplete": false },
+    { "id": "IMP-038", "sequence": 4, "accepted": false, "implementationComplete": true },
+    { "id": "IMP-040", "sequence": 5, "accepted": false, "implementationComplete": false },
+    { "id": "IMP-050", "sequence": 6, "accepted": false, "implementationComplete": false }
+  ]
+}
