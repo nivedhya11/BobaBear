@@ -10,7 +10,7 @@ import path from "node:path";
 import process from "node:process";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { aggregate, finding } from "./model.mjs";
+import { finding } from "./model.mjs";
 import { loadAuthoritiesFromTexts, parseGov2Block } from "./load-authorities.mjs";
 import { CURRENT_AUTHORITY_KIND, parseCurrentGovernanceMeta } from "./schema.mjs";
 import { validateAuthorityDocuments } from "./current.mjs";
@@ -106,8 +106,6 @@ function loadHeadDocuments(root, headSha) {
     const state = readGitPath(root, headSha, STATE_REL);
     return { roadmap, state, history: listGitHistory(root, headSha), readPlan: (rel) => readGitPath(root, headSha, rel) };
   }
-  const roadmapAbs = path.join(root, ROADMAP_REL);
-  const stateAbs = path.join(root, STATE_REL);
   /** @param {string} rel */
   const readPlan = (rel) => {
     try {
@@ -125,8 +123,6 @@ function loadHeadDocuments(root, headSha) {
     state: readPlan(STATE_REL),
     history: listWorkingHistory(root),
     readPlan,
-    roadmapAbs,
-    stateAbs,
   };
 }
 
@@ -265,7 +261,6 @@ export function validateRepositoryTransition(input) {
 
   if (!basePresence.hasGov2 && headPresence.hasGov2) {
     return validateBootstrapTransition({
-      root,
       baseSha: baseResolved.sha,
       headSha,
       baseRoadmap: baseRoadmap.text,
@@ -284,7 +279,7 @@ export function validateRepositoryTransition(input) {
   });
 }
 
-function validateBootstrapTransition({ root, baseSha, headSha, baseRoadmap, baseState, headDocs }) {
+function validateBootstrapTransition({ baseSha, headSha, baseRoadmap, baseState, headDocs }) {
   const findings = [];
   const roadmapSnapshot = uniqueMatch(headDocs.history, PRE_GOV2_ROADMAP, "ROADMAP");
   const stateSnapshot = uniqueMatch(headDocs.history, PRE_GOV2_STATE, "STATE");

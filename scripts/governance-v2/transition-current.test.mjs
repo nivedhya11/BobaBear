@@ -12,9 +12,13 @@ const cli = path.join(root, "scripts/governance-v2/transition-current.mjs");
 const SKIP_OVERLAY = new Set(["node_modules", ".next", "out", "coverage", ".validation-logs"]);
 
 function gitSha(spec) {
-  const result = spawnSync("git", ["-C", root, "rev-parse", spec], { encoding: "utf8" });
-  assert.equal(result.status, 0, result.stderr);
+  const result = spawnSync("git", ["-C", root, "rev-parse", "--verify", `${spec}^{commit}`], { encoding: "utf8" });
+  if (result.status !== 0) return null;
   return result.stdout.trim();
+}
+
+function originMainSha() {
+  return gitSha("origin/main");
 }
 
 function materializeOverlayRoot() {
@@ -47,8 +51,9 @@ function runCli(tmp, baseSha) {
 }
 
 describe("GOV-2 authoritative transition command", () => {
-  it("bootstraps pre-GOV2 base to the current GOV-2 working tree", () => {
-    const base = gitSha("origin/main");
+  it("bootstraps pre-GOV2 base to the current GOV-2 working tree", { skip: !originMainSha() }, () => {
+    const base = originMainSha();
+    assert.ok(base);
     const result = spawnSync(process.execPath, [cli, base], {
       cwd: root,
       encoding: "utf8",
@@ -64,6 +69,7 @@ describe("GOV-2 authoritative transition command", () => {
 
   it("validates a normal GOV-2 to GOV-2 identity transition from git", () => {
     const head = gitSha("HEAD");
+    assert.ok(head);
     const report = validateRepositoryTransition({ root, baseSha: head, headSha: head });
     assert.equal(report.ok, true, JSON.stringify(report.findings, null, 2));
     assert.equal(report.MODE, "GOV2_TO_GOV2");
@@ -110,9 +116,10 @@ describe("GOV-2 authoritative transition command", () => {
     }
   });
 
-  it("rejects rollback from GOV-2 to pre-GOV2", () => {
+  it("rejects rollback from GOV-2 to pre-GOV2", { skip: !originMainSha() }, () => {
     const head = gitSha("HEAD");
-    const base = gitSha("origin/main");
+    const base = originMainSha();
+    assert.ok(head && base);
     const report = validateRepositoryTransition({ root, baseSha: head, headSha: base });
     assert.equal(report.ok, false);
     assert.equal(report.MODE, "GOV2_ROLLBACK");
