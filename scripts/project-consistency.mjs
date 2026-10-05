@@ -41365,6 +41365,12 @@ export function evaluateImp036jTestingPointer(testingText) {
   }
   for (const token of [
     "next gate `IMPLEMENTATION_TRANCHE_8`",
+    "Tranche 1 `PASS`",
+    "Tranche 2 `PASS`",
+    "Tranche 3 `PASS`",
+    "Tranche 4 `PASS`",
+    "Tranche 5 `PASS`",
+    "Tranche 6 `PASS`",
     "Tranche 7 `PASS`",
     "T8 not started",
     "implementation `AUTHORIZED` / `STARTED`",
@@ -44677,6 +44683,12 @@ export function evaluateImp036jTranche7StateR186Record(record) {
     "MIGRATION_CHANGED: YES",
     "MIGRATION: 0049_imp036j_tranche7_immutable_publication",
     "NEW_MIGRATION_BEYOND_0049: NO",
+    "NEW_SERVICE: NO",
+    "NEW_QUEUE: NO",
+    "NEW_SCHEDULER: NO",
+    "NEW_PERMISSION: NO",
+    "NEW_ROLE: NO",
+    "COMMERCIAL_BEHAVIOR_CHANGED: NO",
   ];
   for (const token of required) {
     if (!source.includes(token)) {

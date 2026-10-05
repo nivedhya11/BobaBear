@@ -19325,6 +19325,16 @@ describe("IMP-036J architecture fit remediation candidate 9", () => {
     assert.equal(evaluateImp036jTestingPointer(accepted).ok, false);
     assert.equal(evaluateImp036jTestingPointer(accepted).code, "IMP036J_TESTING_LIFECYCLE");
   });
+  it("rejects reversing a prior tranche PASS marker in the current TESTING.md IMP-036J summary", () => {
+    const mutated = testing.replace("Tranche 6 `PASS`", "Tranche 6 `FAIL`");
+    assert.notEqual(mutated, testing);
+    assert.match(mutated, /Tranche 7 `PASS`/);
+    const result = evaluateImp036jTestingPointer(mutated);
+    assert.equal(result.ok, false);
+    assert.equal(result.code, "IMP036J_TESTING_LIFECYCLE");
+    assert.match(result.message ?? "", /Tranche 6 `PASS`/);
+  });
+
   it("rejects claiming implementation NOT_AUTHORIZED / NOT_STARTED in the current TESTING.md IMP-036J summary", () => {
     const unauthorized = testing.replace(
       "implementation `AUTHORIZED` / `STARTED`",
@@ -19534,6 +19544,15 @@ describe("IMP-036J Tranche 7 STATE-R186 structured provenance", () => {
     assert.equal(result.code, "IMP036J_T7_R186_RECORD");
     assert.match(result.message ?? "", /CURRENT_SOURCE_SECURITY_SDLC/);
     assert.equal(mutated.split("## 10. STATE-R185 record")[1]?.split("## 10. STATE-R184")[0], historicalR185);
+  });
+
+  it("fails when NEW_SERVICE is corrupted inside STATE-R186 while narrative still says no new service", () => {
+    const mutated = replaceStateR186FenceField("NEW_SERVICE", "NO", "YES");
+    assert.match(mutated, /No new service, queue, scheduler, permission, or role/);
+    const result = evaluateImp036jTranche7StateR186Record(extractImp036jStateR186Record(mutated));
+    assert.equal(result.ok, false);
+    assert.equal(result.code, "IMP036J_T7_R186_RECORD");
+    assert.match(result.message ?? "", /NEW_SERVICE/);
   });
 
   it("fails when CURRENT_SOURCE_T1_NAMED_PROOF is corrupted inside STATE-R186 while narrative still names T1–T7 proofs", () => {
