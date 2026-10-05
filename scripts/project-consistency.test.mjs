@@ -120,6 +120,8 @@ import {
   evaluateImp036jTranche7CurrentRoadmapFence,
   extractImp036jStateR186Record,
   evaluateImp036jTranche7StateR186Record,
+  evaluateImp036jTranche7FutureJLedger,
+  evaluateImp036kPreservedAtT7FutureLedger,
   evaluateImp036kGateCandidateProvenance,
   evaluateImp036kDesignReadinessPlanFinalizedFlags,
   evaluateImp036jProductDeliveryTransition,
@@ -19628,5 +19630,33 @@ describe("IMP-036J Tranche 7 STATE-R186 structured provenance", () => {
     assert.deepEqual(evaluateImp036jTranche7StateR186Record(extractImp036jStateR186Record(mutated)), { ok: true });
     assert.deepEqual(evaluateImp036jTranche7CurrentStatePayload(mutated.split("## 2. Current Work Position")[1]?.split("\n## ")[0] ?? ""), { ok: true });
     assert.equal(mutated.split("## 10. STATE-R185 record")[1]?.split("## 10. STATE-R184")[0], historicalR185);
+  });
+});
+
+describe("IMP-036J Tranche 7 future GTM ledger", () => {
+  const roadmap = readFileSync(new URL("../docs/platform/ROADMAP.md", import.meta.url), "utf8");
+  const futureSliceSection = roadmap.split("## 5. Future GTM Slices")[1]?.split("\n## ")[0] ?? "";
+  const futureJ = futureSliceSection.split("\n").find((line) => line.includes("| IMP-036J |")) ?? "";
+  const futureK = futureSliceSection.split("\n").find((line) => line.includes("| IMP-036K |")) ?? "";
+
+  it("accepts the live IMP-036J and IMP-036K future rows", () => {
+    assert.deepEqual(evaluateImp036jTranche7FutureJLedger(futureJ), { ok: true });
+    assert.deepEqual(evaluateImp036kPreservedAtT7FutureLedger(futureK), { ok: true });
+  });
+
+  it("fails when the IMP-036J future row claims IMP036J_ACCEPTED: YES", () => {
+    const mutated = futureJ.replace("IMP036J_ACCEPTED: NO", "IMP036J_ACCEPTED: YES");
+    assert.notEqual(mutated, futureJ);
+    const result = evaluateImp036jTranche7FutureJLedger(mutated);
+    assert.equal(result.ok, false);
+    assert.equal(result.code, "IMP036J_FUTURE_LEDGER");
+  });
+
+  it("fails when the IMP-036K future row claims STARTED while remaining unauthorized", () => {
+    const mutated = futureK.replace("NOT_AUTHORIZED / NOT_STARTED", "NOT_AUTHORIZED / STARTED");
+    assert.notEqual(mutated, futureK);
+    const result = evaluateImp036kPreservedAtT7FutureLedger(mutated);
+    assert.equal(result.ok, false);
+    assert.equal(result.code, "IMP036K_FUTURE_LEDGER");
   });
 });

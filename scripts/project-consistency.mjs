@@ -44778,6 +44778,67 @@ export function evaluateImp036jTranche7StateR186Record(record) {
 }
 
 /**
+ * Future GTM ledger row for IMP-036J at Tranche 7 PASS.
+ * @param {string} futureRow
+ * @returns {{ ok: true } | { ok: false, code: string, message: string }}
+ */
+export function evaluateImp036jTranche7FutureJLedger(futureRow) {
+  const row = String(futureRow ?? "");
+  if (
+    !row.includes("AUTHORIZED / STARTED") ||
+    !row.includes("IMP036J_TRANCHE_1: PASS") ||
+    !row.includes("IMP036J_TRANCHE_2: PASS") ||
+    !row.includes("IMP036J_TRANCHE_3: PASS") ||
+    !row.includes("IMP036J_TRANCHE_4: PASS") ||
+    !row.includes("IMP036J_TRANCHE_5: PASS") ||
+    !row.includes("IMP036J_TRANCHE_6: PASS") ||
+    !row.includes("IMP036J_TRANCHE_7: PASS") ||
+    !row.includes("T7_STARTED: YES") ||
+    !row.includes("T8_STARTED: NO") ||
+    !row.includes("IMPLEMENTATION_TRANCHE_8") ||
+    !row.includes("IMP036J_ACCEPTED: NO") ||
+    row.includes("T7_STARTED: NO") ||
+    row.includes("COMPLETE_AND_ACCEPTED") ||
+    row.includes("IMP036J_IMPLEMENTATION_COMPLETE: YES") ||
+    row.includes("IMP036J_ACCEPTED: YES")
+  ) {
+    return {
+      ok: false,
+      code: "IMP036J_FUTURE_LEDGER",
+      message: "Future GTM slice ledger must record IMP-036J Tranche 7 PASS with next gate IMPLEMENTATION_TRANCHE_8, T8 not started, and implementation incomplete",
+    };
+  }
+  return { ok: true };
+}
+
+/**
+ * Future GTM ledger row for IMP-036K preserved at Tranche 7 PASS.
+ * @param {string} futureK
+ * @returns {{ ok: true } | { ok: false, code: string, message: string }}
+ */
+export function evaluateImp036kPreservedAtT7FutureLedger(futureK) {
+  const row = String(futureK ?? "");
+  if (
+    !row.includes("DESIGN_READINESS PASS") ||
+    !row.includes("QUALITY / TEST PLAN FINALIZATION") ||
+    !row.includes("ARCHITECTURE_FIT PASS") ||
+    !row.includes("ARCHITECTURE_LOCKED YES") ||
+    !row.includes("NOT_AUTHORIZED") ||
+    !row.includes("NOT_STARTED") ||
+    row.includes("DESIGN_READINESS NOT_PERFORMED") ||
+    row.includes("COMPLETE_AND_ACCEPTED") ||
+    row.includes(" / STARTED")
+  ) {
+    return {
+      ok: false,
+      code: "IMP036K_FUTURE_LEDGER",
+      message: "Future GTM slice ledger must keep IMP-036K Design Readiness PASS, next gate QUALITY / TEST PLAN FINALIZATION, and implementation unauthorized",
+    };
+  }
+  return { ok: true };
+}
+
+/**
  * CURRENT checkpoint: IMP-036J Tranche 7 MEASUREMENT_REPORTING PASS (GTM-R188 / STATE-R186).
  * T1–T7 are PASS. Next gate is IMPLEMENTATION_TRANCHE_8. T8 remains not started.
  * Historical GTM-R187 / STATE-R185 remains Tranche 5 PASS with T7 not started.
@@ -44966,13 +45027,11 @@ function checkImp036jTranche7Pass(roadmap, state, architecture, decision) {
     fail("IMP036J_T7_NOT_ACCEPTED_LEDGER", "Accepted slice ledger must not include IMP-036J or IMP-036K");
   }
   const futureRow = futureSliceSection.split("\n").find((line) => line.includes("| IMP-036J |")) ?? "";
-  if (!futureRow.includes("AUTHORIZED / STARTED") || !futureRow.includes("IMP036J_TRANCHE_1: PASS") || !futureRow.includes("IMP036J_TRANCHE_2: PASS") || !futureRow.includes("IMP036J_TRANCHE_3: PASS") || !futureRow.includes("IMP036J_TRANCHE_4: PASS") || !futureRow.includes("IMP036J_TRANCHE_5: PASS") || !futureRow.includes("IMP036J_TRANCHE_6: PASS") || !futureRow.includes("IMP036J_TRANCHE_7: PASS") || !futureRow.includes("T7_STARTED: YES") || !futureRow.includes("T8_STARTED: NO") || !futureRow.includes("IMPLEMENTATION_TRANCHE_8") || futureRow.includes("T7_STARTED: NO") || futureRow.includes("COMPLETE_AND_ACCEPTED") || futureRow.includes("IMP036J_IMPLEMENTATION_COMPLETE: YES")) {
-    fail("IMP036J_FUTURE_LEDGER", "Future GTM slice ledger must record IMP-036J Tranche 7 PASS with next gate IMPLEMENTATION_TRANCHE_8, T8 not started, and implementation incomplete");
-  }
+  const futureJLedger = evaluateImp036jTranche7FutureJLedger(futureRow);
+  if (!futureJLedger.ok) fail(futureJLedger.code, futureJLedger.message);
   const futureK = futureSliceSection.split("\n").find((line) => line.includes("| IMP-036K |")) ?? "";
-  if (!futureK.includes("DESIGN_READINESS PASS") || !futureK.includes("QUALITY / TEST PLAN FINALIZATION") || !futureK.includes("ARCHITECTURE_FIT PASS") || !futureK.includes("ARCHITECTURE_LOCKED YES") || !futureK.includes("NOT_AUTHORIZED") || futureK.includes("DESIGN_READINESS NOT_PERFORMED") || futureK.includes("COMPLETE_AND_ACCEPTED")) {
-    fail("IMP036K_FUTURE_LEDGER", "Future GTM slice ledger must keep IMP-036K Design Readiness PASS, next gate QUALITY / TEST PLAN FINALIZATION, and implementation unauthorized");
-  }
+  const futureKLedger = evaluateImp036kPreservedAtT7FutureLedger(futureK);
+  if (!futureKLedger.ok) fail(futureKLedger.code, futureKLedger.message);
   if (!/next ID \*\*D-384\*\*/.test(decisionText) || !/\| D-383 \|/.test(decisionText) || /\| D-384 \|/.test(decisionText)) {
     fail("IMP036J_T7_D383", "D-383 must remain registered, D-384 must not be created, and the next free ID must stay D-384");
   }
