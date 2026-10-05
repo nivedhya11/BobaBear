@@ -150,6 +150,25 @@ describe("GOV-2 generic engine", () => {
     const added = structuredState(previous);
     added.tranches = [...added.tranches, { id: "T9", order: 9, required: true, dependencies: ["T8"] }];
     assert.ok(tranchePlanTransitionFindings(previous, added).some((item) => item.code === "TRANCHE_ADDED"));
+    const nextState = structuredState(postT7());
+    nextState.currentSlice = next.slice;
+    nextState.acceptedThrough = previous.slice;
+    nextState.implementation.trancheStatuses = { K1: TRANCHE_STATUS.NOT_STARTED };
+    delete nextState.lastTransition;
+    const nextRoadmap = structuredState(roadmap());
+    nextRoadmap.currentSlice = next.slice;
+    nextRoadmap.acceptedThrough = previous.slice;
+    nextRoadmap.capabilities = nextRoadmap.capabilities.map((capability) =>
+      capability.id === previous.slice
+        ? { ...capability, accepted: true, implementationComplete: true }
+        : capability,
+    );
+    const sliceAdvance = validateTransition(postT7(), nextState, next, nextRoadmap, previous, roadmap());
+    assert.equal(
+      sliceAdvance.findings.some((item) => item.code === "INVALID_LAST_TRANSITION"),
+      false,
+      JSON.stringify(sliceAdvance.findings),
+    );
   });
 
   it("rejects deleting lastTransition evidence without a new tranche PASS", () => {

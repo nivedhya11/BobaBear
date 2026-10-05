@@ -51,7 +51,7 @@ export function validateTransition(baseState, headState, tranchePlan, roadmap, b
   findings.push(...roadmapLedgerTransitionFindings(baseRoadmap, roadmap));
   findings.push(...tranchePlanTransitionFindings(basePlan, tranchePlan, { headState, headRoadmap: roadmap }));
   findings.push(...sequenceRegressionFindings(baseState, headState, roadmap));
-  findings.push(...trancheTransitionFindings(baseState, headState, tranchePlan));
+  findings.push(...trancheTransitionFindings(baseState, headState, tranchePlan, basePlan));
 
   const headStatuses = headState?.implementation?.trancheStatuses;
   return {
@@ -194,7 +194,7 @@ export function tranchePlanTransitionFindings(basePlan, headPlan, context = {}) 
   return findings;
 }
 
-function trancheTransitionFindings(baseState, headState, plan) {
+function trancheTransitionFindings(baseState, headState, plan, basePlan = plan) {
   const findings = [];
   const baseStatuses =
     baseState?.implementation?.trancheStatuses != null &&
@@ -248,7 +248,12 @@ function trancheTransitionFindings(baseState, headState, plan) {
   }
 
   findings.push(...tranchePassEvidenceFindings(headState, newlyPassed));
-  if (newlyPassed.length === 0 && lastTransitionKey(baseState?.lastTransition) !== lastTransitionKey(headState?.lastTransition)) {
+  const sameSlice = (basePlan?.slice ?? null) === (plan?.slice ?? null);
+  if (
+    newlyPassed.length === 0 &&
+    sameSlice &&
+    lastTransitionKey(baseState?.lastTransition) !== lastTransitionKey(headState?.lastTransition)
+  ) {
     findings.push(
       finding(
         "INVALID_LAST_TRANSITION",
