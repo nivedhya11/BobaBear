@@ -8,7 +8,7 @@ import {
   evaluatePositionLifecycle,
   finding,
 } from "./model.mjs";
-import { validateRoadmapSchema, validateStateSchema } from "./schema.mjs";
+import { validateRoadmapSchema, validateRoadmapStateAlignment, validateStateSchema } from "./schema.mjs";
 import {
   allRequiredTranchesPass,
   dependenciesSatisfied,
@@ -25,6 +25,7 @@ export function validateCurrentState(state, plan, roadmap) {
   const findings = [];
   findings.push(...validateRoadmapSchema(roadmap).findings);
   findings.push(...validateStateSchema(state, plan, roadmap).findings);
+  findings.push(...validateRoadmapStateAlignment(roadmap, state).findings);
 
   const capabilities = capabilityMap(roadmap);
   const sequence = capabilitySequence(roadmap);

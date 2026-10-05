@@ -136,6 +136,7 @@ export function validateRoadmapSchema(roadmap) {
   findings.push(...requiredNonEmptyString(roadmap.acceptedThrough, "acceptedThrough", "INVALID_ACCEPTED_THROUGH"));
   findings.push(...requiredNonEmptyString(roadmap.currentSlice, "currentSlice", "INVALID_CURRENT_SLICE"));
   findings.push(...requiredNextSlice(roadmap.nextSlice, "nextSlice"));
+  findings.push(...requiredNonEmptyString(roadmap.gtmBoundary, "gtmBoundary", "INVALID_GTM_BOUNDARY"));
 
   const capabilities = roadmap.capabilities;
   if (!Array.isArray(capabilities) || capabilities.length === 0) {
@@ -198,6 +199,11 @@ export function validateRoadmapSchema(roadmap) {
     !ids.has(roadmap.nextSlice)
   ) {
     findings.push(finding("NEXT_SLICE_MISSING", "nextSlice", `nextSlice ${roadmap.nextSlice} is not in the roadmap`));
+  }
+  if (typeof roadmap.gtmBoundary === "string" && roadmap.gtmBoundary.length > 0 && !ids.has(roadmap.gtmBoundary)) {
+    findings.push(
+      finding("UNKNOWN_GTM_BOUNDARY", "gtmBoundary", `gtmBoundary ${roadmap.gtmBoundary} is not in the roadmap`),
+    );
   }
 
   findings.push(...validateHoldsShape(roadmap.holds, ids));
@@ -294,6 +300,7 @@ export function validateStateSchema(state, plan, roadmap) {
 
   findings.push(...requiredNonEmptyString(state.acceptedThrough, "acceptedThrough", "INVALID_ACCEPTED_THROUGH"));
   findings.push(...requiredNextSlice(state.nextSlice, "nextSlice"));
+  findings.push(...lifecyclePhaseCoherenceFindings(state));
 
   if (plan != null) {
     findings.push(...planStateSliceFindings(state, plan));
@@ -304,6 +311,121 @@ export function validateStateSchema(state, plan, roadmap) {
   findings.push(...validateCurrentReferences(state, roadmap));
 
   return aggregate(findings);
+}
+
+/**
+ * Require ROADMAP and STATE sequence pointers to be identical, not merely
+ * independently valid capability ids.
+ *
+ * @param {object} roadmap
+ * @param {object} state
+ */
+export function validateRoadmapStateAlignment(roadmap, state) {
+  const findings = [];
+  if (roadmap == null || typeof roadmap !== "object" || Array.isArray(roadmap)) {
+    return aggregate([finding("INVALID_ROADMAP", "roadmap", "roadmap must be an object")]);
+  }
+  if (state == null || typeof state !== "object" || Array.isArray(state)) {
+    return aggregate([finding("INVALID_STATE", "state", "state must be an object")]);
+  }
+
+  const pairs = [
+    ["acceptedThrough", "ROADMAP_STATE_ACCEPTED_THROUGH_MISMATCH"],
+    ["currentSlice", "ROADMAP_STATE_CURRENT_SLICE_MISMATCH"],
+    ["nextSlice", "ROADMAP_STATE_NEXT_SLICE_MISMATCH"],
+  ];
+  for (const [field, code] of pairs) {
+    if (roadmap[field] !== state[field]) {
+      findings.push(
+        finding(
+          code,
+          field,
+          `ROADMAP ${field}=${JSON.stringify(roadmap[field])} STATE ${field}=${JSON.stringify(state[field])}`,
+        ),
+      );
+    }
+  }
+  return aggregate(findings);
+}
+
+function lifecyclePhaseCoherenceFindings(state) {
+  const findings = [];
+  const phase = state.lifecyclePhase;
+  const accepted = state.accepted;
+  const implementation =
+    state.implementation != null && typeof state.implementation === "object" && !Array.isArray(state.implementation)
+      ? state.implementation
+      : null;
+  const complete = implementation ? implementation.complete : undefined;
+  const authorized = implementation ? implementation.authorized : undefined;
+  const statuses =
+    implementation &&
+    implementation.trancheStatuses != null &&
+    typeof implementation.trancheStatuses === "object" &&
+    !Array.isArray(implementation.trancheStatuses)
+      ? implementation.trancheStatuses
+      : null;
+  const anyPass = statuses ? Object.values(statuses).some((status) => status === TRANCHE_STATUS.PASS) : false;
+  const knownPhase = typeof phase === "string" && LIFECYCLE_PHASE_SET.has(phase);
+
+  if (accepted === true && knownPhase && phase !== LIFECYCLE_PHASE.COMPLETE_AND_ACCEPTED) {
+    findings.push(
+      finding(
+        "ACCEPTED_PHASE_CONTRADICTION",
+        "lifecyclePhase",
+        "accepted requires lifecyclePhase COMPLETE_AND_ACCEPTED",
+      ),
+    );
+  }
+
+  if (phase === LIFECYCLE_PHASE.COMPLETE_AND_ACCEPTED && (accepted !== true || complete !== true)) {
+    findings.push(
+      finding(
+        "COMPLETE_AND_ACCEPTED_PHASE_CONTRADICTION",
+        "lifecyclePhase",
+        "COMPLETE_AND_ACCEPTED requires accepted and implementation.complete",
+      ),
+    );
+  }
+
+  if (
+    complete === true &&
+    accepted === false &&
+    knownPhase &&
+    phase !== LIFECYCLE_PHASE.IMPLEMENTATION_COMPLETE
+  ) {
+    findings.push(
+      finding(
+        "COMPLETE_PHASE_CONTRADICTION",
+        "lifecyclePhase",
+        "implementation.complete without accepted requires lifecyclePhase IMPLEMENTATION_COMPLETE",
+      ),
+    );
+  }
+
+  if (anyPass && complete === false && knownPhase && phase !== LIFECYCLE_PHASE.IMPLEMENTATION_IN_PROGRESS) {
+    findings.push(
+      finding(
+        "PASS_TRANCHE_EARLY_PHASE",
+        "lifecyclePhase",
+        "a PASS tranche with incomplete implementation requires lifecyclePhase IMPLEMENTATION_IN_PROGRESS",
+      ),
+    );
+  }
+
+  if (phase === LIFECYCLE_PHASE.IMPLEMENTATION_IN_PROGRESS) {
+    if (authorized !== true || complete !== false || accepted !== false) {
+      findings.push(
+        finding(
+          "IMPLEMENTATION_IN_PROGRESS_INCOHERENT",
+          "lifecyclePhase",
+          "IMPLEMENTATION_IN_PROGRESS requires authorized, incomplete, and unaccepted implementation",
+        ),
+      );
+    }
+  }
+
+  return findings;
 }
 
 function authorizationInvariantFindings(implementation) {
@@ -494,29 +616,29 @@ export function validateLiveRoadmapStateAlignment(roadmapMeta, stateMeta) {
     };
   }
 
-  const fields = ["acceptedThrough", "currentProductSlice", "nextProductSlice"];
+  const liveFields = [
+    ["acceptedThrough", "acceptedThrough"],
+    ["currentProductSlice", "currentSlice"],
+    ["nextProductSlice", "nextSlice"],
+  ];
   const findings = [];
-  for (const field of fields) {
-    if (!Object.hasOwn(roadmapMeta.meta, field) || !Object.hasOwn(stateMeta.meta, field)) {
+  const roadmapNormalized = {};
+  const stateNormalized = {};
+  for (const [liveField, normalizedField] of liveFields) {
+    if (!Object.hasOwn(roadmapMeta.meta, liveField) || !Object.hasOwn(stateMeta.meta, liveField)) {
       findings.push(
         finding(
           "LIVE_META_FIELD_UNAVAILABLE",
-          field,
-          `${field} is unavailable from current metadata and must not be inferred from narrative`,
+          liveField,
+          `${liveField} is unavailable from current metadata and must not be inferred from narrative`,
         ),
       );
       continue;
     }
-    if (roadmapMeta.meta[field] !== stateMeta.meta[field]) {
-      findings.push(
-        finding(
-          "LIVE_ROADMAP_STATE_MISMATCH",
-          field,
-          `${field}: ROADMAP=${JSON.stringify(roadmapMeta.meta[field])} STATE=${JSON.stringify(stateMeta.meta[field])}`,
-        ),
-      );
-    }
+    roadmapNormalized[normalizedField] = roadmapMeta.meta[liveField];
+    stateNormalized[normalizedField] = stateMeta.meta[liveField];
   }
+  findings.push(...validateRoadmapStateAlignment(roadmapNormalized, stateNormalized).findings);
 
   const result = aggregate(findings);
   return {
