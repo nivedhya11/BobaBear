@@ -40176,6 +40176,7 @@ export function evaluateImp036jGatePassNarrative(roadmapText, productDefinitionT
     !section4.includes("Implementation Plan `PASS`") ||
     !section4.includes("`IMPLEMENTATION_TRANCHE_8`") ||
     section4.includes("`IMPLEMENTATION_TRANCHE_7`") ||
+    section4.includes("`IMPLEMENTATION_TRANCHE_5`") ||
     section4.includes("`IMPLEMENTATION_TRANCHE_4`") ||
     section4.includes("Implementation Plan `NOT_PERFORMED`") ||
     section4.includes("next gate `IMPLEMENTATION_PLAN`") ||
@@ -40201,6 +40202,7 @@ export function evaluateImp036jGatePassNarrative(roadmapText, productDefinitionT
     !section5.includes("Implementation Plan `PASS`") ||
     !section5.includes("`IMPLEMENTATION_TRANCHE_8`") ||
     section5.includes("`IMPLEMENTATION_TRANCHE_7`") ||
+    section5.includes("`IMPLEMENTATION_TRANCHE_5`") ||
     section5.includes("`IMPLEMENTATION_TRANCHE_4`") ||
     /DRAFT_READY_FOR_GATE/.test(section5) ||
     !imp036jFutureClause(section5) ||
@@ -44557,6 +44559,37 @@ function checkImp036jTranche5Pass(roadmap, state, architecture, decision) {
 }
 
 /**
+ * CURRENT STATE work-position lifecycle payload for IMP-036J Tranche 7 PASS.
+ * Ledger records may repeat these tokens; the live `## 2. Current Work Position`
+ * section must still contain them.
+ * @param {string} stateSection2
+ * @returns {{ ok: true } | { ok: false, code: string, message: string }}
+ */
+export function evaluateImp036jTranche7CurrentStatePayload(stateSection2) {
+  const source = String(stateSection2 ?? "");
+  const required = [
+    "IMP036J_TRANCHE_7: PASS",
+    "T7_STARTED: YES",
+    "T8_STARTED: NO",
+    "IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_8",
+    "nextGate: IMPLEMENTATION_TRANCHE_8",
+    "IMP036J_IMPLEMENTATION_COMPLETE: NO",
+    "IMP036J_ACCEPTED: NO",
+    "FOUNDER_UAT: NOT_PERFORMED",
+  ];
+  for (const token of required) {
+    if (!source.includes(token)) {
+      return {
+        ok: false,
+        code: "IMP036J_T7_CURRENT_STATE",
+        message: `Current STATE work position must record ${token}`,
+      };
+    }
+  }
+  return { ok: true };
+}
+
+/**
  * CURRENT checkpoint: IMP-036J Tranche 7 MEASUREMENT_REPORTING PASS (GTM-R188 / STATE-R186).
  * T1–T7 are PASS. Next gate is IMPLEMENTATION_TRANCHE_8. T8 remains not started.
  * Historical GTM-R187 / STATE-R185 remains Tranche 5 PASS with T7 not started.
@@ -44595,6 +44628,8 @@ function checkImp036jTranche7Pass(roadmap, state, architecture, decision) {
   if (architecture?.meta.architectureVersion !== "ARCH-R23" || decision?.meta.decisionRegisterVersion !== "DR-24") {
     fail("IMP036J_T7_GLOBAL_AUTHORITY", "Tranche 7 PASS persistence must retain ARCH-R23 and DR-24");
   }
+  const currentStatePayload = evaluateImp036jTranche7CurrentStatePayload(stateSection2);
+  if (!currentStatePayload.ok) fail(currentStatePayload.code, currentStatePayload.message);
   const passed = [
     "IMP-036J: ARCHITECTURE_LOCKED",
     "IMP036J_IMPLEMENTATION_AUTHORIZATION: APPROVED",
@@ -44637,6 +44672,8 @@ function checkImp036jTranche7Pass(roadmap, state, architecture, decision) {
     "IMP036J_TRANCHE_7: NOT_STARTED",
     "nextGate: IMPLEMENTATION_TRANCHE_7",
     "IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_7",
+    "nextGate: IMPLEMENTATION_TRANCHE_5",
+    "IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_5",
     "T7_STARTED: NO",
     "T8_STARTED: YES",
     "IMP036J_IMPLEMENTATION_STARTED: NO",

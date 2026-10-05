@@ -116,6 +116,7 @@ import {
   evaluateImp036jTranche3CurrentSourceAnchor,
   evaluateImp036jExperienceFitPointer,
   evaluateImp036jTestingPointer,
+  evaluateImp036jTranche7CurrentStatePayload,
   evaluateImp036kGateCandidateProvenance,
   evaluateImp036kDesignReadinessPlanFinalizedFlags,
   evaluateImp036jProductDeliveryTransition,
@@ -6769,6 +6770,12 @@ describe("canonical authority history compression", () => {
       assert.match(state, /IMP036J_IMPLEMENTATION_COMPLETE:\s*NO/);
       assert.match(state, /FOUNDER_UAT:\s*NOT_PERFORMED/);
       assert.match(state, /IMP036J_ACCEPTED:\s*NO/);
+      const stateSection2 = state.split("## 2. Current Work Position")[1]?.split("\n## ")[0] ?? "";
+      assert.deepEqual(evaluateImp036jTranche7CurrentStatePayload(stateSection2), { ok: true });
+      const droppedCurrentT7 = stateSection2.replaceAll("IMP036J_TRANCHE_7: PASS", "IMP036J_TRANCHE_7: OMITTED");
+      assert.notEqual(droppedCurrentT7, stateSection2);
+      assert.equal(evaluateImp036jTranche7CurrentStatePayload(droppedCurrentT7).ok, false);
+      assert.equal(evaluateImp036jTranche7CurrentStatePayload(droppedCurrentT7).code, "IMP036J_T7_CURRENT_STATE");
       assert.match(currentMarker, /IMP036K_DESIGN_READINESS:\s*PASS/);
       assert.match(currentMarker, /IMP036K_NEXT_GATE:\s*QUALITY \/ TEST PLAN FINALIZATION/);
       assert.match(currentMarker, /IMP036K_QUALITY_TEST_PLAN_FINALIZED:\s*NO/);
@@ -18024,6 +18031,13 @@ describe("IMP-036I implementation authorization persistence", () => {
       "| Product Definition Gate and Architecture Fit | NOT_PERFORMED | Implementation | Blocks implementation |",
     );
     assert.equal(evaluateImp036jGatePassNarrative(roadmap, staleDependency).code, "IMP036J_DEPENDENCY_GATE");
+    const staleTranche5 = roadmap.replace(
+      "## 4. Current Product Slice",
+      "## 4. Current Product Slice\n\nStale current sentence `IMPLEMENTATION_TRANCHE_5`.\n",
+    );
+    assert.notEqual(staleTranche5, roadmap);
+    assert.equal(evaluateImp036jGatePassNarrative(staleTranche5, product).ok, false);
+    assert.equal(evaluateImp036jGatePassNarrative(staleTranche5, product).code, "IMP036J_NARRATIVE_SECTION4");
   });
 
   it("fails when only the FD-036J-03 decision block contradicts approved complimentary-item semantics", () => {
