@@ -320,7 +320,9 @@ export function validateStateSchema(state, plan, roadmap) {
   }
 
   const trancheIds = Array.isArray(plan?.tranches) ? plan.tranches.map((tranche) => tranche?.id).filter(Boolean) : [];
-  findings.push(...validateLastTransitionShape(state.lastTransition, trancheIds).findings);
+  findings.push(
+    ...validateLastTransitionShape(state.lastTransition, trancheIds, state.implementation?.trancheStatuses).findings,
+  );
   findings.push(...validateCurrentReferences(state, roadmap));
   findings.push(...contractExecutionDuplicationFindings(state.contracts));
 

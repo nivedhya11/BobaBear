@@ -21,5 +21,11 @@
   "currentReferences": {
     "architecture": ["ARCH-SYNTH-050"],
     "decisions": ["D-SYNTH-050"]
+  },
+  "lastTransition": {
+    "type": "TRANCHE_PASS",
+    "tranche": "MEASUREMENT",
+    "sourcePr": 1,
+    "mergeCommit": "cccccccccccccccccccccccccccccccccccccccc"
   }
 }

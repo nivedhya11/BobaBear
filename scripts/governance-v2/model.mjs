@@ -48,8 +48,17 @@ export function aggregate(findings) {
  * @param {unknown} lastTransition
  * @param {Iterable<string>} trancheIds
  */
-export function validateLastTransitionShape(lastTransition, trancheIds) {
+export function validateLastTransitionShape(lastTransition, trancheIds, statuses) {
+  const passed =
+    statuses != null && typeof statuses === "object" && !Array.isArray(statuses)
+      ? Object.values(statuses).filter((status) => status === TRANCHE_STATUS.PASS)
+      : [];
   if (lastTransition == null) {
+    if (passed.length > 0) {
+      return aggregate([
+        finding("INVALID_LAST_TRANSITION", "lastTransition", "passed tranches require lastTransition evidence"),
+      ]);
+    }
     return { ok: true, findings: [] };
   }
   if (typeof lastTransition !== "object" || Array.isArray(lastTransition)) {

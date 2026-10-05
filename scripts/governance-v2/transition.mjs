@@ -101,8 +101,38 @@ export function roadmapLedgerTransitionFindings(baseRoadmap, headRoadmap) {
   return findings;
 }
 
+const ACCEPTED_LEDGER_ROW = /^\|\s*(IMP-\d+[A-Z]?)\s*\|[^|\n]*\|\s*COMPLETE_AND_ACCEPTED\s*\|/gm;
+
+export function acceptedIdsFromMarkdownLedger(text) {
+  return [...String(text ?? "").matchAll(ACCEPTED_LEDGER_ROW)].map((match) => match[1]);
+}
+
+export function acceptedIdentityTransitionFindings(baseIds, headRoadmap) {
+  const findings = [];
+  const head = capabilityById(headRoadmap);
+  for (const id of baseIds) {
+    const next = head.get(id);
+    if (!next) {
+      findings.push(finding("ACCEPTED_CAPABILITY_REMOVED", `capabilities.${id}`, `accepted capability ${id} cannot be removed or renamed`));
+      continue;
+    }
+    if (next.accepted !== true) {
+      findings.push(finding("ACCEPTED_HISTORY_REWRITTEN", `capabilities.${id}.accepted`, `accepted capability ${id} cannot be un-accepted`));
+    }
+    if (next.implementationComplete !== true) {
+      findings.push(finding("ACCEPTED_INCOMPLETE", `capabilities.${id}.implementationComplete`, `accepted capability ${id} must remain implementation-complete`));
+    }
+  }
+  return findings;
+}
+
 export function tranchePlanTransitionFindings(basePlan, headPlan) {
   const findings = [];
+  const baseSlice = typeof basePlan?.slice === "string" ? basePlan.slice : null;
+  const headSlice = typeof headPlan?.slice === "string" ? headPlan.slice : null;
+  if (baseSlice != null && headSlice != null && baseSlice !== headSlice) {
+    return findings;
+  }
   const base = new Map(trancheList(basePlan).filter((tranche) => tranche?.id).map((tranche) => [tranche.id, tranche]));
   const head = new Map(trancheList(headPlan).filter((tranche) => tranche?.id).map((tranche) => [tranche.id, tranche]));
   for (const [id, tranche] of base) {

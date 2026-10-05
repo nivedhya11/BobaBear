@@ -5,7 +5,7 @@ import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 import { deriveNextGate, validateTranchePlan, validateTrancheStatuses } from "./tranche-graph.mjs";
 import { validateCurrentState } from "./invariants.mjs";
-import { validateTransition } from "./transition.mjs";
+import { validateTransition, tranchePlanTransitionFindings } from "./transition.mjs";
 import { loadFixture, structuredState } from "./load-fixture.mjs";
 import { FOUNDER_UAT, TRANCHE_STATUS } from "./model.mjs";
 import { validateRoadmapSchema, validateRoadmapStateAlignment } from "./schema.mjs";
@@ -132,6 +132,17 @@ describe("GOV-2 generic engine", () => {
     assert.ok(codes(relaxedResult).includes("REQUIRED_TRANCHE_RELAXED"), JSON.stringify(relaxedResult.findings));
   });
 
+  it("does not treat a slice-changing tranche plan as removal of the previous graph", () => {
+    const previous = plan036j();
+    const next = structuredState(previous);
+    next.slice = "IMP-050";
+    next.tranches = [{ id: "K1", order: 1, required: true, dependencies: [] }];
+    assert.equal(tranchePlanTransitionFindings(previous, next).length, 0);
+    const sameSlice = structuredState(previous);
+    sameSlice.tranches = sameSlice.tranches.filter((tranche) => tranche.id !== "T8");
+    assert.ok(tranchePlanTransitionFindings(previous, sameSlice).some((item) => item.code === "TRANCHE_REMOVED"));
+  });
+
   it("rejects deleting lastTransition evidence without a new tranche PASS", () => {
     const base = postT7();
     const head = structuredState(base);
@@ -139,6 +150,17 @@ describe("GOV-2 generic engine", () => {
     const result = validateTransition(base, head, plan036j(), roadmap());
     assert.equal(result.ok, false);
     assert.ok(codes(result).includes("INVALID_LAST_TRANSITION"));
+  });
+
+  it("rejects removing lastTransition while passed tranches remain", () => {
+    const head = structuredState(postT7());
+    delete head.lastTransition;
+    const current = validateCurrentState(head, plan036j(), roadmap());
+    assert.equal(current.ok, false);
+    assert.ok(codes(current).includes("INVALID_LAST_TRANSITION"));
+    const transition = validateTransition(postT7(), head, plan036j(), roadmap());
+    assert.equal(transition.ok, false);
+    assert.ok(codes(transition).includes("INVALID_LAST_TRANSITION"));
   });
 
   it("rejects malformed lastTransition evidence when a tranche newly PASSes", () => {

@@ -14,7 +14,7 @@ import { finding } from "./model.mjs";
 import { loadAuthoritiesFromTexts, parseGov2Block } from "./load-authorities.mjs";
 import { CURRENT_AUTHORITY_KIND, parseCurrentGovernanceMeta } from "./schema.mjs";
 import { validateAuthorityDocuments } from "./current.mjs";
-import { validateTransition } from "./transition.mjs";
+import { acceptedIdsFromMarkdownLedger, acceptedIdentityTransitionFindings, validateTransition } from "./transition.mjs";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_ROOT = process.env.BOBA_PROJECT_ROOT
@@ -331,6 +331,9 @@ function validateBootstrapTransition({ baseSha, headSha, baseRoadmap, baseState,
   findings.push(...headCurrent.findings);
   if (baseRoadmapMeta.ok === true && baseStateMeta.ok === true && headLoaded.ok && headLoaded.roadmap && headLoaded.state) {
     findings.push(...bootstrapPointerFindings(baseRoadmapMeta, baseStateMeta, headLoaded));
+    findings.push(
+      ...acceptedIdentityTransitionFindings(acceptedIdsFromMarkdownLedger(baseRoadmap), headLoaded.roadmap),
+    );
   }
 
   const material = findings.filter((item) => item && item.ok === false);

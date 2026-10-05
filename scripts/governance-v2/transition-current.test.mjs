@@ -119,10 +119,32 @@ describe("GOV-2 authoritative transition command", () => {
   it("rejects rollback from GOV-2 to pre-GOV2", { skip: !originMainSha() }, () => {
     const head = gitSha("HEAD");
     const base = originMainSha();
-    assert.ok(head && base);
+    assert.ok(head);
+    assert.ok(base);
     const report = validateRepositoryTransition({ root, baseSha: head, headSha: base });
     assert.equal(report.ok, false);
     assert.equal(report.MODE, "GOV2_ROLLBACK");
     assert.ok(report.findings.some((item) => item.code === "GOV2_ROLLBACK"));
+  });
+
+  it("fails bootstrap when an accepted markdown ledger identity is renamed", { skip: !originMainSha(), timeout: 120_000 }, () => {
+    const tmp = materializeOverlayRoot();
+    try {
+      const rel = "docs/platform/ROADMAP.md";
+      const original = readFileSync(path.join(tmp, rel), "utf8");
+      const mutated = original.replace(/"id": "IMP-001"/, '"id": "IMP-999"');
+      assert.notEqual(mutated, original);
+      writeFileSync(path.join(tmp, rel), mutated);
+      const result = runCli(tmp, originMainSha());
+      assert.notEqual(result.status, 0, result.stdout);
+      const report = JSON.parse(result.stdout);
+      assert.equal(report.ok, false);
+      assert.ok(
+        report.findings.some((item) => item.code === "ACCEPTED_CAPABILITY_REMOVED"),
+        JSON.stringify(report.findings, null, 2),
+      );
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
   });
 });
