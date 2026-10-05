@@ -41329,6 +41329,68 @@ export function evaluateImp036jTestingPointer(testingText) {
       message: "TESTING.md current tip must be GTM-R188 / STATE-R186 and must retain prior tips GTM-R187 / STATE-R185, GTM-R186 / STATE-R184, GTM-R185 / STATE-R183, GTM-R184 / STATE-R182, GTM-R183 / STATE-R181, GTM-R182 / STATE-R180, GTM-R181 / STATE-R179, GTM-R180 / STATE-R178, and GTM-R179 / STATE-R177",
     };
   }
+  const normalizedBlock = block.replace(/\s+/g, " ");
+  for (const token of [
+    "`acceptedThrough` = IMP-036I",
+    "`currentProductSlice` = IMP-036J",
+    "`pendingAcceptance` = NONE",
+    "`nextProductSlice` = IMP-036K",
+  ]) {
+    if (!normalizedBlock.includes(token)) {
+      return {
+        ok: false,
+        code: "IMP036J_TESTING_LIFECYCLE",
+        message: `TESTING.md current GTM-R188 / STATE-R186 block must record ${token}`,
+      };
+    }
+  }
+  const jStart = block.indexOf("`IMP036J_ACTIVATED");
+  const jEnd = block.indexOf("`IMP036I_PRODUCT_DEFINITION");
+  const currentJ = (jStart < 0 || jEnd < 0 || jEnd <= jStart ? "" : block.slice(jStart, jEnd)).replace(/\s+/g, " ");
+  if (!currentJ) {
+    return {
+      ok: false,
+      code: "IMP036J_TESTING_LIFECYCLE",
+      message: "TESTING.md current GTM-R188 / STATE-R186 block must include the current IMP-036J lifecycle summary",
+    };
+  }
+  for (const token of [
+    "next gate `IMPLEMENTATION_TRANCHE_8`",
+    "Tranche 7 `PASS`",
+    "T8 not started",
+    "`IMP036J_IMPLEMENTATION_COMPLETE: NO`",
+    "`FOUNDER_UAT: NOT_PERFORMED`",
+    "`IMP036J_ACCEPTED: NO`",
+  ]) {
+    if (!currentJ.includes(token)) {
+      return {
+        ok: false,
+        code: "IMP036J_TESTING_LIFECYCLE",
+        message: `TESTING.md current IMP-036J summary must record ${token}`,
+      };
+    }
+  }
+  if (currentJ.includes("T7 not started") || !currentJ.includes("T7 started")) {
+    return {
+      ok: false,
+      code: "IMP036J_TESTING_LIFECYCLE",
+      message: "TESTING.md current IMP-036J summary must record T7 started",
+    };
+  }
+  if (
+    /next gate `IMPLEMENTATION_TRANCHE_7`/.test(currentJ) ||
+    /IMP036J_NEXT_GATE(?::|\s*=)\s*IMPLEMENTATION_TRANCHE_7/.test(currentJ) ||
+    /T8_STARTED(?::|\s*=)\s*YES/.test(currentJ) ||
+    (/\bT8 started\b/.test(currentJ) && !/\bT8 not started\b/.test(currentJ)) ||
+    /IMP036J_IMPLEMENTATION_COMPLETE(?::|\s*=)\s*YES/.test(currentJ) ||
+    /IMP036J_ACCEPTED(?::|\s*=)\s*YES/.test(currentJ)
+  ) {
+    return {
+      ok: false,
+      code: "IMP036J_TESTING_LIFECYCLE",
+      message: "TESTING.md current IMP-036J summary must not regress to Tranche 7 as next gate, T8 started, implementation complete, or IMP-036J accepted",
+    };
+  }
   return { ok: true };
 }
 

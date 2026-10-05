@@ -42,10 +42,10 @@ Definition `PD-IMP-036H-DRAFT-1` = `APPROVED`; Product Definition Gate
 `IMP036J_ACTIVATED: YES`; `IMP036J_PRODUCT_DEFINITION: APPROVED`
 (`PD-IMP-036J-DRAFT-6`; Product Definition Gate `PASS`; Experience Criticality `X3`;
 Experience Definition `XD-IMP-036J-DRAFT-6` `APPROVED`; Experience Gate `PASS`; next gate
-`IMPLEMENTATION_TRANCHE_7`; Architecture Fit `PASS`; architecture `LOCKED`; Design Readiness `PASS`;
+`IMPLEMENTATION_TRANCHE_8`; Architecture Fit `PASS`; architecture `LOCKED`; Design Readiness `PASS`;
 Quality/Test Plan finalized; Measurement/Instrumentation Plan finalized; Implementation Plan
 `PASS`; implementation `AUTHORIZED` / `STARTED`; formal lifecycle `IMPLEMENTATION_IN_PROGRESS`;
-Tranche 1 `PASS`; Tranche 2 `PASS`; Tranche 3 `PASS`; Tranche 4 `PASS`; Tranche 5 `PASS`; Tranche 6 `PASS`; T7 not started; T8 not started; `IMP036J_IMPLEMENTATION_COMPLETE: NO`);
+Tranche 1 `PASS`; Tranche 2 `PASS`; Tranche 3 `PASS`; Tranche 4 `PASS`; Tranche 5 `PASS`; Tranche 6 `PASS`; Tranche 7 `PASS`; T7 started; T8 not started; `IMP036J_IMPLEMENTATION_COMPLETE: NO`; `FOUNDER_UAT: NOT_PERFORMED`; `IMP036J_ACCEPTED: NO`);
 `IMP036I_PRODUCT_DEFINITION: APPROVED` (`PD-IMP-036I-DRAFT-4`);
 `IMP036I_PRODUCT_DEFINITION_GATE: PASS` (independent review `5307761142`); Architecture Fit
 `PASS` (independent review `5312653831`); architecture `LOCKED`; D-379 CURRENT; D-380 CURRENT;

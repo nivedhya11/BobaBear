@@ -6760,6 +6760,15 @@ describe("canonical authority history compression", () => {
       assert.match(currentMarker, /T7_STARTED:\s*YES/);
       assert.match(currentMarker, /T8_STARTED:\s*NO/);
       assert.match(currentMarker, /IMP036J_NEXT_GATE:\s*IMPLEMENTATION_TRANCHE_8/);
+      assert.match(currentMarker, /IMP036J_IMPLEMENTATION_COMPLETE:\s*NO/);
+      assert.match(currentMarker, /FOUNDER_UAT:\s*NOT_PERFORMED/);
+      assert.match(currentMarker, /IMP036J_ACCEPTED:\s*NO/);
+      assert.match(state, /IMP036J_TRANCHE_7:\s*PASS/);
+      assert.match(state, /IMP036J_NEXT_GATE:\s*IMPLEMENTATION_TRANCHE_8/);
+      assert.match(state, /T8_STARTED:\s*NO/);
+      assert.match(state, /IMP036J_IMPLEMENTATION_COMPLETE:\s*NO/);
+      assert.match(state, /FOUNDER_UAT:\s*NOT_PERFORMED/);
+      assert.match(state, /IMP036J_ACCEPTED:\s*NO/);
       assert.match(currentMarker, /IMP036K_DESIGN_READINESS:\s*PASS/);
       assert.match(currentMarker, /IMP036K_NEXT_GATE:\s*QUALITY \/ TEST PLAN FINALIZATION/);
       assert.match(currentMarker, /IMP036K_QUALITY_TEST_PLAN_FINALIZED:\s*NO/);
@@ -19238,6 +19247,51 @@ describe("IMP-036J architecture fit remediation candidate 9", () => {
     const withHistory = `${testing}\n\nHistorical Candidate-5 lock checkpoint remains GTM-R172 / STATE-R170.\n`;
     assert.notEqual(withHistory, testing);
     assert.equal(evaluateImp036jTestingPointer(withHistory).ok, true);
+  });
+  it("accepts historical GTM-R187 / STATE-R185 prior-checkpoint prose outside the current summary", () => {
+    const withHistory = `${testing}\n\nHistorical prior checkpoint GTM-R187 / STATE-R185 remains next gate IMPLEMENTATION_TRANCHE_7 with T7 not started.\n`;
+    assert.notEqual(withHistory, testing);
+    assert.equal(evaluateImp036jTestingPointer(withHistory).ok, true);
+  });
+  it("rejects reverting only the TESTING.md current next gate to IMPLEMENTATION_TRANCHE_7", () => {
+    const mutated = testing.replace(
+      "next gate\n`IMPLEMENTATION_TRANCHE_8`",
+      "next gate\n`IMPLEMENTATION_TRANCHE_7`",
+    );
+    assert.notEqual(mutated, testing);
+    assert.match(mutated, /CURRENT tip GTM-R188 \/ STATE-R186/);
+    const result = evaluateImp036jTestingPointer(mutated);
+    assert.equal(result.ok, false);
+    assert.equal(result.code, "IMP036J_TESTING_LIFECYCLE");
+  });
+  it("rejects reverting only the TESTING.md current T7 start claim", () => {
+    const mutated = testing.replace("T7 started", "T7 not started");
+    assert.notEqual(mutated, testing);
+    assert.match(mutated, /CURRENT tip GTM-R188 \/ STATE-R186/);
+    const result = evaluateImp036jTestingPointer(mutated);
+    assert.equal(result.ok, false);
+    assert.equal(result.code, "IMP036J_TESTING_LIFECYCLE");
+  });
+  it("rejects claiming T8_STARTED = YES in the current TESTING.md IMP-036J summary", () => {
+    const mutated = testing.replace("T8 not started", "T8 not started; T8_STARTED = YES");
+    assert.notEqual(mutated, testing);
+    assert.match(mutated, /CURRENT tip GTM-R188 \/ STATE-R186/);
+    const result = evaluateImp036jTestingPointer(mutated);
+    assert.equal(result.ok, false);
+    assert.equal(result.code, "IMP036J_TESTING_LIFECYCLE");
+  });
+  it("rejects claiming IMP-036J implementation complete or accepted in the current TESTING.md summary", () => {
+    const complete = testing.replace(
+      "`IMP036J_IMPLEMENTATION_COMPLETE: NO`",
+      "`IMP036J_IMPLEMENTATION_COMPLETE: YES`",
+    );
+    const accepted = testing.replace("`IMP036J_ACCEPTED: NO`", "`IMP036J_ACCEPTED: YES`");
+    assert.notEqual(complete, testing);
+    assert.notEqual(accepted, testing);
+    assert.equal(evaluateImp036jTestingPointer(complete).ok, false);
+    assert.equal(evaluateImp036jTestingPointer(complete).code, "IMP036J_TESTING_LIFECYCLE");
+    assert.equal(evaluateImp036jTestingPointer(accepted).ok, false);
+    assert.equal(evaluateImp036jTestingPointer(accepted).code, "IMP036J_TESTING_LIFECYCLE");
   });
 });
 
