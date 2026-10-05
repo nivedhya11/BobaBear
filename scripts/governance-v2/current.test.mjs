@@ -3,11 +3,12 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
-import { validateLiveCurrentState } from "./current.mjs";
+import { validateLiveCurrentState, alignGovernanceMetaToGov2Blocks } from "./current.mjs";
 import { loadLiveAuthorities, parseGov2Block } from "./load-authorities.mjs";
 import { validateCurrentState } from "./invariants.mjs";
 import { validateTransition } from "./transition.mjs";
 import { TRANCHE_STATUS } from "./model.mjs";
+import { CURRENT_AUTHORITY_KIND, parseCurrentGovernanceMeta } from "./schema.mjs";
 import { loadFixture, structuredState } from "./load-fixture.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
@@ -57,5 +58,22 @@ describe("GOV-2 live authorities", () => {
     const engine = readFileSync(path.join(root, "scripts/governance-v2/invariants.mjs"), "utf8");
     assert.doesNotMatch(engine, /GTM-R189/);
     assert.doesNotMatch(engine, /T7_PASS/);
+  });
+
+  it("fails when GOV-2 blocks drift from CURRENT governance-meta pointers", () => {
+    const loaded = loadLiveAuthorities(root);
+    assert.equal(loaded.ok, true, JSON.stringify(loaded.findings, null, 2));
+    const roadmapLive = readFileSync(path.join(root, "docs/platform/ROADMAP.md"), "utf8");
+    const stateLive = readFileSync(path.join(root, "docs/platform/STATE.md"), "utf8");
+    const roadmapMeta = parseCurrentGovernanceMeta(roadmapLive, CURRENT_AUTHORITY_KIND.ROADMAP);
+    const stateMeta = parseCurrentGovernanceMeta(stateLive, CURRENT_AUTHORITY_KIND.STATE);
+    const driftedRoadmap = { ...loaded.roadmap, acceptedThrough: "IMP-036H" };
+    const driftedState = { ...loaded.state, acceptedThrough: "IMP-036H" };
+    const findings = alignGovernanceMetaToGov2Blocks(roadmapMeta, stateMeta, driftedRoadmap, driftedState);
+    assert.equal(
+      findings.some((item) => item.code === "CURRENT_AUTHORITY_POINTER_MISMATCH"),
+      true,
+    );
+    assert.equal(validateLiveCurrentState(root).ok, true);
   });
 });

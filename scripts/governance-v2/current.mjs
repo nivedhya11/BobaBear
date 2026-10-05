@@ -12,10 +12,56 @@ import { fileURLToPath } from "node:url";
 import { CURRENT_AUTHORITY_KIND, parseCurrentGovernanceMeta, validateLiveRoadmapStateAlignment } from "./schema.mjs";
 import { validateCurrentState } from "./invariants.mjs";
 import { loadLiveAuthorities } from "./load-authorities.mjs";
+import { finding } from "./model.mjs";
 import { readFileSync } from "node:fs";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_ROOT = path.resolve(SCRIPT_DIR, "../..");
+
+const ROADMAP_POINTER_PAIRS = Object.freeze([
+  ["acceptedThrough", "acceptedThrough"],
+  ["currentProductSlice", "currentSlice"],
+  ["nextProductSlice", "nextSlice"],
+  ["gtmBoundary", "gtmBoundary"],
+]);
+
+const STATE_POINTER_PAIRS = Object.freeze([
+  ["acceptedThrough", "acceptedThrough"],
+  ["currentProductSlice", "currentSlice"],
+  ["nextProductSlice", "nextSlice"],
+  ["pendingAcceptance", "pendingAcceptance"],
+]);
+
+/**
+ * CURRENT governance-meta pointers must match the loaded GOV-2 blocks.
+ * Internal GOV-2 validation alone must not bless a drifted machine block.
+ *
+ * @param {{ ok?: boolean, meta?: Record<string, unknown> }} roadmapMeta
+ * @param {{ ok?: boolean, meta?: Record<string, unknown> }} stateMeta
+ * @param {Record<string, unknown> | null | undefined} roadmap
+ * @param {Record<string, unknown> | null | undefined} state
+ */
+export function alignGovernanceMetaToGov2Blocks(roadmapMeta, stateMeta, roadmap, state) {
+  /** @type {ReturnType<typeof finding>[]} */
+  const findings = [];
+  const compare = (metaResult, gov2, pairs, prefix) => {
+    if (metaResult?.ok !== true || gov2 == null || typeof gov2 !== "object") return;
+    for (const [metaKey, gov2Key] of pairs) {
+      if (metaResult.meta[metaKey] !== gov2[gov2Key]) {
+        findings.push(
+          finding(
+            "CURRENT_AUTHORITY_POINTER_MISMATCH",
+            `${prefix}.${gov2Key}`,
+            `governance-meta ${metaKey}=${JSON.stringify(metaResult.meta[metaKey])} disagrees with gov2 ${gov2Key}=${JSON.stringify(gov2[gov2Key])}`,
+          ),
+        );
+      }
+    }
+  };
+  compare(roadmapMeta, roadmap, ROADMAP_POINTER_PAIRS, "gov2-roadmap");
+  compare(stateMeta, state, STATE_POINTER_PAIRS, "gov2-state");
+  return findings;
+}
 
 export function validateLiveCurrentState(root = DEFAULT_ROOT) {
   const loaded = loadLiveAuthorities(root);
@@ -25,7 +71,11 @@ export function validateLiveCurrentState(root = DEFAULT_ROOT) {
   const stateMeta = parseCurrentGovernanceMeta(stateLive, CURRENT_AUTHORITY_KIND.STATE);
   const liveAlignment = validateLiveRoadmapStateAlignment(roadmapMeta, stateMeta);
 
-  const findings = [...(loaded.ok ? [] : loaded.findings), ...liveAlignment.findings];
+  const findings = [
+    ...(loaded.ok ? [] : loaded.findings),
+    ...liveAlignment.findings,
+    ...alignGovernanceMetaToGov2Blocks(roadmapMeta, stateMeta, loaded.roadmap, loaded.state),
+  ];
   const validation =
     loaded.ok && loaded.roadmap && loaded.state && loaded.plan
       ? validateCurrentState(loaded.state, loaded.plan, loaded.roadmap)
