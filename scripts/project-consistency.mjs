@@ -18903,7 +18903,9 @@ function checkImp029ArchitectureLock(roadmap, state, architecture, decision) {
     if (
       !/"capability":\s*"IMP-029"/.test(body) ||
       !/"architectureLock":\s*"ARCHITECTURE_LOCKED"/.test(body) ||
-      !new RegExp(`"implementation":\\s*"${expectedImplementation.replace(/\//g, "\\/")}"`).test(body) ||
+      !new RegExp(
+        `"implementation":\\s*"${expectedImplementation.replace(/\\/g, "\\\\").replace(/\//g, "\\/")}"`,
+      ).test(body) ||
       !new RegExp(`"implementationAuthorized":\\s*${authorized}`).test(body) ||
       !/D-372/.test(body)
     ) {
