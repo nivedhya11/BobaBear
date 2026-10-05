@@ -19546,6 +19546,25 @@ describe("IMP-036J Tranche 7 STATE-R186 structured provenance", () => {
     assert.equal(mutated.split("## 10. STATE-R185 record")[1]?.split("## 10. STATE-R184")[0], historicalR185);
   });
 
+  it("fails when PR357 is corrupted inside STATE-R186 while narrative still names pull request #357", () => {
+    const mutated = replaceStateR186FenceField("PR357", "MERGED", "NOT_MERGED");
+    assert.match(mutated, /merged in pull request #357/);
+    const result = evaluateImp036jTranche7StateR186Record(extractImp036jStateR186Record(mutated));
+    assert.equal(result.ok, false);
+    assert.equal(result.code, "IMP036J_T7_R186_RECORD");
+    assert.match(result.message ?? "", /PR357/);
+    assert.equal(mutated.split("## 10. STATE-R185 record")[1]?.split("## 10. STATE-R184")[0], historicalR185);
+  });
+
+  it("fails when D-383 is corrupted inside STATE-R186 while section 2 still records D-383 CURRENT", () => {
+    const mutated = replaceStateR186FenceField("D-383", "CURRENT", "SUPERSEDED");
+    assert.match(mutated.split("## 2. Current Work Position")[1]?.split("\n## ")[0] ?? "", /D-383 CURRENT/);
+    const result = evaluateImp036jTranche7StateR186Record(extractImp036jStateR186Record(mutated));
+    assert.equal(result.ok, false);
+    assert.equal(result.code, "IMP036J_T7_R186_RECORD");
+    assert.match(result.message ?? "", /D-383/);
+  });
+
   it("fails when NEW_SERVICE is corrupted inside STATE-R186 while narrative still says no new service", () => {
     const mutated = replaceStateR186FenceField("NEW_SERVICE", "NO", "YES");
     assert.match(mutated, /No new service, queue, scheduler, permission, or role/);

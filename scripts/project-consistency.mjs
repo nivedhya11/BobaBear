@@ -44653,6 +44653,29 @@ export function evaluateImp036jTranche7StateR186Record(record) {
   const required = [
     "STATE-R186 = IMP036J_TRANCHE_7_PASS",
     "supersedes: STATE-R185",
+    "acceptedThrough: IMP-036I",
+    "pendingAcceptance: NONE",
+    "currentProductSlice: IMP-036J",
+    "nextProductSlice: IMP-036K",
+    "nextGate: IMPLEMENTATION_TRANCHE_8",
+    "formalLifecycle: IMPLEMENTATION_IN_PROGRESS",
+    "IMP036J_STARTED: YES",
+    "IMP036J_IMPLEMENTATION_STARTED: YES",
+    "IMP036J_IMPLEMENTATION_COMPLETE: NO",
+    "IMP036J_ACCEPTED: NO",
+    "FOUNDER_UAT: NOT_PERFORMED",
+    "IMP036J_TRANCHE_1: PASS",
+    "IMP036J_TRANCHE_2: PASS",
+    "IMP036J_TRANCHE_3: PASS",
+    "IMP036J_TRANCHE_4: PASS",
+    "IMP036J_TRANCHE_5: PASS",
+    "IMP036J_TRANCHE_6: PASS",
+    "IMP036J_TRANCHE_7: PASS",
+    "T7_STARTED: YES",
+    "T8_STARTED: NO",
+    "IMP036J_NEXT_GATE: IMPLEMENTATION_TRANCHE_8",
+    "TRANCHE_7: MEASUREMENT_REPORTING",
+    "IMPLEMENTATION_TRANCHE: 7 / MEASUREMENT_REPORTING",
     "IMPLEMENTATION_PR: #357",
     "IMPLEMENTATION_REVIEWED_HEAD: 0bd2734c51b88e5f9e6025389f23920e7a3c805d",
     "IMPLEMENTATION_REVIEWED_TREE: 42ba8ba7fd99892df2b2e2ca2e466114bdf65ea9",
@@ -44692,13 +44715,40 @@ export function evaluateImp036jTranche7StateR186Record(record) {
     "NEW_PERMISSION: NO",
     "NEW_ROLE: NO",
     "COMMERCIAL_BEHAVIOR_CHANGED: NO",
+    "PR357: MERGED",
+    "IMP036K_DESIGN_READINESS: PASS",
+    "DESIGN_READINESS_SOURCE_CANDIDATE: IMP-036K-DESIGN-CANDIDATE-1",
+    "DESIGN_READINESS_ARCHITECT_REVIEW: 5396061135",
+    "IMP036K_NEXT_GATE: QUALITY / TEST PLAN FINALIZATION",
+    "IMP036K_QUALITY_TEST_PLAN: NOT_PERFORMED",
+    "IMP036K_QUALITY_TEST_PLAN_FINALIZED: NO",
+    "IMP036K_MEASUREMENT_PLAN: NOT_PERFORMED",
+    "IMP036K_MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED: NO",
+    "IMP036K_IMPLEMENTATION_PLAN: NOT_PERFORMED",
+    "IMP036K_IMPLEMENTATION_AUTHORIZED: NO",
+    "IMP036K_IMPLEMENTATION_STARTED: NO",
+    "IMP036K_IMPLEMENTATION_COMPLETE: NO",
+    "IMP036K_ACCEPTED: NO",
+    "IMP036K_ARCHITECTURE_FIT: PASS",
+    "IMP036K_ARCHITECTURE_LOCKED: YES",
+    "D-383: CURRENT",
+    "ARCH-R23: UNCHANGED",
+    "DECISION_REGISTER: DR-24",
   ];
-  for (const token of required) {
-    if (!source.includes(token)) {
+  const actualLines = source.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  if (actualLines.length !== required.length) {
+    return {
+      ok: false,
+      code: "IMP036J_T7_R186_RECORD",
+      message: "STATE-R186 structured record must contain the complete required field set",
+    };
+  }
+  for (let i = 0; i < required.length; i += 1) {
+    if (actualLines[i] !== required[i]) {
       return {
         ok: false,
         code: "IMP036J_T7_R186_RECORD",
-        message: `STATE-R186 structured record must contain ${token}`,
+        message: `STATE-R186 structured record must contain ${required[i]}`,
       };
     }
   }
