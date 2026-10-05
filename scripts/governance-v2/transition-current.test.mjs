@@ -5,10 +5,13 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
-import { validateRepositoryTransition } from "./transition-current.mjs";
+import { hasGov2Block, validateRepositoryTransition } from "./transition-current.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const cli = path.join(root, "scripts/governance-v2/transition-current.mjs");
+const HISTORY_DIR = path.join(root, "docs/platform/history");
+const ROADMAP_REL = "docs/platform/ROADMAP.md";
+const STATE_REL = "docs/platform/STATE.md";
 const SKIP_OVERLAY = new Set(["node_modules", ".next", "out", "coverage", ".validation-logs"]);
 
 function gitSha(spec) {
@@ -17,8 +20,70 @@ function gitSha(spec) {
   return result.stdout.trim();
 }
 
-function originMainSha() {
-  return gitSha("origin/main");
+function uniquePreGov2Snapshot(pattern) {
+  const matches = readdirSync(HISTORY_DIR).filter((name) => pattern.test(name));
+  if (matches.length !== 1) return null;
+  return {
+    rel: path.join("docs/platform/history", matches[0]),
+    text: readFileSync(path.join(HISTORY_DIR, matches[0]), "utf8"),
+    hash: spawnSync("git", ["-C", root, "hash-object", path.join(HISTORY_DIR, matches[0])], {
+      encoding: "utf8",
+    }).stdout.trim(),
+  };
+}
+
+function blobHashAt(sha, rel) {
+  const result = spawnSync("git", ["-C", root, "rev-parse", "--verify", `${sha}:${rel}`], {
+    encoding: "utf8",
+  });
+  if (result.status !== 0) return null;
+  return result.stdout.trim();
+}
+
+/**
+ * Resolve a real pre-GOV2 commit using the bootstrap contract: the unique
+ * history snapshots must equal the base ROADMAP/STATE blobs, and those blobs
+ * must lack GOV-2 machine blocks. Do not use origin/main after cutover.
+ */
+function resolvePreGov2BaseSha() {
+  const roadmapSnap = uniquePreGov2Snapshot(/^ROADMAP-.*-pre-gov2\.md$/);
+  const stateSnap = uniquePreGov2Snapshot(/^STATE-.*-pre-gov2\.md$/);
+  if (!roadmapSnap?.hash || !stateSnap?.hash) return null;
+
+  const listed = spawnSync("git", ["-C", root, "rev-list", "HEAD", "--", STATE_REL], {
+    encoding: "utf8",
+    maxBuffer: 16 * 1024 * 1024,
+  });
+  if (listed.status !== 0) return null;
+
+  for (const sha of listed.stdout.split("\n").map((line) => line.trim()).filter(Boolean)) {
+    if (blobHashAt(sha, STATE_REL) !== stateSnap.hash) continue;
+    if (blobHashAt(sha, ROADMAP_REL) !== roadmapSnap.hash) continue;
+    const stateText = spawnSync("git", ["-C", root, "show", `${sha}:${STATE_REL}`], {
+      encoding: "utf8",
+      maxBuffer: 32 * 1024 * 1024,
+    });
+    const roadmapText = spawnSync("git", ["-C", root, "show", `${sha}:${ROADMAP_REL}`], {
+      encoding: "utf8",
+      maxBuffer: 32 * 1024 * 1024,
+    });
+    if (stateText.status !== 0 || roadmapText.status !== 0) continue;
+    if (hasGov2Block(stateText.stdout, "state") || hasGov2Block(roadmapText.stdout, "roadmap")) {
+      continue;
+    }
+    return sha;
+  }
+  return null;
+}
+
+const preGov2BaseSha = resolvePreGov2BaseSha();
+
+function requirePreGov2BaseSha() {
+  assert.ok(
+    preGov2BaseSha,
+    "unique pre-GOV2 history snapshots must equal ROADMAP/STATE blobs on a HEAD-ancestry commit without GOV-2 blocks",
+  );
+  return preGov2BaseSha;
 }
 
 function materializeOverlayRoot() {
@@ -51,9 +116,12 @@ function runCli(tmp, baseSha) {
 }
 
 describe("GOV-2 authoritative transition command", () => {
-  it("bootstraps pre-GOV2 base to the current GOV-2 working tree", { skip: !originMainSha() }, () => {
-    const base = originMainSha();
-    assert.ok(base);
+  it("resolves a pre-GOV2 bootstrap base from unique history snapshots", () => {
+    requirePreGov2BaseSha();
+  });
+
+  it("bootstraps pre-GOV2 base to the current GOV-2 working tree", () => {
+    const base = requirePreGov2BaseSha();
     const result = spawnSync(process.execPath, [cli, base], {
       cwd: root,
       encoding: "utf8",
@@ -116,7 +184,8 @@ describe("GOV-2 authoritative transition command", () => {
     }
   });
 
-  it("fails bootstrap when head GOV-2 execution mutates the pre-GOV2 current position", { skip: !originMainSha(), timeout: 120_000 }, () => {
+  it("fails bootstrap when head GOV-2 execution mutates the pre-GOV2 current position", { timeout: 120_000 }, () => {
+    const base = requirePreGov2BaseSha();
     const tmp = materializeOverlayRoot();
     try {
       const mutations = [
@@ -128,7 +197,7 @@ describe("GOV-2 authoritative transition command", () => {
       ];
       for (const mutation of mutations) {
         mutateState(tmp, mutation.mutate);
-        const result = runCli(tmp, originMainSha());
+        const result = runCli(tmp, base);
         assert.notEqual(result.status, 0, `${mutation.label}: ${result.stdout}`);
         const report = JSON.parse(result.stdout);
         assert.equal(report.ok, false, mutation.label);
@@ -144,18 +213,18 @@ describe("GOV-2 authoritative transition command", () => {
     }
   });
 
-  it("rejects rollback from GOV-2 to pre-GOV2", { skip: !originMainSha() }, () => {
+  it("rejects rollback from GOV-2 to pre-GOV2", () => {
     const head = gitSha("HEAD");
-    const base = originMainSha();
+    const base = requirePreGov2BaseSha();
     assert.ok(head);
-    assert.ok(base);
     const report = validateRepositoryTransition({ root, baseSha: head, headSha: base });
     assert.equal(report.ok, false);
     assert.equal(report.MODE, "GOV2_ROLLBACK");
     assert.ok(report.findings.some((item) => item.code === "GOV2_ROLLBACK"));
   });
 
-  it("fails bootstrap when an accepted markdown ledger identity is renamed", { skip: !originMainSha(), timeout: 120_000 }, () => {
+  it("fails bootstrap when an accepted markdown ledger identity is renamed", { timeout: 120_000 }, () => {
+    const base = requirePreGov2BaseSha();
     const tmp = materializeOverlayRoot();
     try {
       const rel = "docs/platform/ROADMAP.md";
@@ -163,7 +232,7 @@ describe("GOV-2 authoritative transition command", () => {
       const mutated = original.replace(/"id": "IMP-001"/, '"id": "IMP-999"');
       assert.notEqual(mutated, original);
       writeFileSync(path.join(tmp, rel), mutated);
-      const result = runCli(tmp, originMainSha());
+      const result = runCli(tmp, base);
       assert.notEqual(result.status, 0, result.stdout);
       const report = JSON.parse(result.stdout);
       assert.equal(report.ok, false);
