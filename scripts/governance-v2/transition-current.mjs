@@ -164,6 +164,15 @@ function bootstrapPointerFindings(baseRoadmapMeta, baseStateMeta, headLoaded) {
       );
     }
   }
+  if (baseRoadmapMeta.meta.gtmBoundary !== headLoaded.roadmap.gtmBoundary) {
+    findings.push(
+      finding(
+        "GOV2_BOOTSTRAP_POINTER_MISMATCH",
+        "gov2-roadmap.gtmBoundary",
+        `base ROADMAP governance-meta gtmBoundary=${JSON.stringify(baseRoadmapMeta.meta.gtmBoundary)} disagrees with head gov2 gtmBoundary=${JSON.stringify(headLoaded.roadmap.gtmBoundary)}`,
+      ),
+    );
+  }
   return findings;
 }
 

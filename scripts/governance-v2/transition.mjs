@@ -210,7 +210,9 @@ function trancheTransitionFindings(baseState, headState, plan, basePlan = plan) 
       : {};
   const declared = new Set(trancheList(plan).map((tranche) => tranche?.id).filter(Boolean));
   const newlyPassed = [];
+  const sameSlice = (basePlan?.slice ?? null) === (plan?.slice ?? null);
 
+  if (sameSlice) {
   for (const id of declared) {
     const from = baseStatuses[id];
     const to = headStatuses[id];
@@ -246,9 +248,9 @@ function trancheTransitionFindings(baseState, headState, plan, basePlan = plan) 
       );
     }
   }
+  }
 
   findings.push(...tranchePassEvidenceFindings(headState, newlyPassed));
-  const sameSlice = (basePlan?.slice ?? null) === (plan?.slice ?? null);
   if (
     newlyPassed.length === 0 &&
     sameSlice &&
@@ -259,6 +261,15 @@ function trancheTransitionFindings(baseState, headState, plan, basePlan = plan) 
         "INVALID_LAST_TRANSITION",
         "lastTransition",
         "lastTransition cannot change unless a tranche newly PASSes",
+      ),
+    );
+  }
+  if (newlyPassed.length === 0 && !sameSlice && headState?.lastTransition != null) {
+    findings.push(
+      finding(
+        "INVALID_LAST_TRANSITION",
+        "lastTransition",
+        "slice change may clear lastTransition but must not rewrite it",
       ),
     );
   }
