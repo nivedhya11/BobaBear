@@ -31,11 +31,11 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2290,
-    "executableTestFiles": 499,
+    "trackedPathsConsidered": 2292,
+    "executableTestFiles": 500,
     "sourceTestFiles": 148,
     "testsTreeExecutableFiles": 272,
-    "scriptTestFiles": 79,
+    "scriptTestFiles": 80,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
     "playwrightConfigs": 7,
@@ -511,6 +511,7 @@
     "scripts/generate-nginx-security-headers.test.mjs",
     "scripts/governance-context.test.mjs",
     "scripts/governance-fingerprint.test.mjs",
+    "scripts/governance-v2/bootstrap-execution.test.mjs",
     "scripts/governance-v2/current.test.mjs",
     "scripts/governance-v2/engine.test.mjs",
     "scripts/governance-v2/shadow.test.mjs",
@@ -2098,6 +2099,23 @@
     },
     {
       "path": "scripts/governance-fingerprint.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/governance-v2/bootstrap-execution.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
       "testType": "script-unit",

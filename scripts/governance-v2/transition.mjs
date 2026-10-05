@@ -2,6 +2,7 @@
  * Generic base → head lifecycle transition rules.
  */
 import {
+  FOUNDER_UAT,
   LAST_TRANSITION_TYPE,
   TRANCHE_STATUS,
   TRANCHE_STATUS_SET,
@@ -49,7 +50,7 @@ export function validateTransition(baseState, headState, tranchePlan, roadmap, b
   const findings = [...base.findings.map(prefix("base")), ...head.findings.map(prefix("head"))];
 
   findings.push(...roadmapLedgerTransitionFindings(baseRoadmap, roadmap));
-  findings.push(...tranchePlanTransitionFindings(basePlan, tranchePlan, { headState, headRoadmap: roadmap }));
+  findings.push(...tranchePlanTransitionFindings(basePlan, tranchePlan, { baseState, headState, headRoadmap: roadmap }));
   findings.push(...sequenceRegressionFindings(baseState, headState, roadmap));
   findings.push(...trancheTransitionFindings(baseState, headState, tranchePlan, basePlan));
 
@@ -144,11 +145,72 @@ export function acceptedIdentityTransitionFindings(baseIds, headRoadmap) {
   return findings;
 }
 
+function normalizedDependencies(tranche) {
+  return [...new Set((Array.isArray(tranche?.dependencies) ? tranche.dependencies : []).filter((dep) => typeof dep === "string"))].sort();
+}
+
+export function normalizePlanGraph(plan) {
+  return trancheList(plan)
+    .filter((tranche) => tranche?.id)
+    .map((tranche) => ({
+      id: tranche.id,
+      order: tranche.order ?? null,
+      required: tranche.required === true,
+      dependencies: normalizedDependencies(tranche),
+    }))
+    .sort((left, right) => (left.order ?? 0) - (right.order ?? 0) || left.id.localeCompare(right.id));
+}
+
+function sliceAdvancePrerequisiteFindings(baseState, basePlan) {
+  const findings = [];
+  const baseSlice = typeof basePlan?.slice === "string" ? basePlan.slice : null;
+  const currentSlice = baseState?.currentSlice ?? baseState?.slice;
+  if (baseSlice != null && currentSlice !== baseSlice) {
+    findings.push(
+      finding(
+        "SLICE_CHANGE_BEFORE_ACCEPTANCE_PREREQUISITES",
+        "currentSlice",
+        `base currentSlice ${JSON.stringify(currentSlice)} must equal base plan slice ${baseSlice} before the execution record is replaced`,
+      ),
+    );
+  }
+  const statuses = baseState?.implementation?.trancheStatuses;
+  if (!allRequiredTranchesPass(basePlan, statuses)) {
+    findings.push(
+      finding(
+        "SLICE_CHANGE_BEFORE_ACCEPTANCE_PREREQUISITES",
+        "implementation.trancheStatuses",
+        "all required base-plan tranches must PASS before the execution record is replaced",
+      ),
+    );
+  }
+  if (baseState?.implementation?.complete !== true) {
+    findings.push(
+      finding(
+        "SLICE_CHANGE_BEFORE_ACCEPTANCE_PREREQUISITES",
+        "implementation.complete",
+        "base implementation.complete must be true before the execution record is replaced",
+      ),
+    );
+  }
+  if (baseState?.founderUat !== FOUNDER_UAT.PASS) {
+    findings.push(
+      finding(
+        "SLICE_CHANGE_BEFORE_ACCEPTANCE_PREREQUISITES",
+        "founderUat",
+        "base founderUat must be PASS before the execution record is replaced",
+      ),
+    );
+  }
+  return findings;
+}
+
 export function tranchePlanTransitionFindings(basePlan, headPlan, context = {}) {
   const findings = [];
   const baseSlice = typeof basePlan?.slice === "string" ? basePlan.slice : null;
   const headSlice = typeof headPlan?.slice === "string" ? headPlan.slice : null;
   if (baseSlice != null && headSlice != null && baseSlice !== headSlice) {
+    findings.push(...sliceAdvancePrerequisiteFindings(context.baseState, basePlan));
     const acceptedThrough = context.headState?.acceptedThrough ?? context.headRoadmap?.acceptedThrough;
     const previous = capabilityById(context.headRoadmap ?? {}).get(baseSlice);
     if (acceptedThrough !== baseSlice && previous?.accepted !== true) {
@@ -178,17 +240,45 @@ export function tranchePlanTransitionFindings(basePlan, headPlan, context = {}) 
     if (tranche.required === true && next.required !== true) {
       findings.push(finding("REQUIRED_TRANCHE_RELAXED", `tranches.${id}.required`, `required tranche ${id} cannot become optional`));
     }
+    if (tranche.required !== true && next.required === true) {
+      findings.push(
+        finding("OPTIONAL_TRANCHE_TIGHTENED", `tranches.${id}.required`, `optional tranche ${id} cannot become required`),
+      );
+    }
     if (tranche.order != null && next.order !== tranche.order) {
       findings.push(finding("TRANCHE_ORDER_CHANGED", `tranches.${id}.order`, `tranche ${id} cannot change declared order`));
     }
-    const baseDeps = new Set(Array.isArray(tranche.dependencies) ? tranche.dependencies : []);
-    const headDeps = new Set(Array.isArray(next.dependencies) ? next.dependencies : []);
+    const baseDeps = new Set(normalizedDependencies(tranche));
+    const headDeps = new Set(normalizedDependencies(next));
     for (const dep of baseDeps) {
       if (!headDeps.has(dep)) {
         findings.push(
           finding("TRANCHE_DEPENDENCY_REMOVED", `tranches.${id}.dependencies`, `tranche ${id} cannot drop dependency ${dep}`),
         );
       }
+    }
+    for (const dep of headDeps) {
+      if (!baseDeps.has(dep)) {
+        findings.push(
+          finding("TRANCHE_DEPENDENCY_ADDED", `tranches.${id}.dependencies`, `tranche ${id} cannot add dependency ${dep}`),
+        );
+      }
+    }
+  }
+  if (JSON.stringify(normalizePlanGraph(basePlan)) !== JSON.stringify(normalizePlanGraph(headPlan))) {
+    const specific = new Set([
+      "TRANCHE_ADDED",
+      "TRANCHE_REMOVED",
+      "REQUIRED_TRANCHE_RELAXED",
+      "OPTIONAL_TRANCHE_TIGHTENED",
+      "TRANCHE_ORDER_CHANGED",
+      "TRANCHE_DEPENDENCY_REMOVED",
+      "TRANCHE_DEPENDENCY_ADDED",
+    ]);
+    if (!findings.some((item) => specific.has(item.code))) {
+      findings.push(
+        finding("TRANCHE_PLAN_GRAPH_CHANGED", "tranches", "same-slice locked tranche graph must remain structurally identical"),
+      );
     }
   }
   return findings;
@@ -233,13 +323,19 @@ function trancheTransitionFindings(baseState, headState, plan, basePlan = plan) 
       continue;
     }
     if (from === to) continue;
-    if (from === TRANCHE_STATUS.NOT_STARTED && to === TRANCHE_STATUS.PASS) {
-      if (!dependenciesSatisfied(plan, headStatuses, id)) {
-        findings.push(
-          finding("DEPENDENCY_NOT_SATISFIED", `implementation.trancheStatuses.${id}`, `tranche ${id} cannot PASS while a required dependency is unresolved`),
-        );
+    if (to === TRANCHE_STATUS.PASS && from !== TRANCHE_STATUS.PASS) {
+      if (from == null || from === TRANCHE_STATUS.NOT_STARTED) {
+        if (!dependenciesSatisfied(plan, headStatuses, id)) {
+          findings.push(
+            finding("DEPENDENCY_NOT_SATISFIED", `implementation.trancheStatuses.${id}`, `tranche ${id} cannot PASS while a required dependency is unresolved`),
+          );
+        }
+        newlyPassed.push(id);
+        continue;
       }
-      newlyPassed.push(id);
+      findings.push(
+        finding("ILLEGAL_STATUS_TRANSITION", `implementation.trancheStatuses.${id}`, `illegal transition ${from} -> ${to} for tranche ${id}`),
+      );
       continue;
     }
     if (from != null && to != null && from !== to) {

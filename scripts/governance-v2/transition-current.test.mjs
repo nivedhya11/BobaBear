@@ -116,6 +116,34 @@ describe("GOV-2 authoritative transition command", () => {
     }
   });
 
+  it("fails bootstrap when head GOV-2 execution mutates the pre-GOV2 current position", { skip: !originMainSha(), timeout: 120_000 }, () => {
+    const tmp = materializeOverlayRoot();
+    try {
+      const mutations = [
+        { label: "T8", mutate: (text) => text.replace(/"T8": "NOT_STARTED"/, '"T8": "PASS"'), path: "implementation.trancheStatuses.T8" },
+        { label: "complete", mutate: (text) => text.replace(/"complete": false/, '"complete": true'), path: "implementation.complete" },
+        { label: "uat", mutate: (text) => text.replace(/"founderUat": "NOT_PERFORMED"/, '"founderUat": "PASS"'), path: "founderUat" },
+        { label: "accepted", mutate: (text) => text.replace(/"accepted": false/, '"accepted": true'), path: "accepted" },
+        { label: "lastTransition", mutate: (text) => text.replace(/"tranche": "T7"/, '"tranche": "T8"'), path: "lastTransition" },
+      ];
+      for (const mutation of mutations) {
+        mutateState(tmp, mutation.mutate);
+        const result = runCli(tmp, originMainSha());
+        assert.notEqual(result.status, 0, `${mutation.label}: ${result.stdout}`);
+        const report = JSON.parse(result.stdout);
+        assert.equal(report.ok, false, mutation.label);
+        assert.equal(report.MODE, "GOV2_BOOTSTRAP");
+        assert.ok(
+          report.findings.some((item) => item.code === "GOV2_BOOTSTRAP_EXECUTION_MISMATCH" && item.path === mutation.path),
+          JSON.stringify({ label: mutation.label, findings: report.findings }, null, 2),
+        );
+        writeFileSync(path.join(tmp, "docs/platform/STATE.md"), readFileSync(path.join(root, "docs/platform/STATE.md"), "utf8"));
+      }
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it("rejects rollback from GOV-2 to pre-GOV2", { skip: !originMainSha() }, () => {
     const head = gitSha("HEAD");
     const base = originMainSha();
