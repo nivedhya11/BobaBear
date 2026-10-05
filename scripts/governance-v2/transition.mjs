@@ -1,7 +1,7 @@
 /**
  * Generic base → head lifecycle transition rules.
  */
-import { TRANCHE_STATUS, TRANCHE_STATUS_SET, aggregate, finding } from "./model.mjs";
+import { LAST_TRANSITION_TYPE, TRANCHE_STATUS, TRANCHE_STATUS_SET, aggregate, finding } from "./model.mjs";
 import { validateCurrentState } from "./invariants.mjs";
 import { dependenciesSatisfied, deriveNextGate, allRequiredTranchesPass, trancheList } from "./tranche-graph.mjs";
 
@@ -69,6 +69,7 @@ function trancheTransitionFindings(baseState, headState, plan) {
       ? headState.implementation.trancheStatuses
       : {};
   const declared = new Set(trancheList(plan).map((tranche) => tranche?.id).filter(Boolean));
+  const newlyPassed = [];
 
   for (const id of declared) {
     const from = baseStatuses[id];
@@ -96,6 +97,7 @@ function trancheTransitionFindings(baseState, headState, plan) {
           finding("DEPENDENCY_NOT_SATISFIED", `implementation.trancheStatuses.${id}`, `tranche ${id} cannot PASS while a required dependency is unresolved`),
         );
       }
+      newlyPassed.push(id);
       continue;
     }
     if (from != null && to != null && from !== to) {
@@ -105,6 +107,46 @@ function trancheTransitionFindings(baseState, headState, plan) {
     }
   }
 
+  findings.push(...tranchePassEvidenceFindings(headState, newlyPassed));
+  return findings;
+}
+
+function tranchePassEvidenceFindings(headState, newlyPassed) {
+  if (newlyPassed.length === 0) return [];
+  if (newlyPassed.length > 1) {
+    return [
+      finding(
+        "MULTIPLE_TRANCHE_PASS",
+        "lastTransition",
+        `ordinary PASS may advance one tranche; received ${newlyPassed.join(",")}`,
+      ),
+    ];
+  }
+  const passed = newlyPassed[0];
+  const lastTransition = headState?.lastTransition;
+  if (lastTransition == null || typeof lastTransition !== "object" || Array.isArray(lastTransition)) {
+    return [finding("MISSING_LAST_TRANSITION", "lastTransition", `PASS of ${passed} requires lastTransition evidence`)];
+  }
+  const findings = [];
+  if (lastTransition.type !== LAST_TRANSITION_TYPE.TRANCHE_PASS) {
+    findings.push(
+      finding("LAST_TRANSITION_TYPE_MISMATCH", "lastTransition.type", `PASS of ${passed} requires lastTransition.type TRANCHE_PASS`),
+    );
+  }
+  if (lastTransition.tranche !== passed) {
+    findings.push(
+      finding(
+        "LAST_TRANSITION_TRANCHE_MISMATCH",
+        "lastTransition.tranche",
+        `PASS of ${passed} cannot keep lastTransition.tranche ${JSON.stringify(lastTransition.tranche)}`,
+      ),
+    );
+  }
+  if (lastTransition.sourcePr == null && lastTransition.mergeCommit == null) {
+    findings.push(
+      finding("LAST_TRANSITION_EVIDENCE_MISSING", "lastTransition", `PASS of ${passed} requires sourcePr or mergeCommit`),
+    );
+  }
   return findings;
 }
 

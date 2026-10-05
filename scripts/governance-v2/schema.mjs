@@ -188,6 +188,8 @@ export function validateRoadmapSchema(roadmap) {
     findings.push(
       finding("ACCEPTED_THROUGH_MISSING", "acceptedThrough", `acceptedThrough ${roadmap.acceptedThrough} is not in the roadmap`),
     );
+  } else if (typeof roadmap.acceptedThrough === "string") {
+    findings.push(...acceptedPrefixFindings(capabilities, roadmap.acceptedThrough));
   }
   if (typeof roadmap.currentSlice === "string" && roadmap.currentSlice.length > 0 && !ids.has(roadmap.currentSlice)) {
     findings.push(finding("CURRENT_SLICE_MISSING", "currentSlice", `currentSlice ${roadmap.currentSlice} is not in the roadmap`));
@@ -592,6 +594,45 @@ function uniqueStringList(list, path, duplicateCode) {
       findings.push(finding(duplicateCode, `${path}[${index}]`, `duplicate reference ${value}`));
     }
     seen.add(value);
+  }
+  return findings;
+}
+
+function acceptedPrefixFindings(capabilities, acceptedThrough) {
+  const findings = [];
+  const boundary = capabilities.find((capability) => capability?.id === acceptedThrough);
+  if (!boundary || !Number.isInteger(boundary.sequence)) return findings;
+  for (const [index, capability] of capabilities.entries()) {
+    if (capability == null || typeof capability !== "object" || Array.isArray(capability)) continue;
+    if (!Number.isInteger(capability.sequence) || typeof capability.id !== "string") continue;
+    const path = `capabilities[${index}]`;
+    if (capability.sequence <= boundary.sequence) {
+      if (capability.accepted !== true) {
+        findings.push(
+          finding(
+            "ACCEPTED_PREFIX_GAP",
+            `${path}.accepted`,
+            `${capability.id} precedes or equals acceptedThrough ${acceptedThrough} and must be accepted`,
+          ),
+        );
+      } else if (capability.implementationComplete !== true) {
+        findings.push(
+          finding(
+            "ACCEPTED_INCOMPLETE",
+            `${path}.implementationComplete`,
+            `accepted capability ${capability.id} must be implementation-complete`,
+          ),
+        );
+      }
+    } else if (capability.accepted === true) {
+      findings.push(
+        finding(
+          "ACCEPTED_BEYOND_BOUNDARY",
+          `${path}.accepted`,
+          `${capability.id} is after acceptedThrough ${acceptedThrough} and cannot be accepted`,
+        ),
+      );
+    }
   }
   return findings;
 }

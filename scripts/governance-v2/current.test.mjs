@@ -48,6 +48,11 @@ describe("GOV-2 live authorities", () => {
     assert.equal(loaded.ok, true, JSON.stringify(loaded.findings, null, 2));
     const head = structuredState(loaded.state);
     head.implementation.trancheStatuses.T8 = TRANCHE_STATUS.PASS;
+    head.lastTransition = {
+      ...head.lastTransition,
+      type: "TRANCHE_PASS",
+      tranche: "T8",
+    };
     const simulated = loadFixture(root, "imp036j-t8-pass-simulated.json");
     assert.equal(simulated.REAL_T8_STARTED, false);
     const result = validateTransition(loaded.state, head, loaded.plan, loaded.roadmap);

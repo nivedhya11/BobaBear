@@ -104,6 +104,41 @@ describe("GOV-2 generic engine", () => {
     assert.equal(base.implementation.trancheStatuses.T8, "NOT_STARTED");
   });
 
+  it("rejects T8 PASS that keeps stale T7 lastTransition evidence", () => {
+    const base = postT7();
+    const head = structuredState(base);
+    head.implementation.trancheStatuses.T8 = TRANCHE_STATUS.PASS;
+    const result = validateTransition(base, head, plan036j(), roadmap());
+    assert.equal(result.ok, false);
+    assert.ok(codes(result).includes("LAST_TRANSITION_TRANCHE_MISMATCH"));
+  });
+
+  it("rejects accepted-history gaps and acceptance beyond acceptedThrough", () => {
+    const gap = structuredState(roadmap());
+    gap.capabilities = gap.capabilities.map((capability) =>
+      capability.id === "IMP-036I" ? { ...capability, accepted: false } : capability,
+    );
+    const gapResult = validateCurrentState(postT7(), plan036j(), gap);
+    assert.equal(gapResult.ok, false);
+    assert.ok(codes(gapResult).includes("ACCEPTED_PREFIX_GAP"));
+
+    const beyond = structuredState(roadmap());
+    beyond.capabilities = beyond.capabilities.map((capability) =>
+      capability.id === "IMP-036K" ? { ...capability, accepted: true, implementationComplete: true } : capability,
+    );
+    const beyondResult = validateCurrentState(postT7(), plan036j(), beyond);
+    assert.equal(beyondResult.ok, false);
+    assert.ok(codes(beyondResult).includes("ACCEPTED_BEYOND_BOUNDARY"));
+
+    const incomplete = structuredState(roadmap());
+    incomplete.capabilities = incomplete.capabilities.map((capability) =>
+      capability.id === "IMP-036I" ? { ...capability, implementationComplete: false } : capability,
+    );
+    const incompleteResult = validateCurrentState(postT7(), plan036j(), incomplete);
+    assert.equal(incompleteResult.ok, false);
+    assert.ok(codes(incompleteResult).includes("ACCEPTED_INCOMPLETE"));
+  });
+
   it("rejects PASS when a required dependency is unresolved", () => {
     const base = loadFixture(root, "imp036j-parallel-t6-before-t5.json");
     const head = structuredState(base);
@@ -152,6 +187,12 @@ describe("GOV-2 generic engine", () => {
 
     const validHead = structuredState(parallel);
     validHead.implementation.trancheStatuses.WORKFLOW = TRANCHE_STATUS.PASS;
+    validHead.lastTransition = {
+      type: "TRANCHE_PASS",
+      tranche: "WORKFLOW",
+      sourcePr: 1,
+      mergeCommit: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    };
     const allowed = validateTransition(parallel, validHead, plan, futureRoadmap);
     assert.equal(allowed.ok, true, JSON.stringify(allowed.findings, null, 2));
 
