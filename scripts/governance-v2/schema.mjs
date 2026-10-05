@@ -148,6 +148,7 @@ export function validateRoadmapSchema(roadmap) {
 
   const ids = new Set();
   const sequences = new Set();
+  let previousSequence = null;
   for (const [index, capability] of capabilities.entries()) {
     const path = `capabilities[${index}]`;
     if (capability == null || typeof capability !== "object" || Array.isArray(capability)) {
@@ -169,6 +170,16 @@ export function validateRoadmapSchema(roadmap) {
       );
     } else {
       sequences.add(capability.sequence);
+      if (previousSequence != null && capability.sequence <= previousSequence) {
+        findings.push(
+          finding(
+            "INVALID_CAPABILITY_SEQUENCE_ORDER",
+            `${path}.sequence`,
+            `capability.sequence must increase in declared ledger order (saw ${capability.sequence} after ${previousSequence})`,
+          ),
+        );
+      }
+      previousSequence = capability.sequence;
     }
     if (typeof capability.accepted !== "boolean") {
       findings.push(finding("INVALID_CAPABILITY_ACCEPTED", `${path}.accepted`, "capability.accepted must be a boolean"));

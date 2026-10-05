@@ -325,6 +325,15 @@ describe("GOV-2 generic engine", () => {
     const sequenceResult = validateCurrentState(postT7(), plan036j(), duplicateSequence);
     assert.equal(sequenceResult.ok, false);
     assert.ok(codes(sequenceResult).includes("DUPLICATE_CAPABILITY_SEQUENCE"));
+
+    const swapped = structuredState(roadmap());
+    const first = swapped.capabilities[0];
+    const second = swapped.capabilities[1];
+    swapped.capabilities[0] = { ...first, sequence: second.sequence };
+    swapped.capabilities[1] = { ...second, sequence: first.sequence };
+    const swapResult = validateCurrentState(postT7(), plan036j(), swapped);
+    assert.equal(swapResult.ok, false);
+    assert.ok(codes(swapResult).includes("INVALID_CAPABILITY_SEQUENCE_ORDER"));
   });
 
   it("rejects duplicate declared tranche order instead of lexical fallback", () => {
