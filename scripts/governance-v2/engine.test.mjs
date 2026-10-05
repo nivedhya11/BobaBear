@@ -5,7 +5,7 @@ import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 import { deriveNextGate, validateTranchePlan, validateTrancheStatuses } from "./tranche-graph.mjs";
 import { validateCurrentState } from "./invariants.mjs";
-import { validateTransition, tranchePlanTransitionFindings } from "./transition.mjs";
+import { validateTransition, tranchePlanTransitionFindings, acceptedIdentityTransitionFindings } from "./transition.mjs";
 import { loadFixture, structuredState } from "./load-fixture.mjs";
 import { FOUNDER_UAT, TRANCHE_STATUS } from "./model.mjs";
 import { validateRoadmapSchema, validateRoadmapStateAlignment } from "./schema.mjs";
@@ -137,10 +137,19 @@ describe("GOV-2 generic engine", () => {
     const next = structuredState(previous);
     next.slice = "IMP-050";
     next.tranches = [{ id: "K1", order: 1, required: true, dependencies: [] }];
-    assert.equal(tranchePlanTransitionFindings(previous, next).length, 0);
+    assert.equal(tranchePlanTransitionFindings(previous, next).some((item) => item.code === "TRANCHE_REMOVED"), false);
+    assert.ok(tranchePlanTransitionFindings(previous, next).some((item) => item.code === "SLICE_CHANGE_WITHOUT_ACCEPTANCE"));
+    const accepted = tranchePlanTransitionFindings(previous, next, {
+      headState: { acceptedThrough: previous.slice },
+      headRoadmap: { acceptedThrough: previous.slice, capabilities: [{ id: previous.slice, accepted: true }] },
+    });
+    assert.equal(accepted.length, 0, JSON.stringify(accepted));
     const sameSlice = structuredState(previous);
     sameSlice.tranches = sameSlice.tranches.filter((tranche) => tranche.id !== "T8");
     assert.ok(tranchePlanTransitionFindings(previous, sameSlice).some((item) => item.code === "TRANCHE_REMOVED"));
+    const added = structuredState(previous);
+    added.tranches = [...added.tranches, { id: "T9", order: 9, required: true, dependencies: ["T8"] }];
+    assert.ok(tranchePlanTransitionFindings(previous, added).some((item) => item.code === "TRANCHE_ADDED"));
   });
 
   it("rejects deleting lastTransition evidence without a new tranche PASS", () => {
@@ -161,6 +170,31 @@ describe("GOV-2 generic engine", () => {
     const transition = validateTransition(postT7(), head, plan036j(), roadmap());
     assert.equal(transition.ok, false);
     assert.ok(codes(transition).includes("INVALID_LAST_TRANSITION"));
+  });
+
+  it("rejects rewriting lastTransition without a new tranche PASS", () => {
+    const base = postT7();
+    const rewritten = structuredState(base);
+    rewritten.lastTransition = { ...base.lastTransition, sourcePr: 2 };
+    const result = validateTransition(base, rewritten, plan036j(), roadmap());
+    assert.equal(result.ok, false);
+    assert.ok(codes(result).includes("INVALID_LAST_TRANSITION"));
+  });
+
+  it("rejects swapping accepted ledger order", () => {
+    const swapped = structuredState(roadmap());
+    const first = swapped.capabilities.find((capability) => capability.accepted === true);
+    const second = swapped.capabilities.find((capability) => capability.accepted === true && capability.id !== first.id);
+    if (first && second) {
+      const originalFirstSeq = first.sequence;
+      first.sequence = second.sequence;
+      second.sequence = originalFirstSeq;
+      const [firstId, secondId] = [first.id, second.id];
+      first.id = secondId;
+      second.id = firstId;
+      const findings = acceptedIdentityTransitionFindings([firstId, secondId], swapped);
+      assert.ok(findings.some((item) => item.code === "ACCEPTED_SEQUENCE_CHANGED"), JSON.stringify(findings));
+    }
   });
 
   it("rejects malformed lastTransition evidence when a tranche newly PASSes", () => {

@@ -49,7 +49,7 @@ export function validateTransition(baseState, headState, tranchePlan, roadmap, b
   const findings = [...base.findings.map(prefix("base")), ...head.findings.map(prefix("head"))];
 
   findings.push(...roadmapLedgerTransitionFindings(baseRoadmap, roadmap));
-  findings.push(...tranchePlanTransitionFindings(basePlan, tranchePlan));
+  findings.push(...tranchePlanTransitionFindings(basePlan, tranchePlan, { headState, headRoadmap: roadmap }));
   findings.push(...sequenceRegressionFindings(baseState, headState, roadmap));
   findings.push(...trancheTransitionFindings(baseState, headState, tranchePlan));
 
@@ -123,18 +123,52 @@ export function acceptedIdentityTransitionFindings(baseIds, headRoadmap) {
       findings.push(finding("ACCEPTED_INCOMPLETE", `capabilities.${id}.implementationComplete`, `accepted capability ${id} must remain implementation-complete`));
     }
   }
+  const headAccepted = (Array.isArray(headRoadmap?.capabilities) ? headRoadmap.capabilities : [])
+    .filter((capability) => capability?.accepted === true && typeof capability.id === "string")
+    .slice()
+    .sort((left, right) => (left.sequence ?? 0) - (right.sequence ?? 0))
+    .map((capability) => capability.id);
+  const comparable = Math.min(baseIds.length, headAccepted.length);
+  for (let index = 0; index < comparable; index += 1) {
+    if (baseIds[index] !== headAccepted[index]) {
+      findings.push(
+        finding(
+          "ACCEPTED_SEQUENCE_CHANGED",
+          `capabilities.${headAccepted[index]}.sequence`,
+          `accepted ledger order cannot change: expected ${baseIds[index]} at position ${index}, received ${headAccepted[index]}`,
+        ),
+      );
+      break;
+    }
+  }
   return findings;
 }
 
-export function tranchePlanTransitionFindings(basePlan, headPlan) {
+export function tranchePlanTransitionFindings(basePlan, headPlan, context = {}) {
   const findings = [];
   const baseSlice = typeof basePlan?.slice === "string" ? basePlan.slice : null;
   const headSlice = typeof headPlan?.slice === "string" ? headPlan.slice : null;
   if (baseSlice != null && headSlice != null && baseSlice !== headSlice) {
+    const acceptedThrough = context.headState?.acceptedThrough ?? context.headRoadmap?.acceptedThrough;
+    const previous = capabilityById(context.headRoadmap ?? {}).get(baseSlice);
+    if (acceptedThrough !== baseSlice && previous?.accepted !== true) {
+      findings.push(
+        finding(
+          "SLICE_CHANGE_WITHOUT_ACCEPTANCE",
+          "plan.slice",
+          `tranche plan slice cannot change from ${baseSlice} to ${headSlice} until ${baseSlice} is accepted`,
+        ),
+      );
+    }
     return findings;
   }
   const base = new Map(trancheList(basePlan).filter((tranche) => tranche?.id).map((tranche) => [tranche.id, tranche]));
   const head = new Map(trancheList(headPlan).filter((tranche) => tranche?.id).map((tranche) => [tranche.id, tranche]));
+  for (const [id] of head) {
+    if (!base.has(id)) {
+      findings.push(finding("TRANCHE_ADDED", `tranches.${id}`, `tranche ${id} cannot be added while the plan slice is unchanged`));
+    }
+  }
   for (const [id, tranche] of base) {
     const next = head.get(id);
     if (!next) {
@@ -214,7 +248,27 @@ function trancheTransitionFindings(baseState, headState, plan) {
   }
 
   findings.push(...tranchePassEvidenceFindings(headState, newlyPassed));
+  if (newlyPassed.length === 0 && lastTransitionKey(baseState?.lastTransition) !== lastTransitionKey(headState?.lastTransition)) {
+    findings.push(
+      finding(
+        "INVALID_LAST_TRANSITION",
+        "lastTransition",
+        "lastTransition cannot change unless a tranche newly PASSes",
+      ),
+    );
+  }
   return findings;
+}
+
+function lastTransitionKey(value) {
+  if (value == null) return "null";
+  if (typeof value !== "object" || Array.isArray(value)) return JSON.stringify(value);
+  return JSON.stringify({
+    type: value.type ?? null,
+    tranche: value.tranche ?? null,
+    sourcePr: value.sourcePr ?? null,
+    mergeCommit: value.mergeCommit ?? null,
+  });
 }
 
 function tranchePassEvidenceFindings(headState, newlyPassed) {
