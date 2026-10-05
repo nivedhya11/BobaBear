@@ -19169,6 +19169,14 @@ describe("IMP-036J architecture fit remediation candidate 9", () => {
     );
     assert.notEqual(withCanonicalPass, productReadme);
     assert.equal(evaluateImp036jProductReadmePointers(withCanonicalPass).ok, true);
+    const withoutT8 = mutateExperienceRow((line) => line.replace("T8 has not started.", ""));
+    assert.notEqual(withoutT8, productReadme);
+    assert.equal(evaluateImp036jProductReadmePointers(withoutT8).ok, false);
+    assert.equal(evaluateImp036jProductReadmePointers(withoutT8).code, "IMP036J_EXPERIENCE_README");
+    const t8Started = mutateExperienceRow((line) => line.replace("T8 has not started.", "T8 started."));
+    assert.notEqual(t8Started, productReadme);
+    assert.equal(evaluateImp036jProductReadmePointers(t8Started).ok, false);
+    assert.equal(evaluateImp036jProductReadmePointers(t8Started).code, "IMP036J_EXPERIENCE_README");
   });
   it("rejects current-tense Tranche 5 NOT_STARTED summaries in Product Definition and product index", () => {
     const mutatedProduct = product.replace("Tranche 5 is PASS. Tranche 6 is PASS.", "Tranche 5 has not started. Tranche 6 is PASS.");

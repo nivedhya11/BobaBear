@@ -41258,6 +41258,13 @@ export function evaluateImp036jProductReadmePointers(readmeText) {
     experienceRow.includes("Tranche 6 has not started") ||
     !experienceTranche5Pass ||
     !experienceTranche7Pass ||
+    !(
+      experienceRow.includes("T8 has not started") ||
+      experienceRow.includes("T8 not started") ||
+      /T8_STARTED(?::|\s*=)\s*NO/.test(experienceRow)
+    ) ||
+    /T8_STARTED(?::|\s*=)\s*YES/.test(experienceRow) ||
+    (/\bT8 started\b/.test(experienceRow) && !experienceRow.includes("T8 has not started") && !experienceRow.includes("T8 not started")) ||
     experienceRow.includes("T7 has not started") ||
     experienceRow.includes("Tranche 5 has not started") ||
     experienceRow.includes("IMP036J_TRANCHE_5: NOT_STARTED") ||
