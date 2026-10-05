@@ -41,15 +41,25 @@ function blobHashAt(sha, rel) {
 }
 
 /**
- * Resolve a real pre-GOV2 commit using the bootstrap contract: the unique
- * history snapshots must equal the base ROADMAP/STATE blobs, and those blobs
- * must lack GOV-2 machine blocks. Do not use origin/main after cutover.
+ * Prefer a HEAD-ancestry commit whose ROADMAP/STATE blobs equal the unique
+ * pre-GOV2 snapshots and lack GOV-2 blocks. When history is shallow (common in
+ * CI jobs without fetch-depth: 0), synthesize an equivalent detached commit
+ * from those snapshots so bootstrap/rollback proofs remain generic.
  */
 function resolvePreGov2BaseSha() {
   const roadmapSnap = uniquePreGov2Snapshot(/^ROADMAP-.*-pre-gov2\.md$/);
   const stateSnap = uniquePreGov2Snapshot(/^STATE-.*-pre-gov2\.md$/);
   if (!roadmapSnap?.hash || !stateSnap?.hash) return null;
+  if (hasGov2Block(roadmapSnap.text, "roadmap") || hasGov2Block(stateSnap.text, "state")) {
+    return null;
+  }
 
+  const fromHistory = findAncestryPreGov2Commit(roadmapSnap, stateSnap);
+  if (fromHistory) return fromHistory;
+  return synthesizePreGov2Commit(roadmapSnap, stateSnap);
+}
+
+function findAncestryPreGov2Commit(roadmapSnap, stateSnap) {
   const listed = spawnSync("git", ["-C", root, "rev-list", "HEAD", "--", STATE_REL], {
     encoding: "utf8",
     maxBuffer: 16 * 1024 * 1024,
@@ -76,12 +86,57 @@ function resolvePreGov2BaseSha() {
   return null;
 }
 
+function synthesizePreGov2Commit(roadmapSnap, stateSnap) {
+  const indexDir = mkdtempSync(path.join(tmpdir(), "gov2-pre-gov2-index-"));
+  const indexFile = path.join(indexDir, "index");
+  const env = { ...process.env, GIT_INDEX_FILE: indexFile };
+  const git = (args, options = {}) =>
+    spawnSync("git", ["-C", root, ...args], { encoding: "utf8", env, ...options });
+
+  try {
+    const headTree = git(["read-tree", "HEAD"]);
+    if (headTree.status !== 0) return null;
+
+    const writeBlob = (text) => {
+      const written = spawnSync("git", ["-C", root, "hash-object", "-w", "--stdin"], {
+        encoding: "utf8",
+        input: text,
+      });
+      if (written.status !== 0) return null;
+      return written.stdout.trim();
+    };
+    const roadmapBlob = writeBlob(roadmapSnap.text);
+    const stateBlob = writeBlob(stateSnap.text);
+    if (!roadmapBlob || !stateBlob) return null;
+
+    const updateRoadmap = git(["update-index", "--cacheinfo", `100644,${roadmapBlob},${ROADMAP_REL}`]);
+    const updateState = git(["update-index", "--cacheinfo", `100644,${stateBlob},${STATE_REL}`]);
+    if (updateRoadmap.status !== 0 || updateState.status !== 0) return null;
+
+    const tree = git(["write-tree"]);
+    if (tree.status !== 0) return null;
+    const commit = git([
+      "commit-tree",
+      tree.stdout.trim(),
+      "-m",
+      "TEST_ONLY pre-GOV2 bootstrap base synthesized from unique history snapshots",
+    ]);
+    if (commit.status !== 0) return null;
+    const sha = commit.stdout.trim();
+    if (blobHashAt(sha, STATE_REL) !== stateSnap.hash) return null;
+    if (blobHashAt(sha, ROADMAP_REL) !== roadmapSnap.hash) return null;
+    return sha;
+  } finally {
+    rmSync(indexDir, { recursive: true, force: true });
+  }
+}
+
 const preGov2BaseSha = resolvePreGov2BaseSha();
 
 function requirePreGov2BaseSha() {
   assert.ok(
     preGov2BaseSha,
-    "unique pre-GOV2 history snapshots must equal ROADMAP/STATE blobs on a HEAD-ancestry commit without GOV-2 blocks",
+    "unique pre-GOV2 history snapshots must yield a commit whose ROADMAP/STATE blobs match and lack GOV-2 blocks",
   );
   return preGov2BaseSha;
 }
