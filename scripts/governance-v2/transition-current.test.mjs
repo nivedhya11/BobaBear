@@ -89,7 +89,17 @@ function findAncestryPreGov2Commit(roadmapSnap, stateSnap) {
 function synthesizePreGov2Commit(roadmapSnap, stateSnap) {
   const indexDir = mkdtempSync(path.join(tmpdir(), "gov2-pre-gov2-index-"));
   const indexFile = path.join(indexDir, "index");
-  const env = { ...process.env, GIT_INDEX_FILE: indexFile };
+  const env = {
+    ...process.env,
+    GIT_INDEX_FILE: indexFile,
+    // Deterministic TEST_ONLY identity: do not depend on developer/CI git config.
+    GIT_AUTHOR_NAME: "GOV-2 Test",
+    GIT_AUTHOR_EMAIL: "gov2-test@example.invalid",
+    GIT_AUTHOR_DATE: "1970-01-01T00:00:00Z",
+    GIT_COMMITTER_NAME: "GOV-2 Test",
+    GIT_COMMITTER_EMAIL: "gov2-test@example.invalid",
+    GIT_COMMITTER_DATE: "1970-01-01T00:00:00Z",
+  };
   const git = (args, options = {}) =>
     spawnSync("git", ["-C", root, ...args], { encoding: "utf8", env, ...options });
 
