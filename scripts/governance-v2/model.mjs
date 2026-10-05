@@ -52,7 +52,7 @@ export function validateLastTransitionShape(lastTransition, trancheIds) {
   if (lastTransition == null) {
     return { ok: true, findings: [] };
   }
-  if (typeof lastTransition !== "object") {
+  if (typeof lastTransition !== "object" || Array.isArray(lastTransition)) {
     return aggregate([finding("INVALID_LAST_TRANSITION", "lastTransition", "lastTransition must be an object")]);
   }
   const findings = [];
@@ -66,13 +66,25 @@ export function validateLastTransitionShape(lastTransition, trancheIds) {
       finding("INVALID_LAST_TRANSITION", "lastTransition.tranche", `lastTransition.tranche ${JSON.stringify(lastTransition.tranche)} is not in the tranche plan`),
     );
   }
-  if (lastTransition.sourcePr != null && !Number.isInteger(lastTransition.sourcePr)) {
-    findings.push(finding("INVALID_LAST_TRANSITION", "lastTransition.sourcePr", "sourcePr must be an integer pull-request number"));
+  if (lastTransition.sourcePr != null && !isPositiveSourcePr(lastTransition.sourcePr)) {
+    findings.push(
+      finding("INVALID_LAST_TRANSITION", "lastTransition.sourcePr", "sourcePr must be a positive integer pull-request number"),
+    );
   }
-  if (lastTransition.mergeCommit != null && !SHA1_RE.test(String(lastTransition.mergeCommit))) {
+  if (lastTransition.mergeCommit != null && !isValidMergeCommit(lastTransition.mergeCommit)) {
     findings.push(finding("INVALID_LAST_TRANSITION", "lastTransition.mergeCommit", "mergeCommit must be a 40-character lowercase SHA-1"));
   }
   return aggregate(findings);
+}
+
+/** @param {unknown} value */
+export function isPositiveSourcePr(value) {
+  return Number.isInteger(value) && value > 0;
+}
+
+/** @param {unknown} value */
+export function isValidMergeCommit(value) {
+  return typeof value === "string" && SHA1_RE.test(value);
 }
 
 /**

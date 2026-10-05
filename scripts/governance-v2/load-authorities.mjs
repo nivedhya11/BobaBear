@@ -66,6 +66,49 @@ export function readAuthority(root, rel) {
 }
 
 /**
+ * @param {string} roadmapText
+ * @param {string} stateText
+ * @param {string | null | undefined} planText
+ */
+export function loadAuthoritiesFromTexts(roadmapText, stateText, planText) {
+  const findings = [];
+  const roadmapBlock = parseGov2Block(roadmapText, "roadmap");
+  const stateBlock = parseGov2Block(stateText, "state");
+  if (roadmapBlock.ok !== true) findings.push(roadmapBlock);
+  if (stateBlock.ok !== true) findings.push(stateBlock);
+  if (findings.length > 0) {
+    return { ...aggregate(findings), roadmap: null, state: null, plan: null, planRel: null };
+  }
+
+  const planRel =
+    typeof roadmapBlock.value.tranchePlanPath === "string" && roadmapBlock.value.tranchePlanPath.length > 0
+      ? roadmapBlock.value.tranchePlanPath
+      : null;
+  if (!planRel) {
+    findings.push(finding("CURRENT_AUTHORITY_MISSING", "tranchePlanPath", "ROADMAP gov2 block must declare tranchePlanPath"));
+    return { ...aggregate(findings), roadmap: roadmapBlock.value, state: stateBlock.value, plan: null, planRel: null };
+  }
+  if (planText == null) {
+    findings.push(finding("CURRENT_AUTHORITY_MISSING", planRel, `unable to read ${planRel}`));
+    return { ...aggregate(findings), roadmap: roadmapBlock.value, state: stateBlock.value, plan: null, planRel };
+  }
+  const planBlock = parseGov2Block(planText, "tranche-plan");
+  if (planBlock.ok !== true) {
+    findings.push(planBlock);
+    return { ...aggregate(findings), roadmap: roadmapBlock.value, state: stateBlock.value, plan: null, planRel };
+  }
+
+  return {
+    ok: true,
+    findings: [],
+    roadmap: roadmapBlock.value,
+    state: stateBlock.value,
+    plan: planBlock.value,
+    planRel,
+  };
+}
+
+/**
  * @param {string} root
  */
 export function loadLiveAuthorities(root) {
@@ -79,38 +122,17 @@ export function loadLiveAuthorities(root) {
   }
 
   const roadmapBlock = parseGov2Block(roadmapFile.text, "roadmap");
-  const stateBlock = parseGov2Block(stateFile.text, "state");
-  if (roadmapBlock.ok !== true) findings.push(roadmapBlock);
-  if (stateBlock.ok !== true) findings.push(stateBlock);
+  const planRel =
+    roadmapBlock.ok === true &&
+    typeof roadmapBlock.value.tranchePlanPath === "string" &&
+    roadmapBlock.value.tranchePlanPath.length > 0
+      ? roadmapBlock.value.tranchePlanPath
+      : null;
+  const planFile = planRel ? readAuthority(root, planRel) : { ok: true, text: null };
+  if (planRel && planFile.ok === false) findings.push(planFile);
   if (findings.length > 0) {
     return { ...aggregate(findings), roadmap: null, state: null, plan: null };
   }
 
-  const planRel =
-    typeof roadmapBlock.value.tranchePlanPath === "string" && roadmapBlock.value.tranchePlanPath.length > 0
-      ? roadmapBlock.value.tranchePlanPath
-      : null;
-  if (!planRel) {
-    findings.push(finding("CURRENT_AUTHORITY_MISSING", "tranchePlanPath", "ROADMAP gov2 block must declare tranchePlanPath"));
-    return { ...aggregate(findings), roadmap: roadmapBlock.value, state: stateBlock.value, plan: null };
-  }
-
-  const planFile = readAuthority(root, planRel);
-  if (planFile.ok === false) {
-    findings.push(planFile);
-    return { ...aggregate(findings), roadmap: roadmapBlock.value, state: stateBlock.value, plan: null };
-  }
-  const planBlock = parseGov2Block(planFile.text, "tranche-plan");
-  if (planBlock.ok !== true) {
-    findings.push(planBlock);
-    return { ...aggregate(findings), roadmap: roadmapBlock.value, state: stateBlock.value, plan: null };
-  }
-
-  return {
-    ok: true,
-    findings: [],
-    roadmap: roadmapBlock.value,
-    state: stateBlock.value,
-    plan: planBlock.value,
-  };
+  return loadAuthoritiesFromTexts(roadmapFile.text, stateFile.text, planFile.text);
 }

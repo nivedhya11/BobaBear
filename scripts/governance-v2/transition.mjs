@@ -1,7 +1,15 @@
 /**
  * Generic base → head lifecycle transition rules.
  */
-import { LAST_TRANSITION_TYPE, TRANCHE_STATUS, TRANCHE_STATUS_SET, aggregate, finding } from "./model.mjs";
+import {
+  LAST_TRANSITION_TYPE,
+  TRANCHE_STATUS,
+  TRANCHE_STATUS_SET,
+  aggregate,
+  finding,
+  isPositiveSourcePr,
+  isValidMergeCommit,
+} from "./model.mjs";
 import { validateCurrentState } from "./invariants.mjs";
 import { dependenciesSatisfied, deriveNextGate, allRequiredTranchesPass, trancheList } from "./tranche-graph.mjs";
 
@@ -142,9 +150,15 @@ function tranchePassEvidenceFindings(headState, newlyPassed) {
       ),
     );
   }
-  if (lastTransition.sourcePr == null && lastTransition.mergeCommit == null) {
+  const hasValidSourcePr = isPositiveSourcePr(lastTransition.sourcePr);
+  const hasValidMergeCommit = isValidMergeCommit(lastTransition.mergeCommit);
+  if (!hasValidSourcePr && !hasValidMergeCommit) {
     findings.push(
-      finding("LAST_TRANSITION_EVIDENCE_MISSING", "lastTransition", `PASS of ${passed} requires sourcePr or mergeCommit`),
+      finding(
+        "INVALID_LAST_TRANSITION",
+        "lastTransition",
+        `PASS of ${passed} requires a positive integer sourcePr or a valid mergeCommit`,
+      ),
     );
   }
   return findings;

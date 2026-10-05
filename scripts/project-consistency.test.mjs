@@ -113,15 +113,8 @@ import {
   evaluateImp036jArchitectureLock,
   evaluateImp036jProgrammeLifecycle,
   evaluateImp036jProductIdentity,
-  evaluateImp036jTranche3CurrentSourceAnchor,
   evaluateImp036jExperienceFitPointer,
   evaluateImp036jTestingPointer,
-  evaluateImp036jTranche7CurrentStatePayload,
-  evaluateImp036jTranche7CurrentRoadmapFence,
-  extractImp036jStateR186Record,
-  evaluateImp036jTranche7StateR186Record,
-  evaluateImp036jTranche7FutureJLedger,
-  evaluateImp036kPreservedAtT7FutureLedger,
   evaluateImp036kGateCandidateProvenance,
   evaluateImp036kDesignReadinessPlanFinalizedFlags,
   evaluateImp036jProductDeliveryTransition,
@@ -6776,18 +6769,6 @@ describe("canonical authority history compression", () => {
       assert.match(state, /IMP036J_IMPLEMENTATION_COMPLETE:\s*NO/);
       assert.match(state, /FOUNDER_UAT:\s*NOT_PERFORMED/);
       assert.match(state, /IMP036J_ACCEPTED:\s*NO/);
-      const stateSection2 = state.split("## 2. Current Work Position")[1]?.split("\n## ")[0] ?? "";
-      assert.deepEqual(evaluateImp036jTranche7CurrentStatePayload(stateSection2), { ok: true });
-      const droppedCurrentT7 = stateSection2.replaceAll("IMP036J_TRANCHE_7: PASS", "IMP036J_TRANCHE_7: OMITTED");
-      assert.notEqual(droppedCurrentT7, stateSection2);
-      assert.equal(evaluateImp036jTranche7CurrentStatePayload(droppedCurrentT7).ok, false);
-      assert.equal(evaluateImp036jTranche7CurrentStatePayload(droppedCurrentT7).code, "IMP036J_T7_CURRENT_STATE");
-      const currentFence = currentMarker.split("```text").pop()?.split("```")[0] ?? "";
-      assert.deepEqual(evaluateImp036jTranche7CurrentRoadmapFence(currentFence), { ok: true });
-      const droppedFenceT7 = currentFence.replaceAll("IMP036J_TRANCHE_7: PASS", "IMP036J_TRANCHE_7: OMITTED");
-      assert.notEqual(droppedFenceT7, currentFence);
-      assert.equal(evaluateImp036jTranche7CurrentRoadmapFence(droppedFenceT7).ok, false);
-      assert.equal(evaluateImp036jTranche7CurrentRoadmapFence(droppedFenceT7).code, "IMP036J_T7_CURRENT_FENCE");
       assert.match(currentMarker, /IMP036K_DESIGN_READINESS:\s*PASS/);
       assert.match(currentMarker, /IMP036K_NEXT_GATE:\s*QUALITY \/ TEST PLAN FINALIZATION/);
       assert.match(currentMarker, /IMP036K_QUALITY_TEST_PLAN_FINALIZED:\s*NO/);
@@ -6803,7 +6784,6 @@ describe("canonical authority history compression", () => {
       assert.match(historicalR185, /IMP036J_TRANCHE_5:\s*PASS/);
       assert.match(historicalR185, /T7_STARTED:\s*NO/);
       assert.match(historicalR185, /IMP036J_NEXT_GATE:\s*IMPLEMENTATION_TRANCHE_7/);
-      assert.deepEqual(evaluateImp036jTranche7StateR186Record(extractImp036jStateR186Record(state)), { ok: true });
       assert.match(roadmap, /0bd2734c51b88e5f9e6025389f23920e7a3c805d/);
       assert.match(roadmap, /5407550500/);
       assert.match(roadmap, /5983294615/);
@@ -19127,50 +19107,6 @@ describe("IMP-036J architecture fit remediation candidate 9", {
     assert.match(designReadinessRecord, /IMP036J_NEXT_GATE:\s*IMPLEMENTATION_TRANCHE_3/);
     assert.match(roadmap, /GTM-R183 \/ STATE-R181 remains the (?:IMP-036K )?Design Readiness PASS checkpoint/);
   });
-  it("preserves exact T3 source main 43f280d9 on GTM-R184 / STATE-R182 and rejects stale 8e4221f CURRENT labels", () => {
-    const state = readFileSync("docs/platform/STATE.md", "utf8");
-    const roadmap = readFileSync("docs/platform/ROADMAP.md", "utf8");
-    assert.deepEqual(evaluateImp036jTranche3CurrentSourceAnchor(roadmap, state), { ok: true });
-    assert.match(state, /CURRENT_SOURCE_MAIN:\s*43f280d9e42c159910d6f916b7db255e748e1c1e/);
-    assert.match(state, /CURRENT_SOURCE_EXACT_MAIN_CI:\s*37116839745/);
-    assert.match(state, /CURRENT_SOURCE_EXACT_MAIN_CODEQL:\s*37116839762/);
-    assert.match(state, /CURRENT_SOURCE_SECURITY_CHECKPOINT_PR:\s*349/);
-    assert.match(state, /CURRENT_SOURCE_SECURITY_CLOSURE:\s*5968401737/);
-    assert.match(state, /HISTORICAL_PRE_SECURITY_SOURCE_MAIN:\s*8e4221f27d3e9c930dca4544382a038a58f0f93a/);
-    assert.match(state, /PR346_PROVENANCE_REPAIR_MERGE_CHECKPOINT:\s*51cc0b3c3964e2d5e4d301b1b43c80d5132b7210/);
-    assert.doesNotMatch(state, /CURRENT_SOURCE_MAIN:\s*8e4221f27d3e9c930dca4544382a038a58f0f93a/);
-    assert.doesNotMatch(state, /CURRENT_SOURCE_MAIN:\s*51cc0b3c3964e2d5e4d301b1b43c80d5132b7210/);
-    assert.doesNotMatch(state, /CURRENT_SOURCE_EXACT_MAIN_CI:\s*37071608421/);
-    assert.doesNotMatch(state, /CURRENT_SOURCE_EXACT_MAIN_CI:\s*37070367757/);
-    assert.doesNotMatch(state, /CURRENT_SOURCE_EXACT_MAIN_CODEQL:\s*37071608405/);
-    assert.doesNotMatch(state, /CURRENT_SOURCE_EXACT_MAIN_CODEQL:\s*37070367671/);
-    const staleMain = state.replace(
-      "CURRENT_SOURCE_MAIN: 43f280d9e42c159910d6f916b7db255e748e1c1e",
-      "CURRENT_SOURCE_MAIN: 8e4221f27d3e9c930dca4544382a038a58f0f93a",
-    );
-    assert.notEqual(staleMain, state);
-    assert.equal(evaluateImp036jTranche3CurrentSourceAnchor(roadmap, staleMain).code, "IMP036J_T3_STALE_CURRENT_SOURCE");
-    const staleRepair = state.replace(
-      "CURRENT_SOURCE_MAIN: 43f280d9e42c159910d6f916b7db255e748e1c1e",
-      "CURRENT_SOURCE_MAIN: 51cc0b3c3964e2d5e4d301b1b43c80d5132b7210",
-    );
-    assert.equal(evaluateImp036jTranche3CurrentSourceAnchor(roadmap, staleRepair).code, "IMP036J_T3_STALE_CURRENT_SOURCE");
-    const staleCi = state.replace(
-      "CURRENT_SOURCE_EXACT_MAIN_CI: 37116839745",
-      "CURRENT_SOURCE_EXACT_MAIN_CI: 37071608421",
-    );
-    assert.equal(evaluateImp036jTranche3CurrentSourceAnchor(roadmap, staleCi).code, "IMP036J_T3_STALE_CURRENT_SOURCE");
-    const staleCodeql = state.replace(
-      "CURRENT_SOURCE_EXACT_MAIN_CODEQL: 37116839762",
-      "CURRENT_SOURCE_EXACT_MAIN_CODEQL: 37071608405",
-    );
-    assert.equal(evaluateImp036jTranche3CurrentSourceAnchor(roadmap, staleCodeql).code, "IMP036J_T3_STALE_CURRENT_SOURCE");
-    const historicalOnly = state.replace(
-      "PR346_PROVENANCE_REPAIR_MERGE_CHECKPOINT: 51cc0b3c3964e2d5e4d301b1b43c80d5132b7210\n",
-      "",
-    );
-    assert.equal(evaluateImp036jTranche3CurrentSourceAnchor(roadmap, historicalOnly).code, "IMP036J_T3_HISTORICAL_SOURCE");
-  });
   it("preserves the GTM-R180 / STATE-R178 checkpoint where Tranche 2 had not started", () => {
     const state = readFileSync("docs/platform/STATE.md", "utf8");
     const roadmap = readFileSync("docs/platform/ROADMAP.md", "utf8");
@@ -19470,233 +19406,3 @@ describe("IMP-036K Design Readiness plan-finalized flags", () => {
   });
 });
 
-describe("IMP-036J Tranche 7 STATE-R186 structured provenance", {
-  skip: /"roadmapVersion": "GTM-R189"/.test(readFileSync("docs/platform/ROADMAP.md", "utf8")),
-}, () => {
-  const state = readFileSync(new URL("../docs/platform/STATE.md", import.meta.url), "utf8");
-  const stateSection2 = state.split("## 2. Current Work Position")[1]?.split("\n## ")[0] ?? "";
-  const historicalR185 = state.split("## 10. STATE-R185 record")[1]?.split("## 10. STATE-R184")[0] ?? "";
-  const liveRecord = extractImp036jStateR186Record(state);
-
-  /**
-   * @param {string} field
-   * @param {string} from
-   * @param {string} to
-   */
-  function replaceStateR186FenceField(field, from, to) {
-    const heading = "## 10. STATE-R186 record";
-    const start = state.indexOf(heading);
-    const end = state.indexOf("## 10. STATE-R185", start);
-    assert.notEqual(start, -1);
-    assert.notEqual(end, -1);
-    const section = state.slice(start, end);
-    const fenceOpen = section.indexOf("```text");
-    const fenceClose = section.indexOf("```", fenceOpen + "```text".length);
-    assert.notEqual(fenceOpen, -1);
-    assert.notEqual(fenceClose, -1);
-    const fence = section.slice(fenceOpen, fenceClose);
-    const needle = `${field}: ${from}`;
-    const mutatedFence = fence.replace(needle, `${field}: ${to}`);
-    assert.notEqual(mutatedFence, fence);
-    assert.equal(mutatedFence.includes(needle), false);
-    return state.slice(0, start) + section.slice(0, fenceOpen) + mutatedFence + section.slice(fenceClose) + state.slice(end);
-  }
-
-  it("accepts the live STATE-R186 structured record", () => {
-    assert.deepEqual(evaluateImp036jTranche7StateR186Record(liveRecord), { ok: true });
-    assert.deepEqual(evaluateImp036jTranche7CurrentStatePayload(stateSection2), { ok: true });
-    assert.match(historicalR185, /STATE-R185\s*=\s*IMP036J_TRANCHE_5_PASS/);
-    assert.match(stateSection2, /IMP036K_DESIGN_READINESS:\s*PASS/);
-    assert.match(stateSection2, /IMP036K_NEXT_GATE:\s*QUALITY \/ TEST PLAN FINALIZATION/);
-    assert.match(stateSection2, /IMP036K_IMPLEMENTATION_AUTHORIZED:\s*NO/);
-  });
-
-  it("fails when IMPLEMENTATION_REVIEWED_HEAD is corrupted inside STATE-R186 while narrative still has the SHA", () => {
-    const mutated = replaceStateR186FenceField(
-      "IMPLEMENTATION_REVIEWED_HEAD",
-      "0bd2734c51b88e5f9e6025389f23920e7a3c805d",
-      "0000000000000000000000000000000000000000",
-    );
-    assert.match(mutated, /0bd2734c51b88e5f9e6025389f23920e7a3c805d/);
-    const result = evaluateImp036jTranche7StateR186Record(extractImp036jStateR186Record(mutated));
-    assert.equal(result.ok, false);
-    assert.equal(result.code, "IMP036J_T7_R186_RECORD");
-    assert.match(result.message ?? "", /IMPLEMENTATION_REVIEWED_HEAD/);
-    assert.deepEqual(evaluateImp036jTranche7CurrentStatePayload(mutated.split("## 2. Current Work Position")[1]?.split("\n## ")[0] ?? ""), { ok: true });
-    assert.equal(mutated.split("## 10. STATE-R185 record")[1]?.split("## 10. STATE-R184")[0], historicalR185);
-    assert.match(mutated.split("## 2. Current Work Position")[1]?.split("\n## ")[0] ?? "", /IMP036K_DESIGN_READINESS:\s*PASS/);
-  });
-
-  it("fails when IMPLEMENTATION_ARCHITECT_REVIEW is corrupted inside STATE-R186 while narrative still has the id", () => {
-    const mutated = replaceStateR186FenceField(
-      "IMPLEMENTATION_ARCHITECT_REVIEW",
-      "5407550500",
-      "0000000000",
-    );
-    assert.match(mutated, /5407550500/);
-    const result = evaluateImp036jTranche7StateR186Record(extractImp036jStateR186Record(mutated));
-    assert.equal(result.ok, false);
-    assert.equal(result.code, "IMP036J_T7_R186_RECORD");
-    assert.match(result.message ?? "", /IMPLEMENTATION_ARCHITECT_REVIEW/);
-    assert.deepEqual(evaluateImp036jTranche7CurrentStatePayload(mutated.split("## 2. Current Work Position")[1]?.split("\n## ")[0] ?? ""), { ok: true });
-    assert.equal(mutated.split("## 10. STATE-R185 record")[1]?.split("## 10. STATE-R184")[0], historicalR185);
-  });
-
-  it("fails when IMPLEMENTATION_EXACT_MAIN_CI is corrupted inside STATE-R186 while narrative still has the run id", () => {
-    const mutated = replaceStateR186FenceField(
-      "IMPLEMENTATION_EXACT_MAIN_CI",
-      "37225606813",
-      "00000000000",
-    );
-    assert.match(mutated, /37225606813/);
-    const result = evaluateImp036jTranche7StateR186Record(extractImp036jStateR186Record(mutated));
-    assert.equal(result.ok, false);
-    assert.equal(result.code, "IMP036J_T7_R186_RECORD");
-    assert.match(result.message ?? "", /IMPLEMENTATION_EXACT_MAIN_CI/);
-  });
-
-  it("fails when IMPLEMENTATION_POST_MERGE_CLOSURE is corrupted inside STATE-R186 while narrative still has the id", () => {
-    const mutated = replaceStateR186FenceField(
-      "IMPLEMENTATION_POST_MERGE_CLOSURE",
-      "5983294615",
-      "0000000000",
-    );
-    assert.match(mutated, /5983294615/);
-    const result = evaluateImp036jTranche7StateR186Record(extractImp036jStateR186Record(mutated));
-    assert.equal(result.ok, false);
-    assert.equal(result.code, "IMP036J_T7_R186_RECORD");
-    assert.match(result.message ?? "", /IMPLEMENTATION_POST_MERGE_CLOSURE/);
-  });
-
-  it("fails when IMPLEMENTATION_MERGE_MAIN_TREE is corrupted inside STATE-R186 while narrative tree text is unchanged", () => {
-    const mutated = replaceStateR186FenceField(
-      "IMPLEMENTATION_MERGE_MAIN_TREE",
-      "42ba8ba7fd99892df2b2e2ca2e466114bdf65ea9",
-      "0000000000000000000000000000000000000000",
-    );
-    assert.match(mutated, /Exact main tree `42ba8ba7fd99892df2b2e2ca2e466114bdf65ea9`/);
-    assert.match(extractImp036jStateR186Record(mutated), /IMPLEMENTATION_REVIEWED_TREE: 42ba8ba7fd99892df2b2e2ca2e466114bdf65ea9/);
-    const result = evaluateImp036jTranche7StateR186Record(extractImp036jStateR186Record(mutated));
-    assert.equal(result.ok, false);
-    assert.equal(result.code, "IMP036J_T7_R186_RECORD");
-    assert.match(result.message ?? "", /IMPLEMENTATION_MERGE_MAIN_TREE/);
-    assert.equal(mutated.split("## 10. STATE-R185 record")[1]?.split("## 10. STATE-R184")[0], historicalR185);
-  });
-
-  it("fails when CURRENT_SOURCE_SECURITY_SDLC is corrupted inside STATE-R186 while narrative still says it passed", () => {
-    const mutated = replaceStateR186FenceField(
-      "CURRENT_SOURCE_SECURITY_SDLC",
-      "PASS",
-      "FAIL",
-    );
-    assert.match(mutated, /Exact-main Security SDLC, SCA,/);
-    const result = evaluateImp036jTranche7StateR186Record(extractImp036jStateR186Record(mutated));
-    assert.equal(result.ok, false);
-    assert.equal(result.code, "IMP036J_T7_R186_RECORD");
-    assert.match(result.message ?? "", /CURRENT_SOURCE_SECURITY_SDLC/);
-    assert.equal(mutated.split("## 10. STATE-R185 record")[1]?.split("## 10. STATE-R184")[0], historicalR185);
-  });
-
-  it("fails when PR357 is corrupted inside STATE-R186 while narrative still names pull request #357", () => {
-    const mutated = replaceStateR186FenceField("PR357", "MERGED", "NOT_MERGED");
-    assert.match(mutated, /merged in pull request #357/);
-    const result = evaluateImp036jTranche7StateR186Record(extractImp036jStateR186Record(mutated));
-    assert.equal(result.ok, false);
-    assert.equal(result.code, "IMP036J_T7_R186_RECORD");
-    assert.match(result.message ?? "", /PR357/);
-    assert.equal(mutated.split("## 10. STATE-R185 record")[1]?.split("## 10. STATE-R184")[0], historicalR185);
-  });
-
-  it("fails when D-383 is corrupted inside STATE-R186 while section 2 still records D-383 CURRENT", () => {
-    const mutated = replaceStateR186FenceField("D-383", "CURRENT", "SUPERSEDED");
-    assert.match(mutated.split("## 2. Current Work Position")[1]?.split("\n## ")[0] ?? "", /D-383 CURRENT/);
-    const result = evaluateImp036jTranche7StateR186Record(extractImp036jStateR186Record(mutated));
-    assert.equal(result.ok, false);
-    assert.equal(result.code, "IMP036J_T7_R186_RECORD");
-    assert.match(result.message ?? "", /D-383/);
-  });
-
-  it("fails when NEW_SERVICE is corrupted inside STATE-R186 while narrative still says no new service", () => {
-    const mutated = replaceStateR186FenceField("NEW_SERVICE", "NO", "YES");
-    assert.match(mutated, /No new service, queue, scheduler, permission, or role/);
-    const result = evaluateImp036jTranche7StateR186Record(extractImp036jStateR186Record(mutated));
-    assert.equal(result.ok, false);
-    assert.equal(result.code, "IMP036J_T7_R186_RECORD");
-    assert.match(result.message ?? "", /NEW_SERVICE/);
-  });
-
-  it("fails when CURRENT_SOURCE_T1_NAMED_PROOF is corrupted inside STATE-R186 while narrative still names T1–T7 proofs", () => {
-    const mutated = replaceStateR186FenceField(
-      "CURRENT_SOURCE_T1_NAMED_PROOF",
-      "PASS",
-      "FAIL",
-    );
-    assert.match(mutated, /Named IMP-036J\nTranche 1 through 7 proofs passed on exact main/);
-    const result = evaluateImp036jTranche7StateR186Record(extractImp036jStateR186Record(mutated));
-    assert.equal(result.ok, false);
-    assert.equal(result.code, "IMP036J_T7_R186_RECORD");
-    assert.match(result.message ?? "", /CURRENT_SOURCE_T1_NAMED_PROOF/);
-    assert.match(extractImp036jStateR186Record(mutated), /CURRENT_SOURCE_T7_NAMED_PROOF: PASS/);
-  });
-
-  it("fails when the STATE-R186 fence delimiters are removed while narrative still has the tokens", () => {
-    const heading = "## 10. STATE-R186 record";
-    const start = state.indexOf(heading);
-    const end = state.indexOf("## 10. STATE-R185", start);
-    const section = state.slice(start, end);
-    const unfenced = section.replace("```text\n", "").replace("\n```\n", "\n");
-    assert.notEqual(unfenced, section);
-    const mutated = state.slice(0, start) + unfenced + state.slice(end);
-    assert.equal(extractImp036jStateR186Record(mutated), "");
-    assert.match(mutated, /IMPLEMENTATION_REVIEWED_HEAD: 0bd2734c51b88e5f9e6025389f23920e7a3c805d/);
-    const result = evaluateImp036jTranche7StateR186Record(extractImp036jStateR186Record(mutated));
-    assert.equal(result.ok, false);
-    assert.equal(result.code, "IMP036J_T7_R186_RECORD");
-    assert.deepEqual(evaluateImp036jTranche7CurrentStatePayload(mutated.split("## 2. Current Work Position")[1]?.split("\n## ")[0] ?? ""), { ok: true });
-  });
-
-  it("still passes if only the STATE-R186 narrative SHA is removed", () => {
-    const heading = "## 10. STATE-R186 record";
-    const start = state.indexOf(heading);
-    const end = state.indexOf("## 10. STATE-R185", start);
-    const section = state.slice(start, end);
-    const fenceClose = section.indexOf("```", section.indexOf("```text") + "```text".length);
-    const narrative = section.slice(fenceClose);
-    const mutatedNarrative = narrative.replaceAll("0bd2734c51b88e5f9e6025389f23920e7a3c805d", "omitted-reviewed-head");
-    assert.notEqual(mutatedNarrative, narrative);
-    const mutated = state.slice(0, start) + section.slice(0, fenceClose) + mutatedNarrative + state.slice(end);
-    assert.deepEqual(evaluateImp036jTranche7StateR186Record(extractImp036jStateR186Record(mutated)), { ok: true });
-    assert.deepEqual(evaluateImp036jTranche7CurrentStatePayload(mutated.split("## 2. Current Work Position")[1]?.split("\n## ")[0] ?? ""), { ok: true });
-    assert.equal(mutated.split("## 10. STATE-R185 record")[1]?.split("## 10. STATE-R184")[0], historicalR185);
-  });
-});
-
-describe("IMP-036J Tranche 7 future GTM ledger", {
-  skip: /"roadmapVersion": "GTM-R189"/.test(readFileSync(new URL("../docs/platform/ROADMAP.md", import.meta.url), "utf8")),
-}, () => {
-  const roadmap = readFileSync(new URL("../docs/platform/ROADMAP.md", import.meta.url), "utf8");
-  const futureSliceSection = roadmap.split("## 5. Future GTM Slices")[1]?.split("\n## ")[0] ?? "";
-  const futureJ = futureSliceSection.split("\n").find((line) => line.includes("| IMP-036J |")) ?? "";
-  const futureK = futureSliceSection.split("\n").find((line) => line.includes("| IMP-036K |")) ?? "";
-
-  it("accepts the live IMP-036J and IMP-036K future rows", () => {
-    assert.deepEqual(evaluateImp036jTranche7FutureJLedger(futureJ), { ok: true });
-    assert.deepEqual(evaluateImp036kPreservedAtT7FutureLedger(futureK), { ok: true });
-  });
-
-  it("fails when the IMP-036J future row claims IMP036J_ACCEPTED: YES", () => {
-    const mutated = futureJ.replace("IMP036J_ACCEPTED: NO", "IMP036J_ACCEPTED: YES");
-    assert.notEqual(mutated, futureJ);
-    const result = evaluateImp036jTranche7FutureJLedger(mutated);
-    assert.equal(result.ok, false);
-    assert.equal(result.code, "IMP036J_FUTURE_LEDGER");
-  });
-
-  it("fails when the IMP-036K future row claims STARTED while remaining unauthorized", () => {
-    const mutated = futureK.replace("NOT_AUTHORIZED / NOT_STARTED", "NOT_AUTHORIZED / STARTED");
-    assert.notEqual(mutated, futureK);
-    const result = evaluateImp036kPreservedAtT7FutureLedger(mutated);
-    assert.equal(result.ok, false);
-    assert.equal(result.code, "IMP036K_FUTURE_LEDGER");
-  });
-});

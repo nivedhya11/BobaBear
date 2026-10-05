@@ -113,6 +113,26 @@ describe("GOV-2 generic engine", () => {
     assert.ok(codes(result).includes("LAST_TRANSITION_TRANCHE_MISMATCH"));
   });
 
+  it("rejects malformed lastTransition evidence when a tranche newly PASSes", () => {
+    const base = postT7();
+    const cases = [
+      { sourcePr: 0, mergeCommit: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
+      { sourcePr: -1, mergeCommit: null },
+      { sourcePr: 1.5, mergeCommit: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
+      { sourcePr: "357", mergeCommit: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
+      { sourcePr: null, mergeCommit: null },
+      { sourcePr: 1, mergeCommit: "NOTASHA" },
+    ];
+    for (const evidence of cases) {
+      const head = structuredState(base);
+      head.implementation.trancheStatuses.T8 = TRANCHE_STATUS.PASS;
+      head.lastTransition = { type: "TRANCHE_PASS", tranche: "T8", ...evidence };
+      const result = validateTransition(base, head, plan036j(), roadmap());
+      assert.equal(result.ok, false, JSON.stringify({ evidence, findings: result.findings }));
+      assert.ok(codes(result).includes("INVALID_LAST_TRANSITION"), JSON.stringify(result.findings));
+    }
+  });
+
   it("rejects accepted-history gaps and acceptance beyond acceptedThrough", () => {
     const gap = structuredState(roadmap());
     gap.capabilities = gap.capabilities.map((capability) =>

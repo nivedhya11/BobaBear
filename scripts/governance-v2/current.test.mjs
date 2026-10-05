@@ -22,8 +22,9 @@ describe("GOV-2 live authorities", () => {
     assert.equal(report.ok, true, JSON.stringify(report.findings, null, 2));
     assert.equal(report.GOV2_VALIDATION_AUTHORITATIVE, "YES");
     assert.equal(report.GOV2_AUTHORITY_MODE, "GOV2");
-    assert.equal(report.CUTOVER_CANDIDATE, "YES");
-    assert.equal(report.MERGED, "NO");
+    assert.equal("CUTOVER_CANDIDATE" in report, false);
+    assert.equal("MERGED" in report, false);
+    assert.equal("GOV2_PHASE" in report, false);
     assert.equal(report.REAL_T8_STARTED, "NO");
     assert.equal(report.T8_STATUS, "NOT_STARTED");
     assert.equal(report.DERIVED_NEXT_GATE, "T8");
@@ -105,7 +106,9 @@ describe("GOV-2 live authorities", () => {
     assert.doesNotMatch(consistency, /gov2Cutover = roadmapVersion === "GTM-R189"/);
     assert.doesNotMatch(consistency, /function isGov2CutoverCheckpoint/);
     assert.doesNotMatch(consistency, /function checkGov2Cutover/);
-    assert.match(consistency, /function checkGov2GenericCurrent/);
+    assert.doesNotMatch(consistency, /function checkGov2GenericCurrent/);
+    assert.doesNotMatch(consistency, /function isImp036jTranche1PassCheckpoint/);
+    assert.doesNotMatch(consistency, /function checkImp036jTranche7Pass/);
     assert.equal(loaded.state.implementation.trancheStatuses.T8, "NOT_STARTED");
     assert.equal(validateLiveCurrentState(root).T8_STATUS, "NOT_STARTED");
   });

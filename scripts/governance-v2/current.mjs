@@ -65,12 +65,9 @@ export function alignGovernanceMetaToGov2Blocks(roadmapMeta, stateMeta, roadmap,
   return findings;
 }
 
-export function validateLiveCurrentState(root = DEFAULT_ROOT) {
-  const loaded = loadLiveAuthorities(root);
-  const roadmapLive = readFileSync(path.join(root, "docs/platform/ROADMAP.md"), "utf8");
-  const stateLive = readFileSync(path.join(root, "docs/platform/STATE.md"), "utf8");
-  const roadmapMeta = parseCurrentGovernanceMeta(roadmapLive, CURRENT_AUTHORITY_KIND.ROADMAP);
-  const stateMeta = parseCurrentGovernanceMeta(stateLive, CURRENT_AUTHORITY_KIND.STATE);
+export function validateAuthorityDocuments(roadmapText, stateText, loaded) {
+  const roadmapMeta = parseCurrentGovernanceMeta(roadmapText, CURRENT_AUTHORITY_KIND.ROADMAP);
+  const stateMeta = parseCurrentGovernanceMeta(stateText, CURRENT_AUTHORITY_KIND.STATE);
   const liveAlignment = validateLiveRoadmapStateAlignment(roadmapMeta, stateMeta);
 
   const findings = [
@@ -89,10 +86,7 @@ export function validateLiveCurrentState(root = DEFAULT_ROOT) {
   const ok = findings.filter((item) => item && item.ok === false).length === 0;
 
   return {
-    GOV2_PHASE: "AUTHORITATIVE_CANDIDATE",
     GOV2_AUTHORITY_MODE: "GOV2",
-    CUTOVER_CANDIDATE: "YES",
-    MERGED: "NO",
     GOV2_CUTOVER_ACCEPTANCE: "NO",
     GOV2_VALIDATION_AUTHORITATIVE: "YES",
     LIVE_CURRENT_META_VALID: liveAlignment.LIVE_CURRENT_META_VALID,
@@ -105,6 +99,13 @@ export function validateLiveCurrentState(root = DEFAULT_ROOT) {
     findings: findings.filter((item) => item && item.ok === false),
     ok,
   };
+}
+
+export function validateLiveCurrentState(root = DEFAULT_ROOT) {
+  const loaded = loadLiveAuthorities(root);
+  const roadmapLive = readFileSync(path.join(root, "docs/platform/ROADMAP.md"), "utf8");
+  const stateLive = readFileSync(path.join(root, "docs/platform/STATE.md"), "utf8");
+  return validateAuthorityDocuments(roadmapLive, stateLive, loaded);
 }
 
 function main() {

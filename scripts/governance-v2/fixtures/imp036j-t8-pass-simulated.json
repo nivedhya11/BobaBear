@@ -32,7 +32,7 @@
   "lastTransition": {
     "type": "TRANCHE_PASS",
     "tranche": "T8",
-    "sourcePr": 0,
+    "sourcePr": 1,
     "mergeCommit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
   }
 }
