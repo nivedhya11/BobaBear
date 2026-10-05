@@ -393,6 +393,31 @@ export function validateRoadmapStateAlignment(roadmap, state) {
       );
     }
   }
+
+  if (state.accepted === true) {
+    const slice = typeof state.slice === "string" ? state.slice : state.currentSlice;
+    const capability = Array.isArray(roadmap.capabilities)
+      ? roadmap.capabilities.find((item) => item && item.id === slice)
+      : null;
+    if (capability && capability.accepted !== true) {
+      findings.push(
+        finding(
+          "STATE_ACCEPTED_ROADMAP_MISMATCH",
+          "accepted",
+          `STATE accepted ${slice} while ROADMAP capability.accepted is ${JSON.stringify(capability.accepted)}`,
+        ),
+      );
+    }
+    if (typeof slice === "string" && state.acceptedThrough !== slice) {
+      findings.push(
+        finding(
+          "ACCEPTED_THROUGH_SLICE_MISMATCH",
+          "acceptedThrough",
+          `accepted STATE slice ${slice} requires acceptedThrough ${slice}`,
+        ),
+      );
+    }
+  }
   return aggregate(findings);
 }
 
@@ -423,6 +448,12 @@ function lifecyclePhaseCoherenceFindings(state) {
         "lifecyclePhase",
         "accepted requires lifecyclePhase COMPLETE_AND_ACCEPTED",
       ),
+    );
+  }
+
+  if (accepted === true && state.founderUat !== FOUNDER_UAT.PASS) {
+    findings.push(
+      finding("ACCEPTED_WITHOUT_UAT", "founderUat", "accepted requires founderUat PASS"),
     );
   }
 

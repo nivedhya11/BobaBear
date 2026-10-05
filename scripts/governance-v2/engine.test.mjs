@@ -226,6 +226,20 @@ describe("GOV-2 generic engine", () => {
     complete.implementation.complete = true;
     const completeResult = validateCurrentState(complete, plan036j(), roadmap());
     assert.ok(codes(completeResult).includes("COMPLETE_WITH_REQUIRED_TRANCHE_MISSING"));
+
+    const uatMissing = structuredState(postT7());
+    uatMissing.implementation.trancheStatuses.T8 = TRANCHE_STATUS.PASS;
+    uatMissing.implementation.complete = true;
+    uatMissing.accepted = true;
+    uatMissing.lifecyclePhase = "COMPLETE_AND_ACCEPTED";
+    const uatMissingResult = validateCurrentState(uatMissing, plan036j(), roadmap());
+    assert.ok(codes(uatMissingResult).includes("ACCEPTED_WITHOUT_UAT"));
+
+    const ledgerMismatch = structuredState(uatMissing);
+    ledgerMismatch.founderUat = FOUNDER_UAT.PASS;
+    const ledgerResult = validateCurrentState(ledgerMismatch, plan036j(), roadmap());
+    assert.ok(codes(ledgerResult).includes("STATE_ACCEPTED_ROADMAP_MISMATCH"));
+    assert.ok(codes(ledgerResult).includes("ACCEPTED_THROUGH_SLICE_MISMATCH"));
   });
 
   it("does not let historical prose rescue invalid structured state", () => {
