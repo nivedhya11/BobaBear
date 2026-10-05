@@ -41583,7 +41583,22 @@ export function evaluateImp036jPlatformIndexPointer(indexText) {
     row.includes("source `IMP-036J-FIT-CANDIDATE-5`") ||
     !row.includes("ARCH-R23 unchanged") ||
     !row.includes("Design Readiness PASS") ||
-    !row.includes("next gate IMPLEMENTATION_TRANCHE_8") || !row.includes("Tranche 1 PASS") || !row.includes("Tranche 2 PASS") || !row.includes("Tranche 3 PASS") || !row.includes("Tranche 4 PASS") || !row.includes("Tranche 5 PASS") || !row.includes("Tranche 6 PASS") || !row.includes("Tranche 7 PASS") || !row.includes("T8 not started") || row.includes("T7 not started") || row.includes("Tranche 5 not started") || row.includes("Tranche 1 IN_REVIEW") || row.includes("Tranche 4 not started") || !row.includes("implementation AUTHORIZED / STARTED") || row.includes("implementation NOT_AUTHORIZED")
+    !row.includes("next gate IMPLEMENTATION_TRANCHE_8") ||
+    !row.includes("Tranche 1 PASS") ||
+    !row.includes("Tranche 2 PASS") ||
+    !row.includes("Tranche 3 PASS") ||
+    !row.includes("Tranche 4 PASS") ||
+    !row.includes("Tranche 5 PASS") ||
+    !row.includes("Tranche 6 PASS") ||
+    !row.includes("Tranche 7 PASS") ||
+    !row.includes("T7 started") ||
+    !row.includes("T8 not started") ||
+    row.includes("T7 not started") ||
+    row.includes("Tranche 5 not started") ||
+    row.includes("Tranche 1 IN_REVIEW") ||
+    row.includes("Tranche 4 not started") ||
+    !row.includes("implementation AUTHORIZED / STARTED") ||
+    row.includes("implementation NOT_AUTHORIZED")
   ) {
     return { ok: false, code: "IMP036J_LOCK_INDEX", message: "Platform index IMP-036J row must name Candidate 9 as the current Architecture Fit source" };
   }

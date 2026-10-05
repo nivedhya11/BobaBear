@@ -19212,6 +19212,17 @@ describe("IMP-036J architecture fit remediation candidate 9", () => {
     assert.equal(evaluateImp036jProductIdentity(product).ok, true);
     assert.equal(evaluateImp036jProductReadmePointers(productReadme).ok, true);
   });
+  it("rejects a platform index IMP-036J row that drops T7 started", () => {
+    const mutated = platformReadme.replace("T7 started; T8 not started", "T8 not started");
+    assert.notEqual(mutated, platformReadme);
+    assert.match(mutated, /Tranche 7 PASS/);
+    assert.match(mutated, /T8 not started/);
+    const result = evaluateImp036jPlatformIndexPointer(mutated);
+    assert.equal(result.ok, false);
+    assert.equal(result.code, "IMP036J_LOCK_INDEX");
+    assert.equal(evaluateImp036jPlatformIndexPointer(platformReadme).ok, true);
+  });
+
   it("rejects a platform index IMP-036J row reverted to Candidate 5", () => {
     const mutated = platformReadme.replace(
       "source `IMP-036J-FIT-CANDIDATE-9`",
