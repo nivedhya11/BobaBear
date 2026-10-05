@@ -27,44 +27,9 @@ PD1_DID_NOT_ACTIVATE_IMP036F_AT_ADOPTION = YES
 ```
 
 TEST-1 / PD-1 did not themselves activate IMP-036F when introduced. Current lifecycle and
-activation truth is owned by [`ROADMAP.md`](./ROADMAP.md) / [`STATE.md`](./STATE.md)
-(`IMP036F_ACTIVATED` / `IMP036G_ACTIVATED` / `IMP036H_ACTIVATED` / `IMP036I_ACTIVATED` /
-`IMP036J_ACTIVATED` / `IMP037_ACTIVATED` / `IMP038_ACTIVATED`). IMP-036G remains `COMPLETE_AND_ACCEPTED` (`IMP036G_ACCEPTED: YES`; Founder UAT
-PASS). Under `PROGRAM_PAUSE: PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED` (**D-377**), IMP-036H is
-`COMPLETE_AND_ACCEPTED` (`IMP036H_ACTIVATED: YES`; Product
-Definition `PD-IMP-036H-DRAFT-1` = `APPROVED`; Product Definition Gate
-`PASS`; Architecture Fit `PASS`; architecture `LOCKED`; implementation
-`AUTHORIZED` / `STARTED` / `COMPLETE`; `IMP036H_IMPLEMENTATION_COMPLETE: YES`;
-`IMP036H_ACCEPTED: YES`; `IMP036H_FOUNDER_UAT: PASS`; `IMP036H_FORMAL_ACCEPTANCE: ACCEPTED`
-(acceptance provenance GTM-R147 / STATE-R145); CURRENT tip GTM-R188 / STATE-R186 (prior tip GTM-R187 / STATE-R185; prior tip GTM-R186 / STATE-R184; prior tip GTM-R185 / STATE-R183; prior tip GTM-R184 / STATE-R182; prior tip GTM-R183 / STATE-R181; prior tip GTM-R182 / STATE-R180; prior tip GTM-R181 / STATE-R179; prior tip GTM-R180 / STATE-R178; prior tip GTM-R179 / STATE-R177; prior tip GTM-R178 / STATE-R176; prior tip GTM-R177 / STATE-R175; prior tip GTM-R176 / STATE-R174; prior tip GTM-R175 / STATE-R173; prior tip GTM-R174 / STATE-R172; prior tip GTM-R173 / STATE-R171; prior tip GTM-R172 / STATE-R170; prior tip GTM-R171 / STATE-R169; prior tip GTM-R170 / STATE-R168; prior tip GTM-R169 / STATE-R167; prior tip GTM-R168 / STATE-R166; prior tip GTM-R167 / STATE-R165; prior tip GTM-R166 / STATE-R164; prior tip GTM-R165 / STATE-R163; prior tip GTM-R164 / STATE-R162; prior tip GTM-R162 / STATE-R160; prior tip GTM-R161 / STATE-R159; prior tip GTM-R156 / STATE-R154; prior tip GTM-R155 / STATE-R153; prior tip GTM-R154 / STATE-R152; prior tip GTM-R153 / STATE-R151; prior tip GTM-R152 / STATE-R150; prior tip GTM-R151 / STATE-R149; prior tip GTM-R150 / STATE-R148; prior tip GTM-R149 / STATE-R147);
-`acceptedThrough` = IMP-036I; `currentProductSlice` = IMP-036J;
-`pendingAcceptance` = NONE; `nextProductSlice` = IMP-036K; `IMP036I_ACTIVATED: YES`;
-`IMP036J_ACTIVATED: YES`; `IMP036J_PRODUCT_DEFINITION: APPROVED`
-(`PD-IMP-036J-DRAFT-6`; Product Definition Gate `PASS`; Experience Criticality `X3`;
-Experience Definition `XD-IMP-036J-DRAFT-6` `APPROVED`; Experience Gate `PASS`; next gate
-`IMPLEMENTATION_TRANCHE_8`; Architecture Fit `PASS`; architecture `LOCKED`; Design Readiness `PASS`;
-Quality/Test Plan finalized; Measurement/Instrumentation Plan finalized; Implementation Plan
-`PASS`; implementation `AUTHORIZED` / `STARTED`; formal lifecycle `IMPLEMENTATION_IN_PROGRESS`;
-Tranche 1 `PASS`; Tranche 2 `PASS`; Tranche 3 `PASS`; Tranche 4 `PASS`; Tranche 5 `PASS`; Tranche 6 `PASS`; Tranche 7 `PASS`; T7 started; T8 not started; `IMP036J_IMPLEMENTATION_COMPLETE: NO`; `FOUNDER_UAT: NOT_PERFORMED`; `IMP036J_ACCEPTED: NO`);
-`IMP036I_PRODUCT_DEFINITION: APPROVED` (`PD-IMP-036I-DRAFT-4`);
-`IMP036I_PRODUCT_DEFINITION_GATE: PASS` (independent review `5307761142`); Architecture Fit
-`PASS` (independent review `5312653831`); architecture `LOCKED`; D-379 CURRENT; D-380 CURRENT;
-ADR-019 Accepted; ADR-020 Accepted; ARCH-R23; DR-24; formal lifecycle `COMPLETE_AND_ACCEPTED`;
-implementation `AUTHORIZED` / `STARTED` / `COMPLETE`; `IMP036I_ACCEPTED: YES`;
-`IMP036I_FOUNDER_UAT: PASS`; `IMP036I_FORMAL_ACCEPTANCE: ACCEPTED`). IMP-038 remains held (`IMP038_HOLD: YES`;
-`IMPLEMENTATION_IN_PROGRESS (HOLD — IMPLEMENTATION_COMPLETE / NOT_ACCEPTED)`; Product Definition
-`APPROVED` / `PD-IMP-038-DRAFT-2`; Gate PASS; Architecture Fit PASS; architecture LOCKED;
-`IMP038_IMPLEMENTATION_COMPLETE: YES`; `IMP038_ACCEPTED: NO`;
-`IMP038_ACCEPTANCE_BLOCKED_BY_IMP037: YES`;
-`IMP038_EXTERNAL_ASSESSMENT: DEFERRED_UNTIL_PRE_GTM_APPLICATION_SCOPE_STABILIZES`) and is **not**
-CURRENT `currentProductSlice`. IMP-037 remains an unresolved held
-`IMPLEMENTATION_IN_PROGRESS` predecessor (`IMP037_HOLD: YES`; `IMP037_ACTIVATED: YES`; Product
-Definition `APPROVED` / `PD-IMP-037-DRAFT-1`; Gate PASS; Architecture Fit PASS; architecture LOCKED;
-implementation AUTHORIZED / STARTED; `IMP037_IMPLEMENTATION_COMPLETE: NO`; `IMP037_ACCEPTED: NO`;
-`PHASE1_BLOCK_STATUS: BLOCKED_PROVIDER_ACCESS`). TEST-1 remains the verification policy
-for new story-based delivery from IMP-036F. Verification layers and delivery
-phases are not new ROADMAP lifecycle states. Session 1 established documentation policy; it
-changed no runtime, tests, CI configuration, staging deployment, or acceptance status.
+activation truth is owned by [`ROADMAP.md`](./ROADMAP.md) / [`STATE.md`](./STATE.md).
+This policy does not independently encode current tranche or gate pointers. Read current
+execution from STATE's GOV-2 machine-readable block.
 
 ## Test pyramid / matrix
 

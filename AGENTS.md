@@ -34,8 +34,9 @@ BEFORE_DEPENDENT_ACTION_READ_NAMED_SKILL = REQUIRED
 SKILL_UNREADABLE = STOP_AFFECTED_ACTION
 ```
 
-Generated `docs/platform/governance/current-context.json` remains non-authoritative. It is not an
-authority registry and must not substitute for required canonical reads.
+Generated `docs/platform/governance/current-context.json` remains non-authoritative. It is
+projected from GOV-2 machine-readable blocks in ROADMAP/STATE plus architecture and decision
+metadata. It is not an authority registry and must not substitute for required canonical reads.
 
 ```text
 GENERATED_CURRENT_CONTEXT_AUTHORITY = NON_AUTHORITATIVE

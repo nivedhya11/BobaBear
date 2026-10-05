@@ -99,7 +99,15 @@ const HISTORY_DIR_REL = "docs/platform/history";
 const HISTORY_README_REL = "docs/platform/history/README.md";
 const HISTORY_ROADMAP_REL = "docs/platform/history/ROADMAP-GTM-R113-pre-compression.md";
 const HISTORY_STATE_REL = "docs/platform/history/STATE-STATE-R111-pre-compression.md";
-const REQUIRED_HISTORY_MARKDOWN = [HISTORY_README_REL, HISTORY_ROADMAP_REL, HISTORY_STATE_REL];
+const HISTORY_ROADMAP_GOV2_REL = "docs/platform/history/ROADMAP-GTM-R188-pre-gov2.md";
+const HISTORY_STATE_GOV2_REL = "docs/platform/history/STATE-STATE-R186-pre-gov2.md";
+const REQUIRED_HISTORY_MARKDOWN = [
+  HISTORY_README_REL,
+  HISTORY_ROADMAP_REL,
+  HISTORY_STATE_REL,
+  HISTORY_ROADMAP_GOV2_REL,
+  HISTORY_STATE_GOV2_REL,
+];
 
 /** @type {{ roadmapText: string, stateText: string, blob: string } | null} */
 let historicalAuthorityCorpusCache = null;
@@ -1558,19 +1566,23 @@ function checkRoadmapState(roadmap, state) {
     );
   } else {
     const productDefinitionText = readFileSync(tipPath, "utf8");
-    const tip = evaluateCurrentProductDefinitionTipAlignment({
-      productDefinitionText,
-      roadmapVersion: String(roadmap.meta.roadmapVersion ?? ""),
-      stateVersion: String(state.meta.stateVersion ?? ""),
-      currentProductSlice: String(roadmap.meta.currentProductSlice ?? ""),
-      nextProductSlice: String(roadmap.meta.nextProductSlice ?? ""),
-    });
-    if (!tip.ok) {
-      fail(tip.code, tip.message);
+    if (isGov2CutoverCheckpoint(roadmap, state)) {
+      note("GOV-2: Product Definitions do not independently own CURRENT ROADMAP/STATE tip versions");
     } else {
-      note(
-        `IMP-036I Program context CURRENT tip matches ${roadmap.meta.roadmapVersion} / ${state.meta.stateVersion}`,
-      );
+      const tip = evaluateCurrentProductDefinitionTipAlignment({
+        productDefinitionText,
+        roadmapVersion: String(roadmap.meta.roadmapVersion ?? ""),
+        stateVersion: String(state.meta.stateVersion ?? ""),
+        currentProductSlice: String(roadmap.meta.currentProductSlice ?? ""),
+        nextProductSlice: String(roadmap.meta.nextProductSlice ?? ""),
+      });
+      if (!tip.ok) {
+        fail(tip.code, tip.message);
+      } else {
+        note(
+          `IMP-036I Program context CURRENT tip matches ${roadmap.meta.roadmapVersion} / ${state.meta.stateVersion}`,
+        );
+      }
     }
     const historicalLifecycle = evaluateImp036iHistoricalLifecycleProvenance({
       productDefinitionText,
@@ -1899,6 +1911,7 @@ export function isSupportedImp030GovernanceCheckpoint(roadmapVersion, stateVersi
   const imp036jTranche6Pass = roadmapVersion === "GTM-R186" && stateVersion === "STATE-R184";
   const imp036jTranche5Pass = roadmapVersion === "GTM-R187" && stateVersion === "STATE-R185";
   const imp036jTranche7Pass = roadmapVersion === "GTM-R188" && stateVersion === "STATE-R186";
+  const gov2Cutover = roadmapVersion === "GTM-R189" && stateVersion === "STATE-R187";
   if (kind === "activation") return activation;
   if (kind === "lock") return lock;
   if (kind === "authorization") return authorization;
@@ -2012,7 +2025,8 @@ export function isSupportedImp030GovernanceCheckpoint(roadmapVersion, stateVersi
   if (kind === "imp036jTranche6Pass") return imp036jTranche6Pass;
   if (kind === "imp036jTranche5Pass") return imp036jTranche5Pass;
   if (kind === "imp036jTranche7Pass") return imp036jTranche7Pass;
-  return activation || lock || authorization || start || routeAmendment || consistencyRepair || acceptance || imp031Activation || imp031Draft || imp031Lock || imp031Authorization || imp031Start || imp031Completion || imp031Acceptance || imp032Activation || imp032Draft || imp032Lock || imp032Authorization || imp032Start || imp032BoundaryClarification || imp032Completion || imp032Acceptance || imp033Activation || imp033Completion || imp033Acceptance || imp034Completion || imp034Acceptance || imp035Completion || imp035Acceptance || imp036Completion || imp036Acceptance || enterpriseExperiencePlan || imp036aCompletion || imp036aAcceptance || imp036bCompletion || imp036bAcceptance || imp036cCompletion || imp036cAcceptance || imp036dActivation || imp036dLock || imp036dAuthorization || imp036dStart || imp036dCompletion || imp036dAcceptance || imp036eActivation || imp036eLock || imp036eAuthorization || imp036eStart || imp036eCompletion || authorityCompression || imp036eAcceptance || imp036fActivation || imp036fProductDefinitionDraftAuthorized || imp036fProductDefinitionGatePass || imp036fArchitectureLock || imp036fImplementationAuthorization || imp036fImplementationStart || imp036fAcceptance || imp036gActivation || imp036gProductDefinitionDraft || imp036gProductDefinitionGatePass || imp036gArchitectureLock || imp036gImplementationStart || imp036gCompletion || imp036gAcceptance || imp037Activation || imp037ProductDefinitionGatePass || d374CostOptimizedPilotInfrastructure || imp037ArchitectureLock || imp037ImplementationAuthorization || imp037ImplementationStart || imp037PostMergeReconciliation || imp038ControlledContinuationActivation || imp038ArchitectureLock || imp038ImplementationAuthorizeStart || imp036hProductDefinitionActivation || imp036hProductDefinitionGatePass || imp036hArchitectureLock || imp036hImplementationAuthorization || imp036hImplementationStart || imp036hImplementationComplete || imp036hAcceptance || imp036iProductDefinitionActivation || imp036iProductDefinitionDraftReady || imp036iProductDefinitionGatePass || imp036iArchitectureLock || imp036iImplementationAuthorization || imp036iImplementationStart || imp036iTranche2 || imp036iTranche3 || imp036iTranche4 || imp036iTranche5 || imp036iImplementationComplete || imp036iAcceptance || imp036jProductDefinitionActivation || imp036jProductDefinitionDraftReady || imp036jProductDefinitionGatePass || imp036jPd2ExperienceTransition || imp036jExperienceGatePass || imp036jArchitectureLock || imp036jImplementationAuthorization || imp036kParallelDefinition || imp036jImplementationStart || imp036kProductExperienceGate || imp036jTranche1Pass || imp036kArchitectureLock || imp036jTranche2Pass || imp036kDesignReadinessPass || imp036jTranche3Pass || imp036jTranche4Pass || imp036jTranche6Pass || imp036jTranche5Pass || imp036jTranche7Pass;
+  if (kind === "gov2Cutover") return gov2Cutover;
+  return activation || lock || authorization || start || routeAmendment || consistencyRepair || acceptance || imp031Activation || imp031Draft || imp031Lock || imp031Authorization || imp031Start || imp031Completion || imp031Acceptance || imp032Activation || imp032Draft || imp032Lock || imp032Authorization || imp032Start || imp032BoundaryClarification || imp032Completion || imp032Acceptance || imp033Activation || imp033Completion || imp033Acceptance || imp034Completion || imp034Acceptance || imp035Completion || imp035Acceptance || imp036Completion || imp036Acceptance || enterpriseExperiencePlan || imp036aCompletion || imp036aAcceptance || imp036bCompletion || imp036bAcceptance || imp036cCompletion || imp036cAcceptance || imp036dActivation || imp036dLock || imp036dAuthorization || imp036dStart || imp036dCompletion || imp036dAcceptance || imp036eActivation || imp036eLock || imp036eAuthorization || imp036eStart || imp036eCompletion || authorityCompression || imp036eAcceptance || imp036fActivation || imp036fProductDefinitionDraftAuthorized || imp036fProductDefinitionGatePass || imp036fArchitectureLock || imp036fImplementationAuthorization || imp036fImplementationStart || imp036fAcceptance || imp036gActivation || imp036gProductDefinitionDraft || imp036gProductDefinitionGatePass || imp036gArchitectureLock || imp036gImplementationStart || imp036gCompletion || imp036gAcceptance || imp037Activation || imp037ProductDefinitionGatePass || d374CostOptimizedPilotInfrastructure || imp037ArchitectureLock || imp037ImplementationAuthorization || imp037ImplementationStart || imp037PostMergeReconciliation || imp038ControlledContinuationActivation || imp038ArchitectureLock || imp038ImplementationAuthorizeStart || imp036hProductDefinitionActivation || imp036hProductDefinitionGatePass || imp036hArchitectureLock || imp036hImplementationAuthorization || imp036hImplementationStart || imp036hImplementationComplete || imp036hAcceptance || imp036iProductDefinitionActivation || imp036iProductDefinitionDraftReady || imp036iProductDefinitionGatePass || imp036iArchitectureLock || imp036iImplementationAuthorization || imp036iImplementationStart || imp036iTranche2 || imp036iTranche3 || imp036iTranche4 || imp036iTranche5 || imp036iImplementationComplete || imp036iAcceptance || imp036jProductDefinitionActivation || imp036jProductDefinitionDraftReady || imp036jProductDefinitionGatePass || imp036jPd2ExperienceTransition || imp036jExperienceGatePass || imp036jArchitectureLock || imp036jImplementationAuthorization || imp036kParallelDefinition || imp036jImplementationStart || imp036kProductExperienceGate || imp036jTranche1Pass || imp036kArchitectureLock || imp036jTranche2Pass || imp036kDesignReadinessPass || imp036jTranche3Pass || imp036jTranche4Pass || imp036jTranche6Pass || imp036jTranche5Pass || imp036jTranche7Pass || gov2Cutover;
 }
 
 function isImp032ArchitectureActivationCheckpoint(roadmap, state) {
@@ -2653,6 +2667,14 @@ function isImp036jTranche7PassCheckpoint(roadmap, state) {
   );
 }
 
+function isGov2CutoverCheckpoint(roadmap, state) {
+  return isSupportedImp030GovernanceCheckpoint(
+    roadmap?.meta.roadmapVersion,
+    state?.meta.stateVersion,
+    "gov2Cutover",
+  );
+}
+
 function isImp030ArchitectureCheckpoint(roadmap, state) {
   return isImp030ArchitectureActivationCheckpoint(roadmap, state) || isImp030ArchitectureLockCheckpoint(roadmap, state);
 }
@@ -2771,7 +2793,8 @@ function isImp030GovernanceCheckpoint(roadmap, state) {
     isImp036jTranche4PassCheckpoint(roadmap, state) ||
     isImp036jTranche6PassCheckpoint(roadmap, state) ||
     isImp036jTranche5PassCheckpoint(roadmap, state) ||
-    isImp036jTranche7PassCheckpoint(roadmap, state)
+    isImp036jTranche7PassCheckpoint(roadmap, state) ||
+    isGov2CutoverCheckpoint(roadmap, state)
   );
 }
 
@@ -18210,7 +18233,8 @@ function checkImp028ArchitectureLock(roadmap, state, architecture, decision) {
     } else {
       note("ARCHITECTURE.md records ARCH-G16 / ARCH-G17 / ARCH-G18 / D-365 / D-366 / D-367");
     }
-    const expectedArchitectureVersion = isImp036jTranche7PassCheckpoint(roadmap, state) ||
+    const expectedArchitectureVersion = isGov2CutoverCheckpoint(roadmap, state) ||
+      isImp036jTranche7PassCheckpoint(roadmap, state) ||
       isImp036jTranche5PassCheckpoint(roadmap, state) ||
       isImp036jTranche6PassCheckpoint(roadmap, state) ||
       isImp036jTranche4PassCheckpoint(roadmap, state) ||
@@ -18401,7 +18425,8 @@ function checkImp028ArchitectureLock(roadmap, state, architecture, decision) {
   }
 
   if (decision) {
-    const expectedDecisionRegisterVersion = isImp036jTranche7PassCheckpoint(roadmap, state) ||
+    const expectedDecisionRegisterVersion = isGov2CutoverCheckpoint(roadmap, state) ||
+      isImp036jTranche7PassCheckpoint(roadmap, state) ||
       isImp036jTranche5PassCheckpoint(roadmap, state) ||
       isImp036jTranche6PassCheckpoint(roadmap, state) ||
       isImp036jTranche4PassCheckpoint(roadmap, state) ||
@@ -25502,6 +25527,7 @@ function checkProductDeliveryProcessAuthorities() {
       || (roadmapMeta?.roadmapVersion === "GTM-R186" && stateMeta?.stateVersion === "STATE-R184")
       || (roadmapMeta?.roadmapVersion === "GTM-R187" && stateMeta?.stateVersion === "STATE-R185")
       || (roadmapMeta?.roadmapVersion === "GTM-R188" && stateMeta?.stateVersion === "STATE-R186")
+      || (roadmapMeta?.roadmapVersion === "GTM-R189" && stateMeta?.stateVersion === "STATE-R187")
     );
   const atImp036hProductDefinitionActivationCheckpoint =
     roadmapMeta?.roadmapVersion === "GTM-R141" &&
@@ -26134,7 +26160,8 @@ export function runProjectConsistency() {
       !isImp036jTranche4PassCheckpoint(roadmap, state) &&
       !isImp036jTranche6PassCheckpoint(roadmap, state) &&
       !isImp036jTranche5PassCheckpoint(roadmap, state) &&
-      !isImp036jTranche7PassCheckpoint(roadmap, state)
+      !isImp036jTranche7PassCheckpoint(roadmap, state) &&
+      !isGov2CutoverCheckpoint(roadmap, state)
     ) {
       fail("UNSUPPORTED_GOVERNANCE_CHECKPOINT", "Governance revisions at or beyond GTM-R66 / STATE-R64 require an exact supported canonical checkpoint");
     }
@@ -26297,6 +26324,7 @@ export function runProjectConsistency() {
   checkImp036jTranche6Pass(roadmap, state, architecture, decision);
   checkImp036jTranche5Pass(roadmap, state, architecture, decision);
   checkImp036jTranche7Pass(roadmap, state, architecture, decision);
+  checkGov2Cutover(roadmap, state, architecture, decision);
   checkImp038CurrentImplementationCompleteMarkerConsistency(roadmap, state);
   checkTechnicalInventory();
   checkStaticWeb();
@@ -44836,6 +44864,64 @@ export function evaluateImp036kPreservedAtT7FutureLedger(futureK) {
     };
   }
   return { ok: true };
+}
+
+/**
+ * CURRENT GOV-2 cutover candidate. Lifecycle is validated by the generic engine.
+ * Ordinary later tranche PASS must not require a new checkpoint function.
+ */
+function checkGov2Cutover(roadmap, state, architecture, decision) {
+  if (!isGov2CutoverCheckpoint(roadmap, state)) return;
+  if (roadmap?.meta.roadmapVersion !== "GTM-R189" || state?.meta.stateVersion !== "STATE-R187") {
+    fail("GOV2_CUTOVER_IDENTITY", "GOV-2 cutover candidate must be GTM-R189 / STATE-R187");
+  }
+  if (roadmap?.meta.supersedes !== "GTM-R188" || state?.meta.supersedes !== "STATE-R186") {
+    fail("GOV2_CUTOVER_SUPERSEDES", "GTM-R189 must supersede GTM-R188 and STATE-R187 must supersede STATE-R186");
+  }
+  if (roadmap?.meta.acceptedThrough !== "IMP-036I" || state?.meta.acceptedThrough !== "IMP-036I") {
+    fail("GOV2_ACCEPTED_THROUGH", "acceptedThrough must stay IMP-036I");
+  }
+  if (roadmap?.meta.currentProductSlice !== "IMP-036J" || state?.meta.currentProductSlice !== "IMP-036J") {
+    fail("GOV2_CURRENT_SLICE", "currentProductSlice must stay IMP-036J");
+  }
+  if (roadmap?.meta.nextProductSlice !== "IMP-036K" || state?.meta.nextProductSlice !== "IMP-036K") {
+    fail("GOV2_NEXT_SLICE", "nextProductSlice must stay IMP-036K");
+  }
+  if (state?.meta.pendingAcceptance !== "NONE") fail("GOV2_PENDING", "pendingAcceptance must stay NONE");
+  if (architecture?.meta.architectureVersion !== "ARCH-R23" || decision?.meta.decisionRegisterVersion !== "DR-24") {
+    fail("GOV2_GLOBAL_AUTHORITY", "GOV-2 cutover must retain ARCH-R23 and DR-24");
+  }
+  for (const rel of [
+    "docs/platform/history/ROADMAP-GTM-R188-pre-gov2.md",
+    "docs/platform/history/STATE-STATE-R186-pre-gov2.md",
+  ]) {
+    const abs = resolveExactRelativeFile(rel) ?? resolvePlatformDoc(rel);
+    if (!abs || !existsSync(abs)) fail("GOV2_SNAPSHOT", `Missing pre-GOV2 snapshot ${rel}`);
+  }
+  const result = spawnSync(process.execPath, [path.join(projectRoot, "scripts/governance-v2/current.mjs")], {
+    cwd: projectRoot,
+    encoding: "utf8",
+  });
+  if (result.status !== 0) {
+    fail("GOV2_CURRENT_STATE", result.stderr || result.stdout || "GOV-2 current-state validation failed");
+    return;
+  }
+  let report;
+  try {
+    report = JSON.parse(result.stdout);
+  } catch (error) {
+    fail("GOV2_CURRENT_STATE", `GOV-2 current-state output is not JSON: ${error instanceof Error ? error.message : String(error)}`);
+    return;
+  }
+  if (report.ok !== true) fail("GOV2_CURRENT_STATE", JSON.stringify(report.findings ?? report));
+  if (report.REAL_T8_STARTED !== "NO" || report.T8_STATUS !== "NOT_STARTED") {
+    fail("GOV2_T8_STARTED", "IMP-036J T8 must remain NOT_STARTED");
+  }
+  if (report.DERIVED_NEXT_GATE !== "T8") fail("GOV2_NEXT_GATE", "derived nextGate must be T8 while T8 is NOT_STARTED");
+  if (!/T8_STARTED:\s*NO/.test(state?.text ?? "") && !/"T8": "NOT_STARTED"/.test(state?.text ?? "")) {
+    fail("GOV2_T8_POINTER", "STATE must keep T8 NOT_STARTED in the machine-readable block");
+  }
+  note("GOV-2 current-state validation PASS; T8 remains NOT_STARTED");
 }
 
 /**

@@ -3,7 +3,7 @@
  */
 import { TRANCHE_STATUS, TRANCHE_STATUS_SET, aggregate, finding } from "./model.mjs";
 import { validateCurrentState } from "./invariants.mjs";
-import { dependenciesSatisfied, deriveNextGate, allRequiredTranchesPass } from "./tranche-graph.mjs";
+import { dependenciesSatisfied, deriveNextGate, allRequiredTranchesPass, trancheList } from "./tranche-graph.mjs";
 
 /**
  * @param {object} baseState
@@ -12,6 +12,28 @@ import { dependenciesSatisfied, deriveNextGate, allRequiredTranchesPass } from "
  * @param {object} roadmap
  */
 export function validateTransition(baseState, headState, tranchePlan, roadmap) {
+  const shapeFindings = [];
+  if (baseState == null || typeof baseState !== "object" || Array.isArray(baseState)) {
+    shapeFindings.push(finding("INVALID_STATE", "base", "base state must be an object"));
+  }
+  if (headState == null || typeof headState !== "object" || Array.isArray(headState)) {
+    shapeFindings.push(finding("INVALID_STATE", "head", "head state must be an object"));
+  }
+  if (tranchePlan == null || typeof tranchePlan !== "object" || Array.isArray(tranchePlan)) {
+    shapeFindings.push(finding("EMPTY_TRANCHE_PLAN", "plan", "tranche plan must be an object"));
+  }
+  if (roadmap == null || typeof roadmap !== "object" || Array.isArray(roadmap)) {
+    shapeFindings.push(finding("INVALID_ROADMAP", "roadmap", "roadmap must be an object"));
+  }
+  if (shapeFindings.length > 0) {
+    return {
+      ...aggregate(shapeFindings),
+      nextGate: "NONE",
+      allRequiredTranchesPass: false,
+      mutations: [],
+    };
+  }
+
   const base = validateCurrentState(baseState, tranchePlan, roadmap);
   const head = validateCurrentState(headState, tranchePlan, roadmap);
   const findings = [...base.findings.map(prefix("base")), ...head.findings.map(prefix("head"))];
@@ -19,10 +41,11 @@ export function validateTransition(baseState, headState, tranchePlan, roadmap) {
   findings.push(...sequenceRegressionFindings(baseState, headState, roadmap));
   findings.push(...trancheTransitionFindings(baseState, headState, tranchePlan));
 
+  const headStatuses = headState?.implementation?.trancheStatuses;
   return {
     ...aggregate(findings),
-    nextGate: deriveNextGate(tranchePlan, headState.implementation?.trancheStatuses ?? {}),
-    allRequiredTranchesPass: allRequiredTranchesPass(tranchePlan, headState.implementation?.trancheStatuses ?? {}),
+    nextGate: deriveNextGate(tranchePlan, headStatuses),
+    allRequiredTranchesPass: allRequiredTranchesPass(tranchePlan, headStatuses),
     mutations: collectMutations(baseState, headState, tranchePlan),
   };
 }
@@ -33,9 +56,19 @@ function prefix(scope) {
 
 function trancheTransitionFindings(baseState, headState, plan) {
   const findings = [];
-  const baseStatuses = baseState.implementation?.trancheStatuses ?? {};
-  const headStatuses = headState.implementation?.trancheStatuses ?? {};
-  const declared = new Set(plan.tranches.map((tranche) => tranche.id));
+  const baseStatuses =
+    baseState?.implementation?.trancheStatuses != null &&
+    typeof baseState.implementation.trancheStatuses === "object" &&
+    !Array.isArray(baseState.implementation.trancheStatuses)
+      ? baseState.implementation.trancheStatuses
+      : {};
+  const headStatuses =
+    headState?.implementation?.trancheStatuses != null &&
+    typeof headState.implementation.trancheStatuses === "object" &&
+    !Array.isArray(headState.implementation.trancheStatuses)
+      ? headState.implementation.trancheStatuses
+      : {};
+  const declared = new Set(trancheList(plan).map((tranche) => tranche?.id).filter(Boolean));
 
   for (const id of declared) {
     const from = baseStatuses[id];
@@ -77,27 +110,34 @@ function trancheTransitionFindings(baseState, headState, plan) {
 
 function sequenceRegressionFindings(baseState, headState, roadmap) {
   const findings = [];
-  const sequence = new Map((roadmap.capabilities ?? []).map((capability, index) => [capability.id, capability.sequence ?? index]));
-  const baseAccepted = sequence.get(baseState.acceptedThrough);
-  const headAccepted = sequence.get(headState.acceptedThrough);
+  const capabilities = Array.isArray(roadmap?.capabilities) ? roadmap.capabilities : [];
+  const sequence = new Map(
+    capabilities
+      .filter((capability) => capability && typeof capability === "object" && typeof capability.id === "string")
+      .map((capability, index) => [capability.id, capability.sequence ?? index]),
+  );
+  const baseAccepted = sequence.get(baseState?.acceptedThrough);
+  const headAccepted = sequence.get(headState?.acceptedThrough);
   if (Number.isInteger(baseAccepted) && Number.isInteger(headAccepted) && headAccepted < baseAccepted) {
     findings.push(
       finding("ACCEPTED_THROUGH_REGRESSION", "acceptedThrough", `acceptedThrough cannot move backwards from ${baseState.acceptedThrough} to ${headState.acceptedThrough}`),
     );
   }
 
-  const baseCurrent = sequence.get(baseState.currentSlice);
-  const headCurrent = sequence.get(headState.currentSlice);
+  const baseCurrent = sequence.get(baseState?.currentSlice);
+  const headCurrent = sequence.get(headState?.currentSlice);
   if (Number.isInteger(baseCurrent) && Number.isInteger(headCurrent) && headCurrent < baseCurrent) {
     findings.push(
       finding("SEQUENCE_REVERSED", "currentSlice", `currentSlice cannot silently reverse from ${baseState.currentSlice} to ${headState.currentSlice}`),
     );
   }
 
-  const baseNext = sequence.get(baseState.nextSlice);
-  const headNext = sequence.get(headState.nextSlice);
+  const baseNext = sequence.get(baseState?.nextSlice);
+  const headNext = sequence.get(headState?.nextSlice);
   if (Number.isInteger(baseNext) && Number.isInteger(headNext) && headNext < baseNext) {
-    const held = (roadmap.holds ?? []).some((hold) => hold.capability === headState.nextSlice);
+    const held = (Array.isArray(roadmap?.holds) ? roadmap.holds : []).some(
+      (hold) => hold?.capability === headState?.nextSlice,
+    );
     if (!held) {
       findings.push(
         finding("SEQUENCE_REVERSED", "nextSlice", `nextSlice cannot silently reverse from ${baseState.nextSlice} to ${headState.nextSlice}`),
@@ -109,9 +149,20 @@ function sequenceRegressionFindings(baseState, headState, roadmap) {
 
 function collectMutations(baseState, headState, plan) {
   const mutations = [];
-  const baseStatuses = baseState.implementation?.trancheStatuses ?? {};
-  const headStatuses = headState.implementation?.trancheStatuses ?? {};
-  for (const tranche of plan.tranches) {
+  const baseStatuses =
+    baseState?.implementation?.trancheStatuses != null &&
+    typeof baseState.implementation.trancheStatuses === "object" &&
+    !Array.isArray(baseState.implementation.trancheStatuses)
+      ? baseState.implementation.trancheStatuses
+      : {};
+  const headStatuses =
+    headState?.implementation?.trancheStatuses != null &&
+    typeof headState.implementation.trancheStatuses === "object" &&
+    !Array.isArray(headState.implementation.trancheStatuses)
+      ? headState.implementation.trancheStatuses
+      : {};
+  for (const tranche of trancheList(plan)) {
+    if (!tranche?.id) continue;
     const from = baseStatuses[tranche.id];
     const to = headStatuses[tranche.id];
     if (from !== to) {

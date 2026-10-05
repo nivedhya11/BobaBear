@@ -57,16 +57,17 @@ export function validateTranchePlan(plan) {
   }
 
   const known = new Set(tranches.map((tranche) => tranche.id).filter(Boolean));
-  for (const tranche of tranches) {
+  for (const [index, tranche] of tranches.entries()) {
     if (!Array.isArray(tranche?.dependencies)) continue;
     const seenDeps = new Set();
+    const pathId = typeof tranche?.id === "string" && tranche.id.length > 0 ? tranche.id : String(index);
     for (const dependency of tranche.dependencies) {
       if (typeof dependency !== "string" || dependency.length === 0) {
         findings.push(
           finding(
             "INVALID_DEPENDENCY",
-            `tranches.${tranche.id}.dependencies`,
-            `tranche ${tranche.id} has a malformed dependency`,
+            `tranches.${pathId}.dependencies`,
+            `tranche ${pathId} has a malformed dependency`,
           ),
         );
         continue;
@@ -104,7 +105,13 @@ export function validateTrancheStatuses(plan, statuses) {
 
   const findings = [];
   const declared = new Set(plan.tranches.map((tranche) => tranche.id));
-  const statusMap = statuses ?? {};
+  const statusMap =
+    statuses != null && typeof statuses === "object" && !Array.isArray(statuses) ? statuses : {};
+  if (statuses != null && (typeof statuses !== "object" || Array.isArray(statuses))) {
+    return aggregate([
+      finding("INVALID_TRANCHE_STATUSES", "implementation.trancheStatuses", "implementation.trancheStatuses must be an object"),
+    ]);
+  }
 
   for (const id of Object.keys(statusMap)) {
     if (!declared.has(id)) {
@@ -146,7 +153,7 @@ export function deriveNextGate(plan, statuses) {
   const ordered = declaredOrder(plan);
   for (const tranche of ordered) {
     if (!tranche.required) continue;
-    if (statuses?.[tranche.id] !== TRANCHE_STATUS.PASS) {
+    if (statusMap(statuses)[tranche.id] !== TRANCHE_STATUS.PASS) {
       return tranche.id;
     }
   }
@@ -154,19 +161,30 @@ export function deriveNextGate(plan, statuses) {
 }
 
 export function allRequiredTranchesPass(plan, statuses) {
-  return plan.tranches
-    .filter((tranche) => tranche.required)
-    .every((tranche) => statuses?.[tranche.id] === TRANCHE_STATUS.PASS);
+  return trancheList(plan)
+    .filter((tranche) => tranche?.required)
+    .every((tranche) => statusMap(statuses)[tranche.id] === TRANCHE_STATUS.PASS);
 }
 
 export function dependenciesSatisfied(plan, statuses, trancheId) {
-  const tranche = plan.tranches.find((item) => item.id === trancheId);
+  const tranche = trancheList(plan).find((item) => item?.id === trancheId);
   if (!tranche) return false;
-  return tranche.dependencies.every((dependency) => statuses?.[dependency] === TRANCHE_STATUS.PASS);
+  if (!Array.isArray(tranche.dependencies)) return false;
+  return tranche.dependencies.every(
+    (dependency) => typeof dependency === "string" && statusMap(statuses)[dependency] === TRANCHE_STATUS.PASS,
+  );
 }
 
 export function declaredOrder(plan) {
-  return [...plan.tranches].sort((left, right) => left.order - right.order || left.id.localeCompare(right.id));
+  return [...trancheList(plan)].sort((left, right) => (left.order ?? 0) - (right.order ?? 0) || String(left.id ?? "").localeCompare(String(right.id ?? "")));
+}
+
+export function trancheList(plan) {
+  return Array.isArray(plan?.tranches) ? plan.tranches : [];
+}
+
+function statusMap(statuses) {
+  return statuses != null && typeof statuses === "object" && !Array.isArray(statuses) ? statuses : {};
 }
 
 function cycleFindings(tranches) {
@@ -182,7 +200,14 @@ function cycleFindings(tranches) {
       return;
     }
     visiting.add(id);
-    for (const dependency of byId.get(id).dependencies ?? []) {
+    const dependencies = byId.get(id)?.dependencies;
+    if (!Array.isArray(dependencies)) {
+      visiting.delete(id);
+      visited.add(id);
+      return;
+    }
+    for (const dependency of dependencies) {
+      if (typeof dependency !== "string") continue;
       walk(dependency, [...stack, id]);
     }
     visiting.delete(id);

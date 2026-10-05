@@ -317,6 +317,22 @@ the cart.
 
 ## 4. Tranche dependency graph
 
+<!-- gov2-tranche-plan
+{
+  "slice": "IMP-036J",
+  "tranches": [
+    { "id": "T1", "order": 1, "required": true, "dependencies": [] },
+    { "id": "T2", "order": 2, "required": true, "dependencies": ["T1"] },
+    { "id": "T3", "order": 3, "required": true, "dependencies": ["T1"] },
+    { "id": "T4", "order": 4, "required": true, "dependencies": ["T1", "T2", "T3"] },
+    { "id": "T5", "order": 5, "required": true, "dependencies": ["T4"] },
+    { "id": "T6", "order": 6, "required": true, "dependencies": ["T1", "T3", "T4"] },
+    { "id": "T7", "order": 7, "required": true, "dependencies": ["T2", "T4", "T5"] },
+    { "id": "T8", "order": 8, "required": true, "dependencies": ["T1", "T2", "T3", "T4", "T5", "T6", "T7"] }
+  ]
+}
+-->
+
 Eight tranches. Count follows the dependency cuts already required by locked schema,
 evaluation, command provenance, presentation, operator authoring, and reporting. It is
 not a target count.

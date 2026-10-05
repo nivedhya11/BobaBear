@@ -23,6 +23,24 @@ import {
  */
 export function validateCurrentState(state, plan, roadmap) {
   const findings = [];
+  if (state == null || typeof state !== "object" || Array.isArray(state)) {
+    findings.push(finding("INVALID_STATE", "state", "state must be an object"));
+  }
+  if (plan == null || typeof plan !== "object" || Array.isArray(plan)) {
+    findings.push(finding("EMPTY_TRANCHE_PLAN", "plan", "tranche plan must be an object"));
+  }
+  if (roadmap == null || typeof roadmap !== "object" || Array.isArray(roadmap)) {
+    findings.push(finding("INVALID_ROADMAP", "roadmap", "roadmap must be an object"));
+  }
+  if (findings.length > 0) {
+    return {
+      ...aggregate(findings),
+      nextGate: "NONE",
+      allRequiredTranchesPass: false,
+      derivedStarted: {},
+    };
+  }
+
   findings.push(...validateRoadmapSchema(roadmap).findings);
   findings.push(...validateStateSchema(state, plan, roadmap).findings);
   findings.push(...validateRoadmapStateAlignment(roadmap, state).findings);
@@ -114,6 +132,7 @@ export function validateCurrentState(state, plan, roadmap) {
 
 export function derivedStarted(statuses) {
   const started = {};
+  if (statuses == null || typeof statuses !== "object" || Array.isArray(statuses)) return started;
   for (const [id, status] of Object.entries(statuses)) {
     started[id] = status === TRANCHE_STATUS.PASS;
   }
@@ -121,13 +140,18 @@ export function derivedStarted(statuses) {
 }
 
 function graphAndStatusFindings(plan, state) {
-  return validateTrancheStatuses(plan ?? {}, state?.implementation?.trancheStatuses ?? {}).findings;
+  return validateTrancheStatuses(plan ?? {}, state?.implementation?.trancheStatuses).findings;
 }
 
 function passWithoutDependencyFindings(plan, state) {
-  const statuses = state.implementation?.trancheStatuses ?? {};
+  const statuses =
+    state?.implementation?.trancheStatuses != null &&
+    typeof state.implementation.trancheStatuses === "object" &&
+    !Array.isArray(state.implementation.trancheStatuses)
+      ? state.implementation.trancheStatuses
+      : {};
   const findings = [];
-  for (const tranche of plan.tranches ?? []) {
+  for (const tranche of Array.isArray(plan?.tranches) ? plan.tranches : []) {
     if (statuses[tranche.id] !== TRANCHE_STATUS.PASS) continue;
     if (!dependenciesSatisfied(plan, statuses, tranche.id)) {
       findings.push(

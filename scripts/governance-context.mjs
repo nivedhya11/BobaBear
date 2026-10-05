@@ -6,7 +6,8 @@
  * CURRENT_CONTEXT_AUTHORITY = NON_AUTHORITATIVE
  * CURRENT_CONTEXT_IS_SHORTCUT_FOR_CURRENT_POSITION = YES
  * CURRENT_CONTEXT_MAY_REPLACE_APPLICABLE_CANONICAL_AUTHORITY_READS = NO
- * CURRENT_CONTEXT_EXTRACTION_SOURCES = ROADMAP + STATE + ARCHITECTURE + DECISION_REGISTER
+ * CURRENT_CONTEXT_EXTRACTION_SOURCES = ROADMAP + STATE + ARCHITECTURE + DECISION_REGISTER (GOV-2 machine-readable blocks)
+
  * CANONICAL_AUTHORITY_MODEL_SOURCE = AGENTS.md + REFERENCED_AUTHORITIES
  *
  * ROADMAP.md, STATE.md, ARCHITECTURE.md, and decision-register.md are extraction
@@ -22,6 +23,9 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import { loadLiveAuthorities } from "./governance-v2/load-authorities.mjs";
+import { deriveNextGate } from "./governance-v2/tranche-graph.mjs";
+import { CURRENT_AUTHORITY_KIND, parseCurrentGovernanceMeta } from "./governance-v2/schema.mjs";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_ROOT = path.resolve(SCRIPT_DIR, "..");
@@ -87,7 +91,7 @@ export const EXTRACTION_SOURCES = Object.freeze([
 ]);
 
 export const GOVERNANCE_CONTEXT_NOTICE =
-  "Generated current-position projection from ROADMAP.md, STATE.md, ARCHITECTURE.md, and decision-register.md. These are extraction sources for this projection, not the complete canonical authority set. Applicable canonical authority and mandatory read requirements remain defined by AGENTS.md and the authorities it references. This projection must not substitute for applicable Product, Experience, Product Language, Architecture, Testing, or per-IMP authority.";
+  "Generated current-position projection from GOV-2 machine-readable blocks in ROADMAP.md and STATE.md, plus ARCHITECTURE.md and decision-register.md metadata. These are extraction sources for this projection, not the complete canonical authority set. Applicable canonical authority and mandatory read requirements remain defined by AGENTS.md and the authorities it references. This projection must not substitute for applicable Product, Experience, Product Language, Architecture, Testing, or per-IMP authority.";
 
 export class GovernanceContextError extends Error {
   /**
@@ -269,28 +273,39 @@ function requireSame(label, roadmapValue, stateValue) {
  * @param {string} root
  */
 export function buildGovernanceContext(root = DEFAULT_ROOT) {
+  const loaded = loadLiveAuthorities(root);
+  if (!loaded.ok) {
+    const detail = loaded.findings.map((item) => item.message ?? item.code).join("; ");
+    throw new GovernanceContextError("GOV2_AUTHORITY", detail || "GOV-2 live authorities failed to load");
+  }
+
   const roadmapText = readRepoFile(root, ROADMAP_REL);
   const stateText = readRepoFile(root, STATE_REL);
   const architectureText = readRepoFile(root, ARCHITECTURE_REL);
   const decisionText = readRepoFile(root, DECISION_REGISTER_REL);
 
-  const roadmapMeta = parseGovernanceMeta(roadmapText, ROADMAP_REL);
-  const stateMeta = parseGovernanceMeta(stateText, STATE_REL);
+  const roadmapMeta = parseCurrentGovernanceMeta(roadmapText, CURRENT_AUTHORITY_KIND.ROADMAP);
+  const stateMeta = parseCurrentGovernanceMeta(stateText, CURRENT_AUTHORITY_KIND.STATE);
   const architectureMeta = parseGovernanceMeta(architectureText, ARCHITECTURE_REL);
   const decisionMeta = parseGovernanceMeta(decisionText, DECISION_REGISTER_REL);
+  if (roadmapMeta.ok !== true) {
+    throw new GovernanceContextError(roadmapMeta.code ?? "META_INVALID", roadmapMeta.message ?? "ROADMAP meta");
+  }
+  if (stateMeta.ok !== true) {
+    throw new GovernanceContextError(stateMeta.code ?? "META_INVALID", stateMeta.message ?? "STATE meta");
+  }
 
-  const acceptedThrough = requireSame("acceptedThrough", roadmapMeta.acceptedThrough, stateMeta.acceptedThrough);
-  const currentProductSlice = requireSame(
-    "currentProductSlice",
-    roadmapMeta.currentProductSlice,
-    stateMeta.currentProductSlice,
-  );
-  const nextProductSlice = requireSame("nextProductSlice", roadmapMeta.nextProductSlice, stateMeta.nextProductSlice);
-  const gtmBoundary = requireSame("gtmBoundary", roadmapMeta.gtmBoundary, stateMeta.gtmBoundary);
-  if (typeof stateMeta.pendingAcceptance !== "string" || !stateMeta.pendingAcceptance) {
+  const acceptedThrough = requireSame("acceptedThrough", loaded.roadmap.acceptedThrough, loaded.state.acceptedThrough);
+  const currentProductSlice = requireSame("currentSlice", loaded.roadmap.currentSlice, loaded.state.currentSlice);
+  const nextProductSlice = requireSame("nextSlice", loaded.roadmap.nextSlice, loaded.state.nextSlice);
+  const gtmBoundary = loaded.roadmap.gtmBoundary;
+  if (typeof gtmBoundary !== "string" || !gtmBoundary) {
+    throw new GovernanceContextError("META_MISSING", "ROADMAP gtmBoundary");
+  }
+  if (typeof loaded.state.pendingAcceptance !== "string" || !loaded.state.pendingAcceptance) {
     throw new GovernanceContextError("META_MISSING", "STATE pendingAcceptance");
   }
-  if (typeof roadmapMeta.roadmapVersion !== "string" || typeof stateMeta.stateVersion !== "string") {
+  if (typeof roadmapMeta.meta.roadmapVersion !== "string" || typeof stateMeta.meta.stateVersion !== "string") {
     throw new GovernanceContextError("META_MISSING", "roadmapVersion or stateVersion");
   }
   if (typeof architectureMeta.architectureVersion !== "string") {
@@ -300,59 +315,12 @@ export function buildGovernanceContext(root = DEFAULT_ROOT) {
     throw new GovernanceContextError("META_MISSING", "decisionRegisterVersion");
   }
 
-  const roadmapSection = sectionBetween(roadmapText, "## 2. Current Position", "## 3. Accepted Slices");
-  const stateSection = sectionBetween(stateText, "## 2. Current Work Position", "## 3. Accepted Technical Inventory");
-  const pendingMatch = roadmapSection.match(/Pending Acceptance:\s*(\S+)/);
-  if (!pendingMatch || pendingMatch[1] !== stateMeta.pendingAcceptance) {
-    throw new GovernanceContextError(
-      "PENDING_ACCEPTANCE_CONFLICT",
-      `ROADMAP current position Pending Acceptance ${pendingMatch?.[1] ?? "MISSING"} != STATE ${stateMeta.pendingAcceptance}`,
-    );
-  }
-
-  const roadmapSlice = extractCurrentSlice(roadmapSection, currentProductSlice);
-  const stateSlice = extractCurrentSlice(stateSection, currentProductSlice);
-  if (roadmapSlice.lifecycle !== stateSlice.lifecycle) {
-    throw new GovernanceContextError(
-      "LIFECYCLE_CONFLICT",
-      `ROADMAP ${roadmapSlice.lifecycle} != STATE ${stateSlice.lifecycle}`,
-    );
-  }
-  if (roadmapSlice.nextGate !== stateSlice.nextGate) {
-    throw new GovernanceContextError(
-      "NEXT_GATE_CONFLICT",
-      `ROADMAP ${roadmapSlice.nextGate} != STATE ${stateSlice.nextGate}`,
-    );
-  }
-
-  /** @type {Record<string, string>} */
-  const gates = {};
-  /** @type {string[]} */
-  const singleSourceGates = [];
-  for (const [field] of GATE_FIELDS) {
-    const fromRoadmap = roadmapSlice.gates[field];
-    const fromState = stateSlice.gates[field];
-    if (fromRoadmap && fromState) {
-      if (fromRoadmap !== fromState) {
-        throw new GovernanceContextError(
-          "GATE_CONFLICT",
-          `${field}: ROADMAP ${fromRoadmap} != STATE ${fromState}`,
-        );
-      }
-      gates[field] = fromRoadmap;
-    } else if (fromRoadmap || fromState) {
-      gates[field] = fromRoadmap || fromState;
-      singleSourceGates.push(field);
-    }
-  }
-  for (const field of REQUIRED_BOTH_SOURCES) {
-    if (!roadmapSlice.gates[field] || !stateSlice.gates[field]) {
-      throw new GovernanceContextError(
-        "GATE_MISSING",
-        `${field} must appear in both ROADMAP and STATE current-position fences`,
-      );
-    }
-  }
+  const lifecycle = loaded.state.lifecyclePhase;
+  const nextGate = deriveNextGate(loaded.plan, loaded.state.implementation?.trancheStatuses);
+  const contracts =
+    loaded.state.contracts != null && typeof loaded.state.contracts === "object" && !Array.isArray(loaded.state.contracts)
+      ? loaded.state.contracts
+      : {};
 
   return {
     schemaVersion: 1,
@@ -361,8 +329,8 @@ export function buildGovernanceContext(root = DEFAULT_ROOT) {
     generatedBy: "scripts/governance-context.mjs",
     sources: [...EXTRACTION_SOURCES],
     versions: {
-      roadmapVersion: roadmapMeta.roadmapVersion,
-      stateVersion: stateMeta.stateVersion,
+      roadmapVersion: roadmapMeta.meta.roadmapVersion,
+      stateVersion: stateMeta.meta.stateVersion,
       architectureVersion: architectureMeta.architectureVersion,
       decisionRegisterVersion: decisionMeta.decisionRegisterVersion,
     },
@@ -370,18 +338,18 @@ export function buildGovernanceContext(root = DEFAULT_ROOT) {
       acceptedThrough,
       currentProductSlice,
       nextProductSlice,
-      pendingAcceptance: stateMeta.pendingAcceptance,
+      pendingAcceptance: loaded.state.pendingAcceptance,
       gtmBoundary,
     },
-    lifecycle: roadmapSlice.lifecycle,
-    nextGate: roadmapSlice.nextGate,
+    lifecycle,
+    nextGate,
     currentSliceGates: {
       slice: currentProductSlice,
-      lifecycle: roadmapSlice.lifecycle,
-      nextGate: roadmapSlice.nextGate,
-      ...gates,
+      lifecycle,
+      nextGate,
+      ...contracts,
     },
-    singleSourceGates,
+    singleSourceGates: [],
   };
 }
 

@@ -392,6 +392,69 @@ describe("GOV-2 generic engine", () => {
     }
   });
 
+  it("fails closed on malformed tranche dependencies without throwing", () => {
+    const objectDep = validateTranchePlan({
+      slice: "IMP-036J",
+      tranches: [{ id: "A", order: 1, required: true, dependencies: [{ id: "B" }] }],
+    });
+    assert.equal(objectDep.ok, false);
+    assert.ok(codes(objectDep).includes("INVALID_DEPENDENCY"));
+
+    const numberDep = validateTranchePlan({
+      slice: "IMP-036J",
+      tranches: [{ id: "A", order: 1, required: true, dependencies: 12 }],
+    });
+    assert.equal(numberDep.ok, false);
+    assert.ok(codes(numberDep).includes("INVALID_DEPENDENCIES"));
+
+    const nested = validateTranchePlan({
+      slice: "IMP-036J",
+      tranches: [{ id: "A", order: 1, required: true, dependencies: [["B"]] }],
+    });
+    assert.equal(nested.ok, false);
+    assert.ok(codes(nested).includes("INVALID_DEPENDENCY"));
+
+    const current = validateCurrentState(
+      postT7(),
+      {
+        slice: "IMP-036J",
+        tranches: [{ id: "T1", order: 1, required: true, dependencies: { T0: true } }],
+      },
+      roadmap(),
+    );
+    assert.equal(current.ok, false);
+    assert.ok(codes(current).includes("INVALID_DEPENDENCIES"));
+    assert.equal(typeof current.findings[0].code, "string");
+  });
+
+  it("fails closed on malformed transition and current-state inputs without throwing", () => {
+    const nullTransition = validateTransition(null, postT7(), plan036j(), roadmap());
+    assert.equal(nullTransition.ok, false);
+    assert.ok(codes(nullTransition).includes("INVALID_STATE"));
+
+    const arrayState = validateTransition(postT7(), [], plan036j(), roadmap());
+    assert.equal(arrayState.ok, false);
+    assert.ok(codes(arrayState).includes("INVALID_STATE"));
+
+    const missingPlan = validateTransition(postT7(), postT7(), undefined, roadmap());
+    assert.equal(missingPlan.ok, false);
+    assert.ok(codes(missingPlan).includes("EMPTY_TRANCHE_PLAN"));
+
+    const nullCurrent = validateCurrentState(null, plan036j(), roadmap());
+    assert.equal(nullCurrent.ok, false);
+    assert.ok(codes(nullCurrent).includes("INVALID_STATE"));
+
+    const stringRoadmap = validateCurrentState(postT7(), plan036j(), "ROADMAP");
+    assert.equal(stringRoadmap.ok, false);
+    assert.ok(codes(stringRoadmap).includes("INVALID_ROADMAP"));
+
+    const brokenHead = structuredState(postT7());
+    brokenHead.implementation = null;
+    const result = validateTransition(postT7(), brokenHead, plan036j(), roadmap());
+    assert.equal(result.ok, false);
+    assert.ok(result.findings.some((item) => typeof item.code === "string"));
+  });
+
   it("rejects unknown architecture and decision references generically", () => {
     const unknownArch = structuredState(postT7());
     unknownArch.currentReferences.architecture = ["ARCH-UNKNOWN"];

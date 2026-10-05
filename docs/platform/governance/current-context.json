@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "authority": "NON_AUTHORITATIVE",
-  "notice": "Generated current-position projection from ROADMAP.md, STATE.md, ARCHITECTURE.md, and decision-register.md. These are extraction sources for this projection, not the complete canonical authority set. Applicable canonical authority and mandatory read requirements remain defined by AGENTS.md and the authorities it references. This projection must not substitute for applicable Product, Experience, Product Language, Architecture, Testing, or per-IMP authority.",
+  "notice": "Generated current-position projection from GOV-2 machine-readable blocks in ROADMAP.md and STATE.md, plus ARCHITECTURE.md and decision-register.md metadata. These are extraction sources for this projection, not the complete canonical authority set. Applicable canonical authority and mandatory read requirements remain defined by AGENTS.md and the authorities it references. This projection must not substitute for applicable Product, Experience, Product Language, Architecture, Testing, or per-IMP authority.",
   "generatedBy": "scripts/governance-context.mjs",
   "sources": [
     "docs/platform/ROADMAP.md",
@@ -10,8 +10,8 @@
     "docs/platform/decision-register.md"
   ],
   "versions": {
-    "roadmapVersion": "GTM-R188",
-    "stateVersion": "STATE-R186",
+    "roadmapVersion": "GTM-R189",
+    "stateVersion": "STATE-R187",
     "architectureVersion": "ARCH-R23",
     "decisionRegisterVersion": "DR-24"
   },
@@ -22,12 +22,12 @@
     "pendingAcceptance": "NONE",
     "gtmBoundary": "IMP-040"
   },
-  "lifecycle": "ARCHITECTURE_LOCKED",
-  "nextGate": "IMPLEMENTATION_TRANCHE_8",
+  "lifecycle": "IMPLEMENTATION_IN_PROGRESS",
+  "nextGate": "T8",
   "currentSliceGates": {
     "slice": "IMP-036J",
-    "lifecycle": "ARCHITECTURE_LOCKED",
-    "nextGate": "IMPLEMENTATION_TRANCHE_8",
+    "lifecycle": "IMPLEMENTATION_IN_PROGRESS",
+    "nextGate": "T8",
     "activated": "YES",
     "productDefinition": "APPROVED",
     "productDefinitionVersion": "PD-IMP-036J-DRAFT-6",

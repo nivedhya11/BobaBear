@@ -115,6 +115,7 @@
     "governance:fingerprint": "node scripts/governance-fingerprint.mjs",
     "governance:v2:test": "node --test scripts/governance-v2/*.test.mjs",
     "governance:v2:shadow": "node scripts/governance-v2/shadow.mjs",
+    "governance:v2:current": "node scripts/governance-v2/current.mjs",
     "governance:context": "node scripts/governance-context.mjs --write",
     "governance:context:check": "node scripts/governance-context.mjs --check",
     "agent:context:check": "node scripts/agent-context-check.mjs",

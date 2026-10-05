@@ -430,46 +430,24 @@ adopting PD-2.
 ## IMP-036J transition
 
 IMP-036J is the first current X3 capability transitioning into PD-2. Experience Definition and
-Experience Gate were not performed under PD-1. The current transition is authorized, implementation has started, Tranche 1, Tranche 2, Tranche 3, Tranche 4, Tranche 5, Tranche 6, and Tranche 7 have passed, and Tranche 8 remains the next unresolved gate:
+Experience Gate were not performed under PD-1. Current execution, including tranche status, is
+owned by [`STATE.md`](./STATE.md). This process document does not independently encode the
+current next gate or tranche PASS list.
 
 ```text
 PRODUCT_DEFINITION = PD-IMP-036J-DRAFT-6 APPROVED / PASS
 EXPERIENCE_DEFINITION = XD-IMP-036J-DRAFT-6 APPROVED / PASS
 ARCHITECTURE_FIT = PASS
 ARCHITECTURE_LOCKED = YES
-ARCHITECTURE_SOURCE = IMP-036J-FIT-CANDIDATE-9
 DESIGN_READINESS = PASS
-QUALITY_TEST_PLAN_FINALIZED = YES
-MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = YES
 IMPLEMENTATION_PLAN = PASS
-IMPLEMENTATION_PLAN_FINALIZED = YES
-IMPLEMENTATION_AUTHORIZATION = APPROVED
 IMPLEMENTATION_AUTHORIZED = YES
-IMPLEMENTATION_STARTED = YES
 IMPLEMENTATION_COMPLETE = NO
 IMP036J_ACCEPTED = NO
-NEXT_GATE = IMPLEMENTATION_TRANCHE_8
-FORMAL_LIFECYCLE = IMPLEMENTATION_IN_PROGRESS
-TRANCHE_1 = PASS
-TRANCHE_2 = PASS
-TRANCHE_3 = PASS
-TRANCHE_4 = PASS
-TRANCHE_5 = PASS
-TRANCHE_6 = PASS
-TRANCHE_7 = PASS
-T7_STARTED = YES
-T8_STARTED = NO
 ```
 
-Product Definition `PD-IMP-036J-DRAFT-6` is `APPROVED` and its Product Definition Gate is `PASS`.
-Experience Definition `XD-IMP-036J-DRAFT-6` is `APPROVED` and Experience Gate is `PASS`.
-Architecture Fit is `PASS` and architecture is locked on `IMP-036J-FIT-CANDIDATE-9`. Design
-Readiness is `PASS`. The Quality/Test Plan and the Measurement/Instrumentation Plan are finalized.
-The Implementation Plan is `PASS` and finalized. Implementation Authorization is `APPROVED`.
-Implementation is authorized and has started. Tranche 1 is PASS. Tranche 2 is PASS. Tranche 3 is PASS. Tranche 4 is PASS. Tranche 5 is PASS. Tranche 6 is PASS. Tranche 7 is PASS. Tranche 8 has not started.
-Implementation is not complete, and IMP-036J is not accepted. The next gate is
-`IMPLEMENTATION_TRANCHE_8`. Formal lifecycle is `IMPLEMENTATION_IN_PROGRESS`. Architecture
-remains locked. Change Risk is recorded in ROADMAP/STATE and is not an AGENTS risk level.
+Current lifecycle position is authoritative only in ROADMAP/STATE. Change Risk is recorded in
+ROADMAP/STATE and is not an AGENTS risk level.
 
 ## IMP-036K Design Readiness PASS
 

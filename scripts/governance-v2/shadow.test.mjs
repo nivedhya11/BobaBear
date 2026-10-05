@@ -21,8 +21,8 @@ describe("GOV-2 shadow command", () => {
     assert.equal(report.LIVE_CURRENT_META_VALID, "PASS");
     assert.equal(report.LIVE_ROADMAP_STATE_ALIGNMENT, "PASS");
     assert.equal(report.ok, true);
-    assert.equal(report.liveRoadmapMeta.roadmapVersion, "GTM-R188");
-    assert.equal(report.liveStateMeta.stateVersion, "STATE-R186");
+    assert.equal(report.liveRoadmapMeta.roadmapVersion, "GTM-R189");
+    assert.equal(report.liveStateMeta.stateVersion, "STATE-R187");
     assert.equal(report.liveRoadmapMeta.authority, CURRENT_AUTHORITY_KIND.ROADMAP);
     assert.equal(report.liveStateMeta.authority, CURRENT_AUTHORITY_KIND.STATE);
     assert.equal(report.liveRoadmapMeta.status, "CURRENT");

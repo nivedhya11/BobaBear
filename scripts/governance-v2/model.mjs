@@ -1,9 +1,9 @@
 /**
  * GOV-2 generic governance model.
  *
- * TEST_ONLY fixtures and this module are NON_AUTHORITATIVE in PR A.
- * ROADMAP.md and STATE.md remain the live lifecycle authorities.
- * GOV2_CUTOVER = NO
+ * TEST_ONLY fixtures and this module are used by engine tests.
+ * Live current execution is validated from ROADMAP/STATE GOV-2 blocks.
+ * GOV2_CUTOVER_ACCEPTANCE = NO
  */
 import { evaluateCapabilityLifecycle } from "../project-consistency.mjs";
 
@@ -23,7 +23,7 @@ export const LAST_TRANSITION_TYPE = Object.freeze({
   TRANCHE_PASS: "TRANCHE_PASS",
 });
 
-/** Eventual GOV-2 delivery overlay. PR A does not cut over AGENTS.md. */
+/** Delivery overlay recorded in AGENTS.md. */
 export const DELIVERY_RISK_TIER = Object.freeze({
   GREEN: "GREEN",
   AMBER: "AMBER",
