@@ -19522,6 +19522,34 @@ describe("IMP-036J Tranche 7 STATE-R186 structured provenance", () => {
     assert.equal(mutated.split("## 10. STATE-R185 record")[1]?.split("## 10. STATE-R184")[0], historicalR185);
   });
 
+  it("fails when CURRENT_SOURCE_SECURITY_SDLC is corrupted inside STATE-R186 while narrative still says it passed", () => {
+    const mutated = replaceStateR186FenceField(
+      "CURRENT_SOURCE_SECURITY_SDLC",
+      "PASS",
+      "FAIL",
+    );
+    assert.match(mutated, /Exact-main Security SDLC, SCA,/);
+    const result = evaluateImp036jTranche7StateR186Record(extractImp036jStateR186Record(mutated));
+    assert.equal(result.ok, false);
+    assert.equal(result.code, "IMP036J_T7_R186_RECORD");
+    assert.match(result.message ?? "", /CURRENT_SOURCE_SECURITY_SDLC/);
+    assert.equal(mutated.split("## 10. STATE-R185 record")[1]?.split("## 10. STATE-R184")[0], historicalR185);
+  });
+
+  it("fails when CURRENT_SOURCE_T1_NAMED_PROOF is corrupted inside STATE-R186 while narrative still names T1–T7 proofs", () => {
+    const mutated = replaceStateR186FenceField(
+      "CURRENT_SOURCE_T1_NAMED_PROOF",
+      "PASS",
+      "FAIL",
+    );
+    assert.match(mutated, /Named IMP-036J\nTranche 1 through 7 proofs passed on exact main/);
+    const result = evaluateImp036jTranche7StateR186Record(extractImp036jStateR186Record(mutated));
+    assert.equal(result.ok, false);
+    assert.equal(result.code, "IMP036J_T7_R186_RECORD");
+    assert.match(result.message ?? "", /CURRENT_SOURCE_T1_NAMED_PROOF/);
+    assert.match(extractImp036jStateR186Record(mutated), /CURRENT_SOURCE_T7_NAMED_PROOF: PASS/);
+  });
+
   it("still passes if only the STATE-R186 narrative SHA is removed", () => {
     const heading = "## 10. STATE-R186 record";
     const start = state.indexOf(heading);
