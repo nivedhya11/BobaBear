@@ -18035,14 +18035,14 @@ describe("IMP-036I implementation authorization persistence", () => {
     const live = readFileSync("docs/platform/product/IMP-036J/product-definition.md", "utf8");
     assert.deepEqual(evaluateImp036jStoryReadiness(live), { ok: true });
     const pendingStories = live.replaceAll(
-      "Readiness: READY_FOR_IMPLEMENTATION — Implementation Authorization APPROVED 2026-10-01; implementation STARTED; Tranche 1 PASS.",
+      "Readiness: READY_FOR_IMPLEMENTATION — Implementation Authorization APPROVED 2026-10-01. Current execution is owned by STATE.md.",
       "Readiness: NOT_READY_FOR_IMPLEMENTATION — implementation NOT_AUTHORIZED pending Implementation Authorization.",
     );
     const pending = evaluateImp036jStoryReadiness(pendingStories);
     assert.equal(pending.ok, false);
     assert.equal(pending.code, "IMP036J_READINESS_POST_GATE");
     const staleGate = live.replace(
-      "| `READY_FOR_IMPLEMENTATION`. Reason: Implementation Authorization APPROVED 2026-10-01; implementation STARTED; Tranche 1 PASS. |",
+      "| `READY_FOR_IMPLEMENTATION`. Reason: Implementation Authorization APPROVED 2026-10-01. Current execution is owned by STATE.md. |",
       "| `NOT_READY_FOR_IMPLEMENTATION`. Reason: Product Definition Gate NOT_PERFORMED; Architecture Fit NOT_PERFORMED; implementation NOT_AUTHORIZED. |",
     );
     const stale = evaluateImp036jStoryReadiness(staleGate);
@@ -18888,7 +18888,7 @@ describe("IMP-036J current authorization prose", () => {
 
   it("rejects restoring outstanding authorization or a current unauthorized claim", () => {
     const outstanding = live.replace(
-      "Implementation Authorization is APPROVED and implementation has started.",
+      "Implementation Authorization is APPROVED. Current execution/lifecycle is owned by STATE.md.",
       "Implementation authorization is outstanding.",
     );
     const unauthorized = live.replace(

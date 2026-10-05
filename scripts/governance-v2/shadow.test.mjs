@@ -13,8 +13,8 @@ describe("GOV-2 shadow command", () => {
   it("reports the TEST-ONLY current fixture without mutating the tree", () => {
     const report = runShadow(root);
     assert.equal(report.GOV2_PHASE, "SHADOW");
-    assert.equal(report.GOV2_CUTOVER, "NO");
-    assert.equal(report.CURRENT_GOVERNANCE_REMAINS_AUTHORITATIVE, "YES");
+    assert.equal(report.GOV2_AUTHORITY_MODE, "GOV2");
+    assert.equal(report.CURRENT_GOVERNANCE_REMAINS_AUTHORITATIVE, "NO");
     assert.equal(report.STATE_VALID, "PASS");
     assert.equal(report.DERIVED_NEXT_GATE, "T8");
     assert.equal(report.REAL_T8_STARTED, "NO");

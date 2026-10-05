@@ -28,10 +28,8 @@ ARCHITECTURE_FIT = PASS
 IMP036J_ARCHITECTURE_FIT = PASS
 IMP036J_ARCHITECTURE_LOCKED = YES
 IMP036J_DESIGN_READINESS = PASS
-IMP036J_IMPLEMENTATION_AUTHORIZED = YES
-IMP036J_FORMAL_LIFECYCLE = IMPLEMENTATION_IN_PROGRESS
-FOUNDER_UAT = NOT_PERFORMED
-IMP036J_ACCEPTED = NO
+IMP036J_IMPLEMENTATION_AUTHORIZATION = APPROVED
+IMPLEMENTATION_AUTHORIZATION_EVIDENCE = PR#332/5926464685
 OPEN_FOUNDER_PRODUCT_DECISIONS = 0
 UNRESOLVED_MATERIAL_PRODUCT_DECISIONS = 0
 FOUNDER_UAT_REQUIRED = YES
@@ -63,7 +61,7 @@ entry. Lifecycle truth remains
 [`ROADMAP.md`](../../ROADMAP.md) and [`STATE.md`](../../STATE.md). DRAFT-6 closes the DRAFT-5
 acceptance-slice concurrency gap for complimentary-item activation.
 
-Current lifecycle pointer: Architecture Fit current source is `IMP-036J-FIT-CANDIDATE-9`. Architecture Fit is PASS. Architecture is LOCKED. Evaluated head `052289471cfc2424879932e16fd88d6c16696de8`, evaluated tree `ed6d0b4c7e82eef4fd764c0fe3f73539f8e1858b`, evaluated governance fingerprint `5be074e0736c097b6d68f18a3b71cd26cc69c03600eac0cf956bf74d0b6834b0`. The [capability architecture](../../capabilities/IMP-036J-promotions-coupons-offers.md) is locked. Design Readiness is PASS for `IMP-036J-DESIGN-CANDIDATE-2`. Implementation Plan is PASS for `IMP-036J-PLAN-CANDIDATE-1`. Implementation Authorization is APPROVED on 2026-10-01 (pull request #332 comment `5926464685`). Next gate: Implementation Tranche 8. Implementation is AUTHORIZED and STARTED. Formal lifecycle is IMPLEMENTATION_IN_PROGRESS. Tranche 1 is PASS. Tranche 2 is PASS. Tranche 3 is PASS. Tranche 4 is PASS. Tranche 5 is PASS. Tranche 6 is PASS. Tranche 7 is PASS. Tranche 8 has not started. Product semantics and Gate provenance are unchanged.
+Current execution and lifecycle are owned by [`STATE.md`](../../STATE.md). Architecture Fit current source is `IMP-036J-FIT-CANDIDATE-9`. Architecture Fit is PASS. Architecture is LOCKED. Evaluated head `052289471cfc2424879932e16fd88d6c16696de8`, evaluated tree `ed6d0b4c7e82eef4fd764c0fe3f73539f8e1858b`, evaluated governance fingerprint `5be074e0736c097b6d68f18a3b71cd26cc69c03600eac0cf956bf74d0b6834b0`. The [capability architecture](../../capabilities/IMP-036J-promotions-coupons-offers.md) is locked. Design Readiness is PASS for `IMP-036J-DESIGN-CANDIDATE-2`. Implementation Plan is PASS for `IMP-036J-PLAN-CANDIDATE-1`. Implementation Authorization is APPROVED on 2026-10-01 (pull request #332 comment `5926464685`). Product semantics and Gate provenance are unchanged. are unchanged.
 
 Prior lock history: independent Architecture Fit review `5347761109` passed `IMP-036J-FIT-CANDIDATE-5`. Candidate 5 is historical prior-lock provenance and is not the current Architecture Fit source.
 
@@ -122,27 +120,20 @@ is not the current candidate.
 ### Program context (CURRENT tip — verify against ROADMAP/STATE)
 
 ```text
-CURRENT_LIFECYCLE_AUTHORITY = ROADMAP.md / STATE.md
+CURRENT_EXECUTION_AUTHORITY = STATE.md
 ARCHITECTURE = ARCH-R23
 decision-register = DR-24
 PROGRAM_PAUSE = PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED
 PROGRAM_PAUSE_AUTHORITY = D-377
 ADDITIONAL_SEQUENCING_AUTHORITY = D-382
-IMP036J_ACTIVATED = YES
 IMP036J_PRODUCT_DEFINITION = APPROVED
 IMP036J_PRODUCT_DEFINITION_VERSION = PD-IMP-036J-DRAFT-6
 IMP036J_PRODUCT_DEFINITION_GATE = PASS
 IMP036J_ARCHITECTURE_FIT = PASS
 IMP036J_ARCHITECTURE_LOCKED = YES
 IMP036J_IMPLEMENTATION_AUTHORIZATION = APPROVED
-IMP036J_IMPLEMENTATION_AUTHORIZED = YES
 IMP036J_IMPLEMENTATION_AUTHORIZATION_DATE = 2026-10-01
 IMPLEMENTATION_AUTHORIZATION_EVIDENCE = PR#332/5926464685
-IMP036J_STARTED = YES
-IMP036J_IMPLEMENTATION_STARTED = YES
-IMP036J_FORMAL_LIFECYCLE = IMPLEMENTATION_IN_PROGRESS
-FOUNDER_UAT = NOT_PERFORMED
-IMP036J_ACCEPTED = NO
 IMP036J_EXPERIENCE_CRITICALITY = X3
 IMP036J_CHANGE_RISK = CR2
 IMP036J_EXPERIENCE_DEFINITION = APPROVED
@@ -153,7 +144,7 @@ QUALITY_TEST_PLAN_FINALIZED = YES
 MEASUREMENT_INSTRUMENTATION_PLAN_FINALIZED = YES
 IMPLEMENTATION_PLAN = PASS
 IMPLEMENTATION_PLAN_FINALIZED = YES
-READY_FOR_IMPLEMENTATION_AUTHORIZATION = YES
+FOUNDER_UAT_REQUIRED = YES
 ```
 
 Discovery history in
@@ -176,9 +167,9 @@ parallel definition preparation only. Deals and Campaigns stay unallocated.
 | Product Definition version / document status | `PD-IMP-036J-DRAFT-6`; **Document status: APPROVED**; `PRE_GATE_DRAFT = NO`; `PRODUCT_DEFINITION_IN_PROGRESS = NO`; `DRAFT_READY_FOR_GATE = NO`; `APPROVED = YES`. |
 | Product owner / approval evidence | Founder sequencing authorization 2026-09-27 (Promotions first) recorded as **D-382**. FD-036J-01 and FD-036J-02 approved by the Founder on 2026-09-27. FD-036J-03 approved by the Founder on 2026-09-28. Founder Product Definition Gate-PASS approval on 2026-09-28. Independent Product Definition Gate PASS against HEAD `24aa3ced280dbfc18ac52275ed97ae919904481d` / tree `e7fd72f2af3b0267f438bf9b65e7f7f23bf43f27` / fingerprint `9f9c708306a76e140ea4143feaf8e007ca975f03c3dc418f65e30aaf8bbbd1e1`. |
 | Process / verification policy | PD-2 / EXP-1 / LANG-1 / TEST-1. This Product Definition was approved under PD-1. PD-2 does not reopen that gate. |
-| Canonical anchors | VISION-1; ROADMAP GTM-R188; STATE STATE-R186; ARCH-R23; DR-24 (D-377 CURRENT; D-382 AMENDED by D-383 for Revenue Recommendations identity, activation, and sequencing only; D-383 CURRENT; next decision ID D-384); EXP-1; LANG-1; accepted IMP-016 Promotions; accepted IMP-036F commercial management; ADR-007 CURRENT; accepted IMP-036H fulfilment mode; accepted IMP-036I scheduled timing |
+| Canonical anchors | VISION-1; ARCH-R23; DR-24 (D-377 CURRENT; D-382 AMENDED by D-383 for Revenue Recommendations identity, activation, and sequencing only; D-383 CURRENT; next decision ID D-384); EXP-1; LANG-1; accepted IMP-016 Promotions; accepted IMP-036F commercial management; ADR-007 CURRENT; accepted IMP-036H fulfilment mode; accepted IMP-036I scheduled timing. Current ROADMAP/STATE revision identifiers are owned by those authorities, not by this Product Definition. |
 | Repository candidate | `/home/ajoshi/repos/boba-bear-platform`; branch recorded at publication; HEAD / tree / fingerprint recorded by the activating change. This draft is not an acceptance candidate. |
-| Capability lifecycle / authorization | ROADMAP/STATE remain lifecycle/execution authority. Product Definition `APPROVED`; Gate `PASS`; Experience Definition `APPROVED`; Experience Gate `PASS`; Fit `PASS`; architecture `LOCKED`; Design Readiness `PASS`. |
+| Capability lifecycle / authorization | Current execution/lifecycle is owned by STATE.md. Product Definition `APPROVED`; Gate `PASS`; Experience Definition `APPROVED`; Experience Gate `PASS`; Fit `PASS`; architecture `LOCKED`; Design Readiness `PASS`. Implementation Authorization APPROVED 2026-10-01 (`PR#332/5926464685`) is immutable plan/gate provenance. |
 | Relevant capability architecture / ADRs | Locked capability architecture [`../../capabilities/IMP-036J-promotions-coupons-offers.md`](../../capabilities/IMP-036J-promotions-coupons-offers.md). Architecture Fit `PASS` for current source `IMP-036J-FIT-CANDIDATE-9`. Architecture is `LOCKED`. Prior lock history: `IMP-036J-FIT-CANDIDATE-5` independent review `5347761109`. Binding money authority remains accepted Promotion / Coupon / Pricing / Checkout Snapshot (ADR-007; IMP-016; IMP-036F). Fulfilment mode remains D-378 / IMP-036H. Scheduled timing remains D-379 / IMP-036I. |
 | Founder UAT applicability | `FOUNDER_UAT_REQUIRED = YES` when this capability later changes customer-visible savings and operator-visible commercial operation. UAT is not in progress and is not passed by this draft. |
 
@@ -316,7 +307,7 @@ Data implications: Application facts come from accepted evaluation. Purchased tr
 Security implications: Do not disclose another customer's eligibility.
 Architecture fit / applicable invariants: NO_SECOND_MONEY_ENGINE. Exact evaluator representation is Fit.
 Open material decisions: NONE for this story.
-Readiness: READY_FOR_IMPLEMENTATION — Implementation Authorization APPROVED 2026-10-01; implementation STARTED; Tranche 1 PASS.
+Readiness: READY_FOR_IMPLEMENTATION — Implementation Authorization APPROVED 2026-10-01. Current execution is owned by STATE.md.
 ```
 
 ```text
@@ -338,7 +329,7 @@ Data implications: The entered code is an activation attempt against one shared 
 Security implications: Do not reveal whether a code belongs to another customer beyond the allowed reason class. Do not expose another customer's private eligibility.
 Architecture fit / applicable invariants: Coupon remains activation/redemption authority. NO_SECOND_MONEY_ENGINE.
 Open material decisions: NONE
-Readiness: READY_FOR_IMPLEMENTATION — Implementation Authorization APPROVED 2026-10-01; implementation STARTED; Tranche 1 PASS.
+Readiness: READY_FOR_IMPLEMENTATION — Implementation Authorization APPROVED 2026-10-01. Current execution is owned by STATE.md.
 ```
 
 ```text
@@ -360,7 +351,7 @@ Data implications: Display is a projection of eligibility.
 Security implications: N/A beyond ordinary cart privacy.
 Architecture fit / applicable invariants: No fabricated commercial numbers.
 Open material decisions: NONE
-Readiness: READY_FOR_IMPLEMENTATION — Implementation Authorization APPROVED 2026-10-01; implementation STARTED; Tranche 1 PASS.
+Readiness: READY_FOR_IMPLEMENTATION — Implementation Authorization APPROVED 2026-10-01. Current execution is owned by STATE.md.
 ```
 
 ```text
@@ -382,7 +373,7 @@ Data implications: Components must sum to the explained saving. Payable amount i
 Security implications: Do not show another customer's commercial facts.
 Architecture fit / applicable invariants: One coherent delivery-charge result.
 Open material decisions: NONE
-Readiness: READY_FOR_IMPLEMENTATION — Implementation Authorization APPROVED 2026-10-01; implementation STARTED; Tranche 1 PASS.
+Readiness: READY_FOR_IMPLEMENTATION — Implementation Authorization APPROVED 2026-10-01. Current execution is owned by STATE.md.
 ```
 
 ```text
@@ -404,7 +395,7 @@ Data implications: Eligibility reads purchased-order history. It does not write 
 Security implications: Do not expose another customer's order history.
 Architecture fit / applicable invariants: Exact query and concurrency are Fit-owned.
 Open material decisions: NONE — definition is the approved ODC-06 direction.
-Readiness: READY_FOR_IMPLEMENTATION — Implementation Authorization APPROVED 2026-10-01; implementation STARTED; Tranche 1 PASS.
+Readiness: READY_FOR_IMPLEMENTATION — Implementation Authorization APPROVED 2026-10-01. Current execution is owned by STATE.md.
 ```
 
 ```text
@@ -426,7 +417,7 @@ Data implications: Eligibility consumes accepted mode and timing facts.
 Security implications: N/A.
 Architecture fit / applicable invariants: No duplicate scheduling authority.
 Open material decisions: NONE
-Readiness: READY_FOR_IMPLEMENTATION — Implementation Authorization APPROVED 2026-10-01; implementation STARTED; Tranche 1 PASS.
+Readiness: READY_FOR_IMPLEMENTATION — Implementation Authorization APPROVED 2026-10-01. Current execution is owned by STATE.md.
 ```
 
 ```text
@@ -448,7 +439,7 @@ Data implications: Caps are consumption facts, not a second price.
 Security implications: Personal-cap messaging must not leak another customer's usage count.
 Architecture fit / applicable invariants: Concurrency-safe consumption is Fit-owned.
 Open material decisions: NONE for the customer-visible distinction.
-Readiness: READY_FOR_IMPLEMENTATION — Implementation Authorization APPROVED 2026-10-01; implementation STARTED; Tranche 1 PASS.
+Readiness: READY_FOR_IMPLEMENTATION — Implementation Authorization APPROVED 2026-10-01. Current execution is owned by STATE.md.
 ```
 
 ```text
@@ -470,7 +461,7 @@ Data implications: Payable total is recomputed. No snapshot is sealed with the s
 Security implications: N/A.
 Architecture fit / applicable invariants: Checkout Snapshot remains the purchased commercial truth.
 Open material decisions: NONE
-Readiness: READY_FOR_IMPLEMENTATION — Implementation Authorization APPROVED 2026-10-01; implementation STARTED; Tranche 1 PASS.
+Readiness: READY_FOR_IMPLEMENTATION — Implementation Authorization APPROVED 2026-10-01. Current execution is owned by STATE.md.
 ```
 
 ```text
@@ -492,7 +483,7 @@ Data implications: One entered coupon state. Coupon and automatic candidates are
 Security implications: N/A.
 Architecture fit / applicable invariants: Deterministic non-monetary tie-break is Fit-owned. Customer-visible rule is the best monetary outcome.
 Open material decisions: NONE
-Readiness: READY_FOR_IMPLEMENTATION — Implementation Authorization APPROVED 2026-10-01; implementation STARTED; Tranche 1 PASS.
+Readiness: READY_FOR_IMPLEMENTATION — Implementation Authorization APPROVED 2026-10-01. Current execution is owned by STATE.md.
 ```
 
 ```text
@@ -514,7 +505,7 @@ Data implications: Applied benefits remain inside the single commercial evaluati
 Security implications: N/A.
 Architecture fit / applicable invariants: Existing exclusive/combinable mechanics are reconciled at Fit and are not rewritten by this draft. Exact evaluator representation belongs to Fit.
 Open material decisions: NONE
-Readiness: READY_FOR_IMPLEMENTATION — Implementation Authorization APPROVED 2026-10-01; implementation STARTED; Tranche 1 PASS.
+Readiness: READY_FOR_IMPLEMENTATION — Implementation Authorization APPROVED 2026-10-01. Current execution is owned by STATE.md.
 ```
 
 ```text
@@ -536,7 +527,7 @@ Data implications: Order detail reads purchased facts.
 Security implications: Order commercial facts stay with the owning customer and authorized workforce scope.
 Architecture fit / applicable invariants: No new snapshot authority.
 Open material decisions: NONE
-Readiness: READY_FOR_IMPLEMENTATION — Implementation Authorization APPROVED 2026-10-01; implementation STARTED; Tranche 1 PASS.
+Readiness: READY_FOR_IMPLEMENTATION — Implementation Authorization APPROVED 2026-10-01. Current execution is owned by STATE.md.
 ```
 
 ```text
@@ -559,7 +550,7 @@ Data implications: Authoring writes accepted Promotion/Coupon authority or the m
 Security implications: Cross-scope denial is mandatory. Client-supplied role or scope is not authority.
 Architecture fit / applicable invariants: No new service, role, or permission is decided here.
 Open material decisions: NONE for the operator outcomes. Mechanism is Fit.
-Readiness: READY_FOR_IMPLEMENTATION — Implementation Authorization APPROVED 2026-10-01; implementation STARTED; Tranche 1 PASS.
+Readiness: READY_FOR_IMPLEMENTATION — Implementation Authorization APPROVED 2026-10-01. Current execution is owned by STATE.md.
 ```
 
 ```text
@@ -584,7 +575,7 @@ Data implications: The presented line and the purchased snapshot come from the s
 Security implications: Do not expose another customer's eligibility or purchased lines.
 Architecture fit / applicable invariants: COMPLIMENTARY_MENU_ITEM_STACKING_SLOT = PRIMARY_MERCHANDISE_OR_ORDER_OFFER. COMPLIMENTARY_MENU_ITEM_NEW_STACKING_SLOT = NO. FIT_COMPLIMENTARY_ITEM_UNSAFE = STOP_CONTRADICTION_DECISION_REQUIRED.
 Open material decisions: NONE
-Readiness: READY_FOR_IMPLEMENTATION — Implementation Authorization APPROVED 2026-10-01; implementation STARTED; Tranche 1 PASS.
+Readiness: READY_FOR_IMPLEMENTATION — Implementation Authorization APPROVED 2026-10-01. Current execution is owned by STATE.md.
 ```
 
 ## 10. Acceptance scenarios
@@ -1191,7 +1182,7 @@ are in V1. Deal views, campaign aggregates, and incremental-revenue claims are n
 | Fulfilment mode | IMP-036H COMPLETE_AND_ACCEPTED | `US-036J-006` | None for product meaning |
 | Scheduled timing | IMP-036I COMPLETE_AND_ACCEPTED | `US-036J-006` | Do not redefine Scheduled |
 | Product Definition Gate | PASS | Architecture Fit | None. Gate PASS is not Architecture Fit. |
-| Architecture Fit | PASS / LOCKED | Implementation Tranche 8 | Implementation Plan PASS; Implementation Authorization APPROVED 2026-10-01; implementation STARTED; Tranche 1 PASS; Tranche 2 PASS; Tranche 3 PASS; Tranche 4 PASS; Tranche 5 PASS; Tranche 6 PASS; Tranche 7 PASS; Tranche 8 not started |
+| Architecture Fit | PASS / LOCKED | Implementation (current execution owned by STATE.md) | Implementation Plan PASS; Implementation Authorization APPROVED 2026-10-01 |
 | FD-036J-01 | APPROVED 2026-09-27: Cart and Checkout Review share one coupon state; Payment does not mutate it | None for Gate readiness | Does not itself pass the Gate |
 | FD-036J-02 | APPROVED 2026-09-27: one primary merchandise or order Offer plus one compatible delivery incentive; a qualifying compatible pair with real monetary benefit both apply; best valid monetary combination wins; standing free delivery creates no duplicate saving | None for Gate readiness | Product Definition decision. Not a Decision Register entry. Does not itself pass the Gate |
 | FD-036J-03 | APPROVED 2026-09-28: complimentary-item V1 operating model in the dedicated section below | None for Gate readiness | Product Definition decision. Not a Decision Register entry. Does not itself pass the Gate |
@@ -1277,7 +1268,7 @@ is required. This boundary is not ordinary commercial follow-up.
 
 | `UNRESOLVED_DECISION_REQUIRED` item | Material user/business impact | Decision owner / evidence needed | Affected stories / gate |
 |---|---|---|---|
-| None | `OPEN_FOUNDER_PRODUCT_DECISIONS = 0`; `UNRESOLVED_MATERIAL_PRODUCT_DECISIONS = 0` | FD-036J-01, FD-036J-02, and FD-036J-03 are APPROVED | Product Definition Gate PASS is persisted. Architecture Fit PASS and architecture lock are persisted. Design Readiness PASS and Implementation Plan PASS are persisted. Implementation Authorization is APPROVED and implementation has started. Tranche 1 is PASS. Tranche 2 is PASS. Tranche 3 is PASS. Tranche 4 is PASS. Tranche 5 is PASS. Tranche 6 is PASS. Tranche 7 is PASS. Tranche 8 has not started. |
+| None | `OPEN_FOUNDER_PRODUCT_DECISIONS = 0`; `UNRESOLVED_MATERIAL_PRODUCT_DECISIONS = 0` | FD-036J-01, FD-036J-02, and FD-036J-03 are APPROVED | Product Definition Gate PASS is persisted. Architecture Fit PASS and architecture lock are persisted. Design Readiness PASS and Implementation Plan PASS are persisted. Implementation Authorization is APPROVED. Current execution/lifecycle is owned by STATE.md. |
 
 `FD-036J-01` = `APPROVED` on 2026-09-27.
 `FD-036J-02` = `APPROVED` on 2026-09-27.
@@ -1369,19 +1360,19 @@ application and redemption visibility, not campaign analytics.
 
 | Story ID | Applicable fields complete / evidence | Open material decisions | Readiness / blocker |
 |---|---|---|---|
-| `US-036J-001` … `US-036J-013` | Sections 9–18 state the outcome. Architecture Fit PASS and permissions binding are recorded in the locked capability architecture. | None. | `READY_FOR_IMPLEMENTATION`. Reason: Implementation Authorization APPROVED 2026-10-01; implementation STARTED; Tranche 1 PASS. |
+| `US-036J-001` … `US-036J-013` | Sections 9–18 state the outcome. Architecture Fit PASS and permissions binding are recorded in the locked capability architecture. | None. | `READY_FOR_IMPLEMENTATION`. Reason: Implementation Authorization APPROVED 2026-10-01. Current execution is owned by STATE.md. |
 
 ```text
 READINESS = READY_FOR_IMPLEMENTATION
 PRODUCT_DEFINITION_GATE = PASS
 ARCHITECTURE_FIT = PASS
-IMPLEMENTATION_AUTHORIZED = YES
-IMPLEMENTATION_STARTED = YES
+IMPLEMENTATION_AUTHORIZATION = APPROVED
+IMPLEMENTATION_AUTHORIZATION_EVIDENCE = PR#332/5926464685
 READINESS_WHILE_GATE_NOT_PERFORMED = NOT_READY_FOR_IMPLEMENTATION
 AFTER_GATE_PASS_READINESS_MUST_DROP_GATE_BLOCKER = YES
 ```
 
-Stories are `READY_FOR_IMPLEMENTATION`. Product Definition Gate PASS, Design Readiness PASS, Quality/Test Plan and Measurement/Instrumentation Plan finalization, Implementation Plan PASS, and Implementation Authorization APPROVED on 2026-10-01 remove those readiness blockers. Implementation has started. Tranche 1 is PASS. Tranche 2 is PASS. Tranche 3 is PASS. Tranche 4 is PASS. Tranche 5 is PASS. Tranche 6 is PASS. Tranche 7 is PASS. Tranche 8 has not started. No Sprint is assigned.
+Stories are `READY_FOR_IMPLEMENTATION`. Product Definition Gate PASS, Design Readiness PASS, Quality/Test Plan and Measurement/Instrumentation Plan finalization, Implementation Plan PASS, and Implementation Authorization APPROVED on 2026-10-01 remove those readiness blockers. Current execution/lifecycle is owned by STATE.md. No Sprint is assigned.
 
 ## 27. Product Definition Gate (historical evaluation)
 

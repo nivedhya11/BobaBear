@@ -67,15 +67,38 @@ const GATE_FIELDS = Object.freeze([
   ["accepted", "ACCEPTED"],
 ]);
 
-const REQUIRED_BOTH_SOURCES = Object.freeze([
-  "productDefinition",
-  "productDefinitionGate",
-  "architectureFit",
-  "architectureLocked",
-  "designReadiness",
+const EXECUTION_CONTRACT_KEYS = new Set([
   "implementationAuthorized",
+  "started",
+  "implementationStarted",
+  "implementationComplete",
   "accepted",
 ]);
+
+/**
+ * Project execution fields from canonical GOV-2 state. These values are not
+ * independently persisted in `contracts`.
+ * @param {Record<string, any>} state
+ */
+export function deriveExecutionProjection(state) {
+  const authorized = state?.implementation?.authorized === true;
+  const complete = state?.implementation?.complete === true;
+  const accepted = state?.accepted === true;
+  const statuses = state?.implementation?.trancheStatuses;
+  const started =
+    complete ||
+    (statuses != null &&
+      typeof statuses === "object" &&
+      !Array.isArray(statuses) &&
+      Object.values(statuses).some((value) => value === "PASS"));
+  return {
+    implementationAuthorized: authorized ? "YES" : "NO",
+    started: started ? "YES" : "NO",
+    implementationStarted: started ? "YES" : "NO",
+    implementationComplete: complete ? "YES" : "NO",
+    accepted: accepted ? "YES" : "NO",
+  };
+}
 
 const ROADMAP_REL = "docs/platform/ROADMAP.md";
 const STATE_REL = "docs/platform/STATE.md";
@@ -321,6 +344,9 @@ export function buildGovernanceContext(root = DEFAULT_ROOT) {
     loaded.state.contracts != null && typeof loaded.state.contracts === "object" && !Array.isArray(loaded.state.contracts)
       ? loaded.state.contracts
       : {};
+  const semanticContracts = Object.fromEntries(
+    Object.entries(contracts).filter(([key]) => !EXECUTION_CONTRACT_KEYS.has(key)),
+  );
 
   return {
     schemaVersion: 1,
@@ -347,7 +373,8 @@ export function buildGovernanceContext(root = DEFAULT_ROOT) {
       slice: currentProductSlice,
       lifecycle,
       nextGate,
-      ...contracts,
+      ...semanticContracts,
+      ...deriveExecutionProjection(loaded.state),
     },
     singleSourceGates: [],
   };

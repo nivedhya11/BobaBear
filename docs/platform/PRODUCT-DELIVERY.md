@@ -441,12 +441,9 @@ ARCHITECTURE_FIT = PASS
 ARCHITECTURE_LOCKED = YES
 DESIGN_READINESS = PASS
 IMPLEMENTATION_PLAN = PASS
-IMPLEMENTATION_AUTHORIZED = YES
-IMPLEMENTATION_COMPLETE = NO
-IMP036J_ACCEPTED = NO
 ```
 
-Current lifecycle position is authoritative only in ROADMAP/STATE. Change Risk is recorded in
+Current lifecycle position is authoritative only in [`STATE.md`](./STATE.md). Change Risk is recorded in
 ROADMAP/STATE and is not an AGENTS risk level.
 
 ## IMP-036K Design Readiness PASS

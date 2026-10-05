@@ -16,7 +16,19 @@ import { evaluateAgentContextPackaging } from "./agent-context-check.mjs";
 import { evaluateGovernanceContextDrift } from "./governance-context.mjs";
 import { computeWorkingTreeFingerprint } from "./working-tree-fingerprint.mjs";
 
-const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const DEFAULT_PROJECT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const projectRoot = process.env.BOBA_PROJECT_ROOT
+  ? path.resolve(process.env.BOBA_PROJECT_ROOT)
+  : DEFAULT_PROJECT_ROOT;
+
+function hasUniqueGov2Block(text, kind) {
+  const matches = [...String(text ?? "").matchAll(new RegExp(`<!--\\s*gov2-${kind}\\b`, "g"))];
+  return matches.length === 1;
+}
+
+function isGov2AuthorityDocuments(roadmap, state) {
+  return hasUniqueGov2Block(roadmap?.text, "roadmap") && hasUniqueGov2Block(state?.text, "state");
+}
 
 /**
  * @param {"roadmap" | "state"} kind
@@ -1566,7 +1578,7 @@ function checkRoadmapState(roadmap, state) {
     );
   } else {
     const productDefinitionText = readFileSync(tipPath, "utf8");
-    if (isGov2CutoverCheckpoint(roadmap, state)) {
+    if (isGov2AuthorityDocuments(roadmap, state)) {
       note("GOV-2: Product Definitions do not independently own CURRENT ROADMAP/STATE tip versions");
     } else {
       const tip = evaluateCurrentProductDefinitionTipAlignment({
@@ -1911,7 +1923,6 @@ export function isSupportedImp030GovernanceCheckpoint(roadmapVersion, stateVersi
   const imp036jTranche6Pass = roadmapVersion === "GTM-R186" && stateVersion === "STATE-R184";
   const imp036jTranche5Pass = roadmapVersion === "GTM-R187" && stateVersion === "STATE-R185";
   const imp036jTranche7Pass = roadmapVersion === "GTM-R188" && stateVersion === "STATE-R186";
-  const gov2Cutover = roadmapVersion === "GTM-R189" && stateVersion === "STATE-R187";
   if (kind === "activation") return activation;
   if (kind === "lock") return lock;
   if (kind === "authorization") return authorization;
@@ -2025,8 +2036,7 @@ export function isSupportedImp030GovernanceCheckpoint(roadmapVersion, stateVersi
   if (kind === "imp036jTranche6Pass") return imp036jTranche6Pass;
   if (kind === "imp036jTranche5Pass") return imp036jTranche5Pass;
   if (kind === "imp036jTranche7Pass") return imp036jTranche7Pass;
-  if (kind === "gov2Cutover") return gov2Cutover;
-  return activation || lock || authorization || start || routeAmendment || consistencyRepair || acceptance || imp031Activation || imp031Draft || imp031Lock || imp031Authorization || imp031Start || imp031Completion || imp031Acceptance || imp032Activation || imp032Draft || imp032Lock || imp032Authorization || imp032Start || imp032BoundaryClarification || imp032Completion || imp032Acceptance || imp033Activation || imp033Completion || imp033Acceptance || imp034Completion || imp034Acceptance || imp035Completion || imp035Acceptance || imp036Completion || imp036Acceptance || enterpriseExperiencePlan || imp036aCompletion || imp036aAcceptance || imp036bCompletion || imp036bAcceptance || imp036cCompletion || imp036cAcceptance || imp036dActivation || imp036dLock || imp036dAuthorization || imp036dStart || imp036dCompletion || imp036dAcceptance || imp036eActivation || imp036eLock || imp036eAuthorization || imp036eStart || imp036eCompletion || authorityCompression || imp036eAcceptance || imp036fActivation || imp036fProductDefinitionDraftAuthorized || imp036fProductDefinitionGatePass || imp036fArchitectureLock || imp036fImplementationAuthorization || imp036fImplementationStart || imp036fAcceptance || imp036gActivation || imp036gProductDefinitionDraft || imp036gProductDefinitionGatePass || imp036gArchitectureLock || imp036gImplementationStart || imp036gCompletion || imp036gAcceptance || imp037Activation || imp037ProductDefinitionGatePass || d374CostOptimizedPilotInfrastructure || imp037ArchitectureLock || imp037ImplementationAuthorization || imp037ImplementationStart || imp037PostMergeReconciliation || imp038ControlledContinuationActivation || imp038ArchitectureLock || imp038ImplementationAuthorizeStart || imp036hProductDefinitionActivation || imp036hProductDefinitionGatePass || imp036hArchitectureLock || imp036hImplementationAuthorization || imp036hImplementationStart || imp036hImplementationComplete || imp036hAcceptance || imp036iProductDefinitionActivation || imp036iProductDefinitionDraftReady || imp036iProductDefinitionGatePass || imp036iArchitectureLock || imp036iImplementationAuthorization || imp036iImplementationStart || imp036iTranche2 || imp036iTranche3 || imp036iTranche4 || imp036iTranche5 || imp036iImplementationComplete || imp036iAcceptance || imp036jProductDefinitionActivation || imp036jProductDefinitionDraftReady || imp036jProductDefinitionGatePass || imp036jPd2ExperienceTransition || imp036jExperienceGatePass || imp036jArchitectureLock || imp036jImplementationAuthorization || imp036kParallelDefinition || imp036jImplementationStart || imp036kProductExperienceGate || imp036jTranche1Pass || imp036kArchitectureLock || imp036jTranche2Pass || imp036kDesignReadinessPass || imp036jTranche3Pass || imp036jTranche4Pass || imp036jTranche6Pass || imp036jTranche5Pass || imp036jTranche7Pass || gov2Cutover;
+  return activation || lock || authorization || start || routeAmendment || consistencyRepair || acceptance || imp031Activation || imp031Draft || imp031Lock || imp031Authorization || imp031Start || imp031Completion || imp031Acceptance || imp032Activation || imp032Draft || imp032Lock || imp032Authorization || imp032Start || imp032BoundaryClarification || imp032Completion || imp032Acceptance || imp033Activation || imp033Completion || imp033Acceptance || imp034Completion || imp034Acceptance || imp035Completion || imp035Acceptance || imp036Completion || imp036Acceptance || enterpriseExperiencePlan || imp036aCompletion || imp036aAcceptance || imp036bCompletion || imp036bAcceptance || imp036cCompletion || imp036cAcceptance || imp036dActivation || imp036dLock || imp036dAuthorization || imp036dStart || imp036dCompletion || imp036dAcceptance || imp036eActivation || imp036eLock || imp036eAuthorization || imp036eStart || imp036eCompletion || authorityCompression || imp036eAcceptance || imp036fActivation || imp036fProductDefinitionDraftAuthorized || imp036fProductDefinitionGatePass || imp036fArchitectureLock || imp036fImplementationAuthorization || imp036fImplementationStart || imp036fAcceptance || imp036gActivation || imp036gProductDefinitionDraft || imp036gProductDefinitionGatePass || imp036gArchitectureLock || imp036gImplementationStart || imp036gCompletion || imp036gAcceptance || imp037Activation || imp037ProductDefinitionGatePass || d374CostOptimizedPilotInfrastructure || imp037ArchitectureLock || imp037ImplementationAuthorization || imp037ImplementationStart || imp037PostMergeReconciliation || imp038ControlledContinuationActivation || imp038ArchitectureLock || imp038ImplementationAuthorizeStart || imp036hProductDefinitionActivation || imp036hProductDefinitionGatePass || imp036hArchitectureLock || imp036hImplementationAuthorization || imp036hImplementationStart || imp036hImplementationComplete || imp036hAcceptance || imp036iProductDefinitionActivation || imp036iProductDefinitionDraftReady || imp036iProductDefinitionGatePass || imp036iArchitectureLock || imp036iImplementationAuthorization || imp036iImplementationStart || imp036iTranche2 || imp036iTranche3 || imp036iTranche4 || imp036iTranche5 || imp036iImplementationComplete || imp036iAcceptance || imp036jProductDefinitionActivation || imp036jProductDefinitionDraftReady || imp036jProductDefinitionGatePass || imp036jPd2ExperienceTransition || imp036jExperienceGatePass || imp036jArchitectureLock || imp036jImplementationAuthorization || imp036kParallelDefinition || imp036jImplementationStart || imp036kProductExperienceGate || imp036jTranche1Pass || imp036kArchitectureLock || imp036jTranche2Pass || imp036kDesignReadinessPass || imp036jTranche3Pass || imp036jTranche4Pass || imp036jTranche6Pass || imp036jTranche5Pass || imp036jTranche7Pass;
 }
 
 function isImp032ArchitectureActivationCheckpoint(roadmap, state) {
@@ -2667,14 +2677,6 @@ function isImp036jTranche7PassCheckpoint(roadmap, state) {
   );
 }
 
-function isGov2CutoverCheckpoint(roadmap, state) {
-  return isSupportedImp030GovernanceCheckpoint(
-    roadmap?.meta.roadmapVersion,
-    state?.meta.stateVersion,
-    "gov2Cutover",
-  );
-}
-
 function isImp030ArchitectureCheckpoint(roadmap, state) {
   return isImp030ArchitectureActivationCheckpoint(roadmap, state) || isImp030ArchitectureLockCheckpoint(roadmap, state);
 }
@@ -2794,7 +2796,7 @@ function isImp030GovernanceCheckpoint(roadmap, state) {
     isImp036jTranche6PassCheckpoint(roadmap, state) ||
     isImp036jTranche5PassCheckpoint(roadmap, state) ||
     isImp036jTranche7PassCheckpoint(roadmap, state) ||
-    isGov2CutoverCheckpoint(roadmap, state)
+    isGov2AuthorityDocuments(roadmap, state)
   );
 }
 
@@ -18233,7 +18235,7 @@ function checkImp028ArchitectureLock(roadmap, state, architecture, decision) {
     } else {
       note("ARCHITECTURE.md records ARCH-G16 / ARCH-G17 / ARCH-G18 / D-365 / D-366 / D-367");
     }
-    const expectedArchitectureVersion = isGov2CutoverCheckpoint(roadmap, state) ||
+    const expectedArchitectureVersion = isGov2AuthorityDocuments(roadmap, state) ||
       isImp036jTranche7PassCheckpoint(roadmap, state) ||
       isImp036jTranche5PassCheckpoint(roadmap, state) ||
       isImp036jTranche6PassCheckpoint(roadmap, state) ||
@@ -18425,7 +18427,7 @@ function checkImp028ArchitectureLock(roadmap, state, architecture, decision) {
   }
 
   if (decision) {
-    const expectedDecisionRegisterVersion = isGov2CutoverCheckpoint(roadmap, state) ||
+    const expectedDecisionRegisterVersion = isGov2AuthorityDocuments(roadmap, state) ||
       isImp036jTranche7PassCheckpoint(roadmap, state) ||
       isImp036jTranche5PassCheckpoint(roadmap, state) ||
       isImp036jTranche6PassCheckpoint(roadmap, state) ||
@@ -25527,7 +25529,7 @@ function checkProductDeliveryProcessAuthorities() {
       || (roadmapMeta?.roadmapVersion === "GTM-R186" && stateMeta?.stateVersion === "STATE-R184")
       || (roadmapMeta?.roadmapVersion === "GTM-R187" && stateMeta?.stateVersion === "STATE-R185")
       || (roadmapMeta?.roadmapVersion === "GTM-R188" && stateMeta?.stateVersion === "STATE-R186")
-      || (roadmapMeta?.roadmapVersion === "GTM-R189" && stateMeta?.stateVersion === "STATE-R187")
+      || (hasUniqueGov2Block(roadmapText, "roadmap") && hasUniqueGov2Block(stateText, "state"))
     );
   const atImp036hProductDefinitionActivationCheckpoint =
     roadmapMeta?.roadmapVersion === "GTM-R141" &&
@@ -26161,7 +26163,7 @@ export function runProjectConsistency() {
       !isImp036jTranche6PassCheckpoint(roadmap, state) &&
       !isImp036jTranche5PassCheckpoint(roadmap, state) &&
       !isImp036jTranche7PassCheckpoint(roadmap, state) &&
-      !isGov2CutoverCheckpoint(roadmap, state)
+      !isGov2AuthorityDocuments(roadmap, state)
     ) {
       fail("UNSUPPORTED_GOVERNANCE_CHECKPOINT", "Governance revisions at or beyond GTM-R66 / STATE-R64 require an exact supported canonical checkpoint");
     }
@@ -26315,16 +26317,18 @@ export function runProjectConsistency() {
   checkImp036kParallelDefinition(roadmap, state, architecture, decision);
   checkImp036jImplementationStart(roadmap, state, architecture, decision);
   checkImp036kProductExperienceGate(roadmap, state, architecture, decision);
-  checkImp036jTranche1Pass(roadmap, state, architecture, decision);
   checkImp036kArchitectureLock(roadmap, state, architecture, decision);
-  checkImp036jTranche2Pass(roadmap, state, architecture, decision);
   checkImp036kDesignReadinessPass(roadmap, state, architecture, decision);
-  checkImp036jTranche3Pass(roadmap, state, architecture, decision);
-  checkImp036jTranche4Pass(roadmap, state, architecture, decision);
-  checkImp036jTranche6Pass(roadmap, state, architecture, decision);
-  checkImp036jTranche5Pass(roadmap, state, architecture, decision);
-  checkImp036jTranche7Pass(roadmap, state, architecture, decision);
-  checkGov2Cutover(roadmap, state, architecture, decision);
+  if (!isGov2AuthorityDocuments(roadmap, state)) {
+    checkImp036jTranche1Pass(roadmap, state, architecture, decision);
+    checkImp036jTranche2Pass(roadmap, state, architecture, decision);
+    checkImp036jTranche3Pass(roadmap, state, architecture, decision);
+    checkImp036jTranche4Pass(roadmap, state, architecture, decision);
+    checkImp036jTranche6Pass(roadmap, state, architecture, decision);
+    checkImp036jTranche5Pass(roadmap, state, architecture, decision);
+    checkImp036jTranche7Pass(roadmap, state, architecture, decision);
+  }
+  checkGov2GenericCurrent(roadmap, state);
   checkImp038CurrentImplementationCompleteMarkerConsistency(roadmap, state);
   checkTechnicalInventory();
   checkStaticWeb();
@@ -39887,14 +39891,15 @@ export function evaluateImp036jStoryReadiness(productDefinitionText) {
     const readinessCell = imp036jReadinessCell(text);
     const postGateBlockers =
       readinessCell.startsWith("`READY_FOR_IMPLEMENTATION`") &&
-      /Implementation Authorization APPROVED 2026-10-01; implementation STARTED; Tranche 1 PASS/.test(readinessCell) &&
+      /Implementation Authorization APPROVED 2026-10-01/.test(readinessCell) &&
+      /owned by STATE\.md/.test(readinessCell) &&
       !/pending Implementation Authorization/.test(readinessCell) &&
       !/Product Definition Gate NOT_PERFORMED/.test(readinessCell);
     if (!postGateBlockers) {
       return {
         ok: false,
         code: "IMP036J_READINESS_POST_GATE",
-        message: "After Implementation Authorization, definition of ready must be READY_FOR_IMPLEMENTATION and implementation must be STARTED with Tranche 1 PASS",
+        message: "After Implementation Authorization, definition of ready must be READY_FOR_IMPLEMENTATION; current execution is owned by STATE.md",
       };
     }
     for (const match of readiness) {
@@ -39908,13 +39913,14 @@ export function evaluateImp036jStoryReadiness(productDefinitionText) {
       }
       if (
         !line.startsWith("READY_FOR_IMPLEMENTATION") ||
-        !/Implementation Authorization APPROVED 2026-10-01; implementation STARTED; Tranche 1 PASS/.test(line) ||
+        !/Implementation Authorization APPROVED 2026-10-01/.test(line) ||
+        !/owned by STATE\.md/.test(line) ||
         /pending Implementation Authorization/.test(line)
       ) {
         return {
           ok: false,
           code: "IMP036J_READINESS_POST_GATE",
-          message: `${match[1]} must be READY_FOR_IMPLEMENTATION after Implementation Authorization and must record implementation STARTED with Tranche 1 PASS`,
+          message: `${match[1]} must be READY_FOR_IMPLEMENTATION after Implementation Authorization; current execution is owned by STATE.md`,
         };
       }
     }
@@ -41559,11 +41565,11 @@ export function evaluateImp036jAuthorizationProse(productText) {
   const fenceEnd = fenceStart < 0 ? -1 : gateSection.indexOf("```", fenceStart + 3);
   const fence = fenceStart < 0 || fenceEnd < 0 ? "" : gateSection.slice(fenceStart, fenceEnd);
   const afterFence = fenceEnd < 0 ? "" : gateSection.slice(fenceEnd);
-  if (!unresolved.includes("Implementation Authorization is APPROVED and implementation has started.")) {
+  if (!unresolved.includes("Implementation Authorization is APPROVED. Current execution/lifecycle is owned by STATE.md.")) {
     return {
       ok: false,
       code: "IMP036J_AUTHORIZATION_PROSE",
-      message: "Current unresolved-decision row must record Implementation Authorization APPROVED and implementation started",
+      message: "Current unresolved-decision row must record Implementation Authorization APPROVED and STATE execution ownership",
     };
   }
   if (/implementation authorization is outstanding/i.test(unresolved)) {
@@ -44867,40 +44873,23 @@ export function evaluateImp036kPreservedAtT7FutureLedger(futureK) {
 }
 
 /**
- * CURRENT GOV-2 cutover candidate. Lifecycle is validated by the generic engine.
- * Ordinary later tranche PASS must not require a new checkpoint function.
+ * Unique valid GOV-2 authorities are the current lifecycle path.
+ * Ordinary tranche PASS must not require a new project-consistency checkpoint.
  */
-function checkGov2Cutover(roadmap, state, architecture, decision) {
-  if (!isGov2CutoverCheckpoint(roadmap, state)) return;
-  if (roadmap?.meta.roadmapVersion !== "GTM-R189" || state?.meta.stateVersion !== "STATE-R187") {
-    fail("GOV2_CUTOVER_IDENTITY", "GOV-2 cutover candidate must be GTM-R189 / STATE-R187");
-  }
-  if (roadmap?.meta.supersedes !== "GTM-R188" || state?.meta.supersedes !== "STATE-R186") {
-    fail("GOV2_CUTOVER_SUPERSEDES", "GTM-R189 must supersede GTM-R188 and STATE-R187 must supersede STATE-R186");
-  }
-  if (roadmap?.meta.acceptedThrough !== "IMP-036I" || state?.meta.acceptedThrough !== "IMP-036I") {
-    fail("GOV2_ACCEPTED_THROUGH", "acceptedThrough must stay IMP-036I");
-  }
-  if (roadmap?.meta.currentProductSlice !== "IMP-036J" || state?.meta.currentProductSlice !== "IMP-036J") {
-    fail("GOV2_CURRENT_SLICE", "currentProductSlice must stay IMP-036J");
-  }
-  if (roadmap?.meta.nextProductSlice !== "IMP-036K" || state?.meta.nextProductSlice !== "IMP-036K") {
-    fail("GOV2_NEXT_SLICE", "nextProductSlice must stay IMP-036K");
-  }
-  if (state?.meta.pendingAcceptance !== "NONE") fail("GOV2_PENDING", "pendingAcceptance must stay NONE");
-  if (architecture?.meta.architectureVersion !== "ARCH-R23" || decision?.meta.decisionRegisterVersion !== "DR-24") {
-    fail("GOV2_GLOBAL_AUTHORITY", "GOV-2 cutover must retain ARCH-R23 and DR-24");
-  }
-  for (const rel of [
-    "docs/platform/history/ROADMAP-GTM-R188-pre-gov2.md",
-    "docs/platform/history/STATE-STATE-R186-pre-gov2.md",
-  ]) {
-    const abs = resolveExactRelativeFile(rel) ?? resolvePlatformDoc(rel);
-    if (!abs || !existsSync(abs)) fail("GOV2_SNAPSHOT", `Missing pre-GOV2 snapshot ${rel}`);
+function checkGov2GenericCurrent(roadmap, state) {
+  if (!isGov2AuthorityDocuments(roadmap, state)) return;
+  const planRelMatch = /"tranchePlanPath":\s*"([^"]+)"/.exec(roadmap?.text ?? "");
+  const planAbs = planRelMatch
+    ? resolveExactRelativeFile(planRelMatch[1]) ?? path.join(projectRoot, planRelMatch[1])
+    : null;
+  if (!planAbs || !existsSync(planAbs) || !hasUniqueGov2Block(readFileSync(planAbs, "utf8"), "tranche-plan")) {
+    fail("GOV2_CURRENT_STATE", "unique gov2-tranche-plan authority is required");
+    return;
   }
   const result = spawnSync(process.execPath, [path.join(projectRoot, "scripts/governance-v2/current.mjs")], {
     cwd: projectRoot,
     encoding: "utf8",
+    env: { ...process.env, BOBA_PROJECT_ROOT: projectRoot },
   });
   if (result.status !== 0) {
     fail("GOV2_CURRENT_STATE", result.stderr || result.stdout || "GOV-2 current-state validation failed");
@@ -44910,18 +44899,14 @@ function checkGov2Cutover(roadmap, state, architecture, decision) {
   try {
     report = JSON.parse(result.stdout);
   } catch (error) {
-    fail("GOV2_CURRENT_STATE", `GOV-2 current-state output is not JSON: ${error instanceof Error ? error.message : String(error)}`);
+    fail(
+      "GOV2_CURRENT_STATE",
+      `GOV-2 current-state output is not JSON: ${error instanceof Error ? error.message : String(error)}`,
+    );
     return;
   }
   if (report.ok !== true) fail("GOV2_CURRENT_STATE", JSON.stringify(report.findings ?? report));
-  if (report.REAL_T8_STARTED !== "NO" || report.T8_STATUS !== "NOT_STARTED") {
-    fail("GOV2_T8_STARTED", "IMP-036J T8 must remain NOT_STARTED");
-  }
-  if (report.DERIVED_NEXT_GATE !== "T8") fail("GOV2_NEXT_GATE", "derived nextGate must be T8 while T8 is NOT_STARTED");
-  if (!/T8_STARTED:\s*NO/.test(state?.text ?? "") && !/"T8": "NOT_STARTED"/.test(state?.text ?? "")) {
-    fail("GOV2_T8_POINTER", "STATE must keep T8 NOT_STARTED in the machine-readable block");
-  }
-  note("GOV-2 current-state validation PASS; T8 remains NOT_STARTED");
+  else note("GOV-2 current-state validation PASS");
 }
 
 /**

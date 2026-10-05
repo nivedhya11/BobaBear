@@ -479,6 +479,13 @@ describe("GOV-2 generic engine", () => {
     const result = validateCurrentState(syntheticState, plan036j(), syntheticRoadmap);
     assert.equal(result.ok, true, JSON.stringify(result.findings, null, 2));
   });
+
+  it("rejects persisted execution copies inside contracts", () => {
+    const state = structuredState(postT7());
+    state.contracts = { ...(state.contracts ?? {}), implementationAuthorized: "YES", accepted: "NO" };
+    const result = validateCurrentState(state, plan036j(), roadmap());
+    assert.ok(codes(result).includes("CONTRACT_EXECUTION_DUPLICATION"), JSON.stringify(result.findings, null, 2));
+  });
 });
 
 describe("GOV-2 source hygiene", () => {

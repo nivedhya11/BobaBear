@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -10,6 +12,7 @@ import { validateTransition } from "./transition.mjs";
 import { TRANCHE_STATUS } from "./model.mjs";
 import { CURRENT_AUTHORITY_KIND, parseCurrentGovernanceMeta } from "./schema.mjs";
 import { loadFixture, structuredState } from "./load-fixture.mjs";
+import { buildGovernanceContext, serializeGovernanceContext, SNAPSHOT_REL } from "../governance-context.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -18,7 +21,9 @@ describe("GOV-2 live authorities", () => {
     const report = validateLiveCurrentState(root);
     assert.equal(report.ok, true, JSON.stringify(report.findings, null, 2));
     assert.equal(report.GOV2_VALIDATION_AUTHORITATIVE, "YES");
-    assert.equal(report.GOV2_CUTOVER, "NO");
+    assert.equal(report.GOV2_AUTHORITY_MODE, "GOV2");
+    assert.equal(report.CUTOVER_CANDIDATE, "YES");
+    assert.equal(report.MERGED, "NO");
     assert.equal(report.REAL_T8_STARTED, "NO");
     assert.equal(report.T8_STATUS, "NOT_STARTED");
     assert.equal(report.DERIVED_NEXT_GATE, "T8");
@@ -75,5 +80,110 @@ describe("GOV-2 live authorities", () => {
       true,
     );
     assert.equal(validateLiveCurrentState(root).ok, true);
+  });
+
+  it("passes GOV-2 current validation on a T8 PASS data copy without validator source change", () => {
+    const loaded = loadLiveAuthorities(root);
+    assert.equal(loaded.ok, true, JSON.stringify(loaded.findings, null, 2));
+    assert.equal(loaded.state.implementation.trancheStatuses.T8, "NOT_STARTED");
+    const head = structuredState(loaded.state);
+    head.implementation.trancheStatuses.T8 = TRANCHE_STATUS.PASS;
+    head.lastTransition = {
+      ...head.lastTransition,
+      type: "TRANCHE_PASS",
+      tranche: "T8",
+    };
+    const current = validateCurrentState(head, loaded.plan, loaded.roadmap);
+    assert.equal(current.ok, true, JSON.stringify(current.findings, null, 2));
+    assert.equal(current.nextGate, "NONE");
+    const consistency = readFileSync(path.join(root, "scripts/project-consistency.mjs"), "utf8");
+    assert.doesNotMatch(consistency, /gov2Cutover = roadmapVersion === "GTM-R189"/);
+    assert.doesNotMatch(consistency, /function isGov2CutoverCheckpoint/);
+    assert.doesNotMatch(consistency, /function checkGov2Cutover/);
+    assert.match(consistency, /function checkGov2GenericCurrent/);
+    assert.equal(loaded.state.implementation.trancheStatuses.T8, "NOT_STARTED");
+    assert.equal(validateLiveCurrentState(root).T8_STATUS, "NOT_STARTED");
+  });
+});
+
+const SKIP_OVERLAY = new Set(["node_modules", ".next", "out", "coverage", ".validation-logs"]);
+
+function materializeOverlayRoot() {
+  const tmp = mkdtempSync(path.join(tmpdir(), "gov2-t8-"));
+  for (const name of readdirSync(root)) {
+    if (SKIP_OVERLAY.has(name)) continue;
+    const src = path.join(root, name);
+    const dest = path.join(tmp, name);
+    if (name === "docs") {
+      cpSync(src, dest, { recursive: true });
+    } else {
+      symlinkSync(src, dest);
+    }
+  }
+  symlinkSync(path.join(root, "node_modules"), path.join(tmp, "node_modules"));
+  return tmp;
+}
+
+function writeMutatedState(tmp, mutate) {
+  const rel = "docs/platform/STATE.md";
+  const original = readFileSync(path.join(root, rel), "utf8");
+  writeFileSync(path.join(tmp, rel), mutate(original));
+  writeFileSync(path.join(tmp, SNAPSHOT_REL), serializeGovernanceContext(buildGovernanceContext(tmp)));
+}
+
+describe("GOV-2 full repository ordinary tranche simulation", () => {
+  it("project-consistency and GOV-2 current PASS on T8 PASS data without validator source change", { timeout: 600_000 }, () => {
+    const tmp = materializeOverlayRoot();
+    try {
+      writeMutatedState(tmp, (text) =>
+        text
+          .replace(/"T8": "NOT_STARTED"/, '"T8": "PASS"')
+          .replace(/"tranche": "T7"/, '"tranche": "T8"'),
+      );
+      const env = { ...process.env, BOBA_PROJECT_ROOT: tmp };
+      const current = spawnSync(process.execPath, [path.join(root, "scripts/governance-v2/current.mjs")], {
+        cwd: tmp,
+        encoding: "utf8",
+        env,
+      });
+      assert.equal(current.status, 0, current.stderr || current.stdout);
+      const currentReport = JSON.parse(current.stdout);
+      assert.equal(currentReport.ok, true, JSON.stringify(currentReport.findings, null, 2));
+      assert.equal(currentReport.DERIVED_NEXT_GATE, "NONE");
+      assert.equal(currentReport.T8_STATUS, "PASS");
+      const consistency = spawnSync(process.execPath, [path.join(root, "scripts/project-consistency.mjs")], {
+        cwd: tmp,
+        encoding: "utf8",
+        env,
+      });
+      assert.equal(consistency.status, 0, consistency.stderr || consistency.stdout);
+      assert.equal(JSON.parse(readFileSync(path.join(root, "docs/platform/STATE.md"), "utf8").match(/<!--\s*gov2-state\s*([\s\S]*?)-->/)[1]).implementation.trancheStatuses.T8, "NOT_STARTED");
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it("future STATE revision identifiers do not require a checkpoint whitelist entry", { timeout: 600_000 }, () => {
+    const tmp = materializeOverlayRoot();
+    try {
+      writeMutatedState(tmp, (text) => text.replaceAll("STATE-R187", "STATE-R188"));
+      const env = { ...process.env, BOBA_PROJECT_ROOT: tmp };
+      const current = spawnSync(process.execPath, [path.join(root, "scripts/governance-v2/current.mjs")], {
+        cwd: tmp,
+        encoding: "utf8",
+        env,
+      });
+      assert.equal(current.status, 0, current.stderr || current.stdout);
+      const consistency = spawnSync(process.execPath, [path.join(root, "scripts/project-consistency.mjs")], {
+        cwd: tmp,
+        encoding: "utf8",
+        env,
+      });
+      assert.equal(consistency.status, 0, consistency.stderr || consistency.stdout);
+      const consistencySource = readFileSync(path.join(root, "scripts/project-consistency.mjs"), "utf8");
+      assert.doesNotMatch(consistencySource, /STATE-R188/);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
   });
 });

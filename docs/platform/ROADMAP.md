@@ -141,7 +141,6 @@ Current Product Slice: IMP-036J — Promotions, Coupons & Offers
 Next Product Slice:    IMP-036K — Revenue Recommendations
 Pending Acceptance:    NONE
 Public GTM Boundary:   IMP-040 — Launch Validation & Cutover
-IMP-036J: IMPLEMENTATION_IN_PROGRESS
 IMP036J_ACTIVATED: YES
 IMP036K_ACTIVATED: YES
 IMP037_ACTIVATED: YES
@@ -222,7 +221,7 @@ IMP-037 and IMP-038 remain held under D-377.
 
 | IMP | Capability | Lifecycle |
 |---|---|---|
-| IMP-036J | Promotions, Coupons & Offers | IMPLEMENTATION_IN_PROGRESS (current slice; execution in STATE) |
+| IMP-036J | Promotions, Coupons & Offers | current product slice; execution owned by STATE.md |
 | IMP-036K | Revenue Recommendations | nextProductSlice; implementation not authorized |
 | IMP-037 | Backup, Restore & Migration Readiness | IMPLEMENTATION_IN_PROGRESS (HOLD) |
 | IMP-038 | Security & Privacy Hardening | IMPLEMENTATION_IN_PROGRESS (HOLD; implementation complete / not accepted) |

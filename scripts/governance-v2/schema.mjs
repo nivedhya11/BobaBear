@@ -309,8 +309,43 @@ export function validateStateSchema(state, plan, roadmap) {
   const trancheIds = Array.isArray(plan?.tranches) ? plan.tranches.map((tranche) => tranche?.id).filter(Boolean) : [];
   findings.push(...validateLastTransitionShape(state.lastTransition, trancheIds).findings);
   findings.push(...validateCurrentReferences(state, roadmap));
+  findings.push(...contractExecutionDuplicationFindings(state.contracts));
 
   return aggregate(findings);
+}
+
+const CONTRACT_EXECUTION_KEYS = Object.freeze([
+  "started",
+  "implementationStarted",
+  "implementationComplete",
+  "accepted",
+  "implementationAuthorized",
+]);
+
+/**
+ * `contracts` may hold independent semantic gate references only.
+ * Execution copies of canonical implementation/accepted fields are forbidden.
+ * @param {unknown} contracts
+ */
+export function contractExecutionDuplicationFindings(contracts) {
+  if (contracts == null) return [];
+  if (typeof contracts !== "object" || Array.isArray(contracts)) {
+    return [finding("INVALID_CONTRACTS", "contracts", "contracts must be an object when present")];
+  }
+  /** @type {ReturnType<typeof finding>[]} */
+  const findings = [];
+  for (const key of CONTRACT_EXECUTION_KEYS) {
+    if (Object.hasOwn(contracts, key)) {
+      findings.push(
+        finding(
+          "CONTRACT_EXECUTION_DUPLICATION",
+          `contracts.${key}`,
+          `contracts.${key} duplicates canonical execution state and must be derived, not persisted`,
+        ),
+      );
+    }
+  }
+  return findings;
 }
 
 /**

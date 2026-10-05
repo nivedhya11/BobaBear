@@ -51,12 +51,7 @@
     "experienceGate": "PASS",
     "architectureFit": "PASS",
     "architectureLocked": "YES",
-    "designReadiness": "PASS",
-    "implementationAuthorized": "YES",
-    "started": "YES",
-    "implementationStarted": "YES",
-    "implementationComplete": "NO",
-    "accepted": "NO"
+    "designReadiness": "PASS"
   },
   "lastTransition": {
     "type": "TRANCHE_PASS",
@@ -659,12 +654,14 @@ Product / Experience / Architecture documents.
 | Binding decision status | [`decision-register.md`](./decision-register.md) |
 
 Agents may propose a STATE delta in their report. Only independent acceptance updates this file's
-accepted position. GOV-2 cutover is not accepted by this candidate.
+accepted position. GOV-2 authority mode is `GOV2`. Cutover acceptance is not granted by this
+candidate.
 
 ## 10. STATE-R187 record
 
 ```text
-STATE-R187 = GOV2_CUTOVER_CANDIDATE
+STATE-R187 = GOV2_AUTHORITY_MODE
+GOV2_AUTHORITY_MODE = GOV2
 supersedes: STATE-R186
 acceptedThrough: IMP-036I
 pendingAcceptance: NONE

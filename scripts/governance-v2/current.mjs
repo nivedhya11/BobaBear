@@ -3,7 +3,7 @@
  * Authoritative GOV-2 current-state validation against live authorities.
  *
  * GOV2_VALIDATION_AUTHORITATIVE = YES
- * GOV2_CUTOVER = NO
+ * GOV2_AUTHORITY_MODE = GOV2
  * GOV2_CUTOVER_ACCEPTANCE = NO
  */
 import path from "node:path";
@@ -13,10 +13,12 @@ import { CURRENT_AUTHORITY_KIND, parseCurrentGovernanceMeta, validateLiveRoadmap
 import { validateCurrentState } from "./invariants.mjs";
 import { loadLiveAuthorities } from "./load-authorities.mjs";
 import { finding } from "./model.mjs";
-import { readFileSync } from "node:fs";
+import { readFileSync, realpathSync } from "node:fs";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
-const DEFAULT_ROOT = path.resolve(SCRIPT_DIR, "../..");
+const DEFAULT_ROOT = process.env.BOBA_PROJECT_ROOT
+  ? path.resolve(process.env.BOBA_PROJECT_ROOT)
+  : path.resolve(SCRIPT_DIR, "../..");
 
 const ROADMAP_POINTER_PAIRS = Object.freeze([
   ["acceptedThrough", "acceptedThrough"],
@@ -84,11 +86,13 @@ export function validateLiveCurrentState(root = DEFAULT_ROOT) {
 
   const derivedT8Started = Boolean(validation.derivedStarted?.T8);
   const t8Status = loaded.state?.implementation?.trancheStatuses?.T8;
-  const ok = findings.filter((item) => item && item.ok === false).length === 0 && derivedT8Started === false && t8Status === "NOT_STARTED";
+  const ok = findings.filter((item) => item && item.ok === false).length === 0;
 
   return {
     GOV2_PHASE: "AUTHORITATIVE_CANDIDATE",
-    GOV2_CUTOVER: "NO",
+    GOV2_AUTHORITY_MODE: "GOV2",
+    CUTOVER_CANDIDATE: "YES",
+    MERGED: "NO",
     GOV2_CUTOVER_ACCEPTANCE: "NO",
     GOV2_VALIDATION_AUTHORITATIVE: "YES",
     LIVE_CURRENT_META_VALID: liveAlignment.LIVE_CURRENT_META_VALID,
@@ -109,6 +113,14 @@ function main() {
   process.exitCode = report.ok ? 0 : 1;
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  main();
+if (process.argv[1]) {
+  try {
+    if (realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))) {
+      main();
+    }
+  } catch {
+    if (path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+      main();
+    }
+  }
 }

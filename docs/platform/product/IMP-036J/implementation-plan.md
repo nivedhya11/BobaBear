@@ -14,9 +14,8 @@
   "implementationPlan": "PASS",
   "implementationPlanFinalized": true,
   "readyForImplementationAuthorization": true,
-  "implementationAuthorized": true,
-  "implementationStarted": false,
-  "implementationComplete": false,
+  "planApproval": "PASS",
+  "authorizationEvidence": "PR#332/5926464685",
   "authoritative": true,
   "architectReview": "5925360293",
   "evaluatedHead": "2cf349b10ecb3dd326818fd401662ed37817b603",
@@ -40,16 +39,12 @@ QUALITY_PLAN_SOURCE = IMP-036J-QUALITY-CANDIDATE-2
 MEASUREMENT_PLAN_SOURCE = IMP-036J-MEASUREMENT-CANDIDATE-2
 IMPLEMENTATION_PLAN = PASS
 IMPLEMENTATION_PLAN_FINALIZED = YES
-IMPLEMENTATION_AUTHORIZED = YES
-IMPLEMENTATION_STARTED = NO
-IMPLEMENTATION_COMPLETE = NO
-IMP036J_ACCEPTED = NO
-PROOF_EXECUTED = NO
 READY_FOR_IMPLEMENTATION_AUTHORIZATION = YES
+PLAN_APPROVAL = PASS
+AUTHORIZATION_EVIDENCE = PR#332/5926464685
 IMPLEMENTATION_AUTHORIZATION = APPROVED
 IMPLEMENTATION_AUTHORIZATION_DATE = 2026-10-01
 IMPLEMENTATION_AUTHORIZATION_EVIDENCE = PR#332/5926464685
-NEXT_ACTION = IMPLEMENTATION_TRANCHE_1
 INDEPENDENT_IMPLEMENTATION_PLAN_REVIEW = PASS
 IMPLEMENTATION_PLAN_ARCHITECT_REVIEW = 5925360293
 IMPLEMENTATION_PLAN_EVALUATED_HEAD = 2cf349b10ecb3dd326818fd401662ed37817b603
@@ -74,8 +69,7 @@ Definition, architecture, a Decision Register entry, acceptance, or implementati
 authorization.
 
 `READY_FOR_IMPLEMENTATION_AUTHORIZATION = YES` remains the readiness conclusion.
-Implementation Authorization is `APPROVED` on 2026-10-01. `IMPLEMENTATION_AUTHORIZED` is `YES` and `IMPLEMENTATION_STARTED` stays
-`NO`. Product Definition story rows are `READY_FOR_IMPLEMENTATION`. Implementation has not started.
+Implementation Authorization is `APPROVED` on 2026-10-01. That approval is immutable plan provenance (`AUTHORIZATION_EVIDENCE`). Current execution/lifecycle is owned by [`STATE.md`](../../STATE.md). This plan does not store current tranche or start/complete status.
 
 Product, Experience, locked architecture, Design Readiness, the Quality/Test Plan, and the
 Measurement/Instrumentation Plan stay binding. This plan sequences their implementation.
@@ -88,8 +82,8 @@ It does not reopen them.
 ```text
 IMPLEMENTATION_PLAN_GATE = PASS
 IMPLEMENTATION_PLAN_FINALIZED = YES
-IMPLEMENTATION_AUTHORIZED = YES
-IMPLEMENTATION_STARTED = NO
+PLAN_APPROVAL = PASS
+AUTHORIZATION_EVIDENCE = PR#332/5926464685
 RUNTIME_CHANGE_AUTHORIZED = NO
 SCHEMA_MIGRATION_AUTHORIZED = NO
 MIGRATION_WRITTEN_BY_THIS_CANDIDATE = NO
@@ -145,7 +139,7 @@ SOURCE_DRIFT = NO
 
 Binding identities match section 0. When this plan was written, the next gate on
 ROADMAP/STATE was `IMPLEMENTATION_PLAN`. Formal lifecycle stays `ARCHITECTURE_LOCKED`.
-Plan persistence moved the next gate to `IMPLEMENTATION_AUTHORIZATION`. Founder authorization on 2026-10-01 then approved implementation. The next action is `IMPLEMENTATION_TRANCHE_1`. This record does not start implementation.
+Plan persistence moved the next gate to `IMPLEMENTATION_AUTHORIZATION`. Founder authorization on 2026-10-01 then approved implementation. Those are historical plan-time facts, not current execution. Current execution/lifecycle is owned by STATE.md.
 
 ---
 
@@ -172,14 +166,14 @@ not enter implementation.
 
 ```text
 READY_FOR_IMPLEMENTATION_AUTHORIZATION = YES
-IMPLEMENTATION_AUTHORIZED = YES
-IMPLEMENTATION_STARTED = NO
+PLAN_APPROVAL = PASS
+AUTHORIZATION_EVIDENCE = PR#332/5926464685
 ```
 
 `READY_FOR_IMPLEMENTATION_AUTHORIZATION` means a later human authorization can proceed
 without a missing material decision. It is not that authorization. Product Definition
 story readiness is `READY_FOR_IMPLEMENTATION` after explicit Implementation
-Authorization. Implementation has not started.
+Authorization. Current execution/lifecycle is owned by STATE.md.
 
 ---
 
@@ -1183,10 +1177,8 @@ QUALITY_PLAN = KNOWN
 MEASUREMENT_INTENT = KNOWN
 OPEN_MATERIAL_DECISIONS = NONE
 READY_FOR_IMPLEMENTATION_AUTHORIZATION = YES
-IMPLEMENTATION_AUTHORIZED = YES
-IMPLEMENTATION_STARTED = NO
-IMPLEMENTATION_COMPLETE = NO
-IMP036J_ACCEPTED = NO
+PLAN_APPROVAL = PASS
+AUTHORIZATION_EVIDENCE = PR#332/5926464685
 PROOF_EXECUTED = NO
 PRODUCT_SEMANTICS_CHANGED = NO
 EXPERIENCE_SEMANTICS_CHANGED = NO
@@ -1194,6 +1186,6 @@ ARCHITECTURE_CHANGED = NO
 ```
 
 This verdict is the persisted planning-gate assessment. Implementation Plan PASS is
-recorded in ROADMAP and STATE. Implementation Authorization is APPROVED on 2026-10-01
-(PR #332 comment `5926464685`). Stories are `READY_FOR_IMPLEMENTATION`. Implementation
-has not started. This record does not start implementation.
+recorded as plan provenance. Implementation Authorization is APPROVED on 2026-10-01
+(PR #332 comment `5926464685`). Stories are `READY_FOR_IMPLEMENTATION`. Current
+execution/lifecycle is owned by STATE.md.
