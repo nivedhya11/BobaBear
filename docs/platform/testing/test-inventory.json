@@ -31,11 +31,11 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2266,
-    "executableTestFiles": 495,
+    "trackedPathsConsidered": 2282,
+    "executableTestFiles": 497,
     "sourceTestFiles": 148,
     "testsTreeExecutableFiles": 272,
-    "scriptTestFiles": 75,
+    "scriptTestFiles": 77,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
     "playwrightConfigs": 7,
@@ -47,7 +47,7 @@
     "packageCoverageCommands": 1,
     "packageInventoryCommands": 2,
     "ciWorkflowFiles": 4,
-    "ciValidationSteps": 125,
+    "ciValidationSteps": 126,
     "protectedEvidenceTrackedFiles": 3,
     "archiveTrackedFiles": 92
   },
@@ -511,6 +511,8 @@
     "scripts/generate-nginx-security-headers.test.mjs",
     "scripts/governance-context.test.mjs",
     "scripts/governance-fingerprint.test.mjs",
+    "scripts/governance-v2/engine.test.mjs",
+    "scripts/governance-v2/shadow.test.mjs",
     "scripts/lib/vitest-result-validation.test.mjs",
     "scripts/nginx-origin-redirect.test.mjs",
     "scripts/origin-trust/verify-contracts.test.mjs",
@@ -965,6 +967,10 @@
         {
           "name": "Project consistency",
           "run": "npm run project:consistency"
+        },
+        {
+          "name": "Governance v2 shadow",
+          "run": "npm run governance:v2:test && npm run governance:v2:shadow"
         },
         {
           "name": "Governance fingerprint",
@@ -2082,6 +2088,40 @@
     },
     {
       "path": "scripts/governance-fingerprint.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/governance-v2/engine.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/governance-v2/shadow.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
       "testType": "script-unit",

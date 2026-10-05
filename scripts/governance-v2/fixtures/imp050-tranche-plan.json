@@ -1,0 +1,10 @@
+{
+  "TEST_ONLY": true,
+  "NON_AUTHORITATIVE": true,
+  "slice": "IMP-050",
+  "tranches": [
+    { "id": "FOUNDATION", "order": 1, "required": true, "dependencies": [] },
+    { "id": "WORKFLOW", "order": 2, "required": true, "dependencies": ["FOUNDATION"] },
+    { "id": "MEASUREMENT", "order": 3, "required": true, "dependencies": ["FOUNDATION"] }
+  ]
+}

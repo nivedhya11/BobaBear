@@ -1,0 +1,21 @@
+{
+  "TEST_ONLY": true,
+  "NON_AUTHORITATIVE": true,
+  "slice": "IMP-050",
+  "lifecyclePhase": "IMPLEMENTATION_IN_PROGRESS",
+  "implementation": {
+    "authorized": true,
+    "complete": false,
+    "trancheStatuses": {
+      "FOUNDATION": "PASS",
+      "WORKFLOW": "NOT_STARTED",
+      "MEASUREMENT": "PASS"
+    }
+  },
+  "founderUat": "NOT_PERFORMED",
+  "accepted": false,
+  "pendingAcceptance": "NONE",
+  "acceptedThrough": "IMP-036I",
+  "currentSlice": "IMP-050",
+  "nextSlice": "NONE"
+}
