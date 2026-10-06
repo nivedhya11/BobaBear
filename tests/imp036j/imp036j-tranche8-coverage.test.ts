@@ -521,8 +521,28 @@ const EXPERIENCE_REQUIREMENTS: readonly Evidence[] = [
     id: "XR-IMP-036J-010",
     proofs: [
       {
-        file: "scripts/imp036j-tranche5-responsive-proof.mjs",
-        needle: "cart-sticky-amount",
+        file: "tests/e2e/customer-ordering.spec.ts",
+        needle: "mobile: IMP-036J responsive commercial Cart Review Payment proof",
+      },
+      {
+        file: "tests/e2e/customer-ordering.spec.ts",
+        needle: "IMP-036J responsive commercial Cart Review Payment proof at lg",
+      },
+      {
+        file: "tests/e2e/customer-ordering.spec.ts",
+        needle: "REVIEW_KEYBOARD_ORDER_PROOF",
+      },
+      {
+        file: "tests/e2e/customer-ordering.spec.ts",
+        needle: 'emulateMedia({ reducedMotion: "reduce" })',
+      },
+      {
+        file: "tests/e2e/customer-ordering.spec.ts",
+        needle: "PAYMENT_READ_ONLY_PROOF",
+      },
+      {
+        file: "scripts/imp036j-tranche8-responsive-browser-proof.mjs",
+        needle: "playwright.customer-ordering.config.ts",
       },
     ],
   },
@@ -809,6 +829,28 @@ describe("IMP-036J T8 coverage completeness", () => {
       true,
     );
     expect(isExecutableProofFile("scripts/imp036j-tranche5-responsive-proof.mjs")).toBe(true);
+    expect(isExecutableProofFile("scripts/imp036j-tranche8-responsive-browser-proof.mjs")).toBe(
+      true,
+    );
+    expect(isExecutableProofFile("tests/e2e/customer-ordering.spec.ts")).toBe(true);
+  });
+
+  it("maps XR-IMP-036J-010 to integrated Cart Review Payment proofs below lg and at lg", () => {
+    const spec = load("tests/e2e/customer-ordering.spec.ts");
+    expect(spec).toContain("mobile: IMP-036J responsive commercial Cart Review Payment proof");
+    expect(spec).toContain("IMP-036J responsive commercial Cart Review Payment proof at lg");
+    expect(spec).toContain("persist narrow viewport identity 390x844");
+    expect(spec).toContain("persist lg viewport identity 1024x900");
+    expect(spec).toContain("CART_NARROW");
+    expect(spec).toContain("CART_LG");
+    expect(spec).toContain("REVIEW_NARROW");
+    expect(spec).toContain("REVIEW_LG");
+    expect(spec).toContain("PAYMENT_NARROW");
+    expect(spec).toContain("PAYMENT_LG");
+    const runner = load("scripts/imp036j-tranche8-responsive-browser-proof.mjs");
+    expect(runner).toContain("IMP-036J responsive commercial Cart Review Payment proof");
+    const pkg = load("package.json");
+    expect(pkg).toContain("scripts/imp036j-tranche8-responsive-browser-proof.mjs");
   });
 
   it("maps every mandatory AC to live executable evidence", () => {
