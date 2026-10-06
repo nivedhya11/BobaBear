@@ -98,7 +98,11 @@ export function CommercialOfferStack(props: {
         </p>
       ) : null}
       {props.dropped ? (
-        <p role="status" className="font-body text-[13px] text-[var(--text-secondary)]">
+        <p
+          role="status"
+          data-testid="copy-dropped"
+          className="font-body text-[13px] text-[var(--text-secondary)]"
+        >
           {IMP036J_COPY.DROPPED}
         </p>
       ) : null}

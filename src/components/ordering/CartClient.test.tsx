@@ -1148,4 +1148,103 @@ describe("CartClient", () => {
       document.querySelectorAll('[data-offer-component="CURRENT_CHECKOUT_TOTAL"]').length,
     ).toBeGreaterThan(0);
   });
+
+  it("AC-036J-003-02 CartClient crossed-and-lost uses server evaluation without client threshold maths", async () => {
+    const belowExplanation = {
+      couponPresentationClass: null,
+      merchandiseOrOrderSavingPaise: "0",
+      deliverySavingPaise: "0",
+      totalSavedPaise: "0",
+      grandTotalPaise: "19900",
+      thresholdProgress: {
+        remainingAmountPaise: "5000",
+        remainingItemQuantity: null,
+        displayName: "order discount",
+        benefitType: "fixed_amount_off",
+      },
+      complimentary: null,
+      submittedCouponResult: null,
+    };
+    const crossedExplanation = {
+      couponPresentationClass: null,
+      merchandiseOrOrderSavingPaise: "8000",
+      deliverySavingPaise: "0",
+      totalSavedPaise: "8000",
+      grandTotalPaise: "31800",
+      thresholdProgress: null,
+      complimentary: null,
+      submittedCouponResult: null,
+    };
+    function evaluationFor(
+      revision: string,
+      explanation: typeof belowExplanation | typeof crossedExplanation,
+    ) {
+      return {
+        ok: true,
+        status: 200,
+        data: {
+          cartId: "cart-1",
+          cartRevision: revision,
+          evaluatedAt: "2026-08-13T00:00:00.000Z",
+          status: "COMPLETE",
+          quote: {
+            commercialExplanation: explanation,
+            grandTotalPaise: explanation.grandTotalPaise,
+            basePaise: "19900",
+          },
+        },
+      };
+    }
+
+    getActiveCart.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: { cart: guestCart("1", [{ id: "line-1", variantId, quantity: 1 }]) },
+    });
+    evaluateCart
+      .mockResolvedValueOnce(evaluationFor("1", belowExplanation))
+      .mockResolvedValueOnce(evaluationFor("2", crossedExplanation))
+      .mockResolvedValueOnce(evaluationFor("3", belowExplanation));
+    setCartLineQuantity
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: { cart: guestCart("2", [{ id: "line-1", variantId, quantity: 2 }]) },
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: { cart: guestCart("3", [{ id: "line-1", variantId, quantity: 1 }]) },
+      });
+
+    render(<CartClient brandId={brandId} />);
+    expect(
+      (await screen.findAllByText("Add ₹50.00 more to unlock order discount.")).length,
+    ).toBeGreaterThan(0);
+    expect(screen.queryByText(IMP036J_COPY.DROPPED)).not.toBeInTheDocument();
+    expect(screen.queryByText(IMP036J_COPY.ORDER_SAVING_ROW)).not.toBeInTheDocument();
+    expect(screen.queryByText("Add ₹601.00 more to unlock order discount.")).not.toBeInTheDocument();
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: /increase classic milk tea quantity/i }),
+    );
+    await waitFor(() => {
+      expect(screen.getAllByText(IMP036J_COPY.ORDER_SAVING_ROW).length).toBeGreaterThan(0);
+    });
+    expect(screen.queryByText(/Add .+ more to unlock/)).not.toBeInTheDocument();
+    expect(screen.queryByText(IMP036J_COPY.DROPPED)).not.toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: /decrease classic milk tea quantity/i }),
+    );
+    await waitFor(() => {
+      expect(screen.getAllByTestId("copy-dropped").length).toBeGreaterThan(0);
+    });
+    expect(screen.queryByText(IMP036J_COPY.ORDER_SAVING_ROW)).not.toBeInTheDocument();
+    expect(screen.getAllByText("Add ₹50.00 more to unlock order discount.").length).toBeGreaterThan(
+      0,
+    );
+    expect(screen.queryByText("Add ₹601.00 more to unlock order discount.")).not.toBeInTheDocument();
+    expect(screen.getAllByTestId("copy-dropped")[0]).toHaveTextContent(IMP036J_COPY.DROPPED);
+  });
 });

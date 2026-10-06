@@ -184,9 +184,13 @@ const MANDATORY_AC: readonly Evidence[] = [
     id: "AC-036J-003-02",
     proofs: [
       {
-        file: "src/components/ordering/imp036j-tranche5-presentation.test.tsx",
+        file: "src/components/ordering/CartClient.test.tsx",
         needle:
-          "replaces threshold progress with saving when the minimum holds and shows COPY-DROPPED without a stale saving",
+          "AC-036J-003-02 CartClient crossed-and-lost uses server evaluation without client threshold maths",
+      },
+      {
+        file: "src/components/ordering/CheckoutClient.destination.test.tsx",
+        needle: "AC-036J-003-02 Review crossed-and-lost after re-evaluation",
       },
       {
         file: "tests/promotions/imp036j-tranche3-commercial-evaluation.test.ts",

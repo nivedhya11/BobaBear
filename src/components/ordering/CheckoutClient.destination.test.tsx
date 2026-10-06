@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CheckoutClient } from "@/components/ordering/CheckoutClient";
+import { IMP036J_COPY } from "@/components/ordering/imp036j-copy";
 import type { OrderingCatalog } from "@/shared/ordering-catalog";
 
 const {
@@ -777,5 +778,99 @@ describe("CheckoutClient cart-changed payment recovery", () => {
     expect(screen.getByTestId("checkout-steps")).toHaveTextContent("Fulfilment");
     await chooseDelivery(user);
     expect(screen.getByTestId("checkout-destination-select")).toBeInTheDocument();
+  });
+});
+
+describe("AC-036J-003-02 Review crossed-and-lost after re-evaluation", () => {
+  it("shows COPY-DROPPED and server progress after a later Review evaluation loses the saving", async () => {
+    const user = userEvent.setup();
+    const crossedQuote = {
+      commercialExplanation: {
+        couponPresentationClass: null,
+        merchandiseOrOrderSavingPaise: "8000",
+        deliverySavingPaise: "0",
+        totalSavedPaise: "8000",
+        grandTotalPaise: "17900",
+        thresholdProgress: null,
+        complimentary: null,
+        submittedCouponResult: null,
+      },
+    };
+    const droppedQuote = {
+      commercialExplanation: {
+        couponPresentationClass: null,
+        merchandiseOrOrderSavingPaise: "0",
+        deliverySavingPaise: "0",
+        totalSavedPaise: "0",
+        grandTotalPaise: "25900",
+        thresholdProgress: {
+          remainingAmountPaise: "5000",
+          remainingItemQuantity: null,
+          displayName: "order discount",
+          benefitType: "fixed_amount_off",
+        },
+        complimentary: null,
+        submittedCouponResult: null,
+      },
+    };
+    setCheckoutDestination.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        checkout: checkoutState({
+          revision: "2",
+          status: "DRAFT",
+          destination: { sourceSavedAddressId: "addr-a" },
+        }),
+      },
+    });
+    evaluateCheckout
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          checkout: checkoutState({
+            revision: "3",
+            status: "READY_FOR_PAYMENT",
+            activeSnapshotId: "snap-1",
+            activeSnapshot: snapshot({
+              checkoutRevision: "3",
+              promotionDiscountPaise: "8000",
+              grandTotalPaise: "17900",
+            }),
+          }),
+          snapshot: snapshot({
+            checkoutRevision: "3",
+            promotionDiscountPaise: "8000",
+            grandTotalPaise: "17900",
+          }),
+          quote: crossedQuote,
+        },
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          checkout: checkoutState({
+            revision: "4",
+            status: "READY_FOR_PAYMENT",
+            activeSnapshotId: "snap-2",
+            activeSnapshot: snapshot({ id: "snap-2", checkoutRevision: "4" }),
+          }),
+          snapshot: snapshot({ id: "snap-2", checkoutRevision: "4" }),
+          quote: droppedQuote,
+        },
+      });
+
+    render(<CheckoutClient catalog={catalog} />);
+    await chooseDelivery(user);
+    await waitFor(() => expect(screen.getByTestId("pick-address-a")).toBeInTheDocument());
+    await user.click(screen.getByTestId("pick-address-a"));
+    await user.click(await screen.findByTestId("checkout-timing-asap"));
+    await waitFor(() => expect(screen.getByTestId("checkout-review")).toBeInTheDocument());
+    expect(screen.getByTestId("copy-dropped")).toHaveTextContent(IMP036J_COPY.DROPPED);
+    expect(screen.getByText("Add ₹50.00 more to unlock order discount.")).toBeInTheDocument();
+    expect(screen.queryByText(IMP036J_COPY.ORDER_SAVING_ROW)).not.toBeInTheDocument();
+    expect(screen.queryByText("Add ₹601.00 more to unlock order discount.")).not.toBeInTheDocument();
   });
 });

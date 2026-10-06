@@ -8,6 +8,8 @@ import {
   automaticStatusCopy,
   canReuseCheckoutEvaluation,
   couponStatusCopy,
+  hasAuthoritativeSaving,
+  offerDroppedFromAuthoritativeExplanations,
   sealedPaymentExplanationFromSnapshot,
   thresholdCopy,
 } from "./commercial-explanation-presentation";
@@ -712,6 +714,37 @@ describe("AR-036J-T5 remediation contracts", () => {
 });
 
 describe("IMP-036J T8 executable presentation evidence", () => {
+  it("derives COPY-DROPPED from consecutive server explanations without calculating remaining paise", () => {
+    const below = {
+      couponPresentationClass: null,
+      merchandiseOrOrderSavingPaise: "0",
+      deliverySavingPaise: "0",
+      totalSavedPaise: "0",
+      grandTotalPaise: "19900",
+      thresholdProgress: {
+        remainingAmountPaise: "5000",
+        remainingItemQuantity: null,
+        displayName: "order discount",
+        benefitType: "fixed_amount_off",
+      },
+      complimentary: null,
+      submittedCouponResult: null,
+    } as const;
+    const crossed = {
+      ...below,
+      merchandiseOrOrderSavingPaise: "8000",
+      totalSavedPaise: "8000",
+      grandTotalPaise: "31800",
+      thresholdProgress: null,
+    };
+    expect(hasAuthoritativeSaving(below)).toBe(false);
+    expect(hasAuthoritativeSaving(crossed)).toBe(true);
+    expect(offerDroppedFromAuthoritativeExplanations(null, below)).toBe(false);
+    expect(offerDroppedFromAuthoritativeExplanations(below, crossed)).toBe(false);
+    expect(offerDroppedFromAuthoritativeExplanations(crossed, below)).toBe(true);
+    expect(thresholdCopy(below)).toBe("Add ₹50.00 more to unlock order discount.");
+  });
+
   it("replaces threshold progress with saving when the minimum holds and shows COPY-DROPPED without a stale saving", () => {
     const { unmount } = render(
       <CommercialOfferStack
