@@ -271,6 +271,29 @@ export function thresholdCopy(
   return copyThreshold(formatPaise(progress.remainingAmountPaise), progress.displayName);
 }
 
+/** Server-authored saving rows already present on the explanation. Does not compute eligibility. */
+export function hasAuthoritativeSaving(
+  explanation: WireCommercialExplanation | null,
+): boolean {
+  if (!explanation) return false;
+  return (
+    explanation.merchandiseOrOrderSavingPaise !== "0" || explanation.deliverySavingPaise !== "0"
+  );
+}
+
+/**
+ * Presentation transition: a previous committed server explanation had an applied
+ * saving, and the next committed server explanation does not. Uses only those
+ * server fields. Does not calculate remaining threshold, payable, or eligibility.
+ */
+export function offerDroppedFromAuthoritativeExplanations(
+  previous: WireCommercialExplanation | null,
+  next: WireCommercialExplanation | null,
+): boolean {
+  if (!previous || !next) return false;
+  return hasAuthoritativeSaving(previous) && !hasAuthoritativeSaving(next);
+}
+
 export function canReuseCheckoutEvaluation(input: {
   checkout: Readonly<{
     fulfilmentMode: string;

@@ -56,7 +56,11 @@ import {
 import { CommercialOfferStack } from "@/components/ordering/CommercialOfferStack";
 import { CouponField } from "@/components/ordering/CouponField";
 import { IMP036J_COPY } from "@/components/ordering/imp036j-copy";
-import { parseCommercialExplanation } from "@/components/ordering/commercial-explanation-presentation";
+import {
+  hasAuthoritativeSaving,
+  offerDroppedFromAuthoritativeExplanations,
+  parseCommercialExplanation,
+} from "@/components/ordering/commercial-explanation-presentation";
 import {
   couponFieldStatusFromExplanation,
   couponFieldStatusFromMutationFailure,
@@ -136,6 +140,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
   const [couponFocusResultToken, setCouponFocusResultToken] = useState(0);
   const [staleReview, setStaleReview] = useState(false);
   const [giftGone, setGiftGone] = useState(false);
+  const [offerDropped, setOfferDropped] = useState(false);
   const reviewSummaryRef = useRef<HTMLDivElement | null>(null);
   const [addresses, setAddresses] = useState<readonly CommerceAddress[]>([]);
   const [guestRevision, setGuestRevision] = useState<string | null>(null);
@@ -176,6 +181,15 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
       );
     });
     if (hadGift && !hasGift) setGiftGone(true);
+    const previousExplanation = parseCommercialExplanation(reviewQuote);
+    const nextExplanation = parseCommercialExplanation(evaluated.quote ?? null);
+    if (hasAuthoritativeSaving(nextExplanation)) {
+      setOfferDropped(false);
+    } else if (offerDroppedFromAuthoritativeExplanations(previousExplanation, nextExplanation)) {
+      setOfferDropped(true);
+    } else if (!nextExplanation) {
+      setOfferDropped(false);
+    }
     setCheckout(evaluated.checkout);
     setSnapshot(evaluated.snapshot);
     setEvaluationId(evaluated.evaluationId ?? null);
@@ -1240,6 +1254,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
                 baseSnapshot={snapshot}
                 stale={staleReview}
                 giftGone={giftGone}
+                dropped={offerDropped}
                 complimentaryName={
                   narrowCheckoutSnapshotLines(snapshot.lines).find(
                     (line) => line.lineOrigin === "complimentary_offer",

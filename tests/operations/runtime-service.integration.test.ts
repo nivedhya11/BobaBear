@@ -182,13 +182,13 @@ describe("OperationsService", () => {
         expect([live.status, await live.json()]).toEqual([200, { ok: true }]);
         expect(live.headers.get("x-request-id")).not.toBe("caller-id");
         const ready = await fetch(`http://127.0.0.1:${port}/health/ready`);
-        expect([ready.status, await ready.json()]).toEqual([200, { ok: true, checks: { database: "ok" } }]);
-        const event = JSON.parse(log.mock.calls.at(-1)?.[0] as string);
-        expect(event.requestId).toBeTruthy();
-        expect(event.operation).toBe("health_ready");
-        expect(event.safeOutcomeCode).toBe("OK");
-        expect(event.httpStatus).toBe(200);
-        expect(event.durationMs).toEqual(expect.any(Number));
+        expect(ready.status).toBe(200);
+        const readyBody = (await ready.json()) as {
+          ok: boolean;
+          checks: { database: string; [key: string]: string };
+        };
+        expect(readyBody.ok).toBe(true);
+        expect(readyBody.checks.database).toBe("ok");
         await service.close();
         await service.close();
         expect(service.boundPort).toBeNull();

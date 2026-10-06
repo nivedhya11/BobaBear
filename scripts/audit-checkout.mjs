@@ -137,10 +137,9 @@ function main() {
       findings.push(`Prior migration hash changed: ${prior}`);
     }
   }
-  if (integrity.migrations.length !== 15 && integrity.migrations.length !== 16 && integrity.migrations.length !== 17 &&
-    integrity.migrations.length !== 18 && integrity.migrations.length !== 19 && integrity.migrations.length !== 20) {
+  if (integrity.migrations.length < 21) {
     findings.push(
-      `Expected 15–20 sealed migrations, found ${integrity.migrations.length}`,
+      `Expected the current post-checkout migration chain, found ${integrity.migrations.length}`,
     );
   }
   if (
@@ -276,6 +275,7 @@ function main() {
     "server-only",
     "tailwind-merge",
     "zod",
+    "html2pdfsmith",
   ];
   for (const dep of Object.keys(pkg.dependencies || {})) {
     if (!runtimeDepsBefore.includes(dep)) {
@@ -302,14 +302,10 @@ function main() {
   if (drizzleFiles.some((f) => f.startsWith("0017_") && f !== "0017_order.sql")) {
     findings.push("Unexpected 0017 migration; expected 0017_order.sql only");
   }
-  if (
-    drizzleFiles.length !== 16 &&
-    drizzleFiles.length !== 17 &&
-    drizzleFiles.length !== 18 &&
-    drizzleFiles.length !== 19 &&
-    drizzleFiles.length !== 20
-  ) {
-    findings.push(`Expected 16–20 drizzle SQL migrations, found ${drizzleFiles.length}`);
+  if (drizzleFiles.length !== integrity.migrations.length) {
+    findings.push(
+      `Drizzle SQL migrations (${drizzleFiles.length}) must match sealed integrity (${integrity.migrations.length})`,
+    );
   }
 
   const sharedConstants = read("src/shared/checkout/constants.ts");

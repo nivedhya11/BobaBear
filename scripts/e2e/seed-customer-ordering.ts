@@ -7,6 +7,7 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
+import { randomBytes } from "node:crypto";
 import { sql } from "drizzle-orm";
 
 import { loadConfig, type WorkerConfig } from "../../src/platform/config";
@@ -31,6 +32,12 @@ import {
   createLegalEntityTaxProfile,
 } from "../../src/server/pricing";
 import { upsertOutletPickupProfile } from "../../src/server/outlet-pickup-profile/repository";
+import {
+  activatePromotion,
+  createPromotionDraft,
+  setPromotionBenefit,
+  setPromotionTargets,
+} from "../../src/server/promotions";
 import {
   setOutletServiceabilityDistancePolicy,
   setOutletServiceabilityRoutingPriority,
@@ -228,6 +235,84 @@ export async function seedCustomerOrderingCommerce(workerConfig: WorkerConfig): 
       priceBookId: pricing.priceBookId ?? BOOTSTRAP_PRICE_BOOK_ID,
       packagingPaise: BigInt(2_000),
       deliveryPaise: BigInt(4_000),
+    });
+
+    // IMP-036J T8 — first-order automatic Offer for GJ-FIRST-ORDER / GJ-RETURNING-ORDER.
+    await persistence.transaction(async (tx) => {
+      const created = await createPromotionDraft(tx, {
+        actor,
+        brandId: imported.brandId,
+        code: `fo-${randomBytes(3).toString("hex")}`,
+        displayName: "First order welcome",
+        scopeType: "brand",
+        territoryId: null,
+        organizationId: null,
+        outletId: null,
+        triggerType: "automatic",
+        stackingPolicy: "exclusive",
+        startsAt: new Date("2020-01-01T00:00:00Z"),
+        endsAt: null,
+        firstOrderOnly: true,
+      });
+      let revision = created.revision;
+      revision = (
+        await setPromotionBenefit(tx, {
+          actor,
+          promotionId: created.id,
+          expectedPromotionRevision: revision,
+          benefit: {
+            benefitType: "percentage_discount",
+            percentageBps: 1000,
+            fixedAmountPaise: null,
+            maximumDiscountPaise: null,
+            buyQuantity: null,
+            getQuantity: null,
+            repeatable: null,
+            maximumRewardQuantity: null,
+            includeModifiers: false,
+            includeBundleDeltas: false,
+          },
+        })
+      ).revision;
+      revision = (
+        await setPromotionTargets(tx, {
+          actor,
+          promotionId: created.id,
+          expectedPromotionRevision: revision,
+          targetRole: "qualifier",
+          targets: [
+            {
+              targetRole: "qualifier",
+              targetType: "all_merchandise",
+              productId: null,
+              variantId: null,
+              chargeDefinitionId: null,
+            },
+          ],
+        })
+      ).revision;
+      revision = (
+        await setPromotionTargets(tx, {
+          actor,
+          promotionId: created.id,
+          expectedPromotionRevision: revision,
+          targetRole: "benefit",
+          targets: [
+            {
+              targetRole: "benefit",
+              targetType: "all_merchandise",
+              productId: null,
+              variantId: null,
+              chargeDefinitionId: null,
+            },
+          ],
+        })
+      ).revision;
+      await activatePromotion(tx, {
+        actor,
+        promotionId: created.id,
+        expectedPromotionRevision: revision,
+      });
     });
 
     // IMP-036H — enable ASAP Pickup for the E2E outlet (AC-002 golden journey).

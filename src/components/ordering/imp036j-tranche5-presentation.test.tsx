@@ -8,6 +8,8 @@ import {
   automaticStatusCopy,
   canReuseCheckoutEvaluation,
   couponStatusCopy,
+  hasAuthoritativeSaving,
+  offerDroppedFromAuthoritativeExplanations,
   sealedPaymentExplanationFromSnapshot,
   thresholdCopy,
 } from "./commercial-explanation-presentation";
@@ -710,3 +712,242 @@ describe("AR-036J-T5 remediation contracts", () => {
     expect(liveReevaluation).not.toHaveBeenCalled();
   });
 });
+
+describe("IMP-036J T8 executable presentation evidence", () => {
+  it("derives COPY-DROPPED from consecutive server explanations without calculating remaining paise", () => {
+    const below = {
+      couponPresentationClass: null,
+      merchandiseOrOrderSavingPaise: "0",
+      deliverySavingPaise: "0",
+      totalSavedPaise: "0",
+      grandTotalPaise: "19900",
+      thresholdProgress: {
+        remainingAmountPaise: "5000",
+        remainingItemQuantity: null,
+        displayName: "order discount",
+        benefitType: "fixed_amount_off",
+      },
+      complimentary: null,
+      submittedCouponResult: null,
+    } as const;
+    const crossed = {
+      ...below,
+      merchandiseOrOrderSavingPaise: "8000",
+      totalSavedPaise: "8000",
+      grandTotalPaise: "31800",
+      thresholdProgress: null,
+    };
+    expect(hasAuthoritativeSaving(below)).toBe(false);
+    expect(hasAuthoritativeSaving(crossed)).toBe(true);
+    expect(offerDroppedFromAuthoritativeExplanations(null, below)).toBe(false);
+    expect(offerDroppedFromAuthoritativeExplanations(below, crossed)).toBe(false);
+    expect(offerDroppedFromAuthoritativeExplanations(crossed, below)).toBe(true);
+    expect(thresholdCopy(below)).toBe("Add ₹50.00 more to unlock order discount.");
+  });
+
+  it("replaces threshold progress with saving when the minimum holds and shows COPY-DROPPED without a stale saving", () => {
+    const { unmount } = render(
+      <CommercialOfferStack
+        explanation={{
+          couponPresentationClass: null,
+          merchandiseOrOrderSavingPaise: "8000",
+          deliverySavingPaise: "0",
+          totalSavedPaise: "8000",
+          grandTotalPaise: "11900",
+          thresholdProgress: null,
+          complimentary: null,
+          submittedCouponResult: null,
+        }}
+        payableLabel={IMP036J_COPY.TOTAL_PAYABLE}
+        payablePaise="11900"
+      />,
+    );
+    expect(screen.getByText(IMP036J_COPY.ORDER_SAVING_ROW)).toBeInTheDocument();
+    expect(screen.queryByText(IMP036J_COPY.DROPPED)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Add .+ more to unlock/)).not.toBeInTheDocument();
+    unmount();
+
+    render(
+      <CommercialOfferStack
+        explanation={{
+          couponPresentationClass: null,
+          merchandiseOrOrderSavingPaise: "0",
+          deliverySavingPaise: "0",
+          totalSavedPaise: "0",
+          grandTotalPaise: "19900",
+          thresholdProgress: {
+            remainingAmountPaise: "5000",
+            remainingItemQuantity: null,
+            displayName: "free delivery",
+            benefitType: "delivery_fee_waiver",
+          },
+          complimentary: null,
+          submittedCouponResult: null,
+        }}
+        payableLabel={IMP036J_COPY.TOTAL_PAYABLE}
+        payablePaise="19900"
+        dropped
+      />,
+    );
+    expect(screen.getByText(IMP036J_COPY.DROPPED)).toBeInTheDocument();
+    expect(screen.queryByText(IMP036J_COPY.ORDER_SAVING_ROW)).not.toBeInTheDocument();
+    expect(screen.getByText("Add ₹50.00 more to unlock free delivery.")).toBeInTheDocument();
+  });
+
+  it("maps invalid, expired, inapplicable, global, and personal cap to five distinct sentences", () => {
+    const sentences = [
+      couponStatusCopy({
+        explanation: {
+          couponPresentationClass: null,
+          merchandiseOrOrderSavingPaise: "0",
+          deliverySavingPaise: "0",
+          totalSavedPaise: "0",
+          grandTotalPaise: "19900",
+          thresholdProgress: null,
+          complimentary: null,
+          submittedCouponResult: { status: "INVALID", reasonCode: "UNKNOWN", canonicalCode: null },
+        },
+      })?.text,
+      couponStatusCopy({
+        explanation: {
+          couponPresentationClass: null,
+          merchandiseOrOrderSavingPaise: "0",
+          deliverySavingPaise: "0",
+          totalSavedPaise: "0",
+          grandTotalPaise: "19900",
+          thresholdProgress: null,
+          complimentary: null,
+          submittedCouponResult: {
+            status: "NOT_APPLICABLE",
+            reasonCode: "COUPON_EXPIRED",
+            canonicalCode: "OLD",
+          },
+        },
+      })?.text,
+      couponStatusCopy({
+        explanation: {
+          couponPresentationClass: null,
+          merchandiseOrOrderSavingPaise: "0",
+          deliverySavingPaise: "0",
+          totalSavedPaise: "0",
+          grandTotalPaise: "19900",
+          thresholdProgress: null,
+          complimentary: null,
+          submittedCouponResult: {
+            status: "NOT_APPLICABLE",
+            reasonCode: "NOT_APPLICABLE",
+            canonicalCode: "SAVE",
+          },
+        },
+      })?.text,
+      couponStatusCopy({
+        explanation: {
+          couponPresentationClass: null,
+          merchandiseOrOrderSavingPaise: "0",
+          deliverySavingPaise: "0",
+          totalSavedPaise: "0",
+          grandTotalPaise: "19900",
+          thresholdProgress: null,
+          complimentary: null,
+          submittedCouponResult: {
+            status: "NOT_APPLICABLE",
+            reasonCode: "GLOBAL_CAP_REACHED",
+            canonicalCode: "SAVE",
+          },
+        },
+      })?.text,
+      couponStatusCopy({
+        explanation: {
+          couponPresentationClass: null,
+          merchandiseOrOrderSavingPaise: "0",
+          deliverySavingPaise: "0",
+          totalSavedPaise: "0",
+          grandTotalPaise: "19900",
+          thresholdProgress: null,
+          complimentary: null,
+          submittedCouponResult: {
+            status: "NOT_APPLICABLE",
+            reasonCode: "PERSONAL_CAP_REACHED",
+            canonicalCode: "SAVE",
+          },
+        },
+      })?.text,
+    ];
+    expect(sentences).toEqual([
+      IMP036J_COPY.INVALID,
+      IMP036J_COPY.EXPIRED,
+      IMP036J_COPY.INAPPLICABLE,
+      IMP036J_COPY.GLOBAL_CAP,
+      IMP036J_COPY.PERSONAL_CAP,
+    ]);
+    expect(new Set(sentences).size).toBe(5);
+    expect(sentences.join(" ")).not.toMatch(/remaining|other customer|near-match/i);
+  });
+
+  it("pickup omits delivery saving and uses mode-clause copy without first-order history", () => {
+    render(
+      <CommercialOfferStack
+        explanation={{
+          couponPresentationClass: null,
+          merchandiseOrOrderSavingPaise: "0",
+          deliverySavingPaise: "4000",
+          totalSavedPaise: "4000",
+          grandTotalPaise: "19900",
+          thresholdProgress: null,
+          complimentary: null,
+          submittedCouponResult: {
+            status: "NOT_APPLICABLE",
+            reasonCode: "FULFILMENT_MODE_MISMATCH",
+            canonicalCode: "DELIV",
+          },
+        }}
+        payableLabel={IMP036J_COPY.TOTAL_PAYABLE}
+        payablePaise="19900"
+        fulfilmentMode="PICKUP"
+        deliveryChargePaise="4000"
+      />,
+    );
+    expect(screen.getByText(IMP036J_COPY.INAPPLICABLE_DELIVERY)).toBeInTheDocument();
+    expect(screen.queryByText(IMP036J_COPY.DELIVERY_SAVING_ROW)).not.toBeInTheDocument();
+    expect(screen.queryByText(/first.order|previous order|purchase history/i)).not.toBeInTheDocument();
+
+    expect(
+      couponStatusCopy({
+        fulfilmentMode: "DELIVERY",
+        explanation: {
+          couponPresentationClass: null,
+          merchandiseOrOrderSavingPaise: "0",
+          deliverySavingPaise: "0",
+          totalSavedPaise: "0",
+          grandTotalPaise: "19900",
+          thresholdProgress: null,
+          complimentary: null,
+          submittedCouponResult: {
+            status: "NOT_APPLICABLE",
+            reasonCode: "FULFILMENT_MODE_MISMATCH",
+            canonicalCode: "PICK",
+          },
+        },
+      })?.text,
+    ).toBe(IMP036J_COPY.INAPPLICABLE_PICKUP);
+    expect(
+      couponStatusCopy({
+        explanation: {
+          couponPresentationClass: null,
+          merchandiseOrOrderSavingPaise: "0",
+          deliverySavingPaise: "0",
+          totalSavedPaise: "0",
+          grandTotalPaise: "19900",
+          thresholdProgress: null,
+          complimentary: null,
+          submittedCouponResult: {
+            status: "CUSTOMER_IDENTITY_REQUIRED",
+            reasonCode: "FIRST_ORDER_IDENTITY_REQUIRED",
+            canonicalCode: "FIRST",
+          },
+        },
+      })?.text,
+    ).toBe(IMP036J_COPY.SIGN_IN);
+  });
+});
+

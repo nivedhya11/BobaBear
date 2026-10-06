@@ -99,6 +99,19 @@ async function main() {
       return { desktopId: desktop.id, tabletId: tablet.id };
     });
 
+    await persistence.withContext(async (ctx) => {
+      await ctx.db.execute(sql`
+        update app.price_book_variant_prices
+        set allow_outlet_override = true
+        where brand_id = ${commerce.brandId}::uuid
+      `);
+      await ctx.db.execute(sql`
+        update app.price_book_modifier_prices
+        set allow_outlet_override = true
+        where brand_id = ${commerce.brandId}::uuid
+      `);
+    });
+
     const operator = await createWorkforceOperatorUser(runtime, {
       email: workforceEmail,
       name: "Commercial E2E Brand Admin",

@@ -8,16 +8,14 @@ import { fileURLToPath } from "node:url";
 import { validateLiveCurrentState, alignGovernanceMetaToGov2Blocks } from "./current.mjs";
 import { loadLiveAuthorities, parseGov2Block } from "./load-authorities.mjs";
 import { validateCurrentState } from "./invariants.mjs";
-import { validateTransition } from "./transition.mjs";
-import { TRANCHE_STATUS } from "./model.mjs";
 import { CURRENT_AUTHORITY_KIND, parseCurrentGovernanceMeta } from "./schema.mjs";
-import { loadFixture, structuredState } from "./load-fixture.mjs";
+import { loadFixture } from "./load-fixture.mjs";
 import { buildGovernanceContext, serializeGovernanceContext, SNAPSHOT_REL } from "../governance-context.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
 describe("GOV-2 live authorities", () => {
-  it("validates live ROADMAP/STATE/plan blocks and keeps T8 NOT_STARTED", () => {
+  it("validates live ROADMAP/STATE/plan blocks and records T8 PASS", () => {
     const report = validateLiveCurrentState(root);
     assert.equal(report.ok, true, JSON.stringify(report.findings, null, 2));
     assert.equal(report.GOV2_VALIDATION_AUTHORITATIVE, "YES");
@@ -25,9 +23,9 @@ describe("GOV-2 live authorities", () => {
     assert.equal("CUTOVER_CANDIDATE" in report, false);
     assert.equal("MERGED" in report, false);
     assert.equal("GOV2_PHASE" in report, false);
-    assert.equal(report.REAL_T8_STARTED, "NO");
-    assert.equal(report.T8_STATUS, "NOT_STARTED");
-    assert.equal(report.DERIVED_NEXT_GATE, "T8");
+    assert.equal(report.REAL_T8_STARTED, "YES");
+    assert.equal(report.T8_STATUS, "PASS");
+    assert.equal(report.DERIVED_NEXT_GATE, "NONE");
   });
 
   it("fails when the current STATE block is removed even if historical prose remains", () => {
@@ -44,22 +42,16 @@ describe("GOV-2 live authorities", () => {
     assert.equal(parsed.code, "CURRENT_AUTHORITY_MALFORMED");
   });
 
-  it("simulates T7 to T8 PASS on a copy without changing live T8", () => {
+  it("keeps live T8 PASS and nextGate NONE without requiring a validator source change", () => {
     const loaded = loadLiveAuthorities(root);
     assert.equal(loaded.ok, true, JSON.stringify(loaded.findings, null, 2));
-    const head = structuredState(loaded.state);
-    head.implementation.trancheStatuses.T8 = TRANCHE_STATUS.PASS;
-    head.lastTransition = {
-      ...head.lastTransition,
-      type: "TRANCHE_PASS",
-      tranche: "T8",
-    };
+    assert.equal(loaded.state.implementation.trancheStatuses.T8, "PASS");
+    const current = validateCurrentState(loaded.state, loaded.plan, loaded.roadmap);
+    assert.equal(current.ok, true, JSON.stringify(current.findings, null, 2));
+    assert.equal(current.nextGate, "NONE");
     const simulated = loadFixture(root, "imp036j-t8-pass-simulated.json");
     assert.equal(simulated.REAL_T8_STARTED, false);
-    const result = validateTransition(loaded.state, head, loaded.plan, loaded.roadmap);
-    assert.equal(result.ok, true, JSON.stringify(result.findings, null, 2));
-    assert.equal(loaded.state.implementation.trancheStatuses.T8, "NOT_STARTED");
-    assert.equal(validateLiveCurrentState(root).REAL_T8_STARTED, "NO");
+    assert.equal(validateLiveCurrentState(root).REAL_T8_STARTED, "YES");
   });
 
   it("does not require checkpoint-specific validator source for an ordinary PASS copy", () => {
@@ -88,18 +80,11 @@ describe("GOV-2 live authorities", () => {
     assert.equal(validateLiveCurrentState(root).ok, true);
   });
 
-  it("passes GOV-2 current validation on a T8 PASS data copy without validator source change", () => {
+  it("passes GOV-2 current validation on live T8 PASS without validator source change", () => {
     const loaded = loadLiveAuthorities(root);
     assert.equal(loaded.ok, true, JSON.stringify(loaded.findings, null, 2));
-    assert.equal(loaded.state.implementation.trancheStatuses.T8, "NOT_STARTED");
-    const head = structuredState(loaded.state);
-    head.implementation.trancheStatuses.T8 = TRANCHE_STATUS.PASS;
-    head.lastTransition = {
-      ...head.lastTransition,
-      type: "TRANCHE_PASS",
-      tranche: "T8",
-    };
-    const current = validateCurrentState(head, loaded.plan, loaded.roadmap);
+    assert.equal(loaded.state.implementation.trancheStatuses.T8, "PASS");
+    const current = validateCurrentState(loaded.state, loaded.plan, loaded.roadmap);
     assert.equal(current.ok, true, JSON.stringify(current.findings, null, 2));
     assert.equal(current.nextGate, "NONE");
     const consistency = readFileSync(path.join(root, "scripts/project-consistency.mjs"), "utf8");
@@ -109,8 +94,7 @@ describe("GOV-2 live authorities", () => {
     assert.doesNotMatch(consistency, /function checkGov2GenericCurrent/);
     assert.doesNotMatch(consistency, /function isImp036jTranche1PassCheckpoint/);
     assert.doesNotMatch(consistency, /function checkImp036jTranche7Pass/);
-    assert.equal(loaded.state.implementation.trancheStatuses.T8, "NOT_STARTED");
-    assert.equal(validateLiveCurrentState(root).T8_STATUS, "NOT_STARTED");
+    assert.equal(validateLiveCurrentState(root).T8_STATUS, "PASS");
   });
 });
 
@@ -165,7 +149,7 @@ describe("GOV-2 full repository ordinary tranche simulation", () => {
         env,
       });
       assert.equal(consistency.status, 0, consistency.stderr || consistency.stdout);
-      assert.equal(JSON.parse(readFileSync(path.join(root, "docs/platform/STATE.md"), "utf8").match(/<!--\s*gov2-state\s*([\s\S]*?)-->/)[1]).implementation.trancheStatuses.T8, "NOT_STARTED");
+      assert.equal(JSON.parse(readFileSync(path.join(root, "docs/platform/STATE.md"), "utf8").match(/<!--\s*gov2-state\s*([\s\S]*?)-->/)[1]).implementation.trancheStatuses.T8, "PASS");
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
@@ -174,7 +158,7 @@ describe("GOV-2 full repository ordinary tranche simulation", () => {
   it("future STATE revision identifiers do not require a checkpoint whitelist entry", { timeout: 600_000 }, () => {
     const tmp = materializeOverlayRoot();
     try {
-      writeMutatedState(tmp, (text) => text.replaceAll("STATE-R187", "STATE-R188"));
+      writeMutatedState(tmp, (text) => text.replaceAll("STATE-R188", "STATE-R189"));
       const env = { ...process.env, BOBA_PROJECT_ROOT: tmp };
       const current = spawnSync(process.execPath, [path.join(root, "scripts/governance-v2/current.mjs")], {
         cwd: tmp,
@@ -189,7 +173,7 @@ describe("GOV-2 full repository ordinary tranche simulation", () => {
       });
       assert.equal(consistency.status, 0, consistency.stderr || consistency.stdout);
       const consistencySource = readFileSync(path.join(root, "scripts/project-consistency.mjs"), "utf8");
-      assert.doesNotMatch(consistencySource, /STATE-R188/);
+      assert.doesNotMatch(consistencySource, /STATE-R189/);
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }

@@ -7581,7 +7581,7 @@ describe("canonical authority history compression", () => {
       assert.match(state, /"nextProductSlice": "IMP-039"/);
     } else if (tipIsGov2Cutover) {
       assert.match(roadmap, /"roadmapVersion": "GTM-R189"/);
-      assert.match(state, /"stateVersion": "STATE-R187"/);
+      assert.match(state, /"stateVersion": "STATE-R188"/);
       assert.match(state, /"currentProductSlice": "IMP-036J"/);
       assert.match(state, /"nextProductSlice": "IMP-036K"/);
     } else {

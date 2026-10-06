@@ -72,6 +72,8 @@ export default defineConfig({
       "tests/imp-036c/**/*.test.{ts,tsx}",
       // IMP-036I: server-derived Scheduled window math (no database).
       "tests/scheduled-fulfilment/**/*.test.ts",
+      // IMP-036J T8: AC/XR/BR executable-evidence completeness (no database).
+      "tests/imp036j/**/*.test.ts",
     ],
     exclude: [
       "**/node_modules/**",

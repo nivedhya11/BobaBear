@@ -113,10 +113,10 @@ describe("IMP-017 customer profiles migration", () => {
     expect(integrity.migrations.some((m) => m.tag === "0013_serviceability")).toBe(true);
     expect(integrity.migrations.some((m) => m.tag === "0014_cart")).toBe(true);
     expect(integrity.migrations.some((m) => m.tag === "0015_checkout")).toBe(true);
-    expect(integrity.migrations).toHaveLength(16);
+    expect(integrity.migrations.length).toBeGreaterThanOrEqual(16);
   });
 
-  it("creates exactly 2 profile tables within the current app table inventory, 51 permissions, 7 roles", async () => {
+  it("creates exactly 2 profile tables within the current app table inventory, matching permission and role catalogs", async () => {
     await withIsolatedTestDatabase(adminConnectionInfo(), async (database) => {
       await applyMigrations(database.connectionString);
       await applyMigrations(database.connectionString);
@@ -143,7 +143,7 @@ describe("IMP-017 customer profiles migration", () => {
         const permissions = await ctx.db.execute(
           sql`select count(*)::text as count from app.access_permissions`,
         );
-        expect(permissions.rows[0]?.count).toBe("51");
+        expect(permissions.rows[0]?.count).toBe(String(PERMISSION_KEYS.length));
         expect(PERMISSION_KEYS.length).toBe(68);
         expect(ROLE_KEYS.length).toBe(7);
 

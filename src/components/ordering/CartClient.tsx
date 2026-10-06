@@ -12,7 +12,9 @@ import {
 } from "@/components/ordering/committed-presentation-observation";
 import {
   canReuseCheckoutEvaluation,
+  hasAuthoritativeSaving,
   merchandiseSubtotalFromQuote,
+  offerDroppedFromAuthoritativeExplanations,
   parseCommercialExplanation,
 } from "@/components/ordering/commercial-explanation-presentation";
 import {
@@ -94,6 +96,7 @@ export function CartClient(props: { brandId: string }) {
   const [couponFocusResultToken, setCouponFocusResultToken] = useState(0);
   const [activeCheckout, setActiveCheckout] = useState<CommerceCheckout | null>(null);
   const [observationRoot, setObservationRoot] = useState<"narrow" | "desktop" | null>(null);
+  const [offerDropped, setOfferDropped] = useState(false);
   const narrowOfferRef = useRef<HTMLDivElement | null>(null);
   const desktopOfferRef = useRef<HTMLDivElement | null>(null);
   const stickyAmountRef = useRef<HTMLDivElement | null>(null);
@@ -102,6 +105,7 @@ export function CartClient(props: { brandId: string }) {
   /** Latest cart-evaluation epoch within (and across) a delivery generation. */
   const evaluationEpochRef = useRef(0);
   const cartRef = useRef<CommerceCart | null>(null);
+  const lastExplanationRef = useRef<ReturnType<typeof parseCommercialExplanation>>(null);
 
   const menuLookups = useMemo(
     () => (menu ? buildCustomerMenuLookups(menu) : null),
@@ -123,6 +127,17 @@ export function CartClient(props: { brandId: string }) {
       const publishIfCurrent = (next: CommerceCartEvaluation | null) => {
         if (generation !== surfaceGenerationRef.current) return;
         if (evaluationEpoch !== evaluationEpochRef.current) return;
+        const nextExplanation = parseCommercialExplanation(next?.quote);
+        if (hasAuthoritativeSaving(nextExplanation)) {
+          setOfferDropped(false);
+        } else if (
+          offerDroppedFromAuthoritativeExplanations(lastExplanationRef.current, nextExplanation)
+        ) {
+          setOfferDropped(true);
+        } else if (!nextExplanation) {
+          setOfferDropped(false);
+        }
+        lastExplanationRef.current = nextExplanation;
         setEvaluation(next);
       };
       if (!currentCart || currentCart.lines.length === 0) {
@@ -633,6 +648,7 @@ export function CartClient(props: { brandId: string }) {
                 }
                 complimentaryName={complimentaryName}
                 hidePayable
+                dropped={offerDropped}
                 waitingText={
                   couponPending
                     ? IMP036J_COPY.CHECKING
@@ -686,6 +702,7 @@ export function CartClient(props: { brandId: string }) {
                   usingCheckoutEvaluation ? activeCheckout?.fulfilmentMode ?? null : null
                 }
                 complimentaryName={complimentaryName}
+                dropped={offerDropped}
                 waitingText={
                   couponPending
                     ? IMP036J_COPY.CHECKING

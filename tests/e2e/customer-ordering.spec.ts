@@ -27,6 +27,8 @@ const PHONE_NUMBERS = {
   scriptLoadFailure: "9876500255",
   pickupSuccess: "9876500256",
   pickupMobile: "9876500257",
+  firstOrderOffer: "9876500258",
+  returningOrder: "9876500259",
 } as const;
 
 async function selectCheckoutFulfilmentDelivery(page: Page): Promise<void> {
@@ -85,6 +87,18 @@ async function completeCheckoutDestination(page: Page, phoneNumber: string): Pro
   await checkout.getByRole("button", { name: "Save address" }).click();
 }
 
+async function continueThroughCheckoutTimingIfPresent(page: Page): Promise<void> {
+  const review = page.getByTestId("checkout-review");
+  const timingAsap = page.getByTestId("checkout-timing-asap");
+  await Promise.race([
+    review.waitFor({ state: "visible", timeout: 20_000 }),
+    timingAsap.waitFor({ state: "visible", timeout: 20_000 }),
+  ]).catch(() => undefined);
+  if (await timingAsap.isVisible()) {
+    await timingAsap.click();
+  }
+}
+
 async function reachReadyForPayment(page: Page, phoneNumber: string): Promise<void> {
   await installMockGoogleMaps(page);
   await installLocationProviderMocks(page);
@@ -120,6 +134,7 @@ async function reachReadyForPayment(page: Page, phoneNumber: string): Promise<vo
   // AC-036H-001 / AC-036H-031 — Delivery path must choose Delivery before destination.
   await selectCheckoutFulfilmentDelivery(page);
   await completeCheckoutDestination(page, phoneNumber);
+  await continueThroughCheckoutTimingIfPresent(page);
 
   // Review → payment is an explicit step (checkout-review → Continue to payment → checkout-ready).
   await expect(page.getByTestId("checkout-review")).toBeVisible({ timeout: 20_000 });
@@ -212,6 +227,7 @@ async function reachPickupReadyForPayment(page: Page, phoneNumber: string): Prom
   await checkout.getByTestId("checkout-pickup-continue").focus();
   await expect(checkout.getByTestId("checkout-pickup-continue")).toBeFocused();
   await page.keyboard.press("Enter");
+  await continueThroughCheckoutTimingIfPresent(page);
 
   await expect(page.getByTestId("checkout-review")).toBeVisible({ timeout: 20_000 });
   await expect(page.getByTestId("checkout-review-pickup")).toBeVisible();
@@ -424,4 +440,109 @@ test("mobile: ASAP Pickup happy path remains usable (AC-036H mobile evidence)", 
   await expect(page.getByTestId("order-confirmation")).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId("order-fulfilment-mode")).toContainText(/pickup/i);
   await expect(page.getByTestId("order-pickup-location")).toBeVisible();
+});
+
+async function addFirstMenuItemAndOpenCart(page: Page): Promise<void> {
+  await page.goto("/order/");
+  await expect(page.getByRole("heading", { name: /^the bar$/i, level: 1 })).toBeVisible();
+  const addButtons = page.locator("#main-content").getByRole("button", { name: /^add .+/i });
+  await expect(addButtons.first()).toBeVisible();
+  await addButtons.first().click();
+  const headerCartLink = page.locator("header").getByRole("link", { name: /^cart \(\d+\)$/i });
+  await expect(headerCartLink).toBeVisible({ timeout: 15_000 });
+  await headerCartLink.click();
+  await expect(page.getByRole("heading", { name: /your cart/i })).toBeVisible();
+}
+
+test("GJ-FIRST-ORDER: discover-to-pay still completes with Offer explanation and server Order truth", async ({
+  page,
+}) => {
+  test.setTimeout(180_000);
+  await installRazorpayCheckoutMock(page, "succeed");
+  await installMockGoogleMaps(page);
+  await installLocationProviderMocks(page);
+
+  await addFirstMenuItemAndOpenCart(page);
+  await expect(page.getByTestId("price-summary-total").getByText("Estimated subtotal")).toBeVisible();
+  await expect(page.getByTestId("price-summary-total").getByText("Total payable")).toHaveCount(0);
+  await expect(page.getByText("Offer applied.")).toHaveCount(0);
+  await page.getByRole("button", { name: /checkout/i }).click();
+
+  await expect(page.getByRole("heading", { name: "Sign In" })).toBeVisible();
+  await phoneField(page).fill(PHONE_NUMBERS.firstOrderOffer);
+  await page.getByRole("button", { name: /send code/i }).click();
+  await expect(codeField(page)).toBeVisible();
+  await codeField(page).fill(FIXED_OTP_CODE!);
+  await page.getByRole("button", { name: /verify code/i }).click();
+
+  await expect(page.getByRole("heading", { name: "Checkout" })).toBeVisible({ timeout: 20_000 });
+  await selectCheckoutFulfilmentDelivery(page);
+  await completeCheckoutDestination(page, PHONE_NUMBERS.firstOrderOffer);
+  await continueThroughCheckoutTimingIfPresent(page);
+
+  await expect(page.getByTestId("checkout-review")).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByTestId("offer-status")).toContainText("Offer applied.", { timeout: 20_000 });
+  await expect(page.locator('[data-offer-component="ORDER_SAVING"]').first()).toBeVisible();
+  await expect(page.locator("#main-content").getByTestId("coupon-field")).toBeVisible();
+  await page.getByRole("button", { name: /Continue to payment/i }).click();
+
+  await expect(page.getByTestId("checkout-ready")).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByTestId("checkout-ready").getByTestId("coupon-field")).toHaveCount(0);
+  await expect(page.getByTestId("payment-start")).toBeVisible();
+  await page.getByTestId("payment-start").click();
+
+  await expect(page.getByTestId("order-confirmation")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId("order-status")).toHaveText(/order received/i);
+  await page.getByRole("link", { name: /order history/i }).click();
+  await expect(page.getByTestId("order-history-item").first()).toBeVisible();
+  await expect(page.getByRole("button", { name: /order again/i })).toHaveCount(0);
+});
+
+test("GJ-RETURNING-ORDER: returning customer orders again without a first-order Offer or Order Again shortcut", async ({
+  page,
+}) => {
+  test.setTimeout(240_000);
+  await installRazorpayCheckoutMock(page, "succeed");
+  await reachReadyForPayment(page, PHONE_NUMBERS.returningOrder);
+  await page.getByTestId("payment-start").click();
+  await expect(page.getByTestId("order-confirmation")).toBeVisible({ timeout: 30_000 });
+  const firstOrderNumber = (await page.getByTestId("order-number").innerText()).trim();
+  expect(firstOrderNumber).toMatch(/^ORD-/);
+
+  await addFirstMenuItemAndOpenCart(page);
+  await expect(page.getByText("Offer applied.")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /order again/i })).toHaveCount(0);
+  await page.getByRole("button", { name: /checkout/i }).click();
+
+  const signIn = page.getByRole("heading", { name: "Sign In" });
+  if (await signIn.isVisible().catch(() => false)) {
+    await phoneField(page).fill(PHONE_NUMBERS.returningOrder);
+    await page.getByRole("button", { name: /send code/i }).click();
+    await expect(codeField(page)).toBeVisible();
+    await codeField(page).fill(FIXED_OTP_CODE!);
+    await page.getByRole("button", { name: /verify code/i }).click();
+  }
+
+  await expect(page.getByRole("heading", { name: "Checkout" })).toBeVisible({ timeout: 20_000 });
+  await selectCheckoutFulfilmentDelivery(page);
+  await expect(page.getByTestId("checkout-destination-select")).toBeVisible({ timeout: 20_000 });
+  const savedCard = page.getByTestId("checkout-saved-addresses").getByRole("button").first();
+  await expect(savedCard).toBeVisible({ timeout: 20_000 });
+  await expect(savedCard).toBeEnabled();
+  await savedCard.click();
+  await continueThroughCheckoutTimingIfPresent(page);
+  await expect(page.getByTestId("checkout-review")).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByTestId("checkout-review").getByText("Offer applied.")).toHaveCount(0);
+  await page.getByRole("button", { name: /Continue to payment/i }).click();
+  await expect(page.getByTestId("checkout-ready")).toBeVisible({ timeout: 20_000 });
+  await page.getByTestId("payment-start").click();
+  await expect(page.getByTestId("order-confirmation")).toBeVisible({ timeout: 30_000 });
+
+  await page.getByRole("link", { name: /order history/i }).click();
+  await expect(page.getByRole("heading", { name: /My Orders/i, level: 1 })).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(page.getByTestId("order-history-item")).toHaveCount(2);
+  await expect(page.getByTestId("order-history-item").getByText(firstOrderNumber, { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /order again/i })).toHaveCount(0);
 });
