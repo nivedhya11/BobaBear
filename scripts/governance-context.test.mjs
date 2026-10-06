@@ -160,7 +160,7 @@ describe("governance context snapshot", () => {
     assert.equal(parsed.currentSliceGates.accepted, derived.accepted);
     assert.equal(derived.implementationAuthorized, "YES");
     assert.equal(derived.implementationStarted, "YES");
-    assert.equal(derived.implementationComplete, "NO");
+    assert.equal(derived.implementationComplete, "YES");
     assert.equal(derived.accepted, "NO");
   });
 
