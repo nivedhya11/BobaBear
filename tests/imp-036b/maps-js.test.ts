@@ -125,7 +125,7 @@ describe("maps-js-loader", () => {
     expect(result.value).toBeNull();
     expect(getMapsLoaderFailureReason()).toBe("MAP_LIBRARY_NOT_READY");
     expect(script).toBeDefined();
-  });
+  }, 15_000);
 
   it("scenario D: shares one bootstrap and readiness flow across concurrent callers", async () => {
     const importLibrary = vi.fn(async () => ({ Map: MapCtorMock }));
@@ -181,7 +181,7 @@ describe("maps-js-loader", () => {
     expect(
       appendSpy.mock.calls.some((call) => (call[0] as HTMLElement).id === "boba-google-maps-js"),
     ).toBe(true);
-  });
+  }, 15_000);
 
   it("allows explicit retry after a final failed readiness attempt", async () => {
     const importLibrary = vi

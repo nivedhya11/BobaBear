@@ -191,6 +191,15 @@ jobs:
       - name: IMP-036J Tranche 7 proof
         run: npm run test:imp036j:tranche7
 
+      - name: Production build for IMP-036J T8 Golden Journeys
+        run: npm run build && npm run customer-auth:build && npm run customer-commerce:build
+        env:
+          NEXT_PUBLIC_SITE_URL: https://thebobabear.in
+          NEXT_PUBLIC_BOBA_BEAR_GOOGLE_MAPS_BROWSER_KEY: e2e-maps-browser-key-fixture
+
+      - name: IMP-036J Tranche 8 proof
+        run: npm run test:imp036j:tranche8
+
   security-smoke:
     name: Security smoke
     runs-on: ubuntu-latest

@@ -790,6 +790,6 @@ describe("IMP-028 D-366 final atomic RFV/CN issuance", () => {
       "utf8",
     );
     expect(journal).toContain("0029_refund_statutory_issuance_allocation");
-    expect(journal).not.toContain("0030_");
+    expect(journal).toContain("0030_cart_unit_sequence");
   });
 });

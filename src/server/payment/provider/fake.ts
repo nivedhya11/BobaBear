@@ -474,10 +474,14 @@ export function createFakePaymentProvider(options?: {
       }
 
       if (parsed.outcome !== undefined) {
-        executions.set(
-          parsed.executionIdentity,
-          Object.freeze({ ...stored, outcome: parsed.outcome as FakePaymentOutcome }),
-        );
+        const incomingAmount =
+          parsed.amountPaise !== undefined ? BigInt(parsed.amountPaise) : stored.amountPaise;
+        if (incomingAmount === stored.amountPaise) {
+          executions.set(
+            parsed.executionIdentity,
+            Object.freeze({ ...stored, outcome: parsed.outcome as FakePaymentOutcome }),
+          );
+        }
       }
 
       const current = executions.get(parsed.executionIdentity)!;
@@ -490,6 +494,15 @@ export function createFakePaymentProvider(options?: {
         observedAmount = BigInt(parsed.amountPaise);
       }
 
+      const evidenceOutcome =
+        parsed.outcome === "succeed"
+          ? { outcome: "SUCCEEDED" as const, providerStatusCode: "SUCCESS" }
+          : parsed.outcome === "fail"
+            ? { outcome: "DEFINITIVE_FAILURE" as const, providerStatusCode: "FAILED" }
+            : parsed.outcome === "cancelled"
+              ? { outcome: "DEFINITIVE_CANCELLED" as const, providerStatusCode: "CANCELLED" }
+              : {};
+
       return evidenceFor(current, {
         observedAmountPaise: observedAmount,
         providerEventId:
@@ -498,6 +511,7 @@ export function createFakePaymentProvider(options?: {
             : `fake_evt_${current.executionIdentity}`,
         payloadDigest,
         providerTimestamp: new Date(),
+        ...evidenceOutcome,
       });
     },
 
