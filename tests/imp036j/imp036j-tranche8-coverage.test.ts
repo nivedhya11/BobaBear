@@ -534,6 +534,10 @@ const EXPERIENCE_REQUIREMENTS: readonly Evidence[] = [
       },
       {
         file: "tests/e2e/customer-ordering.spec.ts",
+        needle: "PAYMENT_KEYBOARD_ORDER_PROOF",
+      },
+      {
+        file: "tests/e2e/customer-ordering.spec.ts",
         needle: 'emulateMedia({ reducedMotion: "reduce" })',
       },
       {
@@ -847,6 +851,8 @@ describe("IMP-036J T8 coverage completeness", () => {
     expect(spec).toContain("REVIEW_LG");
     expect(spec).toContain("PAYMENT_NARROW");
     expect(spec).toContain("PAYMENT_LG");
+    expect(spec).toContain("PAYMENT_KEYBOARD_ORDER_PROOF");
+    expect(spec).toContain("assertPaymentKeyboardOrder");
     const runner = load("scripts/imp036j-tranche8-responsive-browser-proof.mjs");
     expect(runner).toContain("IMP-036J responsive commercial Cart Review Payment proof");
     const pkg = load("package.json");

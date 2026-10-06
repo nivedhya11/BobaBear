@@ -687,6 +687,72 @@ async function assertReviewCommercial(page: Page, surface: string): Promise<void
   await assertNoHorizontalOverflow(page, surface);
 }
 
+async function assertPaymentKeyboardOrder(page: Page, surface: string): Promise<void> {
+  // Deterministic start immediately before PaymentPanel actionable controls:
+  // #main-content is tabindex=-1 (programmatic focus only), so the next Tab enters
+  // the first tabbable Payment control without calling .focus() on payment-start.
+  await page.locator("#main-content").focus();
+  await expect(page.locator("#main-content")).toBeFocused();
+
+  const couponControlIds = new Set([
+    "coupon-field",
+    "coupon-input",
+    "coupon-apply",
+    "coupon-change",
+    "coupon-remove",
+  ]);
+  const seen: string[] = [];
+  const traversed: string[] = [];
+  const couponHits: string[] = [];
+  let payEnabledWhenFocused = false;
+
+  for (let i = 0; i < 40; i += 1) {
+    await page.keyboard.press("Tab");
+    const marker = await page.evaluate(() => {
+      const el = document.activeElement as HTMLElement | null;
+      if (!el) return "";
+      const testId = el.getAttribute("data-testid") ?? "";
+      if (testId) return testId;
+      const name =
+        el.getAttribute("aria-label") ||
+        el.textContent?.trim().replace(/\s+/g, " ").slice(0, 80) ||
+        el.tagName.toLowerCase();
+      return name;
+    });
+    traversed.push(marker || "(unnamed)");
+    if (couponControlIds.has(marker) || /^(Apply|Change|Remove)$/i.test(marker)) {
+      couponHits.push(marker);
+    }
+    if (marker === "payment-start" && !seen.includes(marker)) {
+      seen.push(marker);
+      payEnabledWhenFocused = await page.getByTestId("payment-start").isEnabled();
+    } else if (marker === "payment-back-to-review" && !seen.includes(marker)) {
+      seen.push(marker);
+    }
+    if (seen.includes("payment-start") && seen.includes("payment-back-to-review")) {
+      break;
+    }
+  }
+
+  test.info().annotations.push({
+    type: `${surface}_PAYMENT_KEYBOARD_SEQUENCE`,
+    description: JSON.stringify(traversed),
+  });
+  // Exact observed Tab sequence for XR-010 / PR continuation evidence.
+  console.log(`${surface} PAYMENT_KEYBOARD_SEQUENCE=${JSON.stringify(traversed)}`);
+
+  expect(
+    couponHits,
+    `${surface} PAYMENT_KEYBOARD_NO_COUPON traversed=${JSON.stringify(traversed)}`,
+  ).toEqual([]);
+  expect(
+    seen,
+    `${surface} PAYMENT_KEYBOARD_ORDER_PROOF traversed=${JSON.stringify(traversed)}`,
+  ).toEqual(["payment-start", "payment-back-to-review"]);
+  expect(payEnabledWhenFocused, `${surface} PAYMENT_KEYBOARD_PAY_ENABLED`).toBe(true);
+  await expect(page.getByTestId("payment-back-to-review")).toBeFocused();
+}
+
 async function assertPaymentCommercial(page: Page, surface: string): Promise<void> {
   const ready = page.getByTestId("checkout-ready");
   await expectComputedVisible(ready, `${surface} checkout-ready`);
@@ -709,6 +775,7 @@ async function assertPaymentCommercial(page: Page, surface: string): Promise<voi
   await expect(ready.getByTestId("coupon-change")).toHaveCount(0);
   await expect(ready.getByTestId("coupon-remove")).toHaveCount(0);
   await expect(ready.getByRole("button", { name: /^(Apply|Change|Remove)$/ })).toHaveCount(0);
+  await assertPaymentKeyboardOrder(page, surface);
   await assertNoHorizontalOverflow(page, `${surface} PAYMENT_READ_ONLY_PROOF`);
 }
 
