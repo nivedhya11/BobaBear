@@ -2,24 +2,24 @@
 {
   "status": "CURRENT",
   "authority": "ACCEPTED_STATE",
-  "stateVersion": "STATE-R188",
+  "stateVersion": "STATE-R189",
   "acceptedThrough": "IMP-036I",
   "currentProductSlice": "IMP-036J",
   "nextProductSlice": "IMP-036K",
-  "pendingAcceptance": "NONE",
+  "pendingAcceptance": "IMP-036J",
   "gtmBoundary": "IMP-040",
   "governanceHealth": "ALIGNED",
   "lastReviewed": "2026-10-06",
-  "supersedes": "STATE-R187"
+  "supersedes": "STATE-R188"
 }
 -->
 <!-- gov2-state
 {
   "slice": "IMP-036J",
-  "lifecyclePhase": "IMPLEMENTATION_IN_PROGRESS",
+  "lifecyclePhase": "IMPLEMENTATION_COMPLETE",
   "implementation": {
     "authorized": true,
-    "complete": false,
+    "complete": true,
     "trancheStatuses": {
       "T1": "PASS",
       "T2": "PASS",
@@ -33,7 +33,7 @@
   },
   "founderUat": "NOT_PERFORMED",
   "accepted": false,
-  "pendingAcceptance": "NONE",
+  "pendingAcceptance": "IMP-036J",
   "acceptedThrough": "IMP-036I",
   "currentSlice": "IMP-036J",
   "nextSlice": "IMP-036K",
@@ -81,19 +81,48 @@ Accepted Range:            IMP-001 → IMP-036I (including IMP-005A and IMP-026C
 ## 2. Current Work Position
 
 Machine-readable current execution is the `gov2-state` block above. Derived `nextGate` is not
-independently persisted. Tranche 8 is `PASS`. Implementation remains incomplete.
-Founder UAT remains `NOT_PERFORMED`. IMP-036J remains unaccepted.
+independently persisted. Every required tranche is `PASS`. Implementation is complete.
+Founder UAT remains `NOT_PERFORMED`. IMP-036J remains unaccepted and is pending acceptance.
+The next PD-2 process action after this reconciliation is `STAGING_RELEASE_CANDIDATE`. That is
+not a GOV-2 `nextGate` value.
+
+Independent implementation-review provenance for the merged-main candidate (not Founder UAT,
+not formal acceptance):
+
+```text
+T8_PR = 369
+T8_REVIEWED_HEAD = 2ec8a8d707c172ec6c2a898e414bfde41a997727
+T8_REVIEWED_TREE = 10b26472f4ea296e831c1ff9750a09b584d3d1df
+T8_MERGE_MAIN_SHA = 1f00c3bd54abbf2280a844a40ad9c028fb864d6a
+T8_MERGE_MAIN_TREE = 10b26472f4ea296e831c1ff9750a09b584d3d1df
+IMPLEMENTATION_REVIEWED_FINGERPRINT = 461b10360333cae41997db3091ae833630b6c7b8e7d49e40664e55532d5f190d
+POST_MERGE_CI_RUN = 37471414449
+POST_MERGE_CI_FINAL_RESULT = SUCCESS
+POST_MERGE_CI_FINAL_ATTEMPT = 2
+POST_MERGE_CODEQL_RUN = 37471414555
+POST_MERGE_CODEQL_RESULT = SUCCESS
+INITIAL_SECURITY_SDLC_FAILURE_JOB = 112295573359
+INITIAL_SECURITY_SDLC_FAILURE_PRESERVED = YES
+SECURITY_SDLC_DIAGNOSTIC_RERUN_JOB = 112302251973
+SECURITY_SDLC_DIAGNOSTIC_RERUN_RESULT = SUCCESS
+INDEPENDENT_IMPLEMENTATION_REVIEW = PASS
+IMPLEMENTATION_COMPLETE_READY = YES
+BLOCKING_IMPLEMENTATION_FINDINGS = NONE
+FOUNDER_UAT_DEPLOYMENT = NO
+PRODUCTION_READINESS_PASS = NO
+```
 
 ```text
 Current Product Implementation: IMP-037 (unresolved held predecessor; provider-blocked; not acceptance)
-Pending Acceptance:             NONE
+Pending Acceptance:             IMP-036J
 Current Product Slice:          IMP-036J — Promotions, Coupons & Offers
 Next Product Slice:             IMP-036K — Revenue Recommendations
 Unresolved Predecessor:         IMP-037 — Backup, Restore & Migration Readiness
-IMP-036J: IMPLEMENTATION_IN_PROGRESS
+IMP-036J: IMPLEMENTATION_COMPLETE / PENDING_ACCEPTANCE
 IMP036J_ACTIVATED: YES
 IMP036J_IMPLEMENTATION_AUTHORIZED: YES
-IMP036J_IMPLEMENTATION_COMPLETE: NO
+IMP036J_IMPLEMENTATION_COMPLETE: YES
+IMP-036J_IMPLEMENTATION_COMPLETE: YES
 IMP036J_ACCEPTED: NO
 FOUNDER_UAT: NOT_PERFORMED
 IMP036K_ACTIVATED: YES
@@ -237,7 +266,7 @@ Cart → Checkout → Payment → Order
 
 ```text
 acceptedThrough: IMP-036I
-pendingAcceptance: NONE
+pendingAcceptance: IMP-036J
 currentProductSlice: IMP-036J
 nextProductSlice: IMP-036K — Revenue Recommendations
 PROGRAM_PAUSE: PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED
@@ -486,6 +515,13 @@ IMP036I_FOUNDER_UAT_FINDING_001: RESOLVED
 BLOCKING_FINDINGS_AT_ACCEPTANCE: NONE
 nextGate: NONE
 INDEPENDENT_PRODUCT_DEFINITION_GATE_REVIEW: 5307761142
+IMP-036J: IMPLEMENTATION_COMPLETE / PENDING_ACCEPTANCE
+IMP036J_ACTIVATED: YES
+IMP036J_IMPLEMENTATION_AUTHORIZED: YES
+IMP036J_IMPLEMENTATION_COMPLETE: YES
+IMP-036J_IMPLEMENTATION_COMPLETE: YES
+IMP036J_ACCEPTED: NO
+IMP036J_FOUNDER_UAT: NOT_PERFORMED
 IMP-037: IMPLEMENTATION_IN_PROGRESS
 IMP037_HOLD: YES
 IMP037_ACTIVATED: YES
@@ -634,7 +670,7 @@ Implementation/review provenance for IMP-036F is recorded in
 Execution detail for the current slice is the `gov2-state` block. Semantic contracts remain in
 Product / Experience / Architecture documents.
 
-- IMP-036J — Promotions, Coupons & Offers (current implementation slice; not accepted)
+- IMP-036J — Promotions, Coupons & Offers (IMPLEMENTATION_COMPLETE / PENDING_ACCEPTANCE; Founder UAT not performed; not accepted)
 - IMP-036K — Revenue Recommendations (next product slice; implementation not authorized)
 - IMP-037 — Backup, Restore & Migration Readiness (held; not complete; not accepted)
 - IMP-038 — Security & Privacy Hardening (held; implementation complete; not accepted)
@@ -657,7 +693,29 @@ Agents may propose a STATE delta in their report. Only independent acceptance up
 accepted position. GOV-2 authority mode is `GOV2`. Cutover acceptance is not granted by this
 candidate.
 
-## 10. STATE-R188 record
+## 10. STATE-R189 record
+
+```text
+STATE-R189 = IMP036J_IMPLEMENTATION_COMPLETE
+GOV2_AUTHORITY_MODE = GOV2
+supersedes: STATE-R188
+acceptedThrough: IMP-036I
+pendingAcceptance: IMP-036J
+currentProductSlice: IMP-036J
+nextProductSlice: IMP-036K
+formalLifecycle: IMPLEMENTATION_COMPLETE
+IMP036J_IMPLEMENTATION_AUTHORIZED: YES
+IMP036J_IMPLEMENTATION_COMPLETE: YES
+IMP036J_ACCEPTED: NO
+FOUNDER_UAT: NOT_PERFORMED
+T1..T8: PASS
+lastTransition: TRANCHE_PASS T8 sourcePr=369
+PD2_NEXT_PROCESS_ACTION: STAGING_RELEASE_CANDIDATE
+IMP036K_IMPLEMENTATION_AUTHORIZED: NO
+GOV2_CUTOVER_ACCEPTANCE: NO
+```
+
+## 11. STATE-R188 record
 
 ```text
 STATE-R188 = IMP036J_TRANCHE_8_PASS
