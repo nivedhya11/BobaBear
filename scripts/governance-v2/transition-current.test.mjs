@@ -20,6 +20,14 @@ function gitSha(spec) {
   return result.stdout.trim();
 }
 
+function gov2MainBaseSha() {
+  const mergeBase = spawnSync("git", ["-C", root, "merge-base", "HEAD", "origin/main"], { encoding: "utf8" });
+  if (mergeBase.status === 0 && mergeBase.stdout.trim()) return mergeBase.stdout.trim();
+  const originMain = gitSha("origin/main");
+  if (originMain) return originMain;
+  return gitSha("HEAD");
+}
+
 function uniquePreGov2Snapshot(pattern) {
   const matches = readdirSync(HISTORY_DIR).filter((name) => pattern.test(name));
   if (matches.length !== 1) return null;
@@ -220,7 +228,7 @@ describe("GOV-2 authoritative transition command", () => {
     const tmp = materializeOverlayRoot();
     try {
       mutateState(tmp, (text) => text.replace(/"tranche": "T8"/, '"tranche": "T7"'));
-      const result = runCli(tmp, gitSha("HEAD"));
+      const result = runCli(tmp, gov2MainBaseSha());
       assert.notEqual(result.status, 0, result.stdout);
       const report = JSON.parse(result.stdout);
       assert.equal(report.ok, false);
@@ -239,8 +247,7 @@ describe("GOV-2 authoritative transition command", () => {
   it("passes through the CI command when T8 PASS has valid lastTransition evidence", { timeout: 120_000 }, () => {
     const tmp = materializeOverlayRoot();
     try {
-      mutateState(tmp, (text) => text.replace(/"sourcePr": 369/, '"sourcePr": 1'));
-      const result = runCli(tmp, gitSha("HEAD"));
+      const result = runCli(tmp, gov2MainBaseSha());
       assert.equal(result.status, 0, result.stderr || result.stdout);
       const report = JSON.parse(result.stdout);
       assert.equal(report.ok, true, JSON.stringify(report.findings, null, 2));
