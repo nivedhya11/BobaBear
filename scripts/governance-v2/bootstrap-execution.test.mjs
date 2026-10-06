@@ -110,7 +110,7 @@ describe("GOV-2 bootstrap execution extraction", () => {
     assert.ok(findings.some((item) => item.path === "lastTransition"));
   });
 
-  it("matches live GOV-2 execution to the unique pre-GOV2 STATE snapshot", () => {
+  it("records T8 PASS divergence from the unique pre-GOV2 STATE snapshot", () => {
     const history = path.join(root, "docs/platform/history");
     const matches = readdirSync(history).filter((name) => /^STATE-.*-pre-gov2\.md$/.test(name));
     assert.equal(matches.length, 1, JSON.stringify(matches));
@@ -121,10 +121,11 @@ describe("GOV-2 bootstrap execution extraction", () => {
     const head = extractGov2Execution(loaded.state, loaded.plan);
     assert.equal(base.ok, true, JSON.stringify(base.findings, null, 2));
     assert.equal(head.ok, true, JSON.stringify(head.findings, null, 2));
-    assert.equal(bootstrapExecutionFindings(base.execution, head.execution).length, 0, JSON.stringify({
-      base: base.execution,
-      head: head.execution,
-    }, null, 2));
+    assert.equal(base.execution.trancheStatuses.T8, "NOT_STARTED");
+    assert.equal(head.execution.trancheStatuses.T8, "PASS");
+    const findings = bootstrapExecutionFindings(base.execution, head.execution);
+    assert.ok(findings.some((item) => item.path === "implementation.trancheStatuses.T8"));
+    assert.ok(findings.some((item) => item.path === "lastTransition"));
     const fixturePlan = loadFixture(root, "imp036j-tranche-plan.json");
     assert.deepEqual(
       fixturePlan.tranches.map((tranche) => tranche.id),

@@ -185,19 +185,27 @@ describe("GOV-2 authoritative transition command", () => {
     requirePreGov2BaseSha();
   });
 
-  it("bootstraps pre-GOV2 base to the current GOV-2 working tree", () => {
+  it("rejects pre-GOV2 bootstrap once live T8 has PASSed", () => {
     const base = requirePreGov2BaseSha();
     const result = spawnSync(process.execPath, [cli, base], {
       cwd: root,
       encoding: "utf8",
       env: { ...process.env, BOBA_PROJECT_ROOT: root },
     });
-    assert.equal(result.status, 0, result.stderr || result.stdout);
+    assert.notEqual(result.status, 0, result.stderr || result.stdout);
     const report = JSON.parse(result.stdout);
-    assert.equal(report.ok, true, JSON.stringify(report.findings, null, 2));
+    assert.equal(report.ok, false, JSON.stringify(report.findings, null, 2));
     assert.equal(report.MODE, "GOV2_BOOTSTRAP");
     assert.equal(report.BASE_HAS_GOV2, "NO");
     assert.equal(report.HEAD_HAS_GOV2, "YES");
+    assert.ok(
+      report.findings.some(
+        (item) =>
+          item.code === "GOV2_BOOTSTRAP_EXECUTION_MISMATCH" &&
+          item.path === "implementation.trancheStatuses.T8",
+      ),
+      JSON.stringify(report.findings, null, 2),
+    );
   });
 
   it("validates a normal GOV-2 to GOV-2 identity transition from git", () => {
@@ -211,13 +219,16 @@ describe("GOV-2 authoritative transition command", () => {
   it("fails through the CI command when T8 PASS keeps stale T7 lastTransition", { timeout: 120_000 }, () => {
     const tmp = materializeOverlayRoot();
     try {
-      mutateState(tmp, (text) => text.replace(/"T8": "NOT_STARTED"/, '"T8": "PASS"'));
+      mutateState(tmp, (text) => text.replace(/"tranche": "T8"/, '"tranche": "T7"'));
       const result = runCli(tmp, gitSha("HEAD"));
       assert.notEqual(result.status, 0, result.stdout);
       const report = JSON.parse(result.stdout);
       assert.equal(report.ok, false);
       assert.ok(
-        report.findings.some((item) => item.code === "LAST_TRANSITION_TRANCHE_MISMATCH"),
+        report.findings.some(
+          (item) =>
+            item.code === "LAST_TRANSITION_TRANCHE_MISMATCH" || item.code === "INVALID_LAST_TRANSITION",
+        ),
         JSON.stringify(report.findings, null, 2),
       );
     } finally {
@@ -228,12 +239,7 @@ describe("GOV-2 authoritative transition command", () => {
   it("passes through the CI command when T8 PASS has valid lastTransition evidence", { timeout: 120_000 }, () => {
     const tmp = materializeOverlayRoot();
     try {
-      mutateState(tmp, (text) =>
-        text
-          .replace(/"T8": "NOT_STARTED"/, '"T8": "PASS"')
-          .replace(/"tranche": "T7"/, '"tranche": "T8"')
-          .replace(/"sourcePr": 357/, '"sourcePr": 1'),
-      );
+      mutateState(tmp, (text) => text.replace(/"sourcePr": 369/, '"sourcePr": 1'));
       const result = runCli(tmp, gitSha("HEAD"));
       assert.equal(result.status, 0, result.stderr || result.stdout);
       const report = JSON.parse(result.stdout);
@@ -242,7 +248,7 @@ describe("GOV-2 authoritative transition command", () => {
       assert.equal(
         JSON.parse(readFileSync(path.join(root, "docs/platform/STATE.md"), "utf8").match(/<!--\s*gov2-state\s*([\s\S]*?)-->/)[1])
           .implementation.trancheStatuses.T8,
-        "NOT_STARTED",
+        "PASS",
       );
     } finally {
       rmSync(tmp, { recursive: true, force: true });

@@ -11,7 +11,7 @@
   ],
   "versions": {
     "roadmapVersion": "GTM-R189",
-    "stateVersion": "STATE-R187",
+    "stateVersion": "STATE-R188",
     "architectureVersion": "ARCH-R23",
     "decisionRegisterVersion": "DR-24"
   },
@@ -23,11 +23,11 @@
     "gtmBoundary": "IMP-040"
   },
   "lifecycle": "IMPLEMENTATION_IN_PROGRESS",
-  "nextGate": "T8",
+  "nextGate": "NONE",
   "currentSliceGates": {
     "slice": "IMP-036J",
     "lifecycle": "IMPLEMENTATION_IN_PROGRESS",
-    "nextGate": "T8",
+    "nextGate": "NONE",
     "activated": "YES",
     "productDefinition": "APPROVED",
     "productDefinitionVersion": "PD-IMP-036J-DRAFT-6",

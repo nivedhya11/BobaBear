@@ -2,15 +2,15 @@
 {
   "status": "CURRENT",
   "authority": "ACCEPTED_STATE",
-  "stateVersion": "STATE-R187",
+  "stateVersion": "STATE-R188",
   "acceptedThrough": "IMP-036I",
   "currentProductSlice": "IMP-036J",
   "nextProductSlice": "IMP-036K",
   "pendingAcceptance": "NONE",
   "gtmBoundary": "IMP-040",
   "governanceHealth": "ALIGNED",
-  "lastReviewed": "2026-10-05",
-  "supersedes": "STATE-R186"
+  "lastReviewed": "2026-10-06",
+  "supersedes": "STATE-R187"
 }
 -->
 <!-- gov2-state
@@ -28,7 +28,7 @@
       "T5": "PASS",
       "T6": "PASS",
       "T7": "PASS",
-      "T8": "NOT_STARTED"
+      "T8": "PASS"
     }
   },
   "founderUat": "NOT_PERFORMED",
@@ -55,9 +55,8 @@
   },
   "lastTransition": {
     "type": "TRANCHE_PASS",
-    "tranche": "T7",
-    "sourcePr": 357,
-    "mergeCommit": "323f5917995441d7096ddb17dd6168e0e98ce405"
+    "tranche": "T8",
+    "sourcePr": 369
   }
 }
 -->
@@ -82,7 +81,8 @@ Accepted Range:            IMP-001 → IMP-036I (including IMP-005A and IMP-026C
 ## 2. Current Work Position
 
 Machine-readable current execution is the `gov2-state` block above. Derived `nextGate` is not
-independently persisted. Tranche 8 remains `NOT_STARTED`.
+independently persisted. Tranche 8 is `PASS`. Implementation remains incomplete.
+Founder UAT remains `NOT_PERFORMED`. IMP-036J remains unaccepted.
 
 ```text
 Current Product Implementation: IMP-037 (unresolved held predecessor; provider-blocked; not acceptance)
@@ -657,12 +657,12 @@ Agents may propose a STATE delta in their report. Only independent acceptance up
 accepted position. GOV-2 authority mode is `GOV2`. Cutover acceptance is not granted by this
 candidate.
 
-## 10. STATE-R187 record
+## 10. STATE-R188 record
 
 ```text
-STATE-R187 = GOV2_AUTHORITY_MODE
+STATE-R188 = IMP036J_TRANCHE_8_PASS
 GOV2_AUTHORITY_MODE = GOV2
-supersedes: STATE-R186
+supersedes: STATE-R187
 acceptedThrough: IMP-036I
 pendingAcceptance: NONE
 currentProductSlice: IMP-036J
@@ -671,6 +671,8 @@ formalLifecycle: IMPLEMENTATION_IN_PROGRESS
 IMP036J_IMPLEMENTATION_COMPLETE: NO
 IMP036J_ACCEPTED: NO
 FOUNDER_UAT: NOT_PERFORMED
-T8_STARTED: NO
+T8_STARTED: YES
+IMP036J_TRANCHE_8: PASS
+lastTransition: TRANCHE_PASS T8 sourcePr=369
 GOV2_CUTOVER_ACCEPTANCE: NO
 ```
