@@ -66,9 +66,11 @@ test-results-customer-ordering/imp026-real-checkout-real--bd073-ckout-loads-with
 | Why not `ACCIDENTALLY_TRACKED` | Present since early platform commits; listed in `test-inventory.json` `protectedEvidenceTrackedFiles`; CI contract says preserve |
 | Disposition | Keep tracked until a separate human evidence-disposition decision; never `git rm` in hygiene passes |
 
-Nightly/local **new** dumps under the same directory are `TEMPORARY_TEST_OUTPUT` and must not
-be added to Git. GitHub Actions already uploads `test-results-customer-ordering/**` from
-`nightly-verification.yml`.
+Live Playwright dumps must **not** use this protected prefix as `outputDir` (Playwright
+cleans `outputDir` at start and would destroy the tracked triad). The live config writes to
+`test-results-customer-ordering-runtime/` (`TEMPORARY_TEST_OUTPUT`, gitignored). GitHub Actions
+uploads that runtime path from `nightly-verification.yml`. Those Actions artifacts are
+**time-limited** and are not a durable evidence store by themselves.
 
 ## 4. What belongs where
 
@@ -79,7 +81,7 @@ be added to Git. GitHub Actions already uploads `test-results-customer-ordering/
 | Exact prior ROADMAP/STATE snapshots under `docs/platform/history/` | Yes (historical supporting) | N/A | N/A |
 | Design archive under `archive/` | Yes until archive-retirement decision | N/A | N/A |
 | Protected historical triad above | Yes until disposition | N/A | N/A |
-| Fresh Playwright failure dumps / traces / videos | No | Yes (job upload) | Yes (`test-results*` / `playwright-report*`) |
+| Fresh Playwright failure dumps / traces / videos | No | Yes (job upload; **time-limited**) | Yes (`test-results-customer-ordering-runtime/`, other `test-results*` / `playwright-report*`) |
 | Coverage, `.next`, `blob-report` | No | Only if a job needs them | Yes |
 | Large product media at scale | Prefer optimized Git assets until threshold; then object storage/CDN | N/A | N/A |
 
@@ -88,24 +90,44 @@ be added to Git. GitHub Actions already uploads `test-results-customer-ordering/
 | Store | Default retention | Notes |
 |---|---|---|
 | Git live tree | Indefinite for `NEVER_PRUNE` / protected historical triad | History rewrite forbidden under HYG-05 |
-| GitHub Actions artifacts | Platform default (typically 90 days) unless workflow sets `retention-days` | Prefer explicit `retention-days` on expensive browser jobs (`DO_LATER`) |
-| Local ignored evidence | Operator-owned; delete anytime | Must not be required for formal acceptance without upload/path in a durable store |
+| GitHub Actions artifacts | **Time-limited** (platform default, typically 90 days, unless workflow sets `retention-days`) | Not durable beyond expiry; prefer explicit `retention-days` on expensive browser jobs (`DO_LATER`) |
+| Local ignored evidence | Operator-owned; delete anytime | Must not be required for formal acceptance without promotion to a durable store |
 
 ### Naming / manifest strategy
 
 ```text
 PROTECTED_PREFIXES =
-  test-results-customer-ordering/
+  test-results-customer-ordering/          # historical triad only; NOT Playwright outputDir
   test-results-location-selector-layout/
+
+LIVE_CUSTOMER_ORDERING_OUTPUT_DIR =
+  test-results-customer-ordering-runtime/  # gitignored; cleaned by Playwright; Actions upload
 
 TRACKED_PROTECTED_MANIFEST = scripts/testing-inventory.mjs → protectedEvidenceTrackedFiles
 NEW_PROTECTED_GIT_EVIDENCE = REQUIRES human disposition (not routine commits)
 CI_ARTIFACT_NAME_PATTERN = nightly-e2e-<suite> (see nightly-verification.yml)
 ```
 
-Do not grow the tracked protected set by committing new PNG/MD dumps. If a failure must be
-preserved beyond Actions retention, store a named handoff under `docs/platform/handoffs/` with
-links to the Actions run URL (preferred) rather than binary dumps in Git.
+### Durable evidence retention (binding operating rule)
+
+```text
+ACTIONS_ARTIFACTS_ARE_TIME_LIMITED = YES
+ACTIONS_RUN_URL_ALONE_IS_NOT_DURABLE_EVIDENCE = YES
+EVIDENCE_BEYOND_ACTIONS_EXPIRY = MUST_PROMOTE_TO_DURABLE_STORE
+```
+
+Do not grow the tracked protected set by routinely committing new PNG/MD dumps. A GitHub Actions
+**run URL alone is not durable evidence**: linked artifacts expire with the Actions retention
+window. Evidence that must be retained beyond Actions expiry **must** be promoted to either:
+
+1. a durable canonical repository evidence location (after explicit human disposition — for
+   example a named handoff under `docs/platform/handoffs/` that embeds or attaches the needed
+   screenshots/traces/videos, or another CURRENT-approved evidence path), or
+2. another explicitly approved durable store (`REQUIRES_EXTERNAL_STORAGE` when binaries should
+   not live in Git).
+
+Promotion is required before relying on that evidence past Actions expiry. Recording only a
+run URL (without promoting the underlying artifacts) does **not** satisfy retention.
 
 ## 5. Drizzle retention
 
@@ -173,8 +195,11 @@ of MB/year and must be treated as a process failure.
 - Publish this retention policy.
 - Ignore ephemeral Playwright outputs that are not part of the protected tracked triad
   (including `test-results-location-selector-layout/` and additional report dirs) via `.gitignore`.
-- Ignore **new** untracked files under `test-results-customer-ordering/` so dumps are not
-  accidentally `git add`ed; currently tracked protected files remain tracked.
+- Point live customer-ordering `outputDir` at `test-results-customer-ordering-runtime/` (ignored)
+  so Playwright cleanup cannot destroy the protected historical triad under
+  `test-results-customer-ordering/`.
+- Ignore **new** untracked files under `test-results-customer-ordering/` as belt-and-suspenders;
+  currently tracked protected files remain tracked byte-for-byte.
 
 ### DO_LATER
 
