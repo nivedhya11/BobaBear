@@ -2,13 +2,13 @@
 {
   "status": "CURRENT",
   "authority": "IMPLEMENTATION_SEQUENCE",
-  "roadmapVersion": "GTM-R189",
+  "roadmapVersion": "GTM-R190",
   "acceptedThrough": "IMP-036I",
   "currentProductSlice": "IMP-036J",
   "nextProductSlice": "IMP-036K",
   "gtmBoundary": "IMP-040",
-  "lastReviewed": "2026-10-05",
-  "supersedes": "GTM-R188"
+  "lastReviewed": "2026-10-07",
+  "supersedes": "GTM-R189"
 }
 -->
 <!-- gov2-roadmap
@@ -78,7 +78,7 @@
     { "id": "IMP-036G", "sequence": 49, "accepted": true, "implementationComplete": true },
     { "id": "IMP-036H", "sequence": 50, "accepted": true, "implementationComplete": true },
     { "id": "IMP-036I", "sequence": 51, "accepted": true, "implementationComplete": true },
-    { "id": "IMP-036J", "sequence": 52, "accepted": false, "implementationComplete": false },
+    { "id": "IMP-036J", "sequence": 52, "accepted": false, "implementationComplete": true },
     { "id": "IMP-036K", "sequence": 53, "accepted": false, "implementationComplete": false },
     { "id": "IMP-037", "sequence": 54, "accepted": false, "implementationComplete": false },
     { "id": "IMP-038", "sequence": 55, "accepted": false, "implementationComplete": true },
@@ -117,7 +117,7 @@ boundary. It does not own tranche execution status. Current execution truth live
 Accepted Through:     IMP-036I — Scheduled Fulfilment
 Current Product Slice: IMP-036J — Promotions, Coupons & Offers
 Next Product Slice:    IMP-036K — Revenue Recommendations
-Pending Acceptance:    NONE
+Pending Acceptance:    IMP-036J
 Public GTM Boundary:   IMP-040 — Launch Validation & Cutover
 PROGRAM_PAUSE: PRE_GTM_PRODUCT_INSERTION_PROVIDER_BLOCKED
 PROGRAM_PAUSE_AUTHORITY: D-377
@@ -139,10 +139,15 @@ ROADMAP owns sequence position. STATE owns current execution for IMP-036J.
 Accepted Through:     IMP-036I — Scheduled Fulfilment
 Current Product Slice: IMP-036J — Promotions, Coupons & Offers
 Next Product Slice:    IMP-036K — Revenue Recommendations
-Pending Acceptance:    NONE
+Pending Acceptance:    IMP-036J
 Public GTM Boundary:   IMP-040 — Launch Validation & Cutover
+IMP-036J: IMPLEMENTATION_COMPLETE_PENDING_ACCEPTANCE
 IMP036J_ACTIVATED: YES
+IMP036J_IMPLEMENTATION_COMPLETE: YES
+IMP036J_ACCEPTED: NO
+FOUNDER_UAT: NOT_PERFORMED
 IMP036K_ACTIVATED: YES
+IMP036K_IMPLEMENTATION_AUTHORIZED: NO
 IMP037_ACTIVATED: YES
 IMP037_HOLD: YES
 IMP038_ACTIVATED: YES
@@ -212,16 +217,18 @@ authoritative only in [`STATE.md`](./STATE.md). The locked tranche graph is in
 
 ## 4. Current Product Slice
 
-Active implementation slice: **IMP-036J — Promotions, Coupons & Offers**. Product, experience,
-and architecture contracts remain in their semantic documents. Execution status is owned by
-STATE. IMP-036K remains the next product slice and is not the current implementation slice.
-IMP-037 and IMP-038 remain held under D-377.
+Active implementation slice: **IMP-036J — Promotions, Coupons & Offers**
+(`IMPLEMENTATION_COMPLETE_PENDING_ACCEPTANCE`). Product, experience, and architecture
+contracts remain in their semantic documents. Execution status is owned by STATE.
+Founder UAT remains `NOT_PERFORMED`. IMP-036J remains unaccepted. IMP-036K remains the
+next product slice and is not authorized for implementation. IMP-037 and IMP-038 remain
+held under D-377.
 
 ## 5. Future GTM Slices
 
 | IMP | Capability | Lifecycle |
 |---|---|---|
-| IMP-036J | Promotions, Coupons & Offers | current product slice; execution owned by STATE.md |
+| IMP-036J | Promotions, Coupons & Offers | IMPLEMENTATION_COMPLETE_PENDING_ACCEPTANCE; Founder UAT NOT_PERFORMED; not accepted |
 | IMP-036K | Revenue Recommendations | nextProductSlice; implementation not authorized |
 | IMP-037 | Backup, Restore & Migration Readiness | IMPLEMENTATION_IN_PROGRESS (HOLD) |
 | IMP-038 | Security & Privacy Hardening | IMPLEMENTATION_IN_PROGRESS (HOLD; implementation complete / not accepted) |
@@ -258,6 +265,13 @@ The earlier GTM-R113 snapshot remains
 Historical snapshots are not current lifecycle authority.
 
 ## 9. Roadmap Change Log
+
+- **GTM-R190** records IMP-036J `implementationComplete = true` while `accepted = false`.
+  `acceptedThrough` stays IMP-036I. `currentProductSlice` stays IMP-036J.
+  `nextProductSlice` stays IMP-036K. Pending Acceptance is IMP-036J. Founder UAT remains
+  NOT_PERFORMED. IMP-036K implementation remains unauthorized. This record does not perform
+  Founder UAT, formal acceptance, staging deployment, or IMP-036K implementation start.
+  Supersedes GTM-R189.
 
 - **GTM-R189** records the GOV-2 cutover/compression candidate. Live ROADMAP is reduced to
   sequence authority. Live STATE holds current execution. Generic GOV-2 validation becomes

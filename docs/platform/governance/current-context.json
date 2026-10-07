@@ -10,8 +10,8 @@
     "docs/platform/decision-register.md"
   ],
   "versions": {
-    "roadmapVersion": "GTM-R189",
-    "stateVersion": "STATE-R188",
+    "roadmapVersion": "GTM-R190",
+    "stateVersion": "STATE-R189",
     "architectureVersion": "ARCH-R23",
     "decisionRegisterVersion": "DR-24"
   },
@@ -19,14 +19,14 @@
     "acceptedThrough": "IMP-036I",
     "currentProductSlice": "IMP-036J",
     "nextProductSlice": "IMP-036K",
-    "pendingAcceptance": "NONE",
+    "pendingAcceptance": "IMP-036J",
     "gtmBoundary": "IMP-040"
   },
-  "lifecycle": "IMPLEMENTATION_IN_PROGRESS",
+  "lifecycle": "IMPLEMENTATION_COMPLETE",
   "nextGate": "NONE",
   "currentSliceGates": {
     "slice": "IMP-036J",
-    "lifecycle": "IMPLEMENTATION_IN_PROGRESS",
+    "lifecycle": "IMPLEMENTATION_COMPLETE",
     "nextGate": "NONE",
     "activated": "YES",
     "productDefinition": "APPROVED",
@@ -41,7 +41,7 @@
     "implementationAuthorized": "YES",
     "started": "YES",
     "implementationStarted": "YES",
-    "implementationComplete": "NO",
+    "implementationComplete": "YES",
     "accepted": "NO"
   },
   "singleSourceGates": []
