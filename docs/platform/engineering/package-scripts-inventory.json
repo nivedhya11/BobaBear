@@ -1,0 +1,5599 @@
+{
+  "schemaVersion": 1,
+  "generatedBy": "scripts/package-scripts-inventory.mjs",
+  "packageName": "boba-bear-landing",
+  "scriptCount": 258,
+  "categoryCounts": {
+    "BUILD": 5,
+    "DEV": 2,
+    "TEST_UNIT": 11,
+    "TEST_INTEGRATION": 43,
+    "TEST_DATABASE": 21,
+    "TEST_E2E": 8,
+    "AUDIT": 32,
+    "GOVERNANCE": 16,
+    "DATABASE": 18,
+    "ENVIRONMENT": 2,
+    "STAGING": 6,
+    "DOCKER": 26,
+    "RECOVERY": 15,
+    "BOOTSTRAP": 10,
+    "OPERATIONS": 22,
+    "ONE_OFF": 19,
+    "LEGACY_OR_ALIAS": 2
+  },
+  "orphanCount": 57,
+  "duplicateBodyCount": 4,
+  "publicStableCount": 188,
+  "internalOnlyCount": 2,
+  "mutatingCommandCount": 36,
+  "aliasCount": 2,
+  "publicStableAliases": [
+    "help",
+    "scripts:inventory",
+    "scripts:inventory:check",
+    "db:test",
+    "config:check",
+    "check",
+    "verify",
+    "verify:database",
+    "recovery",
+    "recovery:status",
+    "env:hygiene",
+    "env:compose",
+    "project:consistency",
+    "working-tree:fingerprint",
+    "governance:fingerprint",
+    "testing:inventory",
+    "testing:inventory:check"
+  ],
+  "duplicateBodies": [
+    {
+      "body": "tsx scripts/check-config.ts --process web",
+      "group": [
+        "config:check",
+        "config:check:web"
+      ]
+    },
+    {
+      "body": "docker compose config --quiet",
+      "group": [
+        "db:config",
+        "docker:config"
+      ]
+    },
+    {
+      "body": "docker compose down --remove-orphans",
+      "group": [
+        "db:down",
+        "docker:down"
+      ]
+    },
+    {
+      "body": "docker compose ps",
+      "group": [
+        "db:status",
+        "docker:status"
+      ]
+    }
+  ],
+  "orphans": [
+    "assortment:verify-existing-menu",
+    "catalog:bootstrap-imp036c-required-topping",
+    "customer-auth:start",
+    "customer-commerce:start",
+    "db:config",
+    "db:down",
+    "db:logs",
+    "docker:assortment:verify-existing-menu",
+    "docker:config",
+    "docker:customer-commerce:logs",
+    "docker:db:check:migration",
+    "docker:menu:verify-existing",
+    "docker:operations:logs",
+    "docker:pricing:verify-existing-menu",
+    "docker:workforce-auth:logs",
+    "operations:start",
+    "ordering-catalog:generate",
+    "pricing:verify-existing-menu",
+    "staging:baseline-classify",
+    "test:access-control:cli",
+    "test:assortment-bootstrap",
+    "test:cart-auth-integration",
+    "test:cart-security",
+    "test:catalog-imp036c-required-topping",
+    "test:checkout-auth-integration",
+    "test:customer-address-auth-integration",
+    "test:customer-address-security",
+    "test:customer-addresses",
+    "test:customer-profile-auth-integration",
+    "test:customer-profile-security",
+    "test:customer-profiles",
+    "test:database:assortment-availability",
+    "test:database:customer-addresses",
+    "test:database:customer-profiles",
+    "test:database:menu-import",
+    "test:database:notifications",
+    "test:database:pricing-tax",
+    "test:database:promotions",
+    "test:database:workforce-auth",
+    "test:e2e:headed",
+    "test:imp036j:responsive-browser-proof",
+    "test:menu-import",
+    "test:menu-parity",
+    "test:order-auth-integration",
+    "test:order-security",
+    "test:ordering-catalog",
+    "test:payment-auth-integration",
+    "test:payment-promotions",
+    "test:payment-provider",
+    "test:payment-razorpay",
+    "test:pricing-bootstrap",
+    "test:pricing-parity",
+    "test:promotion-coupons",
+    "test:promotion-pricing-parity",
+    "test:serviceability-auth-integration",
+    "test:staging-baseline",
+    "workforce-auth:start"
+  ],
+  "records": [
+    {
+      "name": "access:bootstrap-platform-admin",
+      "body": "node --conditions=react-server --import tsx scripts/access/bootstrap-platform-admin.ts",
+      "category": "BOOTSTRAP",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/access/bootstrap-platform-admin.ts"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "access:grant-assessment-roles",
+      "body": "node --conditions=react-server --import tsx scripts/access/grant-assessment-roles.ts",
+      "category": "BOOTSTRAP",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/security/acceptance-pack/assessor-identity-readiness.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/access/grant-assessment-roles.ts"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "agent:context:check",
+      "body": "node scripts/agent-context-check.mjs",
+      "category": "GOVERNANCE",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/engineering/cursor-context-audit.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/agent-context-check.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "assortment:bootstrap-existing-menu",
+      "body": "node --conditions=react-server --import tsx scripts/assortment/bootstrap-existing-menu.ts",
+      "category": "BOOTSTRAP",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md"
+      ],
+      "packageScriptCallers": [
+        "docker:assortment:bootstrap-existing-menu"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "assortment:configure-outlet-operating-uat",
+      "body": "node --conditions=react-server --import tsx scripts/assortment/configure-outlet-operating-uat.ts",
+      "category": "BOOTSTRAP",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/assortment/configure-outlet-operating-uat.ts"
+      ],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "assortment:verify-existing-menu",
+      "body": "node --conditions=react-server --import tsx scripts/assortment/verify-existing-menu.ts",
+      "category": "OPERATIONS",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "audit:access-control",
+      "body": "node scripts/audit-access-control.mjs",
+      "category": "AUDIT",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/testing/BASELINE.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "audit:assets",
+      "body": "node scripts/audit-assets.mjs",
+      "category": "AUDIT",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check"
+      ],
+      "otherCallers": [
+        "scripts/audit-assets.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "audit:assortment-availability",
+      "body": "node scripts/audit-assortment-availability.mjs",
+      "category": "AUDIT",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "audit:auth-foundation",
+      "body": "node scripts/audit-auth-foundation.mjs",
+      "category": "AUDIT",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md",
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "audit:cart",
+      "body": "node scripts/audit-cart.mjs",
+      "category": "AUDIT",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "audit:catalog",
+      "body": "node scripts/audit-catalog.mjs",
+      "category": "AUDIT",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md",
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "audit:checkout",
+      "body": "node scripts/audit-checkout.mjs",
+      "category": "AUDIT",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "audit:config",
+      "body": "node scripts/audit-config-boundary.mjs",
+      "category": "AUDIT",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md",
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "audit:container",
+      "body": "node scripts/run-trivy.mjs",
+      "category": "AUDIT",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/security/README.md",
+        "docs/platform/security/acceptance-pack/secure-sdlc-evidence.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/run-trivy.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "audit:customer-addresses",
+      "body": "node scripts/audit-customer-addresses.mjs",
+      "category": "AUDIT",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "audit:customer-phone-auth",
+      "body": "node scripts/audit-customer-phone-auth.mjs",
+      "category": "AUDIT",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "README.md",
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "audit:customer-profiles",
+      "body": "node scripts/audit-customer-profiles.mjs",
+      "category": "AUDIT",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "audit:database",
+      "body": "node scripts/audit-database.mjs",
+      "category": "AUDIT",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "audit:docker",
+      "body": "node scripts/audit-docker-runtime.mjs",
+      "category": "AUDIT",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/security/acceptance-pack/client-bundle-secrets-review.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check",
+        "docker:verify"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "audit:menu-images",
+      "body": "node scripts/audit-menu-images.mjs",
+      "category": "AUDIT",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md",
+        "docs/missing-menu-images.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check"
+      ],
+      "otherCallers": [
+        "scripts/audit-menu-images.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "audit:menu-import",
+      "body": "node scripts/audit-menu-import.mjs",
+      "category": "AUDIT",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "audit:npm-sca",
+      "body": "node scripts/audit-npm-sca.mjs",
+      "category": "AUDIT",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/security/README.md",
+        "docs/platform/security/acceptance-pack/client-bundle-secrets-review.md",
+        "docs/platform/security/acceptance-pack/secure-sdlc-evidence.md",
+        "docs/platform/security/acceptance-pack/threat-model.md",
+        "docs/platform/security/vulnerability-exception-register.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "audit:security-sdlc"
+      ],
+      "otherCallers": [
+        "scripts/audit-npm-sca.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "audit:order",
+      "body": "node scripts/audit-order.mjs",
+      "category": "AUDIT",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "audit:outbox-idempotency",
+      "body": "node scripts/audit-outbox-idempotency.mjs",
+      "category": "AUDIT",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/testing/BASELINE.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "audit:payment",
+      "body": "node scripts/audit-payment.mjs",
+      "category": "AUDIT",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "audit:persistence",
+      "body": "node scripts/audit-persistence.mjs",
+      "category": "AUDIT",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "README.md",
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "audit:pricing-tax",
+      "body": "node scripts/audit-pricing-tax.mjs",
+      "category": "AUDIT",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "audit:promotions",
+      "body": "node scripts/audit-promotions.mjs",
+      "category": "AUDIT",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "audit:secrets",
+      "body": "node scripts/run-gitleaks.mjs",
+      "category": "AUDIT",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/security/README.md",
+        "docs/platform/security/acceptance-pack/client-bundle-secrets-review.md",
+        "docs/platform/security/acceptance-pack/secure-sdlc-evidence.md",
+        "docs/platform/security/acceptance-pack/threat-model.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "audit:security-sdlc"
+      ],
+      "otherCallers": [
+        "scripts/run-gitleaks.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "audit:security-sdlc",
+      "body": "npm run audit:npm-sca && npm run audit:secrets",
+      "category": "AUDIT",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/security/README.md",
+        "docs/platform/security/acceptance-pack/secure-sdlc-evidence.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "audit:serviceability",
+      "body": "node scripts/audit-serviceability.mjs",
+      "category": "AUDIT",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "audit:workforce-auth",
+      "body": "node scripts/audit-workforce-auth.mjs",
+      "category": "AUDIT",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "auth:schema:check",
+      "body": "tsx scripts/auth-schema-check.ts",
+      "category": "DATABASE",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md",
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check",
+        "verify:database"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "auth:schema:generate",
+      "body": "tsx scripts/auth-schema-generate.ts",
+      "category": "DATABASE",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md",
+        "docs/platform/accepted-foundation-operating-rules.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/auth/schema-contract/customer-auth.cli.ts",
+        "scripts/auth/schema-contract/workforce-auth.cli.ts"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "build",
+      "body": "next build --webpack",
+      "category": "BUILD",
+      "workflowCallers": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/deploy.yml"
+      ],
+      "docCallers": [
+        "README.md",
+        "docs/missing-menu-images.md",
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/testing/BASELINE.md",
+        "docs/platform/testing/CI-GAP-ANALYSIS.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "test:e2e",
+        "test:e2e:customer-auth",
+        "test:e2e:customer-ordering",
+        "test:e2e:headed",
+        "test:e2e:location-selector-layout",
+        "test:e2e:workforce-auth"
+      ],
+      "otherCallers": [
+        "scripts/e2e/customer-ordering-server.ts",
+        "scripts/package-scripts-inventory.test.mjs",
+        "scripts/serve-static-export.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "catalog:bootstrap-imp028c-modifiers",
+      "body": "node --conditions=react-server --import tsx scripts/catalog/bootstrap-imp028c-modifiers.ts",
+      "category": "ONE_OFF",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md"
+      ],
+      "packageScriptCallers": [
+        "docker:catalog:bootstrap-imp028c-modifiers"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "catalog:bootstrap-imp036c-required-topping",
+      "body": "node --conditions=react-server --import tsx scripts/catalog/bootstrap-imp036c-required-topping.ts",
+      "category": "ONE_OFF",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "check",
+      "body": "npm run lint && npm run typecheck && npm run config:check && npm run test && npm run test:scripts && npm run project:consistency && npm run audit:menu-images && npm run audit:assets && npm run audit:config && npm run audit:database && npm run audit:docker && npm run audit:persistence && npm run audit:outbox-idempotency && npm run audit:auth-foundation && npm run audit:customer-phone-auth && npm run audit:workforce-auth && npm run audit:access-control && npm run audit:catalog && npm run audit:menu-import && npm run audit:assortment-availability && npm run audit:pricing-tax && npm run audit:promotions && npm run audit:customer-profiles && npm run audit:customer-addresses && npm run audit:serviceability && npm run audit:cart && npm run audit:checkout && npm run audit:payment && npm run audit:order && npm run auth:schema:check && npm run db:migrations:check && npm run db:schema:check",
+      "category": "OPERATIONS",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md",
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/testing/BASELINE.md",
+        "docs/platform/testing/CI-GAP-ANALYSIS.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md"
+      ],
+      "packageScriptCallers": [
+        "verify"
+      ],
+      "otherCallers": [
+        "scripts/audit-database.mjs",
+        "scripts/audit-docker-runtime.mjs",
+        "scripts/database/check-migration-history.mjs",
+        "scripts/database/lib/migration-history.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "config:check",
+      "body": "tsx scripts/check-config.ts --process web",
+      "category": "LEGACY_OR_ALIAS",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": true,
+      "duplicate": true,
+      "duplicateGroup": [
+        "config:check",
+        "config:check:web"
+      ],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "config:check:migration",
+      "body": "tsx scripts/check-config.ts --process migration",
+      "category": "AUDIT",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "config:check:web",
+      "body": "tsx scripts/check-config.ts --process web",
+      "category": "AUDIT",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": true,
+      "duplicateGroup": [
+        "config:check",
+        "config:check:web"
+      ],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "config:check:worker",
+      "body": "tsx scripts/check-config.ts --process worker",
+      "category": "AUDIT",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "customer-auth:build",
+      "body": "node scripts/customer-auth/build.mjs",
+      "category": "BUILD",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "README.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "test:e2e:customer-auth",
+        "test:e2e:customer-ordering",
+        "test:e2e:location-selector-layout"
+      ],
+      "otherCallers": [
+        "scripts/e2e/customer-auth-server.ts",
+        "scripts/e2e/customer-ordering-server.ts"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "customer-auth:start",
+      "body": "node --conditions=react-server dist-customer-auth/server/customer-auth/main.js",
+      "category": "OPERATIONS",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "customer-commerce:build",
+      "body": "node scripts/customer-commerce/build.mjs",
+      "category": "BUILD",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "test:e2e:customer-ordering",
+        "test:e2e:location-selector-layout"
+      ],
+      "otherCallers": [
+        "scripts/e2e/customer-ordering-server.ts"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "customer-commerce:start",
+      "body": "node --conditions=react-server dist-customer-commerce/server/customer-commerce/main.js",
+      "category": "OPERATIONS",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "db:check",
+      "body": "node --conditions=react-server --import tsx scripts/database/check.ts --role application",
+      "category": "DATABASE",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "db:check:migration",
+      "body": "node --conditions=react-server --import tsx scripts/database/check.ts --role migration",
+      "category": "DATABASE",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "db:config",
+      "body": "docker compose config --quiet",
+      "category": "DATABASE",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": true,
+      "duplicateGroup": [
+        "db:config",
+        "docker:config"
+      ],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": true
+    },
+    {
+      "name": "db:down",
+      "body": "docker compose down --remove-orphans",
+      "category": "DATABASE",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": true,
+      "duplicateGroup": [
+        "db:down",
+        "docker:down"
+      ],
+      "mutating": true,
+      "environmentSpecific": true,
+      "orphan": true
+    },
+    {
+      "name": "db:env:init",
+      "body": "node scripts/database/init-local-env.mjs",
+      "category": "DATABASE",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/database/init-local-env.mjs",
+        "scripts/docker/init-local-env.mjs",
+        "scripts/docker/stack-up.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "db:generate",
+      "body": "drizzle-kit generate --config=drizzle.config.ts",
+      "category": "DATABASE",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md",
+        "docs/platform/accepted-foundation-operating-rules.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/database/check-schema-drift.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "db:logs",
+      "body": "docker compose logs --tail=200 postgres",
+      "category": "DATABASE",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": true
+    },
+    {
+      "name": "db:migrate",
+      "body": "tsx scripts/database/migrate.ts",
+      "category": "DATABASE",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/recovery/migrate/authority.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "db:migrations:check",
+      "body": "drizzle-kit check --config=drizzle.config.ts && node scripts/database/check-migration-history.mjs",
+      "category": "DATABASE",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md",
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/product/IMP-036H/implementation-plan.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check",
+        "verify:database"
+      ],
+      "otherCallers": [
+        "scripts/database/check-migration-history.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "db:migrations:seal",
+      "body": "node scripts/database/seal-migrations.mjs",
+      "category": "DATABASE",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md",
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/product/IMP-036H/implementation-plan.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/database/check-migration-history.mjs",
+        "scripts/database/seal-migrations.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "db:pull",
+      "body": "docker compose pull postgres",
+      "category": "DATABASE",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "db:reset",
+      "body": "node scripts/database/reset-local.mjs",
+      "category": "DATABASE",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md",
+        "docs/platform/accepted-foundation-operating-rules.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/database/init-local-env.mjs",
+        "scripts/database/reset-local.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "db:schema:check",
+      "body": "node scripts/database/check-schema-drift.mjs",
+      "category": "DATABASE",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md",
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/product/IMP-036H/implementation-plan.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check",
+        "verify:database"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "db:status",
+      "body": "docker compose ps",
+      "category": "DATABASE",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": true,
+      "duplicateGroup": [
+        "db:status",
+        "docker:status"
+      ],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "db:test",
+      "body": "npm run test:database",
+      "category": "LEGACY_OR_ALIAS",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": true,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "db:up",
+      "body": "docker compose up -d --wait postgres",
+      "category": "DATABASE",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "db:verify",
+      "body": "tsx scripts/database/verify.ts",
+      "category": "DATABASE",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md",
+        "docs/platform/accepted-foundation-operating-rules.md"
+      ],
+      "packageScriptCallers": [
+        "verify:database"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "dev",
+      "body": "next dev",
+      "category": "DEV",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md",
+        "docs/platform/accepted-foundation-operating-rules.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "docker:assortment:bootstrap-existing-menu",
+      "body": "docker compose run --rm --entrypoint \"\" assortment-bootstrap-existing-menu npm run assortment:bootstrap-existing-menu --",
+      "category": "BOOTSTRAP",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "docker:assortment:verify-existing-menu",
+      "body": "docker compose run --rm assortment-verify-existing-menu",
+      "category": "DOCKER",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": true
+    },
+    {
+      "name": "docker:build",
+      "body": "docker compose --profile tools build app migrate customer-auth workforce-auth customer-commerce operations",
+      "category": "DOCKER",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md"
+      ],
+      "packageScriptCallers": [
+        "docker:verify"
+      ],
+      "otherCallers": [
+        "scripts/docker/customer-auth-inspect.mjs",
+        "scripts/docker/inspect-runtime.mjs",
+        "scripts/docker/workforce-auth-inspect.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "docker:catalog:bootstrap-imp028c-modifiers",
+      "body": "docker compose run --rm --entrypoint \"\" catalog-bootstrap-imp028c-modifiers npm run catalog:bootstrap-imp028c-modifiers --",
+      "category": "ONE_OFF",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "docker:config",
+      "body": "docker compose config --quiet",
+      "category": "DOCKER",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": true,
+      "duplicateGroup": [
+        "db:config",
+        "docker:config"
+      ],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": true
+    },
+    {
+      "name": "docker:customer-auth:inspect",
+      "body": "node scripts/docker/customer-auth-inspect.mjs",
+      "category": "DOCKER",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md"
+      ],
+      "packageScriptCallers": [
+        "docker:verify"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "docker:customer-auth:logs",
+      "body": "docker compose logs --tail=200 customer-auth",
+      "category": "DOCKER",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "docker:customer-auth:smoke",
+      "body": "node scripts/docker/customer-auth-smoke.mjs",
+      "category": "DOCKER",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md"
+      ],
+      "packageScriptCallers": [
+        "docker:verify"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "docker:customer-commerce:logs",
+      "body": "docker compose logs --tail=200 customer-commerce",
+      "category": "DOCKER",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": true
+    },
+    {
+      "name": "docker:db:check",
+      "body": "docker compose run --rm db-check",
+      "category": "DOCKER",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "docker:db:check:migration",
+      "body": "docker compose run --rm db-check-migration",
+      "category": "DOCKER",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": true
+    },
+    {
+      "name": "docker:down",
+      "body": "docker compose down --remove-orphans",
+      "category": "DOCKER",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md",
+        "docs/platform/accepted-foundation-operating-rules.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": true,
+      "duplicateGroup": [
+        "db:down",
+        "docker:down"
+      ],
+      "mutating": true,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "docker:env:init",
+      "body": "node scripts/docker/init-local-env.mjs",
+      "category": "DOCKER",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/docker/init-local-env.mjs",
+        "scripts/docker/stack-up.mjs",
+        "scripts/docker/workforce-auth-smoke.mjs",
+        "scripts/e2e/run-customer-auth-e2e.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "docker:inspect",
+      "body": "node scripts/docker/inspect-runtime.mjs",
+      "category": "DOCKER",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md"
+      ],
+      "packageScriptCallers": [
+        "docker:verify"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "docker:logs",
+      "body": "docker compose logs --tail=200 app",
+      "category": "DOCKER",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "docker:menu:import-existing",
+      "body": "docker compose run --rm --entrypoint \"\" menu-import-existing npm run menu:import-existing --",
+      "category": "DOCKER",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "docker:menu:verify-existing",
+      "body": "docker compose run --rm menu-verify-existing",
+      "category": "DOCKER",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": true
+    },
+    {
+      "name": "docker:migrate",
+      "body": "docker compose run --rm migrate",
+      "category": "DOCKER",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md",
+        "docs/platform/accepted-foundation-operating-rules.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "compose.yaml"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "docker:operations:logs",
+      "body": "docker compose logs --tail=200 operations",
+      "category": "DOCKER",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": true
+    },
+    {
+      "name": "docker:pricing:bootstrap-existing-menu",
+      "body": "docker compose run --rm --entrypoint \"\" pricing-bootstrap-existing-menu npm run pricing:bootstrap-existing-menu --",
+      "category": "BOOTSTRAP",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "docker:pricing:verify-existing-menu",
+      "body": "docker compose run --rm pricing-verify-existing-menu",
+      "category": "DOCKER",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": true
+    },
+    {
+      "name": "docker:smoke",
+      "body": "node scripts/docker/smoke.mjs",
+      "category": "DOCKER",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md"
+      ],
+      "packageScriptCallers": [
+        "docker:verify"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "docker:status",
+      "body": "docker compose ps",
+      "category": "DOCKER",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": true,
+      "duplicateGroup": [
+        "db:status",
+        "docker:status"
+      ],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "docker:up",
+      "body": "node scripts/docker/stack-up.mjs",
+      "category": "DOCKER",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md",
+        "docs/platform/accepted-foundation-operating-rules.md"
+      ],
+      "packageScriptCallers": [
+        "docker:verify"
+      ],
+      "otherCallers": [
+        "scripts/docker/customer-auth-inspect.mjs",
+        "scripts/docker/inspect-runtime.mjs",
+        "scripts/docker/workforce-auth-inspect.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "docker:verify",
+      "body": "npm run audit:docker && npm run docker:build && npm run docker:up && npm run docker:inspect && npm run docker:smoke && npm run docker:customer-auth:inspect && npm run docker:customer-auth:smoke && npm run docker:workforce-auth:inspect && npm run docker:workforce-auth:smoke && npm run test:e2e:docker",
+      "category": "DOCKER",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "docker:workforce-auth:inspect",
+      "body": "node scripts/docker/workforce-auth-inspect.mjs",
+      "category": "DOCKER",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [
+        "docker:verify"
+      ],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": true,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "docker:workforce-auth:logs",
+      "body": "docker compose logs --tail=200 workforce-auth",
+      "category": "DOCKER",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": true
+    },
+    {
+      "name": "docker:workforce-auth:smoke",
+      "body": "node scripts/docker/workforce-auth-smoke.mjs",
+      "category": "DOCKER",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [
+        "docker:verify"
+      ],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": true,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "env:compose",
+      "body": "node scripts/environment/podman-compose.mjs",
+      "category": "ENVIRONMENT",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md",
+        "docs/platform/engineering/package-scripts-command-surface.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "env:hygiene",
+      "body": "node scripts/environment/hygiene.mjs",
+      "category": "ENVIRONMENT",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "README.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/environment/hygiene.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "env:staging:deploy",
+      "body": "node scripts/environment/staging.mjs deploy",
+      "category": "STAGING",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/environment/staging.mjs"
+      ],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "env:staging:deploy:dry-run",
+      "body": "node scripts/environment/staging.mjs deploy-dry-run",
+      "category": "STAGING",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/environment/staging.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "env:staging:recover-postgres",
+      "body": "node scripts/environment/staging.mjs recover-postgres",
+      "category": "RECOVERY",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/environment/staging.mjs"
+      ],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "env:staging:status",
+      "body": "node scripts/environment/staging.mjs status",
+      "category": "STAGING",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/environment/staging.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "env:staging:workforce:user:create",
+      "body": "node scripts/environment/staging.mjs workforce-user-create",
+      "category": "STAGING",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/environment/staging.mjs"
+      ],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "fd:signing",
+      "body": "node --conditions=react-server --import tsx scripts/financial-document/signing.ts",
+      "category": "OPERATIONS",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/capabilities/IMP-028-invoice-tax-receipt-credit-note.md",
+        "scripts/financial-document/README.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/financial-document/signing.ts"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "figma:sync",
+      "body": "node figma-sync/screenshot.js",
+      "category": "DEV",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "financial-document:recover-missing-receipt-vouchers",
+      "body": "node --conditions=react-server --import tsx scripts/financial-document/recover-missing-receipt-vouchers.ts",
+      "category": "RECOVERY",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "scripts/financial-document/README.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/financial-document/recover-missing-receipt-vouchers.ts"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "financial-document:recover-missing-tax-invoices",
+      "body": "node --conditions=react-server --import tsx scripts/financial-document/recover-missing-tax-invoices.ts",
+      "category": "RECOVERY",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "scripts/financial-document/README.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/financial-document/recover-missing-tax-invoices.ts"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "governance:context",
+      "body": "node scripts/governance-context.mjs --write",
+      "category": "GOVERNANCE",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/README.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "governance:context:check",
+      "body": "node scripts/governance-context.mjs --check",
+      "category": "GOVERNANCE",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/README.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "governance:fingerprint",
+      "body": "node scripts/governance-fingerprint.mjs",
+      "category": "GOVERNANCE",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "AGENTS.md",
+        "docs/platform/README.md",
+        "docs/platform/history/STATE-STATE-R111-pre-compression.md",
+        "docs/platform/testing/BASELINE.md",
+        "docs/platform/testing/CI-GAP-ANALYSIS.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json",
+        "scripts/fixtures/imp033-acceptance-state.md",
+        "scripts/fixtures/imp034-acceptance-state.md",
+        "scripts/fixtures/imp034-completion-state.md",
+        "scripts/fixtures/imp035-completion-state.md",
+        "scripts/fixtures/imp036-completion-state.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/project-consistency.test.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "governance:v2:current",
+      "body": "node scripts/governance-v2/current.mjs",
+      "category": "GOVERNANCE",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "governance:v2:shadow",
+      "body": "node scripts/governance-v2/shadow.mjs",
+      "category": "GOVERNANCE",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "governance:v2:test",
+      "body": "node --test scripts/governance-v2/*.test.mjs",
+      "category": "GOVERNANCE",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "governance:v2:transition",
+      "body": "node scripts/governance-v2/transition-current.mjs",
+      "category": "GOVERNANCE",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/governance-v2/transition-current.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "help",
+      "body": "node scripts/package-scripts-inventory.mjs --help-text",
+      "category": "GOVERNANCE",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/engineering/package-scripts-command-surface.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/package-scripts-inventory.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "lint",
+      "body": "eslint",
+      "category": "AUDIT",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "README.md",
+        "docs/platform/testing/BASELINE.md",
+        "docs/platform/testing/CI-GAP-ANALYSIS.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check"
+      ],
+      "otherCallers": [
+        "scripts/package-scripts-inventory.test.mjs",
+        "scripts/testing-inventory.test.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "menu:import-existing",
+      "body": "node --conditions=react-server --import tsx scripts/menu/import-existing.ts",
+      "category": "OPERATIONS",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md"
+      ],
+      "packageScriptCallers": [
+        "docker:menu:import-existing"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "menu:inventory-existing",
+      "body": "node --conditions=react-server --import tsx scripts/menu/inventory-existing.ts",
+      "category": "OPERATIONS",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "menu:verify-existing",
+      "body": "node --conditions=react-server --import tsx scripts/menu/verify-existing.ts",
+      "category": "OPERATIONS",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "operations:build",
+      "body": "node scripts/operations/build.mjs",
+      "category": "BUILD",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/audit-docker-runtime.test.mjs"
+      ],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "operations:start",
+      "body": "node --conditions=react-server dist-operations/server/operations/main.js",
+      "category": "OPERATIONS",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "order:recover-missing",
+      "body": "node --conditions=react-server --import tsx scripts/order/recover-missing-orders.ts",
+      "category": "RECOVERY",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/order/recover-missing-orders.ts"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "ordering-catalog:generate",
+      "body": "node --conditions=react-server --import tsx scripts/ordering-catalog/generate.ts",
+      "category": "OPERATIONS",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "origin-trust:verify",
+      "body": "node scripts/origin-trust/verify-contracts.mjs",
+      "category": "OPERATIONS",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/security/README.md",
+        "docs/platform/security/origin-trust/README.md",
+        "docs/platform/security/origin-trust/imp039-handoff-checklist.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/origin-trust/verify-contracts.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "pricing:bootstrap-existing-menu",
+      "body": "node --conditions=react-server --import tsx scripts/pricing/bootstrap-existing-menu.ts",
+      "category": "BOOTSTRAP",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md"
+      ],
+      "packageScriptCallers": [
+        "docker:pricing:bootstrap-existing-menu"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "pricing:verify-existing-menu",
+      "body": "node --conditions=react-server --import tsx scripts/pricing/verify-existing-menu.ts",
+      "category": "OPERATIONS",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "project:consistency",
+      "body": "node scripts/project-consistency.mjs",
+      "category": "GOVERNANCE",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "AGENTS.md",
+        "docs/platform/PRODUCT-DELIVERY.md",
+        "docs/platform/README.md",
+        "docs/platform/capabilities/IMP-024-customer-ordering-transport.md",
+        "docs/platform/engineering/change-workflow.md",
+        "docs/platform/engineering/cursor-context-audit.md",
+        "docs/platform/operations/evidence/imp037-local-prequalification-2026-09-21.md",
+        "docs/platform/testing/BASELINE.md",
+        "docs/platform/testing/CI-GAP-ANALYSIS.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check"
+      ],
+      "otherCallers": [
+        "scripts/validation-summary.test.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "recovery",
+      "body": "node scripts/recovery/cli.mjs",
+      "category": "RECOVERY",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/engineering/package-scripts-command-surface.md",
+        "docs/platform/operations/imp037-recovery-runbook.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "compose.recovery.yaml"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "recovery:backup:layer1",
+      "body": "node scripts/recovery/cli.mjs backup layer1",
+      "category": "RECOVERY",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/operations/imp037-recovery-runbook.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "recovery:backup:layer2",
+      "body": "node scripts/recovery/cli.mjs backup layer2",
+      "category": "RECOVERY",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/operations/imp037-recovery-runbook.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "recovery:capacity",
+      "body": "node scripts/recovery/cli.mjs capacity",
+      "category": "RECOVERY",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/operations/imp037-recovery-runbook.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "recovery:evidence:validate",
+      "body": "node scripts/recovery/cli.mjs evidence validate",
+      "category": "RECOVERY",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/operations/imp037-recovery-runbook.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "recovery:gate",
+      "body": "node scripts/recovery/cli.mjs gate",
+      "category": "RECOVERY",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/operations/imp037-recovery-runbook.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "recovery:status",
+      "body": "node scripts/recovery/cli.mjs status",
+      "category": "RECOVERY",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/operations/imp037-recovery-runbook.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "recovery:systemd:validate",
+      "body": "node scripts/recovery/cli.mjs systemd validate",
+      "category": "RECOVERY",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/operations/evidence/imp037-local-prequalification-2026-09-21.md",
+        "docs/platform/operations/imp037-recovery-runbook.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "recovery:target:check",
+      "body": "node scripts/recovery/cli.mjs target check",
+      "category": "RECOVERY",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/operations/imp037-recovery-runbook.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "refund:recover-missing-statutory-decisions",
+      "body": "node --conditions=react-server --import tsx scripts/refund/recover-missing-statutory-decisions.ts",
+      "category": "RECOVERY",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/refund/recover-missing-statutory-decisions.ts"
+      ],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "scripts:inventory",
+      "body": "node scripts/package-scripts-inventory.mjs --write",
+      "category": "GOVERNANCE",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/engineering/package-scripts-command-surface.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/package-scripts-inventory.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "scripts:inventory:check",
+      "body": "node scripts/package-scripts-inventory.mjs --check",
+      "category": "GOVERNANCE",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/engineering/package-scripts-command-surface.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/package-scripts-inventory.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "serviceability:set-distance-policy",
+      "body": "node --conditions=react-server --import tsx scripts/serviceability/set-distance-policy.ts",
+      "category": "OPERATIONS",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/capabilities/IMP-036B-customer-account-onboarding-address-location.md",
+        "docs/platform/experience/enterprise-experience/IMP-036E-store-operations-management.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/serviceability/set-distance-policy.ts"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "staging:baseline-classify",
+      "body": "node --conditions=react-server --import tsx scripts/environment/staging-baseline-classify.ts",
+      "category": "STAGING",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": true
+    },
+    {
+      "name": "staging:bootstrap-dehradun-business",
+      "body": "node --conditions=react-server --import tsx scripts/access/bootstrap-dehradun-business.ts",
+      "category": "BOOTSTRAP",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/access/bootstrap-dehradun-business.ts"
+      ],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "start",
+      "body": "next start",
+      "category": "OPERATIONS",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test",
+      "body": "node scripts/run-vitest.mjs run",
+      "category": "TEST_UNIT",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/engineering/package-scripts-command-surface.md",
+        "docs/platform/testing/BASELINE.md",
+        "docs/platform/testing/CI-GAP-ANALYSIS.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/CI-READINESS.md",
+        "docs/platform/testing/README.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check"
+      ],
+      "otherCallers": [
+        "scripts/testing-inventory.mjs",
+        "scripts/testing-inventory.test.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:access-control",
+      "body": "node scripts/run-vitest.mjs run tests/access-control",
+      "category": "TEST_UNIT",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-GAP-ANALYSIS.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:access-control:cli",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/access-control/cli",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:administration",
+      "body": "node scripts/run-vitest.mjs run tests/administration && npm run test:database:administration",
+      "category": "TEST_UNIT",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:assortment-availability",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/assortment-availability",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:assortment-bootstrap",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/assortment-bootstrap",
+      "category": "BOOTSTRAP",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:cart",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/cart/",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/BASELINE.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:cart-auth-integration",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/cart-auth-integration",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:cart-concurrency",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/cart-concurrency",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [
+        ".github/workflows/nightly-verification.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:cart-security",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/cart-security",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:catalog",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/catalog",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "README.md",
+        "docs/platform/testing/BASELINE.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:catalog-imp028c-modifiers",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/catalog-imp028c-modifiers",
+      "category": "ONE_OFF",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/testing/BASELINE.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:catalog-imp036c-required-topping",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/catalog-imp036c-required-topping",
+      "category": "ONE_OFF",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:checkout",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/checkout/",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:checkout-auth-integration",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/checkout-auth-integration",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:checkout-concurrency",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/checkout-concurrency",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [
+        ".github/workflows/nightly-verification.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:checkout-security",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/checkout-security",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:coverage",
+      "body": "node scripts/run-vitest.mjs coverage",
+      "category": "TEST_UNIT",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md",
+        "docs/platform/testing/BASELINE.md",
+        "docs/platform/testing/CI-GAP-ANALYSIS.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/CI-READINESS.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/testing-inventory.mjs",
+        "scripts/testing-inventory.test.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:customer-address-auth-integration",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-address-auth-integration",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:customer-address-concurrency",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-address-concurrency",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [
+        ".github/workflows/nightly-verification.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:customer-address-security",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-address-security",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:customer-addresses",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-addresses",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:customer-auth:http",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-auth/http.integration.test.ts",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "README.md",
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:customer-commerce:http",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-commerce/http.integration.test.ts tests/customer-commerce/scheduled-http.tranche3.integration.test.ts",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/BASELINE.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:customer-profile-auth-integration",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-profile-auth-integration",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:customer-profile-security",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-profile-security",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:customer-profiles",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-profiles",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:database",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts",
+      "category": "TEST_DATABASE",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md",
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/testing/BASELINE.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md"
+      ],
+      "packageScriptCallers": [
+        "db:test",
+        "verify:database"
+      ],
+      "otherCallers": [
+        "scripts/e2e/customer-auth-server.ts",
+        "scripts/package-scripts-inventory.test.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:database:access-control",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/access-control.integration.test.ts",
+      "category": "TEST_DATABASE",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:database:administration",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/administration/admin-http.integration.test.ts tests/administration/admin-step-up-http.integration.test.ts tests/administration/imp036g-proofs.integration.test.ts tests/administration/admin-catalog-http.integration.test.ts tests/administration/admin-catalog-http-customer-truth.integration.test.ts tests/administration/admin-menu-http.integration.test.ts tests/administration/admin-assortment-http.integration.test.ts tests/administration/admin-pricing-http.integration.test.ts tests/administration/admin-promotions-http.integration.test.ts tests/administration/admin-tariff-http.integration.test.ts tests/administration/admin-commercial-http.integration.test.ts tests/administration/admin-brand-policy-http.tranche3.integration.test.ts",
+      "category": "TEST_DATABASE",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "test:administration"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:database:assortment-availability",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/assortment-availability.integration.test.ts",
+      "category": "TEST_DATABASE",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:database:auth-foundation",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/auth-foundation.integration.test.ts",
+      "category": "TEST_DATABASE",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "README.md",
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:database:cart",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/cart.integration.test.ts",
+      "category": "TEST_DATABASE",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:database:catalog",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/catalog.integration.test.ts",
+      "category": "TEST_DATABASE",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "README.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:database:checkout",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/checkout.integration.test.ts",
+      "category": "TEST_DATABASE",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/testing-inventory.test.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:database:customer-addresses",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/customer-addresses.integration.test.ts",
+      "category": "TEST_DATABASE",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:database:customer-phone-auth",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/customer-phone-auth.integration.test.ts",
+      "category": "TEST_DATABASE",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md",
+        "docs/platform/accepted-foundation-operating-rules.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:database:customer-profiles",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/customer-profiles.integration.test.ts",
+      "category": "TEST_DATABASE",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:database:menu-import",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/menu-import.integration.test.ts",
+      "category": "TEST_DATABASE",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:database:notifications",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/notifications.integration.test.ts",
+      "category": "TEST_DATABASE",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:database:order",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/order.integration.test.ts",
+      "category": "TEST_DATABASE",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:database:outbox-idempotency",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/outbox.integration.test.ts tests/database/idempotency.integration.test.ts tests/database/outbox-idempotency-migration.integration.test.ts",
+      "category": "TEST_DATABASE",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:database:payment",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/payment.integration.test.ts",
+      "category": "TEST_DATABASE",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:database:persistence",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/persistence.integration.test.ts",
+      "category": "TEST_DATABASE",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "README.md",
+        "docs/platform/testing/CI-GAP-ANALYSIS.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:database:pricing-tax",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/pricing-tax.integration.test.ts",
+      "category": "TEST_DATABASE",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:database:promotions",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/promotions*.integration.test.ts",
+      "category": "TEST_DATABASE",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:database:serviceability",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/serviceability.integration.test.ts",
+      "category": "TEST_DATABASE",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:database:workforce-auth",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/workforce-auth.integration.test.ts",
+      "category": "TEST_DATABASE",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:e2e",
+      "body": "npm run build && playwright test",
+      "category": "TEST_E2E",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md",
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/testing/BASELINE.md"
+      ],
+      "packageScriptCallers": [
+        "verify"
+      ],
+      "otherCallers": [
+        "scripts/e2e/customer-auth-server.ts",
+        "scripts/e2e/workforce-auth-server.ts"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:e2e:commercial-workspace",
+      "body": "node scripts/e2e/run-commercial-workspace-e2e.mjs",
+      "category": "TEST_E2E",
+      "workflowCallers": [
+        ".github/workflows/nightly-verification.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:e2e:customer-auth",
+      "body": "npm run build && npm run customer-auth:build && node scripts/e2e/run-customer-auth-e2e.mjs",
+      "category": "TEST_E2E",
+      "workflowCallers": [
+        ".github/workflows/nightly-verification.yml"
+      ],
+      "docCallers": [
+        "README.md",
+        "docs/platform/accepted-foundation-operating-rules.md",
+        "docs/platform/testing/CI-GAP-ANALYSIS.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "verify"
+      ],
+      "otherCallers": [
+        "scripts/e2e/customer-auth-server.ts"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:e2e:customer-ordering",
+      "body": "NEXT_PUBLIC_BOBA_BEAR_GOOGLE_MAPS_BROWSER_KEY=e2e-maps-browser-key-fixture npm run build && npm run customer-auth:build && npm run customer-commerce:build && node scripts/e2e/run-customer-ordering-e2e.mjs",
+      "category": "TEST_E2E",
+      "workflowCallers": [
+        ".github/workflows/nightly-verification.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-GAP-ANALYSIS.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/testing-inventory.test.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:e2e:docker",
+      "body": "PLAYWRIGHT_TARGET=docker playwright test",
+      "category": "DOCKER",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md"
+      ],
+      "packageScriptCallers": [
+        "docker:verify"
+      ],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "test:e2e:headed",
+      "body": "npm run build && playwright test --headed",
+      "category": "TEST_E2E",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:e2e:location-selector-layout",
+      "body": "NEXT_PUBLIC_BOBA_BEAR_GOOGLE_MAPS_BROWSER_KEY=e2e-maps-browser-key-fixture npm run build && npm run customer-auth:build && npm run customer-commerce:build && playwright test --config=playwright.location-selector.config.ts",
+      "category": "TEST_E2E",
+      "workflowCallers": [
+        ".github/workflows/nightly-verification.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/testing-inventory.test.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:e2e:operations-lifecycle",
+      "body": "node scripts/e2e/run-operations-lifecycle-e2e.mjs",
+      "category": "TEST_E2E",
+      "workflowCallers": [
+        ".github/workflows/nightly-verification.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-GAP-ANALYSIS.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:e2e:workforce-auth",
+      "body": "npm run build && npm run workforce-auth:build && node scripts/e2e/run-workforce-auth-e2e.mjs",
+      "category": "TEST_E2E",
+      "workflowCallers": [
+        ".github/workflows/nightly-verification.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-GAP-ANALYSIS.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "verify"
+      ],
+      "otherCallers": [
+        "scripts/e2e/workforce-auth-server.ts",
+        "scripts/testing-inventory.test.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:imp036i:tranche1",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/imp036i-scheduled-fulfilment.integration.test.ts tests/delivery-application/delivery.d380-finality.test.ts",
+      "category": "ONE_OFF",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/testing-inventory.test.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:imp036i:tranche2",
+      "body": "node scripts/run-vitest.mjs run tests/scheduled-fulfilment/windows.test.ts && node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/checkout/scheduled-fulfilment.domain.test.ts tests/payment/payment.scheduled.domain.test.ts tests/payment/payment.scheduled-bind-race.domain.test.ts",
+      "category": "ONE_OFF",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:imp036i:tranche3",
+      "body": "node scripts/run-vitest.mjs run tests/scheduled-fulfilment/operational-cues.test.ts src/components/ordering/CheckoutTimingChoice.test.tsx src/shared/notifications/customer-visible-content.test.ts && node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/checkout/scheduled-surfaces.tranche3.test.ts tests/customer-commerce/scheduled-http.tranche3.integration.test.ts tests/administration/admin-brand-policy-http.tranche3.integration.test.ts tests/operations/scheduling-http.tranche3.integration.test.ts tests/operations/scheduling-profile-workforce-journey.integration.test.ts",
+      "category": "ONE_OFF",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:imp036i:tranche4",
+      "body": "node scripts/run-vitest.mjs run src/shared/scheduled-fulfilment/cancellation.test.ts src/shared/notifications/notifications.domain.test.ts src/shared/notifications/customer-visible-content.test.ts && node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/order/scheduled-cancellation-reminder.tranche4.integration.test.ts",
+      "category": "ONE_OFF",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:imp036i:tranche5",
+      "body": "node scripts/run-vitest.mjs run tests/scheduled-fulfilment/tranche5-traceability.test.ts && node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/payment/payment.tranche5-hardening.integration.test.ts tests/payment/payment.scheduled-bind-race.domain.test.ts tests/order/scheduled-cancellation-reminder.tranche4.integration.test.ts tests/database/scheduled-financial-document-continuity.integration.test.ts",
+      "category": "ONE_OFF",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/history/ROADMAP-GTM-R188-pre-gov2.md",
+        "docs/platform/history/STATE-STATE-R186-pre-gov2.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:imp036j:responsive-browser-proof",
+      "body": "node scripts/imp036j-tranche8-responsive-browser-proof.mjs",
+      "category": "ONE_OFF",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:imp036j:tranche1",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/imp036j-tranche1-commercial-persistence.integration.test.ts",
+      "category": "ONE_OFF",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:imp036j:tranche2",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/imp036j-tranche2-measurement-persistence.integration.test.ts",
+      "category": "ONE_OFF",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:imp036j:tranche3",
+      "body": "node scripts/run-vitest.mjs run tests/promotions/imp036j-tranche3-commercial-evaluation.test.ts tests/promotions/engine.test.ts tests/promotions/fatal-and-money.test.ts tests/promotions/tax-integration.test.ts tests/promotions/bogo.test.ts tests/promotions/targets-modifiers.test.ts",
+      "category": "ONE_OFF",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "test:imp036j:tranche4",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/imp036j-tranche4-commercial-commands.integration.test.ts",
+      "category": "ONE_OFF",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/history/ROADMAP-GTM-R188-pre-gov2.md",
+        "docs/platform/history/STATE-STATE-R186-pre-gov2.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:imp036j:tranche5",
+      "body": "node scripts/run-vitest.mjs run src/server/customer-commerce/measurement/compare-presentation.test.ts src/components/ordering/imp036j-tranche5-presentation.test.tsx src/components/ordering/imp036j-tranche5-checkout-remediation.test.tsx src/components/ordering/committed-presentation-observation.test.ts src/components/ordering/checkout-snapshot-presentation.test.ts src/shared/order/money-summary.test.ts && node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/imp036j-tranche5-customer-presentation.integration.test.ts && node scripts/imp036j-tranche5-responsive-proof.mjs",
+      "category": "ONE_OFF",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/history/ROADMAP-GTM-R188-pre-gov2.md",
+        "docs/platform/history/STATE-STATE-R186-pre-gov2.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:imp036j:tranche6",
+      "body": "node scripts/run-vitest.mjs run tests/administration/PromotionsEditor.test.tsx && node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/imp036j-tranche6-workforce-authoring.integration.test.ts",
+      "category": "ONE_OFF",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/history/ROADMAP-GTM-R188-pre-gov2.md",
+        "docs/platform/history/STATE-STATE-R186-pre-gov2.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:imp036j:tranche7",
+      "body": "node scripts/run-vitest.mjs run src/server/customer-commerce/measurement/report-window.test.ts && node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/imp036j-tranche7-measurement-reporting.integration.test.ts",
+      "category": "ONE_OFF",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:imp036j:tranche8",
+      "body": "node scripts/run-vitest.mjs run tests/imp036j/imp036j-tranche8-coverage.test.ts && node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/imp036j-tranche8-integration-hardening.integration.test.ts && node scripts/imp036j-tranche8-golden-journeys.mjs && node scripts/imp036j-tranche8-responsive-browser-proof.mjs",
+      "category": "ONE_OFF",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:menu-import",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/menu-import",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:menu-parity",
+      "body": "node scripts/run-vitest.mjs run tests/menu-parity",
+      "category": "TEST_UNIT",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:operations:http",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/operations/store-http.integration.test.ts tests/operations/refunds-http.integration.test.ts tests/operations/orders-read-http.integration.test.ts tests/operations/orders-mutation-http.integration.test.ts tests/operations/notifications-http.integration.test.ts tests/operations/scheduling-http.tranche3.integration.test.ts tests/operations/scheduling-profile-workforce-journey.integration.test.ts",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:order",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/order/",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:order-auth-integration",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/order-auth-integration",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:order-concurrency",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/order-concurrency",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [
+        ".github/workflows/nightly-verification.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:order-crash",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/order-crash",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [
+        ".github/workflows/nightly-verification.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:order-security",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/order-security",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:ordering-catalog",
+      "body": "node scripts/run-vitest.mjs run tests/ordering-catalog",
+      "category": "TEST_UNIT",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:payment",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/payment/",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:payment-auth-integration",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/payment-auth-integration",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:payment-concurrency",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/payment-concurrency",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [
+        ".github/workflows/nightly-verification.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/testing-inventory.test.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:payment-idempotency",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/payment-idempotency",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [
+        ".github/workflows/nightly-verification.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:payment-promotions",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/payment-promotions",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:payment-provider",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/payment-provider",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:payment-razorpay",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/payment-razorpay",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:payment-reconciliation",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/payment-reconciliation",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [
+        ".github/workflows/nightly-verification.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:payment-security",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/payment-security",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:pricing-bootstrap",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/pricing-bootstrap",
+      "category": "BOOTSTRAP",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:pricing-parity",
+      "body": "node scripts/run-vitest.mjs run tests/pricing-parity",
+      "category": "TEST_UNIT",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:pricing-tax",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/pricing-tax",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:promotion-coupons",
+      "body": "node scripts/run-vitest.mjs run tests/promotion-coupons",
+      "category": "TEST_UNIT",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:promotion-pricing-parity",
+      "body": "node scripts/run-vitest.mjs run tests/promotion-pricing-parity",
+      "category": "TEST_UNIT",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:promotions",
+      "body": "node scripts/run-vitest.mjs run tests/promotions",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/capabilities/IMP-036J-promotions-coupons-offers.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:recovery",
+      "body": "node --test $(find scripts/recovery -name '*.test.mjs')",
+      "category": "RECOVERY",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/operations/evidence/imp037-local-prequalification-2026-09-21.md",
+        "docs/platform/operations/imp037-recovery-runbook.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:scripts",
+      "body": "find scripts -name \"*.test.mjs\" -print0 | xargs -0 node --test",
+      "category": "TEST_UNIT",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/BASELINE.md",
+        "docs/platform/testing/CI-GAP-ANALYSIS.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/CI-READINESS.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check"
+      ],
+      "otherCallers": [
+        "scripts/testing-inventory.mjs",
+        "scripts/testing-inventory.test.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:serviceability",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/serviceability/",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:serviceability-auth-integration",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/serviceability-auth-integration",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "test:serviceability-concurrency",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/serviceability-concurrency",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [
+        ".github/workflows/nightly-verification.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:serviceability-security",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/serviceability-security",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:staging-baseline",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/staging-baseline",
+      "category": "STAGING",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": true
+    },
+    {
+      "name": "test:watch",
+      "body": "vitest",
+      "category": "TEST_UNIT",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "test:workforce-auth:http",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/workforce-auth/http.integration.test.ts",
+      "category": "TEST_INTEGRATION",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "testing:inventory",
+      "body": "node scripts/testing-inventory.mjs --write",
+      "category": "GOVERNANCE",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/testing/README.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "testing:inventory:check",
+      "body": "node scripts/testing-inventory.mjs --check",
+      "category": "GOVERNANCE",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "docs/platform/operations/evidence/imp037-local-prequalification-2026-09-21.md",
+        "docs/platform/testing/CI-GAP-ANALYSIS.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/README.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "typecheck",
+      "body": "tsc --noEmit",
+      "category": "AUDIT",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "README.md",
+        "docs/platform/testing/BASELINE.md",
+        "docs/platform/testing/CI-GAP-ANALYSIS.md",
+        "docs/platform/testing/CI-JOB-CONTRACT.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "check"
+      ],
+      "otherCallers": [
+        "scripts/package-scripts-inventory.test.mjs",
+        "scripts/testing-inventory.test.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "validation:summary",
+      "body": "node scripts/validation-summary.mjs",
+      "category": "GOVERNANCE",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/README.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/validation-summary.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "verify",
+      "body": "npm run check && npm run test:e2e && npm run test:e2e:customer-auth && npm run test:e2e:workforce-auth",
+      "category": "OPERATIONS",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md",
+        "docs/platform/accepted-foundation-operating-rules.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "verify:database",
+      "body": "npm run db:migrations:check && npm run db:schema:check && npm run auth:schema:check && npm run test:database && npm run db:verify",
+      "category": "OPERATIONS",
+      "workflowCallers": [],
+      "docCallers": [
+        "README.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "workforce-auth:build",
+      "body": "node scripts/workforce-auth/build.mjs",
+      "category": "BUILD",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [
+        "test:e2e:workforce-auth"
+      ],
+      "otherCallers": [
+        "scripts/e2e/workforce-auth-server.ts"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "workforce-auth:start",
+      "body": "node --conditions=react-server dist-workforce-auth/server/workforce-auth/main.js",
+      "category": "OPERATIONS",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": true
+    },
+    {
+      "name": "workforce:user:create",
+      "body": "node --conditions=react-server --import tsx scripts/workforce/create-user.ts",
+      "category": "OPERATIONS",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/security/acceptance-pack/assessor-identity-readiness.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/workforce/create-user.ts"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "workforce:user:disable",
+      "body": "node --conditions=react-server --import tsx scripts/workforce/disable-user.ts",
+      "category": "OPERATIONS",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/workforce/disable-user.ts"
+      ],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "workforce:user:enable",
+      "body": "node --conditions=react-server --import tsx scripts/workforce/enable-user.ts",
+      "category": "OPERATIONS",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/workforce/enable-user.ts"
+      ],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "workforce:user:reset-mfa",
+      "body": "node --conditions=react-server --import tsx scripts/workforce/reset-mfa.ts",
+      "category": "OPERATIONS",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/workforce/reset-mfa.ts"
+      ],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "workforce:user:reset-password",
+      "body": "node --conditions=react-server --import tsx scripts/workforce/reset-password.ts",
+      "category": "OPERATIONS",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/workforce/reset-password.ts"
+      ],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": true,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
+      "name": "working-tree:fingerprint",
+      "body": "node scripts/working-tree-fingerprint.mjs",
+      "category": "GOVERNANCE",
+      "workflowCallers": [],
+      "docCallers": [
+        "AGENTS.md",
+        "docs/platform/README.md",
+        "docs/platform/history/STATE-STATE-R111-pre-compression.md",
+        "docs/platform/product/IMP-036G/product-definition.md",
+        "docs/platform/product/IMP-036K/product-definition.md",
+        "docs/platform/product/IMP-037/product-definition.md",
+        "scripts/fixtures/imp033-acceptance-state.md",
+        "scripts/fixtures/imp034-acceptance-state.md",
+        "scripts/fixtures/imp034-completion-state.md",
+        "scripts/fixtures/imp035-completion-state.md",
+        "scripts/fixtures/imp036-completion-state.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [
+        "scripts/agent-context-check.mjs",
+        "scripts/agent-context-check.test.mjs",
+        "scripts/project-consistency.test.mjs"
+      ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    }
+  ]
+}
