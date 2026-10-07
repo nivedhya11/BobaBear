@@ -7,7 +7,7 @@
   "currentProductSlice": "IMP-036J",
   "nextProductSlice": "IMP-036K",
   "gtmBoundary": "IMP-040",
-  "lastReviewed": "2026-10-06",
+  "lastReviewed": "2026-10-07",
   "supersedes": "GTM-R189"
 }
 -->
