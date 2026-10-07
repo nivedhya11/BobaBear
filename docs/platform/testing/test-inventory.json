@@ -31,11 +31,11 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2296,
-    "executableTestFiles": 502,
+    "trackedPathsConsidered": 2300,
+    "executableTestFiles": 503,
     "sourceTestFiles": 148,
     "testsTreeExecutableFiles": 274,
-    "scriptTestFiles": 80,
+    "scriptTestFiles": 81,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
     "playwrightConfigs": 7,
@@ -43,7 +43,7 @@
     "packageTestCommands": 94,
     "packageAuditCommands": 27,
     "packageE2eCommands": 9,
-    "packageCheckCommands": 17,
+    "packageCheckCommands": 18,
     "packageCoverageCommands": 1,
     "packageInventoryCommands": 2,
     "ciWorkflowFiles": 4,
@@ -521,6 +521,7 @@
     "scripts/lib/vitest-result-validation.test.mjs",
     "scripts/nginx-origin-redirect.test.mjs",
     "scripts/origin-trust/verify-contracts.test.mjs",
+    "scripts/package-scripts-inventory.test.mjs",
     "scripts/project-consistency.test.mjs",
     "scripts/recovery/capacity/observe.test.mjs",
     "scripts/recovery/cli.test.mjs",
@@ -792,6 +793,7 @@
       "lint",
       "project:consistency",
       "recovery:target:check",
+      "scripts:inventory:check",
       "typecheck",
       "validation:summary"
     ],
@@ -847,6 +849,7 @@
     "lint": "eslint",
     "project:consistency": "node scripts/project-consistency.mjs",
     "recovery:target:check": "node scripts/recovery/cli.mjs target check",
+    "scripts:inventory:check": "node scripts/package-scripts-inventory.mjs --check",
     "test": "node scripts/run-vitest.mjs run",
     "test:access-control": "node scripts/run-vitest.mjs run tests/access-control",
     "test:access-control:cli": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/access-control/cli",
@@ -2249,6 +2252,23 @@
     },
     {
       "path": "scripts/origin-trust/verify-contracts.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/package-scripts-inventory.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
       "testType": "script-unit",
