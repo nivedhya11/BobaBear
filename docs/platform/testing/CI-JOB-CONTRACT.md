@@ -498,7 +498,8 @@ DB_REQUIREMENT = YES
 BROWSER_REQUIREMENT = YES
 COST = EXPENSIVE
 BLOCKING_SEMANTICS = YES for release evidence
-ARTIFACTS = test-results-customer-ordering/** (preserve; do not destroy)
+ARTIFACTS = test-results-customer-ordering-runtime/** (ephemeral Actions upload; time-limited)
+PROTECTED_EVIDENCE = test-results-customer-ordering/** (tracked historical triad; not outputDir; preserve; do not destroy)
 FAILURE_BEHAVIOR = fail job; no silent retry
 DISPOSITION = IMPLEMENT_IN_3B2
 ```

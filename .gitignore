@@ -15,11 +15,22 @@
 /playwright-report
 /playwright-report-customer-auth
 /playwright-report-workforce-auth
+/playwright-report-customer-ordering
+/playwright-report-location-selector-layout
 /test-results
 /test-results-customer-auth
 /test-results-workforce-auth
 /test-results-operations-lifecycle
 /test-results-commercial-workspace
+/test-results-location-selector-layout
+# Live customer-ordering Playwright outputDir (HYG-05 remediation).
+# Distinct from protected historical triad under test-results-customer-ordering/
+# (tracked; preserved byte-for-byte; not Playwright outputDir — see
+# playwright.customer-ordering.config.ts and EVIDENCE-RETENTION.md).
+/test-results-customer-ordering-runtime
+# Belt-and-suspenders: never accidentally add NEW dumps under the protected
+# historical prefix. Do not git rm protected evidence without disposition.
+/test-results-customer-ordering/**
 /blob-report
 /artifacts/playwright-report-customer-auth/
 /artifacts/test-results-customer-auth/

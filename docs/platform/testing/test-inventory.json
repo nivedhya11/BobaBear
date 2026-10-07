@@ -15,6 +15,7 @@
       "test-results-workforce-auth/",
       "test-results-operations-lifecycle/",
       "test-results-commercial-workspace/",
+      "test-results-customer-ordering-runtime/",
       "artifacts/playwright-report-customer-auth/",
       "artifacts/test-results-customer-auth/",
       ".next/",
@@ -31,7 +32,7 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2296,
+    "trackedPathsConsidered": 2297,
     "executableTestFiles": 502,
     "sourceTestFiles": 148,
     "testsTreeExecutableFiles": 274,

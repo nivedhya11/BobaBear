@@ -66,6 +66,7 @@ Excluded from executable classification (by design):
 - `coverage/**`, Playwright report/result dirs, `.next/**`, `out/**`, `node_modules/**`
 - `archive/**`
 - protected evidence prefixes `test-results-customer-ordering/**`, `test-results-location-selector-layout/**`
+  (retention / classification: [`EVIDENCE-RETENTION.md`](./EVIDENCE-RETENTION.md); do not delete tracked protected files in hygiene passes)
 
 ## A. TEST-1 layer baseline
 

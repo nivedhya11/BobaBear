@@ -23,6 +23,9 @@ analysis for Session 3 verification work.
    (`npm run test` / `test:scripts` / coverage baseline).
 6. Read [`CI-JOB-CONTRACT.md`](./CI-JOB-CONTRACT.md) for the Session 3B2
    workflow implementation contract (not an authorization to edit workflows).
+7. Read [`EVIDENCE-RETENTION.md`](./EVIDENCE-RETENTION.md) for repository-weight
+   and evidence-retention rules (HYG-05). It does not authorize deletion of
+   protected or migration evidence.
 
 ## Explicit non-authority
 

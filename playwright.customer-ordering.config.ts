@@ -17,7 +17,9 @@ export default defineConfig({
   forbidOnly: isCI,
   retries: 0,
   reporter: [["line"]],
-  outputDir: "test-results-customer-ordering",
+  // Live dumps must not share the protected historical triad prefix
+  // (test-results-customer-ordering/**). Playwright cleans outputDir at start.
+  outputDir: "test-results-customer-ordering-runtime",
   timeout: 180_000,
   expect: {
     timeout: 15_000,
