@@ -15,11 +15,20 @@
 /playwright-report
 /playwright-report-customer-auth
 /playwright-report-workforce-auth
+/playwright-report-customer-ordering
+/playwright-report-location-selector-layout
 /test-results
 /test-results-customer-auth
 /test-results-workforce-auth
 /test-results-operations-lifecycle
 /test-results-commercial-workspace
+/test-results-location-selector-layout
+# Ephemeral customer-ordering Playwright dumps (HYG-05).
+# The three historically tracked protected evidence files under this prefix
+# remain tracked; gitignore only suppresses NEW untracked outputs. Do not
+# git rm protected evidence without an explicit human disposition decision.
+# See docs/platform/testing/EVIDENCE-RETENTION.md.
+/test-results-customer-ordering/**
 /blob-report
 /artifacts/playwright-report-customer-auth/
 /artifacts/test-results-customer-auth/
