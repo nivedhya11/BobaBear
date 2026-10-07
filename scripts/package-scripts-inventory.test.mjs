@@ -13,6 +13,7 @@ import {
   formatHelpText,
   isExactNpmRunAlias,
   isMutatingCommand,
+  resolveCallerRoots,
   serializeInventory,
 } from "./package-scripts-inventory.mjs";
 
@@ -67,6 +68,81 @@ test("exact npm-run alias and mutating heuristics", () => {
   assert.equal(isMutatingCommand("db:reset", "node scripts/database/reset-local.mjs"), true);
   assert.equal(isMutatingCommand("env:staging:deploy:dry-run", "node staging.mjs deploy-dry-run"), false);
   assert.equal(isMutatingCommand("lint", "eslint"), false);
+  assert.equal(
+    isMutatingCommand(
+      "assortment:configure-outlet-operating-uat",
+      "node --conditions=react-server --import tsx scripts/assortment/configure-outlet-operating-uat.ts",
+    ),
+    true,
+  );
+});
+
+test("test:recovery classifies as TEST_UNIT before broad :recover matching", () => {
+  assert.equal(
+    classifyScript("test:recovery", "node --test $(find scripts/recovery -name '*.test.mjs')"),
+    "TEST_UNIT",
+  );
+  assert.equal(
+    classifyScript("recovery:status", "node scripts/recovery/cli.mjs status"),
+    "RECOVERY",
+  );
+  assert.equal(
+    classifyScript(
+      "customer-auth:recover-missing",
+      "node --import tsx scripts/customer-auth/recover-missing.ts",
+    ),
+    "RECOVERY",
+  );
+});
+
+test("caller discovery includes runtime/build consumers", () => {
+  const roots = resolveCallerRoots(repoRoot).map((abs) =>
+    path.relative(repoRoot, abs).split(path.sep).join("/"),
+  );
+  assert.ok(roots.includes("Dockerfile"), `missing Dockerfile in ${roots.join(",")}`);
+  assert.ok(roots.includes("docker"), "missing docker/ tree");
+  assert.ok(roots.includes("compose.yaml"), "missing compose.yaml");
+  assert.ok(
+    roots.some((r) => r.startsWith("playwright") && r.includes(".config.")),
+    "missing playwright*.config.*",
+  );
+
+  const inventory = buildPackageScriptsInventory(repoRoot);
+  const operationsBuild = inventory.records.find((r) => r.name === "operations:build");
+  assert.ok(operationsBuild, "operations:build missing from inventory");
+  assert.ok(
+    operationsBuild.otherCallers.includes("Dockerfile"),
+    `operations:build otherCallers=${JSON.stringify(operationsBuild.otherCallers)}`,
+  );
+
+  const stagingBaseline = inventory.records.find((r) => r.name === "staging:baseline-classify");
+  assert.ok(stagingBaseline, "staging:baseline-classify missing from inventory");
+  assert.ok(
+    stagingBaseline.otherCallers.includes("Dockerfile"),
+    `staging:baseline-classify otherCallers=${JSON.stringify(stagingBaseline.otherCallers)}`,
+  );
+  assert.equal(stagingBaseline.orphan, false);
+
+  const recovery = inventory.records.find((r) => r.name === "recovery");
+  assert.ok(recovery, "recovery missing from inventory");
+  assert.ok(
+    recovery.otherCallers.some((c) => c.startsWith("docker/recovery/systemd/")),
+    `recovery otherCallers=${JSON.stringify(recovery.otherCallers)}`,
+  );
+
+  const uat = inventory.records.find((r) => r.name === "assortment:configure-outlet-operating-uat");
+  assert.ok(uat);
+  assert.equal(uat.mutating, true);
+  assert.equal(uat.category, "BOOTSTRAP");
+
+  const testRecovery = inventory.records.find((r) => r.name === "test:recovery");
+  assert.ok(testRecovery);
+  assert.equal(testRecovery.category, "TEST_UNIT");
+
+  const help = formatHelpText(inventory);
+  assert.match(help, /^TEST_UNIT$/m);
+  assert.match(help, /^\s+test:recovery$/m);
+  assert.doesNotMatch(help, /^RECOVERY\n(?:.*\n)*?\s+test:recovery$/m);
 });
 
 test("extractNpmRunDeps finds package-script parents", () => {

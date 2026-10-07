@@ -15,6 +15,7 @@
 import { execFileSync } from "node:child_process";
 import {
   existsSync,
+  globSync,
   mkdirSync,
   readdirSync,
   readFileSync,
@@ -73,18 +74,51 @@ export const PUBLIC_STABLE_ALIASES = Object.freeze([
   "testing:inventory:check",
 ]);
 
+/**
+ * Caller discovery corpus: workflows/docs/scripts plus runtime/build consumers
+ * (Dockerfile*, compose*.yaml, playwright*.config.*, docker/** including
+ * recovery/systemd). Globs are expanded at the repository root only.
+ */
 const CALLER_GLOBS = Object.freeze([
   ".github/workflows",
   ".github/actions",
   "docs",
   "scripts",
+  "docker",
   "README.md",
   "AGENTS.md",
   "CLAUDE.md",
-  "compose.yaml",
-  "compose.recovery.yaml",
-  "compose.operations-lifecycle-e2e.yaml",
+  "Dockerfile*",
+  "compose*.yaml",
+  "compose*.yml",
+  "playwright*.config.*",
 ]);
+
+/**
+ * Expand CALLER_GLOBS into absolute existing file/directory paths.
+ * Globs are resolved from the repository root (non-recursive basename matches).
+ * Bare paths may be files or directory trees.
+ * @param {string} root
+ * @returns {string[]}
+ */
+export function resolveCallerRoots(root) {
+  /** @type {string[]} */
+  const out = [];
+  for (const pattern of CALLER_GLOBS) {
+    if (pattern.includes("*") || pattern.includes("?")) {
+      for (const rel of globSync(pattern, { cwd: root })) {
+        // Reject nested matches if a glob accidentally expands deeply.
+        if (rel.includes("/") || rel.includes("\\")) continue;
+        const abs = path.join(root, rel);
+        if (existsSync(abs)) out.push(abs);
+      }
+      continue;
+    }
+    const abs = path.join(root, pattern);
+    if (existsSync(abs)) out.push(abs);
+  }
+  return [...new Set(out)].sort((a, b) => a.localeCompare(b));
+}
 
 /**
  * @param {string} name
@@ -97,6 +131,8 @@ export function classifyScript(name, body) {
 
   if (n === "db:test" || n === "config:check") return "LEGACY_OR_ALIAS";
   if (/^test:imp036[a-z]:/.test(n) || /imp028c|imp036c/.test(n)) return "ONE_OFF";
+  // TEST_* before broad :recover matching so suites like test:recovery stay tests.
+  if (n === "test:recovery") return "TEST_UNIT";
   if (
     n.startsWith("recovery") ||
     n.includes(":recover") ||
@@ -211,6 +247,7 @@ export function isMutatingCommand(name, body) {
     /\bmenu:import-existing\b/.test(s) ||
     /\bgrant-assessment-roles\b/.test(s) ||
     /\bset-distance-policy\b/.test(s) ||
+    /\bconfigure-outlet-operating-uat\b/.test(s) ||
     /\bdrizzle-kit (generate|push)\b/.test(s)
   );
 }
@@ -243,10 +280,9 @@ export function extractNpmRunDeps(body) {
  */
 function ripgrepNpmRunCorpus(root) {
   const args = ["-n", "--no-heading", "-e", String.raw`npm\s+run\s+[A-Za-z0-9:_./-]+`];
-  for (const g of CALLER_GLOBS) {
-    const abs = path.join(root, g);
-    if (existsSync(abs)) args.push(abs);
-  }
+  const roots = resolveCallerRoots(root);
+  if (roots.length === 0) return "";
+  args.push(...roots);
   try {
     return execFileSync("rg", args, {
       encoding: "utf8",
@@ -292,7 +328,9 @@ function scanCallerCorpus(root) {
       walk(path.join(rel, ent));
     }
   };
-  for (const g of CALLER_GLOBS) walk(g);
+  for (const abs of resolveCallerRoots(root)) {
+    walk(path.relative(root, abs) || ".");
+  }
   return chunks.join("\n");
 }
 
