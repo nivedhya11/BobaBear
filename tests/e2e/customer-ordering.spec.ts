@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Locator, type Page } from "@playwright/test";
 
 import {
   installLocationProviderMocks,
@@ -29,7 +29,14 @@ const PHONE_NUMBERS = {
   pickupMobile: "9876500257",
   firstOrderOffer: "9876500258",
   returningOrder: "9876500259",
+  // One extra OTP identity only: the full suite already spends 9 otp_send_ip_10m
+  // slots (8 desktop + 1 mobile pickup). A second responsive OTP would trip
+  // the production 10/10min IP limiter.
+  responsiveCommercial: "9876500260",
 } as const;
+
+const NARROW_VIEWPORT = { width: 390, height: 844 } as const;
+const LG_VIEWPORT = { width: 1024, height: 900 } as const;
 
 async function selectCheckoutFulfilmentDelivery(page: Page): Promise<void> {
   const checkout = page.locator("#main-content");
@@ -448,7 +455,7 @@ async function addFirstMenuItemAndOpenCart(page: Page): Promise<void> {
   const addButtons = page.locator("#main-content").getByRole("button", { name: /^add .+/i });
   await expect(addButtons.first()).toBeVisible();
   await addButtons.first().click();
-  const headerCartLink = page.locator("header").getByRole("link", { name: /^cart \(\d+\)$/i });
+  const headerCartLink = page.locator("header").getByRole("link", { name: /^cart \(1\)$/i });
   await expect(headerCartLink).toBeVisible({ timeout: 15_000 });
   await headerCartLink.click();
   await expect(page.getByRole("heading", { name: /your cart/i })).toBeVisible();
@@ -545,4 +552,300 @@ test("GJ-RETURNING-ORDER: returning customer orders again without a first-order 
   await expect(page.getByTestId("order-history-item")).toHaveCount(2);
   await expect(page.getByTestId("order-history-item").getByText(firstOrderNumber, { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: /order again/i })).toHaveCount(0);
+});
+
+async function expectComputedVisible(locator: Locator, name: string): Promise<void> {
+  await expect(locator, name).toBeVisible();
+  const computed = await locator.evaluate((node) => {
+    const style = window.getComputedStyle(node);
+    const rect = node.getBoundingClientRect();
+    return {
+      display: style.display,
+      visibility: style.visibility,
+      width: rect.width,
+      height: rect.height,
+    };
+  });
+  expect(computed.display, `${name} computed display`).not.toBe("none");
+  expect(computed.visibility, `${name} computed visibility`).not.toBe("hidden");
+  expect(computed.width, `${name} computed width`).toBeGreaterThan(0);
+  expect(computed.height, `${name} computed height`).toBeGreaterThan(0);
+}
+
+async function expectComputedHidden(locator: Locator, name: string): Promise<void> {
+  const hidden = await locator.evaluate((node) => {
+    const style = window.getComputedStyle(node);
+    return style.display === "none" || style.visibility === "hidden";
+  });
+  expect(hidden, `${name} computed hidden`).toBe(true);
+}
+
+async function assertNoHorizontalOverflow(page: Page, surface: string): Promise<void> {
+  const metrics = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth,
+  }));
+  expect(
+    metrics.scrollWidth,
+    `${surface} horizontal overflow scrollWidth=${metrics.scrollWidth} clientWidth=${metrics.clientWidth}`,
+  ).toBeLessThanOrEqual(metrics.clientWidth + 1);
+}
+
+async function assertCartCommercial(page: Page, mode: "narrow" | "lg"): Promise<void> {
+  await expect(page.getByRole("heading", { name: /your cart/i })).toBeVisible();
+  const narrowOffer = page.getByTestId("cart-narrow-offer");
+  const orderSummary = page.getByTestId("cart-order-summary");
+  const stickyBar = page.getByTestId("cart-mobile-checkout");
+  const stickyAmount = page.getByTestId("cart-sticky-amount");
+
+  if (mode === "narrow") {
+    await expectComputedVisible(narrowOffer, "CART_NARROW cart-narrow-offer");
+    await expectComputedHidden(orderSummary, "CART_NARROW cart-order-summary");
+    await expectComputedVisible(stickyBar, "CART_NARROW cart-mobile-checkout");
+    await expectComputedVisible(stickyAmount, "CART_NARROW cart-sticky-amount");
+    await expect(stickyBar.getByText("Total payable")).toHaveCount(0);
+    await expect(stickyAmount).not.toHaveText(/Total payable/);
+    await expect(stickyBar.getByRole("button", { name: /checkout/i })).toBeVisible();
+    await expect(stickyBar.getByRole("button", { name: /checkout/i })).toBeEnabled();
+    await expectComputedVisible(
+      narrowOffer.getByTestId("coupon-field"),
+      "CART_NARROW coupon-field",
+    );
+    await expect(orderSummary).not.toBeVisible();
+  } else {
+    await expectComputedVisible(orderSummary, "CART_LG cart-order-summary");
+    await expectComputedHidden(narrowOffer, "CART_LG cart-narrow-offer");
+    await expectComputedHidden(stickyBar, "CART_LG cart-mobile-checkout");
+    await expectComputedVisible(
+      orderSummary.getByTestId("price-summary-total"),
+      "CART_LG authoritative amount",
+    );
+    await expect(orderSummary.getByTestId("price-summary-total")).toContainText(
+      /Estimated subtotal|Current total/,
+    );
+    await expect(orderSummary.getByText("Total payable")).toHaveCount(0);
+    await expect(stickyBar).not.toBeVisible();
+    await expect(narrowOffer).not.toBeVisible();
+    await expectComputedVisible(
+      orderSummary.getByTestId("coupon-field"),
+      "CART_LG coupon-field",
+    );
+    await expect(orderSummary.getByRole("button", { name: /checkout/i })).toBeVisible();
+    await expect(orderSummary.getByRole("button", { name: /checkout/i })).toBeEnabled();
+  }
+
+  const visibleAmountLabels = page.getByText("Total payable", { exact: true });
+  await expect(visibleAmountLabels).toHaveCount(0);
+  await assertNoHorizontalOverflow(page, mode === "narrow" ? "CART_NARROW" : "CART_LG");
+}
+
+async function assertReviewKeyboardOrder(page: Page): Promise<void> {
+  await page.getByTestId("checkout-back-to-delivery").focus();
+  const seen: string[] = [];
+  for (let i = 0; i < 40; i += 1) {
+    await page.keyboard.press("Tab");
+    const marker = await page.evaluate(() => {
+      const el = document.activeElement as HTMLElement | null;
+      return el?.getAttribute("data-testid") ?? "";
+    });
+    if (
+      (marker === "continue-to-payment" || marker === "coupon-input") &&
+      !seen.includes(marker)
+    ) {
+      seen.push(marker);
+    }
+    if (seen.includes("continue-to-payment") && seen.includes("coupon-input")) {
+      break;
+    }
+  }
+  expect(seen, "REVIEW_KEYBOARD_ORDER_PROOF").toEqual([
+    "continue-to-payment",
+    "coupon-input",
+  ]);
+}
+
+async function assertReviewCommercial(page: Page, surface: string): Promise<void> {
+  const review = page.getByTestId("checkout-review");
+  await expectComputedVisible(review, `${surface} checkout-review`);
+  await expectComputedVisible(
+    review.getByRole("region", { name: "Price summary" }),
+    `${surface} Price summary`,
+  );
+  await expectComputedVisible(review.getByText("Total payable"), `${surface} Total payable`);
+  await expectComputedVisible(review.getByTestId("offer-status"), `${surface} offer-status`);
+  await expect(review.getByTestId("offer-status")).toHaveAttribute("role", /status|alert/);
+  await expect(review.getByTestId("offer-status")).toContainText("Offer applied.");
+  await expectComputedVisible(
+    review.locator('[data-offer-component="ORDER_SAVING"]').first(),
+    `${surface} ORDER_SAVING`,
+  );
+  await expectComputedVisible(review.getByTestId("coupon-field"), `${surface} Review coupon`);
+  const continuePayment = review.getByRole("button", { name: /Continue to payment/i });
+  await expectComputedVisible(continuePayment, `${surface} Continue to payment`);
+  await expect(continuePayment).toBeEnabled();
+  await assertReviewKeyboardOrder(page);
+  await assertNoHorizontalOverflow(page, surface);
+}
+
+async function assertPaymentKeyboardOrder(page: Page, surface: string): Promise<void> {
+  // Deterministic start immediately before PaymentPanel actionable controls:
+  // #main-content is tabindex=-1 (programmatic focus only), so the next Tab enters
+  // the first tabbable Payment control without calling .focus() on payment-start.
+  await page.locator("#main-content").focus();
+  await expect(page.locator("#main-content")).toBeFocused();
+
+  const couponControlIds = new Set([
+    "coupon-field",
+    "coupon-input",
+    "coupon-apply",
+    "coupon-change",
+    "coupon-remove",
+  ]);
+  const seen: string[] = [];
+  const traversed: string[] = [];
+  const couponHits: string[] = [];
+  let payEnabledWhenFocused = false;
+
+  for (let i = 0; i < 40; i += 1) {
+    await page.keyboard.press("Tab");
+    const marker = await page.evaluate(() => {
+      const el = document.activeElement as HTMLElement | null;
+      if (!el) return "";
+      const testId = el.getAttribute("data-testid") ?? "";
+      if (testId) return testId;
+      const name =
+        el.getAttribute("aria-label") ||
+        el.textContent?.trim().replace(/\s+/g, " ").slice(0, 80) ||
+        el.tagName.toLowerCase();
+      return name;
+    });
+    traversed.push(marker || "(unnamed)");
+    if (couponControlIds.has(marker) || /^(Apply|Change|Remove)$/i.test(marker)) {
+      couponHits.push(marker);
+    }
+    if (marker === "payment-start" && !seen.includes(marker)) {
+      seen.push(marker);
+      payEnabledWhenFocused = await page.getByTestId("payment-start").isEnabled();
+    } else if (marker === "payment-back-to-review" && !seen.includes(marker)) {
+      seen.push(marker);
+    }
+    if (seen.includes("payment-start") && seen.includes("payment-back-to-review")) {
+      break;
+    }
+  }
+
+  test.info().annotations.push({
+    type: `${surface}_PAYMENT_KEYBOARD_SEQUENCE`,
+    description: JSON.stringify(traversed),
+  });
+  // Exact observed Tab sequence for XR-010 / PR continuation evidence.
+  console.log(`${surface} PAYMENT_KEYBOARD_SEQUENCE=${JSON.stringify(traversed)}`);
+
+  expect(
+    couponHits,
+    `${surface} PAYMENT_KEYBOARD_NO_COUPON traversed=${JSON.stringify(traversed)}`,
+  ).toEqual([]);
+  expect(
+    seen,
+    `${surface} PAYMENT_KEYBOARD_ORDER_PROOF traversed=${JSON.stringify(traversed)}`,
+  ).toEqual(["payment-start", "payment-back-to-review"]);
+  expect(payEnabledWhenFocused, `${surface} PAYMENT_KEYBOARD_PAY_ENABLED`).toBe(true);
+  await expect(page.getByTestId("payment-back-to-review")).toBeFocused();
+}
+
+async function assertPaymentCommercial(page: Page, surface: string): Promise<void> {
+  const ready = page.getByTestId("checkout-ready");
+  await expectComputedVisible(ready, `${surface} checkout-ready`);
+  const payment = ready.getByTestId("checkout-payment");
+  await expectComputedVisible(payment, `${surface} checkout-payment`);
+  await expectComputedVisible(
+    payment.getByRole("region", { name: "Price summary" }),
+    `${surface} Payment Price summary`,
+  );
+  await expectComputedVisible(payment.getByText("Total payable"), `${surface} Payment Total payable`);
+  await expectComputedVisible(
+    payment.locator('[data-offer-component="ORDER_SAVING"]').first(),
+    `${surface} Payment sealed ORDER_SAVING`,
+  );
+  await expect(payment.getByTestId("offer-status")).toContainText("Offer applied.");
+  await expectComputedVisible(ready.getByTestId("payment-start"), `${surface} payment-start`);
+  await expect(ready.getByTestId("payment-start")).toBeEnabled();
+  await expect(ready.getByTestId("coupon-field")).toHaveCount(0);
+  await expect(ready.getByTestId("coupon-apply")).toHaveCount(0);
+  await expect(ready.getByTestId("coupon-change")).toHaveCount(0);
+  await expect(ready.getByTestId("coupon-remove")).toHaveCount(0);
+  await expect(ready.getByRole("button", { name: /^(Apply|Change|Remove)$/ })).toHaveCount(0);
+  await assertPaymentKeyboardOrder(page, surface);
+  await assertNoHorizontalOverflow(page, `${surface} PAYMENT_READ_ONLY_PROOF`);
+}
+
+test("mobile: IMP-036J responsive commercial Cart Review Payment proof", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "mobile-chromium",
+    "Narrow IMP-036J commercial proof runs under mobile-chromium only",
+  );
+  test.setTimeout(180_000);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  expect(page.viewportSize(), "persist narrow viewport identity 390x844").toEqual(
+    NARROW_VIEWPORT,
+  );
+
+  await installRazorpayCheckoutMock(page, "succeed");
+  await installMockGoogleMaps(page);
+  await installLocationProviderMocks(page);
+  await addFirstMenuItemAndOpenCart(page);
+  await assertCartCommercial(page, "narrow");
+
+  await page.getByRole("button", { name: /checkout/i }).click();
+  await expect(page.getByRole("heading", { name: "Sign In" })).toBeVisible();
+  await phoneField(page).fill(PHONE_NUMBERS.responsiveCommercial);
+  await page.getByRole("button", { name: /send code/i }).click();
+  await expect(codeField(page)).toBeVisible();
+  await codeField(page).fill(FIXED_OTP_CODE!);
+  await page.getByRole("button", { name: /verify code/i }).click();
+
+  await expect(page.getByRole("heading", { name: "Checkout" })).toBeVisible({ timeout: 20_000 });
+  await selectCheckoutFulfilmentDelivery(page);
+  await completeCheckoutDestination(page, PHONE_NUMBERS.responsiveCommercial);
+  await continueThroughCheckoutTimingIfPresent(page);
+
+  expect(page.viewportSize(), "narrow viewport remains 390x844 on Review").toEqual(
+    NARROW_VIEWPORT,
+  );
+  await assertReviewCommercial(page, "REVIEW_NARROW");
+  const reducedMotionOffer = page.getByTestId("checkout-review").getByTestId("offer-status");
+  await expect(reducedMotionOffer).toHaveAttribute("role", "status");
+  await expect(reducedMotionOffer).toContainText("Offer applied.");
+
+  await page.setViewportSize(LG_VIEWPORT);
+  expect(page.viewportSize(), "lg viewport identity 1024x900 on Review").toEqual(LG_VIEWPORT);
+  await assertReviewCommercial(page, "REVIEW_LG");
+
+  await page.getByRole("button", { name: /Continue to payment/i }).click();
+  expect(page.viewportSize(), "lg viewport remains 1024x900 on Payment").toEqual(LG_VIEWPORT);
+  await assertPaymentCommercial(page, "PAYMENT_LG");
+
+  await page.setViewportSize(NARROW_VIEWPORT);
+  expect(page.viewportSize(), "narrow viewport remains 390x844 on Payment").toEqual(
+    NARROW_VIEWPORT,
+  );
+  await assertPaymentCommercial(page, "PAYMENT_NARROW");
+});
+
+test("IMP-036J responsive commercial Cart Review Payment proof at lg", async ({ page }) => {
+  test.setTimeout(180_000);
+  await page.setViewportSize(LG_VIEWPORT);
+  expect(page.viewportSize(), "persist lg viewport identity 1024x900").toEqual(LG_VIEWPORT);
+
+  await installMockGoogleMaps(page);
+  await installLocationProviderMocks(page);
+  await addFirstMenuItemAndOpenCart(page);
+  await assertCartCommercial(page, "lg");
+  await page.getByRole("button", { name: /checkout/i }).click();
+  await expect(page.getByRole("heading", { name: "Sign In" })).toBeVisible();
+  expect(page.viewportSize(), "lg viewport remains 1024x900 after Checkout").toEqual(
+    LG_VIEWPORT,
+  );
 });
