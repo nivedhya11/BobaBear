@@ -31,11 +31,30 @@ const INCOMPLETE_TRANSPORT_CODES = new Set([
   "CHECKOUT_DEPENDENCY_INDETERMINATE",
   "PROMOTION_EVALUATION_UNAVAILABLE",
   "CHECKOUT_PROMOTION_INDETERMINATE",
+  "CHECKOUT_TAX_INDETERMINATE",
+  "CHECKOUT_PRICE_UNRESOLVED",
+  "CHECKOUT_SERVICEABILITY_INDETERMINATE",
+  "CHECKOUT_SERVICEABILITY_TEMPORARILY_UNAVAILABLE",
+  "CHECKOUT_TEMPORARILY_UNAVAILABLE",
 ]);
 
 export function isIncompleteCouponTransport(code: string | undefined): boolean {
   if (!code) return true;
   return INCOMPLETE_TRANSPORT_CODES.has(code);
+}
+
+/**
+ * True when Review may treat the sealed snapshot as the current payable.
+ * Cart revision must match the snapshot's source cart revision; a successful
+ * coupon write that advanced the cart without a fresh evaluate must not keep
+ * the prior payable payment-ready.
+ */
+export function isReviewCommercialCurrent(input: {
+  cartRevision: string | null | undefined;
+  snapshotSourceCartRevision: string | null | undefined;
+}): boolean {
+  if (!input.cartRevision || !input.snapshotSourceCartRevision) return false;
+  return input.cartRevision === input.snapshotSourceCartRevision;
 }
 
 export function definitiveCouponFailureCopy(code: string | undefined): string | null {
@@ -58,6 +77,7 @@ export function couponFieldStatusFromExplanation(input: {
     submitted?.reasonCode === "NOT_EFFECTIVE" ||
     submitted?.reasonCode === "RETIRED" ||
     submitted?.reasonCode === "COUPON_EXPIRED" ||
+    submitted?.reasonCode === "COUPON_NOT_EFFECTIVE" ||
     submitted?.reasonCode === "GLOBAL_CAP_REACHED" ||
     submitted?.reasonCode === "PERSONAL_CAP_REACHED" ||
     submitted?.reasonCode === "NO_QUALIFYING_CAPACITY" ||

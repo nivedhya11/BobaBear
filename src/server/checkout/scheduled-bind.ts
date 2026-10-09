@@ -348,7 +348,6 @@ async function assertCommercialTermsStillAccepted(
     evaluatedAt: input.snapshot.evaluatedAt,
     fulfilmentMode: mode,
     serviceabilityEvaluatedAt: input.snapshot.serviceabilityEvaluatedAt,
-    manualCouponCode: input.snapshot.manualCouponCode,
     destination,
     pickupLocation: input.snapshot.pickupLocation,
     commercial,

@@ -1437,8 +1437,16 @@ describe("IMP-021 checkout domain — evaluate commercial", () => {
           opts,
         );
         expect(notSelected.checkout.status).toBe("READY_FOR_PAYMENT");
-        expect(notSelected.snapshot.manualCouponCode).toBe("WRONGITEM");
+        // Fit §8: cart retains entered code; sealed snapshot is applied code or null.
+        expect(notSelected.snapshot.manualCouponCode).toBeNull();
         expect(notSelected.snapshot.promotionDiscountPaise).toBe(BigInt(0));
+        const cartStill = await persistence.withContext(async (ctx) => {
+          const r = await ctx.db.execute(sql`
+            select manual_coupon_code from app.carts where id = ${cartId}::uuid
+          `);
+          return r.rows[0]?.manual_coupon_code as string | null;
+        });
+        expect(cartStill).toBe("WRONGITEM");
       },
     );
   });

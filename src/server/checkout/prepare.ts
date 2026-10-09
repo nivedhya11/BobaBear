@@ -411,7 +411,6 @@ export async function prepareCheckoutForPayment(
     evaluatedAt: now,
     fulfilmentMode: preload.fulfilmentMode,
     serviceabilityEvaluatedAt,
-    manualCouponCode: preload.cart.manualCouponCode,
     destination:
       preload.fulfilmentMode === "DELIVERY" ? preload.destination : null,
     pickupLocation:

@@ -65,6 +65,7 @@ import {
   couponFieldStatusFromExplanation,
   couponFieldStatusFromMutationFailure,
   isIncompleteCouponTransport,
+  isReviewCommercialCurrent,
 } from "@/components/ordering/coupon-result-presentation";
 import { postCommittedPresentationObservation } from "@/components/ordering/committed-presentation-observation";
 import { narrowCheckoutSnapshotLines } from "@/components/ordering/checkout-line-presentation";
@@ -156,6 +157,10 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
   const [scheduledWindows, setScheduledWindows] = useState<CommerceScheduledWindows | null>(null);
   const [selectedWindowStart, setSelectedWindowStart] = useState<string | null>(null);
   const reviewExplanation = parseCommercialExplanation(reviewQuote);
+  const reviewCommercialCurrent = isReviewCommercialCurrent({
+    cartRevision: cart?.revision ?? null,
+    snapshotSourceCartRevision: snapshot?.sourceCartRevision ?? null,
+  });
 
   function adoptEvaluated(evaluated: {
     checkout: CommerceCheckout;
@@ -229,6 +234,10 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
     setScreen("review");
   }
 
+  type ReviewRebaseResult =
+    | { ok: true }
+    | { ok: false; code: string };
+
   /**
    * After Review coupon APPLY/CHANGE/REMOVE advances Cart revision, rebase onto
    * the canonical T4 successor/reuse Checkout and re-establish fulfilment context.
@@ -237,11 +246,11 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
     nextCart: CommerceCart,
     priorSnapshot: CommerceCheckoutSnapshot | null,
     priorCheckout: CommerceCheckout | null,
-  ): Promise<boolean> {
+  ): Promise<ReviewRebaseResult> {
     const started = await startCheckout({ cartId: nextCart.id });
     if (!started.ok) {
       setError(commerceErrorCopy(started.code));
-      return false;
+      return { ok: false, code: started.code };
     }
     let current = started.data.checkout;
     setCheckout(current);
@@ -263,7 +272,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
       });
       if (!fulfilled.ok) {
         setError(commerceErrorCopy(fulfilled.code));
-        return false;
+        return { ok: false, code: fulfilled.code };
       }
       current = fulfilled.data.checkout;
       setCheckout(current);
@@ -297,7 +306,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
       });
       if (!setDest.ok) {
         setError(commerceErrorCopy(setDest.code));
-        return false;
+        return { ok: false, code: setDest.code };
       }
       current = setDest.data.checkout;
       setCheckout(current);
@@ -316,7 +325,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
       });
       if (!timed.ok) {
         setError(commerceErrorCopy(timed.code));
-        return false;
+        return { ok: false, code: timed.code };
       }
       current = timed.data.checkout;
       setCheckout(current);
@@ -337,12 +346,12 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
     });
     if (!evaluated.ok) {
       setError(commerceErrorCopy(evaluated.code));
-      return false;
+      return { ok: false, code: evaluated.code };
     }
     adoptEvaluated(evaluated.data);
     setChosenMode(evaluated.data.snapshot.fulfilmentMode);
     setScreen("review");
-    return true;
+    return { ok: true };
   }
 
   async function mutateReviewCoupon(
@@ -372,9 +381,12 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
         setReviewSurfaceToken(priorToken);
         setReviewQuote(priorQuote);
       }
-      if (status.invalid) setCouponFocusInputToken((token) => token + 1);
+      if (status.invalid || status.retryVisible) {
+        setCouponFocusInputToken((token) => token + 1);
+      }
       return;
     }
+    // Cart coupon write committed — keep intent even if Review evaluation fails.
     setCart(result.data.cart);
     setCouponDraft(result.data.cart.manualCouponCode ?? "");
     const rebased = await rebaseReviewAfterCouponMutation(
@@ -383,10 +395,18 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
       priorCheckout,
     );
     setCouponPending(false);
-    if (!rebased) {
-      // Mutation succeeded; keep new cart code but surface rebase error without inventing money.
-      setCouponStatusOverride(couponFieldStatusFromMutationFailure("INVALID_RESPONSE"));
-      setCouponFocusInputToken((token) => token + 1);
+    if (!rebased.ok) {
+      // Do not describe a successful cart write as a failed coupon mutation.
+      // Drop the prior quote so a stale payable is not presented as current.
+      setReviewQuote(null);
+      setEvaluationId(null);
+      setReviewSurfaceToken(null);
+      const status = couponFieldStatusFromMutationFailure(rebased.code);
+      setCouponStatusOverride(status);
+      if (status.invalid || status.retryVisible) {
+        setCouponFocusInputToken((token) => token + 1);
+      }
+      setScreen("review");
       return;
     }
     setCouponStatusOverride(null);
@@ -1247,20 +1267,31 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
             />
             <div ref={reviewSummaryRef}>
               <CommercialOfferStack
-                explanation={reviewExplanation}
+                explanation={reviewCommercialCurrent ? reviewExplanation : null}
                 payableLabel={IMP036J_COPY.TOTAL_PAYABLE}
-                payablePaise={snapshot.grandTotalPaise}
+                payablePaise={
+                  reviewCommercialCurrent ? snapshot.grandTotalPaise : "0"
+                }
                 fulfilmentMode={snapshot.fulfilmentMode}
-                baseSnapshot={snapshot}
+                baseSnapshot={reviewCommercialCurrent ? snapshot : null}
                 stale={staleReview}
                 giftGone={giftGone}
                 dropped={offerDropped}
                 complimentaryName={
-                  narrowCheckoutSnapshotLines(snapshot.lines).find(
-                    (line) => line.lineOrigin === "complimentary_offer",
-                  )?.productName ?? null
+                  reviewCommercialCurrent
+                    ? narrowCheckoutSnapshotLines(snapshot.lines).find(
+                        (line) => line.lineOrigin === "complimentary_offer",
+                      )?.productName ?? null
+                    : null
                 }
-                waitingText={couponPending ? IMP036J_COPY.CHECKING : null}
+                hidePayable={!reviewCommercialCurrent}
+                waitingText={
+                  couponPending
+                    ? IMP036J_COPY.CHECKING
+                    : reviewCommercialCurrent
+                      ? null
+                      : IMP036J_COPY.UPDATING
+                }
               />
             </div>
             <Button
@@ -1268,7 +1299,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
               variant="primary"
               size="lg"
               data-testid="continue-to-payment"
-              disabled={pending || couponPending}
+              disabled={pending || couponPending || !reviewCommercialCurrent}
               onClick={() => setScreen("payment")}
             >
               Continue to payment
