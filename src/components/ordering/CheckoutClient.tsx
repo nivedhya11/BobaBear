@@ -160,7 +160,6 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
   const reviewCommercialCurrent = isReviewCommercialCurrent({
     cartRevision: cart?.revision ?? null,
     snapshotSourceCartRevision: snapshot?.sourceCartRevision ?? null,
-    hasReviewQuote: reviewQuote != null,
   });
 
   function adoptEvaluated(evaluated: {

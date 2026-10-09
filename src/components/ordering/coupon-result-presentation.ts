@@ -43,13 +43,16 @@ export function isIncompleteCouponTransport(code: string | undefined): boolean {
   return INCOMPLETE_TRANSPORT_CODES.has(code);
 }
 
-/** True when Review may treat sealed snapshot + quote as the current payable. */
+/**
+ * True when Review may treat the sealed snapshot as the current payable.
+ * Cart revision must match the snapshot's source cart revision; a successful
+ * coupon write that advanced the cart without a fresh evaluate must not keep
+ * the prior payable payment-ready.
+ */
 export function isReviewCommercialCurrent(input: {
   cartRevision: string | null | undefined;
   snapshotSourceCartRevision: string | null | undefined;
-  hasReviewQuote: boolean;
 }): boolean {
-  if (!input.hasReviewQuote) return false;
   if (!input.cartRevision || !input.snapshotSourceCartRevision) return false;
   return input.cartRevision === input.snapshotSourceCartRevision;
 }

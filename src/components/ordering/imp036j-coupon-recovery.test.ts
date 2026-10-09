@@ -80,26 +80,17 @@ describe("IMP-036J #383/#384A coupon recovery presentation", () => {
     expect(isIncompleteCouponTransport("NETWORK_ERROR")).toBe(true);
   });
 
-  it("does not treat a prior quote as current after cart revision advances", () => {
+  it("does not treat a prior snapshot as current after cart revision advances", () => {
     expect(
       isReviewCommercialCurrent({
         cartRevision: "3",
         snapshotSourceCartRevision: "2",
-        hasReviewQuote: true,
       }),
     ).toBe(false);
     expect(
       isReviewCommercialCurrent({
         cartRevision: "3",
         snapshotSourceCartRevision: "3",
-        hasReviewQuote: false,
-      }),
-    ).toBe(false);
-    expect(
-      isReviewCommercialCurrent({
-        cartRevision: "3",
-        snapshotSourceCartRevision: "3",
-        hasReviewQuote: true,
       }),
     ).toBe(true);
   });

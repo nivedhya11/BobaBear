@@ -349,7 +349,7 @@ describe("IMP-036J #383 delivery/pickup coupon recovery", () => {
         "DELONLY1",
         ["DELIVERY"],
       );
-      let cart = await applyCartCoupon(persistence, access, {
+      const cart = await applyCartCoupon(persistence, access, {
         couponCode: deliveryOnly.canonicalCode,
         expectedRevision: BigInt(1),
       });
