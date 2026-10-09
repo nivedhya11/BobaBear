@@ -31,9 +31,9 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2298,
-    "executableTestFiles": 504,
-    "sourceTestFiles": 149,
+    "trackedPathsConsidered": 2299,
+    "executableTestFiles": 505,
+    "sourceTestFiles": 150,
     "testsTreeExecutableFiles": 275,
     "scriptTestFiles": 80,
     "playwrightSpecs": 12,
@@ -92,6 +92,7 @@
     "src/components/ordering/client-action.test.ts",
     "src/components/ordering/committed-presentation-observation.test.ts",
     "src/components/ordering/financial-document-presentation.test.ts",
+    "src/components/ordering/imp036j-coupon-recovery.checkout-client.test.tsx",
     "src/components/ordering/imp036j-coupon-recovery.test.ts",
     "src/components/ordering/imp036j-tranche5-checkout-remediation.test.tsx",
     "src/components/ordering/imp036j-tranche5-presentation.test.tsx",
@@ -3654,6 +3655,25 @@
       "ciInclusion": "YES",
       "test1Layers": [
         "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/components/ordering/imp036j-coupon-recovery.checkout-client.test.tsx",
+      "runner": "vitest",
+      "domain": "components/ordering",
+      "testType": "component-or-tsx",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "2-component",
+        "9-recovery-idempotency"
       ],
       "classificationConfidence": "HEURISTIC"
     },

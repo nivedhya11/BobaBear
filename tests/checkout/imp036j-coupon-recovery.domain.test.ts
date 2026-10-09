@@ -12,12 +12,17 @@ import {
   setCheckoutFulfilment,
   startCheckout,
 } from "../../src/server/checkout";
-import { isDefinitiveSubmittedCouponOutcome } from "../../src/server/checkout/adapters/pricing";
+import {
+  isDefinitiveSubmittedCouponOutcome,
+  sealedManualCouponCodeFromCommercial,
+  type CheckoutCommercialResult,
+} from "../../src/server/checkout/adapters/pricing";
 import {
   activateCoupon,
   activatePromotion,
   createCouponDraft,
   createPromotionDraft,
+  disableCoupon,
   getCoupon,
   getPromotion,
   setPromotionBenefit,
@@ -25,6 +30,7 @@ import {
 } from "../../src/server/promotions";
 import { upsertOutletPickupProfile } from "../../src/server/outlet-pickup-profile/repository";
 import { uniqueCode } from "../database/support/cart-fixtures";
+import type { DirectPricingQuote } from "../../src/shared/pricing/types";
 
 type SubmittedCouponWire = Readonly<{
   status: string;
@@ -234,6 +240,59 @@ describe("isDefinitiveSubmittedCouponOutcome (#383 contract)", () => {
   });
 });
 
+describe("sealedManualCouponCodeFromCommercial (Fit §8)", () => {
+  function commercialWith(
+    submitted: DirectPricingQuote["submittedCouponResult"],
+  ): CheckoutCommercialResult {
+    return Object.freeze({
+      quote: Object.freeze({
+        submittedCouponResult: submitted,
+      }) as DirectPricingQuote,
+      lines: Object.freeze([]),
+      charges: Object.freeze([]),
+      promotionEffects: Object.freeze([]),
+      taxComponents: Object.freeze([]),
+    });
+  }
+
+  it("seals only APPLIED canonical codes", () => {
+    expect(
+      sealedManualCouponCodeFromCommercial(
+        commercialWith({
+          status: "APPLIED",
+          reasonCode: "APPLIED",
+          couponId: "c",
+          promotionId: "p",
+          canonicalCode: "TEST123",
+        }),
+      ),
+    ).toBe("TEST123");
+    expect(
+      sealedManualCouponCodeFromCommercial(
+        commercialWith({
+          status: "NOT_APPLICABLE",
+          reasonCode: "FULFILMENT_MODE_MISMATCH",
+          couponId: "c",
+          promotionId: "p",
+          canonicalCode: "TEST123",
+        }),
+      ),
+    ).toBeNull();
+    expect(
+      sealedManualCouponCodeFromCommercial(
+        commercialWith({
+          status: "VALID_BUT_NOT_SELECTED",
+          reasonCode: "COUPON_VALID_BUT_NOT_SELECTED",
+          couponId: "c",
+          promotionId: "p",
+          canonicalCode: "LOSE",
+        }),
+      ),
+    ).toBeNull();
+    expect(sealedManualCouponCodeFromCommercial(commercialWith(null))).toBeNull();
+  });
+});
+
 describe("IMP-036J #383 delivery/pickup coupon recovery", () => {
   it("DELIVERY-only coupon on PICKUP finishes as inapplicable without discount or hard fail", async () => {
     await withCheckoutReadyHarness(async (harness) => {
@@ -294,6 +353,7 @@ describe("IMP-036J #383 delivery/pickup coupon recovery", () => {
 
       expect(evaluated.checkout.status).toBe("READY_FOR_PAYMENT");
       expect(evaluated.snapshot.promotionDiscountPaise).toBe(BigInt(0));
+      expect(evaluated.snapshot.manualCouponCode).toBeNull();
       expect(
         evaluated.snapshot.promotionEffects.filter(
           (effect) => effect.couponId === deliveryOnly.couponId,
@@ -326,6 +386,7 @@ describe("IMP-036J #383 delivery/pickup coupon recovery", () => {
         opts,
       );
       expect(prepared.snapshot.promotionDiscountPaise).toBe(BigInt(0));
+      expect(prepared.snapshot.manualCouponCode).toBeNull();
       expect(
         prepared.snapshot.promotionEffects.filter(
           (effect) => effect.couponId === deliveryOnly.couponId,
@@ -380,7 +441,20 @@ describe("IMP-036J #383 delivery/pickup coupon recovery", () => {
       );
       expect(onDelivery.checkout.status).toBe("READY_FOR_PAYMENT");
       expect(onDelivery.snapshot.promotionDiscountPaise).toBeGreaterThan(BigInt(0));
+      expect(onDelivery.snapshot.manualCouponCode).toBe("DELONLY1");
       expect(submittedFromEvaluation(onDelivery.quote)?.status).toBe("APPLIED");
+
+      const prepared = await prepareCheckoutForPayment(
+        persistence,
+        actors.customerA,
+        {
+          checkoutId: onDelivery.checkout.id,
+          expectedCheckoutRevision: onDelivery.checkout.revision,
+        },
+        opts,
+      );
+      expect(prepared.snapshot.manualCouponCode).toBe("DELONLY1");
+      expect(prepared.snapshot.promotionDiscountPaise).toBeGreaterThan(BigInt(0));
 
       const pickupOnly = await seedModeRestrictedCoupon(
         persistence,
@@ -421,6 +495,7 @@ describe("IMP-036J #383 delivery/pickup coupon recovery", () => {
       expect(onDeliveryWithPickupCoupon.snapshot.promotionDiscountPaise).toBe(
         BigInt(0),
       );
+      expect(onDeliveryWithPickupCoupon.snapshot.manualCouponCode).toBeNull();
       expect(submittedFromEvaluation(onDeliveryWithPickupCoupon.quote)).toEqual(
         expect.objectContaining({
           status: "NOT_APPLICABLE",
@@ -483,6 +558,7 @@ describe("IMP-036J #383 delivery/pickup coupon recovery", () => {
         opts,
       );
       expect(deliveryReady.snapshot.promotionDiscountPaise).toBeGreaterThan(BigInt(0));
+      expect(deliveryReady.snapshot.manualCouponCode).toBe("MODEFLIP1");
       const deliveryPayable = deliveryReady.snapshot.grandTotalPaise;
 
       checkout = await setCheckoutFulfilment(
@@ -506,6 +582,7 @@ describe("IMP-036J #383 delivery/pickup coupon recovery", () => {
         opts,
       );
       expect(pickupReady.snapshot.promotionDiscountPaise).toBe(BigInt(0));
+      expect(pickupReady.snapshot.manualCouponCode).toBeNull();
       expect(submittedFromEvaluation(pickupReady.quote)?.reasonCode).toBe(
         "FULFILMENT_MODE_MISMATCH",
       );
@@ -542,6 +619,7 @@ describe("IMP-036J #383 delivery/pickup coupon recovery", () => {
         opts,
       );
       expect(backToDelivery.snapshot.promotionDiscountPaise).toBeGreaterThan(BigInt(0));
+      expect(backToDelivery.snapshot.manualCouponCode).toBe("MODEFLIP1");
       expect(submittedFromEvaluation(backToDelivery.quote)?.status).toBe("APPLIED");
       expect(backToDelivery.snapshot.grandTotalPaise).toBe(deliveryPayable);
 
@@ -553,6 +631,337 @@ describe("IMP-036J #383 delivery/pickup coupon recovery", () => {
         return r.rows[0]?.manual_coupon_code as string | null;
       });
       expect(still).toBe("MODEFLIP1");
+    });
+  });
+
+  it("expired coupon keeps cart intent and seals null without invalid saving", async () => {
+    await withCheckoutReadyHarness(async (harness) => {
+      const { persistence, actors, cartId, addressId } = harness;
+      const brandId = actors.tree.brand.id;
+      const access = customerAccess(actors.customerA, brandId);
+      const opts = checkoutOpts();
+      await attachCharges(persistence, brandId);
+
+      const expired = await persistence.transaction(async (tx) => {
+        const created = await createPromotionDraft(tx, {
+          actor: actors.brandAdminActor,
+          brandId,
+          code: uniqueCode("exp"),
+          displayName: "Expired coupon promo",
+          scopeType: "brand",
+          territoryId: null,
+          organizationId: null,
+          outletId: null,
+          triggerType: "coupon",
+          stackingPolicy: "exclusive",
+          startsAt: new Date("2020-01-01T00:00:00Z"),
+          endsAt: new Date("2020-12-31T00:00:00Z"),
+        });
+        await setPromotionBenefit(tx, {
+          actor: actors.brandAdminActor,
+          promotionId: created.id,
+          expectedPromotionRevision: (await getPromotion(tx, created.id))!.revision,
+          benefit: {
+            benefitType: "percentage_discount",
+            percentageBps: 2000,
+            fixedAmountPaise: null,
+            maximumDiscountPaise: null,
+            buyQuantity: null,
+            getQuantity: null,
+            repeatable: null,
+            maximumRewardQuantity: null,
+            includeModifiers: false,
+            includeBundleDeltas: false,
+          },
+        });
+        const merch = {
+          targetType: "all_merchandise" as const,
+          productId: null,
+          variantId: null,
+          chargeDefinitionId: null,
+        };
+        await setPromotionTargets(tx, {
+          actor: actors.brandAdminActor,
+          promotionId: created.id,
+          expectedPromotionRevision: (await getPromotion(tx, created.id))!.revision,
+          targetRole: "qualifier",
+          targets: [{ targetRole: "qualifier", ...merch }],
+        });
+        await setPromotionTargets(tx, {
+          actor: actors.brandAdminActor,
+          promotionId: created.id,
+          expectedPromotionRevision: (await getPromotion(tx, created.id))!.revision,
+          targetRole: "benefit",
+          targets: [{ targetRole: "benefit", ...merch }],
+        });
+        await activatePromotion(tx, {
+          actor: actors.brandAdminActor,
+          promotionId: created.id,
+          expectedPromotionRevision: (await getPromotion(tx, created.id))!.revision,
+        });
+        const coupon = await createCouponDraft(tx, {
+          actor: actors.brandAdminActor,
+          promotionId: created.id,
+          origin: "manual",
+          canonicalCode: "EXPIRED1",
+          endsAt: new Date("2020-06-01T00:00:00Z"),
+        });
+        await activateCoupon(tx, {
+          actor: actors.brandAdminActor,
+          couponId: coupon.id,
+          expectedCouponRevision: (await getCoupon(tx, coupon.id))!.revision,
+        });
+        return coupon;
+      });
+
+      await applyCartCoupon(persistence, access, {
+        couponCode: expired.canonicalCode,
+        expectedRevision: BigInt(1),
+      });
+      let checkout = await startCheckout(
+        persistence,
+        actors.customerA,
+        { cartId },
+        opts,
+      );
+      checkout = await setCheckoutDestination(
+        persistence,
+        actors.customerA,
+        {
+          checkoutId: checkout.id,
+          expectedCheckoutRevision: checkout.revision,
+          destination: { kind: "SAVED_ADDRESS", savedAddressId: addressId },
+        },
+        opts,
+      );
+      const evaluated = await evaluateCheckout(
+        persistence,
+        actors.customerA,
+        {
+          checkoutId: checkout.id,
+          expectedCheckoutRevision: checkout.revision,
+        },
+        opts,
+      );
+      expect(evaluated.snapshot.promotionDiscountPaise).toBe(BigInt(0));
+      expect(evaluated.snapshot.manualCouponCode).toBeNull();
+      expect(submittedFromEvaluation(evaluated.quote)?.status).toBe("INVALID");
+      expect(submittedFromEvaluation(evaluated.quote)?.reasonCode).toMatch(
+        /NOT_EFFECTIVE|EXPIRED/,
+      );
+      const cartCode = await persistence.withContext(async (ctx) => {
+        const { sql } = await import("drizzle-orm");
+        const r = await ctx.db.execute(sql`
+          select manual_coupon_code from app.carts where id = ${cartId}::uuid
+        `);
+        return r.rows[0]?.manual_coupon_code as string | null;
+      });
+      expect(cartCode).toBe("EXPIRED1");
+    });
+  });
+
+  it("disabled coupon (definitive ineligible / exhausted-class) keeps cart intent and seals null", async () => {
+    await withCheckoutReadyHarness(async (harness) => {
+      const { persistence, actors, cartId, addressId } = harness;
+      const brandId = actors.tree.brand.id;
+      const access = customerAccess(actors.customerA, brandId);
+      const opts = checkoutOpts();
+      await attachCharges(persistence, brandId);
+
+      const coupon = await seedModeRestrictedCoupon(
+        persistence,
+        brandId,
+        actors.brandAdminActor,
+        "DISABLED1",
+        ["DELIVERY"],
+      );
+      await applyCartCoupon(persistence, access, {
+        couponCode: coupon.canonicalCode,
+        expectedRevision: BigInt(1),
+      });
+      // Entered while active; later disabled before evaluate (exhausted-class definitive).
+      await persistence.transaction(async (tx) => {
+        await disableCoupon(tx, {
+          actor: actors.brandAdminActor,
+          couponId: coupon.couponId,
+          expectedCouponRevision: (await getCoupon(tx, coupon.couponId))!.revision,
+        });
+      });
+
+      let checkout = await startCheckout(
+        persistence,
+        actors.customerA,
+        { cartId },
+        opts,
+      );
+      checkout = await setCheckoutDestination(
+        persistence,
+        actors.customerA,
+        {
+          checkoutId: checkout.id,
+          expectedCheckoutRevision: checkout.revision,
+          destination: { kind: "SAVED_ADDRESS", savedAddressId: addressId },
+        },
+        opts,
+      );
+      const evaluated = await evaluateCheckout(
+        persistence,
+        actors.customerA,
+        {
+          checkoutId: checkout.id,
+          expectedCheckoutRevision: checkout.revision,
+        },
+        opts,
+      );
+      expect(evaluated.snapshot.promotionDiscountPaise).toBe(BigInt(0));
+      expect(evaluated.snapshot.manualCouponCode).toBeNull();
+      expect(
+        evaluated.snapshot.promotionEffects.filter(
+          (effect) => effect.couponId === coupon.couponId,
+        ),
+      ).toHaveLength(0);
+      expect(submittedFromEvaluation(evaluated.quote)).toEqual(
+        expect.objectContaining({
+          status: "INVALID",
+          reasonCode: "COUPON_NOT_ACTIVE",
+          canonicalCode: "DISABLED1",
+        }),
+      );
+      const cartCode = await persistence.withContext(async (ctx) => {
+        const { sql } = await import("drizzle-orm");
+        const r = await ctx.db.execute(sql`
+          select manual_coupon_code from app.carts where id = ${cartId}::uuid
+        `);
+        return r.rows[0]?.manual_coupon_code as string | null;
+      });
+      expect(cartCode).toBe("DISABLED1");
+    });
+  });
+
+  it("valid coupon not selected keeps cart code and seals null", async () => {
+    await withCheckoutReadyHarness(async (harness) => {
+      const { persistence, actors, cartId, addressId } = harness;
+      const brandId = actors.tree.brand.id;
+      const access = customerAccess(actors.customerA, brandId);
+      const opts = checkoutOpts();
+      await attachCharges(persistence, brandId);
+
+      await persistence.transaction(async (tx) => {
+        const auto = await createPromotionDraft(tx, {
+          actor: actors.brandAdminActor,
+          brandId,
+          code: uniqueCode("auto"),
+          displayName: "Strong automatic exclusive",
+          scopeType: "brand",
+          territoryId: null,
+          organizationId: null,
+          outletId: null,
+          triggerType: "automatic",
+          stackingPolicy: "exclusive",
+          priority: 1,
+          startsAt: new Date("2026-01-01T00:00:00Z"),
+          endsAt: null,
+        });
+        await setPromotionBenefit(tx, {
+          actor: actors.brandAdminActor,
+          promotionId: auto.id,
+          expectedPromotionRevision: (await getPromotion(tx, auto.id))!.revision,
+          benefit: {
+            benefitType: "percentage_discount",
+            percentageBps: 2500,
+            fixedAmountPaise: null,
+            maximumDiscountPaise: null,
+            buyQuantity: null,
+            getQuantity: null,
+            repeatable: null,
+            maximumRewardQuantity: null,
+            includeModifiers: false,
+            includeBundleDeltas: false,
+          },
+        });
+        const merch = {
+          targetType: "all_merchandise" as const,
+          productId: null,
+          variantId: null,
+          chargeDefinitionId: null,
+        };
+        await setPromotionTargets(tx, {
+          actor: actors.brandAdminActor,
+          promotionId: auto.id,
+          expectedPromotionRevision: (await getPromotion(tx, auto.id))!.revision,
+          targetRole: "qualifier",
+          targets: [{ targetRole: "qualifier", ...merch }],
+        });
+        await setPromotionTargets(tx, {
+          actor: actors.brandAdminActor,
+          promotionId: auto.id,
+          expectedPromotionRevision: (await getPromotion(tx, auto.id))!.revision,
+          targetRole: "benefit",
+          targets: [{ targetRole: "benefit", ...merch }],
+        });
+        await activatePromotion(tx, {
+          actor: actors.brandAdminActor,
+          promotionId: auto.id,
+          expectedPromotionRevision: (await getPromotion(tx, auto.id))!.revision,
+        });
+      });
+
+      const weakCoupon = await seedModeRestrictedCoupon(
+        persistence,
+        brandId,
+        actors.brandAdminActor,
+        "WEAKCUP1",
+        ["DELIVERY"],
+      );
+      // Weaker than the 25% automatic: seedModeRestrictedCoupon uses 10%.
+      await applyCartCoupon(persistence, access, {
+        couponCode: weakCoupon.canonicalCode,
+        expectedRevision: BigInt(1),
+      });
+
+      let checkout = await startCheckout(
+        persistence,
+        actors.customerA,
+        { cartId },
+        opts,
+      );
+      checkout = await setCheckoutDestination(
+        persistence,
+        actors.customerA,
+        {
+          checkoutId: checkout.id,
+          expectedCheckoutRevision: checkout.revision,
+          destination: { kind: "SAVED_ADDRESS", savedAddressId: addressId },
+        },
+        opts,
+      );
+      const evaluated = await evaluateCheckout(
+        persistence,
+        actors.customerA,
+        {
+          checkoutId: checkout.id,
+          expectedCheckoutRevision: checkout.revision,
+        },
+        opts,
+      );
+      expect(submittedFromEvaluation(evaluated.quote)?.status).toBe(
+        "VALID_BUT_NOT_SELECTED",
+      );
+      expect(evaluated.snapshot.manualCouponCode).toBeNull();
+      expect(evaluated.snapshot.promotionDiscountPaise).toBeGreaterThan(BigInt(0));
+      expect(
+        evaluated.snapshot.promotionEffects.filter(
+          (effect) => effect.couponId === weakCoupon.couponId,
+        ),
+      ).toHaveLength(0);
+      const cartCode = await persistence.withContext(async (ctx) => {
+        const { sql } = await import("drizzle-orm");
+        const r = await ctx.db.execute(sql`
+          select manual_coupon_code from app.carts where id = ${cartId}::uuid
+        `);
+        return r.rows[0]?.manual_coupon_code as string | null;
+      });
+      expect(cartCode).toBe("WEAKCUP1");
     });
   });
 });

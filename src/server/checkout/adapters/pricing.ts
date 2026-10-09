@@ -265,6 +265,19 @@ export function isDefinitiveSubmittedCouponOutcome(
   );
 }
 
+/**
+ * Fit §8 sealed snapshot field: applied selected coupon code, else null.
+ * Cart intent (`carts.manual_coupon_code`) remains separate and may still hold
+ * an entered but unselected / ineligible code.
+ */
+export function sealedManualCouponCodeFromCommercial(
+  commercial: CheckoutCommercialResult,
+): string | null {
+  const submitted = commercial.quote.submittedCouponResult;
+  if (submitted?.status !== "APPLIED") return null;
+  return submitted.canonicalCode;
+}
+
 function assertSubmittedCouponOutcomeAllowsCheckout(
   result: SubmittedCouponResult | null,
 ): void {
