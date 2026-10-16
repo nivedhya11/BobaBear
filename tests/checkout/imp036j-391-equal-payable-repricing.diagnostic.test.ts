@@ -491,7 +491,19 @@ describe("IMP-036J #391 equal-payable CHECKOUT_REPRICED diagnostics", () => {
     });
   });
 
-  it("F/G: modifier permutation with equal payable is rejected; diagnostic classifies MODIFIER_STRUCTURE", async () => {
+  /**
+   * F/G — COMPARATOR-ONLY SYNTHETIC EVIDENCE (not prepare-path proof).
+   *
+   * Reverses modifiers on a locally constructed in-memory CheckoutSnapshot and
+   * asserts the authoritative comparator + sanitized helper classify
+   * MODIFIER_STRUCTURE. This does **not** persist the permutation, does **not**
+   * pass it through prepareCheckoutForPayment, and does **not** prove the
+   * production loader emits modifier-order drift. Do not treat a pass here as
+   * CHECKOUT_REPRICED integration / causal reproduction evidence.
+   *
+   * Contrast: D/E above is genuine prepare-path rejection via promotion revision.
+   */
+  it("F/G (comparator-only synthetic): equal-payable modifier permutation is classified MODIFIER_STRUCTURE", async () => {
     await withEqualPayableCheckoutShape(async (ctx) => {
       const ready = await evaluateToReady(
         ctx.persistence,
@@ -500,17 +512,6 @@ describe("IMP-036J #391 equal-payable CHECKOUT_REPRICED diagnostics", () => {
         ctx.addressId,
         ctx.opts,
       );
-
-      const again = await evaluateCheckout(
-        ctx.persistence,
-        ctx.actors.customerA,
-        {
-          checkoutId: ready.checkout.id,
-          expectedCheckoutRevision: ready.checkout.revision,
-        },
-        ctx.opts,
-      );
-      expect(again.snapshot.id).toBe(ready.snapshot.id);
 
       const multiModLine = ready.snapshot.lines.find(
         (l) => l.modifiers.length >= 2,

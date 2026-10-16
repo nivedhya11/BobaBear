@@ -12,8 +12,8 @@ import { checkoutSnapshotsStructurallyEqual } from "./compare-snapshots";
 export const CHECKOUT_SNAPSHOT_STRUCTURAL_DIFFERENCE_CATEGORIES = Object.freeze([
   "SOURCE_CART_REVISION",
   "SELECTED_OUTLET",
-  "COUPON_SEAL",
   "CURRENCY_OR_TAX_MODE",
+  "COUPON_SEAL",
   "FULFILMENT_SHAPE",
   "MONETARY_COMPONENT",
   "ITEM_LINE_STRUCTURE",
@@ -55,16 +55,23 @@ function firstDifferenceCategory(
   a: CheckoutSnapshot,
   b: CheckoutSnapshot,
 ): CheckoutSnapshotStructuralDifferenceCategory {
+  // Mirror checkoutSnapshotsStructurallyEqual check order exactly:
+  // sourceCartRevision → selectedOutletId → currency → manualCouponCode →
+  // taxInclusionMode → fulfilment → monetary/nested. Currency and tax mode
+  // share CURRENCY_OR_TAX_MODE; coupon sits between them in the comparator.
   if (a.sourceCartRevision !== b.sourceCartRevision) {
     return "SOURCE_CART_REVISION";
   }
   if (a.selectedOutletId !== b.selectedOutletId) {
     return "SELECTED_OUTLET";
   }
+  if (a.currency !== b.currency) {
+    return "CURRENCY_OR_TAX_MODE";
+  }
   if (a.manualCouponCode !== b.manualCouponCode) {
     return "COUPON_SEAL";
   }
-  if (a.currency !== b.currency || a.taxInclusionMode !== b.taxInclusionMode) {
+  if (a.taxInclusionMode !== b.taxInclusionMode) {
     return "CURRENCY_OR_TAX_MODE";
   }
   if (!snapshotFulfilmentShapesEqual(a, b)) {

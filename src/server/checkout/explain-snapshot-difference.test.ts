@@ -245,6 +245,64 @@ describe("explainCheckoutSnapshotStructuralDifference", () => {
     });
   });
 
+  it("when currency and coupon both differ, reports CURRENCY_OR_TAX_MODE first", () => {
+    const a = baseSnapshot();
+    // Diagnostic cast: production currency is INR-only; comparator still
+    // checks currency before coupon, so exercise that order with a stand-in.
+    const b = baseSnapshot({
+      id: "snap-b",
+      currency: "XXX" as CheckoutSnapshot["currency"],
+      manualCouponCode: "OTHER",
+    });
+    expect(checkoutSnapshotsStructurallyEqual(a, b)).toBe(false);
+    expect(explainCheckoutSnapshotStructuralDifference(a, b)).toEqual({
+      equal: false,
+      firstDifferenceCategory: "CURRENCY_OR_TAX_MODE",
+    });
+  });
+
+  it("when coupon and taxInclusionMode both differ, reports COUPON_SEAL first", () => {
+    const a = baseSnapshot();
+    const b = baseSnapshot({
+      id: "snap-b",
+      manualCouponCode: "OTHER",
+      taxInclusionMode: "inclusive",
+    });
+    expect(checkoutSnapshotsStructurallyEqual(a, b)).toBe(false);
+    expect(explainCheckoutSnapshotStructuralDifference(a, b)).toEqual({
+      equal: false,
+      firstDifferenceCategory: "COUPON_SEAL",
+    });
+  });
+
+  it("when currency and taxInclusionMode both differ, reports CURRENCY_OR_TAX_MODE", () => {
+    const a = baseSnapshot();
+    const b = baseSnapshot({
+      id: "snap-b",
+      currency: "XXX" as CheckoutSnapshot["currency"],
+      taxInclusionMode: "inclusive",
+    });
+    expect(checkoutSnapshotsStructurallyEqual(a, b)).toBe(false);
+    expect(explainCheckoutSnapshotStructuralDifference(a, b)).toEqual({
+      equal: false,
+      firstDifferenceCategory: "CURRENCY_OR_TAX_MODE",
+    });
+  });
+
+  it("reports null category when otherwise equal snapshots match", () => {
+    const a = baseSnapshot();
+    const b = baseSnapshot({
+      id: "snap-other",
+      checkoutId: "chk-other",
+      checkoutRevision: BigInt(999),
+    });
+    expect(checkoutSnapshotsStructurallyEqual(a, b)).toBe(true);
+    expect(explainCheckoutSnapshotStructuralDifference(a, b)).toEqual({
+      equal: true,
+      firstDifferenceCategory: null,
+    });
+  });
+
   it("reports MONETARY_COMPONENT when payable changes", () => {
     const a = baseSnapshot();
     const b = baseSnapshot({
@@ -258,23 +316,41 @@ describe("explainCheckoutSnapshotStructuralDifference", () => {
     });
   });
 
-  it("never returns raw values or identifiers in the explanation object", () => {
+  it("category output contains no PII, field values, or secrets", () => {
+    const cases = [
+      baseSnapshot({
+        currency: "XXX" as CheckoutSnapshot["currency"],
+        manualCouponCode: "SECRET99",
+      }),
+      baseSnapshot({
+        manualCouponCode: "SECRET99",
+        taxInclusionMode: "inclusive",
+      }),
+      baseSnapshot({
+        lines: [
+          {
+            ...baseSnapshot().lines[0]!,
+            modifiers: [
+              baseSnapshot().lines[0]!.modifiers[1]!,
+              baseSnapshot().lines[0]!.modifiers[0]!,
+            ],
+          },
+        ],
+      }),
+    ] as const;
     const a = baseSnapshot();
-    const b = baseSnapshot({
-      id: "snap-b",
-      lines: [
-        {
-          ...a.lines[0]!,
-          modifiers: [a.lines[0]!.modifiers[1]!, a.lines[0]!.modifiers[0]!],
-        },
-      ],
-    });
-    const explanation = explainCheckoutSnapshotStructuralDifference(a, b);
-    const serialized = JSON.stringify(explanation);
-    expect(serialized).not.toMatch(/TEST123|Purple Rain|vmg-|Founder|95240|10360/);
-    expect(Object.keys(explanation).sort()).toEqual([
-      "equal",
-      "firstDifferenceCategory",
-    ]);
+    for (const b of cases) {
+      const explanation = explainCheckoutSnapshotStructuralDifference(a, b);
+      const serialized = JSON.stringify(explanation);
+      expect(serialized).not.toMatch(
+        /TEST123|SECRET99|Purple Rain|vmg-|Founder|\+919999999999|1 Test Lane|Dehradun|248001|95240|10360|XXX|inclusive/,
+      );
+      expect(Object.keys(explanation).sort()).toEqual([
+        "equal",
+        "firstDifferenceCategory",
+      ]);
+      expect(explanation.equal).toBe(false);
+      expect(typeof explanation.firstDifferenceCategory).toBe("string");
+    }
   });
 });
