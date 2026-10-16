@@ -209,7 +209,7 @@ export async function prepareCheckoutForPayment(
         });
       }
     });
-    await safeNotifyCheckoutPrepareDiagnostic(
+    safeNotifyCheckoutPrepareDiagnostic(
       options.prepareDiagnosticObserver,
       observeNonStructuralCheckoutPrepareRejection("CART_REVISION"),
     );
@@ -244,7 +244,7 @@ export async function prepareCheckoutForPayment(
     } catch (error) {
       if (checkoutTiming === "SCHEDULED" && error instanceof CheckoutError) {
         await invalidateReady(persistence, preload.row.id, now);
-        await safeNotifyCheckoutPrepareDiagnostic(
+        safeNotifyCheckoutPrepareDiagnostic(
           options.prepareDiagnosticObserver,
           observeNonStructuralCheckoutPrepareRejection("DELIVERY_SERVICEABILITY"),
         );
@@ -308,7 +308,7 @@ export async function prepareCheckoutForPayment(
           });
         }
       });
-      await safeNotifyCheckoutPrepareDiagnostic(
+      safeNotifyCheckoutPrepareDiagnostic(
         options.prepareDiagnosticObserver,
         observeNonStructuralCheckoutPrepareRejection("PICKUP_ELIGIBILITY"),
       );
@@ -351,7 +351,7 @@ export async function prepareCheckoutForPayment(
         });
       }
     });
-    await safeNotifyCheckoutPrepareDiagnostic(
+    safeNotifyCheckoutPrepareDiagnostic(
       options.prepareDiagnosticObserver,
       observeNonStructuralCheckoutPrepareRejection("MERCHANDISE_AVAILABILITY"),
     );
@@ -378,7 +378,7 @@ export async function prepareCheckoutForPayment(
     } catch (error) {
       if (error instanceof CheckoutError) {
         await invalidateReady(persistence, preload.row.id, now);
-        await safeNotifyCheckoutPrepareDiagnostic(
+        safeNotifyCheckoutPrepareDiagnostic(
           options.prepareDiagnosticObserver,
           observeNonStructuralCheckoutPrepareRejection("SCHEDULED_ELIGIBILITY"),
         );
@@ -396,7 +396,7 @@ export async function prepareCheckoutForPayment(
       selectedOutletId !== preload.snapshot.selectedOutletId
     ) {
       await invalidateReady(persistence, preload.row.id, now);
-      await safeNotifyCheckoutPrepareDiagnostic(
+      safeNotifyCheckoutPrepareDiagnostic(
         options.prepareDiagnosticObserver,
         observeNonStructuralCheckoutPrepareRejection("SCHEDULED_TERMS"),
       );
@@ -524,7 +524,7 @@ export async function prepareCheckoutForPayment(
 
   await invalidateReady(persistence, preload.row.id, now);
 
-  await safeNotifyCheckoutPrepareDiagnostic(
+  safeNotifyCheckoutPrepareDiagnostic(
     options.prepareDiagnosticObserver,
     observeStructuralCheckoutPrepareMismatch({
       sealedComparable,

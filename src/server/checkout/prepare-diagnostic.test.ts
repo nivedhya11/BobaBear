@@ -188,43 +188,73 @@ describe("prepare-diagnostic", () => {
     expect(event).not.toHaveProperty("checkoutId");
   });
 
-  it("swallows observer failures", async () => {
+  it("swallows synchronous observer throws without delaying the caller", () => {
     const observer = vi.fn(() => {
       throw new Error("diagnostic boom");
     });
-    await expect(
+    expect(() =>
       safeNotifyCheckoutPrepareDiagnostic(
         observer,
         observeNonStructuralCheckoutPrepareRejection("CART_REVISION"),
       ),
-    ).resolves.toBeUndefined();
+    ).not.toThrow();
     expect(observer).toHaveBeenCalledOnce();
   });
 
-  it("keeps concurrent observers isolated by closure", async () => {
-    const seen: Array<{ requestId: string; stage: string }> = [];
-    const obsA = async (o: { rejectionStage: string }) => {
-      seen.push({ requestId: "req-a", stage: o.rejectionStage });
-    };
-    const obsB = async (o: { rejectionStage: string }) => {
-      seen.push({ requestId: "req-b", stage: o.rejectionStage });
-    };
-    await Promise.all([
+  it("does not await accidental async observer failures", async () => {
+    let rejectAsync!: (error: Error) => void;
+    const asyncFailure = new Promise<void>((_resolve, reject) => {
+      rejectAsync = reject;
+    });
+    const observer = vi.fn(() => asyncFailure as unknown as void);
+
+    expect(() =>
       safeNotifyCheckoutPrepareDiagnostic(
-        obsA,
+        observer,
         observeNonStructuralCheckoutPrepareRejection("CART_REVISION"),
       ),
-      safeNotifyCheckoutPrepareDiagnostic(
-        obsB,
-        observeNonStructuralCheckoutPrepareRejection("MERCHANDISE_AVAILABILITY"),
-      ),
-    ]);
-    expect(seen).toEqual(
-      expect.arrayContaining([
-        { requestId: "req-a", stage: "CART_REVISION" },
-        { requestId: "req-b", stage: "MERCHANDISE_AVAILABILITY" },
-      ]),
+    ).not.toThrow();
+    expect(observer).toHaveBeenCalledOnce();
+
+    // Rejection is detached; must not surface as unhandled or block checkout.
+    rejectAsync(new Error("async diagnostic boom"));
+    await expect(asyncFailure).rejects.toThrow("async diagnostic boom");
+  });
+
+  it("does not wait for a non-settling accidental Promise return", async () => {
+    const neverSettles = new Promise<void>(() => {
+      /* intentionally never settles */
+    });
+    const observer = vi.fn(() => neverSettles as unknown as void);
+
+    const started = Date.now();
+    safeNotifyCheckoutPrepareDiagnostic(
+      observer,
+      observeNonStructuralCheckoutPrepareRejection("CART_REVISION"),
     );
-    expect(seen).toHaveLength(2);
+    expect(Date.now() - started).toBeLessThan(50);
+    expect(observer).toHaveBeenCalledOnce();
+  });
+
+  it("keeps concurrent observers isolated by closure", () => {
+    const seen: Array<{ requestId: string; stage: string }> = [];
+    const obsA = (o: { rejectionStage: string }) => {
+      seen.push({ requestId: "req-a", stage: o.rejectionStage });
+    };
+    const obsB = (o: { rejectionStage: string }) => {
+      seen.push({ requestId: "req-b", stage: o.rejectionStage });
+    };
+    safeNotifyCheckoutPrepareDiagnostic(
+      obsA,
+      observeNonStructuralCheckoutPrepareRejection("CART_REVISION"),
+    );
+    safeNotifyCheckoutPrepareDiagnostic(
+      obsB,
+      observeNonStructuralCheckoutPrepareRejection("MERCHANDISE_AVAILABILITY"),
+    );
+    expect(seen).toEqual([
+      { requestId: "req-a", stage: "CART_REVISION" },
+      { requestId: "req-b", stage: "MERCHANDISE_AVAILABILITY" },
+    ]);
   });
 });

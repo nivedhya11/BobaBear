@@ -31,9 +31,9 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2309,
-    "executableTestFiles": 511,
-    "sourceTestFiles": 154,
+    "trackedPathsConsidered": 2310,
+    "executableTestFiles": 512,
+    "sourceTestFiles": 155,
     "testsTreeExecutableFiles": 277,
     "scriptTestFiles": 80,
     "playwrightSpecs": 12,
@@ -158,6 +158,7 @@
     "src/server/customer-auth/rate-limit/progressive.test.ts",
     "src/server/customer-commerce/checkout-prepare-diagnostic-config.test.ts",
     "src/server/customer-commerce/checkout-prepare-diagnostic-log.test.ts",
+    "src/server/customer-commerce/checkout-prepare-diagnostic-startup.test.ts",
     "src/server/customer-commerce/http/helpers.test.ts",
     "src/server/customer-commerce/measurement/compare-presentation.test.ts",
     "src/server/customer-commerce/measurement/report-window.test.ts",
@@ -4862,6 +4863,25 @@
     },
     {
       "path": "src/server/customer-commerce/checkout-prepare-diagnostic-log.test.ts",
+      "runner": "vitest",
+      "domain": "server/customer-commerce",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/server/customer-commerce/checkout-prepare-diagnostic-startup.test.ts",
       "runner": "vitest",
       "domain": "server/customer-commerce",
       "testType": "unit-or-domain",

@@ -181,6 +181,12 @@ services:
       - .env.runtime.docker.local
       - .env.customer-auth.docker.local
       - .env.customer-commerce.docker.local
+    # Compose project identity from the orchestrator host env (staging.mjs sets
+    # COMPOSE_PROJECT_NAME=boba-staging). Overrides any env_file self-assertion
+    # so checkout prepare diagnostics cannot enable under the wrong project.
+    # Not injected into other services.
+    environment:
+      COMPOSE_PROJECT_NAME: "${COMPOSE_PROJECT_NAME:-}"
     depends_on:
       postgres:
         condition: service_healthy

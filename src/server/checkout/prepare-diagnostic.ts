@@ -49,9 +49,14 @@ export type CheckoutPrepareDiagnosticObservation = Readonly<{
   payableChanged: boolean | null;
 }>;
 
+/**
+ * Synchronous, best-effort diagnostic observer. Must not return a Promise
+ * that the prepare path awaits. Accidental Promise returns are detached so
+ * they cannot delay checkout rejection or surface as unhandled rejections.
+ */
 export type CheckoutPrepareDiagnosticObserver = (
   observation: CheckoutPrepareDiagnosticObservation,
-) => void | Promise<void>;
+) => void;
 
 export type CheckoutPrepareDiagnosticEvent = Readonly<{
   requestId: string;
@@ -75,6 +80,14 @@ function isCategory(
   value: unknown,
 ): value is CheckoutSnapshotStructuralDifferenceCategory {
   return typeof value === "string" && CATEGORY_SET.has(value);
+}
+
+function isThenable(value: unknown): value is PromiseLike<unknown> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as { then?: unknown }).then === "function"
+  );
 }
 
 /**
@@ -146,15 +159,23 @@ export function observeNonStructuralCheckoutPrepareRejection(
 }
 
 /**
- * Invokes the optional observer; never throws into the business path.
+ * Invokes the optional observer synchronously; never throws into the business
+ * path and never awaits observer work (hanging Promises cannot delay checkout).
  */
-export async function safeNotifyCheckoutPrepareDiagnostic(
+export function safeNotifyCheckoutPrepareDiagnostic(
   observer: CheckoutPrepareDiagnosticObserver | undefined,
   observation: CheckoutPrepareDiagnosticObservation,
-): Promise<void> {
+): void {
   if (!observer) return;
   try {
-    await observer(observation);
+    // Observers are typed as void-returning; cast only to detect accidental
+    // Promise returns that TypeScript would otherwise allow under `void`.
+    const result: unknown = observer(observation);
+    if (isThenable(result)) {
+      void Promise.resolve(result).catch(() => {
+        // Accidental async rejection must not become unhandled or alter checkout.
+      });
+    }
   } catch {
     // Diagnostic failures must not alter payment/checkout outcomes.
   }

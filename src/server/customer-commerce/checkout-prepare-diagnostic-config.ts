@@ -5,11 +5,18 @@
  * Activation requires all of:
  * 1. Validated AppEnvironment === "staging" (not NODE_ENV alone)
  * 2. Explicit enablement flag exactly "true"
- * 3. Runtime project identity exactly matching the Founder staging project
- *    constant `boba-staging`
+ * 3. Runtime Compose project identity exactly matching the Founder staging
+ *    project constant `boba-staging`, read from orchestrator-injected
+ *    `COMPOSE_PROJECT_NAME` (compose.yaml customer-commerce environment;
+ *    staging.mjs sets the host value). Not a self-asserted application env
+ *    file string.
  *
  * Missing, mistyped, production, or unverified identity → fail closed (off).
  * This PR does not enable staging; env files are not modified.
+ *
+ * `BOBA_BEAR_CHECKOUT_PREPARE_DIAGNOSTIC_RUNTIME_PROJECT` remains an approved
+ * central-config key so a future staging env-file value cannot break
+ * `loadConfig`, but it is not the trusted project-identity authority.
  *
  * Bounded volume / access / retention (operational note only — no new infra):
  * - Emits at most one allowlisted info event per CHECKOUT_REPRICED prepare on
@@ -25,12 +32,20 @@ import type { AppEnvironment } from "../../platform/config";
 /** Authoritative Founder staging Compose project (scripts/environment/staging.mjs). */
 export const FOUNDER_STAGING_RUNTIME_PROJECT = "boba-staging" as const;
 
+/**
+ * Orchestrator-injected Compose project name (compose.yaml → customer-commerce
+ * `environment.COMPOSE_PROJECT_NAME`). Trusted identity source inside the
+ * process; not a BOBA_BEAR_* application secret.
+ */
+export const COMPOSE_PROJECT_NAME_ENV = "COMPOSE_PROJECT_NAME" as const;
+
 export const CHECKOUT_PREPARE_DIAGNOSTIC_ENABLED_ENV =
   "BOBA_BEAR_CHECKOUT_PREPARE_DIAGNOSTIC_ENABLED" as const;
 
 /**
- * Explicit runtime identity asserting the Founder `boba-staging` project.
- * Must equal {@link FOUNDER_STAGING_RUNTIME_PROJECT}. Absent by default.
+ * Approved central-config key retained for loadConfig compatibility.
+ * Not used as the trusted runtime project identity (see
+ * {@link COMPOSE_PROJECT_NAME_ENV}).
  */
 export const CHECKOUT_PREPARE_DIAGNOSTIC_RUNTIME_PROJECT_ENV =
   "BOBA_BEAR_CHECKOUT_PREPARE_DIAGNOSTIC_RUNTIME_PROJECT" as const;
@@ -53,11 +68,10 @@ export function loadCheckoutPrepareDiagnosticConfig(
 ): CheckoutPrepareDiagnosticConfig {
   const enabledFlag =
     source[CHECKOUT_PREPARE_DIAGNOSTIC_ENABLED_ENV] === "true";
-  const runtimeProject =
-    source[CHECKOUT_PREPARE_DIAGNOSTIC_RUNTIME_PROJECT_ENV];
+  const composeProject = source[COMPOSE_PROJECT_NAME_ENV];
   const stagingIdentityOk =
     environment === "staging" &&
-    runtimeProject === FOUNDER_STAGING_RUNTIME_PROJECT;
+    composeProject === FOUNDER_STAGING_RUNTIME_PROJECT;
 
   return Object.freeze({
     enabled: enabledFlag && stagingIdentityOk,
