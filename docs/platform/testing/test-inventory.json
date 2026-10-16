@@ -31,10 +31,10 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2296,
-    "executableTestFiles": 502,
-    "sourceTestFiles": 148,
-    "testsTreeExecutableFiles": 274,
+    "trackedPathsConsidered": 2299,
+    "executableTestFiles": 505,
+    "sourceTestFiles": 150,
+    "testsTreeExecutableFiles": 275,
     "scriptTestFiles": 80,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
@@ -92,6 +92,8 @@
     "src/components/ordering/client-action.test.ts",
     "src/components/ordering/committed-presentation-observation.test.ts",
     "src/components/ordering/financial-document-presentation.test.ts",
+    "src/components/ordering/imp036j-coupon-recovery.checkout-client.test.tsx",
+    "src/components/ordering/imp036j-coupon-recovery.test.ts",
     "src/components/ordering/imp036j-tranche5-checkout-remediation.test.tsx",
     "src/components/ordering/imp036j-tranche5-presentation.test.tsx",
     "src/components/ordering/order-status.test.ts",
@@ -279,6 +281,7 @@
     "tests/checkout-security/checkout.security.test.ts",
     "tests/checkout/checkout.domain.test.ts",
     "tests/checkout/checkout.pickup.domain.test.ts",
+    "tests/checkout/imp036j-coupon-recovery.domain.test.ts",
     "tests/checkout/legacy-outlet-price-book-retirement.domain.test.ts",
     "tests/checkout/parse-fulfilment-input.test.ts",
     "tests/checkout/scheduled-fulfilment.domain.test.ts",
@@ -3652,6 +3655,44 @@
       "ciInclusion": "YES",
       "test1Layers": [
         "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/components/ordering/imp036j-coupon-recovery.checkout-client.test.tsx",
+      "runner": "vitest",
+      "domain": "components/ordering",
+      "testType": "component-or-tsx",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "2-component",
+        "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/components/ordering/imp036j-coupon-recovery.test.ts",
+      "runner": "vitest",
+      "domain": "components/ordering",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "9-recovery-idempotency"
       ],
       "classificationConfidence": "HEURISTIC"
     },
@@ -7094,6 +7135,25 @@
       "test1Layers": [
         "1-unit",
         "3-domain-use-case"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/checkout/imp036j-coupon-recovery.domain.test.ts",
+      "runner": "vitest",
+      "domain": "checkout",
+      "testType": "unit-or-domain",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:checkout"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case",
+        "9-recovery-idempotency"
       ],
       "classificationConfidence": "HEURISTIC"
     },
