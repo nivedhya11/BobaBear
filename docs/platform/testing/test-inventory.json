@@ -31,10 +31,10 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2299,
-    "executableTestFiles": 505,
-    "sourceTestFiles": 150,
-    "testsTreeExecutableFiles": 275,
+    "trackedPathsConsidered": 2302,
+    "executableTestFiles": 507,
+    "sourceTestFiles": 151,
+    "testsTreeExecutableFiles": 276,
     "scriptTestFiles": 80,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
@@ -145,6 +145,7 @@
     "src/server/auth/shared/realm-isolation.test.ts",
     "src/server/auth/workforce/operator/reset-token-bridge.test.ts",
     "src/server/auth/workforce/runtime.test.ts",
+    "src/server/checkout/explain-snapshot-difference.test.ts",
     "src/server/customer-auth/http/client-ip.test.ts",
     "src/server/customer-auth/http/headers.test.ts",
     "src/server/customer-auth/http/origin.test.ts",
@@ -281,6 +282,7 @@
     "tests/checkout-security/checkout.security.test.ts",
     "tests/checkout/checkout.domain.test.ts",
     "tests/checkout/checkout.pickup.domain.test.ts",
+    "tests/checkout/imp036j-391-equal-payable-repricing.diagnostic.test.ts",
     "tests/checkout/imp036j-coupon-recovery.domain.test.ts",
     "tests/checkout/legacy-outlet-price-book-retirement.domain.test.ts",
     "tests/checkout/parse-fulfilment-input.test.ts",
@@ -4627,6 +4629,25 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "src/server/checkout/explain-snapshot-difference.test.ts",
+      "runner": "vitest",
+      "domain": "server/checkout",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "src/server/customer-auth/http/client-ip.test.ts",
       "runner": "vitest",
       "domain": "server/customer-auth",
@@ -7135,6 +7156,23 @@
       "test1Layers": [
         "1-unit",
         "3-domain-use-case"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/checkout/imp036j-391-equal-payable-repricing.diagnostic.test.ts",
+      "runner": "vitest",
+      "domain": "checkout",
+      "testType": "unit-or-domain",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:checkout"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
       ],
       "classificationConfidence": "HEURISTIC"
     },
