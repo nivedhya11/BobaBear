@@ -30,7 +30,6 @@ import {
   createModifierOption,
   publishCatalogContentChange,
 } from "../../src/server/catalog";
-import type { Persistence } from "../../src/server/persistence/types";
 import type { CheckoutSnapshot } from "../../src/shared/checkout";
 import { includeVariantAtBrand as includeBrand } from "../assortment-availability/support";
 import {
@@ -63,9 +62,12 @@ function customerAccess(actor: CustomerActor, brandId: string) {
   return { kind: "customer" as const, actor, brandId };
 }
 
+type CartHarnessCtx = Parameters<Parameters<typeof withCartHarness>[0]>[0];
+type Persistence = CartHarnessCtx["persistence"];
+
 type DiagnosticHarness = Readonly<{
   persistence: Persistence;
-  actors: Parameters<Parameters<typeof withCartHarness>[0]>[0]["actors"];
+  actors: CartHarnessCtx["actors"];
   brandId: string;
   access: ReturnType<typeof customerAccess>;
   addressId: string;

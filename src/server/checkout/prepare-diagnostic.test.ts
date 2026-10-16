@@ -188,6 +188,64 @@ describe("prepare-diagnostic", () => {
     expect(event).not.toHaveProperty("checkoutId");
   });
 
+  it("does not evaluate a lazy structural factory when observer is undefined", () => {
+    const factory = vi.fn(() =>
+      observeStructuralCheckoutPrepareMismatch({
+        sealedComparable: baseSnapshot(),
+        candidateComparable: baseSnapshot({
+          promotionEffects: [
+            {
+              ...baseSnapshot().promotionEffects[0]!,
+              promotionRevision: BigInt(2),
+            },
+          ],
+        }),
+      }),
+    );
+    expect(() =>
+      safeNotifyCheckoutPrepareDiagnostic(undefined, factory),
+    ).not.toThrow();
+    expect(factory).not.toHaveBeenCalled();
+  });
+
+  it("evaluates a lazy structural factory only when observer is enabled", () => {
+    const sealed = baseSnapshot();
+    const candidate = baseSnapshot({
+      promotionEffects: [
+        {
+          ...baseSnapshot().promotionEffects[0]!,
+          promotionRevision: BigInt(2),
+        },
+      ],
+    });
+    const factory = vi.fn(() =>
+      observeStructuralCheckoutPrepareMismatch({
+        sealedComparable: sealed,
+        candidateComparable: candidate,
+      }),
+    );
+    const observer = vi.fn();
+    safeNotifyCheckoutPrepareDiagnostic(observer, factory);
+    expect(factory).toHaveBeenCalledOnce();
+    expect(observer).toHaveBeenCalledExactlyOnceWith({
+      rejectionStage: "STRUCTURAL",
+      firstDifferenceCategory: "PROMOTION_EFFECT",
+      payableChanged: false,
+    });
+  });
+
+  it("swallows lazy classification throws without invoking the observer", () => {
+    const factory = vi.fn(() => {
+      throw new Error("classifier boom");
+    });
+    const observer = vi.fn();
+    expect(() =>
+      safeNotifyCheckoutPrepareDiagnostic(observer, factory),
+    ).not.toThrow();
+    expect(factory).toHaveBeenCalledOnce();
+    expect(observer).not.toHaveBeenCalled();
+  });
+
   it("swallows synchronous observer throws without delaying the caller", () => {
     const observer = vi.fn(() => {
       throw new Error("diagnostic boom");

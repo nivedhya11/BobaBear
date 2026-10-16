@@ -159,18 +159,32 @@ export function observeNonStructuralCheckoutPrepareRejection(
 }
 
 /**
+ * Observation may be supplied eagerly (cheap non-structural stages) or as a
+ * lazy factory. Factories run only when an observer is present, and only inside
+ * the non-throwing diagnostic boundary so classification failures cannot change
+ * checkout/payment outcomes.
+ */
+export type CheckoutPrepareDiagnosticObservationSource =
+  | CheckoutPrepareDiagnosticObservation
+  | (() => CheckoutPrepareDiagnosticObservation);
+
+/**
  * Invokes the optional observer synchronously; never throws into the business
  * path and never awaits observer work (hanging Promises cannot delay checkout).
+ * When `observation` is a factory, it is evaluated only after the observer
+ * gate and inside the diagnostic try/catch.
  */
 export function safeNotifyCheckoutPrepareDiagnostic(
   observer: CheckoutPrepareDiagnosticObserver | undefined,
-  observation: CheckoutPrepareDiagnosticObservation,
+  observation: CheckoutPrepareDiagnosticObservationSource,
 ): void {
   if (!observer) return;
   try {
+    const resolved =
+      typeof observation === "function" ? observation() : observation;
     // Observers are typed as void-returning; cast only to detect accidental
     // Promise returns that TypeScript would otherwise allow under `void`.
-    const result: unknown = observer(observation);
+    const result: unknown = observer(resolved);
     if (isThenable(result)) {
       void Promise.resolve(result).catch(() => {
         // Accidental async rejection must not become unhandled or alter checkout.

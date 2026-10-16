@@ -524,12 +524,15 @@ export async function prepareCheckoutForPayment(
 
   await invalidateReady(persistence, preload.row.id, now);
 
+  // Lazy: structural classification runs only when an observer is present, and
+  // only inside safeNotify's non-throwing boundary (never alters rejection).
   safeNotifyCheckoutPrepareDiagnostic(
     options.prepareDiagnosticObserver,
-    observeStructuralCheckoutPrepareMismatch({
-      sealedComparable,
-      candidateComparable,
-    }),
+    () =>
+      observeStructuralCheckoutPrepareMismatch({
+        sealedComparable,
+        candidateComparable,
+      }),
   );
 
   throw new CheckoutError(

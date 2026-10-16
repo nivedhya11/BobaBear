@@ -81,6 +81,7 @@ export {
   safeNotifyCheckoutPrepareDiagnostic,
   type CheckoutPrepareDiagnosticEvent,
   type CheckoutPrepareDiagnosticObservation,
+  type CheckoutPrepareDiagnosticObservationSource,
   type CheckoutPrepareDiagnosticObserver,
   type CheckoutPrepareRejectionStage,
 } from "./prepare-diagnostic";
