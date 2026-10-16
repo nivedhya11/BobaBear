@@ -31,10 +31,10 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2310,
-    "executableTestFiles": 512,
+    "trackedPathsConsidered": 2311,
+    "executableTestFiles": 513,
     "sourceTestFiles": 155,
-    "testsTreeExecutableFiles": 277,
+    "testsTreeExecutableFiles": 278,
     "scriptTestFiles": 80,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
@@ -287,6 +287,7 @@
     "tests/checkout/checkout.domain.test.ts",
     "tests/checkout/checkout.pickup.domain.test.ts",
     "tests/checkout/imp036j-391-equal-payable-repricing.diagnostic.test.ts",
+    "tests/checkout/imp036j-391b-prepare-observer-lazy.diagnostic.test.ts",
     "tests/checkout/imp036j-391b-prepare-observer.diagnostic.test.ts",
     "tests/checkout/imp036j-coupon-recovery.domain.test.ts",
     "tests/checkout/legacy-outlet-price-book-retirement.domain.test.ts",
@@ -7242,6 +7243,23 @@
     },
     {
       "path": "tests/checkout/imp036j-391-equal-payable-repricing.diagnostic.test.ts",
+      "runner": "vitest",
+      "domain": "checkout",
+      "testType": "unit-or-domain",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:checkout"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/checkout/imp036j-391b-prepare-observer-lazy.diagnostic.test.ts",
       "runner": "vitest",
       "domain": "checkout",
       "testType": "unit-or-domain",
