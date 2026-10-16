@@ -42,6 +42,8 @@ import {
   createLocationRateLimiter,
   type LocationRateLimiter,
 } from "./location/rate-limit";
+import type { CheckoutPrepareDiagnosticConfig } from "./checkout-prepare-diagnostic-config";
+import { createCheckoutPrepareDiagnosticEmitter } from "./checkout-prepare-diagnostic-log";
 
 const DEFAULT_SHUTDOWN_TIMEOUT_MS = 10_000;
 
@@ -65,6 +67,8 @@ export type CustomerCommerceServiceOptions = Readonly<{
   /** Google Maps location provider (unconfigured is a valid runtime). */
   locationProvider?: LocationSearchProvider | null;
   locationRateLimiter?: LocationRateLimiter;
+  /** Default-disabled prepare diagnostic gate (IMP-036J #391B). */
+  checkoutPrepareDiagnostic?: CheckoutPrepareDiagnosticConfig;
 }>;
 
 const CUSTOMER_COMMERCE_SERVICE_NAME = "customer-commerce";
@@ -146,6 +150,16 @@ export class CustomerCommerceService {
       this.notificationProcessor,
     ].filter((worker): worker is NonNullable<typeof worker> => worker !== null);
 
+    const checkoutPrepareDiagnosticConfig = config.checkoutPrepareDiagnostic ?? {
+      enabled: false,
+    };
+    const checkoutPrepareDiagnostic = Object.freeze({
+      enabled: checkoutPrepareDiagnosticConfig.enabled === true,
+      emitter: createCheckoutPrepareDiagnosticEmitter({
+        logLevel: config.persistenceConfig.logLevel,
+      }),
+    });
+
     const requestListener = createCustomerCommerceRequestListener(
       {
         runtime: this.runtime,
@@ -156,6 +170,7 @@ export class CustomerCommerceService {
         workers,
         locationProvider: config.locationProvider ?? null,
         locationRateLimiter: config.locationRateLimiter ?? createLocationRateLimiter(),
+        checkoutPrepareDiagnostic,
       },
       {
         onRequestStart: () => {

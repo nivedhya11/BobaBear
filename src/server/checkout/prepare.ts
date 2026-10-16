@@ -51,6 +51,11 @@ import {
 import { buildSnapshotCandidate, presentedComplimentaryVariantId } from "./snapshot";
 import { checkoutSnapshotsStructurallyEqual } from "./compare-snapshots";
 import {
+  observeNonStructuralCheckoutPrepareRejection,
+  observeStructuralCheckoutPrepareMismatch,
+  safeNotifyCheckoutPrepareDiagnostic,
+} from "./prepare-diagnostic";
+import {
   assertScheduledPickupProfile,
   sealEligibleScheduledWindow,
   type ScheduledSnapshotSeal,
@@ -204,6 +209,10 @@ export async function prepareCheckoutForPayment(
         });
       }
     });
+    await safeNotifyCheckoutPrepareDiagnostic(
+      options.prepareDiagnosticObserver,
+      observeNonStructuralCheckoutPrepareRejection("CART_REVISION"),
+    );
     throw new CheckoutError(
       "CHECKOUT_REPRICED",
       "Cart changed; Checkout must be re-evaluated.",
@@ -235,6 +244,10 @@ export async function prepareCheckoutForPayment(
     } catch (error) {
       if (checkoutTiming === "SCHEDULED" && error instanceof CheckoutError) {
         await invalidateReady(persistence, preload.row.id, now);
+        await safeNotifyCheckoutPrepareDiagnostic(
+          options.prepareDiagnosticObserver,
+          observeNonStructuralCheckoutPrepareRejection("DELIVERY_SERVICEABILITY"),
+        );
         throw new CheckoutError(
           "CHECKOUT_REPRICED",
           "Delivery serviceability changed; Checkout must be re-evaluated.",
@@ -295,6 +308,10 @@ export async function prepareCheckoutForPayment(
           });
         }
       });
+      await safeNotifyCheckoutPrepareDiagnostic(
+        options.prepareDiagnosticObserver,
+        observeNonStructuralCheckoutPrepareRejection("PICKUP_ELIGIBILITY"),
+      );
       throw new CheckoutError(
         "CHECKOUT_REPRICED",
         "Pickup eligibility changed; Checkout must be re-evaluated.",
@@ -334,6 +351,10 @@ export async function prepareCheckoutForPayment(
         });
       }
     });
+    await safeNotifyCheckoutPrepareDiagnostic(
+      options.prepareDiagnosticObserver,
+      observeNonStructuralCheckoutPrepareRejection("MERCHANDISE_AVAILABILITY"),
+    );
     throw new CheckoutError(
       "CHECKOUT_REPRICED",
       "Merchandise terms changed; Checkout must be re-evaluated.",
@@ -357,6 +378,10 @@ export async function prepareCheckoutForPayment(
     } catch (error) {
       if (error instanceof CheckoutError) {
         await invalidateReady(persistence, preload.row.id, now);
+        await safeNotifyCheckoutPrepareDiagnostic(
+          options.prepareDiagnosticObserver,
+          observeNonStructuralCheckoutPrepareRejection("SCHEDULED_ELIGIBILITY"),
+        );
         throw new CheckoutError(
           "CHECKOUT_REPRICED",
           "Scheduled window is no longer eligible; customer must reconfirm.",
@@ -371,6 +396,10 @@ export async function prepareCheckoutForPayment(
       selectedOutletId !== preload.snapshot.selectedOutletId
     ) {
       await invalidateReady(persistence, preload.row.id, now);
+      await safeNotifyCheckoutPrepareDiagnostic(
+        options.prepareDiagnosticObserver,
+        observeNonStructuralCheckoutPrepareRejection("SCHEDULED_TERMS"),
+      );
       throw new CheckoutError(
         "CHECKOUT_REPRICED",
         "Scheduled terms changed; customer must reconfirm.",
@@ -421,56 +450,59 @@ export async function prepareCheckoutForPayment(
     scheduledSeal,
   });
 
+  const sealedComparable: CheckoutSnapshot = Object.freeze({
+    ...preload.snapshot,
+    id: "x",
+    checkoutRevision: BigInt(1),
+    evaluatedAt: candidate.commercial.evaluatedAt,
+    serviceabilityEvaluatedAt: candidate.commercial.serviceabilityEvaluatedAt,
+    createdAt: candidate.commercial.createdAt,
+    lines: preload.snapshot.lines.map((line) =>
+      Object.freeze({
+        ...line,
+        id: "x",
+        bundleSelections: line.bundleSelections.map((b) =>
+          Object.freeze({ ...b, id: "x" }),
+        ),
+      }),
+    ),
+    charges: preload.snapshot.charges.map((c) =>
+      Object.freeze({ ...c, id: "x" }),
+    ),
+    promotionEffects: preload.snapshot.promotionEffects.map((e) =>
+      Object.freeze({ ...e, id: "x" }),
+    ),
+    taxComponents: preload.snapshot.taxComponents.map((t) =>
+      Object.freeze({ ...t, id: "x" }),
+    ),
+  });
+  const candidateComparable: CheckoutSnapshot = Object.freeze({
+    ...candidate.commercial,
+    id: "x",
+    checkoutRevision: BigInt(1),
+    lines: candidate.commercial.lines.map((line) =>
+      Object.freeze({
+        ...line,
+        id: "x",
+        bundleSelections: line.bundleSelections.map((b) =>
+          Object.freeze({ ...b, id: "x" }),
+        ),
+      }),
+    ),
+    charges: candidate.commercial.charges.map((c) =>
+      Object.freeze({ ...c, id: "x" }),
+    ),
+    promotionEffects: candidate.commercial.promotionEffects.map((e) =>
+      Object.freeze({ ...e, id: "x" }),
+    ),
+    taxComponents: candidate.commercial.taxComponents.map((t) =>
+      Object.freeze({ ...t, id: "x" }),
+    ),
+  });
+
   const equivalent = checkoutSnapshotsStructurallyEqual(
-    Object.freeze({
-      ...preload.snapshot,
-      id: "x",
-      checkoutRevision: BigInt(1),
-      evaluatedAt: candidate.commercial.evaluatedAt,
-      serviceabilityEvaluatedAt: candidate.commercial.serviceabilityEvaluatedAt,
-      createdAt: candidate.commercial.createdAt,
-      lines: preload.snapshot.lines.map((line) =>
-        Object.freeze({
-          ...line,
-          id: "x",
-          bundleSelections: line.bundleSelections.map((b) =>
-            Object.freeze({ ...b, id: "x" }),
-          ),
-        }),
-      ),
-      charges: preload.snapshot.charges.map((c) =>
-        Object.freeze({ ...c, id: "x" }),
-      ),
-      promotionEffects: preload.snapshot.promotionEffects.map((e) =>
-        Object.freeze({ ...e, id: "x" }),
-      ),
-      taxComponents: preload.snapshot.taxComponents.map((t) =>
-        Object.freeze({ ...t, id: "x" }),
-      ),
-    }),
-    Object.freeze({
-      ...candidate.commercial,
-      id: "x",
-      checkoutRevision: BigInt(1),
-      lines: candidate.commercial.lines.map((line) =>
-        Object.freeze({
-          ...line,
-          id: "x",
-          bundleSelections: line.bundleSelections.map((b) =>
-            Object.freeze({ ...b, id: "x" }),
-          ),
-        }),
-      ),
-      charges: candidate.commercial.charges.map((c) =>
-        Object.freeze({ ...c, id: "x" }),
-      ),
-      promotionEffects: candidate.commercial.promotionEffects.map((e) =>
-        Object.freeze({ ...e, id: "x" }),
-      ),
-      taxComponents: candidate.commercial.taxComponents.map((t) =>
-        Object.freeze({ ...t, id: "x" }),
-      ),
-    }),
+    sealedComparable,
+    candidateComparable,
   );
 
   if (equivalent) {
@@ -491,6 +523,14 @@ export async function prepareCheckoutForPayment(
   }
 
   await invalidateReady(persistence, preload.row.id, now);
+
+  await safeNotifyCheckoutPrepareDiagnostic(
+    options.prepareDiagnosticObserver,
+    observeStructuralCheckoutPrepareMismatch({
+      sealedComparable,
+      candidateComparable,
+    }),
+  );
 
   throw new CheckoutError(
     "CHECKOUT_REPRICED",
