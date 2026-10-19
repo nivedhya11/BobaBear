@@ -95,6 +95,12 @@ describe("scheduled fulfilment reminder timing", () => {
     expect(
       evaluateScheduledReminderEnqueue({
         ...base,
+        materializedAt: new Date(due.getTime() + 1),
+      }),
+    ).toMatchObject({ outcome: "SKIP", reason: "INSIDE_REMINDER_WINDOW" });
+    expect(
+      evaluateScheduledReminderEnqueue({
+        ...base,
         fulfilmentTiming: "ASAP",
         windowStartAt: null,
         windowEndAt: null,
