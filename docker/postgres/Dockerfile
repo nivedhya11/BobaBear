@@ -15,7 +15,9 @@
 #   docker run --rm boba-bear-postgres:local pgbackrest version
 
 ARG POSTGRES_BASE_IMAGE=docker.io/library/postgres:18.4-trixie
-ARG GOSU_GO_IMAGE=docker.io/library/golang:1.26.8-bookworm
+# Go 1.26.9 rebuilds gosu against the patched stdlib (CVE-2026-78667/78669/97031).
+# Index digest verified 2026-10-17 via registry Docker-Content-Digest for tag 1.26.9-bookworm.
+ARG GOSU_GO_IMAGE=docker.io/library/golang:1.26.9-bookworm@sha256:d9c68c2c51161e12fd77e4c6320687c9cd86e1af1e3ad6e6cd63ff970641453c
 ARG GOSU_VERSION=1.19
 # Immutable content pin for tianon/gosu@1.19 (do not resolve mutable tags at build).
 ARG GOSU_GIT_SHA=6456aaa0f3c854d199d0f037f068eb97515b7513
@@ -52,7 +54,7 @@ COPY --from=gosu-builder /gosu /usr/local/bin/gosu
 RUN chmod 0755 /usr/local/bin/gosu \
   && gosu nobody true \
   && gosu version 2>&1 | grep -F "gosu version: ${GOSU_VERSION}" \
-  && gosu version 2>&1 | grep -F "go1.26"
+  && gosu version 2>&1 | grep -F "go1.26.9"
 
 # Apply available Debian security updates before installing build deps
 # (IMP-038 §15 Trivy image gate; unfixed CVEs use --ignore-unfixed).
