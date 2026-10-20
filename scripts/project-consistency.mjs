@@ -18343,8 +18343,11 @@ function checkImp028ArchitectureLock(roadmap, state, architecture, decision) {
   }
 
   if (decision) {
-    const expectedDecisionRegisterVersion = isGov2AuthorityDocuments(roadmap, state) ||
-      isImp036kDesignReadinessPassCheckpoint(roadmap, state) ||
+    // GOV-2 CURRENT tip may advance the live register (DR-25 / D-384 programme baseline).
+    // Historical IMP-036K Fit/Design/gate checkpoints remain anchored to source-era DR-24.
+    const expectedDecisionRegisterVersion = isGov2AuthorityDocuments(roadmap, state)
+      ? "DR-25"
+      : isImp036kDesignReadinessPassCheckpoint(roadmap, state) ||
       isImp036kArchitectureLockCheckpoint(roadmap, state) ||
       isImp036kProductExperienceGateCheckpoint(roadmap, state) ||
     isImp036jImplementationStartCheckpoint(roadmap, state) ||
@@ -18461,6 +18464,11 @@ function checkImp028ArchitectureLock(roadmap, state, architecture, decision) {
         "IMP028_DR_VERSION",
         `Decision register must be ${expectedDecisionRegisterVersion} for the current architecture checkpoint, got ${decision.meta.decisionRegisterVersion}`,
       );
+    }
+    if (isGov2AuthorityDocuments(roadmap, state)) {
+      const programme = evaluateD384ProgrammeBaselineProgression(decision);
+      if (!programme.ok) fail(programme.code, programme.message);
+      else note(programme.message);
     }
   }
 }
@@ -42160,6 +42168,125 @@ export function evaluateD383Current(decisionText) {
 }
 
 /**
+ * GOV-2 CURRENT tip register progression for D-384 programme baseline (DR-25).
+ * Independent of IMP-036K source-era Fit/Design provenance (DR-24 / no D-384 then).
+ * @param {{ meta?: { decisionRegisterVersion?: string, supersedes?: string }, text?: string }} decision
+ * @returns {{ ok: true, message: string } | { ok: false, code: string, message: string }}
+ */
+export function evaluateD384ProgrammeBaselineProgression(decision) {
+  const meta = decision?.meta ?? {};
+  const text = decision?.text ?? "";
+  if (meta.decisionRegisterVersion !== "DR-25") {
+    return {
+      ok: false,
+      code: "D384_DR_VERSION",
+      message: `Programme baseline requires decisionRegisterVersion DR-25, got ${meta.decisionRegisterVersion ?? "(missing)"}`,
+    };
+  }
+  if (meta.supersedes !== "DR-24") {
+    return {
+      ok: false,
+      code: "D384_DR_SUPERSEDES",
+      message: `DR-25 must supersede DR-24, got ${meta.supersedes ?? "(missing)"}`,
+    };
+  }
+  const row = evaluateDecisionRegisterRowStatus(text, "D-384");
+  if (!row.ok) {
+    return {
+      ok: false,
+      code: "D384_MISSING",
+      message: "DR-25 must register CURRENT D-384 Tactical Closure and Pre-GTM Strategic Programme Baseline",
+    };
+  }
+  if (row.status !== "CURRENT") {
+    return {
+      ok: false,
+      code: "D384_STATUS",
+      message: `D-384 status cell must be CURRENT (got ${row.status})`,
+    };
+  }
+  const line = String(text).split("\n").find((entry) => /^\|\s*D-384\s*\|/.test(entry)) ?? "";
+  if (
+    !/Tactical Closure and Pre-GTM Strategic Programme Baseline/.test(line) ||
+    !/planning/.test(line)
+  ) {
+    return {
+      ok: false,
+      code: "D384_CONTRACT",
+      message:
+        "D-384 must lock the Tactical Closure and Pre-GTM Strategic Programme Baseline as planning authority",
+    };
+  }
+  if (
+    !/does not supersede D-377, D-382, or D-383/.test(line) ||
+    !/does not amend PD-2/.test(line) ||
+    !/does not authorize IMP-036K implementation/.test(line)
+  ) {
+    return {
+      ok: false,
+      code: "D384_SCOPE",
+      message:
+        "D-384 must explicitly preserve D-377/D-382/D-383, leave PD-2 unamended, and keep IMP-036K implementation unauthorized",
+    };
+  }
+  if (!/next ID \*\*D-385\*\*/.test(text)) {
+    return {
+      ok: false,
+      code: "D384_NEXT_ID",
+      message: "DR-25 ID rules must advance next free decision ID to D-385 after D-384",
+    };
+  }
+  if (/next ID \*\*D-384\*\*/.test(text)) {
+    return {
+      ok: false,
+      code: "D384_NEXT_ID_STALE",
+      message: "DR-25 must not leave next free decision ID at D-384 after allocating D-384",
+    };
+  }
+  const d383 = evaluateD383Current(text);
+  if (!d383.ok) return d383;
+  const d382 = evaluateD382AmendedByD383(text);
+  if (!d382.ok) return d382;
+  return {
+    ok: true,
+    message: "D-384 / DR-25 programme baseline progression valid (next free ID D-385; D-383 CURRENT; D-382 AMENDED by D-383)",
+  };
+}
+
+/**
+ * Source-era IMP-036K Fit/Design/gate allocation check: D-383 registered, D-384 not yet
+ * allocated, next free ID D-384. Does not forbid a later CURRENT tip from allocating D-384.
+ * @param {string} decisionText
+ * @returns {{ ok: true } | { ok: false, code: string, message: string }}
+ */
+export function evaluateImp036kSourceEraDecisionAllocation(decisionText) {
+  const text = decisionText ?? "";
+  if (!/\| D-383 \|/.test(text)) {
+    return {
+      ok: false,
+      code: "IMP036K_SOURCE_ERA_D383",
+      message: "Source-era IMP-036K checkpoint must keep D-383 registered",
+    };
+  }
+  if (/\| D-384 \|/.test(text)) {
+    return {
+      ok: false,
+      code: "IMP036K_SOURCE_ERA_D384",
+      message:
+        "Source-era IMP-036K Fit/Design/gate must not allocate D-384 (historical provenance; later CURRENT tip may allocate D-384 under a later DR revision)",
+    };
+  }
+  if (!/next ID \*\*D-384\*\*/.test(text)) {
+    return {
+      ok: false,
+      code: "IMP036K_SOURCE_ERA_NEXT_ID",
+      message: "Source-era IMP-036K checkpoint must keep next free decision ID at D-384",
+    };
+  }
+  return { ok: true };
+}
+
+/**
  * CURRENT checkpoint: IMP-036J implementation start at Tranche 1
  * (GTM-R178 / STATE-R176). Tranche 1 stays in review. Tranche 2 is not started.
  * @param {Record<string, any>} roadmap
@@ -42835,8 +42962,9 @@ function checkImp036kArchitectureLock(roadmap, state, architecture, decision) {
   if (!futureJ.includes("IMP036J_TRANCHE_1: PASS") || !futureJ.includes("IMPLEMENTATION_TRANCHE_2") || futureJ.includes("IMP036J_TRANCHE_1: IN_REVIEW")) {
     fail("IMP036J_FUTURE_LEDGER", "Future GTM slice ledger must keep IMP-036J Tranche 1 PASS and next gate IMPLEMENTATION_TRANCHE_2");
   }
-  if (!/next ID \*\*D-384\*\*/.test(decisionText) || !/\| D-383 \|/.test(decisionText) || /\| D-384 \|/.test(decisionText)) {
-    fail("IMP036K_LOCK_D384", "D-383 must remain registered, D-384 must not be created, and the next free ID must stay D-384");
+  {
+    const sourceEra = evaluateImp036kSourceEraDecisionAllocation(decisionText);
+    if (!sourceEra.ok) fail("IMP036K_LOCK_D384", sourceEra.message);
   }
   const d383 = evaluateD383Current(decisionText);
   if (!d383.ok) fail(d383.code, d383.message);
@@ -43110,8 +43238,9 @@ function checkImp036kDesignReadinessPass(roadmap, state, architecture, decision)
   if (!futureJ.includes("IMP036J_TRANCHE_1: PASS") || !futureJ.includes("IMP036J_TRANCHE_2: PASS") || !futureJ.includes("IMPLEMENTATION_TRANCHE_3") || futureJ.includes("IMP036J_TRANCHE_3: PASS")) {
     fail("IMP036J_FUTURE_LEDGER", "Future GTM slice ledger must keep IMP-036J Tranche 1/2 PASS with next gate IMPLEMENTATION_TRANCHE_3");
   }
-  if (!/next ID \*\*D-384\*\*/.test(decisionText) || !/\| D-383 \|/.test(decisionText) || /\| D-384 \|/.test(decisionText)) {
-    fail("IMP036K_DR_D384", "D-383 must remain registered, D-384 must not be created, and the next free ID must stay D-384");
+  {
+    const sourceEra = evaluateImp036kSourceEraDecisionAllocation(decisionText);
+    if (!sourceEra.ok) fail("IMP036K_DR_D384", sourceEra.message);
   }
   const d383 = evaluateD383Current(decisionText);
   if (!d383.ok) fail(d383.code, d383.message);
