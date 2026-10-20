@@ -467,7 +467,9 @@ test("GJ-FIRST-ORDER: discover-to-pay still completes with Offer explanation and
   test.setTimeout(180_000);
   await installRazorpayCheckoutMock(page, "succeed");
   await installMockGoogleMaps(page);
-  await installLocationProviderMocks(page);
+  // Opt-in delayed status only: proves checkout destination recovers retained
+  // "Rajpur" input when provider readiness arrives after typing (#395).
+  await installLocationProviderMocks(page, { statusDelayMs: 500 });
 
   await addFirstMenuItemAndOpenCart(page);
   await expect(page.getByTestId("price-summary-total").getByText("Estimated subtotal")).toBeVisible();
