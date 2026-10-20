@@ -42168,6 +42168,21 @@ export function evaluateD383Current(decisionText) {
 }
 
 /**
+ * Count decision-register table rows for a decision ID.
+ * Uniqueness must not be inferred from first-match `.find()` or column-count alone.
+ * @param {string} decisionText
+ * @param {string} decisionId
+ * @returns {string[]}
+ */
+export function collectDecisionRegisterIdRows(decisionText, decisionId) {
+  const id = String(decisionId).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const rowRe = new RegExp(`^\\|\\s*${id}\\s*\\|`);
+  return String(decisionText ?? "")
+    .split("\n")
+    .filter((entry) => rowRe.test(entry));
+}
+
+/**
  * GOV-2 CURRENT tip register progression for D-384 programme baseline (DR-25).
  * Independent of IMP-036K source-era Fit/Design provenance (DR-24 / no D-384 then).
  * @param {{ meta?: { decisionRegisterVersion?: string, supersedes?: string }, text?: string }} decision
@@ -42190,6 +42205,21 @@ export function evaluateD384ProgrammeBaselineProgression(decision) {
       message: `DR-25 must supersede DR-24, got ${meta.supersedes ?? "(missing)"}`,
     };
   }
+  const d384Rows = collectDecisionRegisterIdRows(text, "D-384");
+  if (d384Rows.length === 0) {
+    return {
+      ok: false,
+      code: "D384_MISSING",
+      message: "DR-25 must register CURRENT D-384 Tactical Closure and Pre-GTM Strategic Programme Baseline",
+    };
+  }
+  if (d384Rows.length > 1) {
+    return {
+      ok: false,
+      code: "D384_DUPLICATE",
+      message: `D-384 must appear exactly once in the decision-register table (found ${d384Rows.length} rows)`,
+    };
+  }
   const row = evaluateDecisionRegisterRowStatus(text, "D-384");
   if (!row.ok) {
     return {
@@ -42205,7 +42235,7 @@ export function evaluateD384ProgrammeBaselineProgression(decision) {
       message: `D-384 status cell must be CURRENT (got ${row.status})`,
     };
   }
-  const line = String(text).split("\n").find((entry) => /^\|\s*D-384\s*\|/.test(entry)) ?? "";
+  const line = d384Rows[0] ?? "";
   if (
     !/Tactical Closure and Pre-GTM Strategic Programme Baseline/.test(line) ||
     !/planning/.test(line)

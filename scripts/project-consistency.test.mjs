@@ -109,6 +109,7 @@ import {
   evaluateD382AmendedByD383,
   evaluateD383Current,
   evaluateD384ProgrammeBaselineProgression,
+  collectDecisionRegisterIdRows,
   evaluateImp036kSourceEraDecisionAllocation,
   evaluateImp036jApprovedProductDefinition,
   evaluateImp036jPd2ExperienceTransition,
@@ -19456,6 +19457,43 @@ describe("D-384 programme baseline / IMP-036K source-era decision allocation", (
     const result = evaluateD384ProgrammeBaselineProgression({ meta, text });
     assert.equal(result.ok, false);
     assert.equal(result.code, "D384_MISSING");
+  });
+
+  it("accepts a valid single D-384 table row (uniqueness PASS)", () => {
+    const meta = extractMeta(liveDecision);
+    assert.equal(collectDecisionRegisterIdRows(liveDecision, "D-384").length, 1);
+    const result = evaluateD384ProgrammeBaselineProgression({ meta, text: liveDecision });
+    assert.equal(result.ok, true, result.message);
+  });
+
+  it("rejects an identical second D-384 table row (duplicate allocation FAIL)", () => {
+    const meta = { decisionRegisterVersion: "DR-25", supersedes: "DR-24" };
+    const primary = collectDecisionRegisterIdRows(liveDecision, "D-384")[0];
+    assert.ok(primary);
+    // First-match row-status would still see CURRENT; uniqueness must fail independently.
+    const text = `${liveDecision}\n${primary}\n`;
+    assert.equal(collectDecisionRegisterIdRows(text, "D-384").length, 2);
+    const result = evaluateD384ProgrammeBaselineProgression({ meta, text });
+    assert.equal(result.ok, false);
+    assert.equal(result.code, "D384_DUPLICATE");
+  });
+
+  it("rejects a conflicting second D-384 table row regardless of order (FAIL)", () => {
+    const meta = { decisionRegisterVersion: "DR-25", supersedes: "DR-24" };
+    const primary = collectDecisionRegisterIdRows(liveDecision, "D-384")[0];
+    assert.ok(primary);
+    const conflicting =
+      "| D-384 | Conflicting alternate programme baseline | Roadmap / Program / Planning | PROPOSED | Other record | — | — | Issue #380 |";
+    const afterPrimary = `${liveDecision}\n${conflicting}\n`;
+    const beforePrimary = liveDecision.replace(primary, `${conflicting}\n${primary}`);
+    assert.equal(collectDecisionRegisterIdRows(afterPrimary, "D-384").length, 2);
+    assert.equal(collectDecisionRegisterIdRows(beforePrimary, "D-384").length, 2);
+    const resultAfter = evaluateD384ProgrammeBaselineProgression({ meta, text: afterPrimary });
+    const resultBefore = evaluateD384ProgrammeBaselineProgression({ meta, text: beforePrimary });
+    assert.equal(resultAfter.ok, false);
+    assert.equal(resultAfter.code, "D384_DUPLICATE");
+    assert.equal(resultBefore.ok, false);
+    assert.equal(resultBefore.code, "D384_DUPLICATE");
   });
 
   it("rejects DR-25 progression with stale next free ID D-384", () => {

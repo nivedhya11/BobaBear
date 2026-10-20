@@ -87,10 +87,131 @@ notices; keep history interpretable.
 | D-378 | Checkout Fulfilment Mode + Pickup Execution Boundary: Checkout Snapshot owns immutable fulfilment commitment (`DELIVERY` \| `PICKUP`); DELIVERY requires destination/serviceability and may create Delivery execution; PICKUP binds eligible selected Outlet, requires no customer delivery destination/serviceability, never creates/invokes Delivery; mutable Checkout owns pre-payment mode + `pickupOutletId`; commercial evaluation must not apply delivery charges for PICKUP; OutletPickupProfile is bounded mutable outlet configuration under existing `outlet.read`/`outlet.update`; no new Order lifecycle, payment model, role, permission, deployable service, or scheduled-fulfilment schema (IMP-036I). Financial Document adapters remain D-365 compliant (corrected Option A): Pickup does **not** invent a Delivery destination; does **not** classify Pickup location as recipient/customer address; does **not** reconstruct recipient facts from mutable customer state; optional Pickup recipient fields remain absent (`null`) unless immutable accepted recipient authority already exists. Place-of-supply remains under existing D-365 issuer/profile policy. No new legal claim. Binding ARCH-G28 / ARCH-R22 / ADR-018. Does **not** authorize IMP-036H implementation. | Checkout / Fulfilment / Pickup / Delivery boundary / IMP-036H | AMENDED | This register + [`ARCHITECTURE.md`](./ARCHITECTURE.md) + [`decisions/ADR-018-customer-fulfilment-mode-and-pickup-boundary.md`](./decisions/ADR-018-customer-fulfilment-mode-and-pickup-boundary.md) + [`capabilities/IMP-036H-customer-pickup-takeaway.md`](./capabilities/IMP-036H-customer-pickup-takeaway.md) | — | — | ARCH-G28; IMP-036H Architecture Fit PASS + lock (implementation NOT_AUTHORIZED) |
 | D-379 | Scheduled Fulfilment Timing + Future Execution Boundary: Checkout owns mutable pre-payment `FULFILMENT_TIMING = ASAP \| SCHEDULED`; Checkout Snapshot owns immutable purchased timing truth (window start/end UTC, sealed IANA timezone, sealed cancellation-cutoff minutes); Order projects Snapshot; no ScheduledOrder aggregate; no new Order lifecycle statuses; no Slot capacity/reservation engine; server-authoritative eligibility over IMP-036E hours + minimal Outlet future-closure exceptions + Outlet lead-time profile; Brand cancellation policy (defaults 30/60; 0–240); pre-payment revalidation reuses `prepareCheckoutForPayment`; Scheduled Delivery preserves IMP-032 operator-approved manual dispatch; Pickup immediate Ops visibility (no prep-release state); one proactive reminder via notification-owned outbox `available_at` only (not a generic Scheduled business-action bus); no new deployable service/queue/broker/role/permission. ARCH-G29 / ARCH-R23 / ADR-019 CURRENT / Accepted. Amends D-378 only for ASAP-only / no-scheduled-schema reservation D-379 CURRENT amends those clauses only. Scheduled Delivery reminder completion consumes CURRENT **D-380** Delivery successful-completion truth (`EXISTS DELIVERED`); D-379 does **not** redefine Delivery replacement semantics. Does **not** authorize IMP-036I implementation. Architecture Fit PASS review `5312653831`. | Checkout / Snapshot / Order projection / Outlet schedule / Delivery coordination / Notification / IMP-036I | CURRENT | This register + [`ARCHITECTURE.md`](./ARCHITECTURE.md) (ARCH-R23) + [`decisions/ADR-019-scheduled-fulfilment-timing-and-execution.md`](./decisions/ADR-019-scheduled-fulfilment-timing-and-execution.md) + [`capabilities/IMP-036I-scheduled-fulfilment.md`](./capabilities/IMP-036I-scheduled-fulfilment.md); depends on **D-380** CURRENT for Delivery completion fact | — (amends **D-378** ASAP-only / scheduled-schema reservation only) | — | ARCH-G29 CURRENT; IMP-036I architecture locked; consumes D-380 CURRENT |
 | D-380 | Delivery Successful-Completion Finality + Replacement Boundary: `Delivery.status = DELIVERED` is durable successful Delivery execution truth; a normal replacement Delivery MUST NOT be created after `DELIVERED`; normal replacement after `FAILED` / `CANCELLED` remains governed only by existing accepted Delivery rules and prerequisites (no eligibility expansion); incorrect committed `DELIVERED` requires a separately authorized history-preserving correction mechanism outside IMP-036I; Scheduled Delivery reminder eligibility may suppress on `EXISTS` authoritative `DELIVERED` for the exact Order without lineage-tip / `current_delivery_id` / latest-row-wins authority; current runtime `createDelivery` acceptance of a `DELIVERED` predecessor is `PRE_EXISTING_DELIVERY_CONFORMANCE_DEBT` against CURRENT D-380 and must be corrected before IMP-036I acceptance. Clarifies/amends IMP-031 “authoritatively inactive” replacement interpretation for successful-completion finality only; does **not** supersede IMP-031 wholesale, Delivery lifecycle, one-active rule, stable request identity, booking ambiguity, failure/cancellation, return progression, IMP-032 manual Dehradun mode, or Order lifecycle. ARCH-G30 / ARCH-R23 / ADR-020 CURRENT / Accepted (shared lock with D-379 / ARCH-G29). Human architecture direction APPROVED 2026-09-25; independent Architecture Fit PASS review `5312653831`. Does **not** authorize implementation. | Delivery / Fulfilment / Replacement / IMP-031 / IMP-036I | CURRENT | This register + [`ARCHITECTURE.md`](./ARCHITECTURE.md) (ARCH-R23) + [`decisions/ADR-020-delivery-successful-completion-finality.md`](./decisions/ADR-020-delivery-successful-completion-finality.md) + [`capabilities/IMP-036I-scheduled-fulfilment.md`](./capabilities/IMP-036I-scheduled-fulfilment.md) | — (clarifies/amends IMP-031 successful-completion replacement interpretation only; does not supersede IMP-031 wholesale) | — | ARCH-G30 CURRENT; Delivery DELIVERED finality; normal replacement prohibition after DELIVERED; Scheduled reminder completion authority |
-| D-384 | Tactical Closure and Pre-GTM Strategic Programme Baseline. Founder-approved planning baseline that records Tactical closure of IMP-036J plus Strategic S1 (engineering and governance scalability), S2 (cross-platform experience recovery), and S3 (GTM product completeness and operational readiness) as planning labels only — not IMP identifiers and not a competing authority over ROADMAP, STATE, PD-2, EXP-1, LANG-1, TEST-1, VISION, ARCHITECTURE, or the Experience Debt Register. Supplements planning; does not supersede D-377, D-382, or D-383; does not amend PD-2; does not change ROADMAP/STATE lifecycle position; does not authorize IMP-036K implementation; does not unhold IMP-037/038; does not activate IMP-039/040; does not grant public GTM; does not create product entitlements, roles, permissions, services, schema, or ADRs; does not perform S1/S2/S3 audits or start their remediation. Tactical owns mandatory IMP-036J findings, required candidate proof, authorized verified staging, Founder functional and experience UAT, and formal acceptance reconciliation. S1 assesses governance discoverability/current-history separation/duplication/proportionate effort, engineering modularity/dependency direction/reuse/testability, and runtime launch-load/reliability as distinct concerns, with evidence before prescription and a finite pre-GTM remediation increment. S2 reviews complete current journeys across accepted capabilities without fabricating historical PD-2 gates; uses the Experience Debt Register only when that audit is separately performed. S3 assesses bounded launch completeness using settled decisions first. Routing: mandatory IMP-036J failure → Tactical; immediate security/data/release hazard → applicable risk handling; existing-capability experience gap → S2; code/governance/delivery problem → S1; genuinely missing outcome → S3 discovery. No programme label supplies automatic product acceptance. Framework frozen; detailed release/remediation scope requires separately agreed versioned baseline. | Roadmap / Program / Planning | CURRENT | This register | — | — | Issue #380 programme baseline; planning only; ROADMAP/STATE lifecycle unchanged |
+| D-384 | Tactical Closure and Pre-GTM Strategic Programme Baseline (planning labels Tactical / S1 / S2 / S3 only — not IMP identifiers). Supplements planning; does not supersede D-377, D-382, or D-383; does not amend PD-2; does not change ROADMAP/STATE lifecycle; does not authorize IMP-036K implementation; does not unhold IMP-037/038; does not activate IMP-039/040; does not grant public GTM; does not create entitlements, roles, permissions, services, schema, or ADRs; does not perform S1/S2/S3 audits or start their remediation. Complete operating model: **§ D-384** below. | Roadmap / Program / Planning | CURRENT | This register (§ D-384) | — | — | Issue #380 programme baseline; planning only; ROADMAP/STATE lifecycle unchanged |
 | D-383 | Pre-GTM Revenue Recommendations Insertion / Parallel Definition Authorization. Founder authority 2026-10-01 formally allocates **IMP-036K — Revenue Recommendations**. The string `"IMP-036K"` was previously only a working label and was not governance identity. D-383 authorizes IMP-036K for parallel Product Definition preparation and Experience Definition preparation only. `PARALLEL_PRODUCT_DEFINITION_PREPARATION: AUTHORIZED`. `PARALLEL_EXPERIENCE_DEFINITION_PREPARATION: AUTHORIZED`. This decision does not perform the Product Definition Gate or the Experience Gate. `PARALLEL_DEFINITION_ONLY: YES`. `IMP036K_PRODUCT_DEFINITION: NOT_CREATED`. `IMP036K_PRODUCT_DEFINITION_GATE: NOT_PERFORMED`. `IMP036K_EXPERIENCE_CRITICALITY: X3`. `IMP036K_CHANGE_RISK: CR2`. `IMP036K_EXPERIENCE_DEFINITION: NOT_CREATED`. `IMP036K_EXPERIENCE_GATE: NOT_PERFORMED`. `IMP036K_ARCHITECTURE_FIT: NOT_PERFORMED`. `IMP036K_ARCHITECTURE_LOCKED: NO`. `IMP036K_DESIGN_READINESS: NOT_PERFORMED`. `IMP036K_IMPLEMENTATION_PLAN: NOT_PERFORMED`. `IMP036K_IMPLEMENTATION_AUTHORIZED: NO`. `IMP036K_IMPLEMENTATION_STARTED: NO`. `IMP036K_IMPLEMENTATION_COMPLETE: NO`. `IMP036K_ACCEPTED: NO`. `acceptedThrough` stays IMP-036I. `currentProductSlice` stays IMP-036J. `nextProductSlice` becomes IMP-036K, which precedes held IMP-037. IMP-036J remains the current product slice with `IMP036J_IMPLEMENTATION_AUTHORIZATION: APPROVED`, `IMP036J_IMPLEMENTATION_AUTHORIZED: YES`, implementation not started, and next gate `IMPLEMENTATION_TRANCHE_1`. RRD-01 through RRD-08 remain Founder-approved discovery source material only and are not Product Definition Gate PASS. Open Architecture Fit questions remain open. Deals remain PARKED_DISCOVERY with ROADMAP_IDENTITY NONE. Campaigns remain PARKED_DISCOVERY with ROADMAP_IDENTITY NONE. D-383 amends D-382 only for Revenue Recommendations identity, activation, and sequencing. It does not supersede D-377 and does not rewrite D-382's Promotions-first IMP-036J decisions. It does not itself start IMP-036J implementation and does not authorize IMP-036K implementation, start runtime work, perform Architecture Fit, create an ADR, change ARCH-R23, activate Deals or Campaigns, unhold IMP-037 or IMP-038, close GAP-EXT-ASSESS-001, activate IMP-039 or IMP-040, change the GTM boundary, invent a Limited Drop commerce authority, or invent a recommendation-specific role or permission. | Roadmap / Program / IMP-036K | CURRENT | This register + [`ROADMAP.md`](./ROADMAP.md) + [`STATE.md`](./STATE.md) + [`discovery/revenue-recommendations.md`](./discovery/revenue-recommendations.md) | — | — | GTM-R177 / STATE-R175 parallel definition preparation; IMP-037/038 HOLD unchanged; amends D-382 only for Revenue Recommendations identity, activation, and sequencing |
 | D-382 | Pre-GTM Commercial Growth Insertion: Promotions, Coupons & Offers. Founder authority 2026-09-27 selects Promotions first and inserts **IMP-036J — Promotions, Coupons & Offers** before held IMP-037. Formal identity is IMP-036J only; the earlier working label was not governance identity. IMP-036J activates for Product Definition work only and may consume approved discovery ODC-01..ODC-14 where that direction applies to Promotions, Coupons, and Offers. Deals remain PARKED_DISCOVERY with ROADMAP_IDENTITY NONE. Campaigns remain PARKED_DISCOVERY with ROADMAP_IDENTITY NONE. At registration, Revenue Recommendations remained PARKED_DISCOVERY with ROADMAP_IDENTITY NONE, and no future IMP numbers were assigned to Deals, Campaigns, or Revenue Recommendations. **D-383** amends only those Revenue Recommendations identity, activation, and sequencing clauses and allocates **IMP-036K — Revenue Recommendations** for parallel Product Definition and Experience Definition preparation only. Deals and Campaigns remain PARKED_DISCOVERY with ROADMAP_IDENTITY NONE. Existing Promotion remains monetary/commercial authority. Existing Coupon remains Promotion activation/redemption authority. Offer is product/customer/operator projection and semantics over accepted commercial authority and does not independently set money. No second Pricing engine and no second Promotion evaluator. This decision does not authorize implementation, does not perform the Product Definition Gate, does not perform Architecture Fit, does not change ARCH-R23, does not unhold IMP-037 or IMP-038, does not close GAP-EXT-ASSESS-001, and does not authorize IMP-036J implementation, does not activate IMP-039, IMP-040, Deals, or Campaigns, and does not itself activate Revenue Recommendations. D-377 remains CURRENT and is not reinterpreted as unlimited authority for later pre-GTM insertions. | Roadmap / Program / IMP-036J | AMENDED | This register + [`ROADMAP.md`](./ROADMAP.md) + [`STATE.md`](./STATE.md) | — | — (amended by **D-383** only for Revenue Recommendations identity, activation, and sequencing) | GTM-R163 / STATE-R161 Product Definition activation; PROGRAM_PAUSE remains D-377; IMP-037/038 HOLD; Promotions-first remainder binding |
 | D-381 | ACTIVE OUTLET PRICE BOOK RETIREMENT CONTROL: An ACTIVE PriceBook with scopeType = outlet may be retired through the normal Commercial → Pricing workforce product surface by an actor already authorized with existing pricing.manage authority for the applicable commercial scope. Retirement is the lifecycle transition ACTIVE → RETIRED. Retirement does not delete the PriceBook or its price rows, preserves audit/history, records the retiring workforce principal, and removes the retired Outlet PriceBook from future effective price resolution according to existing resolver semantics. Effective price resolution after retirement continues through the existing hierarchy and does not guarantee a valid fallback price; if remaining commercial authority is missing or invalid, existing fail-closed semantics remain authoritative. No automatic retirement. Retirement requires explicit workforce confirmation. Current scope does not authorize UI retirement for Brand PriceBooks, Territory PriceBooks, Organization PriceBooks, Draft PriceBooks, or already-retired PriceBooks. No reactivation or unretire control is authorized. No delete control is authorized. Existing Pricing resolver semantics remain unchanged. The PR #288 activation guard remains authoritative: new invalid hierarchical PriceBooks must not become ACTIVE. This decision exists partly to recover historical/pre-guard active Outlet books through a legitimate product lifecycle rather than direct database mutation. This decision does not itself retire any PriceBook. It does not authorize staging or production mutation. No new role or permission. No architecture change. No schema or migration change. IMP-036I remains not accepted and Founder UAT remains incomplete. Founder-approved Option A, 2026-09-27. | Pricing / Commercial Administration / Operability / UAT remediation | CURRENT | This register | — | — | current commercial Pricing UI; existing PriceBook retirement domain command; Founder UAT remediation path for IMP-036I Finding 001 |
+
+### D-384 — Tactical Closure and Pre-GTM Strategic Programme Baseline
+
+Founder-approved **planning** baseline (Issue #380). Records Tactical closure of IMP-036J plus
+Strategic S1 / S2 / S3 as planning labels only — not IMP identifiers and not a competing authority
+over ROADMAP, STATE, PD-2, EXP-1, LANG-1, TEST-1, VISION, ARCHITECTURE, or the Experience Debt
+Register. Supplements planning; does not supersede D-377, D-382, or D-383; does not amend PD-2;
+does not change ROADMAP/STATE lifecycle; does not authorize IMP-036K implementation; does not
+unhold IMP-037/038; does not activate IMP-039/040; does not grant public GTM; does not create
+product entitlements, roles, permissions, services, schema, or ADRs; does not perform S1/S2/S3
+audits or start their remediation. No programme label supplies automatic product acceptance.
+Framework frozen; detailed release/remediation scope requires a separately agreed versioned
+baseline. References existing policies in place rather than duplicating them.
+
+#### Authority and position
+
+D-384 records the agreed programme planning baseline. It does not replace the source-of-truth
+hierarchy. S1/S2/S3 remain planning labels only.
+
+#### Tactical
+
+Stabilize current functionality and close IMP-036J: current mandatory findings, required candidate
+proof, authorized verified staging, Founder functional and experience UAT, and formal acceptance
+reconciliation. Release/security obligations keep their own authority. Post-UAT cleanup occurs at
+the proper time under separate approval. IMP-036J closure does not authorize public GTM.
+
+#### S1 — Engineering and governance scalability
+
+Assess governance discoverability, current/history separation, duplication and proportionate
+effort; engineering modularity, dependency direction, reuse and testability; and runtime
+launch-load/reliability expectations as distinct concerns. Use evidence from representative work
+before prescribing changes. Document count alone is not proof of poor governance. No blanket
+rewrite, speculative architecture, or replacement framework. Preserve existing canonical ownership,
+risk-proportionate autonomy and controls. Establish baselines before numerical targets. Agree a
+finite pre-GTM remediation increment with explicit residual debt.
+
+#### S2 — Cross-platform experience recovery
+
+Review complete current journeys across accepted capabilities: customer mobile-first; workforce
+operational tasks; administration desktop-first. Do not assume every old IMP is defective or needs
+rebuilding. Preserve historical acceptance and do not fabricate historical PD-2 gates.
+
+Evidence and coverage method (when the audit is separately performed — this decision does **not**
+claim the audit or research has been performed):
+
+- Trace intended task → approved behaviour → actual UI/task evidence → problem → affected IMPs →
+  disposition → improvement proof.
+- Include terminology, navigation, first-use, role/context, errors/recovery, accessibility,
+  responsive behaviour, and operational promises.
+- Reuse shared patterns rather than redesigning each IMP independently; human-facing wording must
+  not change domain authority.
+- Use the existing Experience Debt Register when that audit is separately performed.
+- Keep Founder / internal / customer-research and production evidence distinct.
+- Representative customer/staff usability sessions are a validation approach, not work already
+  performed or arranged by this decision.
+
+#### S3 — GTM product completeness and operational readiness
+
+Complete means complete for the bounded launch promise using settled decisions first (users,
+coverage, ordering modes/devices, load expectations, operating responsibility, exclusions) — not
+every future ambition.
+
+Assessment dimensions (not declarations that all are missing): required outcomes; justified missing
+capabilities; launch menu/pricing/content/data correctness; staff operations; customer
+support/recovery; release/configuration/data transition and cleanup; security/backups/monitoring/
+provider readiness; and commercial viability using real business inputs.
+
+Manual processes are acceptable only when authorized, supported, staffed, traceable, and
+contract-compatible — not to hide broken mandatory functionality. New features require an evidenced
+missing outcome, minimum scope, dependencies, impact, and approval. Existing roadmap commitments
+and non-goals remain binding. IMP-036K remains Revenue Recommendations in its existing position and
+remains unauthorized for implementation.
+
+#### Routing
+
+- Mandatory IMP-036J failure → Tactical.
+- Immediate security/data/release hazard → applicable risk handling.
+- Existing-capability experience gap → S2, with separate GTM-impact assessment.
+- Code/governance/delivery problem → S1.
+- Genuinely missing outcome requiring capability → S3 discovery.
+- Nonessential ideas → follow-up/deferred, respecting existing commitments.
+
+A mandatory failure cannot be deferred merely by calling it strategic.
+
+#### Finite completion criteria
+
+- **Tactical:** mandatory findings resolved; required candidate evidence; verified authorized
+  staging; Founder functional and experience UAT; formal reconciliation; and separately authorized
+  cleanup at the appropriate time.
+- **S1:** bounded assessment/remediation agreed; priority changes proven on representative work;
+  required controls enforced; residual debt recorded.
+- **S2:** in-scope journeys audited; launch-blocking experience gaps corrected/retested; shared
+  patterns applied; remaining findings explicitly dispositioned.
+- **S3:** launch scope/exclusions agreed; required outcomes demonstrated; essential additions
+  accepted; operational/data/security/release readiness evidenced; appropriate Founder launch
+  decision.
+
+#### Ownership and change control
+
+One primary accountable owner and execution record per finding, with cross-links. Do not duplicate
+statuses or invent automatic acceptance blockers. Retain existing Founder / ChatGPT / Cursor
+responsibilities; do not invent assignees. Admitted work packages need accountable people when work
+is authorized.
+
+A new finding updates the backlog, not automatically the strategy. A new idea does not
+automatically enter the release. Material changes record evidence, why follow-up is insufficient,
+delivery/risk effects, displacement or additional funding, and approving authority. Safety
+obligations may interrupt through existing controls without unrelated scope expansion. Do not
+ignore contradictory evidence to preserve a plan. Review at meaningful assessment / scope /
+acceptance / launch boundaries, not every PR.
+
+#### Execution and sustainability
+
+Tactical implementation receives primary attention until IMP-036J closes. Strategic read-only
+assessment may be organized alongside it under applicable authority; this decision does not start
+those audits and does not mandate parallel implementation or roadmap resequencing. The normal
+one-active-product-slice rule and existing sequence remain. Existing authorities keep their owned
+questions. Use the existing Experience Debt Register and linked GitHub execution records; do not
+create a new master strategy document or duplicate ledger. Corrected patterns/boundaries should
+receive appropriate regression evidence. Temporary constructs retain removal conditions under
+existing policy.
 
 ## 3. Current Capability / Cross-Capability Decisions
 
@@ -190,6 +311,7 @@ ADR bodies.
 
 - Registered **D-384** as **CURRENT** (Founder authority via Issue #380 expanded approval): Tactical Closure and Pre-GTM Strategic Programme Baseline.
 - Records the agreed Tactical / Strategic (S1/S2/S3) programme planning baseline without creating product entitlements, implementation mandates, lifecycle states, or a competing master strategy document.
+- Compact table entry links to structured **§ D-384** operating model (finite completion criteria; S2 evidence/coverage method; S3 readiness dimensions; ownership/change control; execution/sustainability). Completeness restoration only — no new product or governance decisions.
 - S1/S2/S3 are planning labels, not IMP identifiers. Does not supersede D-377, D-382, or D-383. Does not amend PD-2. Does not change ROADMAP or STATE.
 - Does not authorize IMP-036K implementation, unhold IMP-037/038, activate IMP-039/040, grant public GTM, perform Founder UAT, grant formal acceptance, or start S1/S2/S3 audits/remediation.
 - Preserves historical IMP-036K source-era provenance: earlier Fit/Design evaluated under DR-24 and did not create D-384.
