@@ -52,6 +52,11 @@ export const APPROVED_BOBA_BEAR_KEYS: ReadonlySet<string> = new Set([
   "BOBA_BEAR_WHATSAPP_SEND_NEW_MESSAGES",
   "BOBA_BEAR_LOCATION_PROVIDER",
   "BOBA_BEAR_GOOGLE_MAPS_API_KEY",
+  // IMP-036J #391B — temporary CHECKOUT_REPRICED prepare diagnostics.
+  // Presence is approved for startup; enablement remains fail-closed in
+  // customer-commerce (staging + explicit flag + Compose project identity).
+  "BOBA_BEAR_CHECKOUT_PREPARE_DIAGNOSTIC_ENABLED",
+  "BOBA_BEAR_CHECKOUT_PREPARE_DIAGNOSTIC_RUNTIME_PROJECT",
 ]);
 
 export const PAYMENT_PROVIDER_SELECTORS = ["disabled", "razorpay"] as const;

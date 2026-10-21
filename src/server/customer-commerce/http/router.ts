@@ -130,6 +130,14 @@ export type CustomerCommerceRouteDependencies = Readonly<{
   workers?: readonly WorkerHealthReporter[];
   locationProvider?: LocationSearchProvider | null;
   locationRateLimiter?: LocationRateLimiter;
+  /**
+   * Default-disabled CHECKOUT_REPRICED prepare diagnostic (IMP-036J #391B).
+   * When enabled, binds server-generated requestId only on payment-start.
+   */
+  checkoutPrepareDiagnostic?: Readonly<{
+    enabled: boolean;
+    emitter: import("../checkout-prepare-diagnostic-log").CheckoutPrepareDiagnosticEmitter;
+  }>;
 }>;
 
 export type CustomerCommerceRouteOutcome = Readonly<{
@@ -1026,10 +1034,22 @@ export async function routeCustomerCommerceRequest(
       if (!body) return outcome("start_payment", 400, "INVALID_REQUEST");
       const identity = await requireTrustedIdentity(deps.runtime, req.headers);
       const actor = toCartCustomerActor(identity);
+      const prepareDiagnosticObserver =
+        deps.checkoutPrepareDiagnostic?.enabled === true
+          ? (observation: import("../../checkout/prepare-diagnostic").CheckoutPrepareDiagnosticObservation) => {
+              deps.checkoutPrepareDiagnostic!.emitter.emit({
+                requestId,
+                observation,
+              });
+            }
+          : undefined;
       const result = await startPayment(deps.persistence, actor, body, {
         policy: {},
         checkoutPolicy: CUSTOMER_COMMERCE_CHECKOUT_POLICY,
         provider: deps.paymentProvider,
+        ...(prepareDiagnosticObserver
+          ? { prepareDiagnosticObserver }
+          : {}),
       });
       sendJson(res, { ok: true, ...result }, { status: 200, requestId });
       return outcome("start_payment", 200, "OK");

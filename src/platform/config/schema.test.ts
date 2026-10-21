@@ -525,6 +525,19 @@ describe("loadConfig — unknown/unapproved variables", () => {
     });
     expect(config.environment).toBe("local");
   });
+
+  it("accepts the approved IMP-036J #391B checkout prepare diagnostic keys", () => {
+    const config = loadConfig({
+      processKind: "worker",
+      source: source({
+        ...LOCAL_WEB_BASE,
+        BOBA_BEAR_CHECKOUT_PREPARE_DIAGNOSTIC_ENABLED: "true",
+        BOBA_BEAR_CHECKOUT_PREPARE_DIAGNOSTIC_RUNTIME_PROJECT: "boba-staging",
+      }),
+    });
+    expect(config.processKind).toBe("worker");
+    expect(config.environment).toBe("local");
+  });
 });
 
 describe("loadConfig — NODE_ENV consistency", () => {
