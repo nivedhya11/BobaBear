@@ -15,6 +15,7 @@ import {
   type CustomerPiiHashSecret,
 } from "../../../src/server/customer-auth/pii";
 import { createLocalCustomerOtpProviderForTests } from "../../../src/server/customer-auth/provider/local";
+import type { CheckoutPrepareDiagnosticConfig } from "../../../src/server/customer-commerce/checkout-prepare-diagnostic-config";
 import { CustomerCommerceService } from "../../../src/server/customer-commerce/service";
 import type { PaymentProvider } from "../../../src/server/payment/provider";
 import { getApplicationPersistence } from "../../../src/server/persistence";
@@ -31,12 +32,15 @@ export interface CustomerCommerceHttpTestHarness {
   readonly databaseConnectionString: string;
 }
 
-function applicationConfig(databaseUrl: string): WebConfig {
+function applicationConfig(
+  databaseUrl: string,
+  logLevel: WebConfig["logLevel"] = "warn",
+): WebConfig {
   return {
     environment: "test",
     processKind: "web",
     publicOrigin: CUSTOMER_COMMERCE_HTTP_TEST_ORIGIN,
-    logLevel: "warn",
+    logLevel,
     release: null,
     allowUnsafeAdapters: true,
     databaseSslMode: "disable",
@@ -102,6 +106,14 @@ export async function mintCustomerSessionCookieHeader(
 export type WithCustomerCommerceHttpServiceOptions = Readonly<{
   paymentProvider?: PaymentProvider;
   enablePaymentInboxProcessor?: boolean;
+  /**
+   * TEST-ONLY: inject prepare-diagnostic enablement into the disposable
+   * CustomerCommerceService constructor. Defaults remain disabled; does not
+   * bypass the production staging env gate outside this harness.
+   */
+  checkoutPrepareDiagnostic?: CheckoutPrepareDiagnosticConfig;
+  /** TEST-ONLY log level for structured capture. Default remains "warn". */
+  logLevel?: WebConfig["logLevel"];
 }>;
 
 export async function withCustomerCommerceHttpService<T>(
@@ -116,13 +128,17 @@ export async function withCustomerCommerceHttpService<T>(
 
   const service = new CustomerCommerceService({
     auth,
-    persistenceConfig: applicationConfig(databaseConnectionString),
+    persistenceConfig: applicationConfig(
+      databaseConnectionString,
+      options.logLevel ?? "warn",
+    ),
     identityDeriver,
     host: "127.0.0.1",
     port: 0,
     shutdownTimeoutMs: 2_000,
     paymentProvider: options.paymentProvider,
     enablePaymentInboxProcessor: options.enablePaymentInboxProcessor,
+    checkoutPrepareDiagnostic: options.checkoutPrepareDiagnostic,
   });
 
   await service.start();

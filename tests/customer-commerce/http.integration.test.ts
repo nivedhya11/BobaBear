@@ -9,30 +9,37 @@ import { randomUUID } from "node:crypto";
 import { describe, expect, inject, it } from "vitest";
 
 import {
+  addCartLine,
+  setCartLineQuantity,
+  type CustomerActor,
+} from "../../src/server/cart";
+import { DIRECT_ORDERING_BRAND_ID } from "../../src/shared/customer-menu/constants";
+import {
   includeVariantAtBrand,
 } from "../assortment-availability/support";
-import { applyMigrations, withIsolatedTestDatabase } from "../database/support/test-database";
 import {
   seedRecognizedCoupon,
   withCartHarness,
 } from "../database/support/cart-fixtures";
+import { createSavedAddressForCustomer } from "../database/support/checkout-fixtures";
+import { minimalAddressCreateInput } from "../database/support/customer-addresses-fixtures";
+import {
+  withCompletedPositiveOrderHarness,
+} from "../database/support/order-fixtures";
 import {
   createFakePaymentProvider,
   newIdempotencyKey,
   seedFullDiscountCoupon,
   withCheckoutReadyHarness,
 } from "../database/support/payment-fixtures";
+import { applyMigrations, withIsolatedTestDatabase } from "../database/support/test-database";
+import { seedDirectMenuCatalog } from "./support/menu-fixtures";
 import {
-  withCompletedPositiveOrderHarness,
-} from "../database/support/order-fixtures";
-import { minimalAddressCreateInput } from "../database/support/customer-addresses-fixtures";
-import {
+  commerceTestPersistence,
   mintCustomerSessionCookieHeader,
   withCustomerCommerceHttpService,
   type CustomerCommerceHttpTestHarness,
 } from "./support/service-harness";
-import { seedDirectMenuCatalog } from "./support/menu-fixtures";
-import { DIRECT_ORDERING_BRAND_ID } from "../../src/shared/customer-menu/constants";
 
 function adminConnectionInfo() {
   return {
@@ -1073,6 +1080,529 @@ describe("IMP-024 HTTP: error and serialization representatives", () => {
         });
         expect([200, 422]).toContain(evaluate.status);
       });
+    });
+  });
+});
+
+/**
+ * IMP-036J #391B — HTTP → observer requestId correlation (test proof only).
+ * Disposable Testcontainers + test-injected diagnostic enablement.
+ * Does not enable staging/runtime diagnostics or change payment behavior.
+ */
+const DIAGNOSTIC_OPERATION = "checkout_prepare_diagnostic";
+const DIAGNOSTIC_PAYLOAD_KEYS = new Set([
+  "requestId",
+  "operation",
+  "safeOutcomeCode",
+  "rejectionStage",
+  "firstDifferenceCategory",
+  "payableChanged",
+  "level",
+  "service",
+  "timestamp",
+]);
+const DIAGNOSTIC_LEAK_PATTERN =
+  /coupon|grandTotal|amountPaise|session_token|razorpay|secret|addressLine|customerId|cartId|checkoutId|postalCode|recipientPhone/i;
+
+type ReadyCheckoutHttp = Readonly<{
+  checkoutId: string;
+  revision: string | number;
+  sourceCartLineId: string;
+}>;
+
+async function establishReadyCheckoutHttp(input: {
+  baseUrl: string;
+  cookie: string;
+  cartId: string;
+  addressId: string;
+}): Promise<ReadyCheckoutHttp> {
+  const startedCheckout = await fetch(`${input.baseUrl}/api/v1/checkouts`, {
+    method: "POST",
+    headers: jsonHeaders(input.cookie),
+    body: JSON.stringify({ cartId: input.cartId }),
+  });
+  expect(startedCheckout.status).toBe(200);
+  let checkout = (await startedCheckout.json()).checkout;
+
+  const dest = await fetch(
+    `${input.baseUrl}/api/v1/checkouts/${checkout.id}/destination`,
+    {
+      method: "PUT",
+      headers: jsonHeaders(input.cookie),
+      body: JSON.stringify({
+        expectedCheckoutRevision: checkout.revision,
+        destination: {
+          kind: "SAVED_ADDRESS",
+          savedAddressId: input.addressId,
+        },
+      }),
+    },
+  );
+  expect(dest.status).toBe(200);
+  checkout = (await dest.json()).checkout;
+
+  const evaluated = await fetch(
+    `${input.baseUrl}/api/v1/checkouts/${checkout.id}/evaluate`,
+    {
+      method: "POST",
+      headers: jsonHeaders(input.cookie),
+      body: JSON.stringify({ expectedCheckoutRevision: checkout.revision }),
+    },
+  );
+  expect(evaluated.status).toBe(200);
+  const evalBody = await evaluated.json();
+  expect(evalBody.checkout.status).toBe("READY_FOR_PAYMENT");
+  checkout = evalBody.checkout;
+  const sourceCartLineId = (
+    evalBody.snapshot?.lines as Array<{ sourceCartLineId?: string | null }> | undefined
+  )?.find((line) => line.sourceCartLineId != null)?.sourceCartLineId;
+  if (!sourceCartLineId) {
+    throw new Error("READY checkout snapshot missing sourceCartLineId for CART_REVISION fixture.");
+  }
+  return {
+    checkoutId: checkout.id as string,
+    revision: checkout.revision as string | number,
+    sourceCartLineId,
+  };
+}
+
+async function staleCartRevisionForPrepareRejection(input: {
+  connectionString: string;
+  brandId: string;
+  customerActor: CustomerActor;
+  cartLineId: string;
+  expectedRevision: bigint;
+}): Promise<void> {
+  const persistence = commerceTestPersistence(input.connectionString);
+  try {
+    await setCartLineQuantity(
+      persistence,
+      {
+        kind: "customer",
+        actor: input.customerActor,
+        brandId: input.brandId,
+      },
+      {
+        cartLineId: input.cartLineId,
+        quantity: 3,
+        expectedRevision: input.expectedRevision,
+      },
+    );
+  } finally {
+    await persistence.close();
+  }
+}
+
+function captureConsoleLogLines(): {
+  lines: string[];
+  restore: () => void;
+} {
+  const lines: string[] = [];
+  const original = console.log;
+  console.log = (line?: unknown) => {
+    if (typeof line === "string") lines.push(line);
+  };
+  return {
+    lines,
+    restore: () => {
+      console.log = original;
+    },
+  };
+}
+
+function parseCheckoutPrepareDiagnosticEvents(
+  lines: readonly string[],
+): Array<Record<string, unknown>> {
+  const events: Array<Record<string, unknown>> = [];
+  for (const line of lines) {
+    let payload: unknown;
+    try {
+      payload = JSON.parse(line);
+    } catch {
+      continue;
+    }
+    if (
+      payload &&
+      typeof payload === "object" &&
+      (payload as { operation?: unknown }).operation === DIAGNOSTIC_OPERATION
+    ) {
+      events.push(payload as Record<string, unknown>);
+    }
+  }
+  return events;
+}
+
+function assertDiagnosticPrivacy(event: Record<string, unknown>): void {
+  for (const key of Object.keys(event)) {
+    expect(DIAGNOSTIC_PAYLOAD_KEYS.has(key)).toBe(true);
+  }
+  expect(event.operation).toBe(DIAGNOSTIC_OPERATION);
+  expect(JSON.stringify(event)).not.toMatch(DIAGNOSTIC_LEAK_PATTERN);
+}
+
+async function assertCheckoutInvalidatedToDraft(input: {
+  baseUrl: string;
+  cookie: string;
+  checkoutId: string;
+}): Promise<void> {
+  const checkoutAfter = await fetch(
+    `${input.baseUrl}/api/v1/checkouts/active?checkoutId=${encodeURIComponent(input.checkoutId)}`,
+    { headers: { cookie: input.cookie } },
+  );
+  expect(checkoutAfter.status).toBe(200);
+  const body = await checkoutAfter.json();
+  expect(body.checkout).toBeTruthy();
+  expect(body.checkout.id).toBe(input.checkoutId);
+  expect(body.checkout.status).toBe("DRAFT");
+}
+
+describe("IMP-036J #391B HTTP: prepare diagnostic requestId correlation", () => {
+  it("A: enabled observer correlates CHECKOUT_REPRICED HTTP requestId", async () => {
+    await withCheckoutReadyHarness(async (harness) => {
+      const provider = createFakePaymentProvider({ defaultOutcome: "pending" });
+      const cookie = await authCookie(
+        harness.database.connectionString,
+        harness.actors.customerAId,
+      );
+      const brandId = harness.actors.tree.brand.id;
+      const callerSpoofedRequestId = "caller-spoofed-request-id-must-not-win";
+
+      await withCustomerCommerceHttpService(
+        harness.database.connectionString,
+        async ({ baseUrl }) => {
+          const ready = await establishReadyCheckoutHttp({
+            baseUrl,
+            cookie,
+            cartId: harness.cartId,
+            addressId: harness.addressId,
+          });
+
+          await staleCartRevisionForPrepareRejection({
+            connectionString: harness.database.connectionString,
+            brandId,
+            customerActor: harness.actors.customerA,
+            cartLineId: ready.sourceCartLineId,
+            expectedRevision: harness.cartRevision,
+          });
+
+          const capture = captureConsoleLogLines();
+          let response: Response;
+          let body: {
+            ok?: boolean;
+            code?: string;
+            requestId?: string;
+            message?: string;
+          };
+          try {
+            response = await fetch(`${baseUrl}/api/v1/payments`, {
+              method: "POST",
+              headers: {
+                ...jsonHeaders(cookie),
+                "x-request-id": callerSpoofedRequestId,
+              },
+              body: JSON.stringify({
+                checkoutId: ready.checkoutId,
+                expectedCheckoutRevision: ready.revision,
+                paymentMethodIntent: "upi",
+                idempotencyKey: newIdempotencyKey("http-diag-a"),
+              }),
+            });
+            body = await response.json();
+          } finally {
+            capture.restore();
+          }
+
+          expect(response!.status).toBe(409);
+          expect(body.code).toBe("CHECKOUT_REPRICED");
+          expect(body).not.toHaveProperty("message");
+          const headerRequestId = response!.headers.get("x-request-id");
+          expect(headerRequestId).toBeTruthy();
+          expect(headerRequestId).not.toBe(callerSpoofedRequestId);
+          expect(body.requestId).toBe(headerRequestId);
+
+          const diagnosticEvents = parseCheckoutPrepareDiagnosticEvents(capture.lines);
+          expect(diagnosticEvents).toHaveLength(1);
+          const event = diagnosticEvents[0]!;
+          assertDiagnosticPrivacy(event);
+          expect(event.requestId).toBe(headerRequestId);
+          expect(event.safeOutcomeCode).toBe("CHECKOUT_REPRICED");
+          expect(event.rejectionStage).toBe("CART_REVISION");
+          expect(event.firstDifferenceCategory).toBeNull();
+          expect(event.payableChanged).toBeNull();
+
+          await assertCheckoutInvalidatedToDraft({
+            baseUrl,
+            cookie,
+            checkoutId: ready.checkoutId,
+          });
+          expect(provider.createExecutionCallCount).toBe(0);
+        },
+        {
+          paymentProvider: provider,
+          checkoutPrepareDiagnostic: { enabled: true },
+          logLevel: "info",
+        },
+      );
+    });
+  });
+
+  it("B: concurrent independent checkouts keep requestId attribution isolated", async () => {
+    await withCheckoutReadyHarness(async (harness) => {
+      const provider = createFakePaymentProvider({ defaultOutcome: "pending" });
+      const brandId = harness.actors.tree.brand.id;
+      const cookieA = await authCookie(
+        harness.database.connectionString,
+        harness.actors.customerAId,
+      );
+      const cookieB = await authCookie(
+        harness.database.connectionString,
+        harness.actors.customerBId,
+      );
+
+      const persistence = commerceTestPersistence(harness.database.connectionString);
+      let cartBId: string;
+      let cartBRevision: bigint;
+      let addressBId: string;
+      try {
+        const addedB = await addCartLine(
+          persistence,
+          {
+            kind: "customer",
+            actor: harness.actors.customerB,
+            brandId,
+          },
+          {
+            variantId: harness.catalog.variantId,
+            quantity: 1,
+          },
+        );
+        cartBId = addedB.cart.id;
+        cartBRevision = addedB.cart.revision;
+        const addressB = await createSavedAddressForCustomer(
+          persistence,
+          harness.actors.customerBId,
+        );
+        addressBId = addressB.id;
+      } finally {
+        await persistence.close();
+      }
+
+      await withCustomerCommerceHttpService(
+        harness.database.connectionString,
+        async ({ baseUrl }) => {
+          const readyA = await establishReadyCheckoutHttp({
+            baseUrl,
+            cookie: cookieA,
+            cartId: harness.cartId,
+            addressId: harness.addressId,
+          });
+          const readyB = await establishReadyCheckoutHttp({
+            baseUrl,
+            cookie: cookieB,
+            cartId: cartBId,
+            addressId: addressBId,
+          });
+          expect(readyA.checkoutId).not.toBe(readyB.checkoutId);
+
+          await staleCartRevisionForPrepareRejection({
+            connectionString: harness.database.connectionString,
+            brandId,
+            customerActor: harness.actors.customerA,
+            cartLineId: readyA.sourceCartLineId,
+            expectedRevision: harness.cartRevision,
+          });
+          await staleCartRevisionForPrepareRejection({
+            connectionString: harness.database.connectionString,
+            brandId,
+            customerActor: harness.actors.customerB,
+            cartLineId: readyB.sourceCartLineId,
+            expectedRevision: cartBRevision,
+          });
+
+          const capture = captureConsoleLogLines();
+          let settled: Array<{
+            status: number;
+            body: { code?: string; requestId?: string };
+            headerRequestId: string | null;
+          }>;
+          try {
+            const responses = await Promise.all([
+              fetch(`${baseUrl}/api/v1/payments`, {
+                method: "POST",
+                headers: jsonHeaders(cookieA),
+                body: JSON.stringify({
+                  checkoutId: readyA.checkoutId,
+                  expectedCheckoutRevision: readyA.revision,
+                  paymentMethodIntent: "upi",
+                  idempotencyKey: newIdempotencyKey("http-diag-b-a"),
+                }),
+              }),
+              fetch(`${baseUrl}/api/v1/payments`, {
+                method: "POST",
+                headers: jsonHeaders(cookieB),
+                body: JSON.stringify({
+                  checkoutId: readyB.checkoutId,
+                  expectedCheckoutRevision: readyB.revision,
+                  paymentMethodIntent: "upi",
+                  idempotencyKey: newIdempotencyKey("http-diag-b-b"),
+                }),
+              }),
+            ]);
+            settled = await Promise.all(
+              responses.map(async (response) => ({
+                status: response.status,
+                body: (await response.json()) as {
+                  code?: string;
+                  requestId?: string;
+                },
+                headerRequestId: response.headers.get("x-request-id"),
+              })),
+            );
+          } finally {
+            capture.restore();
+          }
+
+          expect(settled).toHaveLength(2);
+          for (const item of settled) {
+            expect(item.status).toBe(409);
+            expect(item.body.code).toBe("CHECKOUT_REPRICED");
+            expect(item.headerRequestId).toBeTruthy();
+            expect(item.body.requestId).toBe(item.headerRequestId);
+          }
+          const requestIds = settled.map((item) => item.headerRequestId!);
+          expect(new Set(requestIds).size).toBe(2);
+
+          const diagnosticEvents = parseCheckoutPrepareDiagnosticEvents(capture.lines);
+          expect(diagnosticEvents).toHaveLength(2);
+          for (const event of diagnosticEvents) {
+            assertDiagnosticPrivacy(event);
+            expect(event.safeOutcomeCode).toBe("CHECKOUT_REPRICED");
+            expect(event.rejectionStage).toBe("CART_REVISION");
+            expect(event.firstDifferenceCategory).toBeNull();
+            expect(event.payableChanged).toBeNull();
+          }
+          const eventByRequestId = new Map(
+            diagnosticEvents.map((event) => [event.requestId as string, event]),
+          );
+          for (const requestId of requestIds) {
+            expect(eventByRequestId.has(requestId)).toBe(true);
+          }
+          expect(eventByRequestId.get(requestIds[0]!)!.requestId).not.toBe(
+            requestIds[1],
+          );
+          expect(eventByRequestId.get(requestIds[1]!)!.requestId).not.toBe(
+            requestIds[0],
+          );
+
+          await assertCheckoutInvalidatedToDraft({
+            baseUrl,
+            cookie: cookieA,
+            checkoutId: readyA.checkoutId,
+          });
+          await assertCheckoutInvalidatedToDraft({
+            baseUrl,
+            cookie: cookieB,
+            checkoutId: readyB.checkoutId,
+          });
+          expect(provider.createExecutionCallCount).toBe(0);
+        },
+        {
+          paymentProvider: provider,
+          checkoutPrepareDiagnostic: { enabled: true },
+          logLevel: "info",
+        },
+      );
+    });
+  });
+
+  it("C: disabled observer keeps CHECKOUT_REPRICED without diagnostic events", async () => {
+    await withCheckoutReadyHarness(async (harness) => {
+      const provider = createFakePaymentProvider({ defaultOutcome: "pending" });
+      const cookie = await authCookie(
+        harness.database.connectionString,
+        harness.actors.customerAId,
+      );
+      const brandId = harness.actors.tree.brand.id;
+
+      await withCustomerCommerceHttpService(
+        harness.database.connectionString,
+        async ({ baseUrl }) => {
+          const ready = await establishReadyCheckoutHttp({
+            baseUrl,
+            cookie,
+            cartId: harness.cartId,
+            addressId: harness.addressId,
+          });
+
+          await staleCartRevisionForPrepareRejection({
+            connectionString: harness.database.connectionString,
+            brandId,
+            customerActor: harness.actors.customerA,
+            cartLineId: ready.sourceCartLineId,
+            expectedRevision: harness.cartRevision,
+          });
+
+          const capture = captureConsoleLogLines();
+          let response: Response;
+          let body: {
+            code?: string;
+            requestId?: string;
+            message?: string;
+            rejectionStage?: string;
+          };
+          try {
+            response = await fetch(`${baseUrl}/api/v1/payments`, {
+              method: "POST",
+              headers: jsonHeaders(cookie),
+              body: JSON.stringify({
+                checkoutId: ready.checkoutId,
+                expectedCheckoutRevision: ready.revision,
+                paymentMethodIntent: "upi",
+                idempotencyKey: newIdempotencyKey("http-diag-c"),
+              }),
+            });
+            body = await response.json();
+          } finally {
+            capture.restore();
+          }
+
+          expect(response!.status).toBe(409);
+          expect(body.code).toBe("CHECKOUT_REPRICED");
+          expect(body).not.toHaveProperty("message");
+          expect(body).not.toHaveProperty("rejectionStage");
+          expect(body).not.toHaveProperty("firstDifferenceCategory");
+          expect(body.requestId).toBe(response!.headers.get("x-request-id"));
+
+          const diagnosticEvents = parseCheckoutPrepareDiagnosticEvents(capture.lines);
+          expect(diagnosticEvents).toHaveLength(0);
+          // Ordinary request-completion logs (if any) must not be mistaken for diagnostics.
+          for (const line of capture.lines) {
+            let payload: unknown;
+            try {
+              payload = JSON.parse(line);
+            } catch {
+              continue;
+            }
+            if (payload && typeof payload === "object") {
+              expect((payload as { operation?: unknown }).operation).not.toBe(
+                DIAGNOSTIC_OPERATION,
+              );
+            }
+          }
+
+          await assertCheckoutInvalidatedToDraft({
+            baseUrl,
+            cookie,
+            checkoutId: ready.checkoutId,
+          });
+          expect(provider.createExecutionCallCount).toBe(0);
+        },
+        {
+          paymentProvider: provider,
+          checkoutPrepareDiagnostic: { enabled: false },
+          logLevel: "info",
+        },
+      );
     });
   });
 });
