@@ -63,6 +63,7 @@ LOCK_STATE = STATE-R179
 GLOBAL_REVISION_FOR_CAPABILITY_LOCK = NO
 NEW_ADR_REQUIRED = NO
 D-384_CREATED = NO
+D-384_CREATED_SCOPE = SOURCE_FIT_LOCK_OPERATION
 
 PRODUCT_DEFINITION = PD-IMP-036K-DRAFT-1
 PRODUCT_DEFINITION_STATUS = APPROVED
@@ -157,6 +158,10 @@ HISTORICAL_REVIEWS_DELETED = NO
 ```
 
 Shared lifecycle files on the source Architecture Fit candidate branch stayed at GTM-R179 / STATE-R177 / ARCH-R23 / DR-24.
+`D-384_CREATED = NO` and `D-384_CREATED_SCOPE = SOURCE_FIT_LOCK_OPERATION` record that this
+Fit/lock operation did not create D-384. That source-era provenance is not a permanent global
+prohibition on later CURRENT tip allocation of D-384 under a later decision-register revision
+for other Founder-approved decisions, and it does not authorize IMP-036K implementation.
 IMP-036J remains the current implementation slice. D-383 remains the sequencing authority and
 is not amended. RRD-01 through RRD-08 remain discovery provenance and are not architecture
 authority.

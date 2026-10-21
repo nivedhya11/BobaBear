@@ -165,6 +165,9 @@ through metadata, targeted searches, and relevant ranges, as described in PD-1.
 ADRs under [`decisions/`](./decisions/) preserve detailed rationale/history. Binding status and
 supersession are owned by [`decision-register.md`](./decision-register.md). Notably:
 
+- **D-384** (DR-25): Tactical Closure and Pre-GTM Strategic Programme Baseline — planning
+  programme only; does not change ROADMAP/STATE lifecycle or authorize IMP-036K implementation
+
 - ADR-014 Route-Handler-as-canonical HTTP host → **SUPERSEDED** by D-356
 - ADR-010 detailed kitchen workflow → **AMENDED** by D-357 (accepted Order lifecycle is IMP-023)
 - ADR-005 historical six-role prose → **AMENDED** by D-358 (inventory is STATE/code)

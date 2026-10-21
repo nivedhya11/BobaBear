@@ -62,12 +62,12 @@ function customerAccess(actor: CustomerActor, brandId: string) {
   return { kind: "customer" as const, actor, brandId };
 }
 
-type CartHarnessCtx = Parameters<Parameters<typeof withCartHarness>[0]>[0];
-type Persistence = CartHarnessCtx["persistence"];
+type Persistence =
+  Parameters<Parameters<typeof withCartHarness>[0]>[0]["persistence"];
 
 type DiagnosticHarness = Readonly<{
   persistence: Persistence;
-  actors: CartHarnessCtx["actors"];
+  actors: Parameters<Parameters<typeof withCartHarness>[0]>[0]["actors"];
   brandId: string;
   access: ReturnType<typeof customerAccess>;
   addressId: string;

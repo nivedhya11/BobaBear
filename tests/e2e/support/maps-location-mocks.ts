@@ -74,9 +74,24 @@ export async function installMockGoogleMaps(
   );
 }
 
+type LocationProviderMockOptions = Readonly<{
+  /**
+   * Opt-in only: delay `/location/status` fulfillment so checkout can type
+   * before provider readiness. Default 0 — do not globally delay the mock.
+   */
+  statusDelayMs?: number;
+}>;
+
 /** Route mocks for Places-backed location APIs used by map-first address flows. */
-export async function installLocationProviderMocks(page: Page): Promise<void> {
+export async function installLocationProviderMocks(
+  page: Page,
+  options: LocationProviderMockOptions = {},
+): Promise<void> {
+  const { statusDelayMs = 0 } = options;
   await page.route("**/api/v1/location/status", async (route) => {
+    if (statusDelayMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, statusDelayMs));
+    }
     await route.fulfill({
       status: 200,
       contentType: "application/json",
