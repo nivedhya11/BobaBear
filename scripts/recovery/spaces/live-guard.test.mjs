@@ -134,6 +134,7 @@ test("Layer 2 Spaces backup verifies versioning before the first PUT", async () 
       evidenceDir: path.join(root, "evidence"),
       recipients: ["age1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3waw4h"],
       sourceIdentity: "prod-db-1",
+      sourceClassification: "production",
       dumpFn: async () => Buffer.from("PGDUMP"),
       encryptFn: async (_opts, plaintext) => ({
         ok: true,

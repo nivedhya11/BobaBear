@@ -206,6 +206,45 @@ test("implemented backup without required config is blocked or failed, not unava
   assert.doesNotMatch(result.stdout, /\bSUCCEEDED\b/);
 });
 
+test("CS3: backup layer2 without --source-class is BLOCKED (no silent production default)", () => {
+  const result = run(
+    [
+      "backup",
+      "layer2",
+      "--json",
+      "--recipient",
+      "age1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3waw4h",
+      "--local-store",
+      "/tmp/boba-recovery-store-test",
+      "--source",
+      "prod-db",
+    ],
+    { env: { ...process.env, BOBA_RECOVERY_AGE_BIN: "age" } },
+  );
+  assert.equal(result.status, CLI_EXIT.BLOCKED);
+  const payload = JSON.parse(result.stdout);
+  assert.match(payload.reason ?? "", /source-class|classification/i);
+  assert.doesNotMatch(result.stdout, /\bSUCCEEDED\b/);
+});
+
+test("CS3: restore logical without --source-class is BLOCKED", () => {
+  const result = run([
+    "restore",
+    "logical",
+    "--json",
+    "--run-id",
+    "run-20260922T000000Z-aaaaaaaaaaaaaaaa",
+    "--source",
+    "prod-db",
+    "--identity-file",
+    "/tmp/missing",
+    "--local-store",
+    "/tmp/boba-recovery-store-test",
+  ]);
+  assert.equal(result.status, CLI_EXIT.BLOCKED);
+  assert.match(result.stdout, /source-class|classification/i);
+});
+
 test("implemented capacity command returns observation JSON", () => {
   const result = run(["capacity", "--json", "--layer1-base-bytes", "100"]);
   assert.equal(result.status, CLI_EXIT.OK);

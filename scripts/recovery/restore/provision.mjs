@@ -16,7 +16,11 @@ import {
   resolveContainerCli,
   stopEphemeralPostgres,
 } from "../docker-exec.mjs";
-import { canonicalizePath, evaluateTargetIdentitySafety } from "../identity.mjs";
+import {
+  canonicalizePath,
+  evaluateTargetIdentitySafety,
+  requireExplicitSourceClassification,
+} from "../identity.mjs";
 import { isValidRunId } from "../run-id.mjs";
 import { redactText } from "../redact.mjs";
 import { waitForPostgresReady } from "../tools/postgres-ready.mjs";
@@ -98,10 +102,15 @@ export function provisionPitrTarget(options) {
     };
   }
 
+  const sourceClass = requireExplicitSourceClassification(options.sourceClassification);
+  if (!sourceClass.ok) {
+    return { ok: false, reason: sourceClass.reason, code: sourceClass.code };
+  }
+
   const fresh = assertFreshTarget({
     sourceIdentity: options.sourceIdentity ?? "unspecified-source",
     targetIdentity,
-    sourceClassification: options.sourceClassification ?? ENVIRONMENT_CLASSIFICATION.PRODUCTION,
+    sourceClassification: sourceClass.classification,
     targetClassification: ENVIRONMENT_CLASSIFICATION.RECOVERY,
     targetPgdataPath: pgdataPath,
     forceProduction: false,
@@ -264,10 +273,15 @@ export function assertOwnedPitrTarget(options) {
     }
   }
 
+  const sourceClass = requireExplicitSourceClassification(options.sourceClassification);
+  if (!sourceClass.ok) {
+    return { ok: false, reason: sourceClass.reason, code: sourceClass.code };
+  }
+
   const fresh = assertFreshTarget({
     sourceIdentity: options.sourceIdentity ?? "unspecified-source",
     targetIdentity: markerIdentity,
-    sourceClassification: options.sourceClassification ?? ENVIRONMENT_CLASSIFICATION.PRODUCTION,
+    sourceClassification: sourceClass.classification,
     targetClassification: ENVIRONMENT_CLASSIFICATION.RECOVERY,
     targetPgdataPath: pgdataPath,
     forceProduction: false,
@@ -321,11 +335,14 @@ export async function provisionLogicalTarget(options) {
       const result = spawnSync(command, args, {
         encoding: "utf8",
         timeout: opts.timeout ?? 180_000,
+        env: opts.env ?? process.env,
+        input: opts.input,
       });
       return {
         status: typeof result.status === "number" ? result.status : 1,
         stdout: result.stdout ?? "",
         stderr: result.stderr ?? "",
+        args,
       };
     });
 
@@ -337,6 +354,11 @@ export async function provisionLogicalTarget(options) {
       execFn(cli, ["network", "rm", networkName], { timeout: 30_000 });
     }
   };
+
+  const sourceClass = requireExplicitSourceClassification(options.sourceClassification);
+  if (!sourceClass.ok) {
+    return { ok: false, reason: sourceClass.reason, code: sourceClass.code };
+  }
 
   // Confirm container name does not already exist.
   const inspect = execFn(cli, ["inspect", containerName], { timeout: 15_000 });
@@ -392,24 +414,35 @@ export async function provisionLogicalTarget(options) {
     };
   }
 
-  const run = execFn(cli, [
-    "run",
-    "-d",
-    "--name",
-    containerName,
-    "--network",
-    networkName,
-    "-e",
-    `POSTGRES_PASSWORD=${password}`,
-    "-e",
-    `POSTGRES_USER=${dbUser}`,
-    "-e",
-    `POSTGRES_DB=${dbName}`,
-    // Loopback-only host publish for repository migration authority / validation.
-    "-p",
-    "127.0.0.1::5432",
-    image,
-  ]);
+  // CS4: deliver credentials via child-only env + docker -e NAME (no =value in argv).
+  const containerEnv = {
+    ...process.env,
+    POSTGRES_PASSWORD: password,
+    POSTGRES_USER: dbUser,
+    POSTGRES_DB: dbName,
+  };
+  const run = execFn(
+    cli,
+    [
+      "run",
+      "-d",
+      "--name",
+      containerName,
+      "--network",
+      networkName,
+      "-e",
+      "POSTGRES_PASSWORD",
+      "-e",
+      "POSTGRES_USER",
+      "-e",
+      "POSTGRES_DB",
+      // Loopback-only host publish for repository migration authority / validation.
+      "-p",
+      "127.0.0.1::5432",
+      image,
+    ],
+    { env: containerEnv, timeout: 180_000 },
+  );
   if (run.status !== 0) {
     abortProvision();
     return {
@@ -443,7 +476,7 @@ export async function provisionLogicalTarget(options) {
   const fresh = assertFreshTarget({
     sourceIdentity: options.sourceIdentity ?? "unspecified-source",
     targetIdentity,
-    sourceClassification: options.sourceClassification ?? ENVIRONMENT_CLASSIFICATION.PRODUCTION,
+    sourceClassification: sourceClass.classification,
     targetClassification: ENVIRONMENT_CLASSIFICATION.RECOVERY,
     forceProduction: false,
     reuseExistingTarget: false,
@@ -473,6 +506,7 @@ export async function provisionLogicalTarget(options) {
 
   // Bootstrap migrator/app roles so post-restore migration uses the same
   // repository authority (scripts/database/migrate.ts) as production recovery.
+  // CS4: password-bearing SQL travels on stdin only — never via psql -c argv.
   const migratorPassword = generateRecoveryPassword();
   const appPassword = generateRecoveryPassword();
   const bootstrapSql = [
@@ -495,6 +529,7 @@ export async function provisionLogicalTarget(options) {
     cli,
     [
       "exec",
+      "-i",
       containerName,
       "psql",
       "-U",
@@ -503,10 +538,8 @@ export async function provisionLogicalTarget(options) {
       dbName,
       "-v",
       "ON_ERROR_STOP=1",
-      "-c",
-      bootstrapSql,
     ],
-    { timeout: 60_000 },
+    { timeout: 60_000, input: bootstrapSql },
   );
   if (bootstrap.status !== 0) {
     abortProvision();
@@ -655,10 +688,15 @@ export function assertOwnedLogicalTarget(options) {
     return { ok: false, reason: notSource.reason, code: notSource.code ?? "SOURCE_EQUALS_TARGET" };
   }
 
+  const sourceClass = requireExplicitSourceClassification(options.sourceClassification);
+  if (!sourceClass.ok) {
+    return { ok: false, reason: sourceClass.reason, code: sourceClass.code };
+  }
+
   const fresh = assertFreshTarget({
     sourceIdentity: options.sourceIdentity ?? "unspecified-source",
     targetIdentity: markerIdentity,
-    sourceClassification: options.sourceClassification ?? ENVIRONMENT_CLASSIFICATION.PRODUCTION,
+    sourceClassification: sourceClass.classification,
     targetClassification: ENVIRONMENT_CLASSIFICATION.RECOVERY,
     forceProduction: false,
     reuseExistingTarget: false,
@@ -757,6 +795,8 @@ export function cleanupProvisionedTarget(target, options = {}) {
         const result = spawnSync(command, args, {
           encoding: "utf8",
           timeout: opts.timeout ?? 30_000,
+          env: opts.env ?? process.env,
+          input: opts.input,
         });
         return {
           status: typeof result.status === "number" ? result.status : 1,

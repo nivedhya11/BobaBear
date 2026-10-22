@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { existsSync, mkdtempSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -12,6 +13,17 @@ import {
 } from "./provision.mjs";
 import { runPitrRestore } from "./pitr.mjs";
 import { runLogicalRestore } from "./logical.mjs";
+
+function completeBodyFor(runId, ciphertext = Buffer.from("AGEENC")) {
+  const sha256Hex = createHash("sha256").update(ciphertext).digest("hex");
+  return {
+    runId,
+    artifactKey: `logical/${runId}/dump.age`,
+    sha256Hex,
+    keyVersion: "test-kv",
+    completedAt: "2026-09-20T12:00:00.000Z",
+  };
+}
 
 test("PITR provision creates run-owned fresh PGDATA and refuses reuse", () => {
   const root = mkdtempSync(path.join(os.tmpdir(), "boba-pitr-prov-"));
@@ -148,6 +160,7 @@ test("PITR ownership: arbitrary / unowned / wrong-run / wrong-path / source-alia
       targetPgdataPath: provisioned.target.pgdataPath,
       targetIdentity: provisioned.target.targetIdentity,
       sourceIdentity: "prod",
+      sourceClassification: "production",
       sourcePgdataPath: "/var/lib/postgresql/data",
     });
     assert.equal(allowed.ok, true);
@@ -225,16 +238,20 @@ test("logical ownership: missing source / same endpoint / arbitrary URL BLOCKED;
     sourceDatabaseUrl: sourceUrl,
     ownershipDescriptor: ownership,
     sourceIdentity: "prod",
+    sourceClassification: "production",
   });
   assert.equal(allowed.ok, true);
 
+  const ciphertext = Buffer.from("AGEENC");
   const objectStore = {
     async headObject() {
       return { exists: true };
     },
     async getObject({ key }) {
-      if (key.endsWith("/COMPLETE")) return { body: Buffer.from("{}") };
-      return { body: Buffer.from("AGEENC") };
+      if (key.endsWith("/COMPLETE")) {
+        return { body: Buffer.from(JSON.stringify(completeBodyFor(runId, ciphertext)), "utf8") };
+      }
+      return { body: ciphertext };
     },
   };
 
@@ -244,6 +261,7 @@ test("logical ownership: missing source / same endpoint / arbitrary URL BLOCKED;
     objectStore,
     identityFile: "/tmp/missing",
     sourceIdentity: "prod",
+    sourceClassification: "production",
     databaseUrl: "postgresql://remote.example:5432/prod",
     provisionTarget: false,
     decryptFn: async () => ({ ok: true, plaintext: Buffer.from("PGDUMP") }),
@@ -258,6 +276,7 @@ test("logical ownership: missing source / same endpoint / arbitrary URL BLOCKED;
     objectStore,
     identityFile: "/tmp/missing",
     sourceIdentity: "prod",
+    sourceClassification: "production",
     sourceDatabaseUrl: sourceUrl,
     databaseUrl: targetUrl,
     targetOwnership: ownership,
