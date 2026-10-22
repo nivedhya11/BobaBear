@@ -263,6 +263,36 @@ this packet. See `docker/recovery/systemd/README.md`.
   (`docker compose exec -T postgres pgbackrest`) and the Layer 2 tools-profile oneshot.
   There is no Layer 1 backup sidecar.
 
+## Founder staging deploy preflight (STOP contract)
+
+`npm run env:staging:deploy` evaluates a fail-closed pre-mutation preflight **before**
+legacy container stops, env materialization, image rebuild, PostgreSQL operations,
+migrations, or cutover. Outcomes are `PASS` | `BLOCKED` | `UNKNOWN`. Only `PASS`
+authorizes operational mutation. Operator `ready`/`bypass` flags are not authority.
+
+Recovery qualification for that gate requires a staging-bound, integrity-verified
+backup/restore checkpoint with identifiable recovery point and suitable rollback plan.
+When the repository cannot yet automatically establish that staging-specific restore
+binding:
+
+```text
+RECOVERY_PROOF_BINDING = DESIGN_DEPENDENCY
+STAGING_DEPLOY_PREFLIGHT = BLOCKED
+STAGING_DEPLOY_MUTATION_STARTED = NO
+```
+
+That BLOCK is an expected safety result until an authorized R3 staging recovery
+checkpoint exists. It does **not** claim production readiness.
+
+`npm run env:staging:status` remains read-only. `npm run env:staging:deploy:dry-run`
+remains non-mutating and reports that preflight readiness is **not** established as
+deployment authorization.
+
+PostgreSQL init mounts are compared by **content identity** (paths, digests, executable
+bits). Same init bytes under a new Git SHA path must preserve the running PostgreSQL
+container and persistent volume. Content mismatch or untrusted mounts fail closed
+without automatic PostgreSQL recreation.
+
 ## Safety boundaries (locked; still binding)
 
 ```text

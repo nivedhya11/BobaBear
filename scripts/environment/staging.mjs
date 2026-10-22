@@ -21,6 +21,17 @@ import {
   resolveStagingBootstrapAction,
   stagingBaselineDecisionLogLines,
 } from "./staging-baseline.mjs";
+import {
+  collectInitManifest,
+  isTrustedStagingInitMountPath,
+  resolvePostgresInitDisposition,
+  POSTGRES_INIT_DISPOSITION,
+} from "./postgres-init-identity.mjs";
+import {
+  assertPreflightAllowsDeployment,
+  evaluateStagingDeployPreflight,
+  PREFLIGHT_OUTCOME,
+} from "./staging-preflight.mjs";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = path.resolve(scriptDir, "..", "..");
@@ -279,16 +290,127 @@ function ensureStagingEnvFiles(
   }
 }
 
-function materializeStagingPostgresInit(buildDir, sha) {
+/**
+ * Materialize candidate init assets without deleting an active mount and without
+ * overwriting a path whose content identity differs. Same-SHA repeats are idempotent.
+ */
+function materializeStagingPostgresInit(
+  buildDir,
+  sha,
+  {
+    activeMountSource = null,
+    runtimeAssetsDir = STAGING_RUNTIME_ASSETS_DIR,
+    collect = collectInitManifest,
+    exists = existsSync,
+    mkdir = mkdirSync,
+    copy = cpSync,
+    log = console.log,
+  } = {},
+) {
   const source = path.join(buildDir, "docker", "postgres", "init");
-  const destination = path.join(STAGING_RUNTIME_ASSETS_DIR, "postgres-init", sha);
-  if (!existsSync(source)) throw new Error("Exact staging candidate does not contain docker/postgres/init.");
-  rmSync(destination, { recursive: true, force: true });
-  mkdirSync(path.dirname(destination), { recursive: true, mode: 0o700 });
-  cpSync(source, destination, { recursive: true, preserveTimestamps: true });
-  console.log(`STAGING_POSTGRES_INIT_DIR ${destination}`);
-  console.log(`STAGING_POSTGRES_INIT_SOURCE_GIT_SHA ${sha}`);
+  const destination = path.join(runtimeAssetsDir, "postgres-init", sha);
+  if (!exists(source)) throw new Error("Exact staging candidate does not contain docker/postgres/init.");
+
+  const resolvedDestination = path.resolve(destination);
+  const resolvedActive =
+    typeof activeMountSource === "string" && activeMountSource.length > 0
+      ? path.resolve(activeMountSource)
+      : null;
+
+  // Never recursively remove an active mounted directory (same-SHA or otherwise).
+  if (resolvedActive && resolvedDestination === resolvedActive) {
+    const candidateManifest = collect(source);
+    const activeManifest = collect(resolvedActive);
+    if (!candidateManifest.ok || !activeManifest.ok || candidateManifest.digest !== activeManifest.digest) {
+      throw new Error("Active postgres-init mount content diverges from candidate; refusing overwrite.");
+    }
+    log(`STAGING_POSTGRES_INIT_DIR ${destination}`);
+    log(`STAGING_POSTGRES_INIT_SOURCE_GIT_SHA ${sha}`);
+    log("STAGING_POSTGRES_INIT_MATERIALIZE SKIP_ACTIVE_MOUNT");
+    return destination;
+  }
+
+  if (exists(destination)) {
+    const candidateManifest = collect(source);
+    const existingManifest = collect(destination);
+    if (!candidateManifest.ok || !existingManifest.ok) {
+      throw new Error("Unable to verify existing postgres-init materialization; refusing mutation.");
+    }
+    if (candidateManifest.digest !== existingManifest.digest) {
+      throw new Error("Existing postgres-init path content differs from candidate; refusing overwrite.");
+    }
+    log(`STAGING_POSTGRES_INIT_DIR ${destination}`);
+    log(`STAGING_POSTGRES_INIT_SOURCE_GIT_SHA ${sha}`);
+    log("STAGING_POSTGRES_INIT_MATERIALIZE IDEMPOTENT");
+    return destination;
+  }
+
+  mkdir(path.dirname(destination), { recursive: true, mode: 0o700 });
+  copy(source, destination, { recursive: true, preserveTimestamps: true });
+  log(`STAGING_POSTGRES_INIT_DIR ${destination}`);
+  log(`STAGING_POSTGRES_INIT_SOURCE_GIT_SHA ${sha}`);
+  log("STAGING_POSTGRES_INIT_MATERIALIZE CREATED");
   return destination;
+}
+
+/**
+ * Read-only resolution of the Compose init mount for an existing staging PostgreSQL.
+ * Prefer preserving the active trusted mount when candidate content matches.
+ */
+function resolveStagingPostgresInitMount(
+  buildDir,
+  sha,
+  {
+    inspect = inspectJson,
+    collect = collectInitManifest,
+    runtimeAssetsDir = STAGING_RUNTIME_ASSETS_DIR,
+    repositoryRoot: root = repositoryRoot,
+    log = console.log,
+  } = {},
+) {
+  const container = `${STAGING_PROJECT}_postgres_1`;
+  const volume = `${STAGING_PROJECT}_postgres-data`;
+  const candidateSource = path.join(buildDir, "docker", "postgres", "init");
+  const candidateManifest = collect(candidateSource);
+  const candidateMaterializedPath = path.join(runtimeAssetsDir, "postgres-init", sha);
+
+  let activePostgres = { present: false, volumePresent: false, mountSource: null };
+  try {
+    const database = inspect(container);
+    const dataMounts = database.Mounts.filter(
+      (mount) => mount.Name === volume && mount.Destination === "/var/lib/postgresql",
+    );
+    const initMount = database.Mounts.find((mount) => mount.Destination === "/docker-entrypoint-initdb.d");
+    activePostgres = {
+      present: true,
+      volumePresent: dataMounts.length === 1,
+      mountSource: initMount?.Source ?? null,
+      project: database.Config.Labels?.["io.podman.compose.project"] ?? null,
+    };
+  } catch (error) {
+    if (!String(error.message ?? error).includes("no such object")) throw error;
+    activePostgres = { present: false, volumePresent: false, mountSource: null };
+  }
+
+  const disposition = resolvePostgresInitDisposition({
+    candidateManifest,
+    candidateMaterializedPath,
+    activePostgres,
+    trustRoots: {
+      runtimeAssetsRoot: runtimeAssetsDir,
+      repositoryInitRoot: path.join(root, "docker", "postgres", "init"),
+    },
+  });
+
+  log(`POSTGRES_INIT_DISPOSITION ${disposition.disposition}`);
+  log(`POSTGRES_INIT_REASON ${disposition.reasonCode}`);
+  if (disposition.composeInitDir) {
+    log(`POSTGRES_INIT_COMPOSE_DIR ${disposition.composeInitDir}`);
+  }
+  if (disposition.contentDigest) {
+    log(`POSTGRES_INIT_CONTENT_DIGEST ${disposition.contentDigest}`);
+  }
+  return { disposition, candidateMaterializedPath, candidateManifest, activePostgres };
 }
 
 function podmanInspect(name, format) {
@@ -589,48 +711,63 @@ function upAndWait(buildDir, services, extraEnv = {}) {
   }
 }
 
-function ensurePersistentPostgres(buildDir, initDir) {
+/**
+ * Preserve an existing persistent PostgreSQL when init content identity matches.
+ * Path-only SHA directory changes do not restart or replace PostgreSQL.
+ * Content mismatch / untrusted mounts / absent containers fail closed (no recreate).
+ */
+function ensurePersistentPostgres(
+  buildDir,
+  initPlan,
+  {
+    inspect = inspectJson,
+    run = runPodman,
+    wait = waitForHealthy,
+    log = console.log,
+    trustRoots = {
+      runtimeAssetsRoot: STAGING_RUNTIME_ASSETS_DIR,
+      repositoryInitRoot: path.join(repositoryRoot, "docker", "postgres", "init"),
+    },
+  } = {},
+) {
   const container = `${STAGING_PROJECT}_postgres_1`;
   const volume = `${STAGING_PROJECT}_postgres-data`;
-  try {
-    const database = inspectJson(container);
-    const dataMounts = database.Mounts.filter(
-      (mount) => mount.Name === volume && mount.Destination === "/var/lib/postgresql",
+  const disposition = initPlan?.disposition;
+  if (!disposition || disposition.disposition !== POSTGRES_INIT_DISPOSITION.PRESERVE) {
+    throw new Error(
+      `PostgreSQL init mount is not preservable (${disposition?.reasonCode ?? "UNKNOWN"}); refusing automatic recreation.`,
     );
-    if (dataMounts.length !== 1) {
-      throw new Error("Persistent PostgreSQL is missing the boba-staging_postgres-data volume mount.");
-    }
-    const initMount = database.Mounts.find((mount) => mount.Destination === "/docker-entrypoint-initdb.d");
-    if (initMount?.Source !== initDir) {
-      // Init scripts only run on empty data dirs. Recreate the container with the
-      // current candidate init mount while preserving the persistent volume.
-      console.log("POSTGRES_INIT_MOUNT_REFRESH YES");
-      console.log(`POSTGRES_INIT_MOUNT_PREVIOUS ${initMount?.Source ?? "MISSING"}`);
-      console.log(`POSTGRES_INIT_MOUNT_NEXT ${initDir}`);
-      for (const service of BOBA_RUNTIME_SERVICES) {
-        const dependent = `${STAGING_PROJECT}_${service}_1`;
-        try {
-          runPodman(["stop", "-t", "30", dependent]);
-          runPodman(["rm", dependent]);
-        } catch {
-          /* absent dependents are permitted */
-        }
-      }
-      if (database.State.Status === "running") {
-        runPodman(["stop", "-t", "30", container]);
-      }
-      runPodman(["rm", container]);
-      podmanCompose(buildDir, ["up", "-d", "postgres"], { BOBA_POSTGRES_INIT_DIR: initDir });
-      waitForHealthy(container);
-      console.log("POSTGRES_VOLUME_PRESERVED YES");
-      return;
-    }
-    if (database.State.Status !== "running") runPodman(["start", container]);
-  } catch (error) {
-    if (!String(error.message).includes("no such object")) throw error;
-    podmanCompose(buildDir, ["up", "-d", "postgres"], { BOBA_POSTGRES_INIT_DIR: initDir });
   }
-  waitForHealthy(container);
+  const initDir = disposition.composeInitDir;
+  if (typeof initDir !== "string" || initDir.length === 0) {
+    throw new Error("Preserved PostgreSQL init mount path is missing.");
+  }
+  if (!isTrustedStagingInitMountPath(initDir, trustRoots)) {
+    throw new Error("Preserved PostgreSQL init mount path is outside trusted staging roots.");
+  }
+
+  const database = inspect(container);
+  const dataMounts = database.Mounts.filter(
+    (mount) => mount.Name === volume && mount.Destination === "/var/lib/postgresql",
+  );
+  if (dataMounts.length !== 1) {
+    throw new Error("Persistent PostgreSQL is missing the boba-staging_postgres-data volume mount.");
+  }
+  const initMount = database.Mounts.find((mount) => mount.Destination === "/docker-entrypoint-initdb.d");
+  if (!initMount?.Source || path.resolve(initMount.Source) !== path.resolve(initDir)) {
+    throw new Error(
+      "Active PostgreSQL init mount diverged after preflight; refusing mutation (no automatic recreate).",
+    );
+  }
+  if (database.State.Status !== "running") {
+    run(["start", container]);
+  }
+  wait(container);
+  log("POSTGRES_INIT_MOUNT_PRESERVED YES");
+  log(`POSTGRES_INIT_MOUNT_PATH ${initDir}`);
+  log("POSTGRES_VOLUME_PRESERVED YES");
+  log("POSTGRES_CONTAINER_REPLACED NO");
+  return { initDir, preserved: true };
 }
 
 function assertLegacyPostgresRecoveryTarget() {
@@ -853,26 +990,261 @@ function runServiceabilityUatSmoke() {
   }
 }
 
-function deploy(candidate) {
-  assertDeployPreconditions(candidate);
-  stopLegacyRuntimeIfNeeded();
-  const buildDir = materializeExactGitTree(candidate.head);
-  console.log(`STAGING_BUILD_DIR ${buildDir}`);
-  console.log(`MERGED_GIT_SHA ${candidate.head}`);
+/**
+ * Read diagnostic enablement from persistent staging env files without printing secrets.
+ */
+function readStagingDiagnosticEnabled(stagingEnvDir = STAGING_ENV_DIR) {
+  const filePath = path.join(stagingEnvDir, ".env.runtime.docker.local");
+  if (!existsSync(filePath)) return { present: false, enabled: false };
+  const parsed = parseEnvFile(readFileSync(filePath, "utf8"));
+  const extracted = extractValues(parsed);
+  if (!extracted.ok) return { present: true, enabled: false, invalid: true };
+  const raw = extracted.values.BOBA_BEAR_CHECKOUT_PREPARE_DIAGNOSTIC_ENABLED;
+  const enabled = raw === "true" || raw === "1" || raw === "yes";
+  return { present: true, enabled, invalid: false };
+}
+
+/**
+ * Gather read-only preflight evidence. Never starts/stops containers or writes env files.
+ * Missing recovery/security/database proof fails closed (no fabricated PASS).
+ */
+function gatherStagingPreflightEvidence(
+  candidate,
+  {
+    treeOf = (sha) => git(["rev-parse", `${sha}^{tree}`]),
+    requiredEnvFilesPresent = () =>
+      STAGING_ENV_FILES.every(
+        (file) => existsSync(path.join(STAGING_ENV_DIR, file)) || existsSync(path.join(repositoryRoot, file)),
+      ),
+    readDiagnostic = readStagingDiagnosticEnabled,
+    resolveInit = null,
+    publishingState = { deployWorkflowState: "UNKNOWN", pagesSourceKnown: false, unsafeActivePublishingPath: true },
+    podmanRootless = () => Boolean(process.getuid?.() && process.getuid() !== 0),
+    protectedCheckoutUsed = false,
+  } = {},
+) {
+  let tree;
   try {
-    ensureStagingEnvFiles(buildDir);
-    podmanCompose(
+    tree = treeOf(candidate.head);
+  } catch (error) {
+    return {
+      probeError: true,
+      probeDetail: error instanceof Error ? error.message : "tree probe failed",
+    };
+  }
+
+  const diagnostic = readDiagnostic();
+  const initResolution =
+    typeof resolveInit === "function"
+      ? resolveInit()
+      : {
+          disposition: {
+            disposition: POSTGRES_INIT_DISPOSITION.UNKNOWN,
+            reasonCode: "POSTGRES_INIT_PROBE_NOT_RUN",
+          },
+        };
+
+  return {
+    source: {
+      repositoryIdentity: "nivedhya11/BobaBear",
+      branch: candidate.branch,
+      head: candidate.head,
+      originMain: candidate.originMain,
+      tree,
+      originMainTree: treeOf(candidate.originMain),
+      trackedDirty: candidate.trackedDirty,
+      protectedCheckoutUsed,
+    },
+    publishing: publishingState,
+    runtime: {
+      podmanRootless: podmanRootless(),
+      composeProject: STAGING_PROJECT,
+      postgresContainer: `${STAGING_PROJECT}_postgres_1`,
+      postgresVolume: `${STAGING_PROJECT}_postgres-data`,
+      unexpectedTarget: false,
+    },
+    environment: {
+      requiredEnvFilesPresent: requiredEnvFilesPresent(),
+      projectedConfigValid: diagnostic.invalid !== true,
+      diagnosticEnabled: diagnostic.enabled === true,
+      bobaBearEnvDrift: false,
+      secretsPrinted: false,
+    },
+    database: {
+      // Live ledger/baseline require authorized DB probes; do not start classifiers here.
+      migrationIdentityKnown: false,
+      migrationLedgerState: "UNKNOWN",
+      baselineCompatibility: "UNKNOWN",
+      unexplainedPendingMutation: false,
+    },
+    recovery: {
+      // Staging-specific qualified restore checkpoint is not yet auto-established.
+      bindingDesignDependency: true,
+      checkpointPresent: false,
+      integrityVerified: false,
+      restoreProofPresent: false,
+      recoveryPointIdentifiable: false,
+      rollbackPlanSuitable: false,
+      stagingBound: false,
+      freshnessOk: false,
+    },
+    security: {
+      imageSecurityEvidenceRequired: true,
+      imageSecurityEvidencePresent: false,
+      issue409RiskWaived: false,
+      sourceImageCorrelated: false,
+    },
+    capacity: {
+      diskSufficient: false,
+      memorySufficient: false,
+      priorImagesPreserved: false,
+      unintendedPostgresReplacement: false,
+    },
+    postgresInit: {
+      disposition: initResolution.disposition?.disposition ?? POSTGRES_INIT_DISPOSITION.UNKNOWN,
+      reasonCode: initResolution.disposition?.reasonCode,
+    },
+  };
+}
+
+function defaultResolveInitForPreflight(candidate, deps = {}) {
+  // Candidate init bytes come from the verified clean tracked tree (exact origin/main).
+  // Do not materialize or mutate runtime-assets during preflight.
+  return resolveStagingPostgresInitMount(repositoryRoot, candidate.head, {
+    inspect: deps.inspect ?? inspectJson,
+    collect: deps.collect ?? collectInitManifest,
+    log: deps.quietInitLog ? () => {} : (deps.log ?? console.log),
+  });
+}
+
+function verifyPreMutationReadiness(candidate, deps = {}) {
+  const {
+    evaluate = evaluateStagingDeployPreflight,
+    log = console.log,
+  } = deps;
+  const gather =
+    deps.gather ??
+    ((c, d) =>
+      gatherStagingPreflightEvidence(c, {
+        ...d,
+        resolveInit: d.resolveInit ?? (() => defaultResolveInitForPreflight(c, d)),
+      }));
+  let evidence;
+  try {
+    evidence = gather(candidate, deps);
+  } catch (error) {
+    evidence = {
+      probeError: true,
+      probeDetail: error instanceof Error ? error.message : "preflight gather failed",
+    };
+  }
+  const decision = evaluate(evidence);
+  log(`STAGING_DEPLOY_PREFLIGHT ${decision.outcome}`);
+  for (const finding of decision.findings) {
+    log(`STAGING_DEPLOY_PREFLIGHT_REASON ${finding.code}${finding.detail ? ` ${finding.detail}` : ""}`);
+  }
+  if (decision.recoveryProofBinding) {
+    log(`STAGING_DEPLOY_PREFLIGHT_RECOVERY_BINDING ${decision.recoveryProofBinding}`);
+  }
+  if (decision.outcome !== PREFLIGHT_OUTCOME.PASS) {
+    log("STAGING_DEPLOY_MUTATION_STARTED NO");
+  }
+  return { decision, evidence };
+}
+
+/**
+ * Auditable deploy ordering:
+ *   verifyCandidate → verifyPreMutationReadiness → assert PASS → operational effects
+ *
+ * Injectable for synthetic tests. Never call against real boba-staging from automated tests.
+ */
+export function runStagingDeploy(candidate, deps = {}) {
+  const effects = deps.effects ?? [];
+  const record = (name) => {
+    effects.push(name);
+  };
+  const {
+    assertPreconditions = assertDeployPreconditions,
+    verifyReadiness = verifyPreMutationReadiness,
+    stopLegacy = () => {
+      record("stopLegacyRuntimeIfNeeded");
+      stopLegacyRuntimeIfNeeded();
+    },
+    materializeTree = materializeExactGitTree,
+    ensureEnv = ensureStagingEnvFiles,
+    compose = podmanCompose,
+    assertImages = assertImageRevisions,
+    resolveInitMount = resolveStagingPostgresInitMount,
+    materializeInit = materializeStagingPostgresInit,
+    ensurePostgres = ensurePersistentPostgres,
+    decideBootstrap = decideAndApplyStagingBootstrap,
+    upWait = upAndWait,
+    smoke = runServiceabilityUatSmoke,
+    reportProvenance = reportRunningProvenance,
+    removeDir = rmSync,
+    log = console.log,
+    spawn = spawnIgnoringStdin,
+    exit = (code) => process.exit(code),
+  } = deps;
+
+  assertPreconditions(candidate);
+  record("assertDeployPreconditions");
+  const readiness = verifyReadiness(candidate, deps);
+  record("verifyPreMutationReadiness");
+  try {
+    assertPreflightAllowsDeployment(readiness.decision);
+  } catch (error) {
+    record("preflightBlocked");
+    log("STAGING_DEPLOY_MUTATION_STARTED NO");
+    throw error;
+  }
+  record("preflightPass");
+
+  stopLegacy();
+  const buildDir = materializeTree(candidate.head);
+  record("materializeExactGitTree");
+  log(`STAGING_BUILD_DIR ${buildDir}`);
+  log(`MERGED_GIT_SHA ${candidate.head}`);
+  try {
+    ensureEnv(buildDir);
+    record("ensureStagingEnvFiles");
+    compose(
       buildDir,
       ["build", "app", "migrate", "customer-auth", "workforce-auth", "customer-commerce", "operations"],
       { BOBA_BUILD_SHA: candidate.head, COMPOSE_PROFILES: "tools" },
     );
-    assertImageRevisions(candidate.head);
-    console.log("BUILT_IMAGE_CANDIDATE_MATCH YES");
-    const initDir = materializeStagingPostgresInit(buildDir, candidate.head);
-    ensurePersistentPostgres(buildDir, initDir);
-    podmanCompose(buildDir, ["run", "--rm", "--no-deps", "migrate"], { COMPOSE_PROFILES: "tools" });
-    decideAndApplyStagingBootstrap(buildDir);
-    upAndWait(buildDir, ["app", "customer-auth", "workforce-auth", "customer-commerce", "operations"], { BOBA_POSTGRES_INIT_DIR: initDir });
+    record("composeBuild");
+    assertImages(candidate.head);
+    record("assertImageRevisions");
+    log("BUILT_IMAGE_CANDIDATE_MATCH YES");
+
+    // Re-resolve init mount after build using candidate archive contents (read-only inspect).
+    const initPlan = resolveInitMount(buildDir, candidate.head, deps);
+    record("resolveStagingPostgresInitMount");
+    if (initPlan.disposition.disposition !== POSTGRES_INIT_DISPOSITION.PRESERVE) {
+      throw new Error(
+        `PostgreSQL init disposition ${initPlan.disposition.disposition} (${initPlan.disposition.reasonCode}); refusing deployment mutation.`,
+      );
+    }
+    // Materialize only when the preserved path is the candidate SHA dir and assets are absent;
+    // never delete/replace an active mount. Compose continues to use the preserved mount path.
+    materializeInit(buildDir, candidate.head, {
+      activeMountSource: initPlan.disposition.preserveMountSource,
+      ...deps,
+    });
+    record("materializeStagingPostgresInit");
+    const ensured = ensurePostgres(buildDir, initPlan, deps);
+    record("ensurePersistentPostgres");
+    const initDir = ensured.initDir;
+
+    compose(buildDir, ["run", "--rm", "--no-deps", "migrate"], { COMPOSE_PROFILES: "tools" });
+    record("migrate");
+    decideBootstrap(buildDir);
+    record("decideAndApplyStagingBootstrap");
+    upWait(buildDir, ["app", "customer-auth", "workforce-auth", "customer-commerce", "operations"], {
+      BOBA_POSTGRES_INIT_DIR: initDir,
+    });
+    record("upAndWait");
     for (const step of [
       { title: "app smoke", command: "node", args: ["scripts/docker/smoke.mjs"] },
       {
@@ -889,25 +1261,32 @@ function deploy(candidate) {
         ],
       },
     ]) {
-      const result = spawnIgnoringStdin(step.command, step.args, {
+      const result = spawn(step.command, step.args, {
         cwd: buildDir,
         env: { ...process.env, DOCKER_HOST: SOCKET, COMPOSE_PROJECT_NAME: STAGING_PROJECT },
       });
-      if (result.status !== 0) process.exit(result.status ?? 1);
+      if (result.status !== 0) exit(result.status ?? 1);
     }
-    runServiceabilityUatSmoke();
-    if (!reportRunningProvenance(candidate.head)) {
+    record("smokes");
+    smoke();
+    record("serviceabilitySmoke");
+    if (!reportProvenance(candidate.head)) {
       throw new Error("Running staging images do not match the merged Git candidate.");
     }
-    console.log(`STAGING_PROJECT ${STAGING_PROJECT}`);
-    console.log(`EXPECTED_GIT_SHA ${candidate.head}`);
-    console.log(`UAT_URL http://localhost:8080/order/`);
-    console.log(`PERSISTENT_DB_VOLUME ${STAGING_PROJECT}_postgres-data`);
-    console.log(`CUSTOMER_AUTH_BASE_URL http://localhost:8080`);
+    log(`STAGING_PROJECT ${STAGING_PROJECT}`);
+    log(`EXPECTED_GIT_SHA ${candidate.head}`);
+    log(`UAT_URL http://localhost:8080/order/`);
+    log(`PERSISTENT_DB_VOLUME ${STAGING_PROJECT}_postgres-data`);
+    log(`CUSTOMER_AUTH_BASE_URL http://localhost:8080`);
+    return { ok: true, effects, initDir, readiness };
   } finally {
-    rmSync(buildDir, { recursive: true, force: true });
-    console.log("STAGING_BUILD_DIR_REMOVED YES");
+    removeDir(buildDir, { recursive: true, force: true });
+    log("STAGING_BUILD_DIR_REMOVED YES");
   }
+}
+
+function deploy(candidate) {
+  runStagingDeploy(candidate);
 }
 
 if (isCli) {
@@ -926,7 +1305,12 @@ if (isCli) {
 
   if (command === "deploy-dry-run") {
     assertDeployPreconditions(candidate);
+    const readiness = verifyPreMutationReadiness(candidate, { quietInitLog: true });
     console.log("DEPLOYMENT DRY RUN ONLY — no image, container, network, volume, or migration was created.");
+    console.log("STAGING_DEPLOY_PREFLIGHT_READINESS_ESTABLISHED NO");
+    console.log(
+      `STAGING_DEPLOY_PREFLIGHT_DECISION ${readiness.decision.outcome} — dry-run does not authorize deployment.`,
+    );
     console.log(`Future deployment provenance uses MERGED_GIT_SHA ${candidate.head}.`);
   }
 
@@ -940,6 +1324,7 @@ export {
   BOBA_BUILD_IMAGES,
   BOBA_RUNTIME_SERVICES,
   STAGING_PUBLIC_ORIGIN,
+  STAGING_RUNTIME_ASSETS_DIR,
   assertImageRevisions,
   assertRunningProvenance,
   assertLegacyPostgresRecoveryTarget,
@@ -953,9 +1338,14 @@ export {
   createStagingWorkforceUser,
   discardMismatchedOperatorCandidateTag,
   ensureStagingEnvFiles,
+  ensurePersistentPostgres,
+  materializeStagingPostgresInit,
   normalizeEnvAssignment,
   normalizeStagingAuthOriginEnv,
   decideAndApplyStagingBootstrap,
   classifyStagingBaselineInTooling,
   runLegacySeedBootstrapChain,
+  gatherStagingPreflightEvidence,
+  verifyPreMutationReadiness,
+  resolveStagingPostgresInitMount,
 };
