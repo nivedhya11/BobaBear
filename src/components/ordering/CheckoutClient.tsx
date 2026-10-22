@@ -146,7 +146,13 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
   const [staleRecovery, setStaleRecovery] = useState<StaleRecoveryPresentation | null>(
     null,
   );
-  const staleRecoveryGenerationRef = useRef(0);
+  /**
+   * Single owner for concurrent Review-affecting async work: automatic stale
+   * recovery, coupon-driven rebase, and fulfilment escape that abandons recovery.
+   * Older in-flight responses must not write Review / recovery presentation once
+   * a newer generation has begun.
+   */
+  const reviewAsyncGenerationRef = useRef(0);
   const [giftGone, setGiftGone] = useState(false);
   const [offerDropped, setOfferDropped] = useState(false);
   const reviewSummaryRef = useRef<HTMLDivElement | null>(null);
@@ -171,6 +177,14 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
   const reviewMoneyConfirmed =
     reviewCommercialCurrent &&
     (staleRecovery == null || staleRecovery.showFreshPayableAsCurrent);
+
+  function beginReviewAsync(): number {
+    return ++reviewAsyncGenerationRef.current;
+  }
+
+  function isReviewAsyncCurrent(generation: number): boolean {
+    return generation === reviewAsyncGenerationRef.current;
+  }
 
   function adoptEvaluated(evaluated: {
     checkout: CommerceCheckout;
@@ -228,7 +242,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
   }, [screen, staleRecovery?.message, staleRecovery?.kind, snapshot?.id]);
 
   async function recoverStaleReview(triggerCode: string): Promise<void> {
-    const generation = ++staleRecoveryGenerationRef.current;
+    const generation = beginReviewAsync();
     const priorSnapshot = snapshot;
     const priorCheckout = checkout;
     const priorGrandTotalPaise = priorSnapshot?.grandTotalPaise ?? null;
@@ -247,9 +261,10 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
       return;
     }
     const refreshed = await getActiveCart(brandId, { guestToken: false });
-    if (generation !== staleRecoveryGenerationRef.current) return;
+    if (!isReviewAsyncCurrent(generation)) return;
     if (!refreshed.ok || !refreshed.data.cart) {
       // Keep the already-set unconfirmed presentation; surface a retryable error.
+      // Coupon / fulfilment correction remain available as escape paths.
       setError(commerceErrorCopy(refreshed.ok === false ? refreshed.code : "CART_NOT_FOUND"));
       return;
     }
@@ -258,9 +273,11 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
       refreshed.data.cart,
       priorSnapshot,
       priorCheckout,
+      generation,
     );
-    if (generation !== staleRecoveryGenerationRef.current) return;
+    if (!isReviewAsyncCurrent(generation)) return;
     if (!rebased.ok) {
+      if (rebased.code === "REVIEW_ASYNC_SUPERSEDED") return;
       // rebase already setError; keep unconfirmed presentation from the initial write.
       setScreen("review");
       return;
@@ -284,13 +301,18 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
   /**
    * After Review coupon APPLY/CHANGE/REMOVE advances Cart revision, rebase onto
    * the canonical T4 successor/reuse Checkout and re-establish fulfilment context.
+   * Also used by automatic stale recovery. All Review writes are generation-gated.
    */
   async function rebaseReviewAfterCouponMutation(
     nextCart: CommerceCart,
     priorSnapshot: CommerceCheckoutSnapshot | null,
     priorCheckout: CommerceCheckout | null,
+    generation: number,
   ): Promise<ReviewRebaseResult> {
     const started = await startCheckout({ cartId: nextCart.id });
+    if (!isReviewAsyncCurrent(generation)) {
+      return { ok: false, code: "REVIEW_ASYNC_SUPERSEDED" };
+    }
     if (!started.ok) {
       setError(commerceErrorCopy(started.code));
       return { ok: false, code: started.code };
@@ -313,6 +335,9 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
             }
           : { pickupOutletId: null }),
       });
+      if (!isReviewAsyncCurrent(generation)) {
+        return { ok: false, code: "REVIEW_ASYNC_SUPERSEDED" };
+      }
       if (!fulfilled.ok) {
         setError(commerceErrorCopy(fulfilled.code));
         return { ok: false, code: fulfilled.code };
@@ -347,6 +372,9 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
         expectedCheckoutRevision: current.revision,
         destination: destinationInput,
       });
+      if (!isReviewAsyncCurrent(generation)) {
+        return { ok: false, code: "REVIEW_ASYNC_SUPERSEDED" };
+      }
       if (!setDest.ok) {
         setError(commerceErrorCopy(setDest.code));
         return { ok: false, code: setDest.code };
@@ -366,6 +394,9 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
         scheduledWindowStartAt: priorSnapshot.scheduledWindowStartAt,
         scheduledWindowEndAt: priorSnapshot.scheduledWindowEndAt,
       });
+      if (!isReviewAsyncCurrent(generation)) {
+        return { ok: false, code: "REVIEW_ASYNC_SUPERSEDED" };
+      }
       if (!timed.ok) {
         setError(commerceErrorCopy(timed.code));
         return { ok: false, code: timed.code };
@@ -378,6 +409,9 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
         expectedCheckoutRevision: current.revision,
         fulfilmentTiming: "ASAP",
       });
+      if (!isReviewAsyncCurrent(generation)) {
+        return { ok: false, code: "REVIEW_ASYNC_SUPERSEDED" };
+      }
       if (timed.ok) {
         current = timed.data.checkout;
         setCheckout(current);
@@ -387,6 +421,9 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
       checkoutId: current.id,
       expectedCheckoutRevision: current.revision,
     });
+    if (!isReviewAsyncCurrent(generation)) {
+      return { ok: false, code: "REVIEW_ASYNC_SUPERSEDED" };
+    }
     if (!evaluated.ok) {
       setError(commerceErrorCopy(evaluated.code));
       return { ok: false, code: evaluated.code };
@@ -401,6 +438,8 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
     work: () => Promise<{ ok: true; data: { cart: CommerceCart } } | { ok: false; code: string }>,
   ): Promise<void> {
     if (!cart || couponPending) return;
+    // Customer coupon mutation supersedes any in-flight automatic recovery.
+    const generation = beginReviewAsync();
     const priorSnapshot = snapshot;
     const priorCart = cart;
     const priorDraft = couponDraft;
@@ -411,6 +450,10 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
     setCouponPending(true);
     setCouponStatusOverride(null);
     const result = await work();
+    if (!isReviewAsyncCurrent(generation)) {
+      setCouponPending(false);
+      return;
+    }
     if (!result.ok) {
       setCouponPending(false);
       const status = couponFieldStatusFromMutationFailure(result.code);
@@ -436,9 +479,15 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
       result.data.cart,
       priorSnapshot,
       priorCheckout,
+      generation,
     );
+    if (!isReviewAsyncCurrent(generation)) {
+      setCouponPending(false);
+      return;
+    }
     setCouponPending(false);
     if (!rebased.ok) {
+      if (rebased.code === "REVIEW_ASYNC_SUPERSEDED") return;
       // Do not describe a successful cart write as a failed coupon mutation.
       // Drop the prior quote so a stale payable is not presented as current.
       setReviewQuote(null);
@@ -938,7 +987,11 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
    * must not keep a pre-payment expectedCheckoutRevision.
    */
   async function returnToFulfilment(): Promise<void> {
-    if (pending || !checkout || !cart) return;
+    if (pending || couponPending || !checkout || !cart) return;
+    // Fulfilment escape supersedes in-flight automatic recovery / coupon rebase.
+    // Do not clear recovery presentation until navigation succeeds — a failed
+    // escape must not re-enable Continue on an unconfirmed prior payable.
+    beginReviewAsync();
     setPending(true);
     setError(null);
     const active = await getActiveCheckout({ cartId: cart.id });
@@ -1303,7 +1356,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
                 variant="outline"
                 className="mt-3 min-h-[44px]"
                 data-testid="checkout-back-to-delivery"
-                disabled={pending}
+                disabled={pending || couponPending}
                 onClick={() => void returnToFulfilment()}
               >
                 {snapshot.fulfilmentMode === "PICKUP" ? "Change fulfilment" : "Edit delivery"}

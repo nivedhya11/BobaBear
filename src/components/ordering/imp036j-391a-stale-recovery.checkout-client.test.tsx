@@ -374,3 +374,314 @@ describe("IMP-036J #391A truthful checkout recovery UX", () => {
     expect(startPayment).toHaveBeenCalledTimes(2);
   });
 });
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
+
+describe("IMP-036J #391A async recovery race ownership", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    window.sessionStorage.clear();
+    getActiveCart.mockResolvedValue({ ok: true, data: { cart } });
+    listOwnAddresses.mockResolvedValue({ ok: true, data: { addresses: [] } });
+    listCheckoutScheduledWindows.mockResolvedValue({
+      ok: true,
+      data: {
+        availability: "NO_TIMES",
+        message: "No scheduled times",
+        timeZone: "Asia/Kolkata",
+        todayLocalDate: "2026-09-25",
+        tomorrowLocalDate: "2026-09-26",
+        cancellationCutoffMinutes: null,
+        windows: [],
+      },
+    });
+  });
+
+  async function renderReadyForPayment(priorTotal = "95240") {
+    const snapshot = buildSnapshot(priorTotal);
+    const readyCheckout = {
+      ...checkout,
+      status: "READY_FOR_PAYMENT",
+      activeSnapshotId: snapshot.id,
+      activeSnapshot: snapshot,
+      sourceCartRevision: cart.revision,
+    };
+    getActiveCheckout.mockResolvedValue({ ok: true, data: { checkout: readyCheckout } });
+    getActiveCart.mockResolvedValue({ ok: true, data: { cart } });
+    render(<CheckoutClient catalog={catalog} />);
+    await waitFor(() => expect(screen.getByTestId("payment-start")).toBeInTheDocument());
+    return snapshot;
+  }
+
+  it("delayed automatic recovery cannot overwrite a newer coupon-driven Review", async () => {
+    await renderReadyForPayment("95240");
+    startPayment.mockResolvedValue({ ok: false, code: "CHECKOUT_REPRICED", status: 409 });
+
+    const recoveryStartHold =
+      deferred<{ ok: true; data: { checkout: typeof checkout } }>();
+    let startCheckoutCalls = 0;
+    startCheckout.mockImplementation(() => {
+      startCheckoutCalls += 1;
+      if (startCheckoutCalls === 1) {
+        return recoveryStartHold.promise;
+      }
+      const successor = {
+        ...checkout,
+        id: "chk-coupon",
+        sourceCartRevision: "3",
+        revision: "1",
+        status: "DRAFT" as const,
+        activeSnapshot: null,
+      };
+      return Promise.resolve({ ok: true as const, data: { checkout: successor } });
+    });
+
+    // Recovery path after held startCheckout — must not win if coupon finished first.
+    const lateRecoveryFresh = buildSnapshot("99900", "snap-late-recovery");
+    setCheckoutFulfilment.mockResolvedValue({
+      ok: true,
+      data: {
+        checkout: {
+          ...checkout,
+          id: "chk-late",
+          fulfilmentMode: "DELIVERY",
+          revision: "2",
+        },
+      },
+    });
+    setCheckoutDestination.mockResolvedValue({
+      ok: true,
+      data: {
+        checkout: {
+          ...checkout,
+          id: "chk-late",
+          fulfilmentMode: "DELIVERY",
+          revision: "3",
+        },
+      },
+    });
+    setCheckoutFulfilmentTiming.mockResolvedValue({
+      ok: true,
+      data: {
+        checkout: {
+          ...checkout,
+          id: "chk-late",
+          fulfilmentMode: "DELIVERY",
+          revision: "4",
+        },
+      },
+    });
+    evaluateCheckout.mockImplementation(async ({ checkoutId }: { checkoutId: string }) => {
+      if (checkoutId === "chk-late") {
+        return {
+          ok: true as const,
+          data: {
+            checkout: {
+              ...checkout,
+              id: "chk-late",
+              revision: "5",
+              status: "READY_FOR_PAYMENT",
+              sourceCartRevision: cart.revision,
+              activeSnapshot: lateRecoveryFresh,
+            },
+            snapshot: lateRecoveryFresh,
+            evaluationId: "eval-late",
+            reviewSurfaceToken: "token-late",
+            quote: {
+              commercialExplanation: {
+                couponPresentationClass: null,
+                merchandiseOrOrderSavingPaise: "0",
+                deliverySavingPaise: "0",
+                totalSavedPaise: "0",
+                grandTotalPaise: lateRecoveryFresh.grandTotalPaise,
+                thresholdProgress: null,
+                complimentary: null,
+                submittedCouponResult: null,
+              },
+            },
+          },
+        };
+      }
+      const couponFresh = buildSnapshot("88800", "snap-coupon");
+      couponFresh.sourceCartRevision = "3";
+      return {
+        ok: true as const,
+        data: {
+          checkout: {
+            ...checkout,
+            id: "chk-coupon",
+            revision: "5",
+            status: "READY_FOR_PAYMENT",
+            sourceCartRevision: "3",
+            activeSnapshot: couponFresh,
+          },
+          snapshot: couponFresh,
+          evaluationId: "eval-coupon",
+          reviewSurfaceToken: "token-coupon",
+          quote: {
+            commercialExplanation: {
+              couponPresentationClass: null,
+              merchandiseOrOrderSavingPaise: "0",
+              deliverySavingPaise: "0",
+              totalSavedPaise: "0",
+              grandTotalPaise: couponFresh.grandTotalPaise,
+              thresholdProgress: null,
+              complimentary: null,
+              submittedCouponResult: null,
+            },
+          },
+        },
+      };
+    });
+
+    await userEvent.click(screen.getByTestId("payment-start"));
+    await waitFor(() => expect(screen.getByTestId("copy-stale")).toBeInTheDocument());
+    await waitFor(() => expect(startCheckoutCalls).toBe(1));
+
+    const couponCart = { ...cart, revision: "3", manualCouponCode: null };
+    removeCartCoupon.mockResolvedValue({ ok: true, data: { cart: couponCart } });
+    setCheckoutFulfilment.mockResolvedValue({
+      ok: true,
+      data: {
+        checkout: {
+          ...checkout,
+          id: "chk-coupon",
+          fulfilmentMode: "DELIVERY",
+          revision: "2",
+          sourceCartRevision: "3",
+        },
+      },
+    });
+    setCheckoutDestination.mockResolvedValue({
+      ok: true,
+      data: {
+        checkout: {
+          ...checkout,
+          id: "chk-coupon",
+          fulfilmentMode: "DELIVERY",
+          revision: "3",
+          sourceCartRevision: "3",
+        },
+      },
+    });
+    setCheckoutFulfilmentTiming.mockResolvedValue({
+      ok: true,
+      data: {
+        checkout: {
+          ...checkout,
+          id: "chk-coupon",
+          fulfilmentMode: "DELIVERY",
+          revision: "4",
+          sourceCartRevision: "3",
+        },
+      },
+    });
+
+    await userEvent.click(screen.getByRole("button", { name: IMP036J_COPY.REMOVE }));
+    await waitFor(() => expect(removeCartCoupon).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(screen.getByTestId("price-summary-total")).toHaveTextContent("₹888.00"),
+    );
+    expect(screen.queryByTestId("copy-stale")).not.toBeInTheDocument();
+    expect(screen.getByTestId("continue-to-payment")).not.toBeDisabled();
+
+    // Resolve the older recovery startCheckout after the coupon Review won.
+    recoveryStartHold.resolve({
+      ok: true,
+      data: {
+        checkout: {
+          ...checkout,
+          id: "chk-late",
+          sourceCartRevision: cart.revision,
+          revision: "1",
+          status: "DRAFT",
+          activeSnapshot: null,
+        },
+      },
+    });
+
+    await waitFor(() => expect(startCheckoutCalls).toBeGreaterThanOrEqual(2));
+    // Flush any superseded recovery continuations.
+    await waitFor(() =>
+      expect(screen.getByTestId("price-summary-total")).toHaveTextContent("₹888.00"),
+    );
+    expect(screen.queryByTestId("copy-stale")).not.toBeInTheDocument();
+    expect(screen.queryByText(IMP036J_COPY.STALE)).not.toBeInTheDocument();
+    expect(screen.getByTestId("continue-to-payment")).not.toBeDisabled();
+    expect(startPayment).toHaveBeenCalledTimes(1);
+  });
+
+  it("failed automatic recovery still allows fulfilment escape without stale overwrite", async () => {
+    await renderReadyForPayment("95240");
+    startPayment.mockResolvedValue({ ok: false, code: "CHECKOUT_REPRICED", status: 409 });
+    getActiveCart.mockResolvedValue({ ok: false, code: "NETWORK_ERROR" });
+
+    await userEvent.click(screen.getByTestId("payment-start"));
+    await waitFor(() => expect(screen.getByTestId("continue-to-payment")).toBeDisabled());
+    expect(screen.getByTestId("copy-stale")).toHaveTextContent(IMP036J_COPY.STALE_UNCONFIRMED);
+
+    getActiveCheckout.mockResolvedValue({
+      ok: true,
+      data: {
+        checkout: {
+          ...checkout,
+          status: "READY_FOR_PAYMENT",
+          activeSnapshotId: "snap-old",
+          activeSnapshot: buildSnapshot("95240"),
+          sourceCartRevision: cart.revision,
+        },
+      },
+    });
+
+    await userEvent.click(screen.getByTestId("checkout-back-to-delivery"));
+    await waitFor(() =>
+      expect(screen.getByTestId("checkout-fulfilment-choice")).toBeInTheDocument(),
+    );
+    expect(screen.queryByTestId("copy-stale")).not.toBeInTheDocument();
+    expect(startPayment).toHaveBeenCalledTimes(1);
+  });
+
+  it("failed fulfilment escape keeps unconfirmed recovery and Continue disabled", async () => {
+    await renderReadyForPayment("95240");
+    startPayment.mockResolvedValue({ ok: false, code: "CHECKOUT_REPRICED", status: 409 });
+    getActiveCart.mockResolvedValue({ ok: false, code: "NETWORK_ERROR" });
+
+    await userEvent.click(screen.getByTestId("payment-start"));
+    await waitFor(() => expect(screen.getByTestId("continue-to-payment")).toBeDisabled());
+    expect(screen.getByTestId("copy-stale")).toHaveTextContent(IMP036J_COPY.STALE_UNCONFIRMED);
+
+    getActiveCheckout.mockResolvedValue({ ok: false, code: "NETWORK_ERROR" });
+    await userEvent.click(screen.getByTestId("checkout-back-to-delivery"));
+    await waitFor(() =>
+      expect(
+        screen.getByText("Network problem. Check your connection and try again."),
+      ).toBeInTheDocument(),
+    );
+    expect(screen.getByTestId("copy-stale")).toHaveTextContent(IMP036J_COPY.STALE_UNCONFIRMED);
+    expect(screen.getByTestId("continue-to-payment")).toBeDisabled();
+    expect(screen.queryByTestId("price-summary-total")).not.toBeInTheDocument();
+    expect(startPayment).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not call startPayment again when continuing after confirmed recovery", async () => {
+    await renderReadyForPayment("95240");
+    const fresh = buildSnapshot("95240", "snap-new");
+    mockSuccessfulRebase(fresh);
+    startPayment.mockResolvedValue({ ok: false, code: "CHECKOUT_REPRICED", status: 409 });
+
+    await userEvent.click(screen.getByTestId("payment-start"));
+    await waitFor(() => expect(screen.getByTestId("copy-stale")).toBeInTheDocument());
+    await userEvent.click(screen.getByTestId("continue-to-payment"));
+    await waitFor(() => expect(screen.getByTestId("checkout-payment")).toBeInTheDocument());
+    expect(startPayment).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId("copy-stale")).not.toBeInTheDocument();
+  });
+});
