@@ -35,6 +35,8 @@ import {
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = path.resolve(scriptDir, "..", "..");
+/** Protected primary worktree — must not be used as staging deploy checkout. */
+const PROTECTED_PRIMARY_REPOSITORY = "/home/ajoshi/repos/boba-bear-platform";
 const STAGING_PROJECT = "boba-staging";
 const STAGING_ENV_DIR = path.join(repositoryRoot, ".env.staging");
 const STAGING_RUNTIME_ASSETS_DIR = path.join(STAGING_ENV_DIR, "runtime-assets");
@@ -47,6 +49,17 @@ const STAGING_ENV_FILES = [
   ".env.customer-commerce.docker.local",
   ".env.operations.docker.local",
 ];
+/**
+ * customer-commerce Compose env_file precedence (later overrides earlier),
+ * then compose.yaml `environment:` overrides. Diagnostic projection must
+ * inspect this full stack — not only `.env.runtime.docker.local`.
+ */
+const CUSTOMER_COMMERCE_ENV_FILE_PRECEDENCE = [
+  ".env.runtime.docker.local",
+  ".env.customer-auth.docker.local",
+  ".env.customer-commerce.docker.local",
+];
+const DIAGNOSTIC_ENABLED_KEY = "BOBA_BEAR_CHECKOUT_PREPARE_DIAGNOSTIC_ENABLED";
 const SOCKET = `unix:///run/user/${process.getuid?.() ?? 1000}/podman/podman.sock`;
 const OCI_REVISION_LABEL = "org.opencontainers.image.revision";
 const BOBA_BUILD_IMAGES = {
@@ -374,7 +387,15 @@ function resolveStagingPostgresInitMount(
   const candidateManifest = collect(candidateSource);
   const candidateMaterializedPath = path.join(runtimeAssetsDir, "postgres-init", sha);
 
-  let activePostgres = { present: false, volumePresent: false, mountSource: null };
+  let activePostgres = {
+    present: false,
+    volumePresent: false,
+    mountSource: null,
+    project: null,
+    persistentVolume: null,
+    // Image upgrades are R3; preflight must not invent compatibility PASS.
+    imageCompatConflict: null,
+  };
   try {
     const database = inspect(container);
     const dataMounts = database.Mounts.filter(
@@ -386,10 +407,20 @@ function resolveStagingPostgresInitMount(
       volumePresent: dataMounts.length === 1,
       mountSource: initMount?.Source ?? null,
       project: database.Config.Labels?.["io.podman.compose.project"] ?? null,
+      persistentVolume: dataMounts.length === 1 ? volume : null,
+      // Live image-compat determination is not established by this probe.
+      imageCompatConflict: null,
     };
   } catch (error) {
     if (!String(error.message ?? error).includes("no such object")) throw error;
-    activePostgres = { present: false, volumePresent: false, mountSource: null };
+    activePostgres = {
+      present: false,
+      volumePresent: false,
+      mountSource: null,
+      project: null,
+      persistentVolume: null,
+      imageCompatConflict: null,
+    };
   }
 
   const disposition = resolvePostgresInitDisposition({
@@ -990,23 +1021,213 @@ function runServiceabilityUatSmoke() {
   }
 }
 
+function parseDiagnosticEnabledRaw(raw) {
+  if (raw == null || raw === "") return { defined: false, enabled: false };
+  // Match customer-commerce loadCheckoutPrepareDiagnosticConfig: exact "true" only.
+  return { defined: true, enabled: raw === "true" };
+}
+
 /**
- * Read diagnostic enablement from persistent staging env files without printing secrets.
+ * Project customer-commerce diagnostic enablement across Compose env_file
+ * precedence plus explicit compose `environment` overrides.
+ *
+ * Does not print raw environment values or secrets.
+ * Ambiguous / malformed / inaccessible / conflicting → invalid (never PASS).
+ *
+ * Full AppEnvironment/loadConfig projection remains UNKNOWN without an
+ * authorized architecture decision (BOBA_BEAR_ENV / TLS / auth origins unchanged).
  */
-function readStagingDiagnosticEnabled(stagingEnvDir = STAGING_ENV_DIR) {
-  const filePath = path.join(stagingEnvDir, ".env.runtime.docker.local");
-  if (!existsSync(filePath)) return { present: false, enabled: false };
-  const parsed = parseEnvFile(readFileSync(filePath, "utf8"));
-  const extracted = extractValues(parsed);
-  if (!extracted.ok) return { present: true, enabled: false, invalid: true };
-  const raw = extracted.values.BOBA_BEAR_CHECKOUT_PREPARE_DIAGNOSTIC_ENABLED;
-  const enabled = raw === "true" || raw === "1" || raw === "yes";
-  return { present: true, enabled, invalid: false };
+function readStagingDiagnosticEnabled(
+  stagingEnvDir = STAGING_ENV_DIR,
+  {
+    composeEnvironment = {},
+    envFilePrecedence = CUSTOMER_COMMERCE_ENV_FILE_PRECEDENCE,
+    readFile = readFileSync,
+    exists = existsSync,
+    repositoryRoot: root = repositoryRoot,
+  } = {},
+) {
+  /** @type {Array<{ file: string, present: boolean, defined: boolean, enabled: boolean, invalid?: boolean }>} */
+  const layers = [];
+  let anyUnreadable = false;
+  let anyMalformed = false;
+
+  for (const file of envFilePrecedence) {
+    const stagingPath = path.join(stagingEnvDir, file);
+    const repoPath = path.join(root, file);
+    const filePath = exists(stagingPath) ? stagingPath : exists(repoPath) ? repoPath : null;
+    if (!filePath) {
+      layers.push({ file, present: false, defined: false, enabled: false });
+      continue;
+    }
+    let content;
+    try {
+      content = readFile(filePath, "utf8");
+    } catch {
+      anyUnreadable = true;
+      layers.push({ file, present: true, defined: false, enabled: false, invalid: true });
+      continue;
+    }
+    const parsed = parseEnvFile(content);
+    const extracted = extractValues(parsed);
+    if (!extracted.ok) {
+      anyMalformed = true;
+      layers.push({ file, present: true, defined: false, enabled: false, invalid: true });
+      continue;
+    }
+    const parsedFlag = parseDiagnosticEnabledRaw(extracted.values[DIAGNOSTIC_ENABLED_KEY]);
+    layers.push({
+      file,
+      present: true,
+      defined: parsedFlag.defined,
+      enabled: parsedFlag.enabled,
+    });
+  }
+
+  const composeRaw = Object.prototype.hasOwnProperty.call(composeEnvironment, DIAGNOSTIC_ENABLED_KEY)
+    ? composeEnvironment[DIAGNOSTIC_ENABLED_KEY]
+    : undefined;
+  const composeFlag = parseDiagnosticEnabledRaw(composeRaw);
+  if (composeFlag.defined) {
+    layers.push({
+      file: "compose.environment",
+      present: true,
+      defined: true,
+      enabled: composeFlag.enabled,
+    });
+  }
+
+  const definedLayers = layers.filter((layer) => layer.defined);
+  const enabledSet = new Set(definedLayers.map((layer) => layer.enabled));
+  const conflict = enabledSet.size > 1;
+
+  // Compose last-wins effective value (env_file order then compose.environment).
+  let effectiveEnabled = false;
+  for (const layer of layers) {
+    if (layer.defined) effectiveEnabled = layer.enabled;
+  }
+
+  // Fail closed: any defined true in the stack is reported enabled for Gate 2.
+  const anyEnabled = definedLayers.some((layer) => layer.enabled === true);
+
+  if (anyUnreadable || anyMalformed || conflict) {
+    return {
+      present: layers.some((layer) => layer.present),
+      enabled: true,
+      invalid: true,
+      conflict,
+      projectionKnown: false,
+      projectedState: "UNKNOWN",
+      layerCount: layers.length,
+    };
+  }
+
+  return {
+    present: layers.every((layer) => layer.file === "compose.environment" || layer.present),
+    enabled: anyEnabled || effectiveEnabled,
+    invalid: false,
+    conflict: false,
+    projectionKnown: true,
+    projectedState: "PROJECTED",
+    layerCount: layers.length,
+  };
+}
+
+/**
+ * Verify rootless Podman socket/engine and inspect the specific staging
+ * PostgreSQL container's Compose project / volume identity.
+ * Never creates or starts containers.
+ */
+function probeStagingRuntimeIdentity({
+  inspect = inspectJson,
+  uid = process.getuid?.(),
+  socketPath = null,
+  exists = existsSync,
+  expectedProject = STAGING_PROJECT,
+  expectedContainer = `${STAGING_PROJECT}_postgres_1`,
+  expectedVolume = `${STAGING_PROJECT}_postgres-data`,
+} = {}) {
+  if (uid == null || uid === 0) {
+    return {
+      evidenceComplete: false,
+      identityUnknown: true,
+      podmanRootless: false,
+      composeProject: null,
+      postgresContainer: null,
+      postgresVolume: null,
+      unexpectedTarget: null,
+      detail: "podman rootless uid proof missing",
+    };
+  }
+  const sock = socketPath ?? `/run/user/${uid}/podman/podman.sock`;
+  if (!exists(sock)) {
+    return {
+      evidenceComplete: false,
+      identityUnknown: true,
+      podmanRootless: false,
+      composeProject: null,
+      postgresContainer: null,
+      postgresVolume: null,
+      unexpectedTarget: null,
+      detail: "podman rootless socket missing",
+    };
+  }
+
+  try {
+    const database = inspect(expectedContainer);
+    const project = database?.Config?.Labels?.["io.podman.compose.project"] ?? null;
+    const mounts = Array.isArray(database?.Mounts) ? database.Mounts : [];
+    const dataMounts = mounts.filter(
+      (mount) => mount.Name === expectedVolume && mount.Destination === "/var/lib/postgresql",
+    );
+    const projectOk = project === expectedProject;
+    const volumeOk = dataMounts.length === 1;
+    const unexpectedTarget = !(projectOk && volumeOk);
+    return {
+      evidenceComplete: true,
+      identityUnknown: false,
+      podmanRootless: true,
+      composeProject: project,
+      postgresContainer: expectedContainer,
+      postgresVolume: volumeOk ? expectedVolume : null,
+      unexpectedTarget,
+      detail: unexpectedTarget ? "compose project or persistent volume identity mismatch" : undefined,
+    };
+  } catch (error) {
+    return {
+      evidenceComplete: false,
+      identityUnknown: true,
+      podmanRootless: true,
+      composeProject: null,
+      postgresContainer: null,
+      postgresVolume: null,
+      unexpectedTarget: null,
+      detail: error instanceof Error ? error.message : "container inspect failed",
+    };
+  }
+}
+
+function readRepositoryIdentityFromRemote(remoteUrl = null) {
+  let url = remoteUrl;
+  if (url == null) {
+    try {
+      url = git(["remote", "get-url", "origin"]);
+    } catch {
+      return null;
+    }
+  }
+  if (typeof url !== "string" || url.length === 0) return null;
+  const ssh = url.match(/git@github\.com:([^/]+\/[^/.]+)(?:\.git)?$/i);
+  if (ssh) return ssh[1];
+  const https = url.match(/github\.com\/([^/]+\/[^/.]+?)(?:\.git)?$/i);
+  if (https) return https[1];
+  return null;
 }
 
 /**
  * Gather read-only preflight evidence. Never starts/stops containers or writes env files.
  * Missing recovery/security/database proof fails closed (no fabricated PASS).
+ * Test-only synthetic PASS fixtures live in staging-preflight.validPreflightEvidence only.
  */
 function gatherStagingPreflightEvidence(
   candidate,
@@ -1019,13 +1240,16 @@ function gatherStagingPreflightEvidence(
     readDiagnostic = readStagingDiagnosticEnabled,
     resolveInit = null,
     publishingState = { deployWorkflowState: "UNKNOWN", pagesSourceKnown: false, unsafeActivePublishingPath: true },
-    podmanRootless = () => Boolean(process.getuid?.() && process.getuid() !== 0),
-    protectedCheckoutUsed = false,
+    probeRuntime = probeStagingRuntimeIdentity,
+    repositoryIdentityOf = readRepositoryIdentityFromRemote,
+    protectedCheckoutUsed = path.resolve(repositoryRoot) === path.resolve(PROTECTED_PRIMARY_REPOSITORY),
   } = {},
 ) {
   let tree;
+  let originMainTree;
   try {
     tree = treeOf(candidate.head);
+    originMainTree = treeOf(candidate.originMain);
   } catch (error) {
     return {
       probeError: true,
@@ -1034,6 +1258,8 @@ function gatherStagingPreflightEvidence(
   }
 
   const diagnostic = readDiagnostic();
+  const runtime = probeRuntime();
+  const repositoryIdentity = repositoryIdentityOf();
   const initResolution =
     typeof resolveInit === "function"
       ? resolveInit()
@@ -1044,29 +1270,40 @@ function gatherStagingPreflightEvidence(
           },
         };
 
+  // Full projected AppConfig validation via loadConfig would require an
+  // unapproved architecture decision (BOBA_BEAR_ENV / origins / TLS policy).
+  // Until authorized, projected config remains UNKNOWN → preflight BLOCKED.
+  const projectedConfigState = "UNKNOWN";
+  const projectedConfigValid = false;
+
   return {
     source: {
-      repositoryIdentity: "nivedhya11/BobaBear",
+      repositoryIdentity: repositoryIdentity ?? "UNKNOWN",
       branch: candidate.branch,
       head: candidate.head,
       originMain: candidate.originMain,
       tree,
-      originMainTree: treeOf(candidate.originMain),
+      originMainTree,
       trackedDirty: candidate.trackedDirty,
       protectedCheckoutUsed,
     },
     publishing: publishingState,
     runtime: {
-      podmanRootless: podmanRootless(),
-      composeProject: STAGING_PROJECT,
-      postgresContainer: `${STAGING_PROJECT}_postgres_1`,
-      postgresVolume: `${STAGING_PROJECT}_postgres-data`,
-      unexpectedTarget: false,
+      evidenceComplete: runtime.evidenceComplete === true,
+      identityUnknown: runtime.identityUnknown === true,
+      podmanRootless: runtime.podmanRootless === true,
+      composeProject: runtime.composeProject,
+      postgresContainer: runtime.postgresContainer,
+      postgresVolume: runtime.postgresVolume,
+      unexpectedTarget: runtime.unexpectedTarget,
     },
     environment: {
       requiredEnvFilesPresent: requiredEnvFilesPresent(),
-      projectedConfigValid: diagnostic.invalid !== true,
+      projectedConfigValid,
+      projectedConfigState,
+      diagnosticProjectionKnown: diagnostic.projectionKnown === true,
       diagnosticEnabled: diagnostic.enabled === true,
+      diagnosticConflict: diagnostic.conflict === true || diagnostic.invalid === true,
       bobaBearEnvDrift: false,
       secretsPrinted: false,
     },
@@ -1079,7 +1316,10 @@ function gatherStagingPreflightEvidence(
     },
     recovery: {
       // Staging-specific qualified restore checkpoint is not yet auto-established.
+      // Completing a future R3 backup alone does not make deployment executable;
+      // additional authorized live evidence bindings are still required before Gate 2.
       bindingDesignDependency: true,
+      binding: "RECOVERY_PROOF_BINDING = DESIGN_DEPENDENCY",
       checkpointPresent: false,
       integrityVerified: false,
       restoreProofPresent: false,
@@ -1325,6 +1565,7 @@ export {
   BOBA_RUNTIME_SERVICES,
   STAGING_PUBLIC_ORIGIN,
   STAGING_RUNTIME_ASSETS_DIR,
+  CUSTOMER_COMMERCE_ENV_FILE_PRECEDENCE,
   assertImageRevisions,
   assertRunningProvenance,
   assertLegacyPostgresRecoveryTarget,
@@ -1348,4 +1589,7 @@ export {
   gatherStagingPreflightEvidence,
   verifyPreMutationReadiness,
   resolveStagingPostgresInitMount,
+  readStagingDiagnosticEnabled,
+  probeStagingRuntimeIdentity,
+  readRepositoryIdentityFromRemote,
 };

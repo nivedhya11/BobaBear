@@ -8,6 +8,8 @@
  * Only PASS may authorize progression into operational deployment effects.
  *
  * Operator-supplied booleans / "ready=true" flags are ignored as authority.
+ * Missing evidence never means PASS — every PASS field requires explicit
+ * independently established positive proof.
  */
 import { ENVIRONMENT_CLASSIFICATION } from "../recovery/constants.mjs";
 import { evaluateQualifyingRecoveryProof, validateEvidence } from "../recovery/evidence.mjs";
@@ -27,6 +29,7 @@ export const PREFLIGHT_REASON = Object.freeze({
   RUNTIME_IDENTITY_INVALID: "RUNTIME_IDENTITY_INVALID",
   ENVIRONMENT_INVALID: "ENVIRONMENT_INVALID",
   DIAGNOSTIC_UNEXPECTEDLY_ENABLED: "DIAGNOSTIC_UNEXPECTEDLY_ENABLED",
+  PROJECTED_CONFIG_UNKNOWN: "PROJECTED_CONFIG_UNKNOWN",
   DATABASE_STATE_UNKNOWN_OR_UNSAFE: "DATABASE_STATE_UNKNOWN_OR_UNSAFE",
   BASELINE_INCOMPATIBLE_OR_UNKNOWN: "BASELINE_INCOMPATIBLE_OR_UNKNOWN",
   RECOVERY_PROOF_MISSING: "RECOVERY_PROOF_MISSING",
@@ -42,10 +45,26 @@ export const PREFLIGHT_REASON = Object.freeze({
   EVIDENCE_MALFORMED: "EVIDENCE_MALFORMED",
 });
 
+/** Exact repository identity required for Founder staging deploy authority. */
+export const EXPECTED_REPOSITORY_IDENTITY = "nivedhya11/BobaBear";
+
+/**
+ * Explicit known-safe migration ledger states. Arbitrary strings are refused.
+ * Synthetic PASS fixtures must use one of these; live probes must establish them.
+ */
+export const KNOWN_SAFE_MIGRATION_LEDGER_STATES = Object.freeze([
+  "APPLIED_CURRENT",
+  "LEDGER_CURRENT",
+]);
+
 /**
  * @typedef {"PASS"|"BLOCKED"|"UNKNOWN"} PreflightOutcome
  * @typedef {{ code: string, category: string, detail?: string }} PreflightFinding
  */
+
+function isFullGitSha(value) {
+  return typeof value === "string" && /^[0-9a-f]{40}$/.test(value);
+}
 
 /**
  * @param {unknown} evidence
@@ -153,37 +172,95 @@ export function assertPreflightAllowsDeployment(decision) {
 
 function evaluateSource(source, findings) {
   if (!source || typeof source !== "object") {
-    findings.push({ code: PREFLIGHT_REASON.SOURCE_AUTHORITY_INVALID, category: "source", detail: "missing source evidence" });
-    return PREFLIGHT_OUTCOME.UNKNOWN;
-  }
-  const branchOk = source.branch === "main";
-  const shaOk =
-    typeof source.head === "string" &&
-    /^[0-9a-f]{40}$/.test(source.head) &&
-    source.head === source.originMain;
-  const treeOk =
-    source.tree == null ||
-    (typeof source.tree === "string" &&
-      /^[0-9a-f]{40}$/.test(source.tree) &&
-      (source.originMainTree == null || source.tree === source.originMainTree));
-  const clean = source.trackedDirty === "" || source.trackedDirty == null;
-  const notProtected = source.protectedCheckoutUsed !== true;
-  const repoOk =
-    source.repositoryIdentity == null ||
-    source.repositoryIdentity === "nivedhya11/BobaBear" ||
-    source.repositoryIdentity === "VERIFIED";
-
-  if (!branchOk || !shaOk || !clean || !notProtected || !repoOk) {
     findings.push({
-      code: !shaOk || !treeOk ? PREFLIGHT_REASON.SOURCE_SHA_TREE_DRIFT : PREFLIGHT_REASON.SOURCE_DIRTY_OR_PROTECTED,
+      code: PREFLIGHT_REASON.SOURCE_AUTHORITY_INVALID,
       category: "source",
+      detail: "missing source evidence",
     });
     return PREFLIGHT_OUTCOME.BLOCKED;
   }
-  if (!treeOk) {
-    findings.push({ code: PREFLIGHT_REASON.SOURCE_SHA_TREE_DRIFT, category: "source" });
+
+  if (source.repositoryIdentity !== EXPECTED_REPOSITORY_IDENTITY) {
+    findings.push({
+      code: PREFLIGHT_REASON.SOURCE_AUTHORITY_INVALID,
+      category: "source",
+      detail: "repositoryIdentity must be verified and exact",
+    });
     return PREFLIGHT_OUTCOME.BLOCKED;
   }
+
+  if (source.branch !== "main") {
+    findings.push({
+      code: PREFLIGHT_REASON.SOURCE_AUTHORITY_INVALID,
+      category: "source",
+      detail: "branch must be exact main",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+
+  if (!isFullGitSha(source.head) || !isFullGitSha(source.originMain)) {
+    findings.push({
+      code: PREFLIGHT_REASON.SOURCE_SHA_TREE_DRIFT,
+      category: "source",
+      detail: "source head and origin-main must be exact full SHAs",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+
+  if (source.head !== source.originMain) {
+    findings.push({
+      code: PREFLIGHT_REASON.SOURCE_SHA_TREE_DRIFT,
+      category: "source",
+      detail: "source head must equal origin-main",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+
+  if (!isFullGitSha(source.tree) || !isFullGitSha(source.originMainTree)) {
+    findings.push({
+      code: PREFLIGHT_REASON.SOURCE_SHA_TREE_DRIFT,
+      category: "source",
+      detail: "candidate and authoritative trees must be present and valid full SHAs",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+
+  if (source.tree !== source.originMainTree) {
+    findings.push({
+      code: PREFLIGHT_REASON.SOURCE_SHA_TREE_DRIFT,
+      category: "source",
+      detail: "candidate tree must equal authoritative origin-main tree",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+
+  if (typeof source.trackedDirty !== "string") {
+    findings.push({
+      code: PREFLIGHT_REASON.SOURCE_DIRTY_OR_PROTECTED,
+      category: "source",
+      detail: "trackedDirty evidence must be explicitly known",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+
+  if (source.trackedDirty !== "") {
+    findings.push({
+      code: PREFLIGHT_REASON.SOURCE_DIRTY_OR_PROTECTED,
+      category: "source",
+      detail: "trackedDirty must be empty",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+
+  if (source.protectedCheckoutUsed !== false) {
+    findings.push({
+      code: PREFLIGHT_REASON.SOURCE_DIRTY_OR_PROTECTED,
+      category: "source",
+      detail: "protectedCheckoutUsed must be explicitly false",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+
   return PREFLIGHT_OUTCOME.PASS;
 }
 
@@ -211,12 +288,20 @@ function evaluateRuntime(runtime, findings) {
     findings.push({ code: PREFLIGHT_REASON.RUNTIME_IDENTITY_INVALID, category: "runtime", detail: "missing runtime evidence" });
     return PREFLIGHT_OUTCOME.UNKNOWN;
   }
+  if (runtime.identityUnknown === true || runtime.evidenceComplete !== true) {
+    findings.push({
+      code: PREFLIGHT_REASON.RUNTIME_IDENTITY_INVALID,
+      category: "runtime",
+      detail: "runtime identity evidence incomplete or unknown",
+    });
+    return PREFLIGHT_OUTCOME.UNKNOWN;
+  }
   const ok =
     runtime.podmanRootless === true &&
     runtime.composeProject === "boba-staging" &&
     runtime.postgresContainer === "boba-staging_postgres_1" &&
     runtime.postgresVolume === "boba-staging_postgres-data" &&
-    runtime.unexpectedTarget !== true;
+    runtime.unexpectedTarget === false;
   if (!ok) {
     findings.push({ code: PREFLIGHT_REASON.RUNTIME_IDENTITY_INVALID, category: "runtime" });
     return PREFLIGHT_OUTCOME.BLOCKED;
@@ -229,14 +314,43 @@ function evaluateEnvironment(environment, findings) {
     findings.push({ code: PREFLIGHT_REASON.ENVIRONMENT_INVALID, category: "environment", detail: "missing environment evidence" });
     return PREFLIGHT_OUTCOME.UNKNOWN;
   }
-  if (environment.diagnosticEnabled === true) {
+
+  if (
+    environment.projectedConfigState === "UNKNOWN" ||
+    environment.projectedConfigState === "INVALID" ||
+    environment.projectedConfigValid !== true
+  ) {
+    findings.push({
+      code:
+        environment.projectedConfigState === "UNKNOWN"
+          ? PREFLIGHT_REASON.PROJECTED_CONFIG_UNKNOWN
+          : PREFLIGHT_REASON.ENVIRONMENT_INVALID,
+      category: "environment",
+      detail: "projected configuration must be positively validated; UNKNOWN/INVALID never PASS",
+    });
+    return environment.projectedConfigState === "UNKNOWN"
+      ? PREFLIGHT_OUTCOME.UNKNOWN
+      : PREFLIGHT_OUTCOME.BLOCKED;
+  }
+
+  if (environment.diagnosticEnabled === true || environment.diagnosticConflict === true) {
     findings.push({
       code: PREFLIGHT_REASON.DIAGNOSTIC_UNEXPECTEDLY_ENABLED,
       category: "environment",
-      detail: "Gate 2 deploy path requires diagnostic observer disabled",
+      detail: "Gate 2 deploy path requires diagnostic observer disabled with no conflicting enablement",
     });
     return PREFLIGHT_OUTCOME.BLOCKED;
   }
+
+  if (environment.diagnosticProjectionKnown !== true) {
+    findings.push({
+      code: PREFLIGHT_REASON.ENVIRONMENT_INVALID,
+      category: "environment",
+      detail: "diagnostic enablement projection must be explicitly known",
+    });
+    return PREFLIGHT_OUTCOME.UNKNOWN;
+  }
+
   const ok =
     environment.requiredEnvFilesPresent === true &&
     environment.projectedConfigValid === true &&
@@ -259,15 +373,22 @@ function evaluateDatabase(database, findings) {
     });
     return PREFLIGHT_OUTCOME.UNKNOWN;
   }
-  if (database.migrationLedgerState === "UNKNOWN" || database.migrationIdentityKnown !== true) {
+  if (database.migrationIdentityKnown !== true) {
     findings.push({ code: PREFLIGHT_REASON.DATABASE_STATE_UNKNOWN_OR_UNSAFE, category: "database" });
     return PREFLIGHT_OUTCOME.UNKNOWN;
   }
   if (
-    database.migrationLedgerState === "PENDING_UNEXPLAINED" ||
-    database.migrationLedgerState === "DESTRUCTIVE_PENDING" ||
-    database.unexplainedPendingMutation === true
+    typeof database.migrationLedgerState !== "string" ||
+    !KNOWN_SAFE_MIGRATION_LEDGER_STATES.includes(database.migrationLedgerState)
   ) {
+    findings.push({
+      code: PREFLIGHT_REASON.DATABASE_STATE_UNKNOWN_OR_UNSAFE,
+      category: "database",
+      detail: "migration ledger state is not an explicit known-safe value",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+  if (database.unexplainedPendingMutation === true) {
     findings.push({ code: PREFLIGHT_REASON.DATABASE_STATE_UNKNOWN_OR_UNSAFE, category: "database" });
     return PREFLIGHT_OUTCOME.BLOCKED;
   }
@@ -304,6 +425,15 @@ function evaluateRecovery(recovery, findings) {
       detail: "staging-specific restore checkpoint cannot yet be automatically established from repository evidence authority",
     });
     return { outcome: PREFLIGHT_OUTCOME.BLOCKED, binding: "RECOVERY_PROOF_BINDING = DESIGN_DEPENDENCY" };
+  }
+
+  if (recovery.binding == null || recovery.binding === "UNKNOWN" || recovery.binding === "") {
+    findings.push({
+      code: PREFLIGHT_REASON.RECOVERY_EVIDENCE_STALE_OR_MISBOUND,
+      category: "recovery",
+      detail: "recovery-proof binding unknown",
+    });
+    return { outcome: PREFLIGHT_OUTCOME.BLOCKED, binding: "RECOVERY_PROOF_BINDING = UNKNOWN" };
   }
 
   if (recovery.checkpointPresent !== true) {
@@ -353,7 +483,7 @@ function evaluateRecovery(recovery, findings) {
     }
   }
 
-  return { outcome: PREFLIGHT_OUTCOME.PASS, binding: recovery.binding ?? "BOUND" };
+  return { outcome: PREFLIGHT_OUTCOME.PASS, binding: recovery.binding };
 }
 
 function evaluateSecurity(security, findings) {
@@ -365,8 +495,14 @@ function evaluateSecurity(security, findings) {
     findings.push({ code: PREFLIGHT_REASON.SECURITY_RISK_WAIVED, category: "security" });
     return PREFLIGHT_OUTCOME.BLOCKED;
   }
-  if (security.imageSecurityEvidenceRequired === true && security.imageSecurityEvidencePresent !== true) {
-    findings.push({ code: PREFLIGHT_REASON.SECURITY_EVIDENCE_MISSING, category: "security" });
+  // Image-security proof is never optional. An unchecked/omitted "required"
+  // boolean must not authorize PASS without independently present correlation.
+  if (security.imageSecurityEvidencePresent !== true) {
+    findings.push({
+      code: PREFLIGHT_REASON.SECURITY_EVIDENCE_MISSING,
+      category: "security",
+      detail: "image security evidence must be independently present",
+    });
     return PREFLIGHT_OUTCOME.BLOCKED;
   }
   if (security.sourceImageCorrelated !== true) {
@@ -423,11 +559,12 @@ function evaluatePostgresInit(postgresInit, findings) {
 /**
  * Construct a fully valid evidence object for isolated tests only.
  * Not an operator bypass — production probes must independently establish each field.
+ * Keep test-only synthetic PASS fixtures separate from live trusted-probe authority.
  */
 export function validPreflightEvidence(overrides = {}) {
   return {
     source: {
-      repositoryIdentity: "nivedhya11/BobaBear",
+      repositoryIdentity: EXPECTED_REPOSITORY_IDENTITY,
       branch: "main",
       head: "a".repeat(40),
       originMain: "a".repeat(40),
@@ -444,6 +581,8 @@ export function validPreflightEvidence(overrides = {}) {
       ...(overrides.publishing ?? {}),
     },
     runtime: {
+      evidenceComplete: true,
+      identityUnknown: false,
       podmanRootless: true,
       composeProject: "boba-staging",
       postgresContainer: "boba-staging_postgres_1",
@@ -454,14 +593,17 @@ export function validPreflightEvidence(overrides = {}) {
     environment: {
       requiredEnvFilesPresent: true,
       projectedConfigValid: true,
+      projectedConfigState: "VALID",
+      diagnosticProjectionKnown: true,
       diagnosticEnabled: false,
+      diagnosticConflict: false,
       bobaBearEnvDrift: false,
       secretsPrinted: false,
       ...(overrides.environment ?? {}),
     },
     database: {
       migrationIdentityKnown: true,
-      migrationLedgerState: "KNOWN",
+      migrationLedgerState: "APPLIED_CURRENT",
       baselineCompatibility: "COMPLETE_COMPATIBLE",
       unexplainedPendingMutation: false,
       ...(overrides.database ?? {}),
@@ -475,6 +617,7 @@ export function validPreflightEvidence(overrides = {}) {
       stagingBound: true,
       freshnessOk: true,
       bindingDesignDependency: false,
+      binding: "BOUND",
       ...(overrides.recovery ?? {}),
     },
     security: {

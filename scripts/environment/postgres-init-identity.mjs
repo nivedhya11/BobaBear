@@ -32,8 +32,18 @@ export const POSTGRES_INIT_REASON = Object.freeze({
   ABSENT_VOLUME: "POSTGRES_INIT_ABSENT_VOLUME",
   MALFORMED_MOUNT: "POSTGRES_INIT_MALFORMED_MOUNT",
   IMAGE_COMPAT_CONFLICT: "POSTGRES_INIT_IMAGE_COMPAT_CONFLICT",
+  IMAGE_COMPAT_UNKNOWN: "POSTGRES_INIT_IMAGE_COMPAT_UNKNOWN",
   IDENTITY_CONFLICT: "POSTGRES_INIT_IDENTITY_CONFLICT",
+  WRONG_COMPOSE_PROJECT: "POSTGRES_INIT_WRONG_COMPOSE_PROJECT",
+  WRONG_PERSISTENT_VOLUME: "POSTGRES_INIT_WRONG_PERSISTENT_VOLUME",
+  SOURCE_ISOLATION_UNRESOLVED: "POSTGRES_INIT_SOURCE_ISOLATION_UNRESOLVED",
 });
+
+/** Authoritative Founder staging Compose project for PostgreSQL init preservation. */
+export const EXPECTED_STAGING_COMPOSE_PROJECT = "boba-staging";
+
+/** Authoritative persistent volume name for Founder staging PostgreSQL. */
+export const EXPECTED_STAGING_POSTGRES_VOLUME = "boba-staging_postgres-data";
 
 /**
  * @typedef {{ relativePath: string, digest: string, executable: boolean }} InitFileIdentity
@@ -235,12 +245,52 @@ export function compareInitManifests(left, right) {
 }
 
 /**
+ * Detect a staging postgres-init mount that appears owned by a different
+ * checkout's `.env.staging/runtime-assets` tree (source-isolation decision).
+ *
+ * @param {string} mountSource
+ * @param {{ runtimeAssetsRoot: string, realpath?: typeof realpathSync }} roots
+ */
+export function isForeignStagingRuntimeAssetsMount(mountSource, roots) {
+  if (typeof mountSource !== "string" || mountSource.trim().length === 0) return false;
+  const realpath = roots.realpath ?? realpathSync;
+  let resolved;
+  try {
+    resolved = realpath(mountSource);
+  } catch {
+    return false;
+  }
+  const marker = `${path.sep}.env.staging${path.sep}runtime-assets${path.sep}postgres-init${path.sep}`;
+  if (!resolved.includes(marker)) return false;
+  try {
+    const runtimeRoot = realpath(roots.runtimeAssetsRoot);
+    const underOwned =
+      resolved === runtimeRoot || resolved.startsWith(`${runtimeRoot}${path.sep}`);
+    return !underOwned;
+  } catch {
+    // Owned mount root cannot be established safely.
+    return true;
+  }
+}
+
+/**
  * Resolve whether an existing PostgreSQL init mount may be preserved for a
  * candidate Git tree. Never authorizes automatic recreation on mismatch.
  *
+ * Trust is limited to the owned staging runtime-assets tree (and optional
+ * exact repository init path). Arbitrary absolute paths are never trusted.
+ * Real PostgreSQL image upgrades remain a separate R3 action.
+ *
  * @param {object} input
  * @param {InitManifest} input.candidateManifest
- * @param {{ present: boolean, mountSource?: string | null, volumePresent?: boolean, imageCompatConflict?: boolean }} input.activePostgres
+ * @param {{
+ *   present: boolean,
+ *   mountSource?: string | null,
+ *   volumePresent?: boolean,
+ *   persistentVolume?: string | null,
+ *   project?: string | null,
+ *   imageCompatConflict?: boolean | null,
+ * }} input.activePostgres
  * @param {{ runtimeAssetsRoot: string, repositoryInitRoot?: string }} input.trustRoots
  * @param {(source: string, roots: object) => boolean} [input.trustPath]
  * @param {(root: string) => InitManifest} [input.collect]
@@ -249,6 +299,17 @@ export function resolvePostgresInitDisposition(input) {
   const trustPath = input.trustPath ?? isTrustedStagingInitMountPath;
   const collect = input.collect ?? collectInitManifest;
   const active = input.activePostgres ?? { present: false };
+
+  // Missing image-compatibility determination must never become compatibility PASS.
+  if (active.imageCompatConflict == null) {
+    return {
+      disposition: POSTGRES_INIT_DISPOSITION.UNKNOWN,
+      reasonCode: POSTGRES_INIT_REASON.IMAGE_COMPAT_UNKNOWN,
+      preserveMountSource: null,
+      composeInitDir: null,
+      note: "PostgreSQL image compatibility must be positively determined; real image upgrades are a separate R3 action.",
+    };
+  }
 
   if (active.imageCompatConflict === true) {
     return {
@@ -269,12 +330,44 @@ export function resolvePostgresInitDisposition(input) {
     };
   }
 
+  if (active.project !== EXPECTED_STAGING_COMPOSE_PROJECT) {
+    return {
+      disposition: POSTGRES_INIT_DISPOSITION.BLOCK,
+      reasonCode: POSTGRES_INIT_REASON.WRONG_COMPOSE_PROJECT,
+      preserveMountSource: null,
+      composeInitDir: null,
+      detail: "verified Compose project must be boba-staging before PRESERVE",
+    };
+  }
+
   if (active.volumePresent === false) {
     return {
       disposition: POSTGRES_INIT_DISPOSITION.BLOCK,
       reasonCode: POSTGRES_INIT_REASON.ABSENT_VOLUME,
       preserveMountSource: null,
       composeInitDir: null,
+    };
+  }
+
+  if (
+    active.persistentVolume != null &&
+    active.persistentVolume !== EXPECTED_STAGING_POSTGRES_VOLUME
+  ) {
+    return {
+      disposition: POSTGRES_INIT_DISPOSITION.BLOCK,
+      reasonCode: POSTGRES_INIT_REASON.WRONG_PERSISTENT_VOLUME,
+      preserveMountSource: null,
+      composeInitDir: null,
+    };
+  }
+
+  if (active.volumePresent !== true) {
+    return {
+      disposition: POSTGRES_INIT_DISPOSITION.UNKNOWN,
+      reasonCode: POSTGRES_INIT_REASON.ABSENT_VOLUME,
+      preserveMountSource: null,
+      composeInitDir: null,
+      detail: "persistent volume presence must be explicitly known",
     };
   }
 
@@ -285,6 +378,26 @@ export function resolvePostgresInitDisposition(input) {
       reasonCode: POSTGRES_INIT_REASON.MALFORMED_MOUNT,
       preserveMountSource: null,
       composeInitDir: null,
+    };
+  }
+
+  if (!input.trustRoots?.runtimeAssetsRoot) {
+    return {
+      disposition: POSTGRES_INIT_DISPOSITION.UNKNOWN,
+      reasonCode: POSTGRES_INIT_REASON.SOURCE_ISOLATION_UNRESOLVED,
+      preserveMountSource: null,
+      composeInitDir: null,
+      note: "Owned staging runtime-assets mount root could not be established; source-isolation decision required.",
+    };
+  }
+
+  if (isForeignStagingRuntimeAssetsMount(mountSource, input.trustRoots)) {
+    return {
+      disposition: POSTGRES_INIT_DISPOSITION.UNKNOWN,
+      reasonCode: POSTGRES_INIT_REASON.SOURCE_ISOLATION_UNRESOLVED,
+      preserveMountSource: null,
+      composeInitDir: null,
+      note: "Active init mount is under a different checkout's staging runtime-assets; do not broaden trust to arbitrary absolute paths.",
     };
   }
 

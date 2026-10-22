@@ -284,6 +284,13 @@ STAGING_DEPLOY_MUTATION_STARTED = NO
 That BLOCK is an expected safety result until an authorized R3 staging recovery
 checkpoint exists. It does **not** claim production readiness.
 
+Critical dependency (intentional): completing a future R3 backup alone does **not**
+make the current deployment executable. Additional authorized live evidence bindings
+are still required before Gate 2, including staging-specific recovery-proof binding,
+live migration/baseline evidence, candidate image-security identity, publishing
+evidence when unavailable, and capacity/rollback evidence when unavailable. Those
+remain fail-closed; they must not be replaced with permissive defaults.
+
 `npm run env:staging:status` remains read-only. `npm run env:staging:deploy:dry-run`
 remains non-mutating and reports that preflight readiness is **not** established as
 deployment authorization.

@@ -45,7 +45,7 @@ test("I01: same content + same path -> preserve PostgreSQL", () => {
     const result = resolvePostgresInitDisposition({
       candidateManifest: manifest,
       candidateMaterializedPath: initDir,
-      activePostgres: { present: true, volumePresent: true, mountSource: initDir },
+      activePostgres: { present: true, volumePresent: true, mountSource: initDir, project: "boba-staging", persistentVolume: "boba-staging_postgres-data", imageCompatConflict: false },
       trustRoots: { runtimeAssetsRoot: path.join(tmp, "runtime-assets") },
     });
     assert.equal(result.disposition, POSTGRES_INIT_DISPOSITION.PRESERVE);
@@ -68,7 +68,7 @@ test("I02: same content + different SHA directory -> preserve PostgreSQL", () =>
     const result = resolvePostgresInitDisposition({
       candidateManifest,
       candidateMaterializedPath: newDir,
-      activePostgres: { present: true, volumePresent: true, mountSource: oldDir },
+      activePostgres: { present: true, volumePresent: true, mountSource: oldDir, project: "boba-staging", persistentVolume: "boba-staging_postgres-data", imageCompatConflict: false },
       trustRoots: { runtimeAssetsRoot: path.join(tmp, "runtime-assets") },
     });
     assert.equal(result.disposition, POSTGRES_INIT_DISPOSITION.PRESERVE);
@@ -90,7 +90,7 @@ test("I03: different source content -> fail closed, zero PostgreSQL mutation", (
     const result = resolvePostgresInitDisposition({
       candidateManifest: collectInitManifest(newDir),
       candidateMaterializedPath: newDir,
-      activePostgres: { present: true, volumePresent: true, mountSource: oldDir },
+      activePostgres: { present: true, volumePresent: true, mountSource: oldDir, project: "boba-staging", persistentVolume: "boba-staging_postgres-data", imageCompatConflict: false },
       trustRoots: { runtimeAssetsRoot: path.join(tmp, "runtime-assets") },
     });
     assert.equal(result.disposition, POSTGRES_INIT_DISPOSITION.BLOCK);
@@ -167,7 +167,7 @@ test("I07: wrong volume or mount target -> fail closed", () => {
     );
     const result = resolvePostgresInitDisposition({
       candidateManifest: collectInitManifest(initDir),
-      activePostgres: { present: true, volumePresent: true, mountSource: untrusted },
+      activePostgres: { present: true, volumePresent: true, mountSource: untrusted, project: "boba-staging", persistentVolume: "boba-staging_postgres-data", imageCompatConflict: false },
       trustRoots: { runtimeAssetsRoot: path.join(tmp, "runtime-assets") },
     });
     assert.equal(result.disposition, POSTGRES_INIT_DISPOSITION.BLOCK);
@@ -175,7 +175,7 @@ test("I07: wrong volume or mount target -> fail closed", () => {
 
     const missingVolume = resolvePostgresInitDisposition({
       candidateManifest: collectInitManifest(initDir),
-      activePostgres: { present: true, volumePresent: false, mountSource: initDir },
+      activePostgres: { present: true, volumePresent: false, mountSource: initDir, project: "boba-staging", persistentVolume: null, imageCompatConflict: false },
       trustRoots: { runtimeAssetsRoot: path.join(tmp, "runtime-assets") },
     });
     assert.equal(missingVolume.reasonCode, POSTGRES_INIT_REASON.ABSENT_VOLUME);
@@ -230,7 +230,7 @@ test("I09: candidate SHA changed, init bytes unchanged -> no unnecessary restart
     const disposition = resolvePostgresInitDisposition({
       candidateManifest: collectInitManifest(newDir),
       candidateMaterializedPath: newDir,
-      activePostgres: { present: true, volumePresent: true, mountSource: oldDir },
+      activePostgres: { present: true, volumePresent: true, mountSource: oldDir, project: "boba-staging", persistentVolume: "boba-staging_postgres-data", imageCompatConflict: false },
       trustRoots: { runtimeAssetsRoot: path.join(tmp, "runtime-assets") },
     });
     assert.equal(disposition.disposition, POSTGRES_INIT_DISPOSITION.PRESERVE);
@@ -271,6 +271,8 @@ test("I10: image/version compatibility conflict -> separate disposition, no auto
       present: true,
       volumePresent: true,
       mountSource: "/tmp/x",
+      project: "boba-staging",
+      persistentVolume: "boba-staging_postgres-data",
       imageCompatConflict: true,
     },
     trustRoots: { runtimeAssetsRoot: "/tmp/runtime-assets" },
@@ -282,7 +284,7 @@ test("I10: image/version compatibility conflict -> separate disposition, no auto
 test("I11: absent PostgreSQL state -> governed decision, not assumed fresh bootstrap", () => {
   const result = resolvePostgresInitDisposition({
     candidateManifest: { ok: true, files: [], digest: "x" },
-    activePostgres: { present: false },
+    activePostgres: { present: false, imageCompatConflict: false },
     trustRoots: { runtimeAssetsRoot: "/tmp/runtime-assets" },
   });
   assert.equal(result.disposition, POSTGRES_INIT_DISPOSITION.BLOCK);
@@ -301,12 +303,125 @@ test("I12: older active mount and new candidate manifest match -> Compose mount 
     const result = resolvePostgresInitDisposition({
       candidateManifest: collectInitManifest(newDir),
       candidateMaterializedPath: newDir,
-      activePostgres: { present: true, volumePresent: true, mountSource: oldDir },
+      activePostgres: { present: true, volumePresent: true, mountSource: oldDir, project: "boba-staging", persistentVolume: "boba-staging_postgres-data", imageCompatConflict: false },
       trustRoots: { runtimeAssetsRoot: path.join(tmp, "runtime-assets") },
     });
     assert.equal(result.composeInitDir, oldDir);
     assert.notEqual(result.composeInitDir, newDir);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test("R-INIT-01: wrong Compose project label -> BLOCK, never PRESERVE", () => {
+  const tmp = mkdtempSync(path.join(os.tmpdir(), "boba-init-r01-"));
+  try {
+    const initDir = path.join(tmp, "runtime-assets", "postgres-init", "sha");
+    makeInitTree(initDir, { "001-bootstrap.sh": "a\n" });
+    const result = resolvePostgresInitDisposition({
+      candidateManifest: collectInitManifest(initDir),
+      candidateMaterializedPath: initDir,
+      activePostgres: {
+        present: true,
+        volumePresent: true,
+        mountSource: initDir,
+        project: "wrong-project",
+        persistentVolume: "boba-staging_postgres-data",
+        imageCompatConflict: false,
+      },
+      trustRoots: { runtimeAssetsRoot: path.join(tmp, "runtime-assets") },
+    });
+    assert.equal(result.disposition, POSTGRES_INIT_DISPOSITION.BLOCK);
+    assert.equal(result.reasonCode, POSTGRES_INIT_REASON.WRONG_COMPOSE_PROJECT);
+    assert.equal(result.composeInitDir, null);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test("R-INIT-02: absent image compatibility evidence -> UNKNOWN/BLOCK, not PASS", () => {
+  const tmp = mkdtempSync(path.join(os.tmpdir(), "boba-init-r02-"));
+  try {
+    const initDir = path.join(tmp, "runtime-assets", "postgres-init", "sha");
+    makeInitTree(initDir, { "001-bootstrap.sh": "a\n" });
+    const result = resolvePostgresInitDisposition({
+      candidateManifest: collectInitManifest(initDir),
+      candidateMaterializedPath: initDir,
+      activePostgres: {
+        present: true,
+        volumePresent: true,
+        mountSource: initDir,
+        project: "boba-staging",
+        persistentVolume: "boba-staging_postgres-data",
+        // imageCompatConflict omitted → must not become PRESERVE
+      },
+      trustRoots: { runtimeAssetsRoot: path.join(tmp, "runtime-assets") },
+    });
+    assert.notEqual(result.disposition, POSTGRES_INIT_DISPOSITION.PRESERVE);
+    assert.equal(result.reasonCode, POSTGRES_INIT_REASON.IMAGE_COMPAT_UNKNOWN);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test("R-INIT-03: wrong PostgreSQL persistent volume -> BLOCK", () => {
+  const tmp = mkdtempSync(path.join(os.tmpdir(), "boba-init-r03-"));
+  try {
+    const initDir = path.join(tmp, "runtime-assets", "postgres-init", "sha");
+    makeInitTree(initDir, { "001-bootstrap.sh": "a\n" });
+    const result = resolvePostgresInitDisposition({
+      candidateManifest: collectInitManifest(initDir),
+      candidateMaterializedPath: initDir,
+      activePostgres: {
+        present: true,
+        volumePresent: true,
+        mountSource: initDir,
+        project: "boba-staging",
+        persistentVolume: "other_postgres-data",
+        imageCompatConflict: false,
+      },
+      trustRoots: { runtimeAssetsRoot: path.join(tmp, "runtime-assets") },
+    });
+    assert.equal(result.disposition, POSTGRES_INIT_DISPOSITION.BLOCK);
+    assert.equal(result.reasonCode, POSTGRES_INIT_REASON.WRONG_PERSISTENT_VOLUME);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test("R-INIT-04: different checkout trusted mount root -> UNKNOWN source-isolation", () => {
+  const owned = mkdtempSync(path.join(os.tmpdir(), "boba-init-owned-"));
+  const foreign = mkdtempSync(path.join(os.tmpdir(), "boba-init-foreign-"));
+  try {
+    const ownedRuntime = path.join(owned, ".env.staging", "runtime-assets");
+    const foreignInit = path.join(
+      foreign,
+      ".env.staging",
+      "runtime-assets",
+      "postgres-init",
+      "a".repeat(40),
+    );
+    const candidate = path.join(ownedRuntime, "postgres-init", "b".repeat(40));
+    makeInitTree(foreignInit, { "001-bootstrap.sh": "same\n" });
+    makeInitTree(candidate, { "001-bootstrap.sh": "same\n" });
+    const result = resolvePostgresInitDisposition({
+      candidateManifest: collectInitManifest(candidate),
+      candidateMaterializedPath: candidate,
+      activePostgres: {
+        present: true,
+        volumePresent: true,
+        mountSource: foreignInit,
+        project: "boba-staging",
+        persistentVolume: "boba-staging_postgres-data",
+        imageCompatConflict: false,
+      },
+      trustRoots: { runtimeAssetsRoot: ownedRuntime },
+    });
+    assert.equal(result.disposition, POSTGRES_INIT_DISPOSITION.UNKNOWN);
+    assert.equal(result.reasonCode, POSTGRES_INIT_REASON.SOURCE_ISOLATION_UNRESOLVED);
+    assert.match(result.note ?? "", /source-isolation|different checkout/i);
+  } finally {
+    rmSync(owned, { recursive: true, force: true });
+    rmSync(foreign, { recursive: true, force: true });
   }
 });
