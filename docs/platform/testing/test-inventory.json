@@ -31,9 +31,9 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2321,
-    "executableTestFiles": 521,
-    "sourceTestFiles": 155,
+    "trackedPathsConsidered": 2324,
+    "executableTestFiles": 523,
+    "sourceTestFiles": 157,
     "testsTreeExecutableFiles": 278,
     "scriptTestFiles": 88,
     "playwrightSpecs": 12,
@@ -92,6 +92,7 @@
     "src/components/ordering/client-action.test.ts",
     "src/components/ordering/committed-presentation-observation.test.ts",
     "src/components/ordering/financial-document-presentation.test.ts",
+    "src/components/ordering/imp036j-391a-stale-recovery.checkout-client.test.tsx",
     "src/components/ordering/imp036j-coupon-recovery.checkout-client.test.tsx",
     "src/components/ordering/imp036j-coupon-recovery.test.ts",
     "src/components/ordering/imp036j-tranche5-checkout-remediation.test.tsx",
@@ -100,6 +101,7 @@
     "src/components/ordering/order-support.test.ts",
     "src/components/ordering/payment-recovery-presentation.test.ts",
     "src/components/ordering/serviceability-copy.test.ts",
+    "src/components/ordering/stale-recovery-presentation.test.ts",
     "src/components/ui/Button.test.tsx",
     "src/lib/customer-auth/chrome-session.test.tsx",
     "src/lib/customer-auth/return-to.auth-transition.test.ts",
@@ -3817,6 +3819,25 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "src/components/ordering/imp036j-391a-stale-recovery.checkout-client.test.tsx",
+      "runner": "vitest",
+      "domain": "components/ordering",
+      "testType": "component-or-tsx",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "2-component",
+        "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "src/components/ordering/imp036j-coupon-recovery.checkout-client.test.tsx",
       "runner": "vitest",
       "domain": "components/ordering",
@@ -3962,6 +3983,25 @@
       "ciInclusion": "YES",
       "test1Layers": [
         "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/components/ordering/stale-recovery-presentation.test.ts",
+      "runner": "vitest",
+      "domain": "components/ordering",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "9-recovery-idempotency"
       ],
       "classificationConfidence": "HEURISTIC"
     },
