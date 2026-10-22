@@ -1,5 +1,5 @@
 /**
- * CS4/C2: credential-bearing subprocess argv negative tests for the real dump builder.
+ * CS4/C2/R2: credential-bearing subprocess argv negative tests for the real dump builder.
  */
 import assert from "node:assert/strict";
 import { test } from "node:test";
@@ -32,20 +32,17 @@ test("CS4/C2: buildPgDumpArgv uses password-free URI and preserves sslmode", () 
   assert.match(argv[1], /^postgres(ql)?:\/\//);
   assert.match(argv[1], /sslmode=verify-full/);
   assert.equal(env.PGPASSWORD, SENTINEL);
+  assert.equal(env.PGSSLPASSWORD, undefined);
 });
 
-test("CS4/C2: sslpassword and query password never enter argv", () => {
+test("CS4/R2: nonempty sslpassword fails closed before argv/env delivery", () => {
   const databaseUrl = `postgresql://backup_user@10.0.0.9:5432/boba_prod?sslmode=require&password=${encodeURIComponent(SENTINEL)}&sslpassword=${encodeURIComponent(SSL_SENTINEL)}`;
   const conn = buildLibpqChildConnection(databaseUrl);
-  assert.equal(conn.ok, true);
-  const argv = buildPgDumpArgv(conn);
-  const env = applyLibpqSecretEnv({}, conn);
-  assert.equal(argv.some((a) => String(a).includes(SENTINEL)), false);
-  assert.equal(argv.some((a) => String(a).includes(SSL_SENTINEL)), false);
-  assert.doesNotMatch(conn.connectionUri, /password=/);
-  assert.doesNotMatch(conn.connectionUri, /sslpassword=/);
-  assert.equal(env.PGPASSWORD, SENTINEL);
-  assert.equal(env.PGSSLPASSWORD, SSL_SENTINEL);
+  assert.equal(conn.ok, false);
+  assert.match(conn.reason, /sslpassword/i);
+  assert.match(conn.reason, /PGSSLPASSWORD is not valid/i);
+  assert.doesNotMatch(conn.reason, new RegExp(SSL_SENTINEL));
+  assert.doesNotMatch(conn.reason, new RegExp(SENTINEL));
 });
 
 test("CS4/C2: unsupported security-relevant libpq parameter is BLOCKED", () => {
@@ -71,5 +68,7 @@ test("CS4/C2: encoded credentials round-trip into PGPASSWORD only", () => {
   assert.equal(conn.password, password);
   const argv = buildPgDumpArgv(conn);
   assert.equal(argv.some((a) => String(a).includes(password)), false);
-  assert.equal(applyLibpqSecretEnv({}, conn).PGPASSWORD, password);
+  const env = applyLibpqSecretEnv({}, conn);
+  assert.equal(env.PGPASSWORD, password);
+  assert.equal(env.PGSSLPASSWORD, undefined);
 });

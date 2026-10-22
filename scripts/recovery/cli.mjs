@@ -11,7 +11,10 @@ import { fileURLToPath } from "node:url";
 import { CLI_EXIT, OPERATION_STATUS, OPERATION_TYPE, READINESS_LEVEL, RECOVERY_LAYER } from "./constants.mjs";
 import { generateRunId } from "./run-id.mjs";
 import { createEvidence, evaluateQualifyingRecoveryProof, validateEvidence } from "./evidence.mjs";
-import { evaluateTargetIdentitySafety, requireExplicitSourceClassification } from "./identity.mjs";
+import {
+  evaluateTargetIdentitySafety,
+  resolveSourceClassificationFromCli,
+} from "./identity.mjs";
 import {
   applyLibpqSecretEnv,
   buildLibpqChildConnection,
@@ -978,15 +981,10 @@ function refuseForceProduction(stdout, json, label) {
  * @returns {{ ok: true, classification: string } | { ok: false, exitCode: number }}
  */
 function resolveRequiredSourceClassification(flags, env, stdout, json) {
-  const fromFlag =
-    stringFlag(flags["source-class"]) ?? stringFlag(flags["source-classification"]);
-  const fromEnv =
-    typeof env?.BOBA_RECOVERY_SOURCE_CLASSIFICATION === "string"
-      ? env.BOBA_RECOVERY_SOURCE_CLASSIFICATION.trim()
-      : "";
-  const required = requireExplicitSourceClassification(fromFlag ?? (fromEnv || null), {
-    composeProjectName: env?.COMPOSE_PROJECT_NAME,
-    claimedRuntimeEnv: env?.BOBA_BEAR_ENV,
+  const required = resolveSourceClassificationFromCli({
+    sourceClassFlag: stringFlag(flags["source-class"]),
+    sourceClassificationFlag: stringFlag(flags["source-classification"]),
+    env,
   });
   if (!required.ok) {
     const payload = {

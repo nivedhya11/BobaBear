@@ -618,9 +618,131 @@ const LIBPQ_KNOWN_PARAMS = new Set([
 const LIBPQ_SECURITY_KEY_PATTERN =
   /^(ssl|gss|krb|pass|cert|key|channel_binding|require|target_session|hostaddr)/i;
 
+/** Identity / security query keys that must not carry conflicting duplicate values. */
+const LIBPQ_IDENTITY_QUERY_KEYS = new Set([
+  "host",
+  "hostaddr",
+  "port",
+  "dbname",
+  "user",
+  "password",
+  "sslpassword",
+  "sslmode",
+  "sslrootcert",
+  "sslcert",
+  "sslkey",
+  "sslcrl",
+  "sslcrldir",
+  "passfile",
+  "channel_binding",
+  "gssencmode",
+  "requiressl",
+  "requirepeer",
+  "target_session_attrs",
+]);
+
+/**
+ * Collect known libpq query params. Conflicting repeated identity/security keys fail closed.
+ * Matching duplicates collapse to a single value.
+ *
+ * @param {URL} parsed
+ * @returns {{ ok: true, query: Record<string, string> } | { ok: false, reason: string }}
+ */
+function collectLibpqQueryParams(parsed) {
+  /** @type {Record<string, string[]>} */
+  const seen = {};
+  for (const [rawKey, rawValue] of parsed.searchParams.entries()) {
+    const key = String(rawKey);
+    if (!LIBPQ_KNOWN_PARAMS.has(key)) {
+      if (LIBPQ_SECURITY_KEY_PATTERN.test(key)) {
+        return {
+          ok: false,
+          reason: `unsupported security-relevant libpq parameter '${key}'; refuse silent drop`,
+        };
+      }
+      return {
+        ok: false,
+        reason: `unsupported libpq parameter '${key}'; refuse ambiguous connection semantics`,
+      };
+    }
+    if (!seen[key]) seen[key] = [];
+    seen[key].push(rawValue);
+  }
+
+  /** @type {Record<string, string>} */
+  const query = {};
+  for (const [key, values] of Object.entries(seen)) {
+    const unique = [...new Set(values)];
+    if (unique.length > 1) {
+      if (LIBPQ_IDENTITY_QUERY_KEYS.has(key)) {
+        return {
+          ok: false,
+          reason: `ambiguous repeated libpq parameter '${key}'; refuse conflicting values`,
+        };
+      }
+      return {
+        ok: false,
+        reason: `ambiguous repeated libpq parameter '${key}'; refuse nondeterministic connection semantics`,
+      };
+    }
+    query[key] = unique[0] ?? "";
+  }
+  return { ok: true, query };
+}
+
+/**
+ * When hierarchical URI components and query identity fields both specify a value,
+ * accept only exact matches. Conflicting forms fail closed rather than silently
+ * preferring one side (which can retarget recovery).
+ *
+ * @param {string} field
+ * @param {string} hierarchical
+ * @param {string} fromQuery
+ * @returns {{ ok: true, value: string } | { ok: false, reason: string }}
+ */
+function resolveIdentityField(field, hierarchical, fromQuery) {
+  const hier = typeof hierarchical === "string" ? hierarchical : "";
+  const q = typeof fromQuery === "string" ? fromQuery : "";
+  if (hier && q && hier !== q) {
+    return {
+      ok: false,
+      reason: `ambiguous databaseUrl ${field} (URI vs query disagree); refuse silent retarget`,
+    };
+  }
+  return { ok: true, value: hier || q };
+}
+
+/**
+ * Verify rebuilt connection URI carries no password/sslpassword components.
+ * Uses structured URI inspection — not substring search of secret material —
+ * so short/common passwords cannot false-reject valid URIs.
+ *
+ * @param {string} connectionUri
+ * @returns {{ ok: true } | { ok: false, reason: string }}
+ */
+function assertPasswordFreeConnectionUri(connectionUri) {
+  try {
+    const rebuilt = new URL(connectionUri);
+    if (rebuilt.password) {
+      return { ok: false, reason: "refusing connectionUri that embeds password material" };
+    }
+    if (rebuilt.searchParams.has("password") || rebuilt.searchParams.has("sslpassword")) {
+      return {
+        ok: false,
+        reason: "refusing connectionUri that embeds password/sslpassword query material",
+      };
+    }
+    return { ok: true };
+  } catch {
+    return { ok: false, reason: "rebuilt connectionUri is not a valid URL" };
+  }
+}
+
 /**
  * Parse a PostgreSQL URL into a password-free libpq connection representation.
- * Secrets (password / sslpassword) are returned separately for child-only env delivery.
+ * Ordinary DB passwords are returned separately for child-only PGPASSWORD delivery.
+ * Nonempty sslpassword is rejected fail-closed: PostgreSQL libpq has no env equivalent
+ * and unattended recovery must not drop, argv-embed, or invent custody for it.
  *
  * @param {string} databaseUrl
  * @returns {{
@@ -629,7 +751,6 @@ const LIBPQ_SECURITY_KEY_PATTERN =
  *   port: string,
  *   user: string,
  *   password: string,
- *   sslPassword: string,
  *   database: string,
  *   connectionUri: string,
  *   query: Record<string, string>,
@@ -645,34 +766,48 @@ export function buildLibpqChildConnection(databaseUrl) {
       return { ok: false, reason: "databaseUrl must be a postgresql URL" };
     }
 
-    /** @type {Record<string, string>} */
-    const query = {};
-    for (const [rawKey, rawValue] of parsed.searchParams.entries()) {
-      const key = String(rawKey);
-      if (!LIBPQ_KNOWN_PARAMS.has(key)) {
-        if (LIBPQ_SECURITY_KEY_PATTERN.test(key)) {
-          return {
-            ok: false,
-            reason: `unsupported security-relevant libpq parameter '${key}'; refuse silent drop`,
-          };
-        }
-        return {
-          ok: false,
-          reason: `unsupported libpq parameter '${key}'; refuse ambiguous connection semantics`,
-        };
-      }
-      query[key] = rawValue;
+    const collected = collectLibpqQueryParams(parsed);
+    if (!collected.ok) return collected;
+    const query = collected.query;
+
+    // sslpassword has no libpq environment-variable equivalent (PGSSLPASSWORD is not
+    // supported). Refuse nonempty values before any dump/restore/psql execution.
+    const sslPasswordRaw = typeof query.sslpassword === "string" ? query.sslpassword : "";
+    if (sslPasswordRaw.length > 0) {
+      return {
+        ok: false,
+        reason:
+          "encrypted client-key sslpassword is unsupported for unattended recovery (no libpq env equivalent; PGSSLPASSWORD is not valid); refuse",
+      };
     }
 
-    const database = decodeURIComponent(parsed.pathname.replace(/^\//, "").split("/")[0] ?? "");
+    let pathDatabase = "";
+    try {
+      pathDatabase = decodeURIComponent(parsed.pathname.replace(/^\//, "").split("/")[0] ?? "");
+    } catch {
+      return { ok: false, reason: "databaseUrl database path is not valid percent-encoding" };
+    }
+    const dbnameResolved = resolveIdentityField(
+      "dbname",
+      pathDatabase,
+      typeof query.dbname === "string" ? query.dbname : "",
+    );
+    if (!dbnameResolved.ok) return dbnameResolved;
+    const database = dbnameResolved.value;
     if (!database) {
       return { ok: false, reason: "databaseUrl missing database name" };
     }
 
     const hostFromUri = parsed.hostname || "";
-    const hostFromQuery = typeof query.host === "string" ? query.host : "";
+    const hostResolved = resolveIdentityField(
+      "host",
+      hostFromUri,
+      typeof query.host === "string" ? query.host : "",
+    );
+    if (!hostResolved.ok) return hostResolved;
+    const host = hostResolved.value;
     const hostaddr = typeof query.hostaddr === "string" ? query.hostaddr : "";
-    if (!hostFromUri && !hostFromQuery && !hostaddr) {
+    if (!host && !hostaddr) {
       return {
         ok: false,
         reason: "databaseUrl missing host/hostaddr; refusing implicit localhost fallback",
@@ -685,15 +820,19 @@ export function buildLibpqChildConnection(databaseUrl) {
     } catch {
       return { ok: false, reason: "databaseUrl password is not valid percent-encoding" };
     }
-    let user = "";
+    let userFromUri = "";
     try {
-      user = parsed.username ? decodeURIComponent(parsed.username) : "";
+      userFromUri = parsed.username ? decodeURIComponent(parsed.username) : "";
     } catch {
       return { ok: false, reason: "databaseUrl username is not valid percent-encoding" };
     }
-    if (!user && typeof query.user === "string") {
-      user = query.user;
-    }
+    const userResolved = resolveIdentityField(
+      "user",
+      userFromUri,
+      typeof query.user === "string" ? query.user : "",
+    );
+    if (!userResolved.ok) return userResolved;
+    const user = userResolved.value;
 
     const queryPassword = typeof query.password === "string" ? query.password : "";
     if (userinfoPassword && queryPassword && userinfoPassword !== queryPassword) {
@@ -703,16 +842,18 @@ export function buildLibpqChildConnection(databaseUrl) {
       };
     }
     const password = userinfoPassword || queryPassword;
-    const sslPassword = typeof query.sslpassword === "string" ? query.sslpassword : "";
 
-    const port =
-      parsed.port ||
-      (typeof query.port === "string" && query.port.trim() ? query.port.trim() : "") ||
-      "5432";
-    const host = hostFromUri || hostFromQuery || "";
+    const portResolved = resolveIdentityField(
+      "port",
+      parsed.port || "",
+      typeof query.port === "string" && query.port.trim() ? query.port.trim() : "",
+    );
+    if (!portResolved.ok) return portResolved;
+    const port = portResolved.value || "5432";
 
     // Rebuild a password-free URI that preserves supported query semantics (incl. sslmode).
-    // When authority host is empty (hostaddr/query-host forms), keep port in the query —
+    // host + hostaddr may both be present (libpq: host for name/TLS, hostaddr for TCP).
+    // When authority host is empty (hostaddr-only), keep user/port in the query —
     // WHATWG URL drops authority port without a hostname.
     const safe = new URL(`${parsed.protocol}//`);
     if (host) {
@@ -728,11 +869,11 @@ export function buildLibpqChildConnection(databaseUrl) {
       if (host) {
         if (key === "user" && user) continue;
         if (key === "port" && port) continue;
-        if (key === "host" && hostFromUri) continue;
+        if (key === "host") continue; // represented in authority hostname
       } else {
-        // Authority-less form: ensure user/port remain available to libpq via query.
         if (key === "user") continue;
         if (key === "port") continue;
+        if (key === "host") continue; // hostaddr-only form has no host
       }
       safe.searchParams.append(key, value);
     }
@@ -742,12 +883,8 @@ export function buildLibpqChildConnection(databaseUrl) {
     }
 
     const connectionUri = safe.toString();
-    if (password && connectionUri.includes(password)) {
-      return { ok: false, reason: "refusing connectionUri that embeds password material" };
-    }
-    if (sslPassword && connectionUri.includes(sslPassword)) {
-      return { ok: false, reason: "refusing connectionUri that embeds sslpassword material" };
-    }
+    const passwordFree = assertPasswordFreeConnectionUri(connectionUri);
+    if (!passwordFree.ok) return passwordFree;
 
     return {
       ok: true,
@@ -755,7 +892,6 @@ export function buildLibpqChildConnection(databaseUrl) {
       port,
       user,
       password,
-      sslPassword,
       database,
       connectionUri,
       query,
@@ -803,15 +939,17 @@ export function buildPsqlHostArgv(conn, extraArgs = []) {
 }
 
 /**
- * Deliver password/sslpassword to the child only (never argv).
+ * Deliver ordinary DB password to the child only via PGPASSWORD (never argv).
+ * Does not set PGSSLPASSWORD — that is not a PostgreSQL libpq environment variable.
+ * Nonempty sslpassword is rejected earlier in buildLibpqChildConnection.
+ *
  * @param {NodeJS.ProcessEnv} baseEnv
- * @param {{ password?: string, sslPassword?: string }} conn
+ * @param {{ password?: string }} conn
  * @returns {NodeJS.ProcessEnv}
  */
 export function applyLibpqSecretEnv(baseEnv, conn) {
   const env = { ...baseEnv };
   if (conn.password) env.PGPASSWORD = conn.password;
-  if (conn.sslPassword) env.PGSSLPASSWORD = conn.sslPassword;
   return env;
 }
 

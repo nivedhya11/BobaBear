@@ -100,6 +100,41 @@ export function requireExplicitSourceClassification(value, context = {}) {
   return { ok: true, classification: normalized };
 }
 
+/**
+ * Production CLI classification resolver (flag wins over env). Pure — no I/O,
+ * no backup/dump/provider execution. Used by the recovery CLI boundary and by
+ * synthetic classification tests that must not continue into operational paths.
+ *
+ * @param {{
+ *   sourceClassFlag?: string | null,
+ *   sourceClassificationFlag?: string | null,
+ *   env?: { BOBA_RECOVERY_SOURCE_CLASSIFICATION?: unknown, COMPOSE_PROJECT_NAME?: unknown, BOBA_BEAR_ENV?: unknown },
+ * }} [input]
+ * @returns {{ ok: true, classification: string } | { ok: false, reason: string, code: string }}
+ */
+export function resolveSourceClassificationFromCli(input = {}) {
+  const fromFlag =
+    nonemptyFlagString(input.sourceClassFlag) ??
+    nonemptyFlagString(input.sourceClassificationFlag);
+  const env = input.env ?? {};
+  const fromEnv =
+    typeof env.BOBA_RECOVERY_SOURCE_CLASSIFICATION === "string"
+      ? env.BOBA_RECOVERY_SOURCE_CLASSIFICATION.trim()
+      : "";
+  return requireExplicitSourceClassification(fromFlag ?? (fromEnv || null), {
+    composeProjectName: env.COMPOSE_PROJECT_NAME,
+    claimedRuntimeEnv: env.BOBA_BEAR_ENV,
+  });
+}
+
+/**
+ * @param {unknown} value
+ * @returns {string | null}
+ */
+function nonemptyFlagString(value) {
+  return typeof value === "string" && value.length > 0 ? value : null;
+}
+
 export function evaluateTargetIdentitySafety(input) {
   const sourceIdentity = normalizeIdentity(input.sourceIdentity);
   const targetIdentity = normalizeIdentity(input.targetIdentity);
