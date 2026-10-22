@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { evaluateTargetIdentitySafety } from "./identity.mjs";
+import { evaluateTargetIdentitySafety, requireExplicitSourceClassification } from "./identity.mjs";
 
 const allowed = {
   sourceIdentity: "prod-postgres-volume-abc",
@@ -48,6 +48,44 @@ test("unresolved classification is denied", () => {
   });
   assert.equal(result.allowed, false);
   assert.equal(result.code, "TARGET_CLASSIFICATION_UNRESOLVED");
+});
+
+test("CS3: missing source classification is denied (no silent production default)", () => {
+  const result = evaluateTargetIdentitySafety({
+    ...allowed,
+    sourceClassification: "",
+  });
+  assert.equal(result.allowed, false);
+  assert.equal(result.code, "SOURCE_CLASSIFICATION_REQUIRED");
+});
+
+test("CS3: invalid/free-form source classification is denied", () => {
+  const result = requireExplicitSourceClassification("founder-uat-box");
+  assert.equal(result.ok, false);
+  assert.equal(result.code, "SOURCE_CLASSIFICATION_INVALID");
+});
+
+test("CS3: compose project name alone does not invent staging classification", () => {
+  const missing = requireExplicitSourceClassification(undefined, {
+    composeProjectName: "boba-staging",
+  });
+  assert.equal(missing.ok, false);
+  assert.equal(missing.code, "SOURCE_CLASSIFICATION_REQUIRED");
+});
+
+test("CS3: production claim vs staging compose + local runtime contradicts", () => {
+  const result = requireExplicitSourceClassification("production", {
+    composeProjectName: "boba-staging",
+    claimedRuntimeEnv: "local",
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.code, "SOURCE_CLASSIFICATION_CONTRADICTION");
+});
+
+test("CS3: explicit staging classification remains valid without inventing taxonomy", () => {
+  const result = requireExplicitSourceClassification("staging");
+  assert.equal(result.ok, true);
+  assert.equal(result.classification, "staging");
 });
 
 test("production target is denied", () => {

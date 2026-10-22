@@ -16,11 +16,18 @@ import {
   resolveContainerCli,
   stopEphemeralPostgres,
 } from "../docker-exec.mjs";
-import { canonicalizePath, evaluateTargetIdentitySafety } from "../identity.mjs";
+import {
+  canonicalizePath,
+  evaluateTargetIdentitySafety,
+  requireExplicitSourceClassification,
+} from "../identity.mjs";
 import { isValidRunId } from "../run-id.mjs";
 import { redactText } from "../redact.mjs";
 import { waitForPostgresReady } from "../tools/postgres-ready.mjs";
 import { assertFreshTarget, createRestoreTargetId } from "./target.mjs";
+// Runtime-only use inside normalizeDbEndpoint (after both modules finish evaluating).
+// Avoids endpoint fingerprints that disagree with buildLibpqChildConnection targeting.
+import { buildLibpqChildConnection } from "./logical.mjs";
 
 export const PITR_OWNERSHIP_MARKER = "TARGET_OWNED_BY_RUN";
 export const LOGICAL_OWNERSHIP_MARKER = "LOGICAL_TARGET_OWNED_BY_RUN";
@@ -98,10 +105,15 @@ export function provisionPitrTarget(options) {
     };
   }
 
+  const sourceClass = requireExplicitSourceClassification(options.sourceClassification);
+  if (!sourceClass.ok) {
+    return { ok: false, reason: sourceClass.reason, code: sourceClass.code };
+  }
+
   const fresh = assertFreshTarget({
     sourceIdentity: options.sourceIdentity ?? "unspecified-source",
     targetIdentity,
-    sourceClassification: options.sourceClassification ?? ENVIRONMENT_CLASSIFICATION.PRODUCTION,
+    sourceClassification: sourceClass.classification,
     targetClassification: ENVIRONMENT_CLASSIFICATION.RECOVERY,
     targetPgdataPath: pgdataPath,
     forceProduction: false,
@@ -264,10 +276,15 @@ export function assertOwnedPitrTarget(options) {
     }
   }
 
+  const sourceClass = requireExplicitSourceClassification(options.sourceClassification);
+  if (!sourceClass.ok) {
+    return { ok: false, reason: sourceClass.reason, code: sourceClass.code };
+  }
+
   const fresh = assertFreshTarget({
     sourceIdentity: options.sourceIdentity ?? "unspecified-source",
     targetIdentity: markerIdentity,
-    sourceClassification: options.sourceClassification ?? ENVIRONMENT_CLASSIFICATION.PRODUCTION,
+    sourceClassification: sourceClass.classification,
     targetClassification: ENVIRONMENT_CLASSIFICATION.RECOVERY,
     targetPgdataPath: pgdataPath,
     forceProduction: false,
@@ -321,11 +338,14 @@ export async function provisionLogicalTarget(options) {
       const result = spawnSync(command, args, {
         encoding: "utf8",
         timeout: opts.timeout ?? 180_000,
+        env: opts.env ?? process.env,
+        input: opts.input,
       });
       return {
         status: typeof result.status === "number" ? result.status : 1,
         stdout: result.stdout ?? "",
         stderr: result.stderr ?? "",
+        args,
       };
     });
 
@@ -337,6 +357,11 @@ export async function provisionLogicalTarget(options) {
       execFn(cli, ["network", "rm", networkName], { timeout: 30_000 });
     }
   };
+
+  const sourceClass = requireExplicitSourceClassification(options.sourceClassification);
+  if (!sourceClass.ok) {
+    return { ok: false, reason: sourceClass.reason, code: sourceClass.code };
+  }
 
   // Confirm container name does not already exist.
   const inspect = execFn(cli, ["inspect", containerName], { timeout: 15_000 });
@@ -392,24 +417,35 @@ export async function provisionLogicalTarget(options) {
     };
   }
 
-  const run = execFn(cli, [
-    "run",
-    "-d",
-    "--name",
-    containerName,
-    "--network",
-    networkName,
-    "-e",
-    `POSTGRES_PASSWORD=${password}`,
-    "-e",
-    `POSTGRES_USER=${dbUser}`,
-    "-e",
-    `POSTGRES_DB=${dbName}`,
-    // Loopback-only host publish for repository migration authority / validation.
-    "-p",
-    "127.0.0.1::5432",
-    image,
-  ]);
+  // CS4: deliver credentials via child-only env + docker -e NAME (no =value in argv).
+  const containerEnv = {
+    ...process.env,
+    POSTGRES_PASSWORD: password,
+    POSTGRES_USER: dbUser,
+    POSTGRES_DB: dbName,
+  };
+  const run = execFn(
+    cli,
+    [
+      "run",
+      "-d",
+      "--name",
+      containerName,
+      "--network",
+      networkName,
+      "-e",
+      "POSTGRES_PASSWORD",
+      "-e",
+      "POSTGRES_USER",
+      "-e",
+      "POSTGRES_DB",
+      // Loopback-only host publish for repository migration authority / validation.
+      "-p",
+      "127.0.0.1::5432",
+      image,
+    ],
+    { env: containerEnv, timeout: 180_000 },
+  );
   if (run.status !== 0) {
     abortProvision();
     return {
@@ -443,7 +479,7 @@ export async function provisionLogicalTarget(options) {
   const fresh = assertFreshTarget({
     sourceIdentity: options.sourceIdentity ?? "unspecified-source",
     targetIdentity,
-    sourceClassification: options.sourceClassification ?? ENVIRONMENT_CLASSIFICATION.PRODUCTION,
+    sourceClassification: sourceClass.classification,
     targetClassification: ENVIRONMENT_CLASSIFICATION.RECOVERY,
     forceProduction: false,
     reuseExistingTarget: false,
@@ -473,6 +509,7 @@ export async function provisionLogicalTarget(options) {
 
   // Bootstrap migrator/app roles so post-restore migration uses the same
   // repository authority (scripts/database/migrate.ts) as production recovery.
+  // CS4: password-bearing SQL travels on stdin only — never via psql -c argv.
   const migratorPassword = generateRecoveryPassword();
   const appPassword = generateRecoveryPassword();
   const bootstrapSql = [
@@ -495,6 +532,7 @@ export async function provisionLogicalTarget(options) {
     cli,
     [
       "exec",
+      "-i",
       containerName,
       "psql",
       "-U",
@@ -503,10 +541,8 @@ export async function provisionLogicalTarget(options) {
       dbName,
       "-v",
       "ON_ERROR_STOP=1",
-      "-c",
-      bootstrapSql,
     ],
-    { timeout: 60_000 },
+    { timeout: 60_000, input: bootstrapSql },
   );
   if (bootstrap.status !== 0) {
     abortProvision();
@@ -642,6 +678,13 @@ export function assertOwnedLogicalTarget(options) {
         ? normalizeDbEndpoint(descriptor.databaseUrl)
         : "";
   const targetEndpoint = normalizeDbEndpoint(options.databaseUrl);
+  if (targetEndpoint.startsWith("__unresolved_libpq__:")) {
+    return {
+      ok: false,
+      reason: "databaseUrl is not a resolvable libpq target; refuse ownership proof",
+      code: "TARGET_URL_INVALID",
+    };
+  }
   if (!descriptorEndpoint || descriptorEndpoint !== targetEndpoint) {
     return {
       ok: false,
@@ -655,10 +698,15 @@ export function assertOwnedLogicalTarget(options) {
     return { ok: false, reason: notSource.reason, code: notSource.code ?? "SOURCE_EQUALS_TARGET" };
   }
 
+  const sourceClass = requireExplicitSourceClassification(options.sourceClassification);
+  if (!sourceClass.ok) {
+    return { ok: false, reason: sourceClass.reason, code: sourceClass.code };
+  }
+
   const fresh = assertFreshTarget({
     sourceIdentity: options.sourceIdentity ?? "unspecified-source",
     targetIdentity: markerIdentity,
-    sourceClassification: options.sourceClassification ?? ENVIRONMENT_CLASSIFICATION.PRODUCTION,
+    sourceClassification: sourceClass.classification,
     targetClassification: ENVIRONMENT_CLASSIFICATION.RECOVERY,
     forceProduction: false,
     reuseExistingTarget: false,
@@ -757,6 +805,8 @@ export function cleanupProvisionedTarget(target, options = {}) {
         const result = spawnSync(command, args, {
           encoding: "utf8",
           timeout: opts.timeout ?? 30_000,
+          env: opts.env ?? process.env,
+          input: opts.input,
         });
         return {
           status: typeof result.status === "number" ? result.status : 1,
@@ -831,7 +881,19 @@ export function assertLogicalTargetNotSource(databaseUrl, sourceDatabaseUrl) {
       code: "SOURCE_ENDPOINT_UNRESOLVED",
     };
   }
-  if (normalizeDbEndpoint(databaseUrl) === normalizeDbEndpoint(sourceDatabaseUrl)) {
+  const targetEndpoint = normalizeDbTcpEndpoint(databaseUrl);
+  const sourceEndpoint = normalizeDbTcpEndpoint(sourceDatabaseUrl);
+  if (
+    targetEndpoint.startsWith("__unresolved_libpq__:") ||
+    sourceEndpoint.startsWith("__unresolved_libpq__:")
+  ) {
+    return {
+      ok: false,
+      reason: "databaseUrl/sourceDatabaseUrl is not a resolvable libpq target; refuse",
+      code: "TARGET_URL_INVALID",
+    };
+  }
+  if (targetEndpoint === sourceEndpoint) {
     return {
       ok: false,
       reason: "databaseUrl resolves to the active/source database endpoint",
@@ -841,7 +903,7 @@ export function assertLogicalTargetNotSource(databaseUrl, sourceDatabaseUrl) {
   return { ok: true };
 }
 
-export { normalizeDbEndpoint };
+export { normalizeDbEndpoint, normalizeDbTcpEndpoint };
 
 /**
  * Positively inspect a Podman/Docker network and report whether it is internal.
@@ -980,15 +1042,49 @@ function generateRecoveryPassword() {
 }
 
 /**
+ * Resolve a URL through {@link buildLibpqChildConnection}, or null if invalid.
+ *
  * @param {string} url
+ * @returns {{ hostName: string, hostaddr: string, addr: string, port: string, database: string } | null}
+ */
+function resolveLibpqEndpointParts(url) {
+  const conn = buildLibpqChildConnection(url);
+  if (!conn.ok) return null;
+  const hostName = typeof conn.hostName === "string" ? conn.hostName : "";
+  const hostaddr = typeof conn.hostaddr === "string" ? conn.hostaddr : "";
+  const addr = hostaddr || hostName || conn.host || "";
+  return { hostName, hostaddr, addr, port: conn.port, database: conn.database };
+}
+
+/**
+ * Fingerprint for ownership descriptors (name host + TCP address + port + database).
+ * Stricter than TCP-only so a descriptor bound to loopback cannot authorize a
+ * hostaddr retarget.
+ *
+ * @param {string} url
+ * @returns {string}
  */
 function normalizeDbEndpoint(url) {
-  try {
-    const parsed = new URL(url);
-    return `${parsed.hostname}:${parsed.port || "5432"}/${parsed.pathname.replace(/^\//, "")}`.toLowerCase();
-  } catch {
-    return String(url).trim().toLowerCase();
+  const parts = resolveLibpqEndpointParts(url);
+  if (!parts) {
+    return `__unresolved_libpq__:${String(url).trim().toLowerCase()}`;
   }
+  return `${parts.hostName}|${parts.addr}:${parts.port}/${parts.database}`.toLowerCase();
+}
+
+/**
+ * Fingerprint the effective TCP destination libpq opens (hostaddr || host).
+ * Used for source≠target so `host=10.0.0.5` and `hostaddr=10.0.0.5` compare equal.
+ *
+ * @param {string} url
+ * @returns {string}
+ */
+function normalizeDbTcpEndpoint(url) {
+  const parts = resolveLibpqEndpointParts(url);
+  if (!parts) {
+    return `__unresolved_libpq__:${String(url).trim().toLowerCase()}`;
+  }
+  return `${parts.addr}:${parts.port}/${parts.database}`.toLowerCase();
 }
 
 // Re-export identity helpers used by callers.

@@ -70,8 +70,19 @@ function createNetworkAwareExecFn(options = {}) {
       assert.equal(args.includes("--network"), true);
       assert.equal(args.includes(createdNetwork), true);
       assert.equal(args.includes("127.0.0.1::5432"), true);
+      // CS4: credentials must not appear as NAME=value in argv.
+      assert.equal(
+        args.some((arg) => typeof arg === "string" && /^POSTGRES_PASSWORD=/.test(arg)),
+        false,
+      );
+      assert.equal(args.includes("POSTGRES_PASSWORD"), true);
       createdContainer = args[args.indexOf("--name") + 1];
       return { status: 0, stdout: "cid", stderr: "" };
+    }
+    if (args[0] === "exec" && args.includes("-i") && args.includes("psql")) {
+      // CS4: password-bearing bootstrap SQL must not be in argv (-c removed).
+      assert.equal(args.includes("-c"), false);
+      return { status: 0, stdout: "", stderr: "" };
     }
     if (args[0] === "port") {
       return { status: 0, stdout: `127.0.0.1:${publishedPort}`, stderr: "" };
@@ -125,6 +136,7 @@ test("logical target password is not derived from RUN_ID and publish is loopback
   const nonLoopback = await provisionLogicalTarget({
     runId: nonLoopbackRunId,
     sourceIdentity: "prod-db-1",
+    sourceClassification: "production",
     sourceDatabaseUrl: "postgresql://prod@10.0.0.5:5432/boba_prod",
     containerCli: "docker",
     execFn: (_command, args) => {
@@ -172,6 +184,7 @@ test("non-internal network after create → BLOCKED", async () => {
   const result = await provisionLogicalTarget({
     runId,
     sourceIdentity: "prod-db-1",
+    sourceClassification: "production",
     sourceDatabaseUrl: "postgresql://prod@10.0.0.5:5432/boba_prod",
     containerCli: "docker",
     execFn,
@@ -245,6 +258,7 @@ test("target cleanup also cleans only its own network", async () => {
   const provisioned = await provisionLogicalTarget({
     runId,
     sourceIdentity: "prod-db-1",
+    sourceClassification: "production",
     sourceDatabaseUrl: "postgresql://prod@10.0.0.5:5432/boba_prod",
     containerCli: "docker",
     execFn,

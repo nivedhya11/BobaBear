@@ -25,6 +25,7 @@ import {
   RECOVERY_LAYER,
 } from "../constants.mjs";
 import { createEvidence } from "../evidence.mjs";
+import { requireExplicitSourceClassification } from "../identity.mjs";
 import { generateRunId, parseRunId } from "../run-id.mjs";
 import { persistEvidence } from "../store.mjs";
 import { redactText } from "../redact.mjs";
@@ -101,6 +102,20 @@ async function executeLogicalBackupChain(options) {
   const validationResults = [];
   /** @type {Array<Record<string, unknown>>} */
   const findings = [];
+
+  const sourceClass = requireExplicitSourceClassification(options.sourceClassification, {
+    composeProjectName: options.composeProjectName,
+    claimedRuntimeEnv: options.claimedRuntimeEnv,
+  });
+  if (!sourceClass.ok) {
+    return {
+      ok: false,
+      status: OPERATION_STATUS.BLOCKED,
+      runId,
+      reason: sourceClass.reason,
+      code: sourceClass.code,
+    };
+  }
 
   try {
     const liveGate = assertS3StoreLiveAuthorized(options.objectStore);
@@ -289,7 +304,7 @@ async function executeLogicalBackupChain(options) {
       startedAt,
       endedAt,
       candidate: options.candidate ?? {},
-      sourceEnvironmentClassification: options.sourceClassification ?? null,
+      sourceEnvironmentClassification: sourceClass.classification,
       sourceIdentityMarker: options.sourceIdentity ?? null,
       recoveryArtifactReference: artifactKey,
       recoveryPoint: options.recoveryPoint ?? startedAt,

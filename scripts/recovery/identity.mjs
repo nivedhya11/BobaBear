@@ -1,12 +1,20 @@
 /**
  * Fail-closed source/target identity guard for IMP-037 recovery.
  * This tranche does not restore. There is no --force-production override.
+ *
+ * CS3: source classification must be explicit — never silently defaulted to production
+ * and never inferred from compose project / free-form operator labels alone.
  */
 import path from "node:path";
 import { DEFAULT_KNOWN_PRODUCTION_PGDATA_PATHS, ENVIRONMENT_CLASSIFICATION } from "./constants.mjs";
 
 const ALLOWED_TARGET_CLASSIFICATIONS = new Set([ENVIRONMENT_CLASSIFICATION.RECOVERY]);
 const KNOWN_CLASSIFICATIONS = new Set(Object.values(ENVIRONMENT_CLASSIFICATION));
+/** Source provenance classifications that may be recorded without inventing new taxonomy. */
+const ALLOWED_SOURCE_CLASSIFICATIONS = new Set([
+  ENVIRONMENT_CLASSIFICATION.PRODUCTION,
+  ENVIRONMENT_CLASSIFICATION.STAGING,
+]);
 
 /**
  * @typedef {object} IdentitySafetyInput
@@ -22,10 +30,119 @@ const KNOWN_CLASSIFICATIONS = new Set(Object.values(ENVIRONMENT_CLASSIFICATION))
  * @param {IdentitySafetyInput} input
  * @returns {{ allowed: true } | { allowed: false, reason: string, code: string }}
  */
+/**
+ * Require an explicit, known source classification. Fail closed on missing/invalid values.
+ * Does not infer staging from compose project names or free-form labels.
+ *
+ * @param {unknown} value
+ * @param {{ composeProjectName?: unknown, claimedRuntimeEnv?: unknown }} [context]
+ * @returns {{ ok: true, classification: string } | { ok: false, reason: string, code: string }}
+ */
+export function requireExplicitSourceClassification(value, context = {}) {
+  if (value == null || (typeof value === "string" && value.trim() === "")) {
+    return {
+      ok: false,
+      code: "SOURCE_CLASSIFICATION_REQUIRED",
+      reason:
+        "explicit --source-class (or sourceClassification) is required; silent production default is forbidden",
+    };
+  }
+  if (typeof value !== "string") {
+    return {
+      ok: false,
+      code: "SOURCE_CLASSIFICATION_INVALID",
+      reason: "source classification must be a string",
+    };
+  }
+  const normalized = normalizeClassification(value);
+  if (normalized === "ambiguous") {
+    return {
+      ok: false,
+      code: "CLASSIFICATION_AMBIGUOUS",
+      reason: "Environment classification is ambiguous",
+    };
+  }
+  if (!normalized || !ALLOWED_SOURCE_CLASSIFICATIONS.has(normalized)) {
+    return {
+      ok: false,
+      code: "SOURCE_CLASSIFICATION_INVALID",
+      reason:
+        "source classification must be an explicit known value (production|staging); free-form labels are insufficient",
+    };
+  }
+
+  // Refuse silent compose-project inference: if an operator only supplies a project name
+  // context without an explicit class, callers must not invent staging/production.
+  // When both are present and obviously contradictory with a free-form claim, fail closed.
+  const composeProject =
+    typeof context.composeProjectName === "string" ? context.composeProjectName.trim().toLowerCase() : "";
+  const runtimeEnv =
+    typeof context.claimedRuntimeEnv === "string" ? context.claimedRuntimeEnv.trim().toLowerCase() : "";
+  if (composeProject && runtimeEnv && composeProject.includes("staging") && runtimeEnv === "production") {
+    return {
+      ok: false,
+      code: "SOURCE_CLASSIFICATION_CONTRADICTION",
+      reason:
+        "contradictory source markers: compose project suggests staging while claimed runtime env is production; refuse silent reconciliation",
+    };
+  }
+  if (normalized === ENVIRONMENT_CLASSIFICATION.PRODUCTION && composeProject.includes("staging") && runtimeEnv === "local") {
+    // Distinct authorities (compose project / BOBA_BEAR_ENV / DB) must not be collapsed into
+    // production evidence without an explicit Founder taxonomy decision. Fail closed here.
+    return {
+      ok: false,
+      code: "SOURCE_CLASSIFICATION_CONTRADICTION",
+      reason:
+        "production source-class contradicts staging compose project + local runtime markers; do not invent provenance reconciliation",
+    };
+  }
+
+  return { ok: true, classification: normalized };
+}
+
+/**
+ * Production CLI classification resolver (flag wins over env). Pure — no I/O,
+ * no backup/dump/provider execution. Used by the recovery CLI boundary and by
+ * synthetic classification tests that must not continue into operational paths.
+ *
+ * @param {{
+ *   sourceClassFlag?: string | null,
+ *   sourceClassificationFlag?: string | null,
+ *   env?: { BOBA_RECOVERY_SOURCE_CLASSIFICATION?: unknown, COMPOSE_PROJECT_NAME?: unknown, BOBA_BEAR_ENV?: unknown },
+ * }} [input]
+ * @returns {{ ok: true, classification: string } | { ok: false, reason: string, code: string }}
+ */
+export function resolveSourceClassificationFromCli(input = {}) {
+  const fromFlag =
+    nonemptyFlagString(input.sourceClassFlag) ??
+    nonemptyFlagString(input.sourceClassificationFlag);
+  const env = input.env ?? {};
+  const fromEnv =
+    typeof env.BOBA_RECOVERY_SOURCE_CLASSIFICATION === "string"
+      ? env.BOBA_RECOVERY_SOURCE_CLASSIFICATION.trim()
+      : "";
+  return requireExplicitSourceClassification(fromFlag ?? (fromEnv || null), {
+    composeProjectName: env.COMPOSE_PROJECT_NAME,
+    claimedRuntimeEnv: env.BOBA_BEAR_ENV,
+  });
+}
+
+/**
+ * @param {unknown} value
+ * @returns {string | null}
+ */
+function nonemptyFlagString(value) {
+  return typeof value === "string" && value.length > 0 ? value : null;
+}
+
 export function evaluateTargetIdentitySafety(input) {
   const sourceIdentity = normalizeIdentity(input.sourceIdentity);
   const targetIdentity = normalizeIdentity(input.targetIdentity);
-  const sourceClassification = normalizeClassification(input.sourceClassification);
+  const requiredSource = requireExplicitSourceClassification(input.sourceClassification, {
+    composeProjectName: input.composeProjectName,
+    claimedRuntimeEnv: input.claimedRuntimeEnv,
+  });
+  const sourceClassification = requiredSource.ok ? requiredSource.classification : "";
   const targetClassification = normalizeClassification(input.targetClassification);
 
   if (!targetIdentity) {
@@ -38,11 +155,11 @@ export function evaluateTargetIdentitySafety(input) {
     return deny("SOURCE_EQUALS_TARGET", "Target identity equals source identity");
   }
 
-  if (sourceClassification === "ambiguous" || targetClassification === "ambiguous") {
-    return deny("CLASSIFICATION_AMBIGUOUS", "Environment classification is ambiguous");
+  if (!requiredSource.ok) {
+    return deny(requiredSource.code, requiredSource.reason);
   }
-  if (!sourceClassification || !KNOWN_CLASSIFICATIONS.has(sourceClassification)) {
-    return deny("SOURCE_CLASSIFICATION_UNRESOLVED", "Source environment classification is missing or unresolved");
+  if (targetClassification === "ambiguous") {
+    return deny("CLASSIFICATION_AMBIGUOUS", "Environment classification is ambiguous");
   }
   if (!targetClassification || !KNOWN_CLASSIFICATIONS.has(targetClassification)) {
     return deny("TARGET_CLASSIFICATION_UNRESOLVED", "Target environment classification is missing or unresolved");

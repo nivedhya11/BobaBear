@@ -31,11 +31,11 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2315,
-    "executableTestFiles": 515,
+    "trackedPathsConsidered": 2321,
+    "executableTestFiles": 521,
     "sourceTestFiles": 155,
     "testsTreeExecutableFiles": 278,
-    "scriptTestFiles": 82,
+    "scriptTestFiles": 88,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
     "playwrightConfigs": 7,
@@ -536,7 +536,9 @@
     "scripts/origin-trust/verify-contracts.test.mjs",
     "scripts/project-consistency.test.mjs",
     "scripts/recovery/capacity/observe.test.mjs",
+    "scripts/recovery/cli.credentials.test.mjs",
     "scripts/recovery/cli.test.mjs",
+    "scripts/recovery/entry-points.source-class.test.mjs",
     "scripts/recovery/evidence.test.mjs",
     "scripts/recovery/flock.test.mjs",
     "scripts/recovery/gate/high-risk.test.mjs",
@@ -549,12 +551,16 @@
     "scripts/recovery/layer1/container-exec.test.mjs",
     "scripts/recovery/layer1/pgbackrest.test.mjs",
     "scripts/recovery/layer1/rotation.test.mjs",
+    "scripts/recovery/layer2/age.plaintext.test.mjs",
     "scripts/recovery/layer2/backup.test.mjs",
     "scripts/recovery/layer2/rotation.test.mjs",
     "scripts/recovery/portability/rehearse.test.mjs",
     "scripts/recovery/readiness.test.mjs",
     "scripts/recovery/redact.test.mjs",
+    "scripts/recovery/restore/logical-connection.test.mjs",
+    "scripts/recovery/restore/logical-integrity.test.mjs",
     "scripts/recovery/restore/logical-pg-restore.test.mjs",
+    "scripts/recovery/restore/logical-store-failures.test.mjs",
     "scripts/recovery/restore/logical-target-hardening.test.mjs",
     "scripts/recovery/restore/provision.test.mjs",
     "scripts/recovery/run-id.test.mjs",
@@ -2347,7 +2353,43 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "scripts/recovery/cli.credentials.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "scripts/recovery/cli.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/recovery/entry-points.source-class.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
       "testType": "script-unit",
@@ -2589,6 +2631,24 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "scripts/recovery/layer2/age.plaintext.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "scripts/recovery/layer2/backup.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
@@ -2679,7 +2739,61 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "scripts/recovery/restore/logical-connection.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/recovery/restore/logical-integrity.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "scripts/recovery/restore/logical-pg-restore.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/recovery/restore/logical-store-failures.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
       "testType": "script-unit",
