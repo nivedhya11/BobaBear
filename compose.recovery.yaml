@@ -5,10 +5,13 @@
 #   npm run recovery -- pgbackrest init --generation 1
 #   # Layer 1 executes in the PostgreSQL container context (same path as the CLI):
 #   docker compose exec -T postgres pgbackrest --config=/etc/pgbackrest/pgbackrest.conf --stanza=boba backup --type=full
-#   npm run recovery -- backup layer1 --type full --generation 1
+#   npm run recovery -- backup layer1 --type full --source-class production --generation 1
 #
 #   # Layer 2 oneshot tooling (age + node orchestration; dump via logical-backup role):
-#   docker compose -f compose.yaml -f compose.recovery.yaml run --rm recovery-layer2-backup
+#   # BOBA_RECOVERY_SOURCE_CLASSIFICATION must be set explicitly (production|staging).
+#   # Compose fails closed before start when the variable is unset (no silent default).
+#   BOBA_RECOVERY_SOURCE_CLASSIFICATION=staging \
+#     docker compose -f compose.yaml -f compose.recovery.yaml run --rm recovery-layer2-backup
 #
 # These services do NOT start with ordinary `docker compose up`. They require the
 # `tools` profile (or explicit `run`). They are not a substitute for production
@@ -41,6 +44,8 @@ services:
       BOBA_RECOVERY_LOCAL_STORE: /recovery-local-store
       BOBA_RECOVERY_AGE_RECIPIENT: "${BOBA_RECOVERY_AGE_RECIPIENT:-}"
       BOBA_LOGICAL_BACKUP_DB_USER: "${BOBA_LOGICAL_BACKUP_DB_USER:-boba_bear_logical_backup}"
+      # Non-secret explicit classification; presence alone is not authority — CLI validates.
+      BOBA_RECOVERY_SOURCE_CLASSIFICATION: "${BOBA_RECOVERY_SOURCE_CLASSIFICATION:?BOBA_RECOVERY_SOURCE_CLASSIFICATION must be set explicitly to production or staging}"
     command:
       [
         "npm",
@@ -49,6 +54,8 @@ services:
         "--",
         "backup",
         "layer2",
+        "--source-class",
+        "${BOBA_RECOVERY_SOURCE_CLASSIFICATION:?BOBA_RECOVERY_SOURCE_CLASSIFICATION must be set explicitly to production or staging}",
         "--local-store",
         "/recovery-local-store",
       ]

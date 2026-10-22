@@ -69,294 +69,320 @@ export async function runLogicalRestore(options) {
   let targetIdentity = options.targetIdentity ?? createRestoreTargetId(runId);
   let databaseUrl = typeof options.databaseUrl === "string" ? options.databaseUrl.trim() : "";
 
-  const shouldProvision = options.provisionTarget === true || (!databaseUrl && !options.restoreFn);
-  if (shouldProvision && !options.restoreFn) {
-    const provisionedResult = await provisionLogicalTarget({
-      runId,
-      sourceIdentity: options.sourceIdentity,
-      sourceClassification: sourceClass.classification,
-      sourceDatabaseUrl: options.sourceDatabaseUrl,
-      image: options.image,
-      execFn: options.containerExecFn,
-    });
-    if (!provisionedResult.ok) {
-      return fail(options, runId, startedAt, targetIdentity, provisionedResult.reason);
-    }
-    provisioned = provisionedResult.target;
-    targetIdentity = provisioned.targetIdentity;
-    databaseUrl = provisioned.databaseUrl;
-  } else if (databaseUrl) {
-    const owned = assertOwnedLogicalTarget({
-      runId,
-      databaseUrl,
-      sourceDatabaseUrl: options.sourceDatabaseUrl,
-      ownershipDescriptor: options.targetOwnership,
-      targetIdentity: options.targetIdentity,
-      sourceIdentity: options.sourceIdentity,
-      sourceClassification: sourceClass.classification,
-    });
-    if (!owned.ok) {
-      return fail(options, runId, startedAt, targetIdentity, owned.reason);
-    }
-    targetIdentity = owned.targetIdentity;
-  } else if (options.restoreFn) {
-    // Injected restoreFn is a unit/integration seam only — still refuse production force.
-    const fresh = assertFreshTarget({
-      sourceIdentity: options.sourceIdentity,
-      targetIdentity,
-      sourceClassification: sourceClass.classification,
-      targetClassification: "recovery",
-      forceProduction: options.forceProduction,
-    });
-    if (!fresh.ok) {
-      return fail(options, runId, startedAt, targetIdentity, fresh.reason);
-    }
-  }
-
   const sourceRunId = options.runIdToRestore;
   if (!isValidRunId(sourceRunId)) {
-    if (provisioned) await cleanupProvisionedTarget(provisioned);
     return fail(options, runId, startedAt, targetIdentity, "runIdToRestore must be a valid RUN_ID");
   }
 
   const completeKey = `logical/${sourceRunId}/COMPLETE`;
   const artifactKey = `logical/${sourceRunId}/dump.age`;
 
-  const binding = await verifyLogicalArtifactBinding({
-    objectStore: options.objectStore,
-    sourceRunId,
-    completeKey,
-    artifactKey,
-  });
+  // Verify artifact integrity before provisioning a disposable target (CS2/C3).
+  let binding;
+  try {
+    binding = await verifyLogicalArtifactBinding({
+      objectStore: options.objectStore,
+      sourceRunId,
+      completeKey,
+      artifactKey,
+    });
+  } catch (error) {
+    return fail(
+      options,
+      runId,
+      startedAt,
+      targetIdentity,
+      sanitizeStoreFailure(error, "object-store binding verification failed"),
+    );
+  }
   if (!binding.ok) {
-    if (provisioned) await cleanupProvisionedTarget(provisioned);
     return fail(options, runId, startedAt, targetIdentity, binding.reason);
   }
 
   const ciphertext = binding.ciphertext;
 
-  let plaintext;
-  if (typeof options.decryptFn === "function") {
-    const decrypted = await options.decryptFn({ ciphertext, identityFile: options.identityFile });
-    if (!decrypted?.ok || !decrypted.plaintext) {
-      if (provisioned) await cleanupProvisionedTarget(provisioned);
-      return fail(options, runId, startedAt, targetIdentity, decrypted?.reason ?? "age decrypt failed");
-    }
-    plaintext = decrypted.plaintext;
-  } else {
-    const decrypted = await decryptFromAge({
-      ciphertext,
-      identityFile: options.identityFile,
-      ageBin: options.ageBin,
-    });
-    if (!decrypted.ok) {
-      if (provisioned) await cleanupProvisionedTarget(provisioned);
-      return fail(options, runId, startedAt, targetIdentity, decrypted.reason);
-    }
-    plaintext = decrypted.plaintext;
-  }
-
-  if (!options.restoreFn && !databaseUrl) {
-    if (provisioned) await cleanupProvisionedTarget(provisioned);
-    return fail(
-      options,
-      runId,
-      startedAt,
-      targetIdentity,
-      "logical restore requires a provisioned fresh recovery database (or owned --database-url with ownership descriptor)",
-    );
-  }
-
-  if (databaseUrl && isForbiddenActiveDatabaseUrl(databaseUrl)) {
-    if (provisioned) await cleanupProvisionedTarget(provisioned);
-    return fail(
-      options,
-      runId,
-      startedAt,
-      targetIdentity,
-      "databaseUrl resolves to a forbidden active/default endpoint; refuse restore",
-    );
-  }
-
-  const dumpFile = writeOwnedAgeTempFile(plaintext, {
-    kind: "restore",
-    suffix: ".dump",
-    ownershipToken: runId.replace(/[^a-zA-Z0-9_-]/g, "").slice(-32),
-  });
-  if (!dumpFile.ok) {
-    if (provisioned) await cleanupProvisionedTarget(provisioned);
-    return fail(options, runId, startedAt, targetIdentity, dumpFile.reason);
-  }
-  const dumpPath = dumpFile.path;
-  const dumpToken = dumpFile.ownershipToken;
-  /** @type {string | null} */
-  let remoteDumpPath = null;
-  let containerCleanupFailed = false;
-  let containerCleanupReason = null;
-
   try {
-    const restoreFn =
-      options.restoreFn ??
-      ((filePath) => {
-        // Prefer in-container restore against a provisioned disposable target
-        // when host pg_restore is absent (common on agent workstations).
-        if (provisioned?.containerName && provisioned?.containerCli) {
-          const remoteDump = `/tmp/boba-restore-${runId}.dump`;
-          remoteDumpPath = remoteDump;
-          const copy = spawnSync(
-            provisioned.containerCli,
-            ["cp", filePath, `${provisioned.containerName}:${remoteDump}`],
-            { encoding: "utf8", timeout: 120_000 },
-          );
-          if (copy.status !== 0) {
-            return {
-              ok: false,
-              reason: redactText(copy.stderr || "failed to copy dump into recovery target container"),
-            };
-          }
-          // Prefer migrator role when provisioned so restored objects are owned by the
-          // same repository migration authority used for post-restore migrate.ts.
-          let restoreUser = "boba_recovery";
-          let restorePassword = null;
-          if (typeof provisioned.migratorDatabaseUrl === "string" && provisioned.migratorDatabaseUrl.trim()) {
-            try {
-              const parsed = new URL(provisioned.migratorDatabaseUrl);
-              if (parsed.username) restoreUser = decodeURIComponent(parsed.username);
-              if (parsed.password) restorePassword = decodeURIComponent(parsed.password);
-            } catch {
-              // keep boba_recovery fallback
-            }
-          }
-          // CS4: pass PGPASSWORD via child env + docker -e NAME (no =value in argv).
-          const childEnv = { ...process.env };
-          const execEnv = ["exec"];
-          if (restorePassword) {
-            childEnv.PGPASSWORD = restorePassword;
-            execEnv.push("-e", "PGPASSWORD");
-          }
-          execEnv.push(
-            provisioned.containerName,
-            "pg_restore",
-            "-U",
-            restoreUser,
-            "-d",
-            "boba_recovery",
-            "--exit-on-error",
-            "--clean",
-            "--if-exists",
-            "--no-owner",
-            "--no-acl",
-            remoteDump,
-          );
-          const result = spawnSync(provisioned.containerCli, execEnv, {
-            encoding: "utf8",
-            timeout: 300_000,
-            env: childEnv,
-          });
-          return evaluatePgRestoreResult(result);
-        }
-        const conn = parsePostgresConnection(databaseUrl);
-        if (!conn.ok) {
-          return { ok: false, reason: conn.reason };
-        }
-        const childEnv = { ...process.env };
-        if (conn.password) childEnv.PGPASSWORD = conn.password;
-        const result = spawnSync(
-          "pg_restore",
-          [
-            "-h",
-            conn.host,
-            "-p",
-            conn.port,
-            "-U",
-            conn.user,
-            "-d",
-            conn.database,
-            "--exit-on-error",
-            "--clean",
-            "--if-exists",
-            filePath,
-          ],
-          {
-            encoding: "utf8",
-            env: childEnv,
-          },
-        );
-        return evaluatePgRestoreResult(result);
-      });
-    const restored = await restoreFn(dumpPath);
-    if (!restored?.ok) {
-      if (provisioned) await cleanupProvisionedTarget(provisioned);
-      return fail(options, runId, startedAt, targetIdentity, restored?.reason ?? "pg_restore failed");
-    }
-  } finally {
-    const hostCleanup = cleanupOwnedAgeTempPath(dumpPath, dumpToken);
-    if (!hostCleanup.ok && existsSync(dumpPath)) {
-      // Ordinary failure path must not leave owned plaintext; escalate if unlink fails.
-      containerCleanupFailed = true;
-      containerCleanupReason = hostCleanup.reason;
-    }
-    if (remoteDumpPath && provisioned?.containerName && provisioned?.containerCli) {
-      const removed = removeContainerTempDump({
-        containerCli: provisioned.containerCli,
-        containerName: provisioned.containerName,
-        remoteDumpPath,
+    const shouldProvision = options.provisionTarget === true || (!databaseUrl && !options.restoreFn);
+    if (shouldProvision && !options.restoreFn) {
+      const provisionedResult = await provisionLogicalTarget({
         runId,
+        sourceIdentity: options.sourceIdentity,
+        sourceClassification: sourceClass.classification,
+        sourceDatabaseUrl: options.sourceDatabaseUrl,
+        image: options.image,
+        execFn: options.containerExecFn,
       });
-      if (!removed.ok) {
-        containerCleanupFailed = true;
-        containerCleanupReason = removed.reason;
+      if (!provisionedResult.ok) {
+        return fail(options, runId, startedAt, targetIdentity, provisionedResult.reason);
+      }
+      provisioned = provisionedResult.target;
+      targetIdentity = provisioned.targetIdentity;
+      databaseUrl = provisioned.databaseUrl;
+    } else if (databaseUrl) {
+      const owned = assertOwnedLogicalTarget({
+        runId,
+        databaseUrl,
+        sourceDatabaseUrl: options.sourceDatabaseUrl,
+        ownershipDescriptor: options.targetOwnership,
+        targetIdentity: options.targetIdentity,
+        sourceIdentity: options.sourceIdentity,
+        sourceClassification: sourceClass.classification,
+      });
+      if (!owned.ok) {
+        return fail(options, runId, startedAt, targetIdentity, owned.reason);
+      }
+      targetIdentity = owned.targetIdentity;
+    } else if (options.restoreFn) {
+      // Injected restoreFn is a unit/integration seam only — still refuse production force.
+      const fresh = assertFreshTarget({
+        sourceIdentity: options.sourceIdentity,
+        targetIdentity,
+        sourceClassification: sourceClass.classification,
+        targetClassification: "recovery",
+        forceProduction: options.forceProduction,
+      });
+      if (!fresh.ok) {
+        return fail(options, runId, startedAt, targetIdentity, fresh.reason);
       }
     }
-  }
 
-  // CS1-E/F: unsuccessful cleanup must not silently produce successful recovery proof.
-  if (containerCleanupFailed) {
-    if (provisioned) await cleanupProvisionedTarget(provisioned);
-    return fail(
+    let plaintext;
+    if (typeof options.decryptFn === "function") {
+      const decrypted = await options.decryptFn({ ciphertext, identityFile: options.identityFile });
+      if (!decrypted?.ok || !decrypted.plaintext) {
+        return failAfterOwnedCleanup(
+          options,
+          runId,
+          startedAt,
+          targetIdentity,
+          provisioned,
+          decrypted?.reason ?? "age decrypt failed",
+        );
+      }
+      plaintext = decrypted.plaintext;
+    } else {
+      const decrypted = await decryptFromAge({
+        ciphertext,
+        identityFile: options.identityFile,
+        ageBin: options.ageBin,
+      });
+      if (!decrypted.ok) {
+        return failAfterOwnedCleanup(
+          options,
+          runId,
+          startedAt,
+          targetIdentity,
+          provisioned,
+          decrypted.reason,
+        );
+      }
+      plaintext = decrypted.plaintext;
+    }
+
+    if (!options.restoreFn && !databaseUrl) {
+      return failAfterOwnedCleanup(
+        options,
+        runId,
+        startedAt,
+        targetIdentity,
+        provisioned,
+        "logical restore requires a provisioned fresh recovery database (or owned --database-url with ownership descriptor)",
+      );
+    }
+
+    if (databaseUrl && isForbiddenActiveDatabaseUrl(databaseUrl)) {
+      return failAfterOwnedCleanup(
+        options,
+        runId,
+        startedAt,
+        targetIdentity,
+        provisioned,
+        "databaseUrl resolves to a forbidden active/default endpoint; refuse restore",
+      );
+    }
+
+    const dumpFile = writeOwnedAgeTempFile(plaintext, {
+      kind: "restore",
+      suffix: ".dump",
+      ownershipToken: runId.replace(/[^a-zA-Z0-9_-]/g, "").slice(-32),
+    });
+    if (!dumpFile.ok) {
+      return failAfterOwnedCleanup(
+        options,
+        runId,
+        startedAt,
+        targetIdentity,
+        provisioned,
+        dumpFile.reason,
+      );
+    }
+    const dumpPath = dumpFile.path;
+    const dumpToken = dumpFile.ownershipToken;
+    /** @type {string | null} */
+    let remoteDumpPath = null;
+    let containerCleanupFailed = false;
+    let containerCleanupReason = null;
+
+    try {
+      const restoreFn =
+        options.restoreFn ??
+        ((filePath) => {
+          // Prefer in-container restore against a provisioned disposable target
+          // when host pg_restore is absent (common on agent workstations).
+          if (provisioned?.containerName && provisioned?.containerCli) {
+            const remoteDump = `/tmp/boba-restore-${runId}.dump`;
+            remoteDumpPath = remoteDump;
+            const copy = spawnSync(
+              provisioned.containerCli,
+              ["cp", filePath, `${provisioned.containerName}:${remoteDump}`],
+              { encoding: "utf8", timeout: 120_000 },
+            );
+            if (copy.status !== 0) {
+              return {
+                ok: false,
+                reason: redactText(copy.stderr || "failed to copy dump into recovery target container"),
+              };
+            }
+            // Prefer migrator role when provisioned so restored objects are owned by the
+            // same repository migration authority used for post-restore migrate.ts.
+            let restoreUser = "boba_recovery";
+            let restorePassword = null;
+            if (typeof provisioned.migratorDatabaseUrl === "string" && provisioned.migratorDatabaseUrl.trim()) {
+              try {
+                const parsed = new URL(provisioned.migratorDatabaseUrl);
+                if (parsed.username) restoreUser = decodeURIComponent(parsed.username);
+                if (parsed.password) restorePassword = decodeURIComponent(parsed.password);
+              } catch {
+                // keep boba_recovery fallback
+              }
+            }
+            // CS4: pass PGPASSWORD via child env + docker -e NAME (no =value in argv).
+            const childEnv = { ...process.env };
+            const execEnv = ["exec"];
+            if (restorePassword) {
+              childEnv.PGPASSWORD = restorePassword;
+              execEnv.push("-e", "PGPASSWORD");
+            }
+            execEnv.push(
+              provisioned.containerName,
+              "pg_restore",
+              "-U",
+              restoreUser,
+              "-d",
+              "boba_recovery",
+              "--exit-on-error",
+              "--clean",
+              "--if-exists",
+              "--no-owner",
+              "--no-acl",
+              remoteDump,
+            );
+            const result = spawnSync(provisioned.containerCli, execEnv, {
+              encoding: "utf8",
+              timeout: 300_000,
+              env: childEnv,
+            });
+            return evaluatePgRestoreResult(result);
+          }
+          const conn = buildLibpqChildConnection(databaseUrl);
+          if (!conn.ok) {
+            return { ok: false, reason: conn.reason };
+          }
+          const result = spawnSync("pg_restore", buildPgRestoreHostArgv(conn, filePath), {
+            encoding: "utf8",
+            env: applyLibpqSecretEnv(process.env, conn),
+          });
+          return evaluatePgRestoreResult(result);
+        });
+      const restored = await restoreFn(dumpPath);
+      if (!restored?.ok) {
+        return failAfterOwnedCleanup(
+          options,
+          runId,
+          startedAt,
+          targetIdentity,
+          provisioned,
+          restored?.reason ?? "pg_restore failed",
+        );
+      }
+    } finally {
+      const hostCleanup = cleanupOwnedAgeTempPath(dumpPath, dumpToken);
+      if (!hostCleanup.ok && existsSync(dumpPath)) {
+        // Ordinary failure path must not leave owned plaintext; escalate if unlink fails.
+        containerCleanupFailed = true;
+        containerCleanupReason = hostCleanup.reason;
+      }
+      if (remoteDumpPath && provisioned?.containerName && provisioned?.containerCli) {
+        const removed = removeContainerTempDump({
+          containerCli: provisioned.containerCli,
+          containerName: provisioned.containerName,
+          remoteDumpPath,
+          runId,
+        });
+        if (!removed.ok) {
+          containerCleanupFailed = true;
+          containerCleanupReason = removed.reason;
+        }
+      }
+    }
+
+    // CS1-E/F: unsuccessful cleanup must not silently produce successful recovery proof.
+    if (containerCleanupFailed) {
+      return failAfterOwnedCleanup(
+        options,
+        runId,
+        startedAt,
+        targetIdentity,
+        provisioned,
+        `restore artifact cleanup failed after pg_restore; refusing SUCCEEDED proof: ${containerCleanupReason ?? "cleanup failed"}`,
+      );
+    }
+
+    const provisionFields = provisioned ? targetEvidenceFields(provisioned) : { findings: [] };
+    const evidence = createEvidence({
+      runId,
+      operationType: OPERATION_TYPE.RESTORE_LOGICAL,
+      recoveryLayer: RECOVERY_LAYER.LAYER_2,
+      status: OPERATION_STATUS.SUCCEEDED,
+      startedAt,
+      endedAt: new Date().toISOString(),
+      sourceIdentityMarker: options.sourceIdentity,
+      sourceEnvironmentClassification: sourceClass.classification,
+      targetIdentityMarker: targetIdentity,
+      recoveryArtifactReference: artifactKey,
+      recoveryPoint: sourceRunId,
+      checksumIntegrityStatus: CHECKSUM_INTEGRITY_STATUS.MATCHED,
+      findings: [
+        {
+          code: "LOGICAL_RESTORE",
+          completeKey,
+          artifactKey,
+          sha256Hex: binding.sha256Hex,
+          volumeOrPathId: provisioned?.volumeOrPathId ?? null,
+        },
+        ...(provisionFields.findings ?? []),
+      ],
+    });
+    if (options.evidenceDir) persistEvidence(options.evidenceDir, evidence);
+    return {
+      ok: true,
+      status: OPERATION_STATUS.SUCCEEDED,
+      runId,
+      targetIdentity,
+      databaseUrl: databaseUrl || null,
+      provisioned,
+      evidence,
+    };
+  } catch (error) {
+    return failAfterOwnedCleanup(
       options,
       runId,
       startedAt,
       targetIdentity,
-      `restore artifact cleanup failed after pg_restore; refusing SUCCEEDED proof: ${containerCleanupReason ?? "cleanup failed"}`,
+      provisioned,
+      sanitizeStoreFailure(error, "logical restore failed closed on unexpected error"),
     );
   }
-
-  const provisionFields = provisioned ? targetEvidenceFields(provisioned) : { findings: [] };
-  const evidence = createEvidence({
-    runId,
-    operationType: OPERATION_TYPE.RESTORE_LOGICAL,
-    recoveryLayer: RECOVERY_LAYER.LAYER_2,
-    status: OPERATION_STATUS.SUCCEEDED,
-    startedAt,
-    endedAt: new Date().toISOString(),
-    sourceIdentityMarker: options.sourceIdentity,
-    sourceEnvironmentClassification: sourceClass.classification,
-    targetIdentityMarker: targetIdentity,
-    recoveryArtifactReference: artifactKey,
-    recoveryPoint: sourceRunId,
-    checksumIntegrityStatus: CHECKSUM_INTEGRITY_STATUS.MATCHED,
-    findings: [
-      {
-        code: "LOGICAL_RESTORE",
-        completeKey,
-        artifactKey,
-        sha256Hex: binding.sha256Hex,
-        volumeOrPathId: provisioned?.volumeOrPathId ?? null,
-      },
-      ...(provisionFields.findings ?? []),
-    ],
-  });
-  if (options.evidenceDir) persistEvidence(options.evidenceDir, evidence);
-  return {
-    ok: true,
-    status: OPERATION_STATUS.SUCCEEDED,
-    runId,
-    targetIdentity,
-    databaseUrl: databaseUrl || null,
-    provisioned,
-    evidence,
-  };
 }
 
 /**
@@ -375,7 +401,15 @@ export async function verifyLogicalArtifactBinding(input) {
   }
 
   if (typeof objectStore.headObject === "function") {
-    const head = await objectStore.headObject({ key: completeKey });
+    let head;
+    try {
+      head = await objectStore.headObject({ key: completeKey });
+    } catch (error) {
+      return {
+        ok: false,
+        reason: sanitizeStoreFailure(error, "object-store headObject failed for COMPLETE"),
+      };
+    }
     if (!head?.exists) {
       return { ok: false, reason: "COMPLETE marker missing; refuse incomplete Layer 2 artifact" };
     }
@@ -385,8 +419,11 @@ export async function verifyLogicalArtifactBinding(input) {
   try {
     const completeRemote = await objectStore.getObject({ key: completeKey });
     completeBody = completeRemote?.body;
-  } catch {
-    return { ok: false, reason: "COMPLETE marker missing; refuse incomplete Layer 2 artifact" };
+  } catch (error) {
+    return {
+      ok: false,
+      reason: sanitizeStoreFailure(error, "COMPLETE marker missing; refuse incomplete Layer 2 artifact"),
+    };
   }
 
   let complete;
@@ -431,8 +468,11 @@ export async function verifyLogicalArtifactBinding(input) {
   let artifactRemote;
   try {
     artifactRemote = await objectStore.getObject({ key: artifactKey });
-  } catch {
-    return { ok: false, reason: "dump.age missing; refuse incomplete Layer 2 artifact" };
+  } catch (error) {
+    return {
+      ok: false,
+      reason: sanitizeStoreFailure(error, "dump.age missing; refuse incomplete Layer 2 artifact"),
+    };
   }
   const ciphertext = Buffer.isBuffer(artifactRemote?.body)
     ? artifactRemote.body
@@ -452,10 +492,18 @@ export async function verifyLogicalArtifactBinding(input) {
   // Store-side verification when available — never substitute a self-reported result
   // for actual retrieved-byte integrity (already checked above).
   if (typeof objectStore.verifyRemoteSha256 === "function") {
-    const verified = await objectStore.verifyRemoteSha256({
-      key: artifactKey,
-      expectedSha256Hex: expectedSha,
-    });
+    let verified;
+    try {
+      verified = await objectStore.verifyRemoteSha256({
+        key: artifactKey,
+        expectedSha256Hex: expectedSha,
+      });
+    } catch (error) {
+      return {
+        ok: false,
+        reason: sanitizeStoreFailure(error, "object-store verifyRemoteSha256 failed; refuse decrypt"),
+      };
+    }
     if (!verified?.ok) {
       return {
         ok: false,
@@ -521,10 +569,73 @@ export function evaluatePgRestoreResult(result) {
 }
 
 /**
- * @param {string} databaseUrl
- * @returns {{ ok: true, host: string, port: string, user: string, password: string, database: string } | { ok: false, reason: string }}
+ * Known libpq URI/query keys we preserve. Unknown security-shaped keys fail closed
+ * rather than being silently dropped (which could weaken TLS/auth semantics).
  */
-export function parsePostgresConnection(databaseUrl) {
+const LIBPQ_KNOWN_PARAMS = new Set([
+  "host",
+  "hostaddr",
+  "port",
+  "dbname",
+  "user",
+  "password",
+  "passfile",
+  "channel_binding",
+  "connect_timeout",
+  "client_encoding",
+  "options",
+  "application_name",
+  "fallback_application_name",
+  "keepalives",
+  "keepalives_idle",
+  "keepalives_interval",
+  "keepalives_count",
+  "tcp_user_timeout",
+  "replication",
+  "gssencmode",
+  "sslmode",
+  "requiressl",
+  "sslcompression",
+  "sslcert",
+  "sslkey",
+  "sslpassword",
+  "sslrootcert",
+  "sslcrl",
+  "sslcrldir",
+  "sslsni",
+  "requirepeer",
+  "ssl_min_protocol_version",
+  "ssl_max_protocol_version",
+  "krbsrvname",
+  "gsslib",
+  "gssdelegation",
+  "service",
+  "target_session_attrs",
+  "load_balance_hosts",
+  "sslnegotiation",
+]);
+
+const LIBPQ_SECURITY_KEY_PATTERN =
+  /^(ssl|gss|krb|pass|cert|key|channel_binding|require|target_session|hostaddr)/i;
+
+/**
+ * Parse a PostgreSQL URL into a password-free libpq connection representation.
+ * Secrets (password / sslpassword) are returned separately for child-only env delivery.
+ *
+ * @param {string} databaseUrl
+ * @returns {{
+ *   ok: true,
+ *   host: string,
+ *   port: string,
+ *   user: string,
+ *   password: string,
+ *   sslPassword: string,
+ *   database: string,
+ *   connectionUri: string,
+ *   query: Record<string, string>,
+ * } | { ok: false, reason: string }}
+ */
+export function buildLibpqChildConnection(databaseUrl) {
   if (typeof databaseUrl !== "string" || !databaseUrl.trim()) {
     return { ok: false, reason: "databaseUrl required" };
   }
@@ -533,21 +644,219 @@ export function parsePostgresConnection(databaseUrl) {
     if (parsed.protocol !== "postgres:" && parsed.protocol !== "postgresql:") {
       return { ok: false, reason: "databaseUrl must be a postgresql URL" };
     }
+
+    /** @type {Record<string, string>} */
+    const query = {};
+    for (const [rawKey, rawValue] of parsed.searchParams.entries()) {
+      const key = String(rawKey);
+      if (!LIBPQ_KNOWN_PARAMS.has(key)) {
+        if (LIBPQ_SECURITY_KEY_PATTERN.test(key)) {
+          return {
+            ok: false,
+            reason: `unsupported security-relevant libpq parameter '${key}'; refuse silent drop`,
+          };
+        }
+        return {
+          ok: false,
+          reason: `unsupported libpq parameter '${key}'; refuse ambiguous connection semantics`,
+        };
+      }
+      query[key] = rawValue;
+    }
+
     const database = decodeURIComponent(parsed.pathname.replace(/^\//, "").split("/")[0] ?? "");
     if (!database) {
       return { ok: false, reason: "databaseUrl missing database name" };
     }
+
+    const hostFromUri = parsed.hostname || "";
+    const hostFromQuery = typeof query.host === "string" ? query.host : "";
+    const hostaddr = typeof query.hostaddr === "string" ? query.hostaddr : "";
+    if (!hostFromUri && !hostFromQuery && !hostaddr) {
+      return {
+        ok: false,
+        reason: "databaseUrl missing host/hostaddr; refusing implicit localhost fallback",
+      };
+    }
+
+    let userinfoPassword = "";
+    try {
+      userinfoPassword = parsed.password ? decodeURIComponent(parsed.password) : "";
+    } catch {
+      return { ok: false, reason: "databaseUrl password is not valid percent-encoding" };
+    }
+    let user = "";
+    try {
+      user = parsed.username ? decodeURIComponent(parsed.username) : "";
+    } catch {
+      return { ok: false, reason: "databaseUrl username is not valid percent-encoding" };
+    }
+    if (!user && typeof query.user === "string") {
+      user = query.user;
+    }
+
+    const queryPassword = typeof query.password === "string" ? query.password : "";
+    if (userinfoPassword && queryPassword && userinfoPassword !== queryPassword) {
+      return {
+        ok: false,
+        reason: "ambiguous databaseUrl password (userinfo vs query disagree); refuse",
+      };
+    }
+    const password = userinfoPassword || queryPassword;
+    const sslPassword = typeof query.sslpassword === "string" ? query.sslpassword : "";
+
+    const port =
+      parsed.port ||
+      (typeof query.port === "string" && query.port.trim() ? query.port.trim() : "") ||
+      "5432";
+    const host = hostFromUri || hostFromQuery || "";
+
+    // Rebuild a password-free URI that preserves supported query semantics (incl. sslmode).
+    // When authority host is empty (hostaddr/query-host forms), keep port in the query —
+    // WHATWG URL drops authority port without a hostname.
+    const safe = new URL(`${parsed.protocol}//`);
+    if (host) {
+      safe.hostname = host;
+      if (port) safe.port = port;
+      if (user) safe.username = user;
+    }
+    safe.password = "";
+    safe.pathname = `/${database}`;
+    for (const [key, value] of Object.entries(query)) {
+      if (key === "password" || key === "sslpassword") continue;
+      if (key === "dbname") continue;
+      if (host) {
+        if (key === "user" && user) continue;
+        if (key === "port" && port) continue;
+        if (key === "host" && hostFromUri) continue;
+      } else {
+        // Authority-less form: ensure user/port remain available to libpq via query.
+        if (key === "user") continue;
+        if (key === "port") continue;
+      }
+      safe.searchParams.append(key, value);
+    }
+    if (!host) {
+      if (user) safe.searchParams.set("user", user);
+      if (port) safe.searchParams.set("port", port);
+    }
+
+    const connectionUri = safe.toString();
+    if (password && connectionUri.includes(password)) {
+      return { ok: false, reason: "refusing connectionUri that embeds password material" };
+    }
+    if (sslPassword && connectionUri.includes(sslPassword)) {
+      return { ok: false, reason: "refusing connectionUri that embeds sslpassword material" };
+    }
+
     return {
       ok: true,
-      host: parsed.hostname || "127.0.0.1",
-      port: parsed.port || "5432",
-      user: decodeURIComponent(parsed.username || ""),
-      password: decodeURIComponent(parsed.password || ""),
+      host: host || hostaddr,
+      port,
+      user,
+      password,
+      sslPassword,
       database,
+      connectionUri,
+      query,
     };
   } catch {
     return { ok: false, reason: "databaseUrl is not a valid URL" };
   }
+}
+
+/**
+ * @deprecated Prefer buildLibpqChildConnection — kept as a compatible alias.
+ * @param {string} databaseUrl
+ */
+export function parsePostgresConnection(databaseUrl) {
+  return buildLibpqChildConnection(databaseUrl);
+}
+
+/**
+ * Production argv builder for host pg_dump (CS4/C2). Secrets stay in child env only.
+ * @param {{ ok: true, connectionUri: string }} conn
+ * @returns {string[]}
+ */
+export function buildPgDumpArgv(conn) {
+  return ["-Fc", conn.connectionUri];
+}
+
+/**
+ * Production argv builder for host pg_restore (CS4/C2).
+ * @param {{ ok: true, connectionUri: string }} conn
+ * @param {string} dumpPath
+ * @returns {string[]}
+ */
+export function buildPgRestoreHostArgv(conn, dumpPath) {
+  return ["-d", conn.connectionUri, "--exit-on-error", "--clean", "--if-exists", dumpPath];
+}
+
+/**
+ * Production argv builder for host psql (CS4/C2).
+ * @param {{ ok: true, connectionUri: string }} conn
+ * @param {string[]} extraArgs
+ * @returns {string[]}
+ */
+export function buildPsqlHostArgv(conn, extraArgs = []) {
+  return [conn.connectionUri, ...extraArgs];
+}
+
+/**
+ * Deliver password/sslpassword to the child only (never argv).
+ * @param {NodeJS.ProcessEnv} baseEnv
+ * @param {{ password?: string, sslPassword?: string }} conn
+ * @returns {NodeJS.ProcessEnv}
+ */
+export function applyLibpqSecretEnv(baseEnv, conn) {
+  const env = { ...baseEnv };
+  if (conn.password) env.PGPASSWORD = conn.password;
+  if (conn.sslPassword) env.PGSSLPASSWORD = conn.sslPassword;
+  return env;
+}
+
+/**
+ * @param {unknown} error
+ * @param {string} fallback
+ */
+function sanitizeStoreFailure(error, fallback) {
+  const message = error instanceof Error ? error.message : String(error ?? fallback);
+  return redactText(message && message.trim() ? `${fallback}: ${message}` : fallback);
+}
+
+/**
+ * Cleanup only a positively identified run-owned target; report remaining resources if cleanup fails.
+ * @param {import("./provision.mjs").ProvisionedLogicalTarget | null} provisioned
+ */
+function cleanupOwnedProvisionedTarget(provisioned) {
+  if (!provisioned) return { ok: true, remaining: null };
+  const cleaned = cleanupProvisionedTarget(provisioned);
+  if (cleaned?.ok) return { ok: true, remaining: null };
+  return {
+    ok: false,
+    reason: cleaned?.reason ?? "owned target cleanup failed",
+    remaining: {
+      kind: provisioned.kind,
+      runId: provisioned.runId,
+      targetIdentity: provisioned.targetIdentity,
+      containerName: provisioned.containerName ?? null,
+      volumeOrPathId: provisioned.volumeOrPathId ?? null,
+    },
+  };
+}
+
+function failAfterOwnedCleanup(options, runId, startedAt, targetIdentity, provisioned, reason) {
+  const cleaned = cleanupOwnedProvisionedTarget(provisioned);
+  if (!cleaned.ok) {
+    return fail(
+      options,
+      runId,
+      startedAt,
+      targetIdentity,
+      `${reason}; owned target cleanup incomplete: ${cleaned.reason}; remaining=${JSON.stringify(cleaned.remaining)}`,
+    );
+  }
+  return fail(options, runId, startedAt, targetIdentity, reason);
 }
 
 function fail(options, runId, startedAt, targetIdentity, reason) {

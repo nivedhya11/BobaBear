@@ -17,7 +17,12 @@ import { generateRunId } from "../run-id.mjs";
 import { persistEvidence } from "../store.mjs";
 import { redactText } from "../redact.mjs";
 import { requireExplicitSourceClassification } from "../identity.mjs";
-import { parsePostgresConnection, runLogicalRestore } from "../restore/logical.mjs";
+import {
+  applyLibpqSecretEnv,
+  buildLibpqChildConnection,
+  buildPsqlHostArgv,
+  runLogicalRestore,
+} from "../restore/logical.mjs";
 import { cleanupProvisionedTarget } from "../restore/provision.mjs";
 import { createRestoreTargetId, assertFreshTarget } from "../restore/target.mjs";
 import { runPostRestoreMigrations } from "../migrate/post-restore.mjs";
@@ -292,36 +297,17 @@ function createTargetQueryFn(databaseUrl, env, provisioned = null) {
         { encoding: "utf8", env: env ?? process.env, timeout: 60_000 },
       );
     } else {
-      // CS4: never put password-bearing database URLs into psql argv.
-      const conn = parsePostgresConnection(databaseUrl);
+      // CS4/C2: password-free libpq URI in argv; secrets only in child env.
+      const conn = buildLibpqChildConnection(databaseUrl);
       if (!conn.ok) {
         throw new Error(conn.reason);
       }
-      const childEnv = { ...(env ?? process.env) };
-      if (conn.password) childEnv.PGPASSWORD = conn.password;
       result = spawnSync(
         "psql",
-        [
-          "-h",
-          conn.host,
-          "-p",
-          conn.port,
-          "-U",
-          conn.user,
-          "-d",
-          conn.database,
-          "-v",
-          "ON_ERROR_STOP=1",
-          "-t",
-          "-A",
-          "-F",
-          ",",
-          "-c",
-          text,
-        ],
+        buildPsqlHostArgv(conn, ["-v", "ON_ERROR_STOP=1", "-t", "-A", "-F", ",", "-c", text]),
         {
           encoding: "utf8",
-          env: childEnv,
+          env: applyLibpqSecretEnv(env ?? process.env, conn),
           timeout: 60_000,
         },
       );

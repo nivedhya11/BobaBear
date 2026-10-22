@@ -12,7 +12,11 @@ import { CLI_EXIT, OPERATION_STATUS, OPERATION_TYPE, READINESS_LEVEL, RECOVERY_L
 import { generateRunId } from "./run-id.mjs";
 import { createEvidence, evaluateQualifyingRecoveryProof, validateEvidence } from "./evidence.mjs";
 import { evaluateTargetIdentitySafety, requireExplicitSourceClassification } from "./identity.mjs";
-import { parsePostgresConnection } from "./restore/logical.mjs";
+import {
+  applyLibpqSecretEnv,
+  buildLibpqChildConnection,
+  buildPgDumpArgv,
+} from "./restore/logical.mjs";
 import { evaluateReadiness } from "./readiness.mjs";
 import { inspectEvidence, persistEvidence, readRunEvidence } from "./store.mjs";
 import { redactText, safeJson } from "./redact.mjs";
@@ -116,6 +120,7 @@ export function usage() {
     "",
     "Safety: --force-production is forbidden on all restore/drill paths.",
     "Safety: --source-class is required on backup/restore/drill (no silent production default).",
+    "        Scheduled templates may supply it via BOBA_RECOVERY_SOURCE_CLASSIFICATION (still validated).",
     "PITR --target-pgdata requires TARGET_OWNED_BY_RUN ownership proof; arbitrary paths are BLOCKED.",
     "Logical --database-url requires --target-ownership descriptor + resolved source endpoint.",
     "Missing docker/pgBackRest/credentials exit BLOCKED or FAILURE — never placeholder SUCCEEDED.",
@@ -968,16 +973,21 @@ function refuseForceProduction(stdout, json, label) {
 
 /**
  * CS3: explicit source classification required — never silently default to production.
+ * Flag wins; otherwise accept explicit non-secret BOBA_RECOVERY_SOURCE_CLASSIFICATION
+ * (scheduled/oneshot templates). Presence alone is not authority — still validated.
  * @returns {{ ok: true, classification: string } | { ok: false, exitCode: number }}
  */
 function resolveRequiredSourceClassification(flags, env, stdout, json) {
-  const required = requireExplicitSourceClassification(
-    stringFlag(flags["source-class"]) ?? stringFlag(flags["source-classification"]),
-    {
-      composeProjectName: env?.COMPOSE_PROJECT_NAME,
-      claimedRuntimeEnv: env?.BOBA_BEAR_ENV,
-    },
-  );
+  const fromFlag =
+    stringFlag(flags["source-class"]) ?? stringFlag(flags["source-classification"]);
+  const fromEnv =
+    typeof env?.BOBA_RECOVERY_SOURCE_CLASSIFICATION === "string"
+      ? env.BOBA_RECOVERY_SOURCE_CLASSIFICATION.trim()
+      : "";
+  const required = requireExplicitSourceClassification(fromFlag ?? (fromEnv || null), {
+    composeProjectName: env?.COMPOSE_PROJECT_NAME,
+    claimedRuntimeEnv: env?.BOBA_BEAR_ENV,
+  });
   if (!required.ok) {
     const payload = {
       ok: false,
@@ -1045,22 +1055,16 @@ function buildDumpFn(env, flags) {
   const databaseUrl = stringFlag(flags["database-url"]) ?? env.BOBA_LOGICAL_BACKUP_DATABASE_URL;
   if (databaseUrl) {
     return async () => {
-      const conn = parsePostgresConnection(databaseUrl);
+      const conn = buildLibpqChildConnection(databaseUrl);
       if (!conn.ok) {
         throw new Error(conn.reason);
       }
-      // CS4: never put password-bearing URLs into pg_dump argv.
-      const childEnv = { ...env };
-      if (conn.password) childEnv.PGPASSWORD = conn.password;
-      const result = spawnSync(
-        "pg_dump",
-        ["-Fc", "-h", conn.host, "-p", conn.port, "-U", conn.user, "-d", conn.database],
-        {
-          encoding: "buffer",
-          maxBuffer: 512 * 1024 * 1024,
-          env: childEnv,
-        },
-      );
+      // CS4/C2: password-free libpq URI in argv; secrets only in child env.
+      const result = spawnSync("pg_dump", buildPgDumpArgv(conn), {
+        encoding: "buffer",
+        maxBuffer: 512 * 1024 * 1024,
+        env: applyLibpqSecretEnv(env, conn),
+      });
       if (result.status !== 0) {
         throw new Error(redactText(String(result.stderr ?? `pg_dump exited ${result.status}`)));
       }

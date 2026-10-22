@@ -12,7 +12,9 @@ import { OWNED_AGE_TEMP_PREFIX } from "../layer2/age.mjs";
 import { generateRunId } from "../run-id.mjs";
 import { safeJson } from "../redact.mjs";
 import {
-  parsePostgresConnection,
+  applyLibpqSecretEnv,
+  buildLibpqChildConnection,
+  buildPgRestoreHostArgv,
   removeContainerTempDump,
   runLogicalRestore,
   verifyLogicalArtifactBinding,
@@ -289,21 +291,18 @@ test("CS1-F: container dump cleanup failure cannot masquerade as SUCCEEDED", asy
   assert.match(pathRefuse.reason, /not run-owned/i);
 });
 
-test("CS4: parsePostgresConnection and restore argv avoid password-bearing URLs", () => {
-  const conn = parsePostgresConnection(`postgresql://user:${SENTINEL}@127.0.0.1:5432/db`);
+test("CS4: buildPgRestoreHostArgv avoids password-bearing URLs and preserves TLS query", () => {
+  const conn = buildLibpqChildConnection(
+    `postgresql://user:${SENTINEL}@127.0.0.1:5432/db?sslmode=verify-full&sslrootcert=/tmp/ca.pem`,
+  );
   assert.equal(conn.ok, true);
   assert.equal(conn.password, SENTINEL);
-  /** @type {string[] | null} */
-  let capturedArgs = null;
-  /** @type {NodeJS.ProcessEnv | null} */
-  let capturedEnv = null;
-  // Exercise argv builder indirectly via a tiny spawn-sync seam substitute.
-  const args = ["-h", conn.host, "-p", conn.port, "-U", conn.user, "-d", conn.database];
-  capturedArgs = args;
-  capturedEnv = { PGPASSWORD: conn.password };
-  assert.equal(capturedArgs.some((a) => String(a).includes(SENTINEL)), false);
-  assert.equal(capturedArgs.some((a) => String(a).includes("postgresql://")), false);
-  assert.equal(capturedEnv.PGPASSWORD, SENTINEL);
+  const args = buildPgRestoreHostArgv(conn, "/tmp/owned.dump");
+  const env = applyLibpqSecretEnv({}, conn);
+  assert.equal(args.some((a) => String(a).includes(SENTINEL)), false);
+  assert.equal(args.some((a) => String(a).includes(`:${SENTINEL}@`)), false);
+  assert.match(args.find((a) => String(a).startsWith("postgres")) ?? "", /sslmode=verify-full/);
+  assert.equal(env.PGPASSWORD, SENTINEL);
 });
 
 test("CS3: missing source classification fails closed on restore", async () => {

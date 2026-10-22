@@ -1,43 +1,75 @@
 /**
- * CS4: credential-bearing subprocess argv negative tests for CLI dump path.
+ * CS4/C2: credential-bearing subprocess argv negative tests for the real dump builder.
  */
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
 import { test } from "node:test";
-import { parsePostgresConnection } from "./restore/logical.mjs";
+import {
+  applyLibpqSecretEnv,
+  buildLibpqChildConnection,
+  buildPgDumpArgv,
+} from "./restore/logical.mjs";
 
 const SENTINEL = "SENTINEL_CLI_DUMP_PASSWORD_7c1e";
+const SSL_SENTINEL = "SENTINEL_SSL_PASSWORD_9a2f";
 
-test("CS4: pg_dump argv built from URL never includes password or full URL", () => {
-  const databaseUrl = `postgresql://backup_user:${SENTINEL}@10.0.0.9:5432/boba_prod`;
-  const conn = parsePostgresConnection(databaseUrl);
+test("CS4/C2: buildPgDumpArgv uses password-free URI and preserves sslmode", () => {
+  const databaseUrl = `postgresql://backup_user:${encodeURIComponent(SENTINEL)}@10.0.0.9:5432/boba_prod?sslmode=verify-full&sslrootcert=/etc/ssl/certs/ca.pem&connect_timeout=5&application_name=boba-recovery`;
+  const conn = buildLibpqChildConnection(databaseUrl);
   assert.equal(conn.ok, true);
+  assert.equal(conn.query.sslmode, "verify-full");
+  assert.equal(conn.query.sslrootcert, "/etc/ssl/certs/ca.pem");
+  assert.match(conn.connectionUri, /sslmode=verify-full/);
+  assert.match(conn.connectionUri, /sslrootcert=/);
+  assert.doesNotMatch(conn.connectionUri, new RegExp(SENTINEL));
 
-  /** @type {string[] | null} */
-  let seenArgs = null;
-  /** @type {NodeJS.ProcessEnv | null} */
-  let seenEnv = null;
+  const argv = buildPgDumpArgv(conn);
+  const env = applyLibpqSecretEnv({ PATH: "/usr/bin" }, conn);
 
-  const original = spawnSync;
-  // Simulate the hardened CLI dump builder without invoking real pg_dump.
-  const childEnv = { PATH: "/usr/bin", PGPASSWORD: conn.password };
-  const args = ["-Fc", "-h", conn.host, "-p", conn.port, "-U", conn.user, "-d", conn.database];
-  seenArgs = args;
-  seenEnv = childEnv;
-
-  assert.equal(seenArgs.includes(databaseUrl), false);
-  assert.equal(seenArgs.some((a) => String(a).includes(SENTINEL)), false);
-  assert.equal(seenArgs.some((a) => String(a).startsWith("postgresql://")), false);
-  assert.equal(seenEnv.PGPASSWORD, SENTINEL);
-  assert.equal(JSON.stringify(seenArgs).includes(SENTINEL), false);
-  void original;
+  assert.deepEqual(argv[0], "-Fc");
+  assert.equal(argv.includes(databaseUrl), false);
+  assert.equal(argv.some((a) => String(a).includes(SENTINEL)), false);
+  assert.equal(JSON.stringify(argv).includes(SENTINEL), false);
+  assert.match(argv[1], /^postgres(ql)?:\/\//);
+  assert.match(argv[1], /sslmode=verify-full/);
+  assert.equal(env.PGPASSWORD, SENTINEL);
 });
 
-test("CS4: unsuccessful pg_dump-style failure text must not echo sentinel via URL argv", () => {
-  const databaseUrl = `postgresql://backup_user:${SENTINEL}@10.0.0.9:5432/boba_prod`;
-  const conn = parsePostgresConnection(databaseUrl);
+test("CS4/C2: sslpassword and query password never enter argv", () => {
+  const databaseUrl = `postgresql://backup_user@10.0.0.9:5432/boba_prod?sslmode=require&password=${encodeURIComponent(SENTINEL)}&sslpassword=${encodeURIComponent(SSL_SENTINEL)}`;
+  const conn = buildLibpqChildConnection(databaseUrl);
   assert.equal(conn.ok, true);
-  const fakeStderr = "pg_dump: error: connection to server failed";
-  assert.doesNotMatch(fakeStderr, new RegExp(SENTINEL));
-  assert.doesNotMatch(JSON.stringify(["-Fc", "-h", conn.host, "-U", conn.user, "-d", conn.database]), new RegExp(SENTINEL));
+  const argv = buildPgDumpArgv(conn);
+  const env = applyLibpqSecretEnv({}, conn);
+  assert.equal(argv.some((a) => String(a).includes(SENTINEL)), false);
+  assert.equal(argv.some((a) => String(a).includes(SSL_SENTINEL)), false);
+  assert.doesNotMatch(conn.connectionUri, /password=/);
+  assert.doesNotMatch(conn.connectionUri, /sslpassword=/);
+  assert.equal(env.PGPASSWORD, SENTINEL);
+  assert.equal(env.PGSSLPASSWORD, SSL_SENTINEL);
+});
+
+test("CS4/C2: unsupported security-relevant libpq parameter is BLOCKED", () => {
+  const conn = buildLibpqChildConnection(
+    "postgresql://backup_user@10.0.0.9:5432/boba_prod?sslmode=verify-full&sslweird=1",
+  );
+  assert.equal(conn.ok, false);
+  assert.match(conn.reason, /unsupported security-relevant|unsupported libpq/i);
+});
+
+test("CS4/C2: missing host/hostaddr refuses localhost fallback", () => {
+  const conn = buildLibpqChildConnection("postgresql:///boba_prod?sslmode=require&user=backup_user");
+  assert.equal(conn.ok, false);
+  assert.match(conn.reason, /host\/hostaddr|localhost fallback/i);
+});
+
+test("CS4/C2: encoded credentials round-trip into PGPASSWORD only", () => {
+  const password = "p@ss/word:weird";
+  const databaseUrl = `postgresql://backup%2Fuser:${encodeURIComponent(password)}@10.0.0.9:5432/boba_prod?sslmode=verify-full`;
+  const conn = buildLibpqChildConnection(databaseUrl);
+  assert.equal(conn.ok, true);
+  assert.equal(conn.user, "backup/user");
+  assert.equal(conn.password, password);
+  const argv = buildPgDumpArgv(conn);
+  assert.equal(argv.some((a) => String(a).includes(password)), false);
+  assert.equal(applyLibpqSecretEnv({}, conn).PGPASSWORD, password);
 });

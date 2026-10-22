@@ -74,6 +74,20 @@ export function validateSystemdUnits(options = {}) {
       }
       if (!parsed.Service?.ExecStart) {
         fileErrors.push(`${name}: Service.ExecStart is required`);
+      } else if (/boba-recovery-layer[12]-/.test(name)) {
+        const execStart = String(parsed.Service.ExecStart);
+        if (!execStart.includes("run-with-flock.sh")) {
+          fileErrors.push(`${name}: ExecStart must use run-with-flock.sh`);
+        }
+        // Scheduled backups must forward an explicit class into the CLI (no silent default).
+        if (!/--source-class=\$\{BOBA_RECOVERY_SOURCE_CLASSIFICATION\}/.test(execStart)) {
+          fileErrors.push(
+            `${name}: ExecStart must pass --source-class=\${BOBA_RECOVERY_SOURCE_CLASSIFICATION}`,
+          );
+        }
+        if (/--source-class=production\b/.test(execStart)) {
+          fileErrors.push(`${name}: ExecStart must not hardcode production source-class`);
+        }
       }
     } else if (!parsed.Timer?.OnCalendar) {
       fileErrors.push(`${name}: Timer.OnCalendar is required`);
