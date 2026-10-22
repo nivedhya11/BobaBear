@@ -37,7 +37,17 @@ export const IMP036J_COPY = Object.freeze({
   TOTAL_PAYABLE: "Total payable",
   DELIVERY_ROW: "Delivery",
   INCLUDED: "Included with your offer",
+  /** COPY-STALE — genuine monetary revalidation change only (#391A). */
   STALE: "Your total changed before payment. Review the updated amount.",
+  /**
+   * Neutral recovery when payable is unchanged, unknown, or unconfirmed.
+   * Must not claim the total changed (#391A).
+   */
+  STALE_UNCONFIRMED:
+    "We couldn't confirm your checkout for payment. Please review your items, offers and total before continuing.",
+  /** Cart revision diverged — do not claim monetary repricing (#391A). */
+  STALE_CART_CHANGED:
+    "Your cart changed before payment. Please review your items, offers and total before continuing.",
   GIFT_GONE: "That included item is no longer available. Your total has been updated.",
   GIFT_CONFLICT: "An included item can't be added to this order.",
   RETRY: "We couldn't check this coupon. Try again.",

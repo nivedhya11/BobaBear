@@ -25,6 +25,8 @@ export function CommercialOfferStack(props: {
   showGiftConflict?: boolean;
   giftGone?: boolean;
   stale?: boolean;
+  /** When stale, the truthful recovery sentence for this event (#391A). */
+  staleMessage?: string | null;
   dropped?: boolean;
   waitingText?: string | null;
   retainedAutomaticOffer?: boolean;
@@ -89,7 +91,7 @@ export function CommercialOfferStack(props: {
           tabIndex={-1}
           className="font-body text-[13px] text-[var(--text-secondary)]"
         >
-          {IMP036J_COPY.STALE}
+          {props.staleMessage ?? IMP036J_COPY.STALE_UNCONFIRMED}
         </p>
       ) : null}
       {props.giftGone ? (

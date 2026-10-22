@@ -301,12 +301,26 @@ describe("IMP-036J Tranche 5 customer presentation", () => {
         payableLabel={IMP036J_COPY.TOTAL_PAYABLE}
         payablePaise="21000"
         stale
+        staleMessage={IMP036J_COPY.STALE}
         giftGone
       />,
     );
     expect(screen.getByTestId("copy-stale")).toHaveTextContent(IMP036J_COPY.STALE);
     expect(screen.getByTestId("copy-gift-gone")).toHaveTextContent(IMP036J_COPY.GIFT_GONE);
     expect(screen.getByRole("region", { name: IMP036J_COPY.PRICE_SUMMARY })).toBeInTheDocument();
+  });
+
+  it("defaults stale alert to neutral unconfirmed copy when no message is supplied", () => {
+    render(
+      <CommercialOfferStack
+        explanation={null}
+        payableLabel={IMP036J_COPY.TOTAL_PAYABLE}
+        payablePaise="21000"
+        stale
+      />,
+    );
+    expect(screen.getByTestId("copy-stale")).toHaveTextContent(IMP036J_COPY.STALE_UNCONFIRMED);
+    expect(screen.getByTestId("copy-stale")).not.toHaveTextContent(IMP036J_COPY.STALE);
   });
 
   it("reuses Checkout evaluation only when fulfilment, revision, and snapshot match", () => {
