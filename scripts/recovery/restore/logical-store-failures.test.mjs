@@ -39,7 +39,7 @@ function ownedOpts(runId, store, extras = {}) {
       runId,
       targetIdentity: `recovery-target-${runId}`,
       databaseUrl: `postgresql://boba_recovery:${SENTINEL}@127.0.0.1:55432/boba_recovery`,
-      endpoint: "127.0.0.1:55432/boba_recovery",
+      endpoint: "127.0.0.1|127.0.0.1:55432/boba_recovery",
       environment: "recovery",
     },
     provisionTarget: false,

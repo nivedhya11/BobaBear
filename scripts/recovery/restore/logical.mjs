@@ -642,8 +642,28 @@ const LIBPQ_IDENTITY_QUERY_KEYS = new Set([
 ]);
 
 /**
- * Collect known libpq query params. Conflicting repeated identity/security keys fail closed.
- * Matching duplicates collapse to a single value.
+ * Percent-decode a libpq URI/query component. Unlike URLSearchParams / form decoding,
+ * `+` is literal (libpq only decodes `%XX`).
+ *
+ * @param {string} encoded
+ * @param {string} field
+ * @returns {{ ok: true, value: string } | { ok: false, reason: string }}
+ */
+function decodeLibpqPercentComponent(encoded, field) {
+  if (!encoded) return { ok: true, value: "" };
+  try {
+    return { ok: true, value: decodeURIComponent(encoded) };
+  } catch {
+    return {
+      ok: false,
+      reason: `databaseUrl ${field} is not valid percent-encoding`,
+    };
+  }
+}
+
+/**
+ * Collect known libpq query params from the raw query string (not URLSearchParams).
+ * Conflicting repeated identity/security keys fail closed. Matching duplicates collapse.
  *
  * @param {URL} parsed
  * @returns {{ ok: true, query: Record<string, string> } | { ok: false, reason: string }}
@@ -651,22 +671,33 @@ const LIBPQ_IDENTITY_QUERY_KEYS = new Set([
 function collectLibpqQueryParams(parsed) {
   /** @type {Record<string, string[]>} */
   const seen = {};
-  for (const [rawKey, rawValue] of parsed.searchParams.entries()) {
-    const key = String(rawKey);
-    if (!LIBPQ_KNOWN_PARAMS.has(key)) {
-      if (LIBPQ_SECURITY_KEY_PATTERN.test(key)) {
+  const rawSearch = parsed.search.startsWith("?") ? parsed.search.slice(1) : "";
+  if (rawSearch) {
+    for (const part of rawSearch.split("&")) {
+      if (part === "") continue;
+      const eq = part.indexOf("=");
+      const rawKey = eq === -1 ? part : part.slice(0, eq);
+      const rawValue = eq === -1 ? "" : part.slice(eq + 1);
+      const keyDecoded = decodeLibpqPercentComponent(rawKey, "query parameter name");
+      if (!keyDecoded.ok) return keyDecoded;
+      const key = keyDecoded.value;
+      if (!LIBPQ_KNOWN_PARAMS.has(key)) {
+        if (LIBPQ_SECURITY_KEY_PATTERN.test(key)) {
+          return {
+            ok: false,
+            reason: `unsupported security-relevant libpq parameter '${key}'; refuse silent drop`,
+          };
+        }
         return {
           ok: false,
-          reason: `unsupported security-relevant libpq parameter '${key}'; refuse silent drop`,
+          reason: `unsupported libpq parameter '${key}'; refuse ambiguous connection semantics`,
         };
       }
-      return {
-        ok: false,
-        reason: `unsupported libpq parameter '${key}'; refuse ambiguous connection semantics`,
-      };
+      const valueDecoded = decodeLibpqPercentComponent(rawValue, `query parameter '${key}'`);
+      if (!valueDecoded.ok) return valueDecoded;
+      if (!seen[key]) seen[key] = [];
+      seen[key].push(valueDecoded.value);
     }
-    if (!seen[key]) seen[key] = [];
-    seen[key].push(rawValue);
   }
 
   /** @type {Record<string, string>} */
@@ -691,6 +722,65 @@ function collectLibpqQueryParams(parsed) {
 }
 
 /**
+ * Serialize query pairs with encodeURIComponent so spaces stay `%20` (not `+`).
+ * libpq does not treat `+` as space.
+ *
+ * @param {Array<[string, string]>} pairs
+ * @returns {string} search including leading `?`, or empty string
+ */
+function formatLibpqQuerySearch(pairs) {
+  if (pairs.length === 0) return "";
+  return `?${pairs
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+    .join("&")}`;
+}
+
+/**
+ * @param {string} port
+ * @returns {{ ok: true, value: string } | { ok: false, reason: string }}
+ */
+function validateLibpqPort(port) {
+  if (!/^[0-9]{1,5}$/.test(port)) {
+    return {
+      ok: false,
+      reason: "databaseUrl port is not a valid TCP port integer; refuse",
+    };
+  }
+  const n = Number(port);
+  if (!Number.isInteger(n) || n < 1 || n > 65535) {
+    return {
+      ok: false,
+      reason: "databaseUrl port is out of range (1-65535); refuse",
+    };
+  }
+  return { ok: true, value: String(n) };
+}
+
+/**
+ * Whether WHATWG URL can store `host` as an authority hostname without drop/truncate.
+ *
+ * @param {string} protocol
+ * @param {string} host
+ * @returns {{ ok: true, hostname: string } | { ok: false }}
+ */
+function tryAuthorityHostname(protocol, host) {
+  const probe = new URL(`${protocol}//__boba_host_probe__`);
+  probe.hostname = host;
+  if (probe.hostname === host) {
+    return { ok: true, hostname: host };
+  }
+  // Accept bracketed IPv6 input if the setter normalizes by stripping brackets.
+  if (
+    host.startsWith("[") &&
+    host.endsWith("]") &&
+    probe.hostname === host.slice(1, -1)
+  ) {
+    return { ok: true, hostname: probe.hostname };
+  }
+  return { ok: false };
+}
+
+/**
  * When hierarchical URI components and query identity fields both specify a value,
  * accept only exact matches. Conflicting forms fail closed rather than silently
  * preferring one side (which can retarget recovery).
@@ -710,6 +800,109 @@ function resolveIdentityField(field, hierarchical, fromQuery) {
     };
   }
   return { ok: true, value: hier || q };
+}
+
+/**
+ * Encode an effective libpq identity value for WHATWG URL username/pathname assignment.
+ *
+ * Assigning the decoded string directly is unsafe: WHATWG treats existing `%XX`
+ * sequences as already encoded, so effective identity `u%2Fv` becomes wire `u%2Fv`
+ * and libpq then connects as `u/v`. `encodeURIComponent` restores a wire form whose
+ * single percent-decode matches the effective identity.
+ *
+ * @param {string} value
+ * @returns {string}
+ */
+function encodeLibpqUriComponent(value) {
+  return encodeURIComponent(value);
+}
+
+/**
+ * Decode a hierarchical URI username/password/path component to its effective identity.
+ * Invalid percent-encoding fails closed.
+ *
+ * @param {string} encoded
+ * @param {string} field
+ * @returns {{ ok: true, value: string } | { ok: false, reason: string }}
+ */
+function decodeLibpqUriComponent(encoded, field) {
+  return decodeLibpqPercentComponent(encoded, field);
+}
+
+/**
+ * Parse-only probe of effective connection identity from a password-free URI.
+ * Uses the same percent-only query decoding as {@link collectLibpqQueryParams}.
+ * Does not rebuild or recurse through {@link buildLibpqChildConnection}.
+ *
+ * @param {string} connectionUri
+ * @returns {{
+ *   ok: true,
+ *   user: string,
+ *   database: string,
+ *   host: string,
+ *   hostaddr: string,
+ *   port: string,
+ *   query: Record<string, string>,
+ * } | { ok: false }}
+ */
+function probeLibpqUriIdentity(connectionUri) {
+  try {
+    const parsed = new URL(connectionUri);
+    if (parsed.protocol !== "postgres:" && parsed.protocol !== "postgresql:") {
+      return { ok: false };
+    }
+    const collected = collectLibpqQueryParams(parsed);
+    if (!collected.ok) return { ok: false };
+    const query = collected.query;
+    const userDecoded = decodeLibpqUriComponent(parsed.username || "", "username");
+    if (!userDecoded.ok) return { ok: false };
+    const pathEncoded = parsed.pathname.startsWith("/")
+      ? parsed.pathname.slice(1)
+      : parsed.pathname;
+    if (!pathEncoded || pathEncoded.endsWith("/")) return { ok: false };
+    const dbDecoded = decodeLibpqUriComponent(pathEncoded, "database path");
+    if (!dbDecoded.ok || !dbDecoded.value) return { ok: false };
+    const userResolved = resolveIdentityField(
+      "user",
+      userDecoded.value,
+      typeof query.user === "string" ? query.user : "",
+    );
+    if (!userResolved.ok) return { ok: false };
+    const dbResolved = resolveIdentityField(
+      "dbname",
+      dbDecoded.value,
+      typeof query.dbname === "string" ? query.dbname : "",
+    );
+    if (!dbResolved.ok || !dbResolved.value) return { ok: false };
+    const hostFromUriDecoded = decodeLibpqUriComponent(parsed.hostname || "", "host");
+    if (!hostFromUriDecoded.ok) return { ok: false };
+    const hostResolved = resolveIdentityField(
+      "host",
+      hostFromUriDecoded.value,
+      typeof query.host === "string" ? query.host : "",
+    );
+    if (!hostResolved.ok) return { ok: false };
+    const portResolved = resolveIdentityField(
+      "port",
+      parsed.port || "",
+      typeof query.port === "string" && query.port.trim() ? query.port.trim() : "",
+    );
+    if (!portResolved.ok) return { ok: false };
+    const port = portResolved.value || "5432";
+    const portValidated = validateLibpqPort(port);
+    if (!portValidated.ok) return { ok: false };
+    return {
+      ok: true,
+      user: userResolved.value,
+      database: dbResolved.value,
+      host: hostResolved.value,
+      hostaddr: typeof query.hostaddr === "string" ? query.hostaddr : "",
+      port: portValidated.value,
+      query,
+    };
+  } catch {
+    return { ok: false };
+  }
 }
 
 /**
@@ -756,14 +949,92 @@ function assertPasswordFreeConnectionUri(connectionUri) {
  *   query: Record<string, string>,
  * } | { ok: false, reason: string }}
  */
+/**
+ * Fail closed on raw URL shapes that WHATWG parsing silently mutates relative to libpq:
+ * `#` fragments (truncate query/TLS), path dot-segments (retarget database), and
+ * ASCII control whitespace.
+ *
+ * @param {string} databaseUrl
+ * @returns {{ ok: true } | { ok: false, reason: string }}
+ */
+function assertRawDatabaseUrlShape(databaseUrl) {
+  if (databaseUrl.includes("#")) {
+    return {
+      ok: false,
+      reason:
+        "databaseUrl contains '#'; refuse fragment truncation that can drop sslmode/secrets",
+    };
+  }
+  if (/[\t\r\n]/.test(databaseUrl)) {
+    return {
+      ok: false,
+      reason: "databaseUrl contains ASCII control whitespace; refuse ambiguous identity",
+    };
+  }
+  const noQuery = databaseUrl.split("?")[0] ?? databaseUrl;
+  const schemeIdx = noQuery.indexOf("://");
+  if (schemeIdx >= 0) {
+    const afterScheme = noQuery.slice(schemeIdx + 3);
+    const pathIdx = afterScheme.indexOf("/");
+    if (pathIdx >= 0) {
+      const path = afterScheme.slice(pathIdx);
+      for (const segment of path.split("/")) {
+        if (!segment) continue;
+        const lowered = segment.toLowerCase();
+        if (
+          segment === "." ||
+          segment === ".." ||
+          lowered === "%2e" ||
+          lowered === "%2e%2e" ||
+          lowered === "%2e." ||
+          lowered === ".%2e"
+        ) {
+          return {
+            ok: false,
+            reason:
+              "databaseUrl database path contains dot-segment; refuse ambiguous database retarget",
+          };
+        }
+      }
+    }
+  }
+  return { ok: true };
+}
+
+/**
+ * Authority hostname is safe only when WHATWG can store it without drop/truncate and
+ * libpq will not percent-decode it to a different target than our effective identity.
+ *
+ * @param {string} protocol
+ * @param {string} host
+ * @returns {{ ok: true, hostname: string } | { ok: false }}
+ */
+function mayUseAuthorityHostname(protocol, host) {
+  if (!host || host.includes("%") || host.startsWith("/")) {
+    return { ok: false };
+  }
+  return tryAuthorityHostname(protocol, host);
+}
+
 export function buildLibpqChildConnection(databaseUrl) {
   if (typeof databaseUrl !== "string" || !databaseUrl.trim()) {
     return { ok: false, reason: "databaseUrl required" };
   }
   try {
-    const parsed = new URL(databaseUrl.trim());
+    const trimmed = databaseUrl.trim();
+    const rawShape = assertRawDatabaseUrlShape(trimmed);
+    if (!rawShape.ok) return rawShape;
+
+    const parsed = new URL(trimmed);
     if (parsed.protocol !== "postgres:" && parsed.protocol !== "postgresql:") {
       return { ok: false, reason: "databaseUrl must be a postgresql URL" };
+    }
+    if (parsed.hash) {
+      return {
+        ok: false,
+        reason:
+          "databaseUrl contains '#'; refuse fragment truncation that can drop sslmode/secrets",
+      };
     }
 
     const collected = collectLibpqQueryParams(parsed);
@@ -780,13 +1051,29 @@ export function buildLibpqChildConnection(databaseUrl) {
           "encrypted client-key sslpassword is unsupported for unattended recovery (no libpq env equivalent; PGSSLPASSWORD is not valid); refuse",
       };
     }
-
-    let pathDatabase = "";
-    try {
-      pathDatabase = decodeURIComponent(parsed.pathname.replace(/^\//, "").split("/")[0] ?? "");
-    } catch {
-      return { ok: false, reason: "databaseUrl database path is not valid percent-encoding" };
+    if (typeof query.service === "string" && query.service.length > 0) {
+      return {
+        ok: false,
+        reason:
+          "libpq service= is unsupported for unattended recovery; refuse inherited service retarget",
+      };
     }
+
+    // libpq uses the full path after the leading slash as the database name
+    // (percent-decoded). Do not truncate on `/` — that retargets `db%2Fname` /
+    // `db/name` identities to `db`.
+    const pathEncoded = parsed.pathname.startsWith("/")
+      ? parsed.pathname.slice(1)
+      : parsed.pathname;
+    if (pathEncoded.endsWith("/")) {
+      return {
+        ok: false,
+        reason: "databaseUrl database path is ambiguous (trailing slash); refuse",
+      };
+    }
+    const pathDecoded = decodeLibpqUriComponent(pathEncoded, "database path");
+    if (!pathDecoded.ok) return pathDecoded;
+    const pathDatabase = pathDecoded.value;
     const dbnameResolved = resolveIdentityField(
       "dbname",
       pathDatabase,
@@ -798,10 +1085,12 @@ export function buildLibpqChildConnection(databaseUrl) {
       return { ok: false, reason: "databaseUrl missing database name" };
     }
 
-    const hostFromUri = parsed.hostname || "";
+    // libpq percent-decodes the authority host; WHATWG leaves `%XX` visible.
+    const hostFromUriDecoded = decodeLibpqUriComponent(parsed.hostname || "", "host");
+    if (!hostFromUriDecoded.ok) return hostFromUriDecoded;
     const hostResolved = resolveIdentityField(
       "host",
-      hostFromUri,
+      hostFromUriDecoded.value,
       typeof query.host === "string" ? query.host : "",
     );
     if (!hostResolved.ok) return hostResolved;
@@ -813,19 +1102,19 @@ export function buildLibpqChildConnection(databaseUrl) {
         reason: "databaseUrl missing host/hostaddr; refusing implicit localhost fallback",
       };
     }
+    if (host.includes(",") || hostaddr.includes(",")) {
+      return {
+        ok: false,
+        reason: "multi-host databaseUrl is unsupported for unattended recovery; refuse",
+      };
+    }
 
-    let userinfoPassword = "";
-    try {
-      userinfoPassword = parsed.password ? decodeURIComponent(parsed.password) : "";
-    } catch {
-      return { ok: false, reason: "databaseUrl password is not valid percent-encoding" };
-    }
-    let userFromUri = "";
-    try {
-      userFromUri = parsed.username ? decodeURIComponent(parsed.username) : "";
-    } catch {
-      return { ok: false, reason: "databaseUrl username is not valid percent-encoding" };
-    }
+    const passwordDecoded = decodeLibpqUriComponent(parsed.password || "", "password");
+    if (!passwordDecoded.ok) return passwordDecoded;
+    const userinfoPassword = passwordDecoded.value;
+    const userDecoded = decodeLibpqUriComponent(parsed.username || "", "username");
+    if (!userDecoded.ok) return userDecoded;
+    const userFromUri = userDecoded.value;
     const userResolved = resolveIdentityField(
       "user",
       userFromUri,
@@ -849,46 +1138,98 @@ export function buildLibpqChildConnection(databaseUrl) {
       typeof query.port === "string" && query.port.trim() ? query.port.trim() : "",
     );
     if (!portResolved.ok) return portResolved;
-    const port = portResolved.value || "5432";
+    const portValidated = validateLibpqPort(portResolved.value || "5432");
+    if (!portValidated.ok) return portValidated;
+    const port = portValidated.value;
 
-    // Rebuild a password-free URI that preserves supported query semantics (incl. sslmode).
+    // Rebuild a password-free URI that preserves supported query semantics (incl. sslmode)
+    // and effective identity under a single libpq percent-decode.
     // host + hostaddr may both be present (libpq: host for name/TLS, hostaddr for TCP).
-    // When authority host is empty (hostaddr-only), keep user/port in the query —
-    // WHATWG URL drops authority port without a hostname.
+    // When authority cannot store host (unix socket path, unbracketed IPv6, etc.), keep
+    // host/user/port in the query — never silently drop them.
+    const authorityHost = host ? mayUseAuthorityHostname(parsed.protocol, host) : { ok: false };
+    const useAuthorityHost = Boolean(host && authorityHost.ok);
     const safe = new URL(`${parsed.protocol}//`);
-    if (host) {
-      safe.hostname = host;
-      if (port) safe.port = port;
-      if (user) safe.username = user;
+    if (useAuthorityHost) {
+      safe.hostname = authorityHost.hostname;
+      safe.port = port;
+      if (safe.hostname !== authorityHost.hostname || safe.port !== port) {
+        return {
+          ok: false,
+          reason:
+            "databaseUrl host/port cannot be represented faithfully in URI authority; refuse silent retarget",
+        };
+      }
+      if (user) safe.username = encodeLibpqUriComponent(user);
     }
     safe.password = "";
-    safe.pathname = `/${database}`;
+    safe.pathname = `/${encodeLibpqUriComponent(database)}`;
+
+    /** @type {Array<[string, string]>} */
+    const queryPairs = [];
     for (const [key, value] of Object.entries(query)) {
       if (key === "password" || key === "sslpassword") continue;
       if (key === "dbname") continue;
-      if (host) {
+      if (useAuthorityHost) {
         if (key === "user" && user) continue;
-        if (key === "port" && port) continue;
+        if (key === "port") continue;
         if (key === "host") continue; // represented in authority hostname
       } else {
         if (key === "user") continue;
         if (key === "port") continue;
-        if (key === "host") continue; // hostaddr-only form has no host
+        if (key === "host") continue; // re-added below when present
       }
-      safe.searchParams.append(key, value);
+      queryPairs.push([key, value]);
     }
-    if (!host) {
-      if (user) safe.searchParams.set("user", user);
-      if (port) safe.searchParams.set("port", port);
+    if (!useAuthorityHost) {
+      if (host) queryPairs.push(["host", host]);
+      if (user) queryPairs.push(["user", user]);
+      if (port) queryPairs.push(["port", port]);
     }
+    safe.search = formatLibpqQuerySearch(queryPairs);
 
     const connectionUri = safe.toString();
     const passwordFree = assertPasswordFreeConnectionUri(connectionUri);
     if (!passwordFree.ok) return passwordFree;
 
+    // Prove rebuild preserves effective targeting (catches WHATWG encode/host pitfalls).
+    const rebuilt = probeLibpqUriIdentity(connectionUri);
+    if (!rebuilt.ok) {
+      return {
+        ok: false,
+        reason: "rebuilt connectionUri failed identity re-parse; refuse unsafe retarget",
+      };
+    }
+    if (
+      rebuilt.user !== user ||
+      rebuilt.database !== database ||
+      rebuilt.host !== host ||
+      rebuilt.hostaddr !== hostaddr ||
+      rebuilt.port !== port
+    ) {
+      return {
+        ok: false,
+        reason:
+          "rebuilt connectionUri does not preserve effective connection identity; refuse silent retarget",
+      };
+    }
+    for (const [key, value] of Object.entries(query)) {
+      if (key === "password" || key === "sslpassword" || key === "dbname") continue;
+      if (useAuthorityHost && (key === "user" || key === "port" || key === "host")) continue;
+      if (!useAuthorityHost && (key === "user" || key === "port" || key === "host")) continue;
+      if (rebuilt.query[key] !== value) {
+        return {
+          ok: false,
+          reason: `rebuilt connectionUri does not preserve libpq parameter '${key}'; refuse silent retarget`,
+        };
+      }
+    }
+
     return {
       ok: true,
       host: host || hostaddr,
+      hostName: host,
+      hostaddr,
       port,
       user,
       password,
@@ -940,7 +1281,8 @@ export function buildPsqlHostArgv(conn, extraArgs = []) {
 
 /**
  * Deliver ordinary DB password to the child only via PGPASSWORD (never argv).
- * Does not set PGSSLPASSWORD — that is not a PostgreSQL libpq environment variable.
+ * Strips inherited `PG*` variables so parent PGHOSTADDR/PGSSLMODE/PGSERVICE/etc.
+ * cannot silently retarget or downgrade the rebuilt URI. Does not set PGSSLPASSWORD.
  * Nonempty sslpassword is rejected earlier in buildLibpqChildConnection.
  *
  * @param {NodeJS.ProcessEnv} baseEnv
@@ -948,7 +1290,13 @@ export function buildPsqlHostArgv(conn, extraArgs = []) {
  * @returns {NodeJS.ProcessEnv}
  */
 export function applyLibpqSecretEnv(baseEnv, conn) {
-  const env = { ...baseEnv };
+  /** @type {NodeJS.ProcessEnv} */
+  const env = {};
+  for (const [key, value] of Object.entries(baseEnv ?? {})) {
+    if (value === undefined) continue;
+    if (/^PG/i.test(key)) continue;
+    env[key] = value;
+  }
   if (conn.password) env.PGPASSWORD = conn.password;
   return env;
 }

@@ -25,6 +25,9 @@ import { isValidRunId } from "../run-id.mjs";
 import { redactText } from "../redact.mjs";
 import { waitForPostgresReady } from "../tools/postgres-ready.mjs";
 import { assertFreshTarget, createRestoreTargetId } from "./target.mjs";
+// Runtime-only use inside normalizeDbEndpoint (after both modules finish evaluating).
+// Avoids endpoint fingerprints that disagree with buildLibpqChildConnection targeting.
+import { buildLibpqChildConnection } from "./logical.mjs";
 
 export const PITR_OWNERSHIP_MARKER = "TARGET_OWNED_BY_RUN";
 export const LOGICAL_OWNERSHIP_MARKER = "LOGICAL_TARGET_OWNED_BY_RUN";
@@ -675,6 +678,13 @@ export function assertOwnedLogicalTarget(options) {
         ? normalizeDbEndpoint(descriptor.databaseUrl)
         : "";
   const targetEndpoint = normalizeDbEndpoint(options.databaseUrl);
+  if (targetEndpoint.startsWith("__unresolved_libpq__:")) {
+    return {
+      ok: false,
+      reason: "databaseUrl is not a resolvable libpq target; refuse ownership proof",
+      code: "TARGET_URL_INVALID",
+    };
+  }
   if (!descriptorEndpoint || descriptorEndpoint !== targetEndpoint) {
     return {
       ok: false,
@@ -871,7 +881,19 @@ export function assertLogicalTargetNotSource(databaseUrl, sourceDatabaseUrl) {
       code: "SOURCE_ENDPOINT_UNRESOLVED",
     };
   }
-  if (normalizeDbEndpoint(databaseUrl) === normalizeDbEndpoint(sourceDatabaseUrl)) {
+  const targetEndpoint = normalizeDbTcpEndpoint(databaseUrl);
+  const sourceEndpoint = normalizeDbTcpEndpoint(sourceDatabaseUrl);
+  if (
+    targetEndpoint.startsWith("__unresolved_libpq__:") ||
+    sourceEndpoint.startsWith("__unresolved_libpq__:")
+  ) {
+    return {
+      ok: false,
+      reason: "databaseUrl/sourceDatabaseUrl is not a resolvable libpq target; refuse",
+      code: "TARGET_URL_INVALID",
+    };
+  }
+  if (targetEndpoint === sourceEndpoint) {
     return {
       ok: false,
       reason: "databaseUrl resolves to the active/source database endpoint",
@@ -881,7 +903,7 @@ export function assertLogicalTargetNotSource(databaseUrl, sourceDatabaseUrl) {
   return { ok: true };
 }
 
-export { normalizeDbEndpoint };
+export { normalizeDbEndpoint, normalizeDbTcpEndpoint };
 
 /**
  * Positively inspect a Podman/Docker network and report whether it is internal.
@@ -1020,15 +1042,49 @@ function generateRecoveryPassword() {
 }
 
 /**
+ * Resolve a URL through {@link buildLibpqChildConnection}, or null if invalid.
+ *
  * @param {string} url
+ * @returns {{ hostName: string, hostaddr: string, addr: string, port: string, database: string } | null}
+ */
+function resolveLibpqEndpointParts(url) {
+  const conn = buildLibpqChildConnection(url);
+  if (!conn.ok) return null;
+  const hostName = typeof conn.hostName === "string" ? conn.hostName : "";
+  const hostaddr = typeof conn.hostaddr === "string" ? conn.hostaddr : "";
+  const addr = hostaddr || hostName || conn.host || "";
+  return { hostName, hostaddr, addr, port: conn.port, database: conn.database };
+}
+
+/**
+ * Fingerprint for ownership descriptors (name host + TCP address + port + database).
+ * Stricter than TCP-only so a descriptor bound to loopback cannot authorize a
+ * hostaddr retarget.
+ *
+ * @param {string} url
+ * @returns {string}
  */
 function normalizeDbEndpoint(url) {
-  try {
-    const parsed = new URL(url);
-    return `${parsed.hostname}:${parsed.port || "5432"}/${parsed.pathname.replace(/^\//, "")}`.toLowerCase();
-  } catch {
-    return String(url).trim().toLowerCase();
+  const parts = resolveLibpqEndpointParts(url);
+  if (!parts) {
+    return `__unresolved_libpq__:${String(url).trim().toLowerCase()}`;
   }
+  return `${parts.hostName}|${parts.addr}:${parts.port}/${parts.database}`.toLowerCase();
+}
+
+/**
+ * Fingerprint the effective TCP destination libpq opens (hostaddr || host).
+ * Used for source≠target so `host=10.0.0.5` and `hostaddr=10.0.0.5` compare equal.
+ *
+ * @param {string} url
+ * @returns {string}
+ */
+function normalizeDbTcpEndpoint(url) {
+  const parts = resolveLibpqEndpointParts(url);
+  if (!parts) {
+    return `__unresolved_libpq__:${String(url).trim().toLowerCase()}`;
+  }
+  return `${parts.addr}:${parts.port}/${parts.database}`.toLowerCase();
 }
 
 // Re-export identity helpers used by callers.

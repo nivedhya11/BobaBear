@@ -102,7 +102,7 @@ test("E: failed pg_restore must not proceed into migration / business-validation
         runId,
         targetIdentity: `recovery-target-${runId}`,
         databaseUrl: "postgresql://boba_recovery:x@127.0.0.1:55432/boba_recovery",
-        endpoint: "127.0.0.1:55432/boba_recovery",
+        endpoint: "127.0.0.1|127.0.0.1:55432/boba_recovery",
         environment: "recovery",
       },
       provisionTarget: false,

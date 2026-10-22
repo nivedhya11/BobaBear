@@ -72,3 +72,17 @@ test("CS4/C2: encoded credentials round-trip into PGPASSWORD only", () => {
   assert.equal(env.PGPASSWORD, password);
   assert.equal(env.PGSSLPASSWORD, undefined);
 });
+
+test("CS4/R2: double-encoded dump identity survives password-free argv rebuild", () => {
+  const password = "p@ss/%252F";
+  const databaseUrl = `postgresql://u%252Fv:${encodeURIComponent(password)}@10.0.0.9:5432/my%252Fdb?sslmode=verify-full`;
+  const conn = buildLibpqChildConnection(databaseUrl);
+  assert.equal(conn.ok, true);
+  assert.equal(conn.user, "u%2Fv");
+  assert.equal(conn.database, "my%2Fdb");
+  const argv = buildPgDumpArgv(conn);
+  assert.match(argv[1], /u%252Fv/);
+  assert.match(argv[1], /my%252Fdb/);
+  assert.equal(argv.some((a) => String(a).includes(password)), false);
+  assert.equal(applyLibpqSecretEnv({}, conn).PGPASSWORD, password);
+});

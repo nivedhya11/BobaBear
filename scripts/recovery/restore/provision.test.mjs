@@ -6,9 +6,12 @@ import path from "node:path";
 import { test } from "node:test";
 import { generateRunId } from "../run-id.mjs";
 import {
+  assertLogicalTargetNotSource,
   assertOwnedLogicalTarget,
   assertOwnedPitrTarget,
   cleanupProvisionedTarget,
+  normalizeDbEndpoint,
+  normalizeDbTcpEndpoint,
   provisionPitrTarget,
 } from "./provision.mjs";
 import { runPitrRestore } from "./pitr.mjs";
@@ -194,6 +197,56 @@ test("PITR ownership: arbitrary / unowned / wrong-run / wrong-path / source-alia
   }
 });
 
+test("logical ownership: hostaddr/query/encoded host cannot bypass source-equals-target", () => {
+  const sourceUrl = "postgresql://backup@prod.db.internal:5432/boba_prod";
+  assert.equal(
+    assertLogicalTargetNotSource(
+      "postgresql://recovery@prod.db.internal:5432/?dbname=boba_prod",
+      sourceUrl,
+    ).ok,
+    false,
+  );
+  assert.equal(
+    assertLogicalTargetNotSource(
+      "postgresql://recovery@pro%64.db.internal:5432/boba_prod",
+      sourceUrl,
+    ).ok,
+    false,
+  );
+  assert.equal(
+    assertLogicalTargetNotSource(
+      "postgresql://u@recovery.host,prod.db/boba_recovery",
+      sourceUrl,
+    ).ok,
+    false,
+  );
+  // hostaddr changes the ownership fingerprint vs a loopback-only descriptor form.
+  const hostaddrTarget =
+    "postgresql://recovery:pw@127.0.0.1:55432/boba_recovery?hostaddr=10.0.0.5";
+  assert.notEqual(normalizeDbEndpoint(hostaddrTarget), "127.0.0.1|127.0.0.1:55432/boba_recovery");
+  assert.match(normalizeDbEndpoint(hostaddrTarget), /10\.0\.0\.5/);
+
+  // Source≠target must compare the TCP destination libpq opens.
+  assert.equal(
+    assertLogicalTargetNotSource(
+      "postgresql://u@10.0.0.5/app?sslmode=require",
+      "postgresql:///app?hostaddr=10.0.0.5&user=u&sslmode=require",
+    ).ok,
+    false,
+  );
+  assert.equal(
+    assertLogicalTargetNotSource(
+      "postgresql://u@10.0.0.5/app?sslmode=require",
+      "postgresql://u@db.prod/app?hostaddr=10.0.0.5&sslmode=require",
+    ).ok,
+    false,
+  );
+  assert.equal(
+    normalizeDbTcpEndpoint("postgresql://u@10.0.0.5/app"),
+    normalizeDbTcpEndpoint("postgresql:///app?hostaddr=10.0.0.5&user=u"),
+  );
+});
+
 test("logical ownership: missing source / same endpoint / arbitrary URL BLOCKED; owned allowed", async () => {
   const runId = generateRunId({ now: new Date(Date.UTC(2026, 8, 20, 14, 0, 0)), randomHex: "dddddddddddddddd" });
   const targetUrl = "postgresql://boba_recovery:x@127.0.0.1:55432/boba_recovery";
@@ -202,7 +255,7 @@ test("logical ownership: missing source / same endpoint / arbitrary URL BLOCKED;
     runId,
     targetIdentity: `recovery-target-${runId}`,
     databaseUrl: targetUrl,
-    endpoint: "127.0.0.1:55432/boba_recovery",
+    endpoint: "127.0.0.1|127.0.0.1:55432/boba_recovery",
     environment: "recovery",
   };
 
