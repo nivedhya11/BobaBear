@@ -31,11 +31,11 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2311,
-    "executableTestFiles": 513,
+    "trackedPathsConsidered": 2315,
+    "executableTestFiles": 515,
     "sourceTestFiles": 155,
     "testsTreeExecutableFiles": 278,
-    "scriptTestFiles": 80,
+    "scriptTestFiles": 82,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
     "playwrightConfigs": 7,
@@ -520,6 +520,8 @@
     "scripts/docker/workforce-auth-smoke.test.mjs",
     "scripts/environment/hygiene.test.mjs",
     "scripts/environment/podman-compose.test.mjs",
+    "scripts/environment/postgres-init-identity.test.mjs",
+    "scripts/environment/staging-preflight.test.mjs",
     "scripts/environment/staging.test.mjs",
     "scripts/generate-nginx-security-headers.test.mjs",
     "scripts/governance-context.test.mjs",
@@ -2055,6 +2057,40 @@
     },
     {
       "path": "scripts/environment/podman-compose.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/environment/postgres-init-identity.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/environment/staging-preflight.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
       "testType": "script-unit",

@@ -81,23 +81,43 @@ test("staging deploy retains the current-main Podman hardening safeguards", () =
   assert.match(source, /git -C .* archive .* \| tar -x -C/);
   assert.match(source, /podman-compose", \["-f", "compose\.yaml", "-p", STAGING_PROJECT/);
   assert.match(source, /\["up", "-d", "--force-recreate", "--no-deps", \.\.\.services\]/);
-  assert.match(source, /ensurePersistentPostgres\(buildDir, initDir\)/);
-  assert.match(source, /POSTGRES_INIT_MOUNT_REFRESH YES/);
+  assert.match(source, /verifyPreMutationReadiness/);
+  assert.match(source, /assertPreflightAllowsDeployment/);
+  assert.match(source, /stopLegacyRuntimeIfNeeded/);
+  assert.match(source, /ensurePersistentPostgres\(/);
+  assert.match(source, /POSTGRES_INIT_MOUNT_PRESERVED YES/);
+  assert.match(source, /POSTGRES_CONTAINER_REPLACED NO/);
   assert.match(source, /POSTGRES_VOLUME_PRESERVED YES/);
+  assert.doesNotMatch(source, /POSTGRES_INIT_MOUNT_REFRESH YES/);
   assert.match(source, /\["run", "--rm", "--no-deps", "migrate"\]/);
-  assert.match(source, /decideAndApplyStagingBootstrap\(buildDir\)/);
+  assert.match(source, /decideBootstrap\(buildDir\)|decideAndApplyStagingBootstrap\(buildDir\)/);
+  assert.match(source, /decideBootstrap = decideAndApplyStagingBootstrap/);
   assert.match(source, /classifyStagingBaselineInTooling/);
   assert.match(source, /runLegacySeedBootstrapChain/);
   assert.match(source, /stagingBaselineDecisionLogLines/);
   assert.match(source, /PARTIAL_OR_INCOMPATIBLE/);
   assert.match(source, /"--no-deps"/);
-  assert.match(source, /upAndWait\(buildDir, BOBA_RUNTIME_SERVICES, \{ BOBA_POSTGRES_INIT_DIR: initDir \}\)/);
+  assert.match(source, /BOBA_POSTGRES_INIT_DIR: initDir/);
   assert.doesNotMatch(source, /upAndWait\(buildDir, \["postgres"\]\)/);
   assert.doesNotMatch(source, /--wait/);
   assert.match(source, /State\.Health\.Status/);
   assert.match(source, /boba-bear_app_1/);
   assert.match(source, /PERSISTENT_DB_VOLUME \$\{STAGING_PROJECT\}_postgres-data/);
   assert.doesNotMatch(source, /postgres-data.*rmSync|rmSync.*postgres-data/);
+});
+
+test("staging deploy invokes fail-closed preflight before the first operational mutation", () => {
+  const source = readFileSync(path.resolve("scripts/environment/staging.mjs"), "utf8");
+  const marker = "export function runStagingDeploy(candidate, deps = {})";
+  const start = source.indexOf(marker);
+  assert.ok(start >= 0);
+  const window = source.slice(start, start + 4000);
+  const preflightIdx = window.indexOf("verifyReadiness(candidate, deps)");
+  const assertPassIdx = window.indexOf("assertPreflightAllowsDeployment(readiness.decision)");
+  const stopIdx = window.indexOf("stopLegacy();");
+  assert.ok(preflightIdx >= 0 && assertPassIdx >= 0 && stopIdx >= 0);
+  assert.ok(preflightIdx < assertPassIdx);
+  assert.ok(assertPassIdx < stopIdx);
 });
 
 test("all final BOBA image targets persist the OCI revision label", () => {
@@ -133,8 +153,11 @@ test("staging PostgreSQL uses a durable configurable init mount", () => {
   const postgres = compose.match(/  postgres:\n([\s\S]*?)(?=\n  [a-z-]+:)/)?.[1] ?? "";
   assert.match(postgres, /\$\{BOBA_POSTGRES_INIT_DIR:-\.\/docker\/postgres\/init\}/);
   assert.match(source, /STAGING_RUNTIME_ASSETS_DIR/);
-  assert.match(source, /materializeStagingPostgresInit\(buildDir, sha\)/);
-  assert.match(source, /cpSync\(source, destination, \{ recursive: true, preserveTimestamps: true \}\)/);
+  assert.match(source, /function materializeStagingPostgresInit\(/);
+  assert.match(source, /resolvePostgresInitDisposition/);
+  assert.match(source, /collectInitManifest/);
+  assert.match(source, /STAGING_POSTGRES_INIT_MATERIALIZE SKIP_ACTIVE_MOUNT/);
+  assert.doesNotMatch(source, /rmSync\(destination,/);
   assert.match(source, /rmSync\(buildDir, \{ recursive: true, force: true \}\)/);
   assert.match(source, /BOBA_POSTGRES_INIT_DIR: initDir/);
 });
