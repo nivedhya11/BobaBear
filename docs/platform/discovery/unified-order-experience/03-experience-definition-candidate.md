@@ -43,7 +43,8 @@ now** when accepted Scheduled Takeaway remains supported (IMP-036I).
 | Avoid (customer) | fulfil, fulfilment window, snapshot, ASAP as UI label, Pickup as peer of Delivery | — | — |
 
 Apply across: Menu, Cart, Checkout, Order Confirmation, My Orders, tracking,
-**implemented** notification channels — WhatsApp + in-app via customer-visible content
+**implemented** notification channels — in-app always; WhatsApp **when sending is configured** —
+via customer-visible content
 (UOE-DR-04; email/SMS/push non-sending today); workforce order lists, queues, details,
 store operations, administration and scheduling **order-type** chrome.
 
@@ -72,9 +73,9 @@ Rules:
   - **Delivery:** explain; offer Schedule if server windows exist at eligible checkout; else empty + recovery
   - **Takeaway Now:** accepting-now eligibility; closed / not accepting → Now unavailable + honest recovery; if schedule-capable, offer Schedule intent (not exact Menu slots)
   - **Takeaway Schedule:** schedule-capable presentation using accepted profile/hours rules; **do not** mark Schedule collection unavailable solely because closed NOW; exact windows remain checkout-eligible only; never claim guaranteed future availability at Menu
-  - **Checkout path (mandatory):** timing-aware listing **and** bind-without-evaluate before Timing (AS-34). Do not present “no collection place” for Schedule solely because accepting-now is empty when schedule-capable outlets exist. When Now list is empty, show Schedule recovery only if server hints schedule-capable candidates exist. Defect evidence: Mode → pickup-options(accepting-now) → bind → evaluate(ASAP) → Timing
-- No windows (eligible checkout — Delivery destination or confirmed Takeaway outlet): empty + recovery; Now if accepting-now still eligible (AS-09 / AS-35 / AS-37)
-- Timing step: if confirmed outlet is not accepting-now, disable Now with reason; Schedule remains when windows exist (AS-34)
+  - **Checkout path (mandatory):** customer-facing order = Method → **When intent as list filter** (Schedule) → **Where** (schedule-capable list with per-outlet “Schedule only — not open for collection now” when closed now) → confirm place → server times → Review (AS-34 / AS-41). Bind without evaluate before Timing. Do not present “no collection place” for Schedule solely because accepting-now is empty when schedule-capable outlets exist. When Now list is empty, show Schedule recovery only if server hints schedule-capable candidates exist. Defect evidence: Mode → pickup-options(accepting-now) → bind → evaluate(ASAP) → Timing
+- No windows (eligible checkout — Delivery destination or confirmed Takeaway outlet): empty + recovery; Now if accepting-now still eligible (AS-09 / AS-35 / AS-37) — Checkout copy, not Menu-only
+- Timing step: if confirmed outlet is not accepting-now (`nowEligible=false` from pickup-options, re-read if stale), disable Now with reason (“Not open for collection right now”); Schedule remains when windows exist (AS-34)
 - Selected outlet becomes invalid: reselect; no silent keep; no fake promise (AS-36)
 - Never silent Checkout bind from browse or AUTO_SELECT alone (AS-38)
 - Cross-midnight: Today/Tomorrow and labels follow outlet timezone
@@ -98,10 +99,18 @@ Rules:
 | Mode/place incomplete | Finish How and Where first |
 | Outlet only proposed | Confirm your collection place at checkout to choose an exact time |
 | API empty after eligible | No times available — try later or change method/place |
-| Now closed but Schedule possible | This place isn’t open for collection right now — you can Schedule a later collection time at checkout |
+| Now closed but Schedule possible (Menu) | This place isn’t open for collection right now — you can Schedule a later collection time at checkout |
+| Checkout outlet schedule-only (closed now) | Schedule only — not open for collection now |
+| Checkout Timing Now disabled | Not open for collection right now — choose a Schedule time |
+| Cart evaluate indeterminate (open Checkout) | Calm “Couldn’t load your checkout total — continue checkout to see your total” (or equivalent); no browse total as substitute |
+| Cart Snapshot-sourced display under reuse | Label as Checkout total / your checkout amount — not a Menu bargain |
 
 Takeaway + Schedule with AUTO_SELECT outlet **proposed but not confirmed** → windows must **not**
 list (outlet not yet confirmed place) — AS-26.
+
+**Closed-now Schedule Takeaway (customer journey):** Choose Takeaway → choose Schedule → see
+schedule-capable places (including closed-now, labelled Schedule-only) → confirm place → pick a
+server time → see Review totals → pay. No promised slot at Menu; no locked promo until Checkout.
 
 ### UX-C — Universal order-context bar
 
@@ -126,9 +135,10 @@ Rules:
 - Preserve eligible cart lines; explain fee, availability, offer changes from **mode- and
   timing-sensitive server cart evaluate** (advisory), including Takeaway without Delivery address
   (GP-02)
-- Schedule **UNCONFIRMED** (Menu / pre-checkout): Offers that depend on timing must use
-  **provisional** wording (“may change when you confirm your collection time”) — never a locked
-  discount or promised slot (AS-43–44)
+- Schedule **UNCONFIRMED** (Menu / pre-checkout): timing-restricted Offers do not apply yet
+  (Cart evaluate omits timing); mode-gated savings may still show with mode-neutral provisional
+  wording (“may change when you confirm your time”) — never a locked discount or promised slot
+  (AS-43–44)
 - When open Checkout quote is reused, show **Checkout’s** effective mode/timing as authoritative
   (AS-29 / AS-40); if evaluation evidence is missing, calm fail-closed recovery — not a competing
   browse total (AS-39 / AS-45)
@@ -149,6 +159,8 @@ Rules:
 | Empty Cart (exists, 0 lines) | Same as browse; may prompt add items before collection quote | “No outlets available” / UNAVAILABLE as if brand has zero stores |
 | Cart with lines; server returns no Now-eligible / no schedule-capable outlets | Honest empty + recovery for that timing intent | Blaming empty cart |
 | Eligibility unavailable / error | Calm retry; no invented outlets | Treating error as permanent UNAVAILABLE without recovery |
+| Open Checkout; evaluation evidence missing | Calm Checkout recovery / Snapshot-sourced Checkout-labelled total only | Divergent browse money as substitute payable |
+| Evaluate refresh failed after intent change | Hide money / retry — do not keep stale-fingerprint quote | Showing old mode/timing total as current |
 
 Anonymous Menu browsing remains allowed throughout.
 

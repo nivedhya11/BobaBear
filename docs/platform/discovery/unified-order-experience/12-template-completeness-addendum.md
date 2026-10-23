@@ -97,7 +97,7 @@ It does not execute or pass any gate.
 | SCHEDULED PICKUP uses `assertScheduledPickupProfile` | checkout `evaluate.ts` / `prepare.ts` / `scheduled-bind.ts` |
 | Cart evaluate location early return before reuse; missing evaluation / throw → null fall-through | `evaluateCart` / `tryReusableCheckoutEvaluation` |
 | Notification customer-visible content uses “Pickup order” / “Scheduled pickup window” / “Arrival / fulfilment window” / reminder “scheduled Pickup” | `src/shared/notifications/customer-visible-content.ts` (incl. `SCHEDULED_FULFILMENT_REMINDER`) |
-| Channel adapters: WHATSAPP + IN_APP live; EMAIL/SMS/PUSH noop | `src/server/notifications/channels/index.ts` |
+| Channel adapters: WHATSAPP optional (noop default); IN_APP live; EMAIL/SMS/PUSH noop | `src/server/notifications/channels/index.ts` |
 | PAYMENT_PENDING blocks fulfilment mutations | `server/checkout/fulfilment.ts` (existing) |
 | delivery-context key (tab-scoped sessionStorage) | `boba.delivery-context.v1` |
 

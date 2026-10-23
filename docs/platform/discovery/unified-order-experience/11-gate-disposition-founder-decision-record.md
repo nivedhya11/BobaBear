@@ -90,7 +90,7 @@ not canonical PASS.
 |---|---|---|
 | Product Definition | Ready for independent Product review | UOE-DR-01 identity; UOE-DR-03 verdict; Founder confirm GP-01 Schedule-capable presentation |
 | Experience | Ready for independent Experience review | Finalize UNCONFIRMED copy variants; workforce admin noun table; Meta body-vs-variable; full IA still PARTIAL vs #379 bound |
-| Architecture Fit | Contracts reviewable; **not** lock-ready | Contract C eligible-Checkout journey; Contract B timing-sensitive quotes + fail-closed + fingerprint/dedup; WhatsApp optional/noop scope + body-vs-variable; formal Fit only after Experience Gate |
+| Architecture Fit | Contracts specified; **not** lock-ready | Formal Fit pending Product/Experience gates + UOE-DR-01/06; implementation still required for Contracts B/C; CART provenance storage choice at lock; WhatsApp body-vs-variable open |
 
 ### Architecture Fit blockers (candidate — before formal Fit)
 
@@ -98,12 +98,13 @@ not canonical PASS.
 2. Evaluate entry must place open-Checkout reuse ahead of Delivery-only `location` early return for Takeaway open Checkouts (GP-02) — contract specified, not implemented
 3. Missing CHECKOUT commercial-evaluation evidence must fail closed (AS-39 / AS-45) — contract specified, not implemented
 4. Checkout composition must become timing-aware **and** bind-without-evaluate before Timing, with Schedule-capable merchandise `ignoreCurrentScheduleDenial` parity (GP-01 Contract C / AS-34 / AS-41) — contract specified, not implemented
-5. Cart evaluate must pass mode/timing into promotion eligibility with provisional Offers when Schedule UNCONFIRMED (AS-42–44) — contract specified, not implemented
-6. CART provenance + evaluate fingerprint/dedup (AS-32 / AS-46) — contract specified, not implemented
+5. Cart evaluate must pass mode (+ outlet) into promotion eligibility; omit timing while Schedule UNCONFIRMED; PICKUP without outlet → non-money status (AS-42–44 / AS-31) — contract specified, not implemented
+6. CART provenance + evaluate context-key dedup (AS-32 / AS-46); additive persistence vs IMP-036J `commercial_evaluations` — storage choice at Fit lock — contract specified, not implemented
 7. Pre-checkout eligibility must emit distinct empty/no-cart states (GP-03) — contract specified, not implemented
-8. WhatsApp DR-04 wording body-vs-variable confirmation still open; WhatsApp remains optional/noop-safe
-9. UOE-DR-01 future IMP identity / sequencing unresolved (blocks implementation authorization, not Fit contract review)
-10. UOE-DR-06 Founder confirmation of Schedule-capable entitlement + Checkout defect classification / remediation vehicle
+8. Timing-step Now disable uses pickup-options `nowEligible` (re-read if stale) — contract specified, not implemented
+9. WhatsApp DR-04 wording body-vs-variable confirmation still open; WhatsApp remains optional/noop-safe
+10. UOE-DR-01 future IMP identity / sequencing unresolved (blocks implementation authorization, not Fit contract review)
+11. UOE-DR-06 Founder confirmation of Schedule-capable entitlement + Checkout defect classification / remediation vehicle
 
 ## C. Remaining consequential Founder decisions
 
@@ -129,7 +130,7 @@ deferrable to authorized engineering after gates.
 | CANDIDATE-3 Checkout precision | Same-scope `PACKAGE_REVISION = CANDIDATE-3 / CHECKOUT-PRECISION-1` on PR #424 after main `00ef486e9…` (#425); prior CANDIDATE-3 head `aff6d9b40…`; **no** UOE-CANDIDATE-4; AS-34–40 + Architecture Contracts B/C |
 | CANDIDATE-3 Final contract completeness | Same-scope `PACKAGE_REVISION = CANDIDATE-3 / FINAL-CONTRACT-COMPLETENESS-1` on PR #424 after Checkout-precision head `25d3b5d21…`; **no** UOE-CANDIDATE-4; AS-41–46 + Contract B timing-sensitive quotes + Contract C exact journey + fail-closed fingerprint/dedup + WhatsApp optional scope |
 | Independent reviews (Checkout precision) | Product [`906437b5-80d5-4fbc-8b19-2075ca545a2a`](906437b5-80d5-4fbc-8b19-2075ca545a2a); Experience [`16f640ff-1498-4101-a996-73f135640a38`](16f640ff-1498-4101-a996-73f135640a38); Architecture [`fa8feb20-4d28-4cda-8702-3b5a22f61ffd`](fa8feb20-4d28-4cda-8702-3b5a22f61ffd) — findings resolved in-docs; **≠ formal gate PASS** |
-| Independent reviews (Final contract completeness) | Pending this delivery — Product / Experience / Architecture (post-push; **≠ formal gate PASS**) |
+| Independent reviews (Final contract completeness) | Product [`449f5a96-d5ea-40eb-9814-524f776bcd8e`](449f5a96-d5ea-40eb-9814-524f776bcd8e); Experience [`bea12444-84db-4c54-8ffc-f8e478ae159b`](bea12444-84db-4c54-8ffc-f8e478ae159b); Architecture [`3312e452-89de-4553-b50c-d2aaaf352eb9`](3312e452-89de-4553-b50c-d2aaaf352eb9) — MEDIUM findings resolved in follow-up commit; **≠ formal gate PASS** |
 | Checkout/Payment safety | SAFE AS DESIGNED (docs only this delivery): Snapshot/payment/serviceability/materialization untouched; PAYMENT_PENDING guards preserved; eligibility/evaluate are read/quote only; open-Checkout reuse + fail-closed missing evidence specified; Schedule Takeaway Checkout path aligns IMP-036I without new lifecycle states; promotion mode/timing gates reused without Menu seal claims |
 | Package path | `docs/platform/discovery/unified-order-experience/` |
 

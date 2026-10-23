@@ -29,7 +29,7 @@ Success looks like:
   Menu slots deferred)
 - Empty / first-use never shows “no outlets” merely because the customer has not added items
 - Delivery and Takeaway are equally first-class in chrome (no delivery-only bias)
-- Implemented notification channels (WhatsApp + in-app) use the same primary words as web
+- Implemented notification channels (in-app; WhatsApp when sending is configured) use the same primary words as web
 - Checkout remains zero-surprise: Snapshot and payment authority unchanged
 - Operators see the same primary order-type labels customers do, with contextual collection language where tasks require it
 

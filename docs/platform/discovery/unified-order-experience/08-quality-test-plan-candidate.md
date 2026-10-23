@@ -45,7 +45,9 @@ architecture/invariants before UI cosmetics.
 - Schedule cannot invent slots when API empty
 - Schedule Takeaway is not denied solely because outlet is closed NOW (AS-08 / AS-34 / GP-01)
 - Checkout pickup-options must not remain accepting-now-only when Schedule path is active (AS-34)
-- Checkout evaluate must not run for PICKUP between outlet bind and timing selection on the Schedule path (AS-34 / Contract C)
+- Checkout evaluate must not run for PICKUP between outlet bind and timing selection (Now, Schedule, or unset listing) (AS-34 / AS-41 / Contract C)
+- Takeaway without outlet must not invent brand-level money (AS-31)
+- Schedule UNCONFIRMED Cart evaluate omits timing so SCHEDULED-only Offers do not lock at Menu (AS-43)
 - Schedule-capable list merchandise check uses `ignoreCurrentScheduleDenial: true` parity (Contract C)
 - AUTO_SELECT is per timing intent; never over Now∪Schedule union (AS-05 / AS-38)
 - Now-eligible outlet with empty future windows recovers honestly; Now offered only if accepting-now eligible (AS-35 / AS-37)
