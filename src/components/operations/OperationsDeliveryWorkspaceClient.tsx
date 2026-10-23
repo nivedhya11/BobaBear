@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { OperationsDeliveryPanel } from "@/components/operations/OperationsDeliveryPanel";
 import { Button } from "@/components/ui/Button";
@@ -35,6 +35,8 @@ function fulfilmentTimingLabel(order: OperationsOrderSummary): string {
 export function OperationsDeliveryWorkspaceClient() {
   const [state, setState] = useState<ViewState>({ kind: "loading" });
   const [loadingMore, setLoadingMore] = useState(false);
+  const [paginationError, setPaginationError] = useState<string | null>(null);
+  const loadMoreGenerationRef = useRef(0);
 
   const applyPage = useCallback(
     (
@@ -79,6 +81,7 @@ export function OperationsDeliveryWorkspaceClient() {
         setState({ kind: "error" });
         return;
       }
+      setPaginationError(null);
       setState(applyPage(result.data.items, result.data.nextCursor, null, false, [], 0));
     })();
     return () => {
@@ -88,27 +91,34 @@ export function OperationsDeliveryWorkspaceClient() {
 
   async function handleLoadMore() {
     if (state.kind !== "ready" || !state.nextCursor || loadingMore) return;
+    const requestCursor = state.nextCursor;
+    const generation = ++loadMoreGenerationRef.current;
     setLoadingMore(true);
+    setPaginationError(null);
     const result = await listWorkforceOrders({
       status: "ACCEPTED",
       limit: 50,
-      cursor: state.nextCursor,
+      cursor: requestCursor,
     });
+    if (generation !== loadMoreGenerationRef.current) return;
     setLoadingMore(false);
     if (!result.ok) {
-      setState({ kind: "error" });
+      // Keep already-loaded queue + selection; surface recoverable retry.
+      setPaginationError("More accepted orders could not be loaded. Try again.");
       return;
     }
-    setState(
-      applyPage(
+    setState((prev) => {
+      if (prev.kind !== "ready") return prev;
+      // Preserve the operator's latest selection (not the selection at request start).
+      return applyPage(
         result.data.items,
         result.data.nextCursor,
-        state.selectedOrderId,
+        prev.selectedOrderId,
         true,
-        state.items,
-        state.rawAcceptedCount,
-      ),
-    );
+        prev.items,
+        prev.rawAcceptedCount,
+      );
+    });
   }
 
   if (state.kind === "loading") return <p aria-live="polite">Loading delivery workspace…</p>;
@@ -169,7 +179,13 @@ export function OperationsDeliveryWorkspaceClient() {
                   aria-pressed={state.selectedOrderId === order.orderId}
                   data-testid={`delivery-queue-item-${order.orderId}`}
                   data-fulfilment-mode={order.fulfilmentMode}
-                  onClick={() => setState({ ...state, selectedOrderId: order.orderId })}
+                  onClick={() =>
+                    setState((prev) =>
+                      prev.kind === "ready"
+                        ? { ...prev, selectedOrderId: order.orderId }
+                        : prev,
+                    )
+                  }
                 >
                   <span className="font-medium">{order.orderNumber}</span>
                   <span className="block text-[var(--text-secondary)]">
@@ -181,7 +197,16 @@ export function OperationsDeliveryWorkspaceClient() {
           </ul>
         )}
         {state.nextCursor ? (
-          <div className="mt-3">
+          <div className="mt-3 space-y-2">
+            {paginationError ? (
+              <p
+                role="alert"
+                className="text-sm text-rose-700"
+                data-testid="delivery-queue-pagination-error"
+              >
+                {paginationError}
+              </p>
+            ) : null}
             <Button
               type="button"
               variant="outline"
@@ -190,7 +215,11 @@ export function OperationsDeliveryWorkspaceClient() {
               aria-busy={loadingMore}
               data-testid="delivery-queue-load-more"
             >
-              {loadingMore ? "Loading…" : "Load more accepted orders"}
+              {loadingMore
+                ? "Loading…"
+                : paginationError
+                  ? "Retry loading more accepted orders"
+                  : "Load more accepted orders"}
             </Button>
           </div>
         ) : null}
@@ -212,7 +241,7 @@ export function OperationsDeliveryWorkspaceClient() {
             <p className="mt-1 text-xs text-[var(--text-tertiary)]" data-testid="delivery-selected-meta">
               {selected.orderNumber} · verified Delivery mode · {fulfilmentTimingLabel(selected)}
             </p>
-            <OperationsDeliveryPanel orderId={selected.orderId} />
+            <OperationsDeliveryPanel key={selected.orderId} orderId={selected.orderId} />
           </>
         ) : selected && !selectedIsDelivery ? (
           <p className="mt-4 text-sm text-[var(--text-secondary)]" role="status" data-testid="delivery-non-delivery-blocked">

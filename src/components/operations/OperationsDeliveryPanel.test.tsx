@@ -1,7 +1,7 @@
 /**
  * Operations Delivery panel UX invariants + WXE-P0-CORRECTIVE-1 safety (IMP-032 semantics preserved).
  */
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { readFileSync } from "node:fs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -17,15 +17,27 @@ vi.mock("@/lib/operations/delivery", () => ({
 }));
 
 const ORDER_ID = "11111111-1111-4111-8111-111111111111";
+const ORDER_B = "33333333-3333-4333-8333-333333333333";
 const DELIVERY_ID = "22222222-2222-4222-8222-222222222222";
+const DELIVERY_B = "44444444-4444-4444-8444-444444444444";
 
-function detail(commands: readonly string[]) {
+function detail(
+  commands: readonly string[],
+  overrides?: {
+    orderId?: string;
+    deliveryId?: string;
+    status?: string;
+    revision?: string;
+  },
+) {
+  const orderId = overrides?.orderId ?? ORDER_ID;
+  const deliveryId = overrides?.deliveryId ?? DELIVERY_ID;
   return {
     delivery: {
-      id: DELIVERY_ID,
-      orderId: ORDER_ID,
-      status: "PICKED_UP",
-      revision: "3",
+      id: deliveryId,
+      orderId,
+      status: overrides?.status ?? "PICKED_UP",
+      revision: overrides?.revision ?? "3",
       bookingCorrelationId: null,
       provider: "courier-a",
       externalBookingReference: "EXT-1",
@@ -86,6 +98,13 @@ describe("OperationsDeliveryPanel source invariants", () => {
   it("does not hard-code inactiveBookingConfirmed true outside acknowledgment path", () => {
     expect(source).toContain("inactiveBookingAcknowledged");
     expect(source).toContain("not verified external-provider evidence");
+  });
+
+  it("binds pending consequence and commands to Order + Delivery identity", () => {
+    expect(source).toContain("pendingConsequence.orderId");
+    expect(source).toContain("pendingConsequence.deliveryId");
+    expect(source).toContain("activeDeliveryIdRef");
+    expect(source).toContain("commandGenerationRef");
   });
 });
 
@@ -234,5 +253,207 @@ describe("OperationsDeliveryPanel interactive safety", () => {
     expect(screen.queryByTestId("delivery-confirm-delivery")).not.toBeInTheDocument();
     expect(screen.queryByTestId("delivery-cancel")).not.toBeInTheDocument();
     expect(screen.queryByTestId("delivery-report-failure")).not.toBeInTheDocument();
+  });
+});
+
+describe("OperationsDeliveryPanel cross-order and identity isolation", () => {
+  it("resets evidence fields, inactivity ack, validation errors, and dialogs on Order change", async () => {
+    const user = userEvent.setup();
+    getWorkforceDelivery.mockImplementation(async (orderId: unknown) => ({
+      ok: true,
+      status: 200,
+      data: {
+        delivery: detail(["RESOLVE_MANUAL_BOOKING_FAILURE", "CONFIRM_DELIVERY"], {
+          orderId: String(orderId),
+          deliveryId: orderId === ORDER_B ? DELIVERY_B : DELIVERY_ID,
+          status: "BOOKING_OUTCOME_UNKNOWN",
+        }),
+      },
+    }));
+
+    const { rerender } = render(<OperationsDeliveryPanel orderId={ORDER_ID} />);
+    await waitFor(() => expect(screen.getByTestId("delivery-failure-code")).toBeInTheDocument());
+    await user.type(screen.getByTestId("delivery-failure-code"), "NO_BOOKING");
+    await user.type(screen.getByTestId("delivery-failure-reason"), "No courier");
+    await user.click(screen.getByTestId("delivery-inactive-booking-ack"));
+    expect(screen.getByTestId("delivery-inactive-booking-ack")).toBeChecked();
+    await user.click(screen.getByTestId("delivery-resolve-failure"));
+    expect(await screen.findByTestId("delivery-consequence-dialog")).toBeInTheDocument();
+
+    rerender(<OperationsDeliveryPanel orderId={ORDER_B} />);
+    await waitFor(() =>
+      expect(screen.getByTestId("operations-delivery-panel")).toHaveAttribute(
+        "data-order-id",
+        ORDER_B,
+      ),
+    );
+    expect(screen.queryByTestId("delivery-consequence-dialog")).not.toBeInTheDocument();
+    expect(screen.getByTestId("delivery-failure-code")).toHaveValue("");
+    expect(screen.getByTestId("delivery-failure-reason")).toHaveValue("");
+    expect(screen.getByTestId("delivery-inactive-booking-ack")).not.toBeChecked();
+    expect(screen.queryByTestId("delivery-field-error")).not.toBeInTheDocument();
+  });
+
+  it("resets delivery-specific operator state when Delivery identity changes under the same Order", async () => {
+    const user = userEvent.setup();
+    getWorkforceDelivery
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          delivery: detail(["CONFIRM_PICKUP"], {
+            deliveryId: DELIVERY_ID,
+            status: "BOOKED",
+          }),
+        },
+      })
+      .mockResolvedValue({
+        ok: true,
+        status: 200,
+        data: {
+          delivery: detail(["CONFIRM_PICKUP"], {
+            deliveryId: DELIVERY_B,
+            status: "BOOKED",
+            revision: "1",
+          }),
+        },
+      });
+    postDeliveryCommand.mockResolvedValue({ ok: true, status: 200, data: { result: {} } });
+
+    render(<OperationsDeliveryPanel orderId={ORDER_ID} />);
+    await waitFor(() => expect(screen.getByTestId("delivery-handoff-reference")).toBeInTheDocument());
+    expect(screen.getByTestId("operations-delivery-panel")).toHaveAttribute(
+      "data-delivery-id",
+      DELIVERY_ID,
+    );
+    await user.type(screen.getByTestId("delivery-handoff-reference"), "handoff-for-d1");
+    await user.click(screen.getByTestId("delivery-confirm-pickup"));
+    await waitFor(() =>
+      expect(screen.getByTestId("operations-delivery-panel")).toHaveAttribute(
+        "data-delivery-id",
+        DELIVERY_B,
+      ),
+    );
+    expect(screen.getByTestId("delivery-handoff-reference")).toHaveValue("");
+    expect(screen.queryByTestId("delivery-consequence-dialog")).not.toBeInTheDocument();
+  });
+
+  it("ignores stale load responses after Order change", async () => {
+    let resolveA: ((value: unknown) => void) | undefined;
+    const loadA = new Promise((resolve) => {
+      resolveA = resolve;
+    });
+    getWorkforceDelivery.mockImplementation((orderId: unknown) => {
+      if (orderId === ORDER_ID) {
+        return loadA.then(() => ({
+          ok: true,
+          status: 200,
+          data: {
+            delivery: detail(["CONFIRM_DELIVERY"], {
+              orderId: ORDER_ID,
+              deliveryId: DELIVERY_ID,
+            }),
+          },
+        }));
+      }
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        data: {
+          delivery: detail(["CONFIRM_PICKUP"], {
+            orderId: ORDER_B,
+            deliveryId: DELIVERY_B,
+            status: "BOOKED",
+          }),
+        },
+      });
+    });
+
+    const { rerender } = render(<OperationsDeliveryPanel orderId={ORDER_ID} />);
+    rerender(<OperationsDeliveryPanel orderId={ORDER_B} />);
+    await waitFor(() => expect(screen.getByTestId("delivery-confirm-pickup")).toBeInTheDocument());
+    expect(screen.getByTestId("operations-delivery-panel")).toHaveAttribute(
+      "data-order-id",
+      ORDER_B,
+    );
+
+    await act(async () => {
+      resolveA?.(undefined);
+    });
+    // Stale ORDER_A payload must not overwrite ORDER_B panel.
+    await waitFor(() => expect(screen.getByTestId("delivery-confirm-pickup")).toBeInTheDocument());
+    expect(screen.queryByTestId("delivery-confirm-delivery")).not.toBeInTheDocument();
+    expect(screen.getByTestId("operations-delivery-panel")).toHaveAttribute(
+      "data-delivery-id",
+      DELIVERY_B,
+    );
+  });
+
+  it("does not apply a stale command response after Order change", async () => {
+    const user = userEvent.setup();
+    let resolvePost: ((value: unknown) => void) | undefined;
+    const postPending = new Promise((resolve) => {
+      resolvePost = resolve;
+    });
+    getWorkforceDelivery.mockImplementation(async (orderId: unknown) => ({
+      ok: true,
+      status: 200,
+      data: {
+        delivery: detail(["CONFIRM_PICKUP"], {
+          orderId: String(orderId),
+          deliveryId: orderId === ORDER_B ? DELIVERY_B : DELIVERY_ID,
+          status: "BOOKED",
+        }),
+      },
+    }));
+    postDeliveryCommand.mockImplementationOnce(() => postPending);
+
+    const { rerender } = render(<OperationsDeliveryPanel orderId={ORDER_ID} />);
+    await waitFor(() => expect(screen.getByTestId("delivery-handoff-reference")).toBeInTheDocument());
+    await user.type(screen.getByTestId("delivery-handoff-reference"), "handoff-a");
+    await user.click(screen.getByTestId("delivery-confirm-pickup"));
+
+    rerender(<OperationsDeliveryPanel orderId={ORDER_B} />);
+    await waitFor(() =>
+      expect(screen.getByTestId("operations-delivery-panel")).toHaveAttribute(
+        "data-order-id",
+        ORDER_B,
+      ),
+    );
+    expect(screen.getByTestId("delivery-handoff-reference")).toHaveValue("");
+
+    await act(async () => {
+      resolvePost?.({ ok: true, status: 200, data: { result: {} } });
+    });
+    // Stale success must not leave ORDER_B showing "Updated." from ORDER_A command.
+    await waitFor(() =>
+      expect(screen.getByTestId("operations-delivery-panel")).toHaveAttribute(
+        "data-order-id",
+        ORDER_B,
+      ),
+    );
+    expect(screen.queryByText("Updated.")).not.toBeInTheDocument();
+    expect(postDeliveryCommand).toHaveBeenCalledWith(
+      ORDER_ID,
+      "confirm-pickup",
+      expect.objectContaining({ deliveryId: DELIVERY_ID }),
+    );
+  });
+
+  it("dismisses a pending dialog when it no longer matches the active Delivery", async () => {
+    const user = userEvent.setup();
+    getWorkforceDelivery.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: { delivery: detail(["CONFIRM_DELIVERY"]) },
+    });
+    render(<OperationsDeliveryPanel orderId={ORDER_ID} />);
+    await waitFor(() => expect(screen.getByTestId("delivery-proof-reference")).toBeInTheDocument());
+    await user.type(screen.getByTestId("delivery-proof-reference"), "pod-1");
+    await user.click(screen.getByTestId("delivery-confirm-delivery"));
+    expect(await screen.findByTestId("delivery-consequence-dialog")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Back" }));
+    expect(screen.queryByTestId("delivery-consequence-dialog")).not.toBeInTheDocument();
+    expect(postDeliveryCommand).not.toHaveBeenCalled();
   });
 });
