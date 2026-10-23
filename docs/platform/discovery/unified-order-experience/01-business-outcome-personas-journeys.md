@@ -1,4 +1,4 @@
-<!-- AUTHORITY: NON_AUTHORITATIVE_DISCOVERY_DRAFT | PACKAGE: UOE-CANDIDATE-2 -->
+<!-- AUTHORITY: NON_AUTHORITATIVE_DISCOVERY_DRAFT | PACKAGE: UOE-CANDIDATE-3 -->
 
 # Business outcome, personas, and journeys
 
@@ -6,25 +6,28 @@
 STATUS: DISCOVERY_DRAFT
 AUTHORITY: NON_AUTHORITATIVE
 FORMAL_IMP_IDENTITY: NOT_ALLOCATED
-PACKAGE: UOE-CANDIDATE-2
+PACKAGE: UOE-CANDIDATE-3
 VARIANT: PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
+GATE_PRECISION_REVISION: YES
 ```
 
 ## Business outcome
 
 Customers and workforce share one clear mental model for **how**, **where**, and **when** an
 order happens — before money is committed — without inventing availability, fees, ETAs, or
-payable amounts on the client. Server-authoritative Takeaway outlet eligibility and
-mode-sensitive Cart quotes may inform browsing earlier; Checkout Snapshot remains the sealed
-commercial authority.
+payable amounts on the client. Server-authoritative Takeaway outlet eligibility (Now vs
+Schedule-capable) and mode-sensitive Cart quotes may inform browsing earlier; Checkout Snapshot
+remains the sealed commercial authority.
 
 Success looks like:
 
 - Earlier, truthful How / Where / When reduces checkout hesitation and wrong-mode orders
 - Takeaway collection place options are server-true before Checkout bind (propose ≠ bind)
+- Closed-now does not falsely deny Schedule Takeaway when accepted IMP-036I supports it
 - Mode-sensitive fees/offers/availability appear as server quotes before pay, with Review as final authority
 - Schedule completion is faster and calmer than the long grid, without fake Menu slots (exact
   Menu slots deferred)
+- Empty / first-use never shows “no outlets” merely because the customer has not added items
 - Delivery and Takeaway are equally first-class in chrome (no delivery-only bias)
 - Implemented notification channels (WhatsApp + in-app) use the same primary words as web
 - Checkout remains zero-surprise: Snapshot and payment authority unchanged
@@ -58,9 +61,9 @@ Pre-GTM audit: `NOT_PERFORMED`.
 ```text
 J1 Browse → bar intent → Cart → Checkout Review → Pay → Confirmation → My Orders
 J2 Delivery with confirmed address + Now
-J3 Takeaway with server eligibility (one or many outlets) + Collection time
+J3 Takeaway with server eligibility (one or many outlets; Now vs Schedule-capable) + Collection time
 J4 Schedule Today/Tomorrow from server windows only (eligible checkout; no Menu exact slots)
-J5 Change mode/location/time before payment; fees/offers recompute server-side (cart evaluate quote → Checkout evaluate)
+J5 Change mode/location/time before payment; fees/offers recompute server-side (cart evaluate quote → Checkout evaluate; open-Checkout reuse when applicable)
 J6 Resume or recover PAYMENT_PENDING without browse rewrite
 J7 Workforce: list/detail uses Delivery / Takeaway; task actions use collection verbs
 ```
@@ -69,7 +72,7 @@ Journey ownership:
 
 | Phase | Presentation owner | Commercial / domain owner |
 |---|---|---|
-| Menu / Cart browsing | Coordinated order-context presentation state | Cart lines + mode-sensitive evaluate quote; serviceability / pickup eligibility reads |
+| Menu / Cart browsing | Coordinated order-context presentation state (tab-scoped) | Cart lines + mode-sensitive evaluate quote; serviceability / Now vs Schedule-capable eligibility reads |
 | Checkout pre-pay | Same bar + checkout steps as confirmation UI | Checkout revision, destination/outlet bind, timing, evaluate |
 | Payment | Recovery / payment UI | Payment + Snapshot seal; bind revalidation |
 | Post-order | Confirmation / My Orders / tracking / implemented notifications | Order projection of sealed Snapshot |

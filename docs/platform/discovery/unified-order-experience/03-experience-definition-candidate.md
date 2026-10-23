@@ -1,16 +1,17 @@
-<!-- AUTHORITY: NON_AUTHORITATIVE_DISCOVERY_DRAFT | ID: XD-UOE-CANDIDATE-2 -->
+<!-- AUTHORITY: NON_AUTHORITATIVE_DISCOVERY_DRAFT | ID: XD-UOE-CANDIDATE-3 -->
 
 # Experience Definition candidate — Unified Order Experience
 
 ```text
-CANDIDATE_ID = XD-UOE-CANDIDATE-2
-SUPERSEDES = XD-UOE-CANDIDATE-1
+CANDIDATE_ID = XD-UOE-CANDIDATE-3
+SUPERSEDES = XD-UOE-CANDIDATE-2
 STATUS = EXPERIENCE_DEFINITION_CANDIDATE
 AUTHORITY = NON_AUTHORITATIVE
 EXPERIENCE_GATE = NOT_PERFORMED
 EXPERIENCE_CRITICALITY = X3
 LANG = LANG-1
 VARIANT = PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
+GATE_PRECISION_REVISION = YES
 IMPLEMENTATION_AUTHORIZED = NO
 ```
 
@@ -20,7 +21,9 @@ Help a customer decide **How · Where · When** with calm confidence before payi
 workforce recognize the same order methods without teaching backend enums. The emotional
 outcome is unbothered clarity — never fake ETA, never fake address, never surprise fees at pay.
 For Takeaway, show **server-true** collection options early; for fees/offers, show **server
-quotes** early — without pretending browse state is Checkout seal.
+quotes** early — without pretending browse state is Checkout seal. For Schedule Takeaway,
+do not tell a customer collection is impossible solely because the outlet is closed **right
+now** when accepted Scheduled Takeaway remains supported (IMP-036I).
 
 ## Experience Criticality
 
@@ -65,10 +68,10 @@ Rules:
 - Preserve server windows, operating hours, minimum lead time, IANA timezone, cutoff,
   bind-time revalidation
 - No arbitrary minute selection; no fake ETA
-- Outlet closed / Now unavailable:
-  - **Delivery:** explain; offer Schedule if server windows exist; else empty + recovery
-  - **Takeaway:** eligibility is **accepting-now**; closed outlet → `UNAVAILABLE` + honest recovery;
-    no Schedule-for-later Takeaway path in V1 (accepted IMP-036H/I; not widened here)
+- Outlet closed / Now unavailable (GP-01):
+  - **Delivery:** explain; offer Schedule if server windows exist at eligible checkout; else empty + recovery
+  - **Takeaway Now:** accepting-now eligibility; closed / not accepting → Now unavailable + honest recovery; if schedule-capable, offer Schedule intent (not exact Menu slots)
+  - **Takeaway Schedule:** schedule-capable presentation using accepted profile/hours rules; **do not** mark Schedule collection unavailable solely because closed NOW; exact windows remain checkout-eligible only; never claim guaranteed future availability at Menu
 - No windows (eligible checkout — Delivery destination or confirmed Takeaway outlet): empty + recovery; Now if eligible
 - Cross-midnight: Today/Tomorrow and labels follow outlet timezone
 - **Unconfirmed Schedule intent** allowed in bar before eligible checkout; exact slot only from
@@ -91,6 +94,7 @@ Rules:
 | Mode/place incomplete | Finish How and Where first |
 | Outlet only proposed | Confirm your store at checkout to choose an exact time |
 | API empty after eligible | No times available — try later or change method/place |
+| Now closed but Schedule possible | Store isn’t collecting right now — you can Schedule a later collection time at checkout |
 
 Takeaway + Schedule with AUTO_SELECT outlet **proposed but not confirmed** → windows must **not**
 list (outlet not yet confirmed place) — AS-26.
@@ -112,13 +116,37 @@ Visible on Menu → Cart → Checkout:
 Rules:
 
 - Browsing intent is **not** Checkout seal authority
-- Browse before address/sign-in allowed
-- Pre-checkout Takeaway place from **server eligibility read** (UOE-DR-05); propose ≠ bind
+- Browse before address/sign-in allowed; browse with empty / no cart allowed without “no outlets” (GP-03)
+- Pre-checkout Takeaway place from **server eligibility read** (UOE-DR-05); propose ≠ bind;
+  Now vs Schedule capability distinguished (GP-01)
 - Preserve eligible cart lines; explain fee, availability, offer changes from **mode-sensitive
-  server cart evaluate** (advisory)
+  server cart evaluate** (advisory), including Takeaway without Delivery address (GP-02)
+- When open Checkout quote is reused, show **Checkout’s** effective mode as authoritative (AS-29)
 - Require final authoritative Checkout Review before pay
 - Never mutate a previous `PAYMENT_PENDING` checkout from a new browsing preference
 - No client-owned payable amount
+- Presentation storage is **tab-scoped**; other tabs must revalidate server facts (GP-04)
+
+## First-use and empty-cart presentation (GP-03)
+
+| State | Customer presentation | Forbidden |
+|---|---|---|
+| No Cart | Browse Menu; invite to add items; method/place/time gaps honest | “No outlets available” |
+| Empty Cart (exists, 0 lines) | Same as browse; may prompt add items before collection quote | “No outlets available” / UNAVAILABLE as if brand has zero stores |
+| Cart with lines; server returns no Now-eligible / no schedule-capable outlets | Honest empty + recovery for that timing intent | Blaming empty cart |
+| Eligibility unavailable / error | Calm retry; no invented outlets | Treating error as permanent UNAVAILABLE without recovery |
+
+Anonymous Menu browsing remains allowed throughout.
+
+## Multi-tab presentation (GP-04)
+
+- `boba.order-context.v1` / `boba.delivery-context.v1` in `sessionStorage` = **this tab’s**
+  presentation intent only
+- Custom events coordinate **within** a tab; they are not a cross-tab authority bus
+- Explicit cross-tab coordination is **out of V1** unless separately specified later
+- Each tab revalidates eligibility, cart evaluate, and Checkout facts from the server before
+  treating them as current
+- Never synchronize payable amounts or sealed Checkout Snapshot state from presentation storage
 
 ## Content design notes
 
@@ -132,8 +160,8 @@ Rules:
 
 | Moment | Frontstage | Backstage authority |
 |---|---|---|
-| Browse | Bar shows intent / gaps / proposed Takeaway place | delivery-context; eligibility read; menu projection |
-| Cart quote | Impact of mode/outlet on fees/offers/availability | cart evaluate (advisory, mode-sensitive) |
+| Browse | Bar shows intent / gaps / proposed Takeaway place | delivery-context; eligibility read (Now vs Schedule-capable); menu projection |
+| Cart quote | Impact of mode/outlet on fees/offers/availability | cart evaluate (advisory, mode-sensitive; open-Checkout reuse when applicable) |
 | Confirm place | Deliver to / Collect from | serviceability; eligibility; checkout pickup-options + confirm |
 | Confirm time | Now / Schedule slot | ASAP path; scheduled windows + seal (checkout-eligible) |
 | Pay | Review totals | Snapshot; prepare; payment; bind revalidate |
@@ -151,7 +179,11 @@ Rules:
 | Schedule before checkout eligibility | Refinement C — unconfirmed intent; DR-02 defer exact Menu slots |
 | Split geo state | Refinement D — one owner |
 | Takeaway place opaque until Checkout | DR-05 eligibility read |
+| Closed-now false denial of Schedule Takeaway | GP-01 Now vs Schedule-capable |
+| Empty-cart “no outlets” | GP-03 state split |
 | Fee surprise at Checkout | DR-05 mode-sensitive cart evaluate + impact banner + Review |
+| Browse quote fights open Checkout | AS-29 / GP-02 precedence |
+| Cross-tab money bleed | GP-04 tab-scoped presentation |
 | Pending payment vs new intent | PAYMENT_PENDING isolation |
 | Channel wording drift | DR-04 implemented-channel consistency |
 

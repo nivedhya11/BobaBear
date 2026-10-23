@@ -1,16 +1,17 @@
-<!-- AUTHORITY: NON_AUTHORITATIVE_DISCOVERY_DRAFT | ID: ARCH-UOE-FIT-CANDIDATE-2 -->
+<!-- AUTHORITY: NON_AUTHORITATIVE_DISCOVERY_DRAFT | ID: ARCH-UOE-FIT-CANDIDATE-3 -->
 
 # Architecture Fit candidate — Unified Order Experience
 
 ```text
-CANDIDATE_ID = ARCH-UOE-FIT-CANDIDATE-2
-SUPERSEDES = ARCH-UOE-FIT-CANDIDATE-1
+CANDIDATE_ID = ARCH-UOE-FIT-CANDIDATE-3
+SUPERSEDES = ARCH-UOE-FIT-CANDIDATE-2
 STATUS = ARCHITECTURE_FIT_CANDIDATE_ONLY
 AUTHORITY = NON_AUTHORITATIVE
 FORMAL_ARCHITECTURE_FIT = NOT_PERFORMED
 ARCHITECTURE_LOCKED = NO
 PREREQUISITE_GATES = Product Definition Gate + Experience Gate (neither formally passed)
 VARIANT = PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
+GATE_PRECISION_REVISION = YES
 IMPLEMENTATION_AUTHORIZED = NO
 ```
 
@@ -23,10 +24,15 @@ renames, or a second commercial authority **if and only if**:
 2. Geographic confirmed facts have a single owner (reuse delivery-context)
 3. Exact Schedule slots come only from server lists at **eligible checkout** (UOE-DR-02 deferred)
 4. Pre-checkout Takeaway eligibility and mode-sensitive Cart quotes reuse **existing server
-   eligibility / cart-evaluate authorities** as read/quote surfaces (UOE-DR-05)
-5. `PAYMENT_PENDING` isolation and Snapshot/payment authorities are unchanged
+   eligibility / cart-evaluate authorities** as read/quote surfaces (UOE-DR-05), with
+   **Now vs Schedule-capable** distinguished per accepted IMP-036H/I (GP-01)
+5. Open non-terminal Checkout Snapshot reuse wins over browse mode/outlet (GP-02 / AS-29)
+6. Empty-cart / no-cart eligibility presentation is not conflated with UNAVAILABLE (GP-03)
+7. Presentation `sessionStorage` stays tab-scoped; no cross-tab money/seal sync (GP-04)
+8. `PAYMENT_PENDING` isolation and Snapshot/payment authorities are unchanged
 
-**Candidate fit verdict:** Candidate contracts specified for Founder-strengthened V1.
+**Candidate fit verdict:** Candidate contracts specified for Founder-strengthened V1 + gate
+precision.
 **Formal Fit:** `NOT_PERFORMED`. Fit may be evaluated after Product/Experience gates; it must not
 finally PASS/lock without those gates (X2/X3 rule).
 
@@ -41,19 +47,34 @@ finally PASS/lock without those gates (X2/X3 rule).
 | Cart evaluate | Advisory cart quote (existing); mode-sensitive extension remains quote-only |
 | Payment (D-361+) | Idempotency, webhook truth, client-evidence — unchanged |
 | Serviceability | Coordinate-authoritative delivery eligibility |
-| Pickup eligibility domain | Same rules as checkout pickup-options (`listEligiblePickupOutletsForCheckout`) |
+| ASAP pickup eligibility | `listEligiblePickupOutletsForCheckout` / `assertPickupOutletEligible` — accepting-now |
+| Scheduled pickup profile / windows | `assertScheduledPickupProfile` + `listServerScheduledWindows` / checkout scheduled-windows — IMP-036I |
 | Cart revision / D-370 | Purchase-intent preservation across auth |
-| `boba.delivery-context.v1` | Geographic browse session facts |
+| `boba.delivery-context.v1` | Geographic browse session facts (tab-scoped `sessionStorage`) |
+
+## Verified current behaviour (package base)
+
+| Fact | Evidence |
+|---|---|
+| ASAP pickup eligibility requires accepting-now | `pickup-eligibility.ts` (closed_by_schedule → not eligible) |
+| Empty cart → ASAP pickup list `[]` | `listEligiblePickupOutletsForCheckout` early return |
+| SCHEDULED PICKUP evaluate/prepare uses scheduled profile gates, not accepting-now | `evaluate.ts` / `prepare.ts` → `assertScheduledPickupProfile` |
+| SCHEDULED bind revalidation uses scheduled profile for PICKUP | `scheduled-bind.ts` → `assertScheduledPickupProfile` |
+| Scheduled windows compose hours / lead / closed-full-day / profile | `scheduled-eligibility.ts` |
+| `evaluateCart` without `location` returns `REQUIRES_FULFILMENT_CONTEXT` before reuse | `cart/evaluate.ts` early return |
+| Open Checkout reuse after Delivery serviceability path | `tryReusableCheckoutEvaluation` for DRAFT / READY_FOR_PAYMENT / PAYMENT_PENDING + same cart revision + active Snapshot |
+| CART commercial persistence lacks mode/outlet provenance fields today | `persistCommercialEvaluation` CART-scope |
 
 ## Reuse vs extend
 
 | Concern | Reuse | Extend | Forbidden |
 |---|---|---|---|
 | Mode / timing enums | Server fulfilment APIs | Earlier intent UX; labels | Enum rename |
-| Delivery geo | delivery-context, LocationSelector, serviceability | Mode-aware bar; orientation vs confirmed copy | Second confirmed-geo store |
-| Takeaway eligibility | Pickup eligibility domain used by checkout pickup-options | **Smallest pre-checkout read** exposing same eligibility + selectionPolicy without checkout bind | Client-invented outlet list; silent bind; parallel eligibility algorithm |
-| Cart pricing by mode | `POST /api/v1/cart/evaluate` | **Smallest mode (+ outlet) input** for advisory quote | Second money authority; treating cart quote as Snapshot |
-| Scheduling | `listCheckoutScheduledWindows(checkoutId)`, seal, bind revalidate | Compact UX; Menu **intent** only (DR-02) | Menu exact-slot preview API in V1; speculative availability |
+| Delivery geo | delivery-context, LocationSelector, serviceability | Mode-aware bar; orientation vs confirmed copy | Second confirmed-geo store; cross-tab money sync |
+| Takeaway Now eligibility | ASAP pickup eligibility domain | Pre-checkout read exposing same accepting-now eligibility + selectionPolicy | Client-invented outlet list; silent bind |
+| Takeaway Schedule capability | Scheduled pickup profile gates (+ hours/scheduling foundations used at Checkout) | Pre-checkout **capability** presentation without Menu exact slots | Reject Schedule solely because closed NOW; Menu exact-slot API; guaranteed availability claim |
+| Cart pricing by mode | `POST /api/v1/cart/evaluate` | Mode (+ outlet) input; Takeaway path without Delivery address; open-Checkout reuse before Delivery-only early return | Second money authority; browse mutate Checkout |
+| Scheduling exact slots | `listCheckoutScheduledWindows(checkoutId)`, seal, bind revalidate | Compact UX; Menu **intent** only (DR-02) | Menu exact-slot preview API in V1 |
 | Menu projection outlet | Existing no_location / server outlet rules | May reflect proposed Takeaway outlet from server eligibility | Client-authored outlet |
 | Cart / checkout | evaluate, prepare, PAYMENT_PENDING freeze | Bar calls same guards; pre-checkout reads never mutate pending checkout | Client payable; browse mutate pending checkout |
 | Workforce | Existing ops surfaces | Primary label Takeaway; collection task verbs | Domain rename |
@@ -63,99 +84,114 @@ finally PASS/lock without those gates (X2/X3 rule).
 These are **candidate contracts** for Architecture Fit evaluation. Exact HTTP path naming is an
 implementation detail within the semantic bounds below. They do **not** authorize implementation.
 
-### A. Pre-checkout Takeaway outlet eligibility (read-only)
+### A. Pre-checkout Takeaway outlet eligibility (read-only, timing-aware)
 
 ```text
-PURPOSE: Server-authoritative eligible Takeaway outlets before Checkout bind
-AUTHORITY: Same pickup eligibility domain as listCheckoutPickupOptions / listEligiblePickupOutletsForCheckout
-NOT AUTHORITY FOR: Checkout bind, Snapshot, payment, sealed fees
+PURPOSE: Server-authoritative Takeaway collection options before Checkout bind
+AUTHORITY: Compose existing ASAP pickup eligibility + scheduled-pickup profile foundations
+NOT AUTHORITY FOR: Checkout bind, Snapshot, payment, sealed fees, exact Menu slots, guaranteed future availability
 ```
 
 | Dimension | Smallest contract |
 |---|---|
-| Inputs | `brandId` + existing cart credential (guest token and/or customer session as today for cart reads). **No** `checkoutId` required. Optional generation / request id for race discard. |
-| Outputs | Customer-safe `outlets[]` (identity + display label fields already used for pickup-options) + `selectionPolicy`: `UNAVAILABLE` \| `AUTO_SELECT` \| `CUSTOMER_SELECT` |
-| Semantics | `AUTO_SELECT` → UI may **propose** one outlet; customer confirmation still required before Checkout fulfilment bind. `CUSTOMER_SELECT` → explicit choice. `UNAVAILABLE` → honest empty + recovery. |
-| Must reuse | Existing eligibility computation over brand + cart + clock — **not** a second algorithm |
-| Must not | Bind `pickupOutletId` on Checkout; mutate cart lines; return hierarchy / legal-entity / ops dumps; invent nearest-outlet client-side; call `listCheckoutPickupOptions` without a Checkout by fabricating checkoutId |
+| Inputs | `brandId` + existing cart credential (guest token and/or customer session as today for cart reads) + **timing intent** `ASAP` \| `SCHEDULED` (or equivalent Now/Schedule). **No** `checkoutId` required. Optional generation / request id for race discard. |
+| Cart-line precondition | If no active cart **or** cart has zero lines → return distinct `cartState`: `NO_CART` \| `EMPTY_CART` with `outlets=[]` and **not** `selectionPolicy=UNAVAILABLE` meaning “brand has no stores” (GP-03) |
+| Outputs (when cart has lines) | Customer-safe `outlets[]` + `selectionPolicy`: `UNAVAILABLE` \| `AUTO_SELECT` \| `CUSTOMER_SELECT` + per-outlet or aggregate capability flags: `nowEligible` and/or `scheduleCapable` as required by requested timing intent |
+| Now (`ASAP`) semantics | Reuse accepting-now composition (`listEligiblePickupOutletsForCheckout` / `assertPickupOutletEligible` class). `closed_by_schedule` / not accepting → not Now-eligible |
+| Schedule (`SCHEDULED`) semantics | Reuse schedule-capable gates aligned with `assertScheduledPickupProfile` (+ scheduling foundations used when Checkout lists windows). **Must not** require accepting-now. Must **not** list exact Menu slots. Must **not** claim windows are guaranteed — only that the outlet is a truthful Schedule-collection candidate for later checkout window listing |
+| AUTO_SELECT / CUSTOMER_SELECT | Same propose ≠ bind rules as CANDIDATE-2 |
+| Must not | Bind `pickupOutletId` on Checkout; mutate cart lines; invent nearest-outlet client-side; fabricate `checkoutId` to call pickup-options / scheduled-windows; treat empty cart as UNAVAILABLE brand |
 
-**Safety**
+**Safety / privacy / races** — unchanged from CANDIDATE-2 except:
 
-- Read-only; no revision bump; no fulfilment mutation
-- BOLA: actor may only read for carts/brands they are credentialed for (parity with cart reads)
-- Terminal/expired Checkout rules are N/A (no checkoutId); must not create Checkout to satisfy this read
-- PAYMENT_PENDING: this read must not call fulfilment/destination/timing mutations on any pending checkout
-- Exposure widening: same customer-safe projection as pickup-options may be visible to guest cart holders — accepted as public store information; `instructions` content must remain customer-safe
-- Abuse/cost: reuse existing customer-commerce rate-limit posture; client debounce; empty cart short-circuits to `[]`; no new infrastructure
+- Eligibility mirrors keyed by cart revision + timing intent + delivery-context fingerprint where relevant
+- Re-read on surface resume / visibility / before Checkout handoff
+- Checkout confirm revalidates with the **correct** timing gate (Now → accepting-now; Schedule → scheduled profile + window seal path)
+- Multi-tab: presentation mirrors are tab-local; server remains source of truth on next read (GP-04)
 
-**Privacy**
-
-- Customer-safe outlet projection only (same field class as checkout pickup-options)
-- No other customers’ carts, no workforce PII, no full org hierarchy dump
-
-**Race behaviour**
-
-- Responses keyed by request generation / cart revision; UI ignores stale responses
-- Eligibility mirrors in `order-context` keyed by cart revision + delivery-context fingerprint where relevant; mismatch → drop mirrors and re-read
-- Eligibility mirrors are **time-sensitive**: re-read on surface resume / visibility / before Checkout handoff; Checkout confirm revalidates (accepting-now)
-- Proposed outlet ≠ confirmed place for Schedule window listing (windows still require confirmed Checkout place)
-- Multi-tab: last-write/generation on presentation state; server eligibility remains source of truth on next read
-
-### B. Mode-sensitive Cart evaluation (advisory quote)
+### B. Mode-sensitive Cart evaluation (advisory quote) — GP-02
 
 ```text
 PURPOSE: Advisory cart quote that reflects Delivery vs Takeaway (+ outlet when Takeaway)
-AUTHORITY: Existing evaluateCart commercial engine — extended input only
-NOT AUTHORITY FOR: Sealed Snapshot, pay readiness, inventing a parallel pricing service
+AUTHORITY: Existing evaluateCart commercial engine — extended input + precedence only
+NOT AUTHORITY FOR: Sealed Snapshot, pay readiness, inventing a parallel pricing service, mutating Checkout
 ```
 
 | Dimension | Smallest contract |
 |---|---|
 | Surface | Extend existing `POST /api/v1/cart/evaluate` (or equivalent same evaluateCart entry) |
 | Added inputs (optional) | `fulfilmentMode`: `DELIVERY` \| `PICKUP`; when `PICKUP`, optional `pickupOutletId` from server eligibility / customer selection |
-| Existing inputs | Retain today’s `location` / coordinates path for Delivery serviceability-backed quotes |
-| Outputs | Existing cart evaluation result shape (status, problems, commercial explanation fields as today) — still **advisory** |
-| Semantics | PICKUP quotes must not invent delivery execution/fee; mode-restricted offers follow server commercial rules; absence of mode preserves backward-compatible evaluate behaviour |
-| Relationship to Checkout | **Precedence (mandatory):** If an active non-terminal Checkout (`DRAFT` / `READY_FOR_PAYMENT` / `PAYMENT_PENDING`) exists for the **same cart revision** with an active Snapshot, the existing reused Checkout evaluation wins over any requested `fulfilmentMode` / `pickupOutletId` (today’s `tryReusableCheckoutEvaluation` / `reusedCheckoutEvaluation: true`). Response must surface that the Checkout’s mode is authoritative; UI shows Checkout mode; server must **not** compute a divergent recomputation for that cart revision — especially under `PAYMENT_PENDING`. Cart quote never replaces Checkout evaluate / Snapshot seal. |
+| Delivery path | Retain today’s `location` / coordinates path for Delivery serviceability-backed quotes |
+| Takeaway path | **Must not require Delivery address/coordinates.** Takeaway quote uses outlet (+ cart) commercial path without inventing delivery fee/execution |
+| Absence of mode | Preserve backward-compatible evaluate behaviour |
+| Outputs | Existing cart evaluation result shape **plus** explicit effective-mode conveyance when reuse applies (below) — still **advisory** |
 
-**Safety**
+#### Open Checkout Snapshot reuse precedence (mandatory)
+
+If an active non-terminal Checkout exists for the **same cart revision** with an active Snapshot
+and status ∈ {`DRAFT`, `READY_FOR_PAYMENT`, `PAYMENT_PENDING`}:
+
+1. **Reuse wins** over any requested browse `fulfilmentMode` / `pickupOutletId` / Delivery location
+   (today’s `tryReusableCheckoutEvaluation` / `reusedCheckoutEvaluation: true` intent).
+2. Reuse must be reachable for Takeaway open Checkouts **without** requiring a Delivery `location`
+   (today’s early `REQUIRES_FULFILMENT_CONTEXT` without location is a Fit gap to close in the
+   evaluate entry ordering — not a license to recompute divergent browse money).
+3. Response **must convey effective Checkout mode** (at minimum: `reusedCheckoutEvaluation: true`
+   and the Checkout’s `fulfilmentMode`, and timing when material to chrome). UI shows Checkout mode
+   as authoritative; browse intent may remain visible as non-authoritative preference only if it
+   does not imply a different payable.
+4. Server must **not** compute a divergent recomputation for that cart revision — especially under
+   `PAYMENT_PENDING`.
+5. Browse intent must **not** call fulfilment / destination / timing mutations on that Checkout.
+
+#### DRAFT / READY_FOR_PAYMENT / PAYMENT_PENDING conflict behaviour
+
+| Checkout status | Browse mode/outlet differs | Required behaviour |
+|---|---|---|
+| `DRAFT` | Yes | Reuse Snapshot/evaluate money for same cart revision; surface Checkout mode; do not mutate Checkout from bar; customer continues Checkout to change mode via existing Checkout APIs |
+| `READY_FOR_PAYMENT` | Yes | Same as DRAFT; pay path still requires prepare + Snapshot authority |
+| `PAYMENT_PENDING` | Yes | **Freeze preserved**; reuse only; recovery-first UX; bar must not call Checkout mutations; no divergent recomputation |
+
+#### Mode/outlet-specific evaluation provenance
+
+- When a **new** CART-scope commercial evaluation is persisted (not reuse), record evaluated
+  `fulfilmentMode` and `pickupOutletId` (or Delivery location fingerprint) for measurement honesty
+- Reused Checkout evaluations retain Checkout/Snapshot provenance (`evaluationId` from CHECKOUT
+  scope); do not rewrite CART provenance over Snapshot truth
+- No duplicate money authority: one presented quote source per response — either reused Checkout
+  Snapshot quote **or** advisory CART quote — never both as competing payables
+
+**Safety / privacy / races**
 
 - Evaluate remains non-sealing; pay still requires Checkout prepare + Snapshot path
 - Invalid mode/outlet combinations → server error/problem statuses; no client-fabricated totals
-- Must not weaken PAYMENT_PENDING freezes; must not diverge browse quote from open Checkout Snapshot at same cart revision (AS-29)
-- Persisted CART-scope commercial evaluations must record the evaluated mode/outlet (measurement honesty)
-
-**Privacy**
-
-- Same cart credential scope as today’s evaluate; no additional PII in responses beyond existing commerce projection
-
-**Race behaviour**
-
+- Must not weaken PAYMENT_PENDING freezes (AS-29)
 - Cart revision concurrency unchanged; stale evaluate responses discarded via generation tokens
-- Mode/outlet intent changes trigger a new evaluate **only when no blocking open-Checkout reuse applies**; prior quote must not linger as payable truth
-- Impact banner / UI money displays only the latest successful server quote (or Checkout evaluate / Snapshot at Review)
+- Mode/outlet intent changes trigger a new evaluate **only when no blocking open-Checkout reuse applies**
+- Impact banner / UI money displays only the latest successful server quote (or Checkout evaluate /
+  Snapshot at Review)
 
 ### Explicit non-authority (no second commercial authority)
 
 | Allowed | Forbidden |
 |---|---|
-| Server eligibility read for browse Takeaway place | Client-authored outlet eligibility |
+| Server eligibility read for browse Takeaway place (Now / Schedule-capable) | Client-authored outlet eligibility |
 | Server cart evaluate quote with mode/outlet | Treating cart quote as sealed payable / Snapshot |
 | Checkout pickup-options + fulfilment bind | Binding outlet from browse without confirm |
 | Checkout evaluate + Snapshot at pay | Parallel “browse Snapshot” or second pricing authority |
-| Presentation `order-context` coordinator | Storing money or sealed windows in session as truth |
+| Presentation `order-context` coordinator (tab-scoped) | Storing money or sealed windows in session as truth; cross-tab seal sync |
 
 ## Refinement D — One browsing-context owner
 
 ### Proposed model
 
 ```text
-boba.order-context.v1  (presentation-state coordinator; sessionStorage)
+boba.order-context.v1  (presentation-state coordinator; sessionStorage; TAB-SCOPED)
   ├── modeIntent: unset | DELIVERY | PICKUP
   ├── timingIntent: unset | ASAP | SCHEDULED
   ├── scheduleConfirmation: UNCONFIRMED | CONFIRMED_WINDOW_REF?  (checkout-bound)
   ├── collectionIntent: unset | proposedOutletId? | confirmedOutletId?
-  ├── eligibilityFlags: mirrors keyed by delivery-context fingerprint / cart revision / generation
+  ├── eligibilityFlags: mirrors keyed by delivery-context fingerprint / cart revision / timing / generation
   └── delivery: reuse boba.delivery-context.v1 (no duplicate confirmed coordinates)
 ```
 
@@ -180,10 +216,10 @@ Otherwise present missing, “Checking…”, market orientation, or **Known · 
 
 | Topic | Rule |
 |---|---|
-| Storage | `sessionStorage` (parity with delivery-context); versioned key `boba.order-context.v1` |
+| Storage | `sessionStorage` (parity with delivery-context); versioned key `boba.order-context.v1`; **tab-scoped by platform** |
+| Cross-tab | **No V1 cross-tab sync** of presentation intent, money, or sealed Checkout. Same-tab event/subscribe only. Each tab revalidates server facts on focus/resume before trusting mirrors (GP-04) |
 | Legacy session compatibility | Dual-read `boba.delivery-context.v1` (+ legacy pin façade if still present); migrate forward on write; never drop confirmed geo |
-| Sign-out | Drop checkout-bound refs (`CONFIRMED_WINDOW_REF`, confirmed outlet, eligibility mirrors); retain only non-personal intents (mode/timing intent); delivery-context logout behaviour unchanged; honor D-370 (post-logout browser loses customer authority) |
-| Cross-tab | Same event/subscribe pattern as delivery-context; generation tokens win |
+| Sign-out | Drop checkout-bound refs (`CONFIRMED_WINDOW_REF`, confirmed outlet, eligibility mirrors); retain only non-personal intents (mode/timing intent); delivery-context logout behaviour unchanged; honor D-370 |
 | Expiry | Checkout-bound refs invalid when checkout completed/expired/terminal; do not auto-create/resume Checkout from bar intent alone |
 | Auth / navigation transitions | Preserve safe intent across login; revalidate eligibility; honor D-370 cart merge |
 | Async generation / race protection | Generation tokens / ignore stale responses (same pattern as OrderingCatalogClient) |
@@ -196,7 +232,7 @@ Otherwise present missing, “Checking…”, market orientation, or **Known · 
 
 | Phase | Allowed | Not allowed |
 |---|---|---|
-| Menu / pre-checkout | Capture Now / Schedule **intent**; show UNCONFIRMED + reason | Call `listCheckoutScheduledWindows` without checkout; invent windows; new Menu exact-slot preview API (deferred) |
+| Menu / pre-checkout | Capture Now / Schedule **intent**; show UNCONFIRMED + reason; Schedule-capable Takeaway place candidates | Call `listCheckoutScheduledWindows` without checkout; invent windows; new Menu exact-slot preview API; claim guaranteed availability |
 | Eligible checkout | List + select server windows; seal on set timing | Free-minute picker; list while outlet only **proposed** (not confirmed) |
 | Pay | `assertScheduledSnapshotStillBindable` (existing) | Pay on expired/drifted window |
 
@@ -212,25 +248,32 @@ Otherwise present missing, “Checking…”, market orientation, or **Known · 
 | Checking | “Checking this address…” | Coords present; serviceability in flight or fingerprint mismatch |
 | Known · not deliverable | Clear unsupported copy + recovery | Coords present; serviceability NOT_SERVICEABLE |
 | Confirmed delivery | “Deliver to {compact label}” | Coords + SERVICEABLE for those coords / checkout destination |
-| Takeaway intent / proposed (V1) | “Collect from {outlet}?” / choose-store CTA from **server eligibility** | Eligibility read; proposed ≠ Checkout-bound |
+| Takeaway Now proposed (V1) | “Collect from {outlet}?” from **accepting-now** eligibility | Eligibility read; proposed ≠ Checkout-bound |
+| Takeaway Schedule proposed (V1) | “Collect from {outlet}?” from **schedule-capable** eligibility; Schedule UNCONFIRMED for exact time | Profile/hours capability; not accepting-now; no Menu slots |
 | Takeaway confirmed | “Collect from {outlet}” | checkout outlet after confirm |
 
 Soft Dehradun bias in location provider search remains non-authoritative (existing comment in
 provider). UI must not upgrade bias into confirmed Deliver to.
 
-## Architecture-fit consequences of CANDIDATE-2
+## Architecture-fit consequences of CANDIDATE-3
 
 | Consequence | Required disposition |
 |---|---|
-| New/extended **read** for pre-checkout pickup eligibility | Fit-authorized as reuse of existing eligibility domain; no new aggregate |
-| Cart evaluate input extension for mode/outlet | Fit-authorized as quote-only; Snapshot authority unchanged; open-Checkout reuse precedence mandatory |
-| Guest visibility of customer-safe outlet projection | Accepted Fit consequence (public store info); rate-limit + debounce; empty-cart `[]` |
+| Timing-aware pre-checkout Takeaway eligibility read | Fit-authorized as composition of ASAP + scheduled-pickup foundations; no new aggregate |
+| Empty/no-cart distinct from UNAVAILABLE | Mandatory presentation + contract `cartState` (GP-03) |
+| Cart evaluate Takeaway without Delivery location | Fit-authorized quote-only path; Snapshot authority unchanged |
+| Open-Checkout reuse before Delivery-only early return | Mandatory evaluate entry ordering / precedence (GP-02 / AS-29) |
+| Effective Checkout mode in evaluate response | Mandatory when `reusedCheckoutEvaluation` |
+| CART evaluation mode/outlet provenance | Required for new CART-scope persists |
+| Guest visibility of customer-safe outlet projection | Accepted Fit consequence (public store info); rate-limit + debounce |
 | DR-04 wording on WhatsApp | Fit must confirm whether wording is Meta template **body** (re-approval / status lifecycle) or **variable**; no new channel adapter authorized |
 | Exact Menu schedule preview | **Out of V1** — no Fit work for that API in this variant |
+| Cross-tab presentation sync | **Out of V1** — tab-scoped only (GP-04) |
 | Client money / client eligibility | STOP — Architecture mismatch |
-| Calling checkout pickup-options without Checkout | STOP — misuse of ownership-exact API |
+| Calling checkout pickup-options / scheduled-windows without Checkout | STOP — misuse of ownership-exact API |
 | Parallel pricing service or browse Snapshot | STOP — second commercial authority |
 | Divergent cart quote vs open Checkout Snapshot (same revision) | STOP — AS-29 / reuse precedence |
+| Reject Schedule Takeaway solely because closed NOW | STOP — contradicts accepted IMP-036I (GP-01) |
 | Domain rename PICKUP → Takeaway | STOP — D6 / out of scope |
 | Formal Fit PASS before Experience Gate | Forbidden (X2/X3) |
 
@@ -239,7 +282,7 @@ provider). UI must not upgrade bias into confirmed Deliver to.
 | Item | Status |
 |---|---|
 | Exact Menu schedule preview API | Deferred in V1 (UOE-DR-02 incorporated) — not a Fit blocker for this variant |
-| Pre-checkout Takeaway eligibility / mode-aware cart evaluate | Contracts specified (UOE-DR-05 incorporated) — formal Fit still NOT_PERFORMED |
+| Pre-checkout Takeaway eligibility / mode-aware cart evaluate | Contracts specified (UOE-DR-05 + GP-01…GP-04) — formal Fit still NOT_PERFORMED |
 | Future IMP identity + vs IMP-036K/D-383 sequencing | DECISION_REQUIRED (UOE-DR-01) |
 | Formal Fit lock | STOP until Product + Experience gates pass |
 | Any pressure to rename `PICKUP` domain value | STOP — out of scope |
@@ -257,5 +300,7 @@ provider). UI must not upgrade bias into confirmed Deliver to.
 9. Presentation language ≠ domain rename
 10. Cart evaluate quote ≠ Snapshot seal
 11. Pre-checkout eligibility read ≠ Checkout fulfilment bind
-12. Takeaway eligibility is accepting-now; Schedule does not widen closed-outlet eligibility in V1
+12. Takeaway **Now** = accepting-now; Takeaway **Schedule** = schedule-capable (not accepting-now); Schedule is not silently denied solely because closed NOW
 13. Open Checkout / Snapshot reuse wins over browse mode/outlet at the same cart revision
+14. Empty / no cart ≠ brand UNAVAILABLE
+15. Presentation storage is tab-scoped; server facts revalidated per tab

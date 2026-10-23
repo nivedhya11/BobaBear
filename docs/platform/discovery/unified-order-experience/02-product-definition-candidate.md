@@ -1,10 +1,10 @@
-<!-- AUTHORITY: NON_AUTHORITATIVE_DISCOVERY_DRAFT | ID: PD-UOE-CANDIDATE-2 -->
+<!-- AUTHORITY: NON_AUTHORITATIVE_DISCOVERY_DRAFT | ID: PD-UOE-CANDIDATE-3 -->
 
 # Product Definition candidate — Unified Order Experience
 
 ```text
-CANDIDATE_ID = PD-UOE-CANDIDATE-2
-SUPERSEDES = PD-UOE-CANDIDATE-1
+CANDIDATE_ID = PD-UOE-CANDIDATE-3
+SUPERSEDES = PD-UOE-CANDIDATE-2
 STATUS = PRODUCT_DEFINITION_CANDIDATE
 AUTHORITY = NON_AUTHORITATIVE
 PRODUCT_DEFINITION_GATE = NOT_PERFORMED
@@ -14,6 +14,7 @@ NOT_IMP_036K = YES
 EXPERIENCE_CRITICALITY = X3
 CHANGE_RISK = CR2 (CR3 at checkout/payment boundaries)
 VARIANT = PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
+GATE_PRECISION_REVISION = YES
 IMPLEMENTATION_AUTHORIZED = NO
 ```
 
@@ -83,19 +84,25 @@ Reuse existing `boba.delivery-context.v1` for geographic browse facts. Avoid two
 copies of confirmed geographic data. Full ownership rules:
 [`06-architecture-fit-candidate.md`](./06-architecture-fit-candidate.md).
 
+`sessionStorage` presentation state is **tab-scoped** (GP-04). No cross-tab sync of payable
+amounts or sealed Checkout state from presentation storage.
+
 ### V1 variant lock (gate candidate) — PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
 
-This Product Definition candidate supersedes the CANDIDATE-1 **intent-only** Takeaway/fee
-pre-checkout posture per Founder UOE-DR-05:
+This Product Definition candidate supersedes CANDIDATE-2’s incorrect “no Schedule-for-later
+Takeaway” posture (GP-01) while retaining DR-02 / DR-04 / DR-05:
 
 | Concern | V1 entitlement |
 |---|---|
 | Schedule exact slots pre-checkout | **Deferred** (UOE-DR-02) — intent + UNCONFIRMED only |
-| Takeaway outlet eligibility pre-checkout | **In V1** — server-authoritative eligibility **read** (same eligibility authority as checkout pickup-options; no client invent) |
-| Mode-sensitive Cart quote | **In V1** — extend existing cart evaluate with mode (+ outlet when Takeaway) as **advisory** quote only |
+| Takeaway **Now** outlet eligibility | **In V1** — server accepting-now eligibility (IMP-036H ASAP pickup domain) |
+| Takeaway **Schedule** collection capability | **In V1** — server schedule-capable outlet presentation using accepted scheduled-pickup profile / hours rules (IMP-036I); **not** rejected solely because closed NOW; **no** Menu exact slots; **no** guaranteed future availability claim |
+| Mode-sensitive Cart quote | **In V1** — extend existing cart evaluate with mode (+ outlet when Takeaway) as **advisory** quote only; Takeaway quote **without** Delivery address (GP-02) |
+| Open Checkout precedence | Open non-terminal Checkout Snapshot reuse wins over browse mode/outlet at same cart revision (AS-29 extended) |
 | Commercial seal | Checkout evaluate + Snapshot remain sole sealed commercial / fulfilment commitment |
 | Implemented channels | **In V1** — same-meaning Delivery / Takeaway / Now / Schedule on WhatsApp + in-app (UOE-DR-04); email/SMS/push non-sending today |
 | Checkout | Authoritative outlet **confirm/bind**, exact windows, Review, pay — unchanged authorities |
+| Empty / first-use | Distinguish No Cart / Empty Cart / no eligible / error (GP-03); never “no outlets” because cart has no lines |
 
 Per-surface Takeaway vs operational vocabulary: see
 [`12-template-completeness-addendum.md`](./12-template-completeness-addendum.md) §G.
@@ -110,9 +117,9 @@ Per-surface Takeaway vs operational vocabulary: see
   `OutletPickupProfile` are **not** renamed (D6); operational vocabulary allowed per §G addendum
 - UX-B compact Now / Schedule interaction using server windows **at eligible checkout**
 - UX-C universal order-context bar on Menu → Cart → Checkout
-- Server-authoritative pre-checkout Takeaway outlet eligibility read + mode-sensitive Cart
-  evaluate (UOE-DR-05) per Architecture Fit smallest contracts
-- Session compatibility for legacy delivery-context
+- Server-authoritative pre-checkout Takeaway eligibility (Now vs Schedule-capable) +
+  mode-sensitive Cart evaluate (UOE-DR-05) per Architecture Fit smallest contracts
+- Session compatibility for legacy delivery-context; tab-scoped order-context (GP-04)
 - Explicit PAYMENT_PENDING isolation from new browse preferences (preserve existing server guards)
 - Content / a11y / responsive obligations implied by X3
 
@@ -126,11 +133,13 @@ Per-surface Takeaway vs operational vocabulary: see
 - Domain enum renames; API/DB/event/migration renames
 - A second sealed commercial authority parallel to Snapshot / checkout evaluate
 - Exact Menu-level schedule preview API (deferred — UOE-DR-02)
+- Guaranteed future availability claims without server window eligibility at Checkout
 - Inventing new notification products or unbounded channel rewrite
 - Receipts / tax invoices / receipt vouchers (D-365 financial document authority) — wording unchanged
 - IMP-036J acceptance; IMP-036K Revenue Recommendations identity
 - Full pre-GTM experience audit performance
 - Open-ended #379 site rewrite
+- Cross-tab synchronization of payable amounts or sealed Checkout state via presentation storage
 
 ## 6. Actors and permissions
 
@@ -142,15 +151,18 @@ models (BOLA-safe; see Architecture Fit).
 
 | Behaviour | Entitlement |
 |---|---|
-| Browse Menu without address/sign-in | Allowed; bar shows missing location honestly |
+| Browse Menu without address/sign-in / without cart lines | Allowed; bar shows missing method/place/time honestly; **no** “no Takeaway outlets” solely because cart empty (GP-03) |
 | Set mode/time **intent** before checkout | Allowed; non-authoritative for seal until Checkout |
 | Confirm Delivery destination | Only after coordinates present **and** last serviceability for those coordinates is SERVICEABLE |
-| Pre-checkout Takeaway outlet eligibility | **In V1** — server list + selectionPolicy; AUTO_SELECT may **propose**; customer must confirm before Checkout bind; never silent bind from browse |
-| Mode-sensitive Cart evaluate | **In V1** — server quote reflects mode (+ proposed/confirmed outlet when Takeaway); advisory until Checkout Review / Snapshot |
-| Confirm Takeaway outlet at Checkout | Via existing checkout-bound pickup-options + fulfilment set (AUTO_SELECT propose + confirm; CUSTOMER_SELECT; UNAVAILABLE) |
+| Pre-checkout Takeaway **Now** eligibility | Server accepting-now list + selectionPolicy; AUTO_SELECT may **propose**; customer must confirm before Checkout bind; never silent bind from browse |
+| Pre-checkout Takeaway **Schedule** capability | Server schedule-capable outlets (accepted profile/hours rules); closed NOW must **not** alone mark Schedule collection unavailable; exact slots remain checkout-eligible only (DR-02); no guaranteed-availability claim |
+| Mode-sensitive Cart evaluate | Server quote reflects mode (+ proposed/confirmed outlet when Takeaway) **without requiring Delivery address** for Takeaway; advisory until Checkout Review / Snapshot |
+| Open Checkout vs browse intent | If active non-terminal Checkout exists for same cart revision with Snapshot, reuse wins; UI shows Checkout’s effective mode; browse intent does not mutate that Checkout |
+| Confirm Takeaway outlet at Checkout | Via existing checkout-bound pickup-options + fulfilment set (AUTO_SELECT propose + confirm; CUSTOMER_SELECT; UNAVAILABLE) — Now path uses accepting-now; Schedule path uses IMP-036I scheduled-pickup gates |
 | Select Schedule window | Server windows only once eligible checkout exists; 30-minute slots; TZ/lead/hours/cutoff preserved; **no** Menu exact-slot list in V1 |
 | Pay | Existing prepare/pay path; Snapshot sealed; scheduled bind revalidation |
 | Change browse intent while PAYMENT_PENDING | Must **not** mutate that checkout; recovery first |
+| Multi-tab | Each tab keeps its own presentation intent; each revalidates server facts; no cross-tab money/seal sync from sessionStorage |
 | Implemented channels | WhatsApp + in-app same primary meaning as web via customer-visible content; email/SMS/push not in V1 |
 | Workforce primary labels | Delivery / Takeaway |
 
@@ -158,19 +170,20 @@ models (BOLA-safe; see Architecture Fit).
 
 | Attribute | Profile |
 |---|---|
-| Correctness | Checkout/payment/serviceability unchanged; presentation must not invent money/availability; pre-checkout quotes are server-authored and advisory |
+| Correctness | Checkout/payment/serviceability unchanged; presentation must not invent money/availability; pre-checkout quotes are server-authored and advisory; Now vs Schedule Takeaway gates match IMP-036H/I |
 | Consistency | Cross-portal primary labels; LANG-1 contextual ops verbs; implemented channels same-meaning |
-| Usability | Mobile-first bar + sheet; desktop integrated chrome; early Takeaway place clarity without fake fees |
+| Usability | Mobile-first bar + sheet; desktop integrated chrome; early Takeaway place clarity without fake fees or fake slots |
 | Accessibility | Keyboard + SR for sheet/dialog; no jargon |
-| Security / abuse | No client-authored payable; no speculative slots; BOLA on eligibility/evaluate; session races guarded |
+| Security / abuse | No client-authored payable; no speculative slots; BOLA on eligibility/evaluate; session races guarded; tab-scoped presentation |
 | Privacy | Customer-safe outlet fields only; no hierarchy/legal dump; analytics PII-minimized |
 | Operability | Ops retain precise task vocabulary |
 
 ## 9. Dependencies
 
-- Accepted IMP-036H (mode / pickup), IMP-036I (scheduled windows), Cart/Checkout foundations
-- Existing delivery-context, LocationSelector, serviceability, pickup eligibility domain,
-  cart evaluate, pickup-options
+- Accepted IMP-036H (mode / ASAP pickup), IMP-036I (scheduled windows incl. PICKUP+SCHEDULED),
+  Cart/Checkout foundations
+- Existing delivery-context, LocationSelector, serviceability, ASAP pickup eligibility domain,
+  scheduled-pickup profile gates, cart evaluate, pickup-options, scheduled windows
 - Parallel tracks **not** owned here: IMP-036J Founder UAT, ₹498 / #391B payment investigations,
   Nginx security verification
 
@@ -182,7 +195,7 @@ models (BOLA-safe; see Architecture Fit).
 | UOE-DR-02 | Exact Menu-level scheduled window preview API | **INCORPORATED — DEFER in V1** (Founder recommendation) |
 | UOE-DR-03 | Formal Product Definition Gate **and** Experience Gate verdicts on this package | Founder / process — NOT_PERFORMED |
 | UOE-DR-04 | Implemented notification-channel consistency | **INCORPORATED — WhatsApp + in-app same-meaning in V1** (Founder recommendation); email/SMS/push and unbounded rewrite remain out of scope |
-| UOE-DR-05 | Pre-checkout Takeaway eligibility + mode-sensitive Cart evaluate | **INCORPORATED — strengthen V1** (Founder recommendation); contracts in `06-…`; no second commercial authority |
+| UOE-DR-05 | Pre-checkout Takeaway eligibility + mode-sensitive Cart evaluate | **INCORPORATED — strengthen V1** (Founder recommendation); contracts in `06-…` refined by GP-01…GP-04; no second commercial authority |
 
 Companion: [`04-story-map-acceptance-scenarios.md`](./04-story-map-acceptance-scenarios.md),
 [`12-template-completeness-addendum.md`](./12-template-completeness-addendum.md).

@@ -1,16 +1,17 @@
-<!-- AUTHORITY: NON_AUTHORITATIVE_DISCOVERY_DRAFT | ID: MI-UOE-CANDIDATE-2 -->
+<!-- AUTHORITY: NON_AUTHORITATIVE_DISCOVERY_DRAFT | ID: MI-UOE-CANDIDATE-3 -->
 
 # Measurement / Instrumentation candidate — Unified Order Experience
 
 ```text
-CANDIDATE_ID = MI-UOE-CANDIDATE-2
-SUPERSEDES = MI-UOE-CANDIDATE-1
+CANDIDATE_ID = MI-UOE-CANDIDATE-3
+SUPERSEDES = MI-UOE-CANDIDATE-2
 STATUS = PROPOSED_FOR_INDEPENDENT_REVIEW
 AUTHORITY = NON_AUTHORITATIVE
 EXPERIENCE_CRITICALITY = X3
 FORMAL_MEASUREMENT_PLAN = NOT_PERFORMED
 PRE_GTM_AUDIT = NOT_PERFORMED
 VARIANT = PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
+GATE_PRECISION_REVISION = YES
 IMPLEMENTATION_AUTHORIZED = NO
 NO_CLAIMED_CONVERSION_LIFT = YES
 ```
@@ -18,8 +19,8 @@ NO_CLAIMED_CONVERSION_LIFT = YES
 ## Business intent to observe
 
 Reduce hesitation and wrong-mode friction between Menu and paid order by making How / Where /
-When visible and truthful earlier — including server-true Takeaway place options and
-mode-sensitive cart quotes — without weakening payment or promise integrity.
+When visible and truthful earlier — including server-true Takeaway place options (Now vs
+Schedule-capable) and mode-sensitive cart quotes — without weakening payment or promise integrity.
 
 ## Primary metric (candidate)
 
@@ -70,7 +71,8 @@ Minimum event meanings (PII-minimized; no raw PAN; no exact street in analytics 
 | `order_context_bar_view` | Bar visible | surface=menu\|cart\|checkout |
 | `order_method_intent_set` | Delivery/Takeaway selected | mode |
 | `order_place_state` | orientation \| missing \| proposed \| confirmed | place_kind |
-| `order_takeaway_eligibility_result` | Server eligibility returned | selection_policy; outlet_count_bucket |
+| `order_takeaway_eligibility_result` | Server eligibility returned | selection_policy; outlet_count_bucket; timing_intent; cart_state |
+| `order_cart_evaluate_reuse` | Open Checkout quote reused | checkout_mode; reused=true |
 | `order_timing_intent_set` | Now/Schedule | timing; confirmation=unconfirmed\|confirmed |
 | `order_schedule_window_selected` | Server window chosen | day_bucket; checkout_bound=true |
 | `order_cart_evaluate_impact` | Mode-sensitive evaluate changes presented quote | reason_class |

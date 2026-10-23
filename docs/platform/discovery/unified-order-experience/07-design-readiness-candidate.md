@@ -1,15 +1,16 @@
-<!-- AUTHORITY: NON_AUTHORITATIVE_DISCOVERY_DRAFT | ID: DR-UOE-CANDIDATE-2 -->
+<!-- AUTHORITY: NON_AUTHORITATIVE_DISCOVERY_DRAFT | ID: DR-UOE-CANDIDATE-3 -->
 
 # Design Readiness candidate — Unified Order Experience
 
 ```text
-CANDIDATE_ID = DR-UOE-CANDIDATE-2
-SUPERSEDES = DR-UOE-CANDIDATE-1
+CANDIDATE_ID = DR-UOE-CANDIDATE-3
+SUPERSEDES = DR-UOE-CANDIDATE-2
 STATUS = DESIGN_READINESS_CANDIDATE_ONLY
 AUTHORITY = NON_AUTHORITATIVE
 FORMAL_DESIGN_READINESS = NOT_PERFORMED
 PREREQUISITES = Product Gate + Experience Gate + Architecture Fit (none formally passed)
 VARIANT = PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
+GATE_PRECISION_REVISION = YES
 IMPLEMENTATION_AUTHORIZED = NO
 ```
 
@@ -25,8 +26,8 @@ evaluation. It is **not** a passed Design Readiness gate.
 | OrderContextBar | Strip: method · place · time | Mobile sticky; desktop header-integrated |
 | OrderContextSheet | Edit How / Where / When | Mobile sheet; desktop popover/dialog |
 | MethodChooser | Delivery \| Takeaway | Maps to domain enums in transport only |
-| PlaceChooser | Delivery location flow **or** Takeaway outlet flow from **server eligibility** | Reuse LocationSelector patterns; eligibility read (not fabricated checkout pickup-options) |
-| TimingChooser | Now \| Schedule → (eligible checkout) day → windows → confirm | Menu: intent + UNCONFIRMED only (DR-02) |
+| PlaceChooser | Delivery location flow **or** Takeaway outlet flow from **server eligibility** (Now vs Schedule-capable) | Reuse LocationSelector patterns; eligibility read (not fabricated checkout pickup-options); empty/no-cart distinct (GP-03) |
+| TimingChooser | Now \| Schedule → (eligible checkout) day → windows → confirm | Menu: intent + UNCONFIRMED only (DR-02); closed-now may offer Schedule intent for Takeaway (GP-01) |
 | OrientationLabel | “Ordering in {market}” | Never styled as Deliver to |
 | ImpactBanner | Fees / offers / availability changed | Server cart/checkout evaluate driven |
 | PendingPaymentGuard | Blocks browse→mutate on PAYMENT_PENDING | Routes to recovery |
@@ -39,9 +40,9 @@ evaluation. It is **not** a passed Design Readiness gate.
 | Method | “Choose how” | Highlight selected intent | Selected + used in evaluate / Checkout |
 | Delivery place | “Add address” | Checking… / Known·not deliverable | “Deliver to …” (coords + SERVICEABLE) |
 | Market orientation | — | “Ordering in Dehradun” | — (not a destination) |
-| Collection place | “Choose store” | Server proposed AUTO_SELECT / list CUSTOMER_SELECT (proposed) | “Collect from …” after Checkout confirm |
+| Collection place | “Choose store” / add items first (empty cart) | Server proposed AUTO_SELECT / list CUSTOMER_SELECT (proposed; timing-aware) | “Collect from …” after Checkout confirm |
 | Time Now | — | Selected Now intent | Eligible ASAP path at Checkout |
-| Time Schedule | “Choose time” | Schedule UNCONFIRMED + reason (no Menu exact slots) | Local window summary after eligible list |
+| Time Schedule | “Choose time” | Schedule UNCONFIRMED + reason (no Menu exact slots); Schedule-capable place when closed NOW | Local window summary after eligible list |
 
 ## Visual / motion constraints
 
@@ -64,10 +65,10 @@ evaluation. It is **not** a passed Design Readiness gate.
 
 1. Shared presentation helpers (UX-A) before chrome rewrite — include WhatsApp + in-app (DR-04)
 2. TimingChooser extractable for checkout and bar (Menu remains intent-only for Schedule)
-3. order-context coordinator dual-reading delivery-context + eligibility/evaluate generation keys
-4. Wire PlaceChooser to pre-checkout eligibility read; Checkout confirm/bind unchanged authority
-5. Wire Cart impact to mode-sensitive evaluate quote
-6. Explicit integration tests for AS-01–29 subset per tranche
+3. order-context coordinator dual-reading delivery-context + eligibility/evaluate generation keys (**tab-scoped**; GP-04)
+4. Wire PlaceChooser to timing-aware pre-checkout eligibility read; Checkout confirm/bind unchanged authority
+5. Wire Cart impact to mode-sensitive evaluate quote (incl. Takeaway without Delivery address; open-Checkout reuse chrome)
+6. Explicit integration tests for AS-01–33 subset per tranche
 
 **Formal Design Readiness:** `NOT_PERFORMED`.
 **Agent disposition after prerequisites:** candidate complete enough for later evaluation —

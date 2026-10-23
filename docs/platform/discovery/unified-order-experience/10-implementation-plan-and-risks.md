@@ -1,16 +1,17 @@
-<!-- AUTHORITY: NON_AUTHORITATIVE_DISCOVERY_DRAFT | ID: IP-UOE-CANDIDATE-2 -->
+<!-- AUTHORITY: NON_AUTHORITATIVE_DISCOVERY_DRAFT | ID: IP-UOE-CANDIDATE-3 -->
 
 # Three-tranche implementation plan and risk matrix
 
 ```text
-CANDIDATE_ID = IP-UOE-CANDIDATE-2
-SUPERSEDES = IP-UOE-CANDIDATE-1
+CANDIDATE_ID = IP-UOE-CANDIDATE-3
+SUPERSEDES = IP-UOE-CANDIDATE-2
 STATUS = PLAN_CANDIDATE_ONLY
 AUTHORITY = NON_AUTHORITATIVE
 IMPLEMENTATION_AUTHORIZED = NO
 FORMAL_IMP_IDENTITY = NOT_ALLOCATED
 PREFERRED_SHAPE = ONE_FUTURE_IMP_WITH_THREE_TRANCHES
 VARIANT = PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
+GATE_PRECISION_REVISION = YES
 ```
 
 ## Delivery boundaries
@@ -19,10 +20,10 @@ VARIANT = PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
 |---|---|
 | UX-A | Presentation maps + copy on customer + workforce primary labels + **WhatsApp + in-app** (DR-04) |
 | UX-B | Compact scheduling UI wired to existing scheduled APIs at eligible checkout |
-| UX-C | Universal bar + order-context coordinator + PAYMENT_PENDING guard |
-| DR-05 server reads/quotes | Pre-checkout Takeaway eligibility read + mode-sensitive cart evaluate (Fit contracts) |
-| Not in V1 | Menu-level exact window preview API (UOE-DR-02 deferred) |
-| Never | Domain/API renames; Snapshot/payment authority changes; second commercial authority; new PAYMENT_PENDING server guards (preserve existing) |
+| UX-C | Universal bar + **tab-scoped** order-context coordinator + PAYMENT_PENDING guard |
+| DR-05 server reads/quotes | Timing-aware pre-checkout Takeaway eligibility + mode-sensitive cart evaluate (Fit contracts; GP-01…04) |
+| Not in V1 | Menu-level exact window preview API (UOE-DR-02 deferred); cross-tab presentation sync |
+| Never | Domain/API renames; Snapshot/payment authority changes; second commercial authority; new PAYMENT_PENDING server guards (preserve existing); Schedule denied solely because closed NOW |
 
 ## Tranche plan (candidate)
 
@@ -40,18 +41,19 @@ VARIANT = PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
 - TimingChooser sheet/popover; Now meaning microcopy
 - Replace primary long grid in checkout; reusable from future bar
 - Preserve windows/TZ/cutoff/bind revalidation; Menu remains Schedule intent-only
-- Server: smallest pre-checkout eligibility read + cart evaluate mode/outlet input (Fit contracts)
-- Open-Checkout reuse precedence for evaluate (AS-29) must be preserved / explicit
-- **Exit:** AS-08–11, AS-24–27, AS-29 (API+client foundation); scheduled regression green
+- Server: timing-aware pre-checkout eligibility read + cart evaluate mode/outlet input (Fit contracts)
+- Open-Checkout reuse precedence for evaluate (AS-29/AS-31/AS-32) must be preserved / explicit — including Takeaway without Delivery location
+- Empty/no-cart distinct from UNAVAILABLE (AS-30)
+- **Exit:** AS-08–11, AS-24–27, AS-29–33 (API+client foundation); scheduled regression green
 
 ### Tranche 3 — UX-C universal bar + context owner
 
 - OrderContextBar on Menu / Cart / Checkout
-- `boba.order-context.v1` coordinator dual-reading delivery-context
+- `boba.order-context.v1` coordinator dual-reading delivery-context (**tab-scoped**; GP-04)
 - Mode/place/time editing; impact banner from mode-sensitive evaluate; pending-payment isolation
-- UNCONFIRMED Schedule intent (no speculative Menu slots)
+- UNCONFIRMED Schedule intent (no speculative Menu slots); Schedule-capable when closed NOW
 - Wire PlaceChooser to eligibility propose/select; Checkout confirm/bind unchanged
-- **Exit:** AS-01–07, AS-12–18, AS-20–23, AS-26, AS-29; concurrency + recovery proofs
+- **Exit:** AS-01–07, AS-12–18, AS-20–23, AS-26, AS-29–33; concurrency + recovery proofs
 
 Sequence: T1 → T2 → T3. Bar ships with Schedule intent + checkout-time exact slots;
 Takeaway place + cart quote may use T2 server foundations before full bar polish in T3.
@@ -84,11 +86,15 @@ No conversion lift promised.
 | R11 | Second commercial authority creep | CR3 | Fit non-authority table; AS-24/25 negatives |
 | R12 | Channel rewrite unbounded | Program | DR-04 = WhatsApp + in-app only; email/SMS/push out of scope while noop |
 | R13 | Meta template re-approval latency for DR-04 wording | Program | Verify body-vs-variable before T1 exit; in-app updates independent |
+| R14 | Schedule Takeaway falsely denied when closed NOW | CR2 | GP-01; Now vs Schedule-capable contracts; AS-08 |
+| R15 | Empty-cart “no outlets” | X2 | GP-03; AS-30 |
+| R16 | Cross-tab money/seal sync from sessionStorage | CR3 | GP-04; tab-scoped only; AS-22 |
+| R17 | Browse evaluate fights open Checkout / missing effective mode | CR3 | GP-02; AS-29/AS-31/AS-32 |
 | D1 | IMP-036H/I accepted contracts | Dep | Reuse; do not reopen |
 | D2 | delivery-context + LocationSelector | Dep | Extend, don’t fork |
 | D3 | listCheckoutScheduledWindows(checkoutId) | Dep | Checkout-bound exact times |
 | D4 | Future ROADMAP ID vs IMP-036J/K | Dep | UOE-DR-01 |
-| D5 | Pickup eligibility domain + evaluateCart | Dep | Reuse for DR-05 reads/quotes |
+| D5 | ASAP pickup eligibility + scheduled-pickup profile + evaluateCart | Dep | Reuse for DR-05 reads/quotes |
 
 ## Authorization wall
 

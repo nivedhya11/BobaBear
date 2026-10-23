@@ -1,15 +1,16 @@
-<!-- AUTHORITY: NON_AUTHORITATIVE_DISCOVERY_DRAFT | ID: QT-UOE-CANDIDATE-2 -->
+<!-- AUTHORITY: NON_AUTHORITATIVE_DISCOVERY_DRAFT | ID: QT-UOE-CANDIDATE-3 -->
 
 # Quality / Test Plan candidate — Unified Order Experience
 
 ```text
-CANDIDATE_ID = QT-UOE-CANDIDATE-2
-SUPERSEDES = QT-UOE-CANDIDATE-1
+CANDIDATE_ID = QT-UOE-CANDIDATE-3
+SUPERSEDES = QT-UOE-CANDIDATE-2
 STATUS = PROPOSED_FOR_INDEPENDENT_REVIEW
 AUTHORITY = NON_AUTHORITATIVE
 TESTING_POLICY = TEST-1
 FORMAL_QUALITY_PLAN = NOT_PERFORMED
 VARIANT = PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
+GATE_PRECISION_REVISION = YES
 IMPLEMENTATION_AUTHORIZED = NO
 ```
 
@@ -24,9 +25,9 @@ architecture/invariants before UI cosmetics.
 |---|---|---|
 | Unit | Presentation maps; order-context reducer; timing bucketing helpers | Labels; UNCONFIRMED; legacy dual-read |
 | Component | Bar, sheet, TimingChooser, MethodChooser, PlaceChooser | AS-12, AS-13, empty/selected/disabled |
-| Integration | Client ↔ cart evaluate (mode/outlet) ↔ eligibility read ↔ checkout/pickup/scheduled APIs | AS-02–11, AS-14–16, AS-24–27, AS-29 |
-| Concurrency | Stale async generation; revision conflicts; eligibility races | AS-16, AS-27 |
-| Recovery | PAYMENT_PENDING; cart_changed_unresolved; window expiry; open-Checkout reuse | AS-11, AS-17, AS-18, AS-29 |
+| Integration | Client ↔ cart evaluate (mode/outlet) ↔ eligibility read ↔ checkout/pickup/scheduled APIs | AS-02–11, AS-14–16, AS-24–33 |
+| Concurrency | Stale async generation; revision conflicts; eligibility races; tab-scoped multi-tab | AS-16, AS-22, AS-27 |
+| Recovery | PAYMENT_PENDING; cart_changed_unresolved; window expiry; open-Checkout reuse; empty-cart honesty | AS-11, AS-17, AS-18, AS-29–33 |
 | Content QA | Customer + workforce primary labels; WhatsApp + in-app; no fulfil jargon | AS-19, AS-28, UX-A |
 | A11y / responsive QA | Keyboard, SR, mobile strip | AS-12, AS-13 |
 | Regression | Snapshot money; payment prepare; serviceability; scheduled bind; pickup-options bind | Must remain green |
@@ -42,9 +43,13 @@ architecture/invariants before UI cosmetics.
 - No client-authored payable amount
 - AUTO_SELECT does not bind without confirm (AS-05 / AS-24)
 - Schedule cannot invent slots when API empty
+- Schedule Takeaway is not denied solely because outlet is closed NOW (AS-08 / GP-01)
+- Empty / no cart must not present brand-level “no outlets available” (AS-30)
 - Proposed outlet alone does not unlock scheduled windows (AS-26)
 - Domain enums unchanged in network payloads
 - Pre-checkout eligibility must not require fabricating a checkoutId
+- Open-Checkout reuse conveys effective Checkout mode; Takeaway reuse without Delivery location (AS-29/AS-31)
+- Presentation storage must not sync payable/seal across tabs (AS-22 / GP-04)
 
 ## Non-goals for this plan
 
@@ -55,7 +60,7 @@ architecture/invariants before UI cosmetics.
 
 ## Exit criteria (for a future authorized implementation)
 
-- AS-01–29 mapped to automated and/or scripted Founder UAT evidence
+- AS-01–33 mapped to automated and/or scripted Founder UAT evidence
 - No invariant regressions listed in Architecture Fit
 - Content QA sign-off on primary surfaces + WhatsApp / in-app
 - X3 a11y/responsive QA recorded
