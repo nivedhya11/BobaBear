@@ -85,5 +85,5 @@ DELIVERY_PROOF_POLICY / Gaps 1–3:
   Gap 3 — Potential URL/body identity mismatch; end-to-end authz bypass NOT proven.
   UI hotfix (WXE-P0-CORRECTIVE-1 / PR #427) reduces fabricated prefills and one-click terminals
   but does NOT close Gaps 1–3 — ESCALATE_FOUNDER (UPD-08).
-Fit Result: CANDIDATE_ONLY (prerequisites Product/Experience Gates NOT_PERFORMED)
+Fit Result: CANDIDATE_ONLY (Product/Experience Gates PASS recorded; Architecture Fit NOT_GRANTED / not locked)
 ```
