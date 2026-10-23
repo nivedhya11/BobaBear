@@ -16,7 +16,7 @@ TARGET_WCAG = 2.2 AA (where applicable)
 | 1440×900 | Primary laptop |
 | 1920×1080 | Primary desktop |
 | Larger operational displays | Supported where relevant |
-| Narrow / mobile | Functional + accessible fallback only; no authoring feature parity |
+| Narrow / mobile | Minimum supported task set in XD §11 only; no authoring feature parity |
 
 ## Core layout
 
@@ -50,7 +50,7 @@ Reuse: `TopBar`, `SideNavigation`, `PageHeader`, `Breadcrumbs`, tables, dialogs,
 | Attention dashboard | Today / Admin overview | Task queues, not vanity metrics |
 | Filterable table | Orders, memberships, audit, resources | Dense rows; stable sort; keyboard focus |
 | List/detail | Orders; optional Delivery queue | Detail shows lifecycle actions **above** secondary panels |
-| Workspace tabs | Commercial sections | Prefer deep-linkable sections over time |
+| Workspace tabs | Commercial sections | Labels/clarity in V1; deep-linkable sections = FOLLOW_UP (UPD-07) |
 | Settings form | Hours, area, takeaway, scheduling | Inline validation; revision-aware save |
 | Diagnostic | Effective permissions; sellability; verification | Read-only framing |
 
@@ -61,15 +61,17 @@ Reuse: `TopBar`, `SideNavigation`, `PageHeader`, `Breadcrumbs`, tables, dialogs,
 | Search & filters | Visible; Apply clear; preserve in URL when practical |
 | Tables | Numeric/right-align money; human times; urgency cues (Due soon / Overdue) |
 | Forms | Labelled inputs; inline validation; disable double-submit |
-| Loading | Skeletons/spinners with polite status |
-| Empty | Explain next action; no fake data |
-| Error | Recoverable message + retry; no raw codes as sole text |
-| Consequence review | Required for publish/effect, lifecycle, refund, grant/revoke, suspend, retire |
-| Unsaved changes | Protect navigate-away on dirty forms |
-| Keyboard | Tab order matches visual; dialogs trap focus; Escape closes |
-| Screen readers | `aria-current`, labelled regions, live alerts for mutations |
+| Loading | Skeletons/spinners with polite status; do not hide primary lifecycle actions at 1366×768 |
+| Empty | Explain next authorized action; no fake / UAT evidence data |
+| Error / recovery | **Journey-specific** contracts in XD §10 + journey doc (GJ-W6/W7/W9/W11–W14) — not a blanket “all pages handle errors” claim; no raw codes as sole text |
+| Stale identity | Order/Delivery/membership identity change resets dialogs; drop stale async |
+| Consequence review | Required for publish/effect, lifecycle, refund, grant/revoke, suspend, retire; Cancel restores focus to invoker; Confirm announces result |
+| Unsaved changes | Protect navigate-away on dirty forms (hours/area/takeaway/scheduling/commercial) |
+| Keyboard | Tab order matches visual; dialogs trap focus; Escape closes; collapsed-nav focus not trapped |
+| Screen readers | `aria-current`, labelled regions, live alerts for mutations; one H1; single main |
 | Freshness | Explicit refresh or “Updated …” where lists can stale |
-| History | Back/forward safe; direct links land on same task |
+| History | Back/forward safe; direct links land on same task; commercial section deep-links FOLLOW_UP |
+| Multi-outlet | Preserve outlet context across breadcrumbs/sub-nav |
 
 ## Order detail action ordering (corrective UX)
 

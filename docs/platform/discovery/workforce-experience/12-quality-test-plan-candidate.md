@@ -15,7 +15,7 @@ POLICY = TEST-1
 | Unit / component source tests | Destination entry unions; delivery default emptiness; section order invariants |
 | Integration | Portal session → resolveAuthorizedDestinations; admin shell entry |
 | Component DOM tests | Dual H1 absence; lifecycle action placement; consequence dialogs |
-| Playwright (workforce/admin) | GJ-W1–W8 smoke on desktop viewport; commercial-only fixture |
+| Playwright (workforce/admin) | GJ-W1–W8 smoke on desktop viewport; commercial-only fixture; **add** targeted X3 proofs for GJ-W6/W7/W9/W11–W14 (AS-16…22) when those stories are implementation-authorized — not claimed covered today |
 | Accessibility checks | axe or equivalent; explicitly cover WCAG 2.2 **2.4.11** (focus not obscured), **2.5.8** (target size), **2.5.7** (dragging alternatives for menu reorder) on shells + order detail + commercial |
 | Regression | Existing operations/admin/commercial suites must stay green |
 
@@ -23,12 +23,14 @@ POLICY = TEST-1
 
 | Finding | Proof |
 |---|---|
-| P0-A | Defaults empty; submit blocked without refs; attestation required; no `track.example.com/uat` in initial state |
-| P1-ENTRY | Capability fixtures for commercial-only / store-without-order.read landings (latent for built-ins) |
-| P1-A | Testid/section order: lifecycle actions before delivery panel |
-| P1-B | Review tab copy does not claim in-tab publish |
+| P0-A (PR #427) | Defaults empty; submit blocked without refs; attestation required; no `track.example.com/uat` in initial state; **does not** prove Gaps 1–3 closed |
+| P1-ENTRY / P1-COMM | Capability fixtures for commercial-only / store-without-order.read / operable Commercial landings — required if UPD-02 **A**; if **B**, assert current entry baseline |
+| P1-A | Testid/section order: lifecycle actions before delivery panel; permission-gated buttons |
+| P1-B | Dual H1 / nested main absent on Orders |
 | P1-C | Retire section/entry opens consequence review |
+| P1-D / P2-D | Review tab copy does not claim in-tab publish |
 | P2-* | Title uniqueness; Scheduling nav; narrow timing accessible name |
+| Server Gaps 1–3 | Out of WXE UI proof scope; separate Founder/security proofs if UPD-08 authorizes |
 
 ## Negative / boundary
 

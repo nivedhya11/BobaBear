@@ -7,10 +7,25 @@ REGISTER_ID = WXE-FINDINGS-CANDIDATE-1
 P0_PLAN_ID = WXE-P0-CORRECTIVE-1
 APPLICATION_FIXES_IN_THIS_TASK = NO
 INDEPENDENT_REVIEW = INCORPORATED
+REFINEMENT = WXE-PD-XD-REFINEMENT-R2
 ```
 
 Severity reassessment used source evidence at `BASE_MAIN_SHA` plus independent challenge.
 Consequence marked **PROVEN** (code path) or **POSSIBLE** / **LATENT**.
+
+### Slice legend (reconciled with PD §5)
+
+| Finding | Slice |
+|---|---|
+| P0-A / `WXE-P0-CORRECTIVE-1` | **SEPARATE_CORRECTIVE** (PR #427) |
+| Server Gaps 1–3 | **SEPARATE_CORRECTIVE** (not closed by UI) |
+| P1-ENTRY / P1-COMM | **V1 or FOLLOW_UP** per Founder UPD-02 A/B |
+| Kitchen/Delivery Admin entry | **V1 or FOLLOW_UP** per Founder UPD-03 A/B |
+| P1-A / P1-B / P1-C | **V1_ACCEPTANCE_SLICE** |
+| P2-C Scheduling nav | **V1_ACCEPTANCE_SLICE** (UPD-06 ratify) |
+| P2-G store immediate-effect confirms | **FOLLOW_UP** |
+| P2-E commercial deep-link semantics | **FOLLOW_UP** (UPD-07) |
+| POS / new READY / unimplemented return-cost UI | **OUT_OF_SCOPE** |
 
 ---
 
@@ -30,7 +45,25 @@ Consequence marked **PROVEN** (code path) or **POSSIBLE** / **LATENT**.
 | Backend/permission | Preserve delivery commands and permissions; no new lifecycle states |
 | Regression | Full delivery command matrix; Takeaway orders absent or non-actionable in Delivery workspace; order-detail still hides panel for Takeaway |
 | Implementation boundary | **R2** UI/workspace hygiene + tests; server proof policy = Founder/architecture if pursued |
-| Priority | **Ship before comprehensive UX redesign** (`WXE-P0-CORRECTIVE-1`) |
+| Priority | **SEPARATE_CORRECTIVE** before comprehensive UX redesign (`WXE-P0-CORRECTIVE-1`) |
+| Publication status (verified checkpoint) | Founder-authorized; **published on PR #427**; independently reviewed; **not merged, not deployed, not formally accepted**. Do **not** say “already shipped.” |
+
+---
+
+## Server conformance gaps (PR #427 documentation — UI does not close)
+
+Incorporated from PR #427 `WXE-P0-CORRECTIVE-1-server-conformance-gaps.md` as read-only supporting
+evidence. No server mutation or IMP-032 acceptance rewrite is authorized by WXE documentation.
+
+| Gap | Verified server behaviour | Potential consequence | Client mitigation (PR #427) | Remains unproven / open | Required decision |
+|---|---|---|---|---|---|
+| **Gap 1** — Arbitrary non-empty proof reference | `parseRecordProofAndDeliverInput` accepts non-empty `proofReference` within length bounds | Contract tension with IMP-032 wording that confirmation must not treat arbitrary free text as sufficient proof | Empty defaults; required field; consequence review; operator-entered disclaimer | Whether production clients have abused free-text proof; whether server policy must change | Founder / architecture (**WXE-UPD-08**); possible CR3 |
+| **Gap 2** — Cancel path auto inactivity attestation | For some non-`REQUESTED` cancels, `workforceCancelDelivery` injects `inactiveBookingConfirmed: true` server-side | Operator attestation bypass on cancel relative to resolve-cancellation’s explicit flag requirement | Cancel still requires codes/reasons + consequence review; resolve UI no longer hard-codes attestation | Full production exploitability not claimed; behavioural gap is documented | Separate server corrective; not T0 UI ownership |
+| **Gap 3** — URL `orderId` vs body `deliveryId` | Several workforce delivery commands use body `deliveryId` without explicit HTTP façade path↔body Order ownership bind (`arrange`/GET differ) | Potential identity-integrity / audit-coherence mismatch if a crafted client posts mismatched identities; **not claimed as an exploited vulnerability** without proof | Panel binds to selected Order + loaded Delivery; resets on identity change; drops stale async/confirm payloads | End-to-end authorization bypass **not proven**; domain `authorizeForDelivery` may still scope by delivery row | Founder / security / architecture before server bind change |
+
+**Explicit non-claims:** UI corrective does not provide verified external-provider evidence; does not
+harden server proof acceptance; does not remove cancel auto-attestation; does not add server-side
+URL/body binding. Gaps are **not** resolved by the UI corrective.
 
 ---
 
@@ -45,8 +78,8 @@ Consequence marked **PROVEN** (code path) or **POSSIBLE** / **LATENT**.
 | Kitchen/Delivery Admin entry | `kitchen_operator` / `delivery_coordinator` enter Administration via `outlet.read`; kitchen also sees Commercial nav via `assortment.read`. Narrowing conflicts with `role-destination-safety.test.ts` → **WXE-UPD-03** |
 | `delivery.read` in Operations union | Not sufficient alone: Delivery workspace uses orders list (`order.read`). Document explicitly |
 | Required behaviour | Entry lists future-proofed; landings resolve to first usable surface; do not list destinations the principal cannot operate |
-| Minimal correction | Prefer **P1** (not T0 P0): add commercial keys to Admin entry; for Operations, if expanding, change default href resolution + Today gate messaging; add capability-fixture tests (not “custom role” claims) |
-| Priority | **Not** in `WXE-P0-CORRECTIVE-1` unless Founder elevates; track with IA tranche |
+| Minimal correction | Prefer **IA/routing tranche (T1 planning)** — never T0 P0: add commercial keys to Admin entry under UPD-02 **A**; for Operations, if expanding, change default href resolution + Today gate messaging; add capability-fixture tests (not “custom role” claims). Under UPD-02 **B**, preserve current entry and defer |
+| Priority | **Not** in `WXE-P0-CORRECTIVE-1` / T0 risk ownership; Founder UPD-02 A/B; track with T1 IA proposal only |
 
 ---
 
@@ -127,9 +160,12 @@ Consequence marked **PROVEN** (code path) or **POSSIBLE** / **LATENT**.
 
 ```text
 IMPLEMENTATION_AUTHORIZED_BY_THIS_PACKAGE = NO
-RECOMMENDED_NEXT = Founder authorize short R2 hotfix under Controlled Exception (below)
+FOUNDER_AUTHORIZATION_FOR_PR_427 = YES (implementation + publication; recorded on PR #427)
+PR_427_STATUS = OPEN_UNMERGED (not deployed; not formally accepted)
+MERGE_DEPLOY_AUTHORIZED = NO
 MAY_PRECEDE_FULL_WXE_REDESIGN = YES
 FORMAL_IMP_IDENTITY = NOT_REQUIRED_FOR_HOTFIX (Founder may still assign)
+SERVER_GAPS_CLOSED_BY_UI = NO
 ```
 
 ## Controlled exception record (PD-2 candidate)
@@ -140,10 +176,11 @@ FORMAL_IMP_IDENTITY = NOT_REQUIRED_FOR_HOTFIX (Founder may still assign)
 | Reason | Fabricated delivery evidence and one-click terminal commands in production UI |
 | Skipped gates | Full Product/Experience Gate for WXE redesign; IMP allocation |
 | Human authority required | Founder |
+| Authorization status | **Prior Founder authorization** covers PR #427 implementation/publication; **merge and deploy remain unapproved** |
 | Minimum proof | Unit/component tests for empty defaults, attestation, terminal confirm, Takeaway filter; exact-head CI |
 | Rollback | Revert hotfix PR |
 | Reconciliation | Note in acceptance/evidence when Founder UAT next touches delivery; do not rewrite IMP-032 acceptance silently |
-| Out of exception | Server-side IMP-032 proof-policy change (needs explicit decision) |
+| Out of exception | Server Gaps 1–3 / IMP-032 proof-policy, cancel auto-attestation, URL/body bind (needs explicit decision — UPD-08) |
 
 ### MAY MODIFY (when authorized)
 
@@ -169,4 +206,5 @@ FORMAL_IMP_IDENTITY = NOT_REQUIRED_FOR_HOTFIX (Founder may still assign)
 |---|---|
 | Operators relied on UAT defaults | Release note; force conscious entry |
 | Empty-field gating blocks legit ops | Clear required-field messaging |
-| IMP-032 deeper conflict | Escalate; do not claim UI hotfix closes §13.2 alone |
+| IMP-032 / Gaps 1–3 deeper conflict | Escalate UPD-08; do not claim UI hotfix closes server gaps |
+| Administration entry / kitchen routing | **Out of T0** — owned by UPD-02/03 + T1 IA proposal only |

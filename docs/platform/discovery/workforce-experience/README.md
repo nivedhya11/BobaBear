@@ -59,7 +59,8 @@ Founder evaluation. It is **not** canonical PASS.
 | Experience-gap programme assessment | [GitHub #380](https://github.com/nivedhya11/BobaBear/issues/380) |
 | Coupon-setup operator journey (related commercial UX) | [GitHub #376](https://github.com/nivedhya11/BobaBear/issues/376) |
 | Promotion-create intermittent 500 (related commercial reliability) | [GitHub #381](https://github.com/nivedhya11/BobaBear/issues/381) |
-| Customer Unified Order Experience candidate | [PR #424](https://github.com/nivedhya11/BobaBear/pull/424) (`UOE-CANDIDATE-*`; separate package) |
+| Customer Unified Order Experience candidate | [PR #424](https://github.com/nivedhya11/BobaBear/pull/424) (`UOE-CANDIDATE-*`; separate package; UX-A shared labels) |
+| P0 delivery safety corrective (separate) | [PR #427](https://github.com/nivedhya11/BobaBear/pull/427) (`WXE-P0-CORRECTIVE-1`; authorized/published; **not merged/deployed/accepted**; server Gaps 1–3 remain open) |
 | Accepted workforce foundations | IMP-030 · IMP-032 · IMP-035 · IMP-036A · IMP-036D · IMP-036E · IMP-036F · IMP-036G · IMP-036H · IMP-036I |
 | Experience Debt Register | [`../../EXPERIENCE-DEBT-REGISTER.md`](../../EXPERIENCE-DEBT-REGISTER.md) (`auditStatus=NOT_PERFORMED`) |
 | Process authorities | PD-2 · EXP-1 · LANG-1 · TEST-1 |
@@ -130,9 +131,13 @@ Founder evaluation. It is **not** canonical PASS.
 
 ## Workspace publication note
 
-Primary development checkout `/home/ajoshi/repos/boba-bear-platform` was occupied by UOE PR #424
-dirty work at publication time. This package was authored and published from an **already-existing**
-clean alternate checkout (`boba-bear-pr413-main-update`) of remote `nivedhya11/BobaBear` at
-`BASE_MAIN_SHA`, on branch `docs/wxe-pd2-candidate`, without creating a new clone/worktree and
-without modifying protected parallel work. Canonical path preference remains
-`/home/ajoshi/repos/boba-bear-platform` when unoccupied.
+Primary development checkout `/home/ajoshi/repos/boba-bear-platform` remains occupied by UOE
+PR #424 work. This package (including `WXE-PD-XD-REFINEMENT-R2`) is authored and published from
+the **already-existing** clean alternate checkout (`boba-bear-pr413-main-update`) of remote
+`nivedhya11/BobaBear` on branch `docs/wxe-pd2-candidate` / PR #426, without creating a new
+clone/worktree and without modifying protected parallel work (UOE #424, corrective #427).
+Canonical path preference remains `/home/ajoshi/repos/boba-bear-platform` when unoccupied.
+
+Historical gate-readiness reviews at HEAD `3c2e0643…` returned `RECOMMENDED_STOP` /
+`REQUIRES_BOUNDED_CANDIDATE_REFINEMENT` and are preserved as evidence in
+[`15-gate-disposition-founder-decision-record.md`](./15-gate-disposition-founder-decision-record.md).

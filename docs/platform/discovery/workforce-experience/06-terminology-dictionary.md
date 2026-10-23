@@ -15,7 +15,7 @@ FOUNDER_PRESENTATION = FUTURE_DIRECTION (not claimed as shipped)
 | **LANG-1** | Intentional presentation; no raw backend language to customers; operators may be more precise; domain names Cart/Checkout Snapshot/Payment/Order/Refund not renamed as domain concepts |
 | **Founder direction** | Primary human labels **Delivery / Takeaway** and **Now / Schedule** |
 | **UOE package (PR #424) UX-A** | **Owns the shared customer + workforce order-type / timing label map** for Delivery/Takeaway and Now/Schedule verbs |
-| **This WXE package** | **Consumes** that shared map for Workforce chrome and ops surfaces; does not fork competing workforce verbs (e.g. invent “Mark collected” outside UOE’s allowed verb list) |
+| **This WXE package** | **Consumes** that shared map for Workforce chrome and ops surfaces; does not fork competing workforce verbs. Takeaway task verbs follow UOE UX-A only (`Prepare for collection`; `Ready for collection`; `Hand over order`). Do **not** independently standardize “Mark collected”. |
 | **Shipped UI today** | Mixed: “Pickup”, “ASAP”, “Scheduled”, “Pickup Profile”, “Serviceability”, “Operating Status”, Admin nav “Workforce/Access/Audit/System/Organization”, Store “Team Members/Team Access”, etc. |
 
 Do **not** present Founder direction as if already implemented in accepted history.
@@ -32,7 +32,7 @@ Do **not** present Founder direction as if already implemented in accepted histo
 | Concept | Preferred primary label | Allowed contextual verbs / cues | Avoid as peer primary |
 |---|---|---|---|
 | Delivery mode | **Delivery** | — | — |
-| Pickup mode | **Takeaway** | Prepare for collection; Hand over order; Collection time | “Pickup” as peer to Delivery (except where verification copy needs “picked up”) |
+| Pickup mode | **Takeaway** | UOE UX-A verbs only: Prepare for collection; Ready for collection; Hand over order; Collection time | “Pickup” as peer to Delivery (except where verification copy needs “picked up”); do not add “Mark collected” unless UOE UX-A later approves it |
 | Immediate timing | **Now** | — | Guaranteeing arrival time |
 | Timed timing | **Schedule** / **Scheduled** | Due soon; Overdue | — |
 
@@ -66,7 +66,7 @@ Do **not** present Founder direction as if already implemented in accepted histo
 | Situation | Preferred | Not preferred |
 |---|---|---|
 | List badge for PICKUP | Takeaway | PICKUP |
-| Fulfil button for takeaway | Hand over order / Mark collected | Generic Fulfil only |
+| Fulfil button for takeaway | Hand over order (per UOE UX-A) | Generic Fulfil only; “Mark collected” unless/until UOE UX-A approves |
 | ASAP row | Now | ASAP (unless operator advanced mode) |
 | Serviceability page title | Delivery Area | Serviceability (keep as secondary/help) |
 | Inspection tab | Review (draft vs live) | Review & publish/effect (when no publish action) |

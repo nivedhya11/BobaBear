@@ -66,17 +66,24 @@ aggregates, or duplicate commercial authorities.
 
 | Item | Notes |
 |---|---|
-| Server-side strengthening of delivery proof beyond UI | Optional; may need product/architecture decision if changing acceptance rules |
-| Commercial section URL deep-links | Presentation enhancement; avoid inventing domain routes unnecessarily |
-| Narrowing Admin entry for kitchen/delivery | Product decision WXE-UPD-03 |
+| Server Gap 1 — arbitrary non-empty proof reference | UPD-08; UI does not close |
+| Server Gap 2 — cancel-path automatic inactivity attestation | UPD-08; separate server corrective |
+| Server Gap 3 — URL `orderId` vs body `deliveryId` binding | Integrity concern; not claimed exploited; UPD-08 |
+| Commercial section URL deep-links | FOLLOW_UP / UPD-07; avoid inventing domain routes |
+| Narrowing Admin entry for kitchen/delivery | Product decision WXE-UPD-03 A/B (not T0) |
+| Administration entry union / Ops landing | Product decision WXE-UPD-02 A/B (T1 proposal) |
 
 ## Architecture Conflicts
 
 ```text
 Architecture Conflicts vs ARCH-R23 for presentation redesign: NONE identified
-DELIVERY_PROOF_POLICY: Possible STATE_CODE_CONFLICT vs IMP-032 capability wording
-  (server accepts non-empty free-text proof; capability text rejects arbitrary free text
-   as sufficient proof). UI hotfix (WXE-P0-CORRECTIVE-1) reduces fabricated prefills but
-   does not by itself close the accepted-contract gap — ESCALATE_FOUNDER for server harden.
+DELIVERY_PROOF_POLICY / Gaps 1–3:
+  Gap 1 — Possible STATE_CODE_CONFLICT vs IMP-032 capability wording
+    (server accepts non-empty free-text proof; capability text rejects arbitrary free text
+     as sufficient proof).
+  Gap 2 — Cancel auto-attestation behavioural gap vs explicit attestation on resolve paths.
+  Gap 3 — Potential URL/body identity mismatch; end-to-end authz bypass NOT proven.
+  UI hotfix (WXE-P0-CORRECTIVE-1 / PR #427) reduces fabricated prefills and one-click terminals
+  but does NOT close Gaps 1–3 — ESCALATE_FOUNDER (UPD-08).
 Fit Result: CANDIDATE_ONLY (prerequisites Product/Experience Gates NOT_PERFORMED)
 ```
