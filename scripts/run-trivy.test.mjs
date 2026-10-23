@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url";
 import {
   TRIVY_VERSION,
   TRIVY_SHA256,
+  TRIVY_SPAWN_MAX_BUFFER,
   PRODUCTION_IMAGE_TARGETS,
   REGISTER_REL,
   buildArgsForTarget,
@@ -20,11 +21,13 @@ import {
   imageExists,
   ensureImageBuilt,
   isActiveExpiry,
+  utcTodayIso,
   parseTrivyExceptionRegister,
   parseTrivyIgnoreFile,
   enforceTrivyExceptionPolicy,
   materializeIgnorefileForImage,
   interpretTrivyJson,
+  scanImage,
   loadTrivyExceptionPolicy,
 } from "./run-trivy.mjs";
 
@@ -88,7 +91,11 @@ test("buildArgsForTarget includes --target when set", () => {
 });
 
 test("trivyImageArgs enables image-config misconfig + vuln scanners fail-closed", () => {
-  const args = trivyImageArgs("boba-bear-app:trivy", "/repo/.trivyignore");
+  const args = trivyImageArgs(
+    "boba-bear-app:trivy",
+    "/repo/.trivyignore",
+    "/tmp/trivy-report.json",
+  );
   assert.equal(args[0], "image");
   assert.equal(args[1], "boba-bear-app:trivy");
   assert.ok(args.includes("CRITICAL,HIGH"));
@@ -100,7 +107,28 @@ test("trivyImageArgs enables image-config misconfig + vuln scanners fail-closed"
   assert.ok(args.includes("--ignore-unfixed"));
   assert.ok(args.includes("json"));
   assert.ok(args.includes("/repo/.trivyignore"));
+  assert.ok(args.includes("--output"));
+  assert.ok(args.includes("/tmp/trivy-report.json"));
   assert.ok(!args.includes("fs"));
+});
+
+test("utcTodayIso ignores BOBA_TRIVY_TODAY env so production CI cannot override UTC", () => {
+  const prev = process.env.BOBA_TRIVY_TODAY;
+  process.env.BOBA_TRIVY_TODAY = "2099-01-01";
+  try {
+    assert.equal(utcTodayIso(new Date("2026-10-23T12:00:00.000Z")), "2026-10-23");
+  } finally {
+    if (prev === undefined) delete process.env.BOBA_TRIVY_TODAY;
+    else process.env.BOBA_TRIVY_TODAY = prev;
+  }
+});
+
+test("utcTodayIso accepts explicit injectedTodayIso only in isolated test paths", () => {
+  assert.equal(utcTodayIso(new Date("2026-10-23T12:00:00.000Z"), "2026-10-24"), "2026-10-24");
+  assert.throws(
+    () => utcTodayIso(new Date("2026-10-23T12:00:00.000Z"), "not-a-date"),
+    /INVALID_BOBA_TRIVY_TODAY/,
+  );
 });
 
 test("resolveContainerCli prefers working podman then docker; fails closed", () => {
@@ -302,10 +330,62 @@ test("interpretTrivyJson fails closed on empty or malformed scanner output", () 
   assert.ok(
     interpretTrivyJson("[]", "img").errors.some((e) => e.includes("TRIVY_JSON_UNSUPPORTED_SHAPE")),
   );
+  assert.ok(
+    interpretTrivyJson("{}", "img").errors.some((e) => e.includes("TRIVY_JSON_EMPTY_OBJECT")),
+  );
+  assert.ok(
+    interpretTrivyJson(JSON.stringify({ Results: [] }), "img").errors.some((e) =>
+      e.includes("TRIVY_SCHEMA_MISSING"),
+    ),
+  );
+});
+
+test("interpretTrivyJson rejects schema/identity mismatches and accepts valid clean reports", () => {
+  const clean = {
+    SchemaVersion: 2,
+    ArtifactName: "boba-bear-app:trivy",
+    ArtifactType: "container_image",
+  };
+  const cleanOut = interpretTrivyJson(JSON.stringify(clean), "boba-bear-app:trivy");
+  assert.deepEqual(cleanOut.errors, []);
+  assert.equal(cleanOut.findings.length, 0);
+
+  const cleanWithEmptyResults = {
+    ...clean,
+    Results: [{ Target: "boba-bear-app:trivy (alpine 3.20)", Class: "os-pkgs", Type: "alpine" }],
+  };
+  const emptyResultsOut = interpretTrivyJson(
+    JSON.stringify(cleanWithEmptyResults),
+    "boba-bear-app:trivy",
+  );
+  assert.deepEqual(emptyResultsOut.errors, []);
+  assert.equal(emptyResultsOut.findings.length, 0);
+
+  assert.ok(
+    interpretTrivyJson(
+      JSON.stringify({ ...clean, SchemaVersion: 1 }),
+      "boba-bear-app:trivy",
+    ).errors.some((e) => e.includes("TRIVY_SCHEMA_UNSUPPORTED")),
+  );
+  assert.ok(
+    interpretTrivyJson(
+      JSON.stringify({ ...clean, ArtifactType: "filesystem" }),
+      "boba-bear-app:trivy",
+    ).errors.some((e) => e.includes("TRIVY_ARTIFACT_TYPE_UNSUPPORTED")),
+  );
+  assert.ok(
+    interpretTrivyJson(
+      JSON.stringify({ ...clean, ArtifactName: "other:tag" }),
+      "boba-bear-app:trivy",
+    ).errors.some((e) => e.includes("TRIVY_ARTIFACT_MISMATCH")),
+  );
 });
 
 test("interpretTrivyJson extracts DS-0002 misconfig findings", () => {
   const payload = JSON.stringify({
+    SchemaVersion: 2,
+    ArtifactName: "boba-bear-postgres:trivy",
+    ArtifactType: "container_image",
     Results: [
       {
         Target: "boba-bear-postgres:trivy",
@@ -320,6 +400,80 @@ test("interpretTrivyJson extracts DS-0002 misconfig findings", () => {
   assert.equal(out.findings.length, 1);
   assert.equal(out.findings[0].id, "DS-0002");
   assert.equal(out.findings[0].type, "misconfig");
+});
+
+test("scanImage writes JSON via --output and tolerates reports larger than 1 MiB", () => {
+  const reportDir = mkdtempSync(path.join(os.tmpdir(), "boba-trivy-scan-"));
+  const reportPath = path.join(reportDir, "report.json");
+  try {
+    const oversizedClean = {
+      SchemaVersion: 2,
+      ArtifactName: "boba-bear-app:trivy",
+      ArtifactType: "container_image",
+      Results: [
+        {
+          Target: "boba-bear-app:trivy",
+          Class: "os-pkgs",
+          Type: "alpine",
+          // Inflate past Node spawnSync default maxBuffer (1 MiB) if ever captured on stdout.
+          Packages: Array.from({ length: 20_000 }, (_, i) => ({
+            Name: `pkg-${i}`,
+            Version: "1.0.0",
+            padding: "x".repeat(64),
+          })),
+        },
+      ],
+    };
+    const json = JSON.stringify(oversizedClean);
+    assert.ok(Buffer.byteLength(json, "utf8") > 1024 * 1024);
+
+    /** @type {object | null} */
+    let spawnOpts = null;
+    const spawn = (_cmd, args, opts) => {
+      spawnOpts = opts;
+      assert.ok(args.includes("--output"));
+      const outIdx = args.indexOf("--output");
+      writeFileSync(args[outIdx + 1], json, "utf8");
+      return { status: 0, stdout: "", stderr: "" };
+    };
+
+    const scanned = scanImage({
+      bin: "trivy",
+      image: "boba-bear-app:trivy",
+      ignorefile: "/tmp/ignore",
+      cwd: "/repo",
+      reportPath,
+      spawn,
+    });
+    assert.equal(scanned.status, 0);
+    assert.deepEqual(scanned.errors, []);
+    assert.equal(scanned.findings.length, 0);
+    assert.equal(spawnOpts?.maxBuffer, TRIVY_SPAWN_MAX_BUFFER);
+    assert.ok(TRIVY_SPAWN_MAX_BUFFER > 1024 * 1024);
+  } finally {
+    rmSync(reportDir, { recursive: true, force: true });
+  }
+});
+
+test("scanImage surfaces spawnSync ENOBUFS / result.error diagnostically", () => {
+  const reportDir = mkdtempSync(path.join(os.tmpdir(), "boba-trivy-enobufs-"));
+  const reportPath = path.join(reportDir, "report.json");
+  try {
+    const enobufs = Object.assign(new Error("spawnSync trivy ENOBUFS"), { code: "ENOBUFS" });
+    const scanned = scanImage({
+      bin: "trivy",
+      image: "boba-bear-app:trivy",
+      ignorefile: "/tmp/ignore",
+      cwd: "/repo",
+      reportPath,
+      spawn: () => ({ status: null, stdout: "", stderr: "", error: enobufs }),
+    });
+    assert.equal(scanned.status, 1);
+    assert.ok(scanned.errors.some((e) => e.includes("TRIVY_SPAWN_ERROR")));
+    assert.ok(scanned.errors.some((e) => e.includes("ENOBUFS")));
+  } finally {
+    rmSync(reportDir, { recursive: true, force: true });
+  }
 });
 
 test("committed register + .trivyignore are consistent on VEX-TRIVY-001 expiry day", () => {

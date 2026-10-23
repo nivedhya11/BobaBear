@@ -23,7 +23,10 @@
  *   BOBA_TRIVY_SKIP_BUILD=1 — reuse already-tagged local images (still fails
  *     closed if any required image is missing; never silently skips scan).
  *   BOBA_TRIVY_CONTAINER_CLI — force docker|podman
- *   BOBA_TRIVY_TODAY — UTC YYYY-MM-DD override for expiry tests
+ *
+ * Time: production/CI always uses real UTC calendar day. Expiry tests inject
+ * `todayIso` via `loadTrivyExceptionPolicy({ todayIso })` or the optional
+ * second argument to `utcTodayIso` — never via process env in the gate CLI.
  */
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
@@ -198,9 +201,10 @@ export function buildArgsForTarget(target) {
 /**
  * @param {string} image
  * @param {string} ignorefile
+ * @param {string} outputPath JSON report path (avoids spawnSync 1 MiB maxBuffer)
  * @returns {string[]}
  */
-export function trivyImageArgs(image, ignorefile) {
+export function trivyImageArgs(image, ignorefile, outputPath) {
   return [
     "image",
     image,
@@ -222,6 +226,9 @@ export function trivyImageArgs(image, ignorefile) {
     "--ignore-unfixed",
     "--ignorefile",
     ignorefile,
+    // File-backed JSON: large clean reports must not hit spawnSync ENOBUFS.
+    "--output",
+    outputPath,
   ];
 }
 
@@ -244,10 +251,18 @@ export function isActiveExpiry(todayIso, expiryIso) {
 }
 
 /**
- * @returns {string} UTC YYYY-MM-DD
+ * UTC YYYY-MM-DD for exception expiry checks.
+ *
+ * Production / required CI must call with wall-clock `now` only. Optional
+ * `injectedTodayIso` exists solely for isolated unit/integration test paths;
+ * the gate CLI (`main`) never reads process env for the calendar day.
+ *
+ * @param {Date} [now]
+ * @param {string} [injectedTodayIso] explicit test injection (not `process.env`)
+ * @returns {string}
  */
-export function utcTodayIso(now = new Date(), envToday = process.env.BOBA_TRIVY_TODAY) {
-  const override = (envToday || "").trim();
+export function utcTodayIso(now = new Date(), injectedTodayIso = undefined) {
+  const override = (injectedTodayIso || "").trim();
   if (override) {
     if (!isIsoDate(override)) {
       throw new Error(`INVALID_BOBA_TRIVY_TODAY value=${override}`);
@@ -544,7 +559,31 @@ export function ensureImageBuilt(options) {
 }
 
 /**
+ * True when the report names the scanned image (ArtifactName or RepoTags).
+ * @param {object} data
+ * @param {string} image
+ */
+export function trivyReportMatchesImage(data, image) {
+  if (!image || typeof image !== "string") return false;
+  if (data.ArtifactName === image) return true;
+  const tags = data.Metadata?.RepoTags;
+  if (Array.isArray(tags) && tags.includes(image)) return true;
+  // Podman often stores `localhost/<name>:<tag>` while the scan arg omits the prefix.
+  if (Array.isArray(tags)) {
+    for (const tag of tags) {
+      if (typeof tag === "string" && (tag === `localhost/${image}` || tag.endsWith(`/${image}`))) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/**
  * Fail closed on unsupported / unparseable scanner JSON.
+ * Requires Trivy SchemaVersion 2 + artifact identity. Valid clean reports may
+ * omit `Results` or include targets with no Vulnerabilities/Misconfigurations.
+ *
  * @param {string} stdout
  * @param {string} image
  * @returns {{ findings: Array<{ id: string, severity: string, type: string }>, errors: string[] }}
@@ -564,11 +603,44 @@ export function interpretTrivyJson(stdout, image) {
   if (data === null || typeof data !== "object" || Array.isArray(data)) {
     return { findings: [], errors: [`TRIVY_JSON_UNSUPPORTED_SHAPE image=${image}`] };
   }
-  if (!Object.prototype.hasOwnProperty.call(data, "Results")) {
-    // Trivy may omit Results when there are zero findings; treat missing key as empty.
-    // Any other top-level SchemaVersion absence is still accepted if Results is present or absent.
+  // Empty `{}` and non-Trivy objects must not look like a clean pass.
+  if (Object.keys(data).length === 0) {
+    return { findings: [], errors: [`TRIVY_JSON_EMPTY_OBJECT image=${image}`] };
   }
-  if (data.Results != null && !Array.isArray(data.Results)) {
+  if (!Object.prototype.hasOwnProperty.call(data, "SchemaVersion")) {
+    return { findings: [], errors: [`TRIVY_SCHEMA_MISSING image=${image}`] };
+  }
+  if (Number(data.SchemaVersion) !== 2) {
+    return {
+      findings: [],
+      errors: [`TRIVY_SCHEMA_UNSUPPORTED image=${image} version=${String(data.SchemaVersion)}`],
+    };
+  }
+  if (typeof data.ArtifactName !== "string" || data.ArtifactName.trim() === "") {
+    return { findings: [], errors: [`TRIVY_ARTIFACT_NAME_MISSING image=${image}`] };
+  }
+  if (data.ArtifactType !== "container_image") {
+    return {
+      findings: [],
+      errors: [
+        `TRIVY_ARTIFACT_TYPE_UNSUPPORTED image=${image} type=${String(data.ArtifactType)}`,
+      ],
+    };
+  }
+  if (!trivyReportMatchesImage(data, image)) {
+    return {
+      findings: [],
+      errors: [
+        `TRIVY_ARTIFACT_MISMATCH image=${image} artifact=${data.ArtifactName}`,
+      ],
+    };
+  }
+  // Trivy may omit Results when there are zero findings; treat missing key as empty.
+  if (
+    Object.prototype.hasOwnProperty.call(data, "Results") &&
+    data.Results != null &&
+    !Array.isArray(data.Results)
+  ) {
     return { findings: [], errors: [`TRIVY_RESULTS_NOT_ARRAY image=${image}`] };
   }
 
@@ -610,93 +682,136 @@ export function interpretTrivyJson(stdout, image) {
   return { findings, errors };
 }
 
+/** Diagnostics-only capture budget; JSON reports are file-backed via `--output`. */
+export const TRIVY_SPAWN_MAX_BUFFER = 16 * 1024 * 1024;
+
 /**
  * @param {object} options
  * @param {string} options.bin
  * @param {string} options.image
  * @param {string} options.ignorefile
  * @param {string} options.cwd
- * @param {(cmd: string, args: string[], opts?: object) => { status: number | null, stdout?: string, stderr?: string }} [options.spawn]
+ * @param {string} [options.reportPath] optional path for Trivy `--output` (tests)
+ * @param {(cmd: string, args: string[], opts?: object) => { status: number | null, stdout?: string, stderr?: string, error?: Error }} [options.spawn]
  * @returns {{ status: number, findings: Array<{ id: string, severity: string, type: string }>, errors: string[], stdout: string, stderr: string }}
  */
 export function scanImage(options) {
   const spawn = options.spawn ?? spawnSync;
-  const args = trivyImageArgs(options.image, options.ignorefile);
-  console.log(`Scanning image ${options.image}: ${options.bin} ${args.join(" ")}`);
-  const result = spawn(options.bin, args, {
-    cwd: options.cwd,
-    encoding: "utf8",
-  });
-  const stdout = result.stdout || "";
-  const stderr = result.stderr || "";
-  // Keep operator logs compact: surface Trivy diagnostics, not the full JSON blob.
-  if (stderr) process.stderr.write(stderr.endsWith("\n") ? stderr : `${stderr}\n`);
+  const ownReportDir = !options.reportPath;
+  const reportDir = ownReportDir
+    ? mkdtempSync(path.join(os.tmpdir(), "boba-trivy-report-"))
+    : path.dirname(options.reportPath);
+  const reportPath = options.reportPath || path.join(reportDir, "report.json");
 
-  const status = typeof result.status === "number" ? result.status : 1;
-  // Unknown flags / unsupported scanner values → Trivy FATAL (non-zero) → fail closed.
-  if (status !== 0 && status !== 1) {
-    return {
-      status: status || 1,
-      findings: [],
-      errors: [
-        `TRIVY_SCANNER_ERROR image=${options.image} status=${status} (unsupported/unknown scanner output fails closed)`,
-      ],
-      stdout,
-      stderr,
-    };
-  }
+  try {
+    const args = trivyImageArgs(options.image, options.ignorefile, reportPath);
+    console.log(`Scanning image ${options.image}: ${options.bin} ${args.join(" ")}`);
+    const result = spawn(options.bin, args, {
+      cwd: options.cwd,
+      encoding: "utf8",
+      maxBuffer: TRIVY_SPAWN_MAX_BUFFER,
+    });
+    const stderr = result.stderr || "";
+    // Keep operator logs compact: surface Trivy diagnostics, not the full JSON blob.
+    if (stderr) process.stderr.write(stderr.endsWith("\n") ? stderr : `${stderr}\n`);
 
-  const interpreted = interpretTrivyJson(stdout, options.image);
-  if (interpreted.errors.length > 0) {
-    return {
-      status: 1,
-      findings: interpreted.findings,
-      errors: interpreted.errors,
-      stdout,
-      stderr,
-    };
-  }
+    if (result.error) {
+      const err = result.error;
+      const code = err.code || "UNKNOWN";
+      return {
+        status: 1,
+        findings: [],
+        errors: [
+          `TRIVY_SPAWN_ERROR image=${options.image} code=${code} message=${err.message}`,
+        ],
+        stdout: result.stdout || "",
+        stderr,
+      };
+    }
 
-  // status 1 with findings = policy failure; status 0 = clean.
-  // If Trivy exited 1 but JSON has no HIGH/CRITICAL findings, treat as scanner error (fail closed).
-  const blocking = interpreted.findings.filter(
-    (f) => f.severity === "CRITICAL" || f.severity === "HIGH",
-  );
-  if (blocking.length > 0) {
-    console.error(
-      `Trivy HIGH/CRITICAL findings image=${options.image}: ${blocking.map((f) => `${f.type}:${f.id}/${f.severity}`).join(", ")}`,
+    const status = typeof result.status === "number" ? result.status : 1;
+    // Unknown flags / unsupported scanner values → Trivy FATAL (non-zero) → fail closed.
+    if (status !== 0 && status !== 1) {
+      return {
+        status: status || 1,
+        findings: [],
+        errors: [
+          `TRIVY_SCANNER_ERROR image=${options.image} status=${status} (unsupported/unknown scanner output fails closed)`,
+        ],
+        stdout: result.stdout || "",
+        stderr,
+      };
+    }
+
+    if (!existsSync(reportPath)) {
+      return {
+        status: 1,
+        findings: [],
+        errors: [
+          `TRIVY_REPORT_MISSING image=${options.image} path=${reportPath} (fail closed; JSON must be file-backed)`,
+        ],
+        stdout: "",
+        stderr,
+      };
+    }
+
+    const stdout = readFileSync(reportPath, "utf8");
+    const interpreted = interpretTrivyJson(stdout, options.image);
+    if (interpreted.errors.length > 0) {
+      return {
+        status: 1,
+        findings: interpreted.findings,
+        errors: interpreted.errors,
+        stdout,
+        stderr,
+      };
+    }
+
+    // status 1 with findings = policy failure; status 0 = clean.
+    // If Trivy exited 1 but JSON has no HIGH/CRITICAL findings, treat as scanner error (fail closed).
+    const blocking = interpreted.findings.filter(
+      (f) => f.severity === "CRITICAL" || f.severity === "HIGH",
     );
-  }
-  if (status === 1 && blocking.length === 0) {
-    return {
-      status: 1,
-      findings: interpreted.findings,
-      errors: [
-        `TRIVY_EXIT_WITHOUT_FINDINGS image=${options.image} (fail closed on unexplained non-zero exit)`,
-      ],
-      stdout,
-      stderr,
-    };
-  }
-  if (status === 0 && blocking.length > 0) {
-    return {
-      status: 1,
-      findings: interpreted.findings,
-      errors: [
-        `TRIVY_FINDINGS_WITH_ZERO_EXIT image=${options.image} (fail closed on inconsistent scanner output)`,
-      ],
-      stdout,
-      stderr,
-    };
-  }
+    if (blocking.length > 0) {
+      console.error(
+        `Trivy HIGH/CRITICAL findings image=${options.image}: ${blocking.map((f) => `${f.type}:${f.id}/${f.severity}`).join(", ")}`,
+      );
+    }
+    if (status === 1 && blocking.length === 0) {
+      return {
+        status: 1,
+        findings: interpreted.findings,
+        errors: [
+          `TRIVY_EXIT_WITHOUT_FINDINGS image=${options.image} (fail closed on unexplained non-zero exit)`,
+        ],
+        stdout,
+        stderr,
+      };
+    }
+    if (status === 0 && blocking.length > 0) {
+      return {
+        status: 1,
+        findings: interpreted.findings,
+        errors: [
+          `TRIVY_FINDINGS_WITH_ZERO_EXIT image=${options.image} (fail closed on inconsistent scanner output)`,
+        ],
+        stdout,
+        stderr,
+      };
+    }
 
-  return {
-    status: blocking.length > 0 ? 1 : 0,
-    findings: interpreted.findings,
-    errors: [],
-    stdout,
-    stderr,
-  };
+    return {
+      status: blocking.length > 0 ? 1 : 0,
+      findings: interpreted.findings,
+      errors: [],
+      stdout,
+      stderr,
+    };
+  } finally {
+    if (ownReportDir) {
+      rmSync(reportDir, { recursive: true, force: true });
+    }
+  }
 }
 
 /**
@@ -707,6 +822,7 @@ export function scanImage(options) {
  */
 export function loadTrivyExceptionPolicy(options = {}) {
   const root = options.root || projectRoot;
+  // Prefer explicit test injection; never fall back to process.env overrides.
   const todayIso = options.todayIso || utcTodayIso();
   const registerPath = path.join(root, REGISTER_REL);
   const ignorePath = path.join(root, TRIVYIGNORE_REL);
