@@ -48,6 +48,9 @@ architecture/invariants before UI cosmetics.
 - Checkout evaluate must not run for PICKUP between outlet bind and timing selection (Now, Schedule, or unset listing) (AS-34 / AS-41 / Contract C)
 - Takeaway without outlet must not invent brand-level money (AS-31)
 - Schedule UNCONFIRMED Cart evaluate omits timing so SCHEDULED-only Offers do not lock at Menu (AS-43)
+- Client-supplied `fulfilmentTiming=SCHEDULED` on CART evaluate is rejected **400** and must not qualify SCHEDULED-only Offers (AS-43); Contract A `SCHEDULED` eligibility intent remains capability-discovery only
+- Explicit Now may supply `fulfilmentTiming=ASAP`; browsing Schedule intent in the request context key is stale-discard only, not evaluated CART timing
+- Authenticated open Checkout reuse may convey server-authoritative Checkout `SCHEDULED` without treating it as client CART timing (AS-43)
 - Schedule-capable list merchandise check uses `ignoreCurrentScheduleDenial: true` parity (Contract C)
 - AUTO_SELECT is per timing intent; never over Now∪Schedule union (AS-05 / AS-38)
 - Now-eligible outlet with empty future windows recovers honestly; Now offered only if accepting-now eligible (AS-35 / AS-37)
@@ -63,6 +66,7 @@ architecture/invariants before UI cosmetics.
 - Menu must not guarantee scheduled slot or final promotional price (AS-44)
 - Evaluate/eligibility fingerprint mismatch drops stale responses; no competing payables (AS-46)
 - Same money / different mode·timing·outlet must not reuse CART `evaluation_id` solely via `result_fingerprint` — `evaluation_context_digest` must differ (`13-…` §2 / AS-32)
+- V1 CART digest always includes `delivery_location_hmac: null` (HMAC disabled); primary Delivery provenance is `evaluated_priced_outlet_id`; same-priced-outlet coordinate-only equal-money reuse is an accepted V1 limitation
 - CHECKOUT reuse / `COMMERCIAL_STATE_CHANGE` remain fingerprint-only (digest must not alter CHECKOUT measurement)
 - Client-supplied context digest / money fingerprint / `evaluationId` / sealed-window fields are **rejected (400)** under strict allowlist — never read as authority
 - Eligible-Checkout Scheduled Takeaway preserves server windows, optimistic revisions, post-window evaluate, then prepare (AS-41)

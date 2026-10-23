@@ -140,7 +140,7 @@ NOT AUTHORITY FOR: Sealed Snapshot, pay readiness, inventing a parallel pricing 
 | Dimension | Smallest contract |
 |---|---|
 | Surface | Extend existing `POST /api/v1/cart/evaluate` (or equivalent same evaluateCart entry) |
-| Added inputs (optional) | `fulfilmentMode`: `DELIVERY` \| `PICKUP`; when `PICKUP`, optional `pickupOutletId` from server eligibility / customer selection; optional `fulfilmentTiming`: `ASAP` \| `SCHEDULED` as **browse intent** (not sealed window) |
+| Added inputs (optional) | `fulfilmentMode`: `DELIVERY` \| `PICKUP`; when `PICKUP`, optional `pickupOutletId` from server eligibility / customer selection; optional `fulfilmentTiming`: **`ASAP` only** when Now is explicit. Schedule UNCONFIRMED → **omit** `fulfilmentTiming`. Client-supplied `fulfilmentTiming=SCHEDULED` on CART evaluate is **unsupported → 400** (not sealed window; not promotion authority). Contract A may still use `SCHEDULED` for **capability-discovery** eligibility |
 | Delivery path | Retain today’s `location` / coordinates path for Delivery serviceability-backed quotes |
 | Takeaway path | **Must not require Delivery address/coordinates.** Takeaway quote uses outlet (+ cart) commercial path without inventing delivery fee/execution |
 | PICKUP without outlet | After open-Checkout reuse is attempted and does not apply: return `REQUIRES_FULFILMENT_CONTEXT` (or equivalent non-money status). **Never** invent a brand-level / guessed-outlet quote |
@@ -159,11 +159,12 @@ supply sealed Checkout mode/timing. **Cart evaluate today** does not yet pass mo
 
 | Situation | Required advisory behaviour |
 |---|---|
-| Mode known (Delivery or Takeaway + outlet when Takeaway) | Pass `fulfilmentMode` (+ outlet) into quote so mode-gated Offers evaluate truthfully |
+| Mode known (Delivery or Takeaway + outlet when Takeaway) | Pass `fulfilmentMode` (+ outlet) into quote so mode-gated Offers evaluate truthfully via **server-evaluated mode context** |
 | Timing known as Now (`ASAP`) | Pass `fulfilmentTiming=ASAP` |
-| Timing = Schedule **intent** only (UNCONFIRMED; no Checkout-sealed window) | **V1 lock:** omit `fulfilmentTiming` from Cart evaluate so timing-restricted Offers stay `FULFILMENT_CONTEXT_REQUIRED`. Mode-gated Offers may still apply when mode (+ outlet when Takeaway) is known. UI may say savings **may change when you confirm your time** — never a locked SCHEDULED-only discount at Menu |
+| Timing = Schedule **intent** only (UNCONFIRMED; no Checkout-sealed window) | **V1 lock:** unconfirmed Schedule intent **must not** become evaluated `fulfilmentTiming=SCHEDULED`. Client **omits** `fulfilmentTiming` from Cart evaluate so timing-restricted Offers stay `FULFILMENT_CONTEXT_REQUIRED`. Mode-gated Offers may still apply when mode (+ outlet when Takeaway) is known. UI may say savings **may change when you confirm your time** — never a locked SCHEDULED-only discount at Menu. Tab-local / request-context keys may distinguish Schedule intent for stale-response rejection without making that intent promotion authority |
+| Client supplies `fulfilmentTiming=SCHEDULED` on CART evaluate | **V1 unsupported → 400.** Must not silently qualify SCHEDULED-only advisory savings. (Contract A `SCHEDULED` eligibility intent remains valid for capability discovery.) |
 | Mode or required timing absent | Mode/timing-restricted promotions must not apply; reason codes above; never invent eligibility |
-| Open Checkout reuse applies | Snapshot / CHECKOUT-scope evaluation wins; do not recompute a competing browse promo total for that cart revision |
+| Open Checkout reuse applies | Snapshot / CHECKOUT-scope evaluation wins; do not recompute a competing browse promo total for that cart revision. Effective Checkout timing may be server-authoritative `SCHEDULED` — that is Checkout reuse authority, **not** client-authorized CART timing |
 
 **Forbidden at Menu / pre-checkout:**
 
@@ -227,14 +228,15 @@ not license to create a second money path.
 
 | Concern | Rule |
 |---|---|
-| CART-scope persist (new quote, not reuse) | Record evaluated `fulfilmentMode`, `fulfilmentTiming` (when supplied), and `pickupOutletId` **or** Delivery location fingerprint |
+| CART-scope persist (new quote, not reuse) | Record evaluated `fulfilmentMode`, `fulfilmentTiming` **only when actually evaluated into the quote** (`ASAP` or null in V1 — never client-claimed `SCHEDULED`), Takeaway `pickupOutletId` when known, and Delivery **`evaluated_priced_outlet_id`**. V1 does **not** populate `evaluated_delivery_location_hmac`; digest includes `delivery_location_hmac: null` (`13-…` §2) |
 | CHECKOUT reuse | Retain Checkout/Snapshot provenance (`evaluationId`, sealed mode/timing/outlet); do **not** overwrite with browse intent |
-| Evaluate context key (client + server discard key; **not** `commercial_evaluations.result_fingerprint` / working-tree fingerprint) | At minimum: `cartRevision` + **requested** `fulfilmentMode` + `fulfilmentTiming` + (Takeaway `pickupOutletId` \| Delivery coordinate fingerprint) + request generation. Server echoes the requested key. **Effective** Checkout mode/timing under reuse is conveyed separately and **must not** trigger a drop of a valid reuse response |
+| Evaluate context key (client + server discard key; **not** `commercial_evaluations.result_fingerprint` / working-tree fingerprint) | At minimum: `cartRevision` + **requested browsing** `fulfilmentMode` + browsing timing key + (Takeaway `pickupOutletId` \| Delivery location change key) + request generation. Server echoes the requested key. Browsing Schedule intent in this key is for **stale-response rejection only** — it must not become evaluated CART `fulfilmentTiming=SCHEDULED`. **Effective** Checkout mode/timing under reuse is conveyed separately and **must not** trigger a drop of a valid reuse response |
 | Deduplication | Identical context key under the same in-flight generation must not present two competing payables; stale responses whose **requested** key ≠ current intent are **dropped**. On evaluate network failure after intent change: hide money / show calm retry — do **not** keep an old-key quote as current |
 | Presentation mirrors | `eligibilityFlags` / quote mirrors keyed by the requested context key above; mismatch → drop, never invent |
 | One quote source | Response presents either reused Checkout Snapshot quote **or** advisory CART quote — never both as competing payables |
 | Snapshot-sourced display fallback | If projecting sealed Snapshot money without a CHECKOUT evaluation wire, mark the response distinctly (e.g. Snapshot projection without `commercialExplanation`) so UI cannot invent an offers breakdown |
 | DRAFT without Snapshot | `tryReusableCheckoutEvaluation` returning null because there is no active Snapshot (or guest access) may fall through to the advisory CART quote — fail-closed applies only when an active Snapshot exists |
+| V1 Delivery coordinate limitation | Same-priced-outlet coordinate changes with equal-money results may reuse CART `evaluation_id` (HMAC disabled). Distinct per-coordinate CART identity requires a future architecture/privacy decision |
 
 #### DRAFT / READY_FOR_PAYMENT / PAYMENT_PENDING conflict behaviour
 
@@ -491,7 +493,8 @@ RECOMMENDED_VARIANT = PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
 | Concern | Evaluation | Disposition |
 |---|---|---|
 | Takeaway without Delivery coordinates | Today `evaluateCart` returns `REQUIRES_FULFILMENT_CONTEXT` before reuse when `!location` (`cart/evaluate.ts` ~138–145) — Fit gap | **Extend** evaluate entry: Takeaway path without Delivery address; reuse **before** Delivery-only early return |
-| Unconfirmed Schedule promotion behaviour | Omit `fulfilmentTiming` while Schedule UNCONFIRMED; mode-gated Offers may apply with provisional messaging; never lock SCHEDULED-only discount at Menu | **V1 lock** — AS-42–44 |
+| Unconfirmed Schedule promotion behaviour | Omit `fulfilmentTiming` while Schedule UNCONFIRMED; reject client `fulfilmentTiming=SCHEDULED` on CART evaluate with **400**; mode-gated Offers may apply with provisional messaging; never lock SCHEDULED-only discount at Menu; Contract A `SCHEDULED` remains capability-discovery only | **V1 lock** — AS-42–44 |
+| Delivery location HMAC | Reserved nullable column; **V1 disabled** (`delivery_location_hmac: null` in digest); primary Delivery provenance = `evaluated_priced_outlet_id` | **V1 disposition** — `13-…` §2.3 |
 | Checkout Snapshot precedence | `tryReusableCheckoutEvaluation` already correct when reached; must become reachable for Takeaway open Checkouts without Delivery `location` | **Mandatory** — AS-29 |
 | Missing commercial-evaluation evidence | Today missing evaluation / `catch → null` falls through to browse quote | **Fail-closed** — AS-39 / AS-45; never divergent browse money |
 | CART provenance + context-key + dedup | Mode/timing/outlet provenance required for new CART-scope persists; evaluate context key ≠ `result_fingerprint` ≠ `evaluation_context_digest` | **Required** — AS-32 / AS-46; storage mechanism **PROPOSED_FOR_LOCK** in `13-…` §2 |
@@ -552,7 +555,7 @@ Architecture Lock proposal are recorded in
 | Snapshot / Payment / prepare | UNCHANGED | D-361+; no new payment state machine |
 | PAYMENT_PENDING freeze | PRESERVED | Browse must not call fulfilment mutations |
 | Missing evaluation fall-through | FIT GAP → fail-closed required | Prevents divergent browse payable under open Snapshot |
-| Promotion timing while UNCONFIRMED | Omit timing in Cart evaluate | Prevents false SCHEDULED-only discount seal at Menu |
+| Promotion timing while UNCONFIRMED | Omit timing in Cart evaluate; reject client CART `SCHEDULED` with 400 | Prevents false SCHEDULED-only discount seal at Menu |
 | Abuse / enumeration | Rate-limit + debounce + customer-safe fields | Detailed in `13-…` §4 |
 | Concurrency | expectedRevision + generation + context-key dedup | No competing payables |
 | Accepted IMP / ADR contradiction | NONE if contracts held | UOE-DR-06 defect is conformance debt vs IMP-036I, not a new conflicting entitlement |

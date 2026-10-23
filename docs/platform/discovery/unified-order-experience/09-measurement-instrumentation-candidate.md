@@ -92,7 +92,16 @@ equal-money / different mode·timing·outlet quotes do not silently reuse a CART
 CART_COUNTED_VIEW_CARDINALITY_MAY_INCREASE_WHEN_CONTEXT_DIFFERS_AT_EQUAL_MONEY = YES
 CHECKOUT_OFFER_RESULT_AND_JOURNEY_MEASUREMENT = UNCHANGED
 RESULT_FINGERPRINT_SEMANTICS = PRESERVED
+V1_DELIVERY_LOCATION_HMAC = DISABLED
+V1_DIGEST_DELIVERY_LOCATION_HMAC = null
+V1_PRIMARY_DELIVERY_PROVENANCE = evaluated_priced_outlet_id
+V1_NEW_CART_EVALUATED_SCHEDULED_FROM_BROWSE_INTENT = NO
 ```
+
+V1 does not mint new CART-scope evaluations with evaluated `SCHEDULED` from pre-checkout intent
+(omit timing while Schedule UNCONFIRMED; reject client CART `SCHEDULED` with 400). Delivery
+coordinate HMAC is reserved/unpopulated; same-priced-outlet coordinate-only equal-money reuse may
+keep one CART `evaluation_id` — a bounded V1 limitation, not a CHECKOUT measurement change.
 
 Measurement Plan finalization (after Fit PASS + Lock) must reconcile Offer-result-view counting
 with this CART cardinality effect. Do not change CHECKOUT fingerprint-only reuse or

@@ -100,10 +100,10 @@ migration only — **not** performed by this proposal):
 | Column (proposed name) | Type | Nullability | Semantics |
 |---|---|---|---|
 | `evaluated_fulfilment_mode` | text | NULL | `DELIVERY` \| `PICKUP` when mode was supplied into the quote; NULL when absent |
-| `evaluated_fulfilment_timing` | text | NULL | `ASAP` \| `SCHEDULED` only when timing was **supplied into the quote**; NULL when omitted (including Schedule UNCONFIRMED V1 lock) |
+| `evaluated_fulfilment_timing` | text | NULL | `ASAP` only when Now timing was **supplied into and evaluated on** a new CART quote; NULL when omitted (Schedule UNCONFIRMED / timing absent). V1 never persists `SCHEDULED` on new CART-scope rows from pre-checkout browse intent (see §3.2). `SCHEDULED` remains Checkout/Snapshot authority under reuse |
 | `evaluated_pickup_outlet_id` | uuid | NULL | Customer-selected Takeaway outlet when `PICKUP` + outlet known; NULL otherwise |
-| `evaluated_priced_outlet_id` | uuid | NULL | Server outlet actually used for pricing (`buildDirectPricingQuote` / eligibility-resolved outlet) for DELIVERY or PICKUP; NULL when no outlet priced the quote |
-| `evaluated_delivery_location_hmac` | bytea | NULL | Optional server-keyed HMAC-SHA256 of **canonicalised, rounded** Delivery coordinates (see §2.3); NULL when not Delivery-location-backed. Prefer priced outlet for AS-32; HMAC distinguishes same-outlet coordinate drift only when required |
+| `evaluated_priced_outlet_id` | uuid | NULL | Server outlet actually used for pricing (`buildDirectPricingQuote` / eligibility-resolved outlet) for DELIVERY or PICKUP; NULL when no outlet priced the quote. **Primary Delivery provenance identity in V1** |
+| `evaluated_delivery_location_hmac` | bytea | NULL | **Reserved optional nullable** column for a future server-keyed HMAC of canonicalised Delivery coordinates. **V1 disposition: disabled** — never populated for V1 CART evaluations; see §2.3 |
 | `evaluation_context_digest` | bytea | NULL **only on pre-migration rows** | Server-authored SHA-256 (32 octets) of the canonical evaluated context (below) |
 
 **Constraints (proposed, future migration):**
@@ -116,12 +116,13 @@ migration only — **not** performed by this proposal):
 - **Application invariant (not a DB NOT NULL):** every **post-migration CART persist** writes a
   non-null `evaluation_context_digest` (null fields allowed **inside** the canonical JSON). NULL
   digest is reserved for pre-migration rows only. Legacy location-only (mode-absent) requests still
-  digest with `fulfilment_mode: null` and populate priced outlet / location HMAC when applied.
+  digest with `fulfilment_mode: null` and populate `priced_outlet_id` when applied. V1 always
+  digests `delivery_location_hmac: null` (HMAC disabled — §2.3).
 - **No rename** of `result_fingerprint`, `expected_components`, or other accepted IMP-036J columns (D6)
 - **No sibling table** — unnecessary indirection for a 1:1 CART provenance extension
 - **Do not** stuff provenance solely into `expected_components` JSON
-- **Do not** store plain SHA-256 of exact coordinates (re-identifiable); use priced outlet and/or
-  keyed HMAC only
+- **Do not** store plain SHA-256 of exact coordinates (re-identifiable). V1 uses
+  `evaluated_priced_outlet_id` only; keyed HMAC remains reserved and unpopulated
 
 ### 2.3 Server-authored context digest (canonical input)
 
@@ -135,10 +136,10 @@ Distinct from:
 evaluation_context_digest = SHA-256(canonicalJson({
   surface_scope: "CART",
   fulfilment_mode,                  // null | DELIVERY | PICKUP  (as evaluated)
-  fulfilment_timing,                // null | ASAP | SCHEDULED   (as evaluated into quote)
+  fulfilment_timing,                // null | ASAP   (V1 new CART quotes; never client-claimed SCHEDULED)
   pickup_outlet_id,                 // null | uuid (customer-selected PICKUP)
   priced_outlet_id,                 // null | uuid (server outlet that priced the quote)
-  delivery_location_hmac            // null | hex of keyed HMAC (optional; see below)
+  delivery_location_hmac            // V1: always null (reserved field; HMAC disabled)
 }))
 ```
 
@@ -149,15 +150,41 @@ evaluation_context_digest = SHA-256(canonicalJson({
   it would mint new CART `evaluation_id`s on non-money revision bumps and inflate Offer-result-view
   cardinality contrary to IMP-036J measurement “ordinal does not come from `carts.revision`”
 - Client request **generation** — discard key only
+- Tab-local Schedule UNCONFIRMED / browsing-context keys — stale-response discard only; **not**
+  commercial-evaluation provenance or promotion authority
 
-**Delivery location HMAC (when used):**
+**Delivery location HMAC — V1 disposition: DISABLED**
 
-- Algorithm: HMAC-SHA256 with existing server PII-hash secret pattern (no new secret class)
-- Input: canonicalised lat/lng rounded to an explicit precision (candidate: 4 decimal degrees ≈ 11 m)
-- Never logged; never returned to the client
-- Retention follows `commercial_evaluations` (cart cascade)
-- Prefer `evaluated_priced_outlet_id` as the primary Delivery provenance fact; HMAC is additive when
-  coordinate-level distinctness is required beyond outlet
+```text
+V1_DELIVERY_LOCATION_HMAC = DISABLED
+V1_PRIMARY_DELIVERY_PROVENANCE = evaluated_priced_outlet_id
+V1_DIGEST_DELIVERY_LOCATION_HMAC = null
+COORDINATE_HASHING_AUTHORIZED_BY_THIS_PROPOSAL = NO
+```
+
+- Column `evaluated_delivery_location_hmac` remains in the proposed additive schema as an optional
+  nullable reserved field, but **is not populated** for V1 CART evaluations.
+- V1 canonical `evaluation_context_digest` **always** includes `delivery_location_hmac: null`.
+- This documentation task authorizes **no** coordinate hashing, HMAC calculation, new secret
+  processing, or location-derived provenance persistence.
+- Client stale-response context keys may still distinguish location changes for discard UX; those
+  keys are **not** commercial-evaluation provenance or financial authority.
+- **Bounded V1 limitation:** same-priced-outlet coordinate changes that yield equal-money results
+  may reuse CART `evaluation_id` (digest unchanged because HMAC is null and `priced_outlet_id`
+  matches). Do **not** claim distinct CART evaluations for every coordinate movement in V1.
+- If future requirements demand coordinate-level evaluation identity, require a **separate**
+  architecture/privacy decision covering canonicalization precision, keyed hashing, retention,
+  key management, rollout, and measurement implications. Until then, do not activate HMAC.
+
+**Requested browsing-context key vs effective commercial-evaluation timing (V1):**
+
+| Layer | May represent Schedule UNCONFIRMED / `SCHEDULED` intent? | Promotion / money authority? |
+|---|---|---|
+| Contract A eligibility timing input | Yes — `SCHEDULED` = capability-discovery intent | No |
+| Tab-local order-context browse intent | Yes — Schedule UNCONFIRMED presentation | No |
+| Client CART evaluate **request context key** | May distinguish Schedule intent for stale-response rejection | No |
+| New CART quote **evaluated** `fulfilmentTiming` | **No** client-claimed `SCHEDULED`; omit timing while UNCONFIRMED; `ASAP` only when Now is explicit | Yes — feeds promotions + digest |
+| Authenticated open Checkout reuse response | May convey server-authoritative Checkout `SCHEDULED` (+ window) | Yes — Snapshot/CHECKOUT authority; not client CART timing |
 
 Rules:
 
@@ -196,13 +223,14 @@ Rules:
 | Scenario | Expected provenance outcome |
 |---|---|
 | Same price, different fulfilment mode | Distinct digest; new CART evaluation even if `result_fingerprint` collides |
-| Same price, different timing (`ASAP` vs supplied `SCHEDULED`) | Distinct digest; new evaluation |
-| Same price, Schedule UNCONFIRMED (timing omitted) vs later `ASAP` | Distinct digest (null timing vs `ASAP`); provisional Offer rules unchanged |
+| Same price, Schedule UNCONFIRMED (timing omitted) vs later explicit `ASAP` | Distinct digest (null timing vs `ASAP`); provisional Offer rules unchanged; V1 does **not** mint evaluated CART `SCHEDULED` from browse intent |
+| Client supplies `fulfilmentTiming=SCHEDULED` on CART evaluate | **V1 unsupported** → **400** (strict allowlist / timing enum). Must not silently qualify SCHEDULED-only promotions |
 | Same price, different Takeaway outlet | Distinct digest (`pickup_outlet_id` / `priced_outlet_id`); new evaluation |
 | Same price, different Delivery priced outlet (same or different coords) | Distinct digest via `priced_outlet_id`; new evaluation |
-| Same price, same outlet, material coordinate change (when HMAC used) | Distinct digest via HMAC; new evaluation |
+| Same price, same priced outlet, coordinate-only change (V1) | **Reuse** CART evaluation when money+digest match — bounded V1 limitation (`delivery_location_hmac: null`). Distinct per-coordinate CART identity is **future / non-V1** pending separate privacy decision |
+| Same price, `ASAP` vs evaluated CART `SCHEDULED` digest comparison | **Future / non-V1 illustration only** — V1 does not create new CART-scope evaluations with evaluated `SCHEDULED` from pre-checkout intent. CHECKOUT may still carry sealed `SCHEDULED` under reuse |
 | Existing commercial evaluation records (null context) | Remain valid; no rewrite migration; null-digest reuse only among null-digest peers |
-| Reused Checkout Snapshot (open non-terminal Checkout) | No new CART provenance from browse; CHECKOUT/`evaluation_id` reuse; effective Checkout mode conveyed separately; **customer-only** reuse (`guest` → advisory quote only) |
+| Reused Checkout Snapshot (open non-terminal Checkout) | No new CART provenance from browse; CHECKOUT/`evaluation_id` reuse; effective Checkout mode/**timing** conveyed separately (may be server-authoritative `SCHEDULED`); **customer-only** reuse (`guest` → advisory quote only) |
 | CHECKOUT fulfilment change at equal money | Fingerprint-only reuse; digest must **not** force a new CHECKOUT evaluation / false `COMMERCIAL_STATE_CHANGE` |
 | Concurrent evaluation requests (same cart, different contexts) | Cart lock serialises persists; latest-row `(fingerprint, digest)` compare; client drops stale **request** keys via generation; UI never shows two competing payables |
 | Concurrent identical context | Fingerprint+digest reuse → single logical evaluation |
@@ -248,16 +276,17 @@ are the proposed Architecture Lock surface for variant
 | Surface | Existing `POST /api/v1/cart/evaluate` (or same `evaluateCart` entry) |
 | Authority | Existing commercial engine only — extended input + precedence |
 | Body allowlist | Strict allowlist only (`brandId`, `location`, `fulfilmentMode`, `pickupOutletId`, `fulfilmentTiming`, request-key/generation fields). Money / fingerprint / digest / `evaluationId` / `checkoutId` / sealed-window fields → **400** |
+| `fulfilmentTiming` on CART evaluate (V1) | **`ASAP` only** when Now is explicitly requested. **Omit** the field for Schedule UNCONFIRMED / timing-absent quotes. Client-supplied `fulfilmentTiming=SCHEDULED` is **unsupported** → **400** (must not silently qualify SCHEDULED-only promotions). Contract A may still accept `SCHEDULED` as **capability-discovery intent** — that is not CART promotion authority |
 | Takeaway without Delivery address | Required; must not invent delivery fee/execution |
-| PICKUP outlet re-assertion | Server re-asserts supplied `pickupOutletId` belongs to `cart.brandId` and satisfies the eligibility gate for the requested timing intent **before** quoting; failure → same generic non-money problem class for nonexistent, cross-brand, and ineligible ids (no existence oracle) |
+| PICKUP outlet re-assertion | Server re-asserts supplied `pickupOutletId` belongs to `cart.brandId` **before** quoting. When evaluated/request `fulfilmentTiming=ASAP`: accepting-now gate. When `fulfilmentTiming` is **omitted** (Schedule UNCONFIRMED / timing-absent): composed Contract A gate — outlet must be accepting-now **or** schedule-capable (so a Schedule-selected place can still quote) **without** evaluating promotions as `SCHEDULED`. Failure → same generic non-money problem class for nonexistent, cross-brand, and ineligible ids (no existence oracle) |
 | PICKUP without outlet | After reuse attempt fails: non-money `REQUIRES_FULFILMENT_CONTEXT` (or equivalent); never brand-level guess quote |
-| Schedule UNCONFIRMED | **Omit** `fulfilmentTiming` from quote input (V1); provisional Offer messaging only |
-| Open Checkout reuse | Attempt **before** any browse-mode/outlet-dependent serviceability, availability, or pricing computation — including the Delivery-location early return. Reuse wins; convey effective Checkout mode. **Guest access: no reuse path; advisory quote only** |
+| Schedule UNCONFIRMED promotions | Unconfirmed Schedule intent **must not** become evaluated `fulfilmentTiming=SCHEDULED` on a new CART quote. Client **omits** `fulfilmentTiming`; timing-restricted Offers stay `FULFILMENT_CONTEXT_REQUIRED`. Mode-restricted promotions continue to use server-evaluated mode context. Provisional “may change when you confirm your time” messaging only — never a locked SCHEDULED-only discount at Menu |
+| Open Checkout reuse | Attempt **before** any browse-mode/outlet-dependent serviceability, availability, or pricing computation — including the Delivery-location early return. Reuse wins; convey effective Checkout mode **and timing when material** (may be server-authoritative `SCHEDULED` from Snapshot — **not** client-authorized CART timing). **Guest access: no reuse path; advisory quote only** |
 | Reused PICKUP projection | Must not present a Delivery charge line (Snapshot charges only) |
 | Missing CHECKOUT evaluation + active Snapshot | Fail-closed distinct status; no divergent browse money (triggers: no CHECKOUT evaluation row; undecodable explanation wire; reuse probe throw) |
 | DRAFT without Snapshot | May fall through to advisory CART quote |
-| Provenance | §2 fields + digest on new CART persists; CHECKOUT reuse retains Snapshot provenance |
-| Client request context key | `cartRevision` + requested mode + timing + outlet\|delivery key + **generation** — discard key; ≠ `result_fingerprint`; ≠ `evaluation_context_digest` |
+| Provenance | §2 fields + digest on new CART persists (`delivery_location_hmac: null` in V1); CHECKOUT reuse retains Snapshot provenance; CHECKOUT scheduled timing / window validation / payment authority unchanged |
+| Client request context key | `cartRevision` + requested mode + **browsing** timing key + outlet\|delivery key + **generation** — stale-response **discard** key only; ≠ `result_fingerprint`; ≠ `evaluation_context_digest`; must not mint evaluated CART `SCHEDULED` |
 | PAYMENT_PENDING reuse | Read-only; writes **zero** Checkout mutations and **zero** new CART provenance rows when reuse hits |
 | Sealing | Evaluate remains non-sealing; pay requires Checkout prepare + Snapshot |
 
@@ -332,9 +361,9 @@ Snapshot / payment safeguards to “go faster.”
 |---|---|
 | Outlet projection | Public customer-safe: display name, coarse public location label, capability flags, outlet id needed for selection |
 | Forbidden in eligibility | Workforce hierarchy, legal entity graph, internal ops notes, other customers’ orders, lead-time/capacity/profile internals, raw geo of unrelated outlets beyond eligible set |
-| Delivery coordinates | Remain in delivery-context / Checkout destination authority; measurement uses priced outlet and/or keyed HMAC — not plain coordinate hashes; never echo HMAC/digest to client |
+| Delivery coordinates | Remain in delivery-context / Checkout destination authority. V1 measurement uses **priced outlet only** (`delivery_location_hmac` always null). No plain coordinate hashes; never echo HMAC/digest to client. Activating coordinate HMAC later needs a separate privacy decision |
 | Cart / guest tokens | Existing cart credential secrecy; limiter keys hash guest tokens; eligibility never becomes an unauthenticated brand-wide outlet dump with non-empty outlets |
-| Measurement | `evaluation_context_digest`, mode/outlet ids, location HMAC are server provenance — not customer-explained abuse detail; not emitted in client responses or logs |
+| Measurement | `evaluation_context_digest`, mode/outlet ids are server provenance — not customer-explained abuse detail; not emitted in client responses or logs. Reserved `evaluated_delivery_location_hmac` stays null in V1 and must never appear in client responses or logs if later activated |
 | WhatsApp variables | Existing `validateTemplateVariables` secret-shaped rejection unchanged |
 
 ### 4.4 Negative security tests (mandatory for future authorized implementation)
@@ -358,6 +387,8 @@ Snapshot / payment safeguards to “go faster.”
 17. `evaluation_context_digest` and `evaluated_delivery_location_hmac` never appear in client responses or logs
 18. Eligibility schedule-capable responses expose capability flags only — no profile internals
 19. CHECKOUT reuse comparator remains fingerprint-only (digest must not alter `COMMERCIAL_STATE_CHANGE`)
+20. Client-supplied `fulfilmentTiming=SCHEDULED` on CART evaluate → **400**; must not apply SCHEDULED-only promotions from browse intent
+21. V1 CART persists leave `evaluated_delivery_location_hmac` null and digest `delivery_location_hmac: null` (no coordinate HMAC computation)
 
 ---
 
@@ -434,7 +465,7 @@ Reviews are **documentation validation**. They do **not** grant Fit PASS or Arch
 ### Founder-visible residual risks (from Security review)
 
 1. Rate limits are per-process in-memory (N× under multiple instances); no Redis proposed
-2. Delivery location HMAC (when used) is linkable personal data retained with commercial evaluations
+2. V1 Delivery provenance is priced-outlet only; same-outlet coordinate drift at equal money may reuse CART `evaluation_id` (HMAC disabled). Future coordinate-level identity needs a separate architecture/privacy decision before activating reserved HMAC
 3. Advisory quote surface widens; UI provisional copy is the control until Checkout revalidates
 4. Per-outlet merchandise availability is observable through eligibility (accepted residual)
 5. Guest Snapshot-reuse exclusion must be revisited if guest checkouts are later authorized
