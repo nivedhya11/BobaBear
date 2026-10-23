@@ -5,23 +5,27 @@
 ```text
 CANDIDATE_ID = ARCH-UOE-FIT-CANDIDATE-3
 SUPERSEDES = ARCH-UOE-FIT-CANDIDATE-2
-STATUS = ARCHITECTURE_FIT_EVALUATION_PERFORMED
+STATUS = ARCHITECTURE_FIT_PASS_RECORDED
 AUTHORITY = NON_AUTHORITATIVE_DISCOVERY_DRAFT
 ARCHITECTURE_FIT_EVALUATION = PERFORMED
 ARCHITECTURE_FIT_RECOMMENDATION = PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
-FORMAL_ARCHITECTURE_FIT_PASS = NOT_GRANTED
-ARCHITECTURE_LOCKED = NO
-ARCHITECTURE_LOCK_PROPOSAL = ARCH-UOE-LOCK-PROPOSAL-1
-ARCHITECTURE_LOCK_PROPOSAL_STATUS = DECISION_READY
+FORMAL_ARCHITECTURE_FIT_PASS = PASS
+ARCHITECTURE_LOCKED = YES
+ARCHITECTURE_LOCK_CONTRACT = ARCH-UOE-LOCK-PROPOSAL-1
+ARCHITECTURE_LOCK_STATUS = ARCHITECTURE_LOCKED
+BINDING_CAPABILITY_ARCHITECTURE = docs/platform/capabilities/UOE-unified-order-experience.md
+REVIEWED_ARCHITECTURE_CONTRACT_HEAD = 9a9e3f71789a4cce5141eb88b3ab606f72b2c54e
+PER_PROCESS_RATE_LIMIT_RESIDUAL = ACCEPTED_FOR_V1_PILOT
 DESIGN_READINESS_PASS = NO
 IMPLEMENTATION_AUTHORIZED = NO
 PREREQUISITE_GATES = Product Definition Gate PASS + Experience Gate PASS (recorded 2026-10-23)
 FOUNDER_GATE_DECISION_REFERENCE = https://github.com/nivedhya11/BobaBear/pull/424#issuecomment-6365686428
+FOUNDER_FIT_LOCK_DECISION_DATE = 2026-10-23
 REVIEWED_PACKAGE_HEAD = dbe0786280fac4ba80ba727c7510b8c23da69ed1
 FIT_EVALUATION_HEAD = ecbfb4f4f7f06a888e0a3c4417bc1c647239974b
 VARIANT = PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
 GATE_PRECISION_REVISION = YES
-PROVENANCE_STORAGE_PROPOSAL = ADDITIVE_NULLABLE_CONTEXT_FIELDS_PLUS_SERVER_CONTEXT_DIGEST
+PROVENANCE_STORAGE_DECISION = ADDITIVE_NULLABLE_CONTEXT_FIELDS_PLUS_SERVER_CONTEXT_DIGEST
 ```
 
 ## Fit summary
@@ -47,7 +51,10 @@ renames, or a second commercial authority **if and only if**:
 **Fit evaluation:** Independent documentation-only evaluation performed after Product Definition
 Gate PASS and Experience Gate PASS (X2/X3 prerequisite satisfied).
 **Recommended variant:** `PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1` (Contracts A/B/C/D below).
-**Formal Fit PASS:** `NOT_GRANTED` (agent must not self-grant). Architecture Lock: `NO`.
+**Formal Fit PASS:** `PASS` (Founder-recorded 2026-10-23 against contract HEAD `9a9e3f717…`).
+Architecture Lock: `YES` at
+[`UOE-unified-order-experience.md`](../../capabilities/UOE-unified-order-experience.md).
+This evaluation document remains discovery evidence; it is not a competing CURRENT architecture.
 
 ## Binding authorities reused (unchanged)
 
@@ -459,12 +466,12 @@ provider). UI must not upgrade bias into confirmed Deliver to.
 | Item | Status |
 |---|---|
 | Exact Menu schedule preview API | Deferred in V1 (UOE-DR-02) — not a Fit blocker |
-| Pre-checkout Takeaway eligibility / mode-aware cart evaluate | Contracts specified (UOE-DR-05 + GP-01…GP-04) — Fit evaluation recommends; formal PASS NOT_GRANTED |
-| Future IMP identity + vs IMP-036K/D-383 sequencing | **DEFERRED** (UOE-DR-01) — blocks implementation authorization, not Fit recommendation |
+| Pre-checkout Takeaway eligibility / mode-aware cart evaluate | Contracts specified (UOE-DR-05 + GP-01…GP-04) — Founder Fit **PASS** recorded |
+| Future IMP identity + vs IMP-036K/D-383 sequencing | **DEFERRED** (UOE-DR-01) — blocks implementation authorization, not Fit PASS |
 | Schedule-capable entitlement + Checkout defect classification | **RECORDED** (UOE-DR-06 ACCEPTED + ACCEPTED_CAPABILITY_CONFORMANCE_DEFECT; separate corrective preferred; NOT_AUTHORIZED) |
-| CART provenance storage mechanism | **PROPOSED_FOR_LOCK** in `13-…` §2 — `ADDITIVE_NULLABLE_CONTEXT_FIELDS_PLUS_SERVER_CONTEXT_DIGEST`; Lock **NOT_GRANTED** |
-| WhatsApp Meta template body vs variable | **ASSIGNED** Content QA + Design Readiness (`13-…` §5); no invented Meta templates; optional/noop-safe |
-| Formal Fit PASS / lock | **NOT_GRANTED** — Lock proposal decision-ready; agent must not self-grant |
+| CART provenance storage mechanism | **LOCKED** — `ADDITIVE_NULLABLE_CONTEXT_FIELDS_PLUS_SERVER_CONTEXT_DIGEST` in capability architecture §2 |
+| WhatsApp Meta template body vs variable | **LOCKED ASSIGNMENT** Content QA + Design Readiness (capability architecture §5); no invented Meta templates; optional/noop-safe |
+| Formal Fit PASS / lock | **PASS / LOCKED** — Founder 2026-10-23 at HEAD `9a9e3f717…` |
 | Any pressure to rename `PICKUP` domain value | STOP — out of scope |
 
 ## Independent Architecture Fit evaluation (2026-10-23)
@@ -473,9 +480,10 @@ provider). UI must not upgrade bias into confirmed Deliver to.
 EVALUATION_SCOPE = Approved PD-UOE-CANDIDATE-3 + XD-UOE-CANDIDATE-3 contracts (docs-only)
 APPLICATION_CODE_MUTATION = NO
 NEW_ORDER_OR_PAYMENT_AUTHORITY = NO
-FORMAL_ARCHITECTURE_FIT_PASS = NOT_GRANTED
-ARCHITECTURE_LOCK = NO
+FORMAL_ARCHITECTURE_FIT_PASS = PASS
+ARCHITECTURE_LOCK = YES
 RECOMMENDED_VARIANT = PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
+REVIEWED_ARCHITECTURE_CONTRACT_HEAD = 9a9e3f71789a4cce5141eb88b3ab606f72b2c54e
 ```
 
 ### A. Pre-checkout eligibility
@@ -495,10 +503,10 @@ RECOMMENDED_VARIANT = PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
 |---|---|---|
 | Takeaway without Delivery coordinates | Today `evaluateCart` returns `REQUIRES_FULFILMENT_CONTEXT` before reuse when `!location` (`cart/evaluate.ts` ~138–145) — Fit gap | **Extend** evaluate entry: Takeaway path without Delivery address; reuse **before** Delivery-only early return |
 | Unconfirmed Schedule promotion behaviour | Omit `fulfilmentTiming` while Schedule UNCONFIRMED; reject client `fulfilmentTiming=SCHEDULED` on CART evaluate with **400**; mode-gated Offers may apply with provisional messaging; never lock SCHEDULED-only discount at Menu; Contract A `SCHEDULED` remains capability-discovery only | **V1 lock** — AS-42–44 |
-| Delivery location HMAC | Reserved nullable column; **V1 disabled** (`delivery_location_hmac: null` in digest); primary Delivery provenance = `evaluated_priced_outlet_id` | **V1 disposition** — `13-…` §2.3 |
+| Delivery location HMAC | Reserved nullable column; **V1 disabled** (`delivery_location_hmac: null` in digest); primary Delivery provenance = `evaluated_priced_outlet_id` | **V1 disposition** — capability architecture §2.3 |
 | Checkout Snapshot precedence | `tryReusableCheckoutEvaluation` already correct when reached; must become reachable for Takeaway open Checkouts without Delivery `location` | **Mandatory** — AS-29 |
 | Missing commercial-evaluation evidence | Today missing evaluation / `catch → null` falls through to browse quote | **Fail-closed** — AS-39 / AS-45; never divergent browse money |
-| CART provenance + context-key + dedup | Mode/timing/outlet provenance required for new CART-scope persists; evaluate context key ≠ `result_fingerprint` ≠ `evaluation_context_digest` | **Required** — AS-32 / AS-46; storage mechanism **PROPOSED_FOR_LOCK** in `13-…` §2 |
+| CART provenance + context-key + dedup | Mode/timing/outlet provenance required for new CART-scope persists; evaluate context key ≠ `result_fingerprint` ≠ `evaluation_context_digest` | **Required** — AS-32 / AS-46; storage mechanism **LOCKED** in capability architecture §2 |
 | PAYMENT_PENDING preservation | Existing fulfilment/destination/timing/evaluate freezes + `cart_changed_unresolved` recovery | **Preserve** — no new server guard; browse must not mutate pending Checkout |
 
 **Tradeoff resolved:** One commercial engine (`evaluateCart` / Checkout evaluate / Snapshot). No parallel pricing service. Advisory quote ≠ seal (D-368 Menu display ≠ payable).
@@ -557,7 +565,7 @@ Architecture Lock proposal are recorded in
 | PAYMENT_PENDING freeze | PRESERVED | Browse must not call fulfilment mutations |
 | Missing evaluation fall-through | FIT GAP → fail-closed required | Prevents divergent browse payable under open Snapshot |
 | Promotion timing while UNCONFIRMED | Omit timing in Cart evaluate; reject client CART `SCHEDULED` with 400 | Prevents false SCHEDULED-only discount seal at Menu |
-| Abuse / enumeration | Rate-limit + debounce + customer-safe fields | Detailed in `13-…` §4 |
+| Abuse / enumeration | Rate-limit + debounce + customer-safe fields | Detailed in capability architecture §4; per-process residual **ACCEPTED_FOR_V1_PILOT** |
 | Concurrency | expectedRevision + generation + context-key dedup | No competing payables |
 | Accepted IMP / ADR contradiction | NONE if contracts held | UOE-DR-06 defect is conformance debt vs IMP-036I, not a new conflicting entitlement |
 
@@ -566,35 +574,41 @@ IMP-036H/I, D-378/D-379, D-361+, D-368, D-370 when Fit non-authority rules are h
 Checkout accepting-now composition is an **accepted capability conformance defect**, not a
 product entitlement conflict.
 
-### Open architecture decisions (Fit lock / later — not Product Gate returns)
+### Remaining post-Lock gates (not Product Gate returns)
 
-1. CART-scope commercial provenance persistence mechanism — **PROPOSED** in
-   [`13-architecture-lock-proposal.md`](./13-architecture-lock-proposal.md) §2
-   (`ADDITIVE_NULLABLE_CONTEXT_FIELDS_PLUS_SERVER_CONTEXT_DIGEST`); awaiting Founder Lock
-2. WhatsApp Meta template body versus variable for DR-04 label changes — **ASSIGNED** to Content QA
-   + Design Readiness (`13-…` §5); no invented templates
+1. CART-scope commercial provenance persistence mechanism — **LOCKED** in
+   [`UOE-unified-order-experience.md`](../../capabilities/UOE-unified-order-experience.md) §2
+   (`ADDITIVE_NULLABLE_CONTEXT_FIELDS_PLUS_SERVER_CONTEXT_DIGEST`); schema migration still
+   unauthorized
+2. WhatsApp Meta template body versus variable for DR-04 label changes — **LOCKED ASSIGNMENT** to
+   Content QA + Design Readiness (capability architecture §5); no invented templates
 3. Exact HTTP path strings within Contract A/B/C semantic bounds — deferred to implementation
 4. Governed remediation vehicle identity/timing for the Checkout composition defect (preferred
    separate corrective; **not authorized** here)
-5. Abuse limits / performance budgets / privacy / negative security tests — **PROPOSED** in
-   `13-…` §4; awaiting Founder Lock / Quality finalization
+5. Abuse limits / performance budgets / privacy / negative security tests — **LOCKED** in
+   capability architecture §4; Quality finalization still required; per-process residual
+   **ACCEPTED_FOR_V1_PILOT**
 
-None of the above changes the accepted product promise. If a future Fit/Design choice would
-change eligibility, pricing truth, or payment safeguards, return to Product / Experience Gate.
+None of the above changes the accepted product promise. If a future Design/implementation choice
+would change eligibility, pricing truth, or payment safeguards, return to Product / Experience Gate.
 
 ```text
-ARCHITECTURE_FIT_EVALUATION_RESULT = RECOMMENDED_VARIANT_READY
-ARCHITECTURE_LOCK_PROPOSAL = ARCH-UOE-LOCK-PROPOSAL-1
-ARCHITECTURE_LOCK_PROPOSAL_STATUS = DECISION_READY
-FORMAL_ARCHITECTURE_FIT_PASS = NOT_GRANTED
-ARCHITECTURE_LOCK = NO
+ARCHITECTURE_FIT_EVALUATION_RESULT = PASS_RECORDED
+ARCHITECTURE_LOCK_CONTRACT = ARCH-UOE-LOCK-PROPOSAL-1
+ARCHITECTURE_LOCK_STATUS = ARCHITECTURE_LOCKED
+BINDING_CAPABILITY_ARCHITECTURE = docs/platform/capabilities/UOE-unified-order-experience.md
+FORMAL_ARCHITECTURE_FIT_PASS = PASS
+ARCHITECTURE_LOCK = YES
+REVIEWED_ARCHITECTURE_CONTRACT_HEAD = 9a9e3f71789a4cce5141eb88b3ab606f72b2c54e
 ```
 
-### Architecture Lock proposal pointer
+### Architecture Lock pointer
 
-Decision-ready Lock proposal (provenance, contract bounds, abuse/perf/privacy, WhatsApp
-assignment): [`13-architecture-lock-proposal.md`](./13-architecture-lock-proposal.md).
-**Do not** treat that proposal as Fit PASS or Architecture Lock.
+Binding CURRENT capability architecture (provenance, contract bounds, abuse/perf/privacy, WhatsApp
+assignment):
+[`UOE-unified-order-experience.md`](../../capabilities/UOE-unified-order-experience.md).
+Historical proposal provenance:
+[`13-architecture-lock-proposal.md`](./13-architecture-lock-proposal.md).
 
 ## Invariants that must not regress
 
