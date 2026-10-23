@@ -85,16 +85,17 @@ freshness (incl. UPD-05 vs open #427); Gaps 1–3 register; T0 vs T1 Admin-entry
 REVIEW_WAVE = WXE_PD_XD_REFINEMENT_R2_INDEPENDENT
 PRODUCT_REVIEWED_COMMIT = c7564db307fd6242d87fd63e577b0f7e27282948
 PRODUCT_VERDICT = RECOMMENDED_PASS
-EXPERIENCE_REVIEWED_COMMIT = c7564db307fd6242d87fd63e577b0f7e27282948
-EXPERIENCE_VERDICT = RECOMMENDED_STOP
-FOLLOW_ON_DOC_FIXES = same-scope repair after Experience STOP (P1-COMM conditionalization, GJ-W2/W14 depth, AS-23/24, metadata)
+EXPERIENCE_FIRST_PASS_COMMIT = c7564db307fd6242d87fd63e577b0f7e27282948
+EXPERIENCE_FIRST_PASS_VERDICT = RECOMMENDED_STOP
+EXPERIENCE_REREVIEW_COMMIT = 6160a35462acc8f8b4073218815c524395e7e432
+EXPERIENCE_REREVIEW_VERDICT = RECOMMENDED_PASS
 FORMAL_PRODUCT_DEFINITION_GATE = NOT_GRANTED
 FORMAL_EXPERIENCE_GATE = NOT_GRANTED
 ```
 
-Product reviewer: ready for Founder PD/XD decision sitting with UPD-02/03/06 still Founder-owned.
-Experience reviewer: prior blockers mostly closed; remaining doc deficits repaired in follow-on commit
-(exact HEAD after push supersedes for Experience re-check).
+Product reviewer: ready for Founder PD/XD decision sitting; UPD-02/03/06 remain Founder-owned.
+Experience first pass STOP → same-scope doc repair → re-review PASS at `6160a3546`.
+No formal Gate PASS granted by any agent.
 
 | Finding theme (prior) | Severity | Disposition after refinement |
 |---|---|---|
