@@ -32,6 +32,8 @@ IMPLEMENTATION_AUTHORIZED = NO
 PRE_GTM_EXPERIENCE_AUDIT = NOT_PERFORMED
 ```
 
+<!-- CI_HEAD_NOTE: inventory refresh on package path set -->
+
 This package converts the completed Workforce-wide UX audit, independent amendments, and
 Founder-approved **desktop-first** design direction into one coherent PD-2 candidate for
 Founder milestone review. It covers **all implemented** Workforce Hub, Operations, Store, and
