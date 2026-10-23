@@ -5,9 +5,13 @@
 ```text
 CANDIDATE_ID = XD-UOE-CANDIDATE-3
 SUPERSEDES = XD-UOE-CANDIDATE-2
-STATUS = EXPERIENCE_DEFINITION_CANDIDATE
-AUTHORITY = NON_AUTHORITATIVE
-EXPERIENCE_GATE = NOT_PERFORMED
+STATUS = EXPERIENCE_GATE_PASS
+AUTHORITY = NON_AUTHORITATIVE_DISCOVERY_DRAFT
+EXPERIENCE_GATE_EXECUTION = PERFORMED
+EXPERIENCE_GATE_RESULT = PASS
+EXPERIENCE_DEFINITION = XD-UOE-CANDIDATE-3
+FOUNDER_GATE_DECISION_REFERENCE = https://github.com/nivedhya11/BobaBear/pull/424#issuecomment-6365686428
+REVIEWED_PACKAGE_HEAD = dbe0786280fac4ba80ba727c7510b8c23da69ed1
 EXPERIENCE_CRITICALITY = X3
 LANG = LANG-1
 VARIANT = PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
@@ -207,7 +211,7 @@ Anonymous Menu browsing remains allowed throughout.
 | Split geo state | Refinement D — one owner |
 | Takeaway place opaque until Checkout | DR-05 eligibility read |
 | Closed-now false denial of Schedule Takeaway | GP-01 Now vs Schedule-capable (Menu **and** Checkout composition) |
-| Checkout Mode→Now-list→bind→evaluate(ASAP)→Timing | AS-34 Checkout contract (candidate defect; UOE-DR-06) |
+| Checkout Mode→Now-list→bind→evaluate(ASAP)→Timing | AS-34 Checkout contract; UOE-DR-06 **ACCEPTED_CAPABILITY_CONFORMANCE_DEFECT** (remediation not authorized here) |
 | Empty-cart “no outlets” | GP-03 state split |
 | Fee surprise at Checkout | DR-05 mode/timing-sensitive cart evaluate + impact banner + Review |
 | Provisional Offer looks final at Menu | AS-43–44 provisional messaging; no Menu slot/final-promo guarantee |

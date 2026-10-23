@@ -3,17 +3,22 @@
 # Template completeness addendum (canonical PD-2 / EXP-1 fields)
 
 ```text
-STATUS: DISCOVERY_DRAFT_ADDENDUM
-AUTHORITY: NON_AUTHORITATIVE
-GATE_EXECUTION: NOT_PERFORMED
+STATUS: GATE_FIELDS_RECONCILED
+AUTHORITY: NON_AUTHORITATIVE_DISCOVERY_DRAFT
+PRODUCT_DEFINITION_GATE_EXECUTION: PERFORMED
+PRODUCT_DEFINITION_GATE_RESULT: PASS
+EXPERIENCE_GATE_EXECUTION: PERFORMED
+EXPERIENCE_GATE_RESULT: PASS
+FOUNDER_GATE_DECISION_REFERENCE: https://github.com/nivedhya11/BobaBear/pull/424#issuecomment-6365686428
+REVIEWED_PACKAGE_HEAD: dbe0786280fac4ba80ba727c7510b8c23da69ed1
 VARIANT: PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
 PACKAGE: UOE-CANDIDATE-3
 GATE_PRECISION_REVISION: YES
 ```
 
-This addendum supplies canonical template fields that must accompany
-`PD-UOE-CANDIDATE-3` / `XD-UOE-CANDIDATE-3` before formal gate evaluation.
-It does not execute or pass any gate.
+This addendum supplies canonical PD-2 / EXP-1 template fields for
+`PD-UOE-CANDIDATE-3` / `XD-UOE-CANDIDATE-3`. Product Definition and Experience gates are
+recorded PASS per Founder decision. Architecture Fit PASS is not granted here.
 
 ## A. Acceptance slicing dispositions
 
@@ -75,8 +80,8 @@ It does not execute or pass any gate.
 | Workforce primary Takeaway label won’t harm ops precision | ASSUMPTION | Founder refinement A | Medium | Ops feedback; collection verbs retained |
 | Pre-checkout server eligibility + mode-sensitive cart quote is acceptable without Menu exact slots | PRODUCT_DECISION (candidate) | Founder review recommendations DR-02/05 | High if mis-implemented as second seal | Fit contracts + AS-24–40 |
 | Implemented-channel same-meaning is sufficient vs full channel rewrite | PRODUCT_DECISION (candidate) | Founder DR-04 | Medium | AS-28 content QA |
-| Schedule-capable presentation without guaranteeing windows is acceptable | PRODUCT_DECISION (candidate) | GP-01 / UOE-DR-06 | High if copy overclaims | Experience Gate + Content QA |
-| Checkout Mode→accepting-now-list→bind→evaluate(ASAP)→Timing is a defect vs IMP-036I | INFERRED / CONFLICT | AC-036I-040 / FD-036I-15 (for); US-036I-002 “IMP-036H rules” (against); code composition VERIFIED | High | UOE-DR-06 Founder classification |
+| Schedule-capable presentation without guaranteeing windows is acceptable | PRODUCT_DECISION | UOE-DR-06 ACCEPTED (Founder 2026-10-23) | High if copy overclaims | Content QA after Design Readiness |
+| Checkout Mode→accepting-now-list→bind→evaluate(ASAP)→Timing is a defect vs IMP-036I | ACCEPTED_CAPABILITY_CONFORMANCE_DEFECT | UOE-DR-06 Founder classification; AC-036I-040 / FD-036I-15; code composition VERIFIED (`pickup-options.ts`, CheckoutClient bind→evaluate) | High | Separately scoped corrective preferred; implementation NOT_AUTHORIZED here |
 
 ## D. Current-state experience evidence (repository)
 
@@ -101,7 +106,7 @@ It does not execute or pass any gate.
 | PAYMENT_PENDING blocks fulfilment mutations | `server/checkout/fulfilment.ts` (existing) |
 | delivery-context key (tab-scoped sessionStorage) | `boba.delivery-context.v1` |
 
-## E. Canonical Product Definition Gate block (pre-gate draft)
+## E. Canonical Product Definition Gate block (PERFORMED / PASS)
 
 ```text
 PRODUCT_DEFINITION_GATE
@@ -112,30 +117,35 @@ Change Risk: CR2 (CR3 at checkout/payment boundaries)
 Linked Experience Definition: XD-UOE-CANDIDATE-3
 Business Outcome: defined in 01-/02-
 Primary Personas: defined in 01-
-Journeys Defined: J1–J7 candidate
-Story Map Complete: YES (candidate) in 04-
+Journeys Defined: J1–J7
+Story Map Complete: YES in 04-
 Acceptance Slice Defined: YES — see §A slicing dispositions
-Happy Paths Defined: YES (candidate)
-Alternate Paths Defined: YES (candidate) — includes Schedule-capable Takeaway when closed NOW (Menu + Checkout)
-Empty / First-Use States Defined: YES (candidate) — No Cart / Empty Cart / no eligible / error (GP-03)
-Error / Recovery Paths Defined: YES (candidate) — AS-34–38 / AS-41 Checkout Schedule/outlet recovery; AS-39 / AS-45 missing evaluation evidence; AS-43 provisional Offer honesty
+Happy Paths Defined: YES
+Alternate Paths Defined: YES — includes Schedule-capable Takeaway when closed NOW (Menu + Checkout)
+Empty / First-Use States Defined: YES — No Cart / Empty Cart / no eligible / error (GP-03)
+Error / Recovery Paths Defined: YES — AS-34–38 / AS-41 Checkout Schedule/outlet recovery; AS-39 / AS-45 missing evaluation evidence; AS-43 provisional Offer honesty
 Authorization Variants Defined: YES — guest browse + cart-credential eligibility/evaluate; authenticated Checkout for exact windows + timing-aware pickup-options; guest empty/no-cart browse without UNAVAILABLE; open-Checkout reuse authority vs browse intent; no silent Checkout bind
 Cross-Scope Scenarios Defined: N/A — no new cross-tenant admin scope
 Concurrency Considered: YES (AS-16, AS-22, AS-27, AS-29, AS-39–40, AS-46; tab-scoped GP-04)
 Destructive Actions Defined: YES (AS-20 ineligible-line disposition)
 Service / operational impact: see 03- service blueprint + §G surface table
 Quality Attribute Profile: 02- §8
-Unresolved Product Decisions: UOE-DR-01, UOE-DR-03, UOE-DR-06 (confirm GP-01)
-Architecture Conflicts: NONE identified against D-378/D-379/IMP-036I if Fit non-authority rules held; STOP on second commercial authority, client-invented eligibility, Schedule denied solely because closed NOW (incl. Checkout pickup-options), or divergent browse quote vs open Checkout Snapshot / missing-evidence fall-through
-PRODUCT_DEFINITION_GATE_EXECUTION: NOT_PERFORMED
-Gate Result: NOT_PERFORMED
+Unresolved Product Decisions: NONE material to the PASS — UOE-DR-01 identity/sequencing DEFERRED (blocks impl auth only); exact microcopy / Meta body-vs-variable / provenance storage / performance budgets / instrumentation schema deferred to later gates without changing the approved promise
+Architecture Conflicts: NONE identified against D-378/D-379/IMP-036I if Fit non-authority rules held; Checkout accepting-now composition classified ACCEPTED_CAPABILITY_CONFORMANCE_DEFECT (UOE-DR-06) — does not invalidate the product entitlement; STOP on second commercial authority, client-invented eligibility, Schedule denied solely because closed NOW, or divergent browse quote vs open Checkout Snapshot / missing-evidence fall-through
+FOUNDER_GATE_DECISION_REFERENCE: https://github.com/nivedhya11/BobaBear/pull/424#issuecomment-6365686428
+REVIEWED_PACKAGE_HEAD: dbe0786280fac4ba80ba727c7510b8c23da69ed1
+ACCEPTANCE_SCENARIOS: AS-01–AS-46
+PRODUCT_DEFINITION_GATE_EXECUTION: PERFORMED
+Gate Result: PASS
 
 Founder Recommendations Incorporated: UOE-DR-02 (defer), UOE-DR-04 (WhatsApp+in-app), UOE-DR-05 (strengthen)
+UOE-DR-06: Schedule-capable ACCEPTED; Checkout composition ACCEPTED_CAPABILITY_CONFORMANCE_DEFECT; separate corrective preferred; implementation NOT_AUTHORIZED
+UOE-DR-01: FUTURE_IMP_ID=NOT_ALLOCATED; sequencing DEFERRED; D-383 / IMP-036K unchanged
 Gate Precision: GP-01…GP-04 + Checkout contract precision + final contract completeness (AS-34–46); UOE-CANDIDATE-4 NOT_INTRODUCED
-AGENT_DISPOSITION: RECOMMENDED_READY_FOR_EVALUATION (gaps listed; not RECOMMENDED_PASS)
+PASS_SCOPE: Product specification only — not implemented behaviour, not Fit PASS, not implementation authorization
 ```
 
-## F. Canonical Experience Gate block (pre-gate draft)
+## F. Canonical Experience Gate block (PERFORMED / PASS)
 
 ```text
 EXPERIENCE_GATE
@@ -147,21 +157,24 @@ Information architecture defined: YES within bound — bar + Method/Place/Timing
 Information hierarchy defined: YES — How/Where/When; orientation ≠ Deliver to; Checkout mode authoritative when reuse
 Primary interaction defined: YES — MethodChooser / PlaceChooser / TimingChooser (07-)
 Mental model / cognitive load considered: YES — Delivery/Takeaway + Now/Schedule; propose ≠ bind; Now vs Schedule-capable Takeaway
-Friction reviewed: YES — 03- friction audit (candidate; not pre-GTM audit)
+Friction reviewed: YES — 03- friction audit (not pre-GTM audit)
 Trust-sensitive moments considered: YES — fees/quotes, pending payment, fake address/time, closed-now Schedule honesty
 Content strategy defined: YES — UX-A + LANG-1; WhatsApp+in-app (DR-04); receipts out of scope
 Error / recovery defined: YES — AS-07–11, AS-16–18, AS-20, AS-23–27, AS-29–46; Now unavailable → Schedule when server hints candidates; Checkout composition recovery (AS-34–38 / AS-41); missing evaluation fail-closed (AS-39 / AS-45); provisional Offer honesty (AS-43–44); eligibility/pickup-options error retry; PAYMENT_PENDING recovery-first
 Mobile / responsive defined: YES — AS-12; sticky strip + sheet vs desktop chrome
 Accessibility considered: YES — AS-13
 Service / operational promise aligned where applicable: YES — 03- blueprint + §G
-Performance experience considered: PARTIAL — generation/debounce/rate-limit noted in 06-; no perf budget claimed
+Performance experience considered: PARTIAL — generation/debounce/rate-limit noted in 06-; no perf budget claimed (deferred to Quality; not fabricated)
 Measurement intent defined: YES — 09- (formal Measurement Plan NOT_PERFORMED)
-Research / evidence level disclosed: FOUNDER_HEURISTIC_REVIEW + FOUNDER_REVIEW_RECOMMENDATIONS (not customer research)
-Unresolved experience decisions: UOE-DR-03 formal verdict; UOE-DR-06 GP-01 confirm; workforce admin noun table §G; UNCONFIRMED reason / provisional-offer copy variants; Meta template body-vs-variable for WhatsApp
-Result: NOT_PERFORMED
+Research / evidence level disclosed: FOUNDER_HEURISTIC_REVIEW + FOUNDER_REVIEW_RECOMMENDATIONS (not customer research; no fabricated user tests)
+Unresolved experience decisions: NONE material to the PASS — exact UNCONFIRMED / provisional-offer microcopy variants; workforce admin noun polish (§G); Meta template body-vs-variable for WhatsApp; performance budgets — owned by Design Readiness / Content QA / Quality without changing the approved experience promise
+FOUNDER_GATE_DECISION_REFERENCE: https://github.com/nivedhya11/BobaBear/pull/424#issuecomment-6365686428
+REVIEWED_PACKAGE_HEAD: dbe0786280fac4ba80ba727c7510b8c23da69ed1
+EXPERIENCE_GATE_EXECUTION: PERFORMED
+Result: PASS
 
 Pre-GTM audit: NOT_PERFORMED
-AGENT_DISPOSITION: RECOMMENDED_READY_FOR_EVALUATION (gaps listed; not RECOMMENDED_PASS)
+PASS_SCOPE: Experience definition only — not Design Readiness, not Fit PASS, not implementation authorization
 ```
 
 ## G. Refinement A — per-surface label disposition

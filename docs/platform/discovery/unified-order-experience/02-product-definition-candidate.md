@@ -5,9 +5,13 @@
 ```text
 CANDIDATE_ID = PD-UOE-CANDIDATE-3
 SUPERSEDES = PD-UOE-CANDIDATE-2
-STATUS = PRODUCT_DEFINITION_CANDIDATE
-AUTHORITY = NON_AUTHORITATIVE
-PRODUCT_DEFINITION_GATE = NOT_PERFORMED
+STATUS = PRODUCT_DEFINITION_GATE_PASS
+AUTHORITY = NON_AUTHORITATIVE_DISCOVERY_DRAFT
+PRODUCT_DEFINITION_GATE_EXECUTION = PERFORMED
+PRODUCT_DEFINITION_GATE_RESULT = PASS
+PRODUCT_DEFINITION = PD-UOE-CANDIDATE-3
+FOUNDER_GATE_DECISION_REFERENCE = https://github.com/nivedhya11/BobaBear/pull/424#issuecomment-6365686428
+REVIEWED_PACKAGE_HEAD = dbe0786280fac4ba80ba727c7510b8c23da69ed1
 FORMAL_IMP_IDENTITY = NOT_ALLOCATED
 NOT_IMP_036J = YES
 NOT_IMP_036K = YES
@@ -102,7 +106,7 @@ Takeaway” posture (GP-01) while retaining DR-02 / DR-04 / DR-05:
 | Open Checkout precedence | Open non-terminal Checkout Snapshot reuse wins over browse mode/outlet at same cart revision (AS-29 extended); missing commercial-evaluation evidence fail-closed (AS-39 / AS-45) |
 | Commercial seal | Checkout evaluate + Snapshot remain sole sealed commercial / fulfilment commitment |
 | Implemented channels | **In V1** — same-meaning Delivery / Takeaway / Now / Schedule on **in-app** and on **WhatsApp when that environment’s WhatsApp adapter is sending** (UOE-DR-04); WhatsApp may remain noop; email/SMS/push non-sending today |
-| Checkout | Authoritative outlet **confirm/bind**, exact windows, Review, pay — unchanged authorities; pickup-options **timing-aware** + bind-without-evaluate on Schedule path (GP-01 Contract C); Founder confirms defect classification under UOE-DR-06 |
+| Checkout | Authoritative outlet **confirm/bind**, exact windows, Review, pay — unchanged authorities; pickup-options **timing-aware** + bind-without-evaluate on Schedule path (GP-01 Contract C); Checkout accepting-now composition classified **ACCEPTED_CAPABILITY_CONFORMANCE_DEFECT** under UOE-DR-06 (remediation preferred separately; not authorized here) |
 | Empty / first-use | Distinguish No Cart / Empty Cart / no eligible / error (GP-03); never “no outlets” because cart has no lines |
 
 Per-surface Takeaway vs operational vocabulary: see
@@ -193,16 +197,16 @@ models (BOLA-safe; see Architecture Fit).
 - Parallel tracks **not** owned here: IMP-036J Founder UAT, ₹498 / #391B payment investigations,
   Nginx security verification
 
-## 10. Open product items for Founder
+## 10. Founder product dispositions (recorded 2026-10-23)
 
 | ID | Item | Disposition |
 |---|---|---|
-| UOE-DR-01 | Allocate future ROADMAP slice ID (not IMP-036J/K) **and** sequencing vs pending IMP-036J acceptance **and** IMP-036K (D-383 nextProductSlice). D-383 unaffected unless a new decision amends sequencing. One-active-slice rule applies. | DECISION_REQUIRED (R3) |
-| UOE-DR-02 | Exact Menu-level scheduled window preview API | **INCORPORATED — DEFER in V1** (Founder recommendation) |
-| UOE-DR-03 | Formal Product Definition Gate **and** Experience Gate verdicts on this package | Founder / process — NOT_PERFORMED |
-| UOE-DR-04 | Implemented notification-channel consistency | **INCORPORATED — WhatsApp + in-app same-meaning in V1** (Founder recommendation); email/SMS/push and unbounded rewrite remain out of scope |
-| UOE-DR-05 | Pre-checkout Takeaway eligibility + mode-sensitive Cart evaluate | **INCORPORATED — strengthen V1** (Founder recommendation); contracts in `06-…` refined by GP-01…GP-04; no second commercial authority |
-| UOE-DR-06 | Confirm Schedule-capable Takeaway presentation (no Menu slots; no guaranteed availability) **and** classify the Checkout Mode→accepting-now-list→bind→evaluate(ASAP)→Timing composition as a defect vs IMP-036I Journey-I-C / AC-036I-040 (citing also US-036I-002 “IMP-036H rules” ambiguity). Choose remediation vehicle: (a) inside future UOE IMP after DR-01, or (b) standalone GREEN/AMBER defect fix against IMP-036I/H ahead of UOE. | DECISION_REQUIRED (recommended accept Schedule-capable + defect classification; vehicle choice is Founder) |
+| UOE-DR-01 | Allocate future ROADMAP slice ID and sequencing vs IMP-036J/K (D-383) | **RECORDED — NOT_ALLOCATED; sequencing DEFERRED; D-383 / IMP-036K unchanged; D-377 holds preserved** |
+| UOE-DR-02 | Exact Menu-level scheduled window preview API | **INCORPORATED — DEFER in V1** |
+| UOE-DR-03 | Formal Product Definition Gate **and** Experience Gate verdicts | **PERFORMED — Product Definition Gate PASS; Experience Gate PASS** ([comment 6365686428](https://github.com/nivedhya11/BobaBear/pull/424#issuecomment-6365686428)) |
+| UOE-DR-04 | Implemented notification-channel consistency | **INCORPORATED — WhatsApp + in-app same-meaning in V1**; email/SMS/push and unbounded rewrite remain out of scope |
+| UOE-DR-05 | Pre-checkout Takeaway eligibility + mode-sensitive Cart evaluate | **INCORPORATED — strengthen V1**; contracts in `06-…`; no second commercial authority |
+| UOE-DR-06 | Schedule-capable Takeaway + Checkout composition classification / remediation vehicle | **ACCEPTED** Schedule-capable Takeaway (no Menu slots; no guaranteed future time). Checkout Mode→accepting-now-list→bind→evaluate(ASAP)→Timing = **ACCEPTED_CAPABILITY_CONFORMANCE_DEFECT**. Preferred **separately scoped corrective** after urgent payment work; **implementation NOT_AUTHORIZED** by this decision |
 
 Companion: [`04-story-map-acceptance-scenarios.md`](./04-story-map-acceptance-scenarios.md),
 [`12-template-completeness-addendum.md`](./12-template-completeness-addendum.md).

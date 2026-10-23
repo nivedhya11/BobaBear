@@ -5,14 +5,19 @@
 ```text
 CANDIDATE_ID = ARCH-UOE-FIT-CANDIDATE-3
 SUPERSEDES = ARCH-UOE-FIT-CANDIDATE-2
-STATUS = ARCHITECTURE_FIT_CANDIDATE_ONLY
-AUTHORITY = NON_AUTHORITATIVE
-FORMAL_ARCHITECTURE_FIT = NOT_PERFORMED
+STATUS = ARCHITECTURE_FIT_EVALUATION_PERFORMED
+AUTHORITY = NON_AUTHORITATIVE_DISCOVERY_DRAFT
+ARCHITECTURE_FIT_EVALUATION = PERFORMED
+ARCHITECTURE_FIT_RECOMMENDATION = PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
+FORMAL_ARCHITECTURE_FIT_PASS = NOT_GRANTED
 ARCHITECTURE_LOCKED = NO
-PREREQUISITE_GATES = Product Definition Gate + Experience Gate (neither formally passed)
+DESIGN_READINESS_PASS = NO
+IMPLEMENTATION_AUTHORIZED = NO
+PREREQUISITE_GATES = Product Definition Gate PASS + Experience Gate PASS (recorded 2026-10-23)
+FOUNDER_GATE_DECISION_REFERENCE = https://github.com/nivedhya11/BobaBear/pull/424#issuecomment-6365686428
+REVIEWED_PACKAGE_HEAD = dbe0786280fac4ba80ba727c7510b8c23da69ed1
 VARIANT = PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
 GATE_PRECISION_REVISION = YES
-IMPLEMENTATION_AUTHORIZED = NO
 ```
 
 ## Fit summary
@@ -35,10 +40,10 @@ renames, or a second commercial authority **if and only if**:
 9. `PAYMENT_PENDING` isolation and Snapshot/payment authorities are unchanged
 10. WhatsApp remains optional / may be noop; DR-04 does not claim it is active in every environment
 
-**Candidate fit verdict:** Candidate contracts specified for Founder-strengthened V1 + gate
-precision.
-**Formal Fit:** `NOT_PERFORMED`. Fit may be evaluated after Product/Experience gates; it must not
-finally PASS/lock without those gates (X2/X3 rule).
+**Fit evaluation:** Independent documentation-only evaluation performed after Product Definition
+Gate PASS and Experience Gate PASS (X2/X3 prerequisite satisfied).
+**Recommended variant:** `PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1` (Contracts A/B/C/D below).
+**Formal Fit PASS:** `NOT_GRANTED` (agent must not self-grant). Architecture Lock: `NO`.
 
 ## Binding authorities reused (unchanged)
 
@@ -62,7 +67,7 @@ finally PASS/lock without those gates (X2/X3 rule).
 |---|---|---|
 | ASAP pickup eligibility requires accepting-now | `pickup-eligibility.ts` (`effectiveState !== "accepting"` → not eligible) | Accepted IMP-036H Now path |
 | Empty cart → ASAP pickup list `[]` | `listEligiblePickupOutletsForCheckout` early return | Accepted; GP-03 presentation debt |
-| `listCheckoutPickupOptions` always uses accepting-now list | `pickup-options.ts` → `listEligiblePickupOutletsForCheckout` only | **Candidate Checkout composition defect** vs IMP-036I Journey-I-C / AC-036I-040 (Founder confirms under UOE-DR-06; US-036I-002 “IMP-036H rules” precondition is the opposing reading) |
+| `listCheckoutPickupOptions` always uses accepting-now list | `pickup-options.ts` → `listEligiblePickupOutletsForCheckout` only | **ACCEPTED_CAPABILITY_CONFORMANCE_DEFECT** (UOE-DR-06) vs IMP-036I Journey-I-C / AC-036I-040; remediation preferred separately; implementation NOT_AUTHORIZED here |
 | CheckoutClient Takeaway composition | Mode → `listCheckoutPickupOptions` → select → `setCheckoutFulfilment(PICKUP, outlet)` → **`evaluateCheckout`** (timing null→`ASAP` → `assertPickupOutletEligible`) → Timing (`chooseFulfilmentMode` / `continuePickupWithOutlet` / `openTiming`) | Accepting-now gate applied **twice** (list + post-bind evaluate) before Schedule can be chosen |
 | ASAP merchandise check denies current-schedule | `listEligiblePickupOutletsForCheckout` → `cartMerchandiseFulfilableAtOutlet` without `ignoreCurrentScheduleDenial` | Schedule-capable list must not reuse that denial; SCHEDULED domain path uses `ignoreCurrentScheduleDenial: true` |
 | NO_TIMES copy offers ASAP unconditionally | `scheduled-customer.ts` empty windows message | AS-37 evidence — Now offer only if accepting-now still eligible |
@@ -252,12 +257,13 @@ PURPOSE: Server-authoritative Takeaway outlet options on an owned Checkout befor
   and a Schedule-viable bind→windows→evaluate→prepare sequence
 AUTHORITY: Compose existing ASAP pickup eligibility + scheduled-pickup profile foundations
 NOT AUTHORITY FOR: Menu exact slots; inventing future availability; silent bind; new lifecycle states
-DEFECT_EVIDENCE (candidate — Founder confirms under UOE-DR-06):
+DEFECT_CLASSIFICATION (UOE-DR-06 ACCEPTED_CAPABILITY_CONFORMANCE_DEFECT):
   (1) listCheckoutPickupOptions accepting-now-only
   (2) continuePickupWithOutlet → evaluateCheckout under default ASAP (assertPickupOutletEligible)
   Domain Schedule path already exists on evaluate/prepare/bind via assertScheduledPickupProfile.
   Canonical for: AC-036I-040 / FD-036I-15 (current pause ≠ unavailable tomorrow).
-  Canonical against / ambiguous: US-036I-002 precondition “eligible pickup outlet path (IMP-036H rules)”.
+  US-036I-002 “IMP-036H rules” ambiguity resolved by Founder defect classification.
+  Remediation: preferred separately scoped corrective after urgent payment work; NOT_AUTHORIZED here.
 ```
 
 #### Exact eligible-Checkout journey — Scheduled Takeaway when closed now but schedule-capable (AS-34 / AS-41)
@@ -308,7 +314,7 @@ no silent bind from browse.
 
 Distinguish:
 
-- **Candidate defect evidence (code-verified composition)** — accepting-now-only list **and** post-bind evaluate-before-timing; classification vs accepted IMP-036I confirmed under UOE-DR-06
+- **Accepted defect evidence (code-verified composition)** — accepting-now-only list **and** post-bind evaluate-before-timing; UOE-DR-06 = ACCEPTED_CAPABILITY_CONFORMANCE_DEFECT
 - **Future UX improvements** — compact chrome, UNCONFIRMED copy polish, pre-checkout eligibility (DR-05) — not required to prove the composition defect exists
 
 ### D. WhatsApp / notification channel scope (DR-04 — verified, non-overclaim)
@@ -445,12 +451,123 @@ provider). UI must not upgrade bias into confirmed Deliver to.
 
 | Item | Status |
 |---|---|
-| Exact Menu schedule preview API | Deferred in V1 (UOE-DR-02 incorporated) — not a Fit blocker for this variant |
-| Pre-checkout Takeaway eligibility / mode-aware cart evaluate | Contracts specified (UOE-DR-05 + GP-01…GP-04) — formal Fit still NOT_PERFORMED |
-| Future IMP identity + vs IMP-036K/D-383 sequencing | DECISION_REQUIRED (UOE-DR-01) |
-| Schedule-capable Checkout entitlement + defect classification / remediation vehicle | DECISION_REQUIRED (UOE-DR-06) |
-| Formal Fit lock | STOP until Product + Experience gates pass |
+| Exact Menu schedule preview API | Deferred in V1 (UOE-DR-02) — not a Fit blocker |
+| Pre-checkout Takeaway eligibility / mode-aware cart evaluate | Contracts specified (UOE-DR-05 + GP-01…GP-04) — Fit evaluation recommends; formal PASS NOT_GRANTED |
+| Future IMP identity + vs IMP-036K/D-383 sequencing | **DEFERRED** (UOE-DR-01) — blocks implementation authorization, not Fit recommendation |
+| Schedule-capable entitlement + Checkout defect classification | **RECORDED** (UOE-DR-06 ACCEPTED + ACCEPTED_CAPABILITY_CONFORMANCE_DEFECT; separate corrective preferred; NOT_AUTHORIZED) |
+| CART provenance storage mechanism | **OPEN_AT_FIT_LOCK** — additive columns / sibling table / `expected_components` JSON (D6 forbids rename only) |
+| WhatsApp Meta template body vs variable | **OPEN** — Design Readiness / Content QA; optional/noop-safe |
+| Formal Fit PASS / lock | **NOT_GRANTED** — evaluation ready; agent must not self-grant |
 | Any pressure to rename `PICKUP` domain value | STOP — out of scope |
+
+## Independent Architecture Fit evaluation (2026-10-23)
+
+```text
+EVALUATION_SCOPE = Approved PD-UOE-CANDIDATE-3 + XD-UOE-CANDIDATE-3 contracts (docs-only)
+APPLICATION_CODE_MUTATION = NO
+NEW_ORDER_OR_PAYMENT_AUTHORITY = NO
+FORMAL_ARCHITECTURE_FIT_PASS = NOT_GRANTED
+ARCHITECTURE_LOCK = NO
+RECOMMENDED_VARIANT = PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
+```
+
+### A. Pre-checkout eligibility
+
+| Concern | Evaluation | Disposition |
+|---|---|---|
+| Now vs Schedule-capable outlets | Compose existing ASAP accepting-now (`listEligiblePickupOutletsForCheckout` / `assertPickupOutletEligible`) with schedule-capable gates aligned to `assertScheduledPickupProfile` + merchandise `ignoreCurrentScheduleDenial: true` parity | **Feasible** — Contract A; no new aggregate |
+| Guest / cart authorization | Reuse existing cart credential (guest token and/or customer session); no `checkoutId` fabrication; ownership-exact Checkout APIs remain Checkout-only | **Feasible** — BOLA preserved |
+| Empty / no-cart distinction | Distinct `cartState` `NO_CART` \| `EMPTY_CART` with `outlets=[]`; never brand `UNAVAILABLE` solely because no lines | **Feasible** — GP-03 / AS-30 |
+| BOLA / privacy / abuse | Customer-safe outlet fields only; fingerprint + generation discard; rate-limit + debounce on eligibility reads; no hierarchy/legal dump | **Required** — no new privacy authority |
+
+**Tradeoff resolved:** Do **not** invent a Menu exact-slot preview (DR-02). Capability presentation without guaranteed windows is the accepted product promise (UOE-DR-06).
+
+### B. Mode-sensitive Cart evaluation
+
+| Concern | Evaluation | Disposition |
+|---|---|---|
+| Takeaway without Delivery coordinates | Today `evaluateCart` returns `REQUIRES_FULFILMENT_CONTEXT` before reuse when `!location` (`cart/evaluate.ts` ~138–145) — Fit gap | **Extend** evaluate entry: Takeaway path without Delivery address; reuse **before** Delivery-only early return |
+| Unconfirmed Schedule promotion behaviour | Omit `fulfilmentTiming` while Schedule UNCONFIRMED; mode-gated Offers may apply with provisional messaging; never lock SCHEDULED-only discount at Menu | **V1 lock** — AS-42–44 |
+| Checkout Snapshot precedence | `tryReusableCheckoutEvaluation` already correct when reached; must become reachable for Takeaway open Checkouts without Delivery `location` | **Mandatory** — AS-29 |
+| Missing commercial-evaluation evidence | Today missing evaluation / `catch → null` falls through to browse quote | **Fail-closed** — AS-39 / AS-45; never divergent browse money |
+| CART provenance + context-key + dedup | Mode/timing/outlet provenance required for new CART-scope persists; evaluate context key ≠ `result_fingerprint` | **Required** — AS-32 / AS-46; storage mechanism OPEN_AT_FIT_LOCK |
+| PAYMENT_PENDING preservation | Existing fulfilment/destination/timing/evaluate freezes + `cart_changed_unresolved` recovery | **Preserve** — no new server guard; browse must not mutate pending Checkout |
+
+**Tradeoff resolved:** One commercial engine (`evaluateCart` / Checkout evaluate / Snapshot). No parallel pricing service. Advisory quote ≠ seal (D-368 Menu display ≠ payable).
+
+### C. Scheduled Takeaway Checkout
+
+| Concern | Evaluation | Disposition |
+|---|---|---|
+| Timing-aware pickup-options | Current `listCheckoutPickupOptions` accepting-now-only = ACCEPTED_CAPABILITY_CONFORMANCE_DEFECT | Contract C: timing-aware listing (Schedule-capable) without writing `SCHEDULED`+null-window solely to unlock list |
+| Bind-before-final-evaluate | Current `continuePickupWithOutlet` → `evaluateCheckout` (ASAP) before Timing | Schedule path: bind outlet **without** evaluate → windows → set SCHEDULED+window → evaluate |
+| Server-issued windows | Reuse `listCheckoutScheduledWindows`; seal at evaluate; revalidate at prepare/pay | **Unchanged authority** — D-379 / ADR-019 / IMP-036I |
+| Scheduled timing + revision guards | Optimistic `expectedRevision`; existing scheduled bind revalidation | **Preserve** |
+| Final prepare/pay revalidation | `assertScheduledSnapshotStillBindable` / profile gates | **Unchanged** — no new lifecycle states |
+
+**Tradeoff resolved:** Remediation of the accepted Checkout composition defect is **preferred as a separately scoped corrective** after urgent payment work (UOE-DR-06) and is **not authorized** by this evaluation. Fit contracts still define the required composition for any eventual UOE or standalone fix. Do not create new Order or Payment authority.
+
+### D. Presentation and channels
+
+| Concern | Evaluation | Disposition |
+|---|---|---|
+| Delivery-context authority | Reuse `boba.delivery-context.v1` for confirmed geo; no second geo store | **Required** — refinement B/D |
+| Tab-scoped browsing intent | `boba.order-context.v1` presentation coordinator; sessionStorage tab-scoped; no cross-tab money/seal sync | **V1** — GP-04 |
+| WhatsApp template body-vs-variable | Optional/noop-safe adapter (verified); same-meaning when sending configured | **OPEN** for Content QA — must not invent Meta templates in discovery |
+| In-app content consistency | `customer-visible-content.ts` wording authority; Takeaway primary labels | **DR-04** |
+| Shared Workforce terminology | Primary Delivery/Takeaway; collection task verbs allowed; domain nouns not renamed (D6) | **§G surface table** |
+
+### Recommended Architecture Fit variant
+
+```text
+VARIANT = PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
+SHAPE =
+  Contract A: timing-aware pre-checkout Takeaway eligibility read (compose ASAP + scheduled foundations)
+  Contract B: mode-sensitive Cart evaluate (quote-only; reuse precedence; fail-closed; provenance/dedup)
+  Contract C: Checkout timing-aware pickup-options + bind→windows→evaluate→prepare (no new lifecycle)
+  Contract D: tab-scoped order-context + delivery-context reuse + optional WhatsApp same-meaning
+NON_GOALS =
+  Menu exact-slot API; second commercial authority; domain rename; new Order/Payment authority;
+  cross-tab seal sync; guaranteed future availability claims; WhatsApp always-on claim
+```
+
+This is the single feasible variant that satisfies the approved product/experience contracts
+without inventing aggregates, services, roles, permissions, or payment authority.
+
+### Security and financial integrity review (docs-only)
+
+| Surface | Verdict | Notes |
+|---|---|---|
+| BOLA on eligibility / pickup-options / scheduled-windows | SAFE AS DESIGNED if contracts held | Cart credentials for pre-checkout; ownership-exact Checkout APIs unchanged |
+| Client-authored money / outlets / windows | FORBIDDEN | STOP conditions retained |
+| Snapshot / Payment / prepare | UNCHANGED | D-361+; no new payment state machine |
+| PAYMENT_PENDING freeze | PRESERVED | Browse must not call fulfilment mutations |
+| Missing evaluation fall-through | FIT GAP → fail-closed required | Prevents divergent browse payable under open Snapshot |
+| Promotion timing while UNCONFIRMED | Omit timing in Cart evaluate | Prevents false SCHEDULED-only discount seal at Menu |
+| Abuse / enumeration | Rate-limit + debounce + customer-safe fields | No new privacy authority |
+| Concurrency | expectedRevision + generation + context-key dedup | No competing payables |
+| Accepted IMP / ADR contradiction | NONE if contracts held | UOE-DR-06 defect is conformance debt vs IMP-036I, not a new conflicting entitlement |
+
+**Material contradiction report:** None between the approved UOE entitlement and accepted
+IMP-036H/I, D-378/D-379, D-361+, D-368, D-370 when Fit non-authority rules are held. The
+Checkout accepting-now composition is an **accepted capability conformance defect**, not a
+product entitlement conflict.
+
+### Open architecture decisions (Fit lock / later — not Product Gate returns)
+
+1. CART-scope commercial provenance persistence mechanism (additive columns vs sibling table vs `expected_components` JSON)
+2. WhatsApp Meta template body versus variable for DR-04 label changes
+3. Exact HTTP path strings within Contract A/B/C semantic bounds
+4. Governed remediation vehicle identity/timing for the Checkout composition defect (preferred separate corrective; **not authorized** here)
+
+None of the above changes the accepted product promise. If a future Fit/Design choice would
+change eligibility, pricing truth, or payment safeguards, return to Product / Experience Gate.
+
+```text
+ARCHITECTURE_FIT_EVALUATION_RESULT = RECOMMENDED_VARIANT_READY
+FORMAL_ARCHITECTURE_FIT_PASS = NOT_GRANTED
+ARCHITECTURE_LOCK = NO
+```
 
 ## Invariants that must not regress
 

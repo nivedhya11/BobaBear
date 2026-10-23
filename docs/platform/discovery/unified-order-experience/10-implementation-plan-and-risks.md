@@ -6,9 +6,13 @@
 CANDIDATE_ID = IP-UOE-CANDIDATE-3
 SUPERSEDES = IP-UOE-CANDIDATE-2
 STATUS = PLAN_CANDIDATE_ONLY
-AUTHORITY = NON_AUTHORITATIVE
+AUTHORITY = NON_AUTHORITATIVE_DISCOVERY_DRAFT
 IMPLEMENTATION_AUTHORIZED = NO
 FORMAL_IMP_IDENTITY = NOT_ALLOCATED
+UOE_DR_01 = NOT_ALLOCATED_SEQUENCING_DEFERRED
+PRODUCT_DEFINITION_GATE = PASS
+EXPERIENCE_GATE = PASS
+ARCHITECTURE_FIT_PASS = NOT_GRANTED
 PREFERRED_SHAPE = ONE_FUTURE_IMP_WITH_THREE_TRANCHES
 VARIANT = PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
 GATE_PRECISION_REVISION = YES
@@ -96,18 +100,19 @@ No conversion lift promised.
 | D1 | IMP-036H/I accepted contracts | Dep | Reuse; do not reopen |
 | D2 | delivery-context + LocationSelector | Dep | Extend, don’t fork |
 | D3 | listCheckoutScheduledWindows(checkoutId) | Dep | Checkout-bound exact times |
-| D4 | Future ROADMAP ID vs IMP-036J/K | Dep | UOE-DR-01 |
+| D4 | Future ROADMAP ID vs IMP-036J/K | Dep | UOE-DR-01 NOT_ALLOCATED / sequencing DEFERRED |
+| D6 | Checkout composition defect remediation | Dep | UOE-DR-06 ACCEPTED_CAPABILITY_CONFORMANCE_DEFECT; preferred separate corrective; NOT_AUTHORIZED here |
 | D5 | ASAP pickup eligibility + scheduled-pickup profile + evaluateCart | Dep | Reuse for DR-05 reads/quotes |
 
 ## Authorization wall
 
 ```text
 NO implementation tranche may start without:
-  Product Definition Gate PASS
-  Experience Gate PASS
-  Architecture Fit PASS + lock as required
+  Product Definition Gate PASS          ← recorded PASS (2026-10-23)
+  Experience Gate PASS                  ← recorded PASS (2026-10-23)
+  Architecture Fit PASS + lock as required  ← evaluation recommended; PASS NOT_GRANTED
   Design Readiness PASS
   Quality / Test Plan finalized
   Measurement Plan finalized (X3)
-  Explicit future IMP identity + implementation authorization
+  Explicit future IMP identity + implementation authorization  ← UOE-DR-01 still NOT_ALLOCATED
 ```

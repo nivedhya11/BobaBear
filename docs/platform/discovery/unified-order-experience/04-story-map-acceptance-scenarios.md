@@ -58,7 +58,7 @@ States to cover where relevant: default / loading / empty / selected / disabled 
 
 **Defect vs improvement:** AS-34 / AS-41 prove remediation of the **candidate Checkout composition
 defect** (accepting-now-only list **and** post-bind `evaluateCheckout` under default ASAP before
-Timing; Founder confirms classification under UOE-DR-06). AS-35–AS-38 are recovery / invariant
+Timing; UOE-DR-06 classifies this as ACCEPTED_CAPABILITY_CONFORMANCE_DEFECT). AS-35–AS-38 are recovery / invariant
 proofs around that path. AS-39–AS-40 / AS-45–46 prove cart-evaluate Snapshot precedence /
 missing-evidence fail-closed + fingerprint/dedup. AS-42–44 prove timing-sensitive advisory
 quotes / provisional Offers without Menu guarantees. Compact chrome polish remains future UX
