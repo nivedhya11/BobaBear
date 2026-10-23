@@ -77,10 +77,14 @@ export function OperationsDeliveryConsequenceDialog(
 
     const focusables = () =>
       Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+    const focusDialogShell = () => {
+      dialog.focus();
+    };
     const initial = focusables();
     const preferred =
       initial.find((el) => el.getAttribute("data-dialog-primary") === "true") ?? initial[0];
-    preferred?.focus();
+    if (preferred) preferred.focus();
+    else focusDialogShell();
 
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -92,7 +96,14 @@ export function OperationsDeliveryConsequenceDialog(
       }
       if (event.key !== "Tab") return;
       const list = focusables();
-      if (list.length === 0) return;
+      // While submitting, buttons are disabled — keep Tab inside the dialog shell so the
+      // operator cannot keyboard-navigate into the queue and change Order mid-command.
+      if (list.length === 0) {
+        event.preventDefault();
+        event.stopPropagation();
+        focusDialogShell();
+        return;
+      }
       const first = list[0];
       const last = list[list.length - 1];
       const active = document.activeElement;
@@ -113,6 +124,16 @@ export function OperationsDeliveryConsequenceDialog(
     // eslint-disable-next-line react-hooks/exhaustive-deps -- open-scoped focus trap
   }, []);
 
+  useEffect(() => {
+    if (!props.pending) return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const active = document.activeElement;
+    if (!active || !dialog.contains(active) || (active as HTMLElement).hasAttribute("disabled")) {
+      dialog.focus();
+    }
+  }, [props.pending]);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
       <div
@@ -121,7 +142,8 @@ export function OperationsDeliveryConsequenceDialog(
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
-        className="flex max-h-[90vh] w-full max-w-lg flex-col gap-4 overflow-y-auto rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface,#fff)] p-6 shadow-xl"
+        tabIndex={-1}
+        className="flex max-h-[90vh] w-full max-w-lg flex-col gap-4 overflow-y-auto rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface,#fff)] p-6 shadow-xl outline-none"
         data-testid="delivery-consequence-dialog"
         data-delivery-consequence-action={props.action}
       >
