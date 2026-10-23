@@ -74,5 +74,10 @@ npm run origin-trust:verify
 ```
 
 Container scanning uses a **pinned Trivy OSS binary** (`scripts/run-trivy.mjs`) to
-**build and scan V1 production runtime images** (including base/OS layers), rather than
-`aquasecurity/trivy-action`, after 2026 Actions tag-compromise advisories. CI is the durable gate.
+**build and scan V1 production runtime images** (including base/OS layers and
+`--image-config-scanners misconfig` for image USER / DS-0002), rather than
+`aquasecurity/trivy-action`, after 2026 Actions tag-compromise advisories. Ignores are
+register-backed, image-scoped, and expiry-enforced. See
+[`proposals/R3-postgres-host-publish-isolation.md`](./proposals/R3-postgres-host-publish-isolation.md)
+for the separate host-publish networking proposal (not applied by the scanner gate).
+CI is the durable gate.
