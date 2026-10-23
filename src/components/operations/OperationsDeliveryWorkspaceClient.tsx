@@ -100,7 +100,9 @@ export function OperationsDeliveryWorkspaceClient() {
       limit: 50,
       cursor: requestCursor,
     });
-    if (generation !== loadMoreGenerationRef.current) return;
+    if (generation !== loadMoreGenerationRef.current) {
+      return;
+    }
     setLoadingMore(false);
     if (!result.ok) {
       // Keep already-loaded queue + selection; surface recoverable retry.
