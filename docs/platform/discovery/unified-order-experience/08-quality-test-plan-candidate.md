@@ -47,7 +47,7 @@ security/negative-test authority is the **binding capability architecture**
 | 4 | Integration | YES | Client ↔ eligibility ↔ evaluate ↔ checkout/pickup/scheduled APIs |
 | 5 | Database | YES when schema authorized | CART provenance columns/digest persistence — **schema not authorized yet**; plan tests for when authorized |
 | 6 | HTTP / API | YES | Allowlist 400s; 429; problem codes; credential scope |
-| 7 | Authorization / security | YES | Full §4.4 suite + BOLA |
+| 7 | Authorization / security | YES | Full §4.4 suite + SEC-BOLA-CHECKOUT (capability §3.5 ownership-exact Checkout paths) |
 | 8 | Concurrency | YES | Genuine overlapping ops; multi-tab boundaries |
 | 9 | Recovery / idempotency | YES | PAYMENT_PENDING; missing evidence; window expiry; retries |
 | 10 | Accessibility | YES | AS-12/13 + Design Readiness a11y |
@@ -59,65 +59,78 @@ security/negative-test authority is the **binding capability architecture**
 
 ## 2. Verification matrix — AS-01…AS-46 + Contracts A–D
 
-Status for every row: **PLANNED**. Owner = future authorized implementation tranche unless noted.
+Status for every row: **PLANNED** (none executed under this package). Canonical scenario titles from
+`04-story-map-acceptance-scenarios.md`. Owner = future authorized implementation tranche unless noted.
 
-| Scenario | Contract | Risk | Verification layer(s) | Planned evidence | Negative case | Owner / dependency |
+| Scenario (canonical `04-…` title) | Contract | Risk | Verification layer(s) | Planned evidence | Negative case | Owner / dependency |
 |---|---|---|---|---|---|---|
-| AS-01 Missing mode/place/time | D | X3 | Component, E2E | Bar CTAs; orientation ≠ Deliver to | Orientation styled as Deliver to | T3 / Design |
-| AS-02 Delivery path | B, D | CR2 | Integration, HTTP | Serviceability + evaluate Delivery | Invented SERVICEABLE | T2–T3 |
-| AS-03 Takeaway path | A, B, D | CR2 | Integration, HTTP | Eligibility + evaluate with outlet | Client-invented outlets | T2–T3 |
-| AS-04 Now timing | B, C | CR2 | Domain, Integration | ASAP path; Now disable reasons | Now offered when not accepting-now | T2 |
-| AS-05 AUTO_SELECT propose | A, C | CR2 | Domain, Component | Propose ≠ bind; per-timing AUTO_SELECT | Silent bind from propose | T2–T3 |
-| AS-06 Multi-outlet select | A, C | CR2 | Component, Integration | Customer select; invalid → reselect | Keep invalid outlet payable | T2–T3 |
-| AS-07 Unsupported address | B, D | CR2 | Integration | Known·not deliverable | Fake deliverable | T2 |
-| AS-08 Closed-now Schedule-capable | A, C | CR2 | Domain, Integration, HTTP | Schedule-capable list; Menu+Checkout | Deny solely because closed NOW | T2 — **Checkout code path depends on UOE-DR-06 remediation auth** |
-| AS-09 Mode switch impact | B, D | CR2 | Component, Integration | ImpactBanner; line disposition | Silent keep ineligible lines | T3 |
-| AS-10 Checkout windows | C | CR2 | Integration, HTTP | Server windows only | Client-authored slots | T2 — DR-06 for Checkout composition |
-| AS-11 Window expiry | C | CR3 | Recovery, Integration | Reselect; no stale pay | Pay on expired window | T2 |
-| AS-12 Responsive bar | D | X3 | Component, A11y | Sticky vs header | Unusable narrow targets | T3 |
-| AS-13 Keyboard / SR | D | X3 | A11y | Focus trap; names | Raw enums in names | T3 |
-| AS-14 Address change | B | CR2 | Integration | Revalidate serviceability | Duplicate geo authority | T3 |
-| AS-15 Auth/session | A, B | CR2 | Auth, Integration | Revalidate; merge rules unchanged | Leak prior customer outlets | T2–T3 |
-| AS-16 Stale async | A, B | CR2 | Concurrency, Component | Generation drop | Stale overwrite money | T2–T3 |
-| AS-17 PAYMENT_PENDING | B, C | CR3 | Auth, Recovery, HTTP | Freeze + guard | Browse mutates pending | T3 + existing freeze tests |
-| AS-18 New vs prior checkout | C | CR2 | Recovery | No Snapshot bleed | Prior seal on new journey | T2–T3 |
-| AS-19 Terminology | D | X2 | Content QA, Component | Delivery/Takeaway maps | Pickup-as-peer | T1 Content QA |
-| AS-20 Ineligible lines | B | CR2 | Component, Domain | Confirm/explain removal | Silent payable keep | T3 |
-| AS-21 Revisit/reload | D | X2 | Component, E2E | Safe restore | Completed checkout bleed | T3 |
-| AS-22 Multi-tab | D | CR3 | Concurrency | Tab-scoped presentation | Cross-tab seal sync | T3 |
-| AS-23 CHECKOUT_EXPIRED | C | CR3 | Recovery | Force recovery | Pay expired | T2 |
-| AS-24 Pre-checkout eligibility | A | CR2 | HTTP, Domain, Auth | Outlets+policy; timing intent | Fabricated checkoutId | T2 |
-| AS-25 Mode-sensitive evaluate | B | CR2 | Domain, HTTP, Integration | Quote updates; ≠ Snapshot | Quote treated as seal | T2 |
-| AS-26 Proposed ≠ windows | A, C | CR2 | Component, Domain | Windows blocked until confirm | Proposed unlocks slots | T2–T3 |
-| AS-27 Eligibility/evaluate race | A, B | CR2 | Concurrency | Fingerprint/generation | Two competing payables | T2–T3 |
-| AS-28 Channel DR-04 | D | X2 | Content QA, Integration | In-app; WhatsApp when sending | Noop mapped to success/failure wrongly | T1; WhatsApp env-dependent |
-| AS-29 Open Checkout reuse | B | CR3 | Domain, Integration, DB | Reuse precedence; mode conveyed | Divergent browse money | T2 |
-| AS-30 Empty/no-cart | A | X2 | HTTP, Component | Distinct cartState | “No outlets” for empty cart | T2 |
-| AS-31 Takeaway w/o Delivery addr | B | CR2 | Domain, HTTP | Outlet quote; without outlet → context required | Brand-level invented money | T2 |
-| AS-32 CART provenance | B | CR2 | DB, Domain | Digest + context columns when schema auth | Equal-money silent wrong reuse | T2 — schema auth separate |
-| AS-33 Error ≠ UNAVAILABLE | A, C | CR2 | Component, HTTP | Calm retry | Permanent UNAVAILABLE on error | T2 — Checkout path ↔ DR-06 |
-| AS-34 Checkout Schedule composition | C | CR2 | Domain, Integration, E2E | Timing-aware list; bind w/o evaluate | Accepting-now-only list; ASAP evaluate before Timing | **Spec/tests planned; remediation NOT_AUTHORIZED (UOE-DR-06)** |
-| AS-35 Now OK / no Schedule slots | C | CR2 | Integration | Honest empty Schedule | Invented slots | T2 / DR-06 |
-| AS-36 Invalid outlet | C | CR2 | Recovery, HTTP | Force reselect | Silent keep | T2 / DR-06 |
-| AS-37 No Schedule times | C | CR2 | Integration | Recovery; Now only if eligible | Unconditional ASAP copy | T2 / DR-06 |
-| AS-38 No silent bind | A, C | CR2 | Domain, Auth | Confirm required | Browse sets pickupOutletId | T2 |
-| AS-39 Missing eval + Snapshot | B | CR3 | Domain, Recovery | Fail-closed / Snapshot-only | Browse fall-through payable | T2 |
-| AS-40 Effective mode UI | B, D | CR2 | Component | Show Checkout mode under reuse | Browse implies other payable | T3 |
-| AS-41 E2E Scheduled Takeaway | C | CR2/CR3 | Integration, E2E, Recovery | Full Contract C journey | Post-bind ASAP evaluate before Timing | **Planned; remediation NOT_AUTHORIZED** |
-| AS-42 Mode-gated Offer | B | CR2 | Domain, Integration | Mode match required | Offer without mode | T2 |
-| AS-43 Timing-gated UNCONFIRMED | B | CR2 | Domain, HTTP | Omit CART SCHEDULED; client SCHEDULED → 400 | Locked SCHEDULED-only savings at Menu | T2 |
-| AS-44 No Menu guarantee | D | X3 | Component, Content QA | No slot/final promo claim | Guaranteed window copy | T3 + Content QA |
-| AS-45 Fail-closed missing evidence | B | CR3 | Domain, Recovery | Same as AS-39 | Competing browse payable | T2 |
-| AS-46 Context-key dedup | A, B | CR2 | Concurrency, Component | Drop stale; one payable | Two payables one generation | T2–T3 |
+| AS-01 No selected mode or location (browse Menu) | D | X3 | Component, E2E | Bar CTAs; orientation ≠ Deliver to; no “no outlets” solely for no cart lines | Orientation as Deliver to; empty-cart “no outlets” | T3 / Design |
+| AS-02 Delivery → Takeaway | A, B, D | CR2 | Integration, HTTP, Component | Eligibility place chrome; mode-sensitive evaluate; line disposition | Client-invented outlets/fees | T2–T3 |
+| AS-03 Takeaway → Delivery | B, D | CR2 | Integration, HTTP | Address/serviceability; evaluate recompute | Invented SERVICEABLE | T2–T3 |
+| AS-04 Mode-dependent charges and offers | B, D | CR2 | Domain, Component, Content QA | ImpactBanner; server-only money; advisory quote | Client-authored charges; quote-as-seal | T2–T3 |
+| AS-05 One Takeaway outlet (pre-checkout + Checkout) | A, C | CR2 | Domain, Component | Per-timing AUTO_SELECT propose; confirm before bind | Silent bind from propose / Now∪Schedule union AUTO_SELECT | T2–T3 |
+| AS-06 Multiple Takeaway outlets | A, C | CR2 | Component, Integration | Explicit select; invalid → reselect | Silent nearest invent | T2–T3 |
+| AS-07 Unsupported Delivery address | B, D | CR2 | Integration | Browse OK; pay blocked + recovery | Fake deliverable | T2 |
+| AS-08 Outlet closed / Now unavailable (GP-01) | A, C | CR2 | Domain, Integration, HTTP | Schedule-capable honesty Menu+Checkout | Deny Schedule solely because closed NOW | Menu/eligibility T2; **Checkout list path blocked until UOE-DR-06 auth** |
+| AS-09 No Schedule windows | C | CR2 | Integration, Component | Empty + recovery; Now if eligible | Invented slots | T2 — Checkout empty-windows ↔ DR-06 when on Checkout composition |
+| AS-10 Cross-midnight / local-time formatting | C, D | X2 | Component, Unit | Today/Tomorrow + outlet TZ labels | Wrong TZ / midnight mislabel | T2–T3 |
+| AS-11 Window expires before payment | C | CR3 | Recovery, Integration | Reselect; no stale pay | Pay on expired window | T2 |
+| AS-12 Mobile / desktop bar | D | X3 | Component, A11y | Sticky vs header | Unusable narrow targets | T3 |
+| AS-13 Keyboard / SR / a11y | D | X3 | A11y | Focus trap; names; selected | Raw enums in names | T3 |
+| AS-14 Saved address / location change | B | CR2 | Integration | Revalidate serviceability | Duplicate geo authority | T3 |
+| AS-15 Authentication / session changes | A, B | CR2 | Auth, Integration | Revalidate; D-370 merge unchanged | Leak prior customer outlets | T2–T3 |
+| AS-16 Cart revisions and stale async responses | A, B | CR2 | Concurrency, Component | Generation drop | Stale overwrite money | T2–T3 |
+| AS-17 Pending historical payment | B, C | CR3 | Auth, Recovery, HTTP | Existing freeze + client guard route | Browse mutates pending | T3 + **existing** freeze tests (no new server guards) |
+| AS-18 New order versus previous checkout | C | CR2 | Recovery | No Snapshot bleed | Prior seal on new journey | T2–T3 |
+| AS-19 Workforce vs customer terminology | D | X2 | Content QA, Component | Delivery/Takeaway maps | Pickup-as-peer | T1 Content QA |
+| AS-20 Ineligible lines on mode switch | B | CR2 | Component, Domain | Confirm/explain removal | Silent payable keep | T3 |
+| AS-21 Revisit / reload / completed checkout | D | X2 | Component, E2E | Safe restore | Completed checkout bleed | T3 |
+| AS-22 Multi-tab divergent intent (GP-04) | D | CR3 | Concurrency | Tab-scoped presentation | Cross-tab seal sync | T3 |
+| AS-23 CHECKOUT_EXPIRED mid-schedule | C | CR3 | Recovery | Force recovery | Pay expired | T2 |
+| AS-24 Pre-checkout Takeaway eligibility read | A | CR2 | HTTP, Domain, Auth | Outlets+policy; timing intent | Fabricated checkoutId | T2 |
+| AS-25 Mode-sensitive Cart evaluate | B | CR2 | Domain, HTTP, Integration | Quote updates; ≠ Snapshot | Quote treated as seal | T2 |
+| AS-26 Proposed outlet ≠ confirmed place for windows | A, C | CR2 | Component, Domain | Windows blocked until confirm | Proposed unlocks slots | T2–T3 |
+| AS-27 Eligibility / evaluate race | A, B | CR2 | Concurrency | Fingerprint/generation | Two competing payables | T2–T3 |
+| AS-28 Implemented channel consistency (DR-04) | D | X2 | Content QA, Integration | In-app; WhatsApp when sending | Noop mapped to success/failure wrongly | T1; WhatsApp env-dependent |
+| AS-29 Open Checkout mode ≠ browse intent | B | CR3 | Domain, Integration, DB | Reuse precedence; mode conveyed | Divergent browse money | T2 |
+| AS-30 No Cart / Empty Cart eligibility (GP-03) | A | X2 | HTTP, Component | Distinct cartState | “No outlets” for empty cart | T2 |
+| AS-31 Takeaway quote without Delivery address | B | CR2 | Domain, HTTP | Outlet quote; without outlet → context required | Brand-level invented money | T2 |
+| AS-32 CART evaluation provenance | B | CR2 | DB, Domain | Digest + context columns when schema auth | Equal-money silent wrong reuse | T2 — schema auth separate |
+| AS-33 Eligibility / pickup-options error vs UNAVAILABLE | A, C | CR2 | Component, HTTP | Calm retry | Permanent UNAVAILABLE on error | T2 — Checkout pickup-options path ↔ DR-06 |
+| AS-34 Closed now but Scheduled Takeaway possible (Checkout) | C | CR2 | Domain, Integration, E2E | Timing-aware list; bind w/o evaluate | Accepting-now-only list; ASAP evaluate before Timing | **PLANNED tests; expect RED vs current Checkout until DR-06 remediation authorized** |
+| AS-35 Outlet valid for Now but no future Schedule slots | C | CR2 | Integration | Honest empty Schedule | Invented slots | T2 / **DR-06 for Checkout path** |
+| AS-36 Selected Checkout outlet becomes invalid | C | CR2 | Recovery, HTTP | Force reselect | Silent keep | T2 / **DR-06** |
+| AS-37 No Schedule times at eligible Checkout | C | CR2 | Integration | Recovery; Now only if eligible | Unconditional ASAP copy | T2 / **DR-06** |
+| AS-38 No silent Checkout binding from browse / list | A, C | CR2 | Domain, Auth | Confirm required | Browse sets pickupOutletId | T2 |
+| AS-39 Open Checkout Snapshot without retrievable commercial evaluation | B | CR3 | Domain, Recovery | Fail-closed / Snapshot-only | Browse fall-through payable | T2 |
+| AS-40 Checkout effective mode/timing in UI under reuse | B, D | CR2 | Component | Show Checkout mode under reuse | Browse implies other payable | T3 |
+| AS-41 Eligible-Checkout Scheduled Takeaway end-to-end (closed now) | C | CR2/CR3 | Integration, E2E, Recovery | Full Contract C journey; expectedRevision conflicts | Post-bind ASAP evaluate before Timing | **PLANNED; expect RED until DR-06 remediation authorized** |
+| AS-42 Mode-gated Offer on Cart advisory quote | B | CR2 | Domain, Integration | Mode match required | Offer without mode | T2 |
+| AS-43 Timing-gated Offer with Schedule UNCONFIRMED | B | CR2 | Domain, HTTP | Omit CART SCHEDULED; client SCHEDULED → 400 | Locked SCHEDULED-only savings at Menu | T2 |
+| AS-44 No Menu guarantee of slot or final promo price | D | X3 | Component, Content QA | No slot/final promo claim | Guaranteed window copy | T3 + Content QA |
+| AS-45 Fail-closed when Snapshot exists but evaluation evidence missing | B | CR3 | Domain, Recovery | Same as AS-39 | Competing browse payable | T2 |
+| AS-46 Evaluate context-key / dedup correctness for mode·timing·outlet | A, B | CR2 | Concurrency, Component | Drop stale; one payable | Two payables one generation | T2–T3 |
+| SEC-BOLA-CHECKOUT Ownership-exact Checkout paths (capability §3.5) | C | CR3 | Auth, HTTP | Guest/wrong-owner denied on timing-aware pickup-options, windows, fulfilment, evaluate, prepare; listing must not weaken ownership | BOLA weaken under Contract C composition | Security tests — **regression required when Contract C implemented** |
 
 ### Contract coverage rollup
 
-| Contract | Primary AS | Mandatory layers |
+| Contract | Primary AS / proofs | Mandatory layers |
 |---|---|---|
-| A Pre-checkout eligibility | AS-05–06, AS-08, AS-24, AS-27, AS-30, AS-33, AS-38 | Domain, HTTP, Auth, Concurrency |
-| B Mode-sensitive Cart evaluate | AS-02–03, AS-09, AS-25, AS-29, AS-31–32, AS-39–40, AS-42–46 | Domain, HTTP, DB (when auth), Recovery |
-| C Scheduled Takeaway Checkout | AS-04, AS-08, AS-10–11, AS-23, AS-26, AS-34–38, AS-41 | Domain, Integration, E2E — **implementation gated by UOE-DR-06 remediation auth** |
-| D Presentation / channels | AS-01, AS-12–13, AS-19, AS-21–22, AS-28, AS-44 | Component, A11y, Content QA |
+| A Pre-checkout eligibility | AS-02, AS-05–06, AS-08, AS-24, AS-27, AS-30, AS-33, AS-38 | Domain, HTTP, Auth, Concurrency |
+| B Mode-sensitive Cart evaluate | AS-02–04, AS-14–18, AS-20, AS-25, AS-29, AS-31–32, AS-39–40, AS-42–46 | Domain, HTTP, DB (when auth), Recovery |
+| C Scheduled Takeaway Checkout | AS-08–11, AS-23, AS-26, AS-33–38, AS-41, SEC-BOLA-CHECKOUT | Domain, Integration, Auth, E2E — **Checkout code remediation gated by UOE-DR-06 authorization** |
+| D Presentation / channels | AS-01, AS-04, AS-10, AS-12–13, AS-19, AS-21–22, AS-28, AS-44 | Component, A11y, Content QA |
+
+### UOE-DR-06 evidence disposition (Founder-owned)
+
+```text
+AS_WITH_CHECKOUT_COMPOSITION_DEPENDENCY = AS-08 (Checkout list), AS-09/AS-33 (Checkout paths),
+  AS-34, AS-35, AS-36, AS-37, AS-41
+INTERACTION_AND_TEST_SPEC = AUTHORIZED_IN_CANDIDATE_DOCS
+PASSING_IMPLEMENTATION_EVIDENCE = BLOCKED_UNTIL_UOE_DR_06_REMEDIATION_AUTHORIZED
+PREFERRED_VEHICLE = SEPARATELY_SCOPED_CORRECTIVE
+FOUNDER_DECIDES = keep blocked until corrective OR explicitly defer those AS from V1 exit
+```
 
 ---
 
@@ -134,7 +147,7 @@ Authority: `docs/platform/capabilities/UOE-unified-order-experience.md` §4.4. E
 | 5 | Client outlet not in eligibility set → no successful Takeaway quote | Domain, HTTP | Quote deny | Out-of-set outlet money | Security + domain |
 | 6 | Server re-asserts outlet brand + timing eligibility before quote | Domain | Re-assert path | Stale client outlet accepted | Domain |
 | 7 | Client money / fingerprint / digest / evaluationId / sealed-window → **400** | HTTP | Strict allowlist | Client authority smuggling | HTTP contract |
-| 8 | Browse cannot mutate Checkout under PAYMENT_PENDING | Auth, Recovery | Mutation deny | Fulfilment/timing write while pending | Existing + UOE guard |
+| 8 | Browse cannot mutate Checkout under PAYMENT_PENDING | Auth, Recovery | Mutation deny via **existing** server freeze + client route guard | Fulfilment/timing write while pending | Existing freeze tests + T3 client guard (**no new server guards**) |
 | 9 | PAYMENT_PENDING reuse → zero Checkout rows + zero new CART provenance | DB, Recovery | Row counts | Provenance write while pending | DB integration |
 | 10 | Missing CHECKOUT eval / undecodable wire / probe throw + Snapshot → never browse fall-through | Domain, Recovery | Fail-closed | Divergent browse payable | Domain |
 | 11 | Guest never receives reused Checkout Snapshot money | Auth, Domain | Guest path | Guest sees sealed Snapshot | Auth |
@@ -160,7 +173,7 @@ Authority: `docs/platform/capabilities/UOE-unified-order-experience.md` §4.4. E
 | Multi-tab boundaries | Two tabs diverge presentation; no seal sync | Concurrency | PLANNED | AS-22 / §4.4 #15 |
 | Persistence / fingerprint / digest | CART digest reuse vs equal-money different context; CHECKOUT fingerprint-only | DB + Domain | PLANNED | Schema migration not authorized now |
 | Schedule timing / promotion | UNCONFIRMED omit timing; 400 on client SCHEDULED; Checkout seal applies truthfully | Domain + HTTP | PLANNED | AS-42–44 |
-| Payment / Checkout financial integrity | Prepare/pay unchanged authority; no client money; Snapshot seal path | Integration + Recovery | PLANNED | Comparator-only checks **do not** prove prepare |
+| Payment / Checkout financial integrity | Prepare/pay unchanged authority; no client money; Snapshot seal path; prepare idempotency + expectedRevision conflicts under Contract C | Integration + Recovery + Concurrency | PLANNED | Comparator-only checks **do not** prove prepare; dual-tab bind/timing races when Contract C implemented |
 | Recovery / idempotency | Duplicate evaluate; pending recover; window reselect | Recovery | PLANNED | AS-11/17/23/39 |
 | A11y / responsive QA | Keyboard, SR, targets, narrow | A11y + Component | PLANNED | AS-12/13 |
 | Performance / load | Eligibility p95 ≤300ms; evaluate p95 ≤500ms; reuse ≤400ms at nominal load | Perf harness (when auth) | PLANNED | Breach → calm degrade; never weaken Snapshot/payment |
@@ -182,12 +195,18 @@ Authority: `docs/platform/capabilities/UOE-unified-order-experience.md` §4.4. E
 
 ## 6. Exit criteria (future authorized implementation)
 
-- AS-01–46 mapped to automated and/or scripted Founder UAT evidence (or explicit deferral under accepted scope)
-- All 21 §4.4 negatives passing on authorized candidate
+- AS-01–46 mapped to automated and/or scripted Founder UAT evidence, **or** Founder-explicit deferral / DR-06-blocked disposition for Checkout-composition-dependent AS (see §2 disposition block)
+- All 21 §4.4 negatives + SEC-BOLA-CHECKOUT passing on authorized candidate
 - No invariant regressions vs locked capability architecture
 - Content QA sign-off on primary surfaces + in-app (+ WhatsApp when sending)
 - X3 a11y/responsive QA recorded
 - Perf methodology run or explicitly waived with Founder risk acceptance
+- AS-34 / AS-41: preserve reproducing RED against current Checkout composition before remediation (TEST-1), then green on authorized corrective
 
-**Formal plan finalization:** `NOT_PERFORMED`.  
-**Agent disposition:** `RECOMMENDED_READY_FOR_EVALUATION` as a reviewable candidate only (not formal PASS).
+```text
+FORMAL_QUALITY_PLAN = NOT_PERFORMED
+QUALITY_PLAN_FINALIZATION = NOT_GRANTED
+INDEPENDENT_REVIEW_VERDICT = PENDING_EXTERNAL_REVIEWERS
+AGENT_MAY_NOT_SELF_GRANT_QUALITY_PLAN_PASS = YES
+TESTS_EXECUTED_UNDER_THIS_PACKAGE = NONE
+```

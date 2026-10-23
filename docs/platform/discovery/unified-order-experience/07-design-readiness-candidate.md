@@ -45,24 +45,51 @@ those contracts; it does not restate or alter them.
 |---|---|---|
 | Menu | Existing menu chrome + **proposed** `OrderContextBar` (sticky mobile / header-integrated desktop) | Bar may open sheet; no Menu exact slots (DR-02) |
 | Cart | Existing cart chrome + bar + **proposed** `ImpactBanner` above totals | Advisory quote only; ≠ Snapshot |
-| Checkout | Existing Checkout steps + bar (read-mostly when Checkout authoritative) + Timing / Place / Method steps + Review | Contract C sequencing is **specified** here; Checkout composition remediation remains `UOE-DR-06` / `REMEDIATION_NOT_AUTHORIZED` |
+| Checkout | Existing Checkout steps + bar (read-mostly when Checkout authoritative) + **Method → Place (timing-aware list) → Timing → Review** | Contract C interaction sequence in §1.3; Checkout composition **code** remediation remains `UOE-DR-06` / `REMEDIATION_NOT_AUTHORIZED` |
 | Recovery | Existing pending-payment recovery route + **proposed** `PendingPaymentGuard` overlays | Preserve existing freeze; no new server guards |
 
 ### 1.2 Component inventory (proposed vs shipped)
 
-| Component | Status | Responsibility | Reuse |
+| Component | Status | Responsibility | Reuse / extend (EXP-1 order) |
 |---|---|---|---|
-| `OrderContextBar` | **Proposed** | Strip: method · place · time; opens sheet/popover | Prefer existing sticky/header patterns |
-| `OrderContextSheet` | **Proposed** | Edit How / Where / When | Prefer existing sheet/dialog primitives |
-| `MethodChooser` | **Proposed** | Delivery \| Takeaway | Maps to domain enums in transport only |
-| `PlaceChooser` | **Proposed** | Delivery location **or** Takeaway outlet from **server eligibility** | Reuse LocationSelector patterns; eligibility read (not fabricated checkout pickup-options) |
-| `TimingChooser` | **Proposed** | Now \| Schedule → (eligible Checkout) day → windows → confirm | Menu: intent + UNCONFIRMED only |
-| `OrientationLabel` | **Proposed** helper | “Ordering in {market}” | Never styled as Deliver to |
-| `ImpactBanner` | **Proposed** | Fees / offers / availability changed | Server cart/checkout evaluate driven |
+| `OrderContextBar` | **Proposed** | Strip: method · place · time; opens sheet/popover | Extend Menu/Cart sticky chrome patterns; do not invent a second commerce shell |
+| `OrderContextSheet` | **Proposed** | Edit How / Where / When | Extend dialog/sheet patterns used by `MenuItemCustomizationDialog` / `StoreConfirmationDialog` (focus trap, Escape, return focus) |
+| `MethodChooser` | **Proposed** | Delivery \| Takeaway | New chooser using existing button/segment patterns; transport maps to domain enums only |
+| `PlaceChooser` | **Proposed** | Delivery location **or** Takeaway outlet from **server eligibility** | **Reuse/extend** `LocationSelector` + `DeliverToOrientation` for Delivery; Takeaway list is new but uses same list/selection semantics |
+| `CheckoutPlaceConfirm` | **Proposed** (Checkout Place step) | Confirm proposed/selected outlet before bind | Distinct confirm control; propose ≠ bind |
+| `TimingChooser` | **Proposed** | Now \| Schedule → (eligible Checkout) day → windows → confirm | Menu: intent + UNCONFIRMED only; Checkout: server windows |
+| `OrientationLabel` | **Proposed** helper | “Ordering in {market}” | Extend `DeliverToOrientation` distinction; never styled as Deliver to |
+| `ImpactBanner` | **Proposed** | Fees / offers / availability changed | Prefer existing status/banner primitives; server evaluate driven |
 | `EligibilityResults` | **Proposed** region | Outlet list / AUTO_SELECT propose / empty / error | Distinct empty-cart vs UNAVAILABLE |
 | `CheckoutReview` | Extend existing | Confirmed method/place/time + sealed money | Existing Review authority |
-| `PendingPaymentGuard` | **Proposed** client guard | Blocks browse→mutate on PAYMENT_PENDING | Routes to recovery; preserves server freeze |
+| `PendingPaymentGuard` | **Proposed** client guard | Blocks browse→mutate on PAYMENT_PENDING | Routes to existing recovery; preserves server freeze — **no new server guards** |
 | Presentation maps | **Proposed** helpers | Customer + workforce + channel label helpers | LANG-1; no API rename |
+
+### 1.3 Contract C — Checkout interaction sequence (specification only)
+
+Locked journey (capability architecture §3.3):  
+**Mode → timing-aware list → confirm outlet → `setCheckoutFulfilment` without evaluate → `listCheckoutScheduledWindows` → set SCHEDULED+window → `evaluateCheckout` → prepare → pay.**
+
+| Step | UI | States | Notes |
+|---|---|---|---|
+| 1. Method | `MethodChooser` | Missing / selected | Delivery or Takeaway |
+| 2. When-intent as list filter | Timing intent control (Now \| Schedule) **before** place list for Takeaway Schedule path | Intent only — not confirmed window | Filters listing; does **not** write SCHEDULED+null window solely to unlock list |
+| 3. Place | `EligibilityResults` + `CheckoutPlaceConfirm` | Loading / empty / proposed / selected / error / confirm | Schedule-capable list when Schedule; per-outlet “Schedule only — not open for collection now” when closed now (copy candidates in §5; also `03-…`) |
+| 4. Bind without evaluate | Confirm control → fulfilment write | Pending / success / revision conflict | **Forbidden:** bind → immediate ASAP `evaluateCheckout` before Timing |
+| 5. Timing windows | `TimingChooser` | Loading / empty / valid / Now-disabled | Server windows only; Now disabled with reason when not accepting-now |
+| 6. Evaluate → Review | `CheckoutReview` | Loading / sealed / indeterminate | Evaluate only after SCHEDULED+window (or eligible Now path) |
+| 7. Prepare → pay | Existing payment UI | Existing pending/success/fail | Unchanged payment authority |
+
+```text
+CONTRACT_C_INTERACTION_SPECIFIED_IN_DESIGN = YES
+UOE_DR_06_CHECKOUT_CODE_REMEDIATION = NOT_AUTHORIZED
+FORBIDDEN_SEQUENCE = Mode → accepting-now-only list → bind → evaluateCheckout(ASAP) → Timing
+```
+
+Experience Intent detail and reason-variant strings also live in `03-experience-definition-candidate.md`
+(Checkout path + UNCONFIRMED / schedule-only table). This section is the Design Readiness
+interaction authority for implementation-ready sequencing; it does **not** authorize Checkout
+source mutation.
 
 ---
 
@@ -128,14 +155,20 @@ These specify UI behaviour only. Locked contracts remain authoritative.
 | Concern | Spec |
 |---|---|
 | Keyboard | Tab to bar controls; Enter/Space open sheet; arrow keys within chooser lists; Escape closes sheet/dialog |
-| Focus entry / return | Opening sheet moves focus to heading or first control; close returns focus to invoking bar control |
-| Dialog / sheet | Prefer existing design-system sheet/dialog; focus trap while open; backdrop click = Escape unless destructive pending |
+| Focus entry / return | Opening sheet moves focus to heading or first control; close returns focus to invoking bar control; on validation/error, move focus to first error |
+| Dialog / sheet | Prefer existing dialog/sheet patterns (`MenuItemCustomizationDialog` / `StoreConfirmationDialog`); focus trap while open; backdrop click = Escape unless destructive pending |
 | Status announcements | `aria-live` (polite) for ImpactBanner, eligibility empty/unavailable, UNCONFIRMED reason, evaluate indeterminate |
-| Selected states | `aria-pressed` / selected for Method and Timing; outlet list option selected semantics |
+| Selected states | Method/Timing as radiogroup (or equivalent exclusive selection) with clear selected semantics; outlet list option selected semantics — not ambiguous multi-`aria-pressed` without grouping |
+| Destructive confirm | Explicit confirm dialog; default safe action = cancel / keep; focus to dialog title then primary/secondary per existing `StoreConfirmationDialog` pattern |
 | Target sizes | Sticky strip controls ≥ 44×44 CSS px; desktop hit areas comfortable |
-| Narrow screen | Sticky bottom or top strip + full-height sheet; no dual competing sticky carts |
-| Navigation restoration | After recovery or successful pay, bar restores safe non-personal intent only |
+| Narrow screen | Sticky bottom or top strip + full-height sheet; no dual competing sticky carts; ImpactBanner and EligibilityResults stack full-width under bar |
+| Tablet / md+ | Header-integrated bar + popover/dialog; avoid full-height sheet unless content requires |
+| Perceived performance | ≥300 ms debounce after intent change (capability §4.1); skeleton on EligibilityResults; hide stale money on context mismatch; calm retry — never weaken Snapshot/payment for speed (budgets in capability §4.2) |
+| Motion | Prefer reduced-motion: sheet/banner appear without large slide if `prefers-reduced-motion` |
+| Contrast / zoom | Meet existing platform contrast; usable at 200% zoom without loss of bar CTAs |
+| Navigation restoration | After recovery or successful pay, bar restores safe non-personal intent only; AS-15 session change revalidates and returns focus to bar or Checkout step |
 | Names | No raw backend enums (`PICKUP`, `ASAP`, `FULFILMENT_*`) in accessible names |
+| Analytics hooks | Component instrumentation intents cross-ref `09-measurement-instrumentation-candidate.md` events (bar view, method/place/timing, eligibility result, impact, pending guard) — schema/vendor remain Measurement-owner decisions |
 
 ---
 
@@ -143,78 +176,96 @@ These specify UI behaviour only. Locked contracts remain authoritative.
 
 All rows are **candidates**. Unapproved variants remain `CONTENT_QA_PENDING`. Do **not** invent
 approved Meta WhatsApp templates; WhatsApp Meta ownership stays per capability architecture §5.
+Aligned strings from Experience Definition (`03-…`) are carried forward as candidates, not sign-off.
 
 | Topic | Candidate primary (customer) | Candidate alt / notes | Status |
 |---|---|---|---|
 | Delivery vs Takeaway | Delivery / Takeaway | Never Pickup as peer of Delivery | CONTENT_QA_PENDING |
 | Now vs Schedule | Now / Schedule | Now = earliest available, not “immediate” | CONTENT_QA_PENDING |
-| UNCONFIRMED scheduling | “Time not confirmed yet — choose your collection window at checkout” | Shorter bar chip: “Schedule · not confirmed” | CONTENT_QA_PENDING |
-| Provisional fees/offers | “Prices and offers may change when you confirm how and when” | ImpactBanner reason-specific lines TBD | CONTENT_QA_PENDING |
-| Indeterminate commercial evaluation | “We couldn’t confirm your total — refresh or continue in checkout” | Never show competing browse total | CONTENT_QA_PENDING |
+| UNCONFIRMED scheduling (mode-aware) | Takeaway: “Time not confirmed yet — choose your collection window at checkout”; Delivery: “…delivery window at checkout” | Bar chip: “Schedule · not confirmed” | CONTENT_QA_PENDING |
+| Provisional fees/offers | “Prices and offers may change when you confirm how and when” | ImpactBanner: fee change / offer change / availability change lines still CONTENT_QA_PENDING | CONTENT_QA_PENDING |
+| Indeterminate commercial evaluation | “Couldn’t load your checkout total — continue checkout to see your total” | Never show competing browse total (`03-…`) | CONTENT_QA_PENDING |
 | Outlet proposal vs confirmed | Proposed: “Suggested collection place”; Confirmed: “Collect from {name}” | Visual distinct chrome required | CONTENT_QA_PENDING |
+| Checkout outlet schedule-only (closed now) | “Schedule only — not open for collection now” | Per-outlet list label (`03-…`) | CONTENT_QA_PENDING |
+| Checkout Timing Now disabled | “Not open for collection right now — choose a Schedule time” | `03-…` | CONTENT_QA_PENDING |
 | Payment-pending recovery | “Finish or recover your payment before changing this order” | Align with existing recovery copy | CONTENT_QA_PENDING |
 | Empty / no-cart Takeaway | “Add items to see collection places” | Must not say brand-level “no outlets available” | CONTENT_QA_PENDING |
+| Eligibility / pickup-options error | “Couldn’t load collection places — try again” | Must not become permanent UNAVAILABLE | CONTENT_QA_PENDING |
+| No eligible outlet for timing | “No collection place can take this order for {Now\|Schedule} — try another time or method” | Distinct from empty-cart | CONTENT_QA_PENDING |
+| No Schedule windows | “No times available — try Now if offered, another place, or come back later” | AS-09 / AS-35 / AS-37 | CONTENT_QA_PENDING |
+| Invalid outlet / force reselect | “That collection place isn’t available — choose another” | AS-36 | CONTENT_QA_PENDING |
+| Window expired / CHECKOUT_EXPIRED | “That time is no longer available — choose a new time” | AS-11 / AS-23 | CONTENT_QA_PENDING |
+| Mode-switch / ineligible lines | Explain removal; confirm destructive clear | AS-20; default safe action = keep browsing / cancel clear | CONTENT_QA_PENDING |
 | Orientation | “Ordering in {market}” | Never “Deliver to {market}” without address | CONTENT_QA_PENDING |
+| Date/time/money format | Outlet-TZ Today/Tomorrow; money from server only | LANG-1; AS-10 | CONTENT_QA_PENDING |
+| Loading / capitalisation | Sentence case for status; avoid ALL-CAPS enums | LANG-1 | CONTENT_QA_PENDING |
+| Sign-in for exact windows | “Sign in to choose your time” (or existing auth prompt pattern) | Guest browse OK; exact windows need Checkout auth | CONTENT_QA_PENDING |
 | WhatsApp Meta body | — | Inventory APPROVED templates; no invented ids | CONTENT_QA_PENDING / META_WORKFLOW |
 
 Workforce primary labels follow refinement A (`12-…` §G). Ops collection verbs remain contextual.
+Founder decides at Design Readiness whether remaining `CONTENT_QA_PENDING` rows may stay owned by
+Content QA exit of T1, or must be fully listed before Design Readiness PASS.
 
 ---
 
 ## 6. Traceability matrix (AS-01…AS-46)
 
-| AS | Journey / theme | Screen / component | States exercised | Expected behaviour (presentation) | Verification reference |
-|---|---|---|---|---|---|
-| AS-01 | Entry / missing context | Bar, Method/Place/Timing | Initial, empty | Honest CTAs; orientation ≠ Deliver to | QT `08-…` AS-01 |
-| AS-02 | Choose Delivery | MethodChooser, PlaceChooser | Valid, loading | Delivery path; serviceability | QT AS-02 |
-| AS-03 | Choose Takeaway | MethodChooser, PlaceChooser | Valid, loading | Takeaway; eligibility-driven place | QT AS-03 |
-| AS-04 | Now timing | TimingChooser | Valid | Now intent; ASAP path at Checkout | QT AS-04 |
-| AS-05 | AUTO_SELECT propose | EligibilityResults, PlaceChooser | Provisional vs confirmed | Propose ≠ bind; per-timing AUTO_SELECT | QT AS-05 |
-| AS-06 | CUSTOMER_SELECT many outlets | PlaceChooser | Valid, invalid | Customer picks; invalid → reselect | QT AS-06 |
-| AS-07 | Unsupported address | PlaceChooser Delivery | Invalid | Known·not deliverable; recovery | QT AS-07 |
-| AS-08 | Closed now + Schedule-capable | PlaceChooser, TimingChooser | Valid, provisional | Schedule path available; no NOW-only denial | QT AS-08 |
-| AS-09 | Delivery ↔ Takeaway switch | MethodChooser, ImpactBanner | Disabled/confirm, provisional | Explain impact; clear incompatible place | QT AS-09 |
-| AS-10 | Day / window at Checkout | TimingChooser, Review | Loading, valid, empty | Server windows only; empty honest | QT AS-10 |
-| AS-11 | Window expiry | TimingChooser, Review | Stale, recovery | Reselect; no stale Snapshot pay | QT AS-11 |
-| AS-12 | Mobile / desktop bar | OrderContextBar/Sheet | Responsive | Sticky sheet vs header popover | QT AS-12 |
-| AS-13 | Keyboard / SR | Sheet, choosers | A11y | Focus trap; pressed; no jargon names | QT AS-13 |
-| AS-14 | Saved address change | PlaceChooser | Loading, valid | Revalidate serviceability | QT AS-14 |
-| AS-15 | Auth / session change | Bar, Checkout | Unauthorized, revisit | Preserve safe intent; revalidate | QT AS-15 |
-| AS-16 | Cart revision / stale async | ImpactBanner, evaluate mirrors | Stale | Drop stale; truthful conflict | QT AS-16 |
-| AS-17 | PAYMENT_PENDING | PendingPaymentGuard | Disabled, recovery | Browse OK; mutate blocked; recover | QT AS-17 |
-| AS-18 | New vs previous checkout | Bar, Review | Revisit | No bleed from prior Snapshot | QT AS-18 |
-| AS-19 | Workforce vs customer labels | Presentation maps | Success | Delivery/Takeaway both sides | QT AS-19 + Content QA |
-| AS-20 | Ineligible lines on mode switch | Cart, MethodChooser | Disabled/confirm | Explain removal; confirm destructive | QT AS-20 |
-| AS-21 | Revisit / reload / completed | Bar | Revisit | Safe restore; no completed bleed | QT AS-21 |
-| AS-22 | Multi-tab intent | Bar (sessionStorage) | Stale / concurrency | Tab-scoped; no seal sync | QT AS-22 |
-| AS-23 | CHECKOUT_EXPIRED mid-schedule | TimingChooser, Review | Recovery | Force reselect; no pay | QT AS-23 |
-| AS-24 | Pre-checkout eligibility | EligibilityResults | Loading, empty, valid, error | Server outlets + policy; no checkoutId fab | QT AS-24 |
-| AS-25 | Mode-sensitive Cart evaluate | ImpactBanner, Cart | Provisional | Quote updates; ≠ Snapshot | QT AS-25 |
-| AS-26 | Proposed ≠ windows unlock | TimingChooser, PlaceChooser | Provisional | Windows blocked until Checkout confirm | QT AS-26 |
-| AS-27 | Eligibility/evaluate race | EligibilityResults, ImpactBanner | Stale | Latest matching context wins | QT AS-27 |
-| AS-28 | Channel consistency (DR-04) | Presentation maps + notifications | Success | In-app always; WhatsApp when sending; noop OK | QT AS-28 + Content QA |
-| AS-29 | Open Checkout ≠ browse intent | Cart, Review, Bar | Confirmed vs provisional | Checkout mode authoritative under reuse | QT AS-29 |
-| AS-30 | No/Empty cart eligibility | PlaceChooser, EligibilityResults | Empty | Invite add items; not “no outlets” | QT AS-30 |
-| AS-31 | Takeaway quote w/o Delivery address | Cart, ImpactBanner | Valid / ineligible | Outlet-known quote OK; without outlet → context required | QT AS-31 |
-| AS-32 | CART provenance (presentation) | Cart mirrors | Provisional | UI must not claim seal; equal money may still be new context | QT AS-32 / MI `09-…` |
-| AS-33 | Eligibility error vs UNAVAILABLE | EligibilityResults, Checkout place | Error | Calm retry; not permanent UNAVAILABLE | QT AS-33 |
-| AS-34 | Checkout Schedule path (closed now) | Checkout Place/Timing | Loading, valid, disabled Now | Timing-aware list; bind without evaluate before Timing | QT AS-34 — **spec OK; remediation NOT_AUTHORIZED (UOE-DR-06)** |
-| AS-35 | Now OK / no future slots | TimingChooser | Empty Schedule | Honest empty + try Now | QT AS-35 |
-| AS-36 | Outlet becomes invalid | PlaceChooser Checkout | Invalid, recovery | Force reselect; no silent bind | QT AS-36 |
-| AS-37 | No Schedule times at Checkout | TimingChooser | Empty | Recovery; Now only if accepting-now | QT AS-37 |
-| AS-38 | No silent Checkout bind | PlaceChooser | Provisional vs confirmed | Customer confirm required | QT AS-38 |
-| AS-39 | Missing evaluation + Snapshot | Review, Cart | Indeterminate | Fail-closed / Snapshot-only; never browse fall-through | QT AS-39 |
-| AS-40 | Effective mode under reuse | Bar, Review | Confirmed | Show Checkout mode/timing | QT AS-40 |
-| AS-41 | E2E Scheduled Takeaway Checkout | Checkout journey | Full state set | Contract C end-to-end interaction | QT AS-41 — **spec OK; remediation NOT_AUTHORIZED (UOE-DR-06)** |
-| AS-42 | Mode-gated Offer on Cart | ImpactBanner | Provisional | Applies only with matching mode | QT AS-42 |
-| AS-43 | Timing-gated Offer UNCONFIRMED | ImpactBanner, TimingChooser | Provisional | No locked SCHEDULED-only savings at Menu | QT AS-43 |
-| AS-44 | No Menu slot/price guarantee | Menu, Bar | Provisional | No specific window or final promo claim | QT AS-44 |
-| AS-45 | Fail-closed missing evidence | Review, Cart | Indeterminate | Same as AS-39 presentation rule | QT AS-45 |
-| AS-46 | Context-key / dedup UX | ImpactBanner | Stale | Hide money / retry; never two payables | QT AS-46 |
+Canonical scenario titles from `04-story-map-acceptance-scenarios.md`. Journey column uses those
+titles; presentation mapping does not redefine AS identity.
+
+| AS | Canonical scenario (`04-…`) | Screen / component | States exercised | Expected behaviour (presentation) | Verification reference | DR-06 code gate |
+|---|---|---|---|---|---|---|
+| AS-01 | No selected mode or location (browse Menu) | Bar, Method/Place/Timing | Initial, empty | Honest CTAs; orientation ≠ Deliver to; no “no outlets” solely because no cart lines | QT `08-…` AS-01 | — |
+| AS-02 | Delivery → Takeaway | MethodChooser, PlaceChooser, ImpactBanner | Valid, loading, confirm | Eligibility-driven collection chrome; mode-sensitive quote; explain ineligible lines (AS-20) | QT AS-02 | — |
+| AS-03 | Takeaway → Delivery | MethodChooser, PlaceChooser, ImpactBanner | Valid, invalid, loading | Needs address/serviceability; fees/offers recompute; unsupported explained | QT AS-03 | — |
+| AS-04 | Mode-dependent charges and offers | ImpactBanner, Cart, Review | Provisional, confirmed | Attention copy; money from server evaluate/Snapshot only; pre-checkout advisory | QT AS-04 | — |
+| AS-05 | One Takeaway outlet (pre-checkout + Checkout) | EligibilityResults, CheckoutPlaceConfirm | Provisional vs confirmed | Per-timing AUTO_SELECT propose; confirm before bind; no browse silent bind | QT AS-05 | — |
+| AS-06 | Multiple Takeaway outlets | PlaceChooser, CheckoutPlaceConfirm | Valid, invalid | Explicit select from server list; no silent nearest | QT AS-06 | — |
+| AS-07 | Unsupported Delivery address | PlaceChooser Delivery | Invalid | Browse OK; checkout/pay blocked with recovery | QT AS-07 | — |
+| AS-08 | Outlet closed / Now unavailable (GP-01) | PlaceChooser, TimingChooser, Checkout Place | Valid, provisional, disabled | Schedule-capable path truthful; no NOW-only denial for Takeaway Schedule | QT AS-08 | Menu/eligibility OK; **Checkout list path blocked until DR-06 auth** |
+| AS-09 | No Schedule windows | TimingChooser | Empty, recovery | Empty + recovery; Now if eligible | QT AS-09 | Checkout empty-windows path ↔ DR-06 when on Checkout composition |
+| AS-10 | Cross-midnight / local-time formatting | TimingChooser window labels | Valid | Today/Tomorrow + labels match outlet TZ | QT AS-10 | — |
+| AS-11 | Window expires before payment | TimingChooser, Review | Stale, recovery | Reselect; no stale Snapshot pay | QT AS-11 | — |
+| AS-12 | Mobile / desktop bar | OrderContextBar/Sheet | Responsive | Sticky sheet vs header popover | QT AS-12 | — |
+| AS-13 | Keyboard / SR / a11y | Sheet, choosers | A11y | Focus trap; selected; no jargon names | QT AS-13 | — |
+| AS-14 | Saved address / location change | PlaceChooser | Loading, valid | Revalidate serviceability; no duplicate geo authority | QT AS-14 | — |
+| AS-15 | Authentication / session changes | Bar, Checkout | Unauthorized, revisit | Preserve safe intent; revalidate; D-370 merge unchanged | QT AS-15 | — |
+| AS-16 | Cart revisions and stale async responses | ImpactBanner, evaluate mirrors | Stale | Drop stale; truthful conflict | QT AS-16 | — |
+| AS-17 | Pending historical payment | PendingPaymentGuard | Disabled, recovery | Browse OK; mutate blocked; recover first | QT AS-17 | — |
+| AS-18 | New order versus previous checkout | Bar, Review | Revisit | No bleed from prior Snapshot | QT AS-18 | — |
+| AS-19 | Workforce vs customer terminology | Presentation maps | Success | Delivery/Takeaway both sides | QT AS-19 + Content QA | — |
+| AS-20 | Ineligible lines on mode switch | Cart, MethodChooser, confirm dialog | Disabled/confirm | Explain removal; confirm destructive | QT AS-20 | — |
+| AS-21 | Revisit / reload / completed checkout | Bar | Revisit | Safe restore; no completed bleed | QT AS-21 | — |
+| AS-22 | Multi-tab divergent intent (GP-04) | Bar (sessionStorage) | Stale / concurrency | Tab-scoped; no seal sync | QT AS-22 | — |
+| AS-23 | CHECKOUT_EXPIRED mid-schedule | TimingChooser, Review | Recovery | Force reselect; no pay | QT AS-23 | — |
+| AS-24 | Pre-checkout Takeaway eligibility read | EligibilityResults | Loading, empty, valid, error | Server outlets + policy; no checkoutId fab | QT AS-24 | — |
+| AS-25 | Mode-sensitive Cart evaluate | ImpactBanner, Cart | Provisional | Quote updates; ≠ Snapshot | QT AS-25 | — |
+| AS-26 | Proposed outlet ≠ confirmed place for windows | TimingChooser, PlaceChooser | Provisional | Windows blocked until Checkout confirm; UNCONFIRMED reason | QT AS-26 | — |
+| AS-27 | Eligibility / evaluate race | EligibilityResults, ImpactBanner | Stale | Latest matching context wins | QT AS-27 | — |
+| AS-28 | Implemented channel consistency (DR-04) | Presentation maps + notifications | Success | In-app always; WhatsApp when sending; noop OK | QT AS-28 + Content QA | — |
+| AS-29 | Open Checkout mode ≠ browse intent | Cart, Review, Bar | Confirmed vs provisional | Checkout mode authoritative under reuse | QT AS-29 | — |
+| AS-30 | No Cart / Empty Cart eligibility (GP-03) | PlaceChooser, EligibilityResults | Empty | Invite add items; not “no outlets” | QT AS-30 | — |
+| AS-31 | Takeaway quote without Delivery address | Cart, ImpactBanner | Valid / ineligible | Outlet-known quote OK; without outlet → context required | QT AS-31 | — |
+| AS-32 | CART evaluation provenance | Cart mirrors | Provisional | UI must not claim seal; equal money may still be new context | QT AS-32 / MI `09-…` | — |
+| AS-33 | Eligibility / pickup-options error vs UNAVAILABLE | EligibilityResults, CheckoutPlaceConfirm | Error | Calm retry; not permanent UNAVAILABLE | QT AS-33 | Checkout pickup-options error path ↔ DR-06 |
+| AS-34 | Closed now but Scheduled Takeaway possible (Checkout) | Checkout Place/Timing (§1.3) | Loading, valid, disabled Now | Timing-aware list; bind without evaluate before Timing | QT AS-34 | **Interaction specified; code remediation NOT_AUTHORIZED** |
+| AS-35 | Outlet valid for Now but no future Schedule slots | TimingChooser | Empty Schedule | Honest empty + try Now | QT AS-35 | Checkout path ↔ DR-06 |
+| AS-36 | Selected Checkout outlet becomes invalid | CheckoutPlaceConfirm | Invalid, recovery | Force reselect; no silent bind | QT AS-36 | Checkout path ↔ DR-06 |
+| AS-37 | No Schedule times at eligible Checkout | TimingChooser | Empty | Recovery; Now only if accepting-now | QT AS-37 | Checkout path ↔ DR-06 |
+| AS-38 | No silent Checkout binding from browse / list | PlaceChooser, CheckoutPlaceConfirm | Provisional vs confirmed | Customer confirm required | QT AS-38 | — |
+| AS-39 | Open Checkout Snapshot without retrievable commercial evaluation | Review, Cart | Indeterminate | Fail-closed / Snapshot-only; never browse fall-through | QT AS-39 | — |
+| AS-40 | Checkout effective mode/timing in UI under reuse | Bar, Review | Confirmed | Show Checkout mode/timing | QT AS-40 | — |
+| AS-41 | Eligible-Checkout Scheduled Takeaway end-to-end (closed now) | Full §1.3 journey | Full state set | Contract C end-to-end interaction | QT AS-41 | **Interaction specified; code remediation NOT_AUTHORIZED** |
+| AS-42 | Mode-gated Offer on Cart advisory quote | ImpactBanner | Provisional | Applies only with matching mode | QT AS-42 | — |
+| AS-43 | Timing-gated Offer with Schedule UNCONFIRMED | ImpactBanner, TimingChooser | Provisional | No locked SCHEDULED-only savings at Menu | QT AS-43 | — |
+| AS-44 | No Menu guarantee of slot or final promo price | Menu, Bar | Provisional | No specific window or final promo claim | QT AS-44 | — |
+| AS-45 | Fail-closed when Snapshot exists but evaluation evidence missing | Review, Cart | Indeterminate | Same as AS-39 presentation rule | QT AS-45 | — |
+| AS-46 | Evaluate context-key / dedup correctness for mode·timing·outlet | ImpactBanner | Stale | Hide money / retry; never two payables | QT AS-46 | — |
 
 **Deferred under accepted scope (not missing):** Menu exact-slot preview API (UOE-DR-02);
 email/SMS/push while noop; cross-tab presentation bus; Meta approved template bodies (Content QA /
-Meta workflow); Checkout composition code fix (UOE-DR-06 remediation vehicle separate).
+Meta workflow); Checkout composition **code** fix (UOE-DR-06 remediation vehicle separate — interaction
+still specified in §1.3).
 
 ---
 
@@ -222,7 +273,8 @@ Meta workflow); Checkout composition code fix (UOE-DR-06 remediation vehicle sep
 
 | Viewport | Bar | Sheet / chooser | Review |
 |---|---|---|---|
-| Narrow (&lt; md) | Sticky strip; one-line summary | Full-height sheet | Existing stacked Checkout |
+| Narrow (&lt; md) | Sticky strip; one-line summary | Full-height sheet; ImpactBanner + EligibilityResults full-width | Existing stacked Checkout |
+| md / tablet | Header-integrated or compact sticky | Popover/dialog preferred over full sheet | Existing |
 | Desktop | Header-integrated summary | Popover or dialog from bar control | Existing multi-step + summary column |
 | Landscape phone | Prefer sheet over tiny popover | Same a11y rules | — |
 
@@ -238,6 +290,9 @@ Meta workflow); Checkout composition code fix (UOE-DR-06 remediation vehicle sep
 6. Wire Cart impact to mode/timing-sensitive evaluate quote
 7. Explicit tests for AS-01–46 per Quality plan tranche mapping
 
-**Formal Design Readiness:** `NOT_PERFORMED` / `NOT_GRANTED`.  
-**Agent disposition:** Candidate complete enough for Founder Design Readiness gate evaluation —
-`RECOMMENDED_PASS` is an independent reviewer recommendation only; agents must not self-grant.
+```text
+FORMAL_DESIGN_READINESS = NOT_PERFORMED
+DESIGN_READINESS_PASS = NOT_GRANTED
+INDEPENDENT_REVIEW_VERDICT = PENDING_EXTERNAL_REVIEWERS
+AGENT_MAY_NOT_SELF_GRANT_DESIGN_READINESS_PASS = YES
+```

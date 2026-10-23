@@ -88,8 +88,8 @@ CONVERSION_IMPROVEMENT_CLAIM = FORBIDDEN until measured under finalized plan
 
 Exact vendor, final schema, retention policy, and analytics-owner approval remain
 **DECISION_REQUIRED** where not already authorized. Do not invent a second telemetry platform.
-Never emit `evaluation_context_digest`, protected provenance fields, raw PAN, or exact street when
-avoidable (capability architecture §4.3).
+Never emit `evaluation_context_digest`, protected provenance fields, raw PAN, or exact street
+(capability architecture §4.3; exact street forbidden in analytics).
 
 | Event | Trigger | Unit / grain | Attribution | Deduplication | Denominator use | Owner | Data classification | Retention decision | Status |
 |---|---|---|---|---|---|---|---|---|---|
@@ -135,7 +135,11 @@ V1_NEW_CART_EVALUATED_SCHEDULED_FROM_BROWSE_INTENT = NO
 2. Do **not** use raw CART evaluation counts as the customer-conversion denominator. Use checkout
    starts → successful payment (or owner-approved journey grain).
 3. **Normalized reporting (candidate, non-persisted):** report CART advisory “views” grouped by
-   stable journey/context meaning — e.g. `(session_or_cart_id, fulfilment_mode, timing_confirmation_class, outlet_or_priced_outlet_bucket)` — using already-authorized server facts and client events above. This is a **reporting convention**, not a new DB source of truth.
+   stable journey/context meaning — e.g. distinct sessions or cart ids × fulfilment mode ×
+   timing-confirmation class × coarse outlet/priced-outlet bucket — computed **server-side from
+   persisted CART provenance** (and joinable journey events), not by emitting digest/mode/outlet
+   secrets to client analytics payloads. This is a **reporting convention**, not a new DB source of
+   truth. Exact bucket definitions remain analytics-owner decisions.
 4. Preserve CHECKOUT fingerprint-only reuse and `COMMERCIAL_STATE_CHANGE` measurement semantics.
 5. Keep `evaluation_context_digest` and protected provenance fields out of client responses and logs.
 6. V1 does not mint new CART-scope evaluations with evaluated `SCHEDULED` from pre-checkout intent
