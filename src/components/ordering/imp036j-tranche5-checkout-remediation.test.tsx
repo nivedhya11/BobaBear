@@ -238,11 +238,13 @@ describe("IMP-036J T5 CheckoutClient activation remediation", () => {
     await waitFor(() => expect(screen.getByTestId("payment-start")).toBeInTheDocument());
     await userEvent.click(screen.getByTestId("payment-start"));
     await waitFor(() => expect(startCheckout).toHaveBeenCalledWith({ cartId: "cart-1" }));
-    expect(screen.getByTestId("copy-stale")).toHaveTextContent(IMP036J_COPY.STALE);
+    expect(screen.getByTestId("copy-stale")).toHaveTextContent(IMP036J_COPY.STALE_CART_CHANGED);
+    expect(screen.getByTestId("copy-stale")).not.toHaveTextContent(IMP036J_COPY.STALE);
     await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId("copy-stale")));
     expect(screen.getByTestId("price-summary-total")).toHaveTextContent("₹299.00");
     await userEvent.click(screen.getByTestId("continue-to-payment"));
     await waitFor(() => expect(screen.getByTestId("checkout-payment")).toBeInTheDocument());
+    expect(screen.queryByTestId("copy-stale")).not.toBeInTheDocument();
     expect(screen.getByTestId("checkout-fee-breakdown")).toHaveTextContent("₹299.00");
     expect(startPayment).toHaveBeenCalledTimes(1);
   });

@@ -112,7 +112,8 @@ export function PaymentPanel(props: {
   activeCartRevision?: string;
   /** Parent adopts the authoritative revision when leaving payment. */
   onBackToReview?: (checkoutRevision: string) => void;
-  onStaleReview?: () => void;
+  /** Payment-start conflict that must return to Review; passes the error code. */
+  onStaleReview?: (code: string) => void;
   explanation?: WireCommercialExplanation | null;
   /** Keep parent checkout revision current after payment mutations. */
   onCheckoutRevisionChange?: (checkoutRevision: string) => void;
@@ -534,7 +535,7 @@ export function PaymentPanel(props: {
         started.code === "CHECKOUT_REPRICED" ||
         started.code === "CHECKOUT_CART_CHANGED"
       ) {
-        props.onStaleReview?.();
+        props.onStaleReview?.(started.code);
         return;
       }
       if (started.code === "NETWORK_ERROR" || started.code === "INVALID_RESPONSE") {
