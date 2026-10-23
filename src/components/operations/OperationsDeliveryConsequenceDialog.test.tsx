@@ -43,4 +43,30 @@ describe("OperationsDeliveryConsequenceDialog", () => {
     await user.keyboard("{Escape}");
     expect(onDismiss).not.toHaveBeenCalled();
   });
+
+  it("keeps Tab focus inside the dialog shell while pending", async () => {
+    const user = userEvent.setup();
+    render(
+      <div>
+        <button type="button" data-testid="outside-control">
+          Outside
+        </button>
+        <OperationsDeliveryConsequenceDialog
+          action="confirm-delivery"
+          orderId="order-aaa"
+          deliveryId="delivery-bbb"
+          deliveryStatus="Picked up"
+          summaryLines={["Proof reference: pod-1"]}
+          pending={true}
+          onConfirm={vi.fn()}
+          onDismiss={vi.fn()}
+        />
+      </div>,
+    );
+    const dialog = screen.getByTestId("delivery-consequence-dialog");
+    expect(dialog).toHaveFocus();
+    await user.keyboard("{Tab}");
+    expect(dialog).toHaveFocus();
+    expect(screen.getByTestId("outside-control")).not.toHaveFocus();
+  });
 });
