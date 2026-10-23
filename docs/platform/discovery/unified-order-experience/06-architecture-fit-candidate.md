@@ -26,10 +26,14 @@ renames, or a second commercial authority **if and only if**:
 4. Pre-checkout Takeaway eligibility and mode-sensitive Cart quotes reuse **existing server
    eligibility / cart-evaluate authorities** as read/quote surfaces (UOE-DR-05), with
    **Now vs Schedule-capable** distinguished per accepted IMP-036H/I (GP-01)
-5. Open non-terminal Checkout Snapshot reuse wins over browse mode/outlet (GP-02 / AS-29)
-6. Empty-cart / no-cart eligibility presentation is not conflated with UNAVAILABLE (GP-03)
-7. Presentation `sessionStorage` stays tab-scoped; no cross-tab money/seal sync (GP-04)
-8. `PAYMENT_PENDING` isolation and Snapshot/payment authorities are unchanged
+5. Open non-terminal Checkout Snapshot reuse wins over browse mode/outlet (GP-02 / AS-29);
+   missing commercial-evaluation evidence fails closed (AS-39 / AS-45)
+6. Timing-sensitive advisory Cart quotes honour promotion mode/timing gates without Menu
+   guarantees of slots or final promo price (Contract B)
+7. Empty-cart / no-cart eligibility presentation is not conflated with UNAVAILABLE (GP-03)
+8. Presentation `sessionStorage` stays tab-scoped; no cross-tab money/seal sync (GP-04)
+9. `PAYMENT_PENDING` isolation and Snapshot/payment authorities are unchanged
+10. WhatsApp remains optional / may be noop; DR-04 does not claim it is active in every environment
 
 **Candidate fit verdict:** Candidate contracts specified for Founder-strengthened V1 + gate
 precision.
@@ -79,7 +83,7 @@ finally PASS/lock without those gates (X2/X3 rule).
 | Takeaway Now eligibility | ASAP pickup eligibility domain | Pre-checkout read exposing same accepting-now eligibility + selectionPolicy | Client-invented outlet list; silent bind |
 | Takeaway Schedule capability | Scheduled pickup profile gates (+ hours/scheduling foundations used at Checkout) | Pre-checkout **capability** presentation without Menu exact slots | Reject Schedule solely because closed NOW; Menu exact-slot API; guaranteed availability claim |
 | Checkout pickup-options | Ownership-exact `listCheckoutPickupOptions` + fulfilment bind | **Timing-aware** Now vs Schedule-capable listing (or timing-intent-before-list order); capability-flagged presentation when timing unset | Keep accepting-now-only list for Schedule path; invent Menu slots; silent bind; weaken Checkout authorization |
-| Cart pricing by mode | `POST /api/v1/cart/evaluate` | Mode (+ outlet) input; Takeaway path without Delivery address; open-Checkout reuse **before** Delivery-only early return; missing-evidence fail-closed | Second money authority; browse mutate Checkout; fall through to divergent browse quote |
+| Cart pricing by mode / timing | `POST /api/v1/cart/evaluate` + `buildDirectPricingQuote` promotion context | Mode (+ outlet) + timing intent input; Takeaway without Delivery address; open-Checkout reuse **before** Delivery-only early return; missing-evidence fail-closed; provisional Offers when Schedule UNCONFIRMED; fingerprint/dedup | Second money authority; browse mutate Checkout; fall through to divergent browse quote; Menu guarantee of slot/final promo |
 | Scheduling exact slots | `listCheckoutScheduledWindows(checkoutId)`, seal, bind revalidate | Compact UX; Menu **intent** only (DR-02) | Menu exact-slot preview API in V1; invent future availability |
 | Menu projection outlet | Existing no_location / server outlet rules | May reflect proposed Takeaway outlet from server eligibility | Client-authored outlet |
 | Cart / checkout | evaluate, prepare, PAYMENT_PENDING freeze | Bar calls same guards; pre-checkout reads never mutate pending checkout | Client payable; browse mutate pending checkout |
@@ -127,11 +131,45 @@ NOT AUTHORITY FOR: Sealed Snapshot, pay readiness, inventing a parallel pricing 
 | Dimension | Smallest contract |
 |---|---|
 | Surface | Extend existing `POST /api/v1/cart/evaluate` (or equivalent same evaluateCart entry) |
-| Added inputs (optional) | `fulfilmentMode`: `DELIVERY` \| `PICKUP`; when `PICKUP`, optional `pickupOutletId` from server eligibility / customer selection |
+| Added inputs (optional) | `fulfilmentMode`: `DELIVERY` \| `PICKUP`; when `PICKUP`, optional `pickupOutletId` from server eligibility / customer selection; optional `fulfilmentTiming`: `ASAP` \| `SCHEDULED` as **browse intent** (not sealed window) |
 | Delivery path | Retain today’s `location` / coordinates path for Delivery serviceability-backed quotes |
 | Takeaway path | **Must not require Delivery address/coordinates.** Takeaway quote uses outlet (+ cart) commercial path without inventing delivery fee/execution |
 | Absence of mode | Preserve backward-compatible evaluate behaviour |
-| Outputs | Existing cart evaluation result shape **plus** explicit effective-mode conveyance when reuse applies (below) — still **advisory** |
+| Outputs | Existing cart evaluation result shape **plus** explicit effective-mode/timing conveyance when reuse applies (below) — still **advisory**; may carry provisional-offer flags (below) |
+
+#### Promotion eligibility by fulfilmentMode / fulfilmentTiming (verified + contract)
+
+**Verified (code):** `evaluateEligibility` → `matchesModeTiming` honours promotion
+`eligibleFulfilmentModes` / `eligibleFulfilmentTimings`. Missing required context →
+`FULFILMENT_CONTEXT_REQUIRED`; mismatch → `FULFILMENT_MODE_MISMATCH` /
+`FULFILMENT_TIMING_MISMATCH`. `buildDirectPricingQuote` already forwards
+`fulfilmentMode` / `fulfilmentTiming` into `evaluatePromotions`. Checkout commercial paths
+supply sealed Checkout mode/timing. **Cart evaluate today** does not yet pass mode/timing into
+`buildDirectPricingQuote` (Fit gap for this contract).
+
+| Situation | Required advisory behaviour |
+|---|---|
+| Mode known (Delivery or Takeaway + outlet when Takeaway) | Pass `fulfilmentMode` (+ outlet) into quote so mode-gated Offers evaluate truthfully |
+| Timing known as Now (`ASAP`) | Pass `fulfilmentTiming=ASAP` |
+| Timing = Schedule **intent** only (UNCONFIRMED; no Checkout-sealed window) | May pass `SCHEDULED` as **provisional timing intent** for quote-only evaluation **or** omit timing so timing-restricted Offers stay `FULFILMENT_CONTEXT_REQUIRED`. Either choice is Fit-valid **iff** the response marks the quote/offers as **provisional** and UI does not claim a final promotional price |
+| Mode or required timing absent | Mode/timing-restricted promotions must not apply; reason codes above; never invent eligibility |
+| Open Checkout reuse applies | Snapshot / CHECKOUT-scope evaluation wins; do not recompute a competing browse promo total for that cart revision |
+
+**Forbidden at Menu / pre-checkout:**
+
+- Guaranteeing a scheduled collection slot
+- Presenting advisory / provisional Offer savings as final payable or Snapshot truth
+- Client-side promotion eligibility that bypasses server evaluate
+
+#### Timing-sensitive provisional-offer messaging (experience + quote contract)
+
+When Schedule is only browse intent (DR-02 UNCONFIRMED) or mode/outlet is proposed not Checkout-bound:
+
+| Allowed | Forbidden |
+|---|---|
+| Server advisory quote with clear **provisional / may change** offer messaging | “Your discount is locked” / final price at Menu |
+| Threshold progress / “add ₹X more” that does not invent mode/timing eligibility | Applying SCHEDULED-only Offers as if a window were sealed |
+| Recompute after Checkout confirm of mode / outlet / window | Treating Menu display price (D-368) as commercial seal |
 
 #### Open Checkout Snapshot reuse precedence (mandatory)
 
@@ -156,7 +194,7 @@ and status ∈ {`DRAFT`, `READY_FOR_PAYMENT`, `PAYMENT_PENDING`}:
    `PAYMENT_PENDING`.
 8. Browse intent must **not** call fulfilment / destination / timing mutations on that Checkout.
 
-#### Missing commercial-evaluation evidence (mandatory — AS-39)
+#### Missing commercial-evaluation evidence (mandatory — AS-39 / AS-45)
 
 When reuse preconditions hold (active non-terminal Checkout, same cart revision, active Snapshot)
 but the corresponding CHECKOUT-scope commercial evaluation row / explanation wire **cannot** be
@@ -175,6 +213,17 @@ that state is non-payable advisory only — never presented as the pending Check
 Rationale: Snapshot remains commercial seal authority; missing measurement/explanation evidence is
 not license to create a second money path.
 
+#### Mode / timing / outlet provenance + fingerprint / deduplication (mandatory — AS-32 / AS-46)
+
+| Concern | Rule |
+|---|---|
+| CART-scope persist (new quote, not reuse) | Record evaluated `fulfilmentMode`, `fulfilmentTiming` (when supplied), and `pickupOutletId` **or** Delivery location fingerprint |
+| CHECKOUT reuse | Retain Checkout/Snapshot provenance (`evaluationId`, sealed mode/timing/outlet); do **not** overwrite with browse intent |
+| Evaluate fingerprint (client + server discard key) | At minimum: `cartRevision` + effective/requested `fulfilmentMode` + `fulfilmentTiming` + (Takeaway `pickupOutletId` \| Delivery coordinate fingerprint) + request generation |
+| Deduplication | Identical fingerprint under the same in-flight generation must not present two competing payables; stale responses whose fingerprint ≠ current intent/context are **dropped** (same class as eligibility mirror drop) |
+| Presentation mirrors | `eligibilityFlags` / quote mirrors keyed by the fingerprint above; mismatch → drop, never invent |
+| One quote source | Response presents either reused Checkout Snapshot quote **or** advisory CART quote — never both as competing payables |
+
 #### DRAFT / READY_FOR_PAYMENT / PAYMENT_PENDING conflict behaviour
 
 | Checkout status | Browse mode/outlet differs | Required behaviour |
@@ -183,30 +232,21 @@ not license to create a second money path.
 | `READY_FOR_PAYMENT` | Yes | Same as DRAFT; pay path still requires prepare + Snapshot authority |
 | `PAYMENT_PENDING` | Yes | **Freeze preserved**; reuse only; recovery-first UX; bar must not call Checkout mutations; no divergent recomputation |
 
-#### Mode/outlet-specific evaluation provenance
-
-- When a **new** CART-scope commercial evaluation is persisted (not reuse), record evaluated
-  `fulfilmentMode` and `pickupOutletId` (or Delivery location fingerprint) for measurement honesty
-- Reused Checkout evaluations retain Checkout/Snapshot provenance (`evaluationId` from CHECKOUT
-  scope); do not rewrite CART provenance over Snapshot truth
-- No duplicate money authority: one presented quote source per response — either reused Checkout
-  Snapshot quote **or** advisory CART quote — never both as competing payables
-
 **Safety / privacy / races**
 
 - Evaluate remains non-sealing; pay still requires Checkout prepare + Snapshot path
 - Invalid mode/outlet combinations → server error/problem statuses; no client-fabricated totals
 - Must not weaken PAYMENT_PENDING freezes (AS-29)
-- Cart revision concurrency unchanged; stale evaluate responses discarded via generation tokens
-- Mode/outlet intent changes trigger a new evaluate **only when no blocking open-Checkout reuse applies**
+- Cart revision concurrency unchanged; stale evaluate responses discarded via generation tokens **and** fingerprint mismatch
+- Mode/outlet/timing intent changes trigger a new evaluate **only when no blocking open-Checkout reuse applies**
 - Impact banner / UI money displays only the latest successful server quote (or Checkout evaluate /
-  Snapshot at Review)
+  Snapshot at Review); provisional Offer copy must not upgrade to sealed savings
 
-### C. Checkout-owned Takeaway outlet listing + bind→timing→evaluate sequence — GP-01 Checkout path
+### C. Checkout-owned Takeaway outlet listing + bind→timing→evaluate→prepare — GP-01 Checkout path
 
 ```text
 PURPOSE: Server-authoritative Takeaway outlet options on an owned Checkout before bind,
-  and a Schedule-viable bind→windows→evaluate sequence
+  and a Schedule-viable bind→windows→evaluate→prepare sequence
 AUTHORITY: Compose existing ASAP pickup eligibility + scheduled-pickup profile foundations
 NOT AUTHORITY FOR: Menu exact slots; inventing future availability; silent bind; new lifecycle states
 DEFECT_EVIDENCE (candidate — Founder confirms under UOE-DR-06):
@@ -217,10 +257,40 @@ DEFECT_EVIDENCE (candidate — Founder confirms under UOE-DR-06):
   Canonical against / ambiguous: US-036I-002 precondition “eligible pickup outlet path (IMP-036H rules)”.
 ```
 
+#### Exact eligible-Checkout journey — Scheduled Takeaway when closed now but schedule-capable (AS-34 / AS-41)
+
+Addresses **both** defect surfaces: (a) pickup-options accepting-now filtering, and
+(b) `evaluateCheckout` running before Scheduled time selection.
+
+```text
+1. Checkout Mode = Takeaway (PICKUP)
+2. Timing intent for LISTING = Schedule (request input only — do NOT mutate Checkout to
+   SCHEDULED + null window solely to unlock the list)
+3. Timing-aware pickup-options → schedule-capable outlets
+   (assertScheduledPickupProfile class + merchandise ignoreCurrentScheduleDenial: true)
+   — NOT accepting-now-only filter
+4. Customer confirms outlet
+5. setCheckoutFulfilment(PICKUP, outletId) with optimistic expectedRevision
+   — NO evaluateCheckout on this step for the Schedule path
+6. listCheckoutScheduledWindows(checkoutId) — server-listed windows only
+7. Customer selects a server window
+8. setCheckoutFulfilmentTiming(SCHEDULED, window) with optimistic expectedRevision
+9. evaluateCheckout — authoritative commercial recomputation
+   (assertScheduledPickupProfile; promotions with sealed mode+timing)
+10. Checkout Review (Snapshot / evaluate money)
+11. prepareCheckoutForPayment — final payment prepare; scheduled bind revalidation
+12. Pay (unchanged payment authority)
+```
+
+**Preserved throughout:** server-listed windows only; optimistic concurrency via expected
+revisions; authoritative `evaluateCheckout` only after SCHEDULED+window; final payment prepare
+unchanged; no new lifecycle states; no Menu exact slots; no guaranteed-availability claim;
+no silent bind from browse.
+
 | Dimension | Future implementation contract |
 |---|---|
 | Authorization | Unchanged ownership-exact Checkout actor checks; no guest fabrication of `checkoutId`; no weakening of BOLA |
-| Order of operations (viable Schedule path) | **Mode → timing-aware list** (timing as **listing request input**, not a Checkout row mutation to `SCHEDULED` + null window) → **bind outlet** via `setCheckoutFulfilment` (**no** `evaluateCheckout`) → **`listCheckoutScheduledWindows`** (requires bound `pickupOutletId`) → **`setCheckoutFulfilmentTiming(SCHEDULED, window)`** → **`evaluateCheckout`** → Review → pay. Forbidden: Mode → accepting-now-only list → bind → evaluate(ASAP) → Timing |
+| Order of operations (viable Schedule path) | Exact journey above. Forbidden: Mode → accepting-now-only list → bind → evaluate(ASAP) → Timing |
 | Intermediate gates | Between outlet bind and timing selection on the Schedule path, **no accepting-now assertion may run** (today’s post-bind `evaluateCheckout` under default ASAP is part of the defect). Do not write `SCHEDULED` with a null window solely to unlock listing — that path conflicts at evaluate seal |
 | Takeaway **Now** eligibility | Reuse accepting-now composition (`listEligiblePickupOutletsForCheckout` / `assertPickupOutletEligible` class) |
 | Takeaway **Schedule-capable** selection | Profile gate aligned with `assertScheduledPickupProfile` **plus** cart merchandise fulfilability with **`ignoreCurrentScheduleDenial: true`** (parity with SCHEDULED evaluate/prepare/bind). **Must not** require accepting-now. **Must not** list exact slots here |
@@ -235,6 +305,25 @@ Distinguish:
 
 - **Candidate defect evidence (code-verified composition)** — accepting-now-only list **and** post-bind evaluate-before-timing; classification vs accepted IMP-036I confirmed under UOE-DR-06
 - **Future UX improvements** — compact chrome, UNCONFIRMED copy polish, pre-checkout eligibility (DR-05) — not required to prove the composition defect exists
+
+### D. WhatsApp / notification channel scope (DR-04 — verified, non-overclaim)
+
+```text
+VERIFIED: createNotificationChannelRegistry — WHATSAPP = options.whatsapp ?? noop;
+  IN_APP = live adapter; EMAIL / SMS / PUSH = noop.
+VERIFIED: Meta Cloud API adapter exists but is optional wiring; default registry is non-sending
+  for WhatsApp when no adapter is supplied (createNonSendingChannelRegistry).
+VERIFIED: customer-visible-content.ts is wording authority for semantic types; does not invent
+  Meta template ids; current Pickup wording still uses “Pickup” (DR-04 same-meaning remediation
+  targets Takeaway primary labels when templates/variables are updated).
+```
+
+| Claim | Allowed | Forbidden |
+|---|---|---|
+| DR-04 same-meaning | When WhatsApp **sending** is configured in an environment, customer-visible content must match web primary meaning (Delivery / Takeaway / Now / Schedule) | Claiming WhatsApp is active / sending in **every** environment |
+| Optional channel | Treat WhatsApp as an **optional implemented channel** whose adapter may be noop | Treating noop WhatsApp as a product failure of this candidate |
+| Email/SMS/push | Remain out of V1 while non-sending | Expanding DR-04 to require those channels |
+| Templates | Fit must still confirm Meta template **body vs variable** for label changes | Inventing new Meta templates inside this discovery package |
 
 ### Explicit non-authority (no second commercial authority)
 
@@ -330,11 +419,12 @@ provider). UI must not upgrade bias into confirmed Deliver to.
 | Empty/no-cart distinct from UNAVAILABLE | Mandatory presentation + contract `cartState` (GP-03) |
 | Cart evaluate Takeaway without Delivery location | Fit-authorized quote-only path; Snapshot authority unchanged |
 | Open-Checkout reuse before Delivery-only early return | Mandatory evaluate entry ordering / precedence (GP-02 / AS-29) |
-| Missing commercial-evaluation evidence with active Snapshot | Fail-closed; no divergent browse money (AS-39) |
-| Effective Checkout mode in evaluate response | Mandatory when `reusedCheckoutEvaluation` |
-| CART evaluation mode/outlet provenance | Required for new CART-scope persists |
+| Missing commercial-evaluation evidence with active Snapshot | Fail-closed; no divergent browse money (AS-39 / AS-45) |
+| Effective Checkout mode/timing in evaluate response | Mandatory when `reusedCheckoutEvaluation` |
+| CART evaluation mode/timing/outlet provenance + fingerprint/dedup | Required for new CART-scope persists (AS-32 / AS-46) |
+| Timing-sensitive provisional Offers | Advisory only; no Menu slot/final-promo guarantee (AS-42–44) |
 | Guest visibility of customer-safe outlet projection | Accepted Fit consequence (public store info); rate-limit + debounce |
-| DR-04 wording on WhatsApp | Fit must confirm whether wording is Meta template **body** (re-approval / status lifecycle) or **variable**; no new channel adapter authorized |
+| DR-04 wording on WhatsApp | Optional channel (noop default); Fit must confirm Meta template **body** vs **variable**; no new channel adapter; do not claim WhatsApp active in every environment |
 | Exact Menu schedule preview | **Out of V1** — no Fit work for that API in this variant |
 | Cross-tab presentation sync | **Out of V1** — tab-scoped only (GP-04) |
 | Client money / client eligibility | STOP — Architecture mismatch |
@@ -372,6 +462,9 @@ provider). UI must not upgrade bias into confirmed Deliver to.
 12. Takeaway **Now** = accepting-now; Takeaway **Schedule** = schedule-capable (not accepting-now); Schedule is not silently denied solely because closed NOW — including on Checkout pickup-options
 13. Open Checkout / Snapshot reuse wins over browse mode/outlet at the same cart revision; reuse attempted before Delivery-location early return
 14. Active Snapshot + missing commercial-evaluation evidence → fail-closed; never divergent browse money
-15. Empty / no cart ≠ brand UNAVAILABLE
-16. Presentation storage is tab-scoped; server facts revalidated per tab
-17. No new backend lifecycle states for Schedule Takeaway recovery
+15. Mode/timing/outlet provenance + evaluate fingerprint/dedup correctness (no competing payables)
+16. Timing-sensitive Cart Offers are advisory; Menu must not guarantee scheduled slot or final promo price
+17. Empty / no cart ≠ brand UNAVAILABLE
+18. Presentation storage is tab-scoped; server facts revalidated per tab
+19. No new backend lifecycle states for Schedule Takeaway recovery
+20. WhatsApp adapter may be noop; DR-04 same-meaning applies when sending is configured — not “always on”

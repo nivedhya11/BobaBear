@@ -97,10 +97,11 @@ Takeaway” posture (GP-01) while retaining DR-02 / DR-04 / DR-05:
 | Schedule exact slots pre-checkout | **Deferred** (UOE-DR-02) — intent + UNCONFIRMED only |
 | Takeaway **Now** outlet eligibility | **In V1** — server accepting-now eligibility (IMP-036H ASAP pickup domain) |
 | Takeaway **Schedule** collection capability | **In V1** — server schedule-capable outlet presentation using accepted scheduled-pickup profile / hours rules (IMP-036I); **not** rejected solely because closed NOW; **no** Menu exact slots; **no** guaranteed future availability claim |
-| Mode-sensitive Cart quote | **In V1** — extend existing cart evaluate with mode (+ outlet when Takeaway) as **advisory** quote only; Takeaway quote **without** Delivery address (GP-02) |
-| Open Checkout precedence | Open non-terminal Checkout Snapshot reuse wins over browse mode/outlet at same cart revision (AS-29 extended) |
+| Mode-sensitive Cart quote | **In V1** — extend existing cart evaluate with mode (+ outlet when Takeaway) and timing intent as **advisory** quote only; Takeaway quote **without** Delivery address (GP-02) |
+| Timing-sensitive Offers | **In V1** — honour existing promotion `eligibleFulfilmentModes` / `eligibleFulfilmentTimings` via server evaluate; **provisional** messaging when Schedule is UNCONFIRMED; **no** Menu guarantee of scheduled slot or final promotional price |
+| Open Checkout precedence | Open non-terminal Checkout Snapshot reuse wins over browse mode/outlet at same cart revision (AS-29 extended); missing commercial-evaluation evidence fail-closed (AS-39 / AS-45) |
 | Commercial seal | Checkout evaluate + Snapshot remain sole sealed commercial / fulfilment commitment |
-| Implemented channels | **In V1** — same-meaning Delivery / Takeaway / Now / Schedule on WhatsApp + in-app (UOE-DR-04); email/SMS/push non-sending today |
+| Implemented channels | **In V1** — same-meaning Delivery / Takeaway / Now / Schedule on **in-app** and on **WhatsApp when that environment’s WhatsApp adapter is sending** (UOE-DR-04); WhatsApp may remain noop; email/SMS/push non-sending today |
 | Checkout | Authoritative outlet **confirm/bind**, exact windows, Review, pay — unchanged authorities; pickup-options **timing-aware** + bind-without-evaluate on Schedule path (GP-01 Contract C); Founder confirms defect classification under UOE-DR-06 |
 | Empty / first-use | Distinguish No Cart / Empty Cart / no eligible / error (GP-03); never “no outlets” because cart has no lines |
 
@@ -156,9 +157,11 @@ models (BOLA-safe; see Architecture Fit).
 | Confirm Delivery destination | Only after coordinates present **and** last serviceability for those coordinates is SERVICEABLE |
 | Pre-checkout Takeaway **Now** eligibility | Server accepting-now list + selectionPolicy; AUTO_SELECT may **propose**; customer must confirm before Checkout bind; never silent bind from browse |
 | Pre-checkout Takeaway **Schedule** capability | Server schedule-capable outlets (accepted profile/hours rules); closed NOW must **not** alone mark Schedule collection unavailable; exact slots remain checkout-eligible only (DR-02); no guaranteed-availability claim |
-| Mode-sensitive Cart evaluate | Server quote reflects mode (+ proposed/confirmed outlet when Takeaway) **without requiring Delivery address** for Takeaway; advisory until Checkout Review / Snapshot |
-| Open Checkout vs browse intent | If active non-terminal Checkout exists for same cart revision with Snapshot, reuse wins; UI shows Checkout’s effective mode; browse intent does not mutate that Checkout |
-| Confirm Takeaway outlet at Checkout | Checkout-owned pickup-options + fulfilment set. **Now** list = accepting-now. **Schedule** list = schedule-capable (IMP-036I profile + merchandise with `ignoreCurrentScheduleDenial` parity) — **not** accepting-now-only. Viable Schedule sequence: Mode → timing-aware list (timing as **read input**, not `SCHEDULED`+null-window Checkout mutation) → bind outlet **without** `evaluateCheckout` → server windows → set SCHEDULED+window → evaluate → Review. Never silent bind from browse (AS-34+) |
+| Mode-sensitive Cart evaluate | Server quote reflects mode (+ proposed/confirmed outlet when Takeaway) and timing intent **without requiring Delivery address** for Takeaway; advisory until Checkout Review / Snapshot |
+| Timing-sensitive Offers (provisional) | Mode/timing-gated promotions evaluate via server quote context; Schedule UNCONFIRMED → provisional-offer messaging only; Menu must not promise a slot or final promo price (AS-42–44) |
+| Open Checkout vs browse intent | If active non-terminal Checkout exists for same cart revision with Snapshot, reuse wins; UI shows Checkout’s effective mode/timing; browse intent does not mutate that Checkout |
+| Snapshot evaluation evidence missing | Fail-closed (`EVALUATION_INDETERMINATE` or Snapshot-sourced display only); never divergent browse money; fingerprint/dedup must not present competing payables (AS-39 / AS-45–46) |
+| Confirm Takeaway outlet at Checkout | Checkout-owned pickup-options + fulfilment set. **Now** list = accepting-now. **Schedule** list = schedule-capable (IMP-036I profile + merchandise with `ignoreCurrentScheduleDenial` parity) — **not** accepting-now-only. Viable Schedule sequence: Mode → timing-aware list (timing as **read input**, not `SCHEDULED`+null-window Checkout mutation) → bind outlet **without** `evaluateCheckout` → server windows → set SCHEDULED+window → evaluate → Review → prepare → pay. Never silent bind from browse (AS-34 / AS-41) |
 | Select Schedule window | Server windows only once outlet is Checkout-confirmed; 30-minute slots; TZ/lead/hours/cutoff preserved; **no** Menu exact-slot list in V1; empty windows → honest recovery; Now offered only if accepting-now still eligible (AS-09 / AS-37) |
 | Selected outlet becomes invalid | Revalidate; force reselect; no silent keep; customer recovers without fake promises (AS-36) |
 | Timing step when outlet closed now | Now control disabled with reason when confirmed outlet is not accepting-now; Schedule remains if windows exist (AS-34) |
@@ -166,7 +169,7 @@ models (BOLA-safe; see Architecture Fit).
 | Pay | Existing prepare/pay path; Snapshot sealed; scheduled bind revalidation; no new backend lifecycle states |
 | Change browse intent while PAYMENT_PENDING | Must **not** mutate that checkout; recovery first |
 | Multi-tab | Each tab keeps its own presentation intent; each revalidates server facts; no cross-tab money/seal sync from sessionStorage |
-| Implemented channels | WhatsApp + in-app same primary meaning as web via customer-visible content; email/SMS/push not in V1 |
+| Implemented channels | In-app same primary meaning as web; WhatsApp same-meaning **when sending is configured** (adapter may be noop — do not claim always-on); email/SMS/push not in V1 |
 | Workforce primary labels | Delivery / Takeaway |
 
 ## 8. Quality Attribute Profile (candidate)

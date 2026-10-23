@@ -25,10 +25,10 @@ architecture/invariants before UI cosmetics.
 |---|---|---|
 | Unit | Presentation maps; order-context reducer; timing bucketing helpers | Labels; UNCONFIRMED; legacy dual-read |
 | Component | Bar, sheet, TimingChooser, MethodChooser, PlaceChooser | AS-12, AS-13, empty/selected/disabled |
-| Integration | Client ↔ cart evaluate (mode/outlet) ↔ eligibility read ↔ checkout/pickup/scheduled APIs | AS-02–11, AS-14–16, AS-24–40 |
-| Concurrency | Stale async generation; revision conflicts; eligibility races; tab-scoped multi-tab | AS-16, AS-22, AS-27 |
-| Recovery | PAYMENT_PENDING; cart_changed_unresolved; window expiry; open-Checkout reuse; missing evaluation evidence; empty-cart honesty | AS-11, AS-17, AS-18, AS-29–40 |
-| Content QA | Customer + workforce primary labels; WhatsApp + in-app; no fulfil jargon | AS-19, AS-28, UX-A |
+| Integration | Client ↔ cart evaluate (mode/outlet/timing + promotions) ↔ eligibility read ↔ checkout/pickup/scheduled APIs | AS-02–11, AS-14–16, AS-24–46 |
+| Concurrency | Stale async generation; revision conflicts; eligibility races; fingerprint mismatch; tab-scoped multi-tab | AS-16, AS-22, AS-27, AS-46 |
+| Recovery | PAYMENT_PENDING; cart_changed_unresolved; window expiry; open-Checkout reuse; missing evaluation evidence; empty-cart honesty | AS-11, AS-17, AS-18, AS-29–46 |
+| Content QA | Customer + workforce primary labels; in-app (+ WhatsApp when sending); provisional Offer copy; no fulfil jargon | AS-19, AS-28, AS-43–44, UX-A |
 | A11y / responsive QA | Keyboard, SR, mobile strip | AS-12, AS-13 |
 | Regression | Snapshot money; payment prepare; serviceability; scheduled bind; pickup-options bind | Must remain green |
 | E2E (staging when authorized) | Golden J1–J6 subset | Not authorized by this package |
@@ -56,7 +56,12 @@ architecture/invariants before UI cosmetics.
 - Domain enums unchanged in network payloads; no new lifecycle states
 - Pre-checkout eligibility must not require fabricating a checkoutId
 - Open-Checkout reuse conveys effective Checkout mode; Takeaway reuse without Delivery location (AS-29/AS-31/AS-40)
-- Missing commercial-evaluation evidence with active Snapshot must not fall through to divergent browse money (AS-39)
+- Missing commercial-evaluation evidence with active Snapshot must not fall through to divergent browse money (AS-39 / AS-45)
+- Mode-gated / timing-gated promotions honour evaluate context; Schedule UNCONFIRMED Offers are provisional only (AS-42–44)
+- Menu must not guarantee scheduled slot or final promotional price (AS-44)
+- Evaluate/eligibility fingerprint mismatch drops stale responses; no competing payables (AS-46)
+- Eligible-Checkout Scheduled Takeaway preserves server windows, optimistic revisions, post-window evaluate, then prepare (AS-41)
+- WhatsApp may be noop; tests must not require WhatsApp sending in every environment (AS-28)
 - Presentation storage must not sync payable/seal across tabs (AS-22 / GP-04)
 
 ## Non-goals for this plan
@@ -68,9 +73,9 @@ architecture/invariants before UI cosmetics.
 
 ## Exit criteria (for a future authorized implementation)
 
-- AS-01–40 mapped to automated and/or scripted Founder UAT evidence
+- AS-01–46 mapped to automated and/or scripted Founder UAT evidence
 - No invariant regressions listed in Architecture Fit
-- Content QA sign-off on primary surfaces + WhatsApp / in-app
+- Content QA sign-off on primary surfaces + in-app (+ WhatsApp when sending)
 - X3 a11y/responsive QA recorded
 
 **Formal plan finalization:** `NOT_PERFORMED`.

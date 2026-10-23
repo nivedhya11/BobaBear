@@ -22,8 +22,8 @@ register live in
 | Topic | Evidence | Notes |
 |---|---|---|
 | Outcome / personas / journeys | `01-…`, `02-…` | Candidate |
-| Entitlement + out of scope | `02-…` §4–7 | V1 pre-checkout eligibility (Now vs Schedule-capable) + Checkout timing-aware pickup-options + mode-sensitive cart quote; Menu exact slots deferred; GP-01…04 Checkout precision |
-| Stories + AS-01–40 | `04-…` | Includes DR-05/DR-04/DR-02 + GP extensions (AS-29–33) + Checkout Schedule/precedence (AS-34–40) |
+| Entitlement + out of scope | `02-…` §4–7 | V1 pre-checkout eligibility (Now vs Schedule-capable) + Checkout timing-aware pickup-options + mode/timing-sensitive cart quote + provisional Offers; Menu exact slots deferred; GP-01…04 + final contract completeness |
+| Stories + AS-01–46 | `04-…` | Includes DR-05/DR-04/DR-02 + GP extensions (AS-29–33) + Checkout Schedule/precedence (AS-34–41) + timing quotes / fail-closed / fingerprint (AS-42–46) |
 | Slicing / deferrals | `12-…` §A | DR-02 deferred; DR-04/05 in V1 slice |
 | Unresolved decisions | UOE-DR-01, UOE-DR-03, UOE-DR-06 | DR-02/04/05 incorporated; GP-01 Founder confirm as UOE-DR-06 |
 | Architecture conflicts if contracts held | None vs D-378/D-379/IMP-036I if no second commercial authority | STOP if client invents eligibility/money or denies Schedule solely because closed NOW |
@@ -59,5 +59,6 @@ Implementation authorization → requires Design Readiness + Quality plan + (X3)
 ```
 
 Architecture Fit and Design Readiness in this package remain **candidates only**. Fit contracts
-for UOE-DR-05 + GP-01…GP-04 (including Checkout Contract C and missing-evaluation fail-closed)
-are specified in `06-…` but formal Fit remains `NOT_PERFORMED`.
+for UOE-DR-05 + GP-01…GP-04 (including Checkout Contract C, timing-sensitive quotes, missing-
+evaluation fail-closed, fingerprint/dedup, WhatsApp optional scope) are specified in `06-…` but
+formal Fit remains `NOT_PERFORMED`.

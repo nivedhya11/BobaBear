@@ -63,12 +63,12 @@ evaluation. It is **not** a passed Design Readiness gate.
 
 ## Handoff to engineering (when authorized)
 
-1. Shared presentation helpers (UX-A) before chrome rewrite — include WhatsApp + in-app (DR-04)
+1. Shared presentation helpers (UX-A) before chrome rewrite — include in-app (+ WhatsApp when sending) (DR-04)
 2. TimingChooser extractable for checkout and bar (Menu remains intent-only for Schedule)
-3. order-context coordinator dual-reading delivery-context + eligibility/evaluate generation keys (**tab-scoped**; GP-04)
-4. Wire PlaceChooser to timing-aware pre-checkout eligibility read; Checkout timing-aware pickup-options + bind-without-evaluate on Schedule path (Contract C)
-5. Wire Cart impact to mode-sensitive evaluate quote (incl. Takeaway without Delivery address; open-Checkout reuse chrome; missing-evidence fail-closed)
-6. Explicit integration tests for AS-01–40 subset per tranche
+3. order-context coordinator dual-reading delivery-context + eligibility/evaluate fingerprint keys (**tab-scoped**; GP-04)
+4. Wire PlaceChooser to timing-aware pre-checkout eligibility read; Checkout timing-aware pickup-options + bind-without-evaluate on Schedule path (Contract C / AS-41)
+5. Wire Cart impact to mode/timing-sensitive evaluate quote (Takeaway without Delivery address; provisional Offers; open-Checkout reuse; missing-evidence fail-closed; fingerprint/dedup)
+6. Explicit integration tests for AS-01–46 subset per tranche
 
 **Formal Design Readiness:** `NOT_PERFORMED`.
 **Agent disposition after prerequisites:** candidate complete enough for later evaluation —

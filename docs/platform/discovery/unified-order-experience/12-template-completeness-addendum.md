@@ -19,7 +19,7 @@ It does not execute or pass any gate.
 
 | Slice class | Scope | Disposition |
 |---|---|---|
-| `V1_ACCEPTANCE_SLICE` | UX-A/B/C on web Menu→Cart→Checkout; primary workforce order-type labels; Checkout-bound exact Schedule windows; **server pre-checkout Takeaway eligibility (Now vs Schedule-capable) + mode-sensitive Cart evaluate** (DR-05 + GP-01/02); **WhatsApp + in-app same-meaning** (DR-04); empty/first-use honesty (GP-03); tab-scoped presentation (GP-04) | In candidate |
+| `V1_ACCEPTANCE_SLICE` | UX-A/B/C on web Menu→Cart→Checkout; primary workforce order-type labels; Checkout-bound exact Schedule windows; **server pre-checkout Takeaway eligibility (Now vs Schedule-capable) + mode/timing-sensitive Cart evaluate + provisional Offers** (DR-05 + GP-01/02); **in-app same-meaning + WhatsApp when sending** (DR-04); empty/first-use honesty (GP-03); tab-scoped presentation (GP-04); Snapshot missing-evidence fail-closed + fingerprint/dedup | In candidate |
 | `EXPLICITLY_DEFERRED` | Exact Menu-level schedule preview API | UOE-DR-02 (Founder: defer) |
 | `EXPLICITLY_DEFERRED` | Email/SMS/push (non-sending today); unbounded channel rewrite / new channel products | Beyond WhatsApp + in-app |
 | `EXPLICITLY_DEFERRED` | Cross-tab presentation coordination bus | GP-04 — tab-scoped only in V1 |
@@ -43,8 +43,8 @@ It does not execute or pass any gate.
 | AUTHORIZATION | Guest browse OK; exact windows require authenticated Checkout; eligibility/evaluate within cart credentials; guest may hold cart token for eligibility/evaluate; no silent Checkout bind | S-10, AS-24–25, AS-30, AS-38 |
 | NOT FOUND / STALE REFERENCE | Stale outlet/window/address refs cleared or revalidated | AS-14, AS-16, AS-20, AS-27, AS-36 |
 | SERVER / NETWORK ERROR | Calm recovery; no invented slots/money/outlets; error ≠ permanent UNAVAILABLE (pre-checkout + Checkout pickup-options) | AS-16, AS-33 |
-| RECOVERY | PAYMENT_PENDING recovery; cart conflict; new-order path; open-Checkout quote reuse; Now→Schedule when closed; missing evaluation fail-closed | AS-08, AS-17–18, AS-29, AS-34–40 |
-| CONCURRENCY | Generation tokens; revision conflicts; tab-scoped multi-tab; stale eligibility; Checkout reuse precedence | AS-16, AS-22, AS-27, AS-29, AS-39–40 |
+| RECOVERY | PAYMENT_PENDING recovery; cart conflict; new-order path; open-Checkout quote reuse; Now→Schedule when closed; missing evaluation fail-closed | AS-08, AS-17–18, AS-29, AS-34–46 |
+| CONCURRENCY | Generation tokens; revision conflicts; tab-scoped multi-tab; stale eligibility; fingerprint mismatch; Checkout reuse precedence | AS-16, AS-22, AS-27, AS-29, AS-39–40, AS-46 |
 | DESTRUCTIVE ACTION | Removing ineligible lines on mode switch requires clear confirmation/explanation | AS-20 |
 | SUCCESS FEEDBACK | Confirmation uses Delivery/Takeaway + time promise words | AS-19, S-19 |
 | DOWNSTREAM EFFECT | Ops lists primary Takeaway/Delivery; collection task verbs; implemented channels | W-01–W-02, AS-19, AS-28 |
@@ -61,7 +61,8 @@ It does not execute or pass any gate.
 | Ops list may show raw DELIVERY/PICKUP badges | FACT | Operations order list client | Medium | UX-A workforce map |
 | `listCheckoutScheduledWindows` requires checkoutId + auth | FACT | `checkout.ts` / router / scheduled-customer | High if ignored | Architecture Fit; DR-02 defer Menu slots |
 | `listCheckoutPickupOptions` is checkout-bound / ownership-exact | FACT | pickup-options + router | High if reused without checkout | DR-05 separate read reusing eligibility domain |
-| Implemented channels = WhatsApp + in-app only; EMAIL/SMS/PUSH are noop | FACT | `src/server/notifications/channels/index.ts` | High if DR-04 mis-scoped | AS-28; T1 content QA |
+| Implemented channels = IN_APP live; WHATSAPP = optional adapter else noop; EMAIL/SMS/PUSH noop | FACT | `src/server/notifications/channels/index.ts` | High if DR-04 claims WhatsApp always-on | AS-28; T1 content QA |
+| Promotion eligibility may require fulfilmentMode / fulfilmentTiming | FACT | `src/shared/promotions/eligibility.ts` `matchesModeTiming` | High if Cart quote omits context or Menu locks provisional Offers | Contract B; AS-42–44 |
 | `evaluateCart` today is location-centric advisory quote; may reuse open Checkout Snapshot after Delivery path | FACT | `cart/evaluate.ts` (`tryReusableCheckoutEvaluation`); early return without location | High for Takeaway-without-address + PAYMENT_PENDING | DR-05 Contract B precedence; AS-29/AS-31 |
 | ASAP Takeaway eligibility is accepting-now | FACT | `pickup-eligibility.ts` | High if Schedule confused with Now | AS-08 / AS-24 split |
 | SCHEDULED PICKUP evaluate/prepare/bind uses scheduled profile gates (not accepting-now) | FACT | `assertScheduledPickupProfile` in evaluate/prepare/scheduled-bind | High if CANDIDATE-2 denial retained | GP-01; AS-08 |
@@ -117,10 +118,10 @@ Acceptance Slice Defined: YES — see §A slicing dispositions
 Happy Paths Defined: YES (candidate)
 Alternate Paths Defined: YES (candidate) — includes Schedule-capable Takeaway when closed NOW (Menu + Checkout)
 Empty / First-Use States Defined: YES (candidate) — No Cart / Empty Cart / no eligible / error (GP-03)
-Error / Recovery Paths Defined: YES (candidate) — AS-34–38 Checkout Schedule/outlet recovery; AS-39 missing evaluation evidence
+Error / Recovery Paths Defined: YES (candidate) — AS-34–38 / AS-41 Checkout Schedule/outlet recovery; AS-39 / AS-45 missing evaluation evidence; AS-43 provisional Offer honesty
 Authorization Variants Defined: YES — guest browse + cart-credential eligibility/evaluate; authenticated Checkout for exact windows + timing-aware pickup-options; guest empty/no-cart browse without UNAVAILABLE; open-Checkout reuse authority vs browse intent; no silent Checkout bind
 Cross-Scope Scenarios Defined: N/A — no new cross-tenant admin scope
-Concurrency Considered: YES (AS-16, AS-22, AS-27, AS-29, AS-39–40; tab-scoped GP-04)
+Concurrency Considered: YES (AS-16, AS-22, AS-27, AS-29, AS-39–40, AS-46; tab-scoped GP-04)
 Destructive Actions Defined: YES (AS-20 ineligible-line disposition)
 Service / operational impact: see 03- service blueprint + §G surface table
 Quality Attribute Profile: 02- §8
@@ -130,7 +131,7 @@ PRODUCT_DEFINITION_GATE_EXECUTION: NOT_PERFORMED
 Gate Result: NOT_PERFORMED
 
 Founder Recommendations Incorporated: UOE-DR-02 (defer), UOE-DR-04 (WhatsApp+in-app), UOE-DR-05 (strengthen)
-Gate Precision: GP-01…GP-04 + Checkout contract precision (AS-34–40); UOE-CANDIDATE-4 NOT_INTRODUCED
+Gate Precision: GP-01…GP-04 + Checkout contract precision + final contract completeness (AS-34–46); UOE-CANDIDATE-4 NOT_INTRODUCED
 AGENT_DISPOSITION: RECOMMENDED_READY_FOR_EVALUATION (gaps listed; not RECOMMENDED_PASS)
 ```
 
@@ -149,14 +150,14 @@ Mental model / cognitive load considered: YES — Delivery/Takeaway + Now/Schedu
 Friction reviewed: YES — 03- friction audit (candidate; not pre-GTM audit)
 Trust-sensitive moments considered: YES — fees/quotes, pending payment, fake address/time, closed-now Schedule honesty
 Content strategy defined: YES — UX-A + LANG-1; WhatsApp+in-app (DR-04); receipts out of scope
-Error / recovery defined: YES — AS-07–11, AS-16–18, AS-20, AS-23–27, AS-29–40; Now unavailable → Schedule when server hints candidates; Checkout composition recovery (AS-34–38); missing evaluation fail-closed (AS-39); eligibility/pickup-options error retry; PAYMENT_PENDING recovery-first
+Error / recovery defined: YES — AS-07–11, AS-16–18, AS-20, AS-23–27, AS-29–46; Now unavailable → Schedule when server hints candidates; Checkout composition recovery (AS-34–38 / AS-41); missing evaluation fail-closed (AS-39 / AS-45); provisional Offer honesty (AS-43–44); eligibility/pickup-options error retry; PAYMENT_PENDING recovery-first
 Mobile / responsive defined: YES — AS-12; sticky strip + sheet vs desktop chrome
 Accessibility considered: YES — AS-13
 Service / operational promise aligned where applicable: YES — 03- blueprint + §G
 Performance experience considered: PARTIAL — generation/debounce/rate-limit noted in 06-; no perf budget claimed
 Measurement intent defined: YES — 09- (formal Measurement Plan NOT_PERFORMED)
 Research / evidence level disclosed: FOUNDER_HEURISTIC_REVIEW + FOUNDER_REVIEW_RECOMMENDATIONS (not customer research)
-Unresolved experience decisions: UOE-DR-03 formal verdict; UOE-DR-06 GP-01 confirm; workforce admin noun table §G; UNCONFIRMED reason copy variants; Meta template body-vs-variable for WhatsApp
+Unresolved experience decisions: UOE-DR-03 formal verdict; UOE-DR-06 GP-01 confirm; workforce admin noun table §G; UNCONFIRMED reason / provisional-offer copy variants; Meta template body-vs-variable for WhatsApp
 Result: NOT_PERFORMED
 
 Pre-GTM audit: NOT_PERFORMED
@@ -173,6 +174,7 @@ AGENT_DISPOSITION: RECOMMENDED_READY_FOR_EVALUATION (gaps listed; not RECOMMENDE
 | Store ops “Pickup promise/location” task chrome | Prefer collection wording where customer-visible; internal task precision OK |
 | Admin OutletPickupProfile / “Pickup minimum lead time” / profile config nouns | `OPERATIONAL_VOCAB_ALLOWED` — **domain/config names not renamed (D6)** |
 | Admin scheduling policy screens | Operational vocabulary OK; order-type filters use Takeaway when showing mode |
-| Notifications — WhatsApp + in-app (**implemented**) | Same meaning as customer web (UOE-DR-04 / AS-28); chooser labels Now/Schedule; sentence-form “scheduled collection / collection time” OK; no customer “fulfilment window”; no Pickup-as-peer |
+| Notifications — in-app (**always live adapter**) | Same meaning as customer web (UOE-DR-04 / AS-28); chooser labels Now/Schedule; sentence-form “scheduled collection / collection time” OK; no customer “fulfilment window”; no Pickup-as-peer |
+| Notifications — WhatsApp (**optional sending**) | Same-meaning when Meta adapter is wired; default registry uses noop WhatsApp — do not claim active in every environment |
 | Notifications — email/SMS/push | Out of scope while non-sending noop adapters |
 | Receipts / tax invoices / vouchers | `NOT_IN_SCOPE` (D-365) |

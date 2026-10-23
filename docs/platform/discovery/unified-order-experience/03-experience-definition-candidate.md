@@ -123,9 +123,15 @@ Rules:
 - Browse before address/sign-in allowed; browse with empty / no cart allowed without “no outlets” (GP-03)
 - Pre-checkout Takeaway place from **server eligibility read** (UOE-DR-05); propose ≠ bind;
   Now vs Schedule capability distinguished (GP-01)
-- Preserve eligible cart lines; explain fee, availability, offer changes from **mode-sensitive
-  server cart evaluate** (advisory), including Takeaway without Delivery address (GP-02)
-- When open Checkout quote is reused, show **Checkout’s** effective mode as authoritative (AS-29)
+- Preserve eligible cart lines; explain fee, availability, offer changes from **mode- and
+  timing-sensitive server cart evaluate** (advisory), including Takeaway without Delivery address
+  (GP-02)
+- Schedule **UNCONFIRMED** (Menu / pre-checkout): Offers that depend on timing must use
+  **provisional** wording (“may change when you confirm your collection time”) — never a locked
+  discount or promised slot (AS-43–44)
+- When open Checkout quote is reused, show **Checkout’s** effective mode/timing as authoritative
+  (AS-29 / AS-40); if evaluation evidence is missing, calm fail-closed recovery — not a competing
+  browse total (AS-39 / AS-45)
 - On the Checkout surface, the bar reflects Checkout-owned mode/outlet/timing and routes edits
   through Checkout APIs (not sessionStorage intent alone)
 - Require final authoritative Checkout Review before pay
@@ -169,13 +175,13 @@ Anonymous Menu browsing remains allowed throughout.
 | Moment | Frontstage | Backstage authority |
 |---|---|---|
 | Browse | Bar shows intent / gaps / proposed Takeaway place | delivery-context; eligibility read (Now vs Schedule-capable); menu projection |
-| Cart quote | Impact of mode/outlet on fees/offers/availability | cart evaluate (advisory, mode-sensitive; open-Checkout reuse when applicable) |
+| Cart quote | Impact of mode/outlet/timing on fees/offers/availability | cart evaluate (advisory; provisional Offers when Schedule UNCONFIRMED) |
 | Confirm place | Deliver to / Collect from | serviceability; eligibility; **timing-aware** checkout pickup-options + confirm |
 | Confirm time | Now / Schedule slot | ASAP path; scheduled windows + seal (checkout-eligible); empty → recovery |
 | Cart quote with open Checkout | Show Checkout mode/money when reuse applies | reuse before Delivery early return; fail-closed if evaluation evidence missing |
 | Pay | Review totals | Snapshot; prepare; payment; bind revalidate |
 | Collect / deliver | Customer promise words | Ops tasks + existing execution |
-| Notify | Same-meaning words on WhatsApp + in-app | `customer-visible-content` (+ Meta template body/variable rules) (DR-04) |
+| Notify | Same-meaning words on in-app (+ WhatsApp when sending) | `customer-visible-content`; WhatsApp adapter may be noop; Meta body/variable still open (DR-04) |
 
 ## Friction audit (candidate, not full pre-GTM audit)
 
@@ -191,10 +197,11 @@ Anonymous Menu browsing remains allowed throughout.
 | Closed-now false denial of Schedule Takeaway | GP-01 Now vs Schedule-capable (Menu **and** Checkout composition) |
 | Checkout Mode→Now-list→bind→evaluate(ASAP)→Timing | AS-34 Checkout contract (candidate defect; UOE-DR-06) |
 | Empty-cart “no outlets” | GP-03 state split |
-| Fee surprise at Checkout | DR-05 mode-sensitive cart evaluate + impact banner + Review |
-| Browse quote fights open Checkout | AS-29 / AS-39–40 / GP-02 precedence |
+| Fee surprise at Checkout | DR-05 mode/timing-sensitive cart evaluate + impact banner + Review |
+| Provisional Offer looks final at Menu | AS-43–44 provisional messaging; no Menu slot/final-promo guarantee |
+| Browse quote fights open Checkout | AS-29 / AS-39–40 / AS-45–46 / GP-02 precedence |
 | Cross-tab money bleed | GP-04 tab-scoped presentation |
 | Pending payment vs new intent | PAYMENT_PENDING isolation |
-| Channel wording drift | DR-04 implemented-channel consistency |
+| Channel wording drift | DR-04 in-app (+ WhatsApp when sending); no always-on WhatsApp claim |
 
 Full pre-GTM audit remains `NOT_PERFORMED` per Experience Debt Register.

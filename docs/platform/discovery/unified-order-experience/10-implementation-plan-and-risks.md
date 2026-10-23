@@ -42,11 +42,12 @@ GATE_PRECISION_REVISION = YES
 - TimingChooser sheet/popover; Now meaning microcopy
 - Replace primary long grid in checkout; reusable from future bar
 - Preserve windows/TZ/cutoff/bind revalidation; Menu remains Schedule intent-only
-- Server: timing-aware pre-checkout eligibility read + cart evaluate mode/outlet input (Fit contracts)
-- Checkout: timing-aware pickup-options (Contract C) so Schedule-capable closed-now outlets are selectable
-- Open-Checkout reuse before Delivery-location early return; missing commercial-evaluation evidence fail-closed (AS-29/AS-31/AS-32/AS-39/AS-40)
+- Server: timing-aware pre-checkout eligibility read + cart evaluate mode/outlet/timing input (Fit contracts; promotion context)
+- Checkout: timing-aware pickup-options + bind→windows→evaluate→prepare journey (Contract C / AS-41)
+- Open-Checkout reuse before Delivery-location early return; missing commercial-evaluation evidence fail-closed; fingerprint/dedup (AS-29/AS-31/AS-32/AS-39/AS-40/AS-45–46)
+- Timing-sensitive provisional Offers when Schedule UNCONFIRMED (AS-42–44)
 - Empty/no-cart distinct from UNAVAILABLE (AS-30)
-- **Exit:** AS-08–11, AS-24–27, AS-29–40 (API+client foundation); scheduled regression green; no new lifecycle states
+- **Exit:** AS-08–11, AS-24–27, AS-29–46 (API+client foundation); scheduled regression green; no new lifecycle states
 
 ### Tranche 3 — UX-C universal bar + context owner
 
