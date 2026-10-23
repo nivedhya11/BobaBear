@@ -22,8 +22,8 @@ register live in
 | Topic | Evidence | Notes |
 |---|---|---|
 | Outcome / personas / journeys | `01-…`, `02-…` | Candidate |
-| Entitlement + out of scope | `02-…` §4–7 | V1 pre-checkout eligibility (Now vs Schedule-capable) + mode-sensitive cart quote; Menu exact slots deferred; GP-01…04 |
-| Stories + AS-01–33 | `04-…` | Includes DR-05/DR-04/DR-02 + GP extensions (AS-29–33) |
+| Entitlement + out of scope | `02-…` §4–7 | V1 pre-checkout eligibility (Now vs Schedule-capable) + Checkout timing-aware pickup-options + mode-sensitive cart quote; Menu exact slots deferred; GP-01…04 Checkout precision |
+| Stories + AS-01–40 | `04-…` | Includes DR-05/DR-04/DR-02 + GP extensions (AS-29–33) + Checkout Schedule/precedence (AS-34–40) |
 | Slicing / deferrals | `12-…` §A | DR-02 deferred; DR-04/05 in V1 slice |
 | Unresolved decisions | UOE-DR-01, UOE-DR-03, UOE-DR-06 | DR-02/04/05 incorporated; GP-01 Founder confirm as UOE-DR-06 |
 | Architecture conflicts if contracts held | None vs D-378/D-379/IMP-036I if no second commercial authority | STOP if client invents eligibility/money or denies Schedule solely because closed NOW |
@@ -39,9 +39,9 @@ register live in
 |---|---|---|
 | Experience Intent / UX-A/B/C | `03-…` | Candidate; Now vs Schedule-capable Takeaway honesty |
 | LANG-1 / protective friction | `03-…`, refinements B/C, DR-04 channels | |
-| Authorization / IA / recovery | `12-…` §B/E/F | Guest browse; empty/first-use; open-Checkout mode authority; PAYMENT_PENDING recovery |
+| Authorization / IA / recovery | `12-…` §B/E/F | Guest browse; empty/first-use; open-Checkout mode authority; invalid outlet / empty windows recovery; PAYMENT_PENDING recovery |
 | Assumption register | `12-…` §C | Required X3 artifact |
-| Current-state evidence | `12-…` §D | Code-cited incl. IMP-036I scheduled-pickup gates |
+| Current-state evidence | `12-…` §D | Code-cited incl. IMP-036I scheduled-pickup gates + Checkout pickup-options accepting-now-only defect |
 | Research | Founder heuristic + Founder review recommendations | Disclosed — not customer research |
 | Pre-GTM audit | NOT_PERFORMED | Experience Debt Register |
 
@@ -59,4 +59,5 @@ Implementation authorization → requires Design Readiness + Quality plan + (X3)
 ```
 
 Architecture Fit and Design Readiness in this package remain **candidates only**. Fit contracts
-for UOE-DR-05 + GP-01…GP-04 are specified in `06-…` but formal Fit remains `NOT_PERFORMED`.
+for UOE-DR-05 + GP-01…GP-04 (including Checkout Contract C and missing-evaluation fail-closed)
+are specified in `06-…` but formal Fit remains `NOT_PERFORMED`.

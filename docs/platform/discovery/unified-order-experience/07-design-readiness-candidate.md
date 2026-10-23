@@ -40,7 +40,7 @@ evaluation. It is **not** a passed Design Readiness gate.
 | Method | “Choose how” | Highlight selected intent | Selected + used in evaluate / Checkout |
 | Delivery place | “Add address” | Checking… / Known·not deliverable | “Deliver to …” (coords + SERVICEABLE) |
 | Market orientation | — | “Ordering in Dehradun” | — (not a destination) |
-| Collection place | “Choose store” / add items first (empty cart) | Server proposed AUTO_SELECT / list CUSTOMER_SELECT (proposed; timing-aware) | “Collect from …” after Checkout confirm |
+| Collection place | “Choose collection place” / add items first (empty cart) | Server proposed AUTO_SELECT / list CUSTOMER_SELECT (proposed; timing-aware; per-timing AUTO_SELECT) | “Collect from …” after Checkout confirm |
 | Time Now | — | Selected Now intent | Eligible ASAP path at Checkout |
 | Time Schedule | “Choose time” | Schedule UNCONFIRMED + reason (no Menu exact slots); Schedule-capable place when closed NOW | Local window summary after eligible list |
 
@@ -66,9 +66,9 @@ evaluation. It is **not** a passed Design Readiness gate.
 1. Shared presentation helpers (UX-A) before chrome rewrite — include WhatsApp + in-app (DR-04)
 2. TimingChooser extractable for checkout and bar (Menu remains intent-only for Schedule)
 3. order-context coordinator dual-reading delivery-context + eligibility/evaluate generation keys (**tab-scoped**; GP-04)
-4. Wire PlaceChooser to timing-aware pre-checkout eligibility read; Checkout confirm/bind unchanged authority
-5. Wire Cart impact to mode-sensitive evaluate quote (incl. Takeaway without Delivery address; open-Checkout reuse chrome)
-6. Explicit integration tests for AS-01–33 subset per tranche
+4. Wire PlaceChooser to timing-aware pre-checkout eligibility read; Checkout timing-aware pickup-options + bind-without-evaluate on Schedule path (Contract C)
+5. Wire Cart impact to mode-sensitive evaluate quote (incl. Takeaway without Delivery address; open-Checkout reuse chrome; missing-evidence fail-closed)
+6. Explicit integration tests for AS-01–40 subset per tranche
 
 **Formal Design Readiness:** `NOT_PERFORMED`.
 **Agent disposition after prerequisites:** candidate complete enough for later evaluation —

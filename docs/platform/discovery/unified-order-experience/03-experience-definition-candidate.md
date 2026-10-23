@@ -36,7 +36,7 @@ now** when accepted Scheduled Takeaway remains supported (IMP-036I).
 | Surface | Customer words | Workforce primary | Contextual ops (allowed) |
 |---|---|---|---|
 | Mode | Delivery / Takeaway | Delivery / Takeaway | — |
-| Timing | Now / Schedule | Now / Schedule for order-type chrome; **Scheduled** allowed as contextual ops precision (not a competing customer label) | ASAP OK in deep ops tools if needed |
+| Timing | Now / Schedule (chooser / chrome labels) | Same chooser labels; **Scheduled** allowed as contextual ops precision | ASAP OK in deep ops tools if needed; WhatsApp/in-app **sentence form** may use “scheduled collection / collection time” (not a competing chooser label; AS-28) |
 | Place | Deliver to [confirmed]; Collect from [outlet] | Same meaning | Delivery address / collection point in tasks |
 | Time promise | Delivery time / Collection time | Same | Scheduled window (ops) |
 | Tasks | — | — | Prepare for collection; Ready for collection; Hand over order |
@@ -72,7 +72,11 @@ Rules:
   - **Delivery:** explain; offer Schedule if server windows exist at eligible checkout; else empty + recovery
   - **Takeaway Now:** accepting-now eligibility; closed / not accepting → Now unavailable + honest recovery; if schedule-capable, offer Schedule intent (not exact Menu slots)
   - **Takeaway Schedule:** schedule-capable presentation using accepted profile/hours rules; **do not** mark Schedule collection unavailable solely because closed NOW; exact windows remain checkout-eligible only; never claim guaranteed future availability at Menu
-- No windows (eligible checkout — Delivery destination or confirmed Takeaway outlet): empty + recovery; Now if eligible
+  - **Checkout path (mandatory):** timing-aware listing **and** bind-without-evaluate before Timing (AS-34). Do not present “no collection place” for Schedule solely because accepting-now is empty when schedule-capable outlets exist. When Now list is empty, show Schedule recovery only if server hints schedule-capable candidates exist. Defect evidence: Mode → pickup-options(accepting-now) → bind → evaluate(ASAP) → Timing
+- No windows (eligible checkout — Delivery destination or confirmed Takeaway outlet): empty + recovery; Now if accepting-now still eligible (AS-09 / AS-35 / AS-37)
+- Timing step: if confirmed outlet is not accepting-now, disable Now with reason; Schedule remains when windows exist (AS-34)
+- Selected outlet becomes invalid: reselect; no silent keep; no fake promise (AS-36)
+- Never silent Checkout bind from browse or AUTO_SELECT alone (AS-38)
 - Cross-midnight: Today/Tomorrow and labels follow outlet timezone
 - **Unconfirmed Schedule intent** allowed in bar before eligible checkout; exact slot only from
   server list once eligible — **no Menu exact-slot preview in V1** (UOE-DR-02)
@@ -92,9 +96,9 @@ Rules:
 | No place yet | Add address / choose store before exact times |
 | No checkout yet | Exact times appear when you check out |
 | Mode/place incomplete | Finish How and Where first |
-| Outlet only proposed | Confirm your store at checkout to choose an exact time |
+| Outlet only proposed | Confirm your collection place at checkout to choose an exact time |
 | API empty after eligible | No times available — try later or change method/place |
-| Now closed but Schedule possible | Store isn’t collecting right now — you can Schedule a later collection time at checkout |
+| Now closed but Schedule possible | This place isn’t open for collection right now — you can Schedule a later collection time at checkout |
 
 Takeaway + Schedule with AUTO_SELECT outlet **proposed but not confirmed** → windows must **not**
 list (outlet not yet confirmed place) — AS-26.
@@ -104,7 +108,7 @@ list (outlet not yet confirmed place) — AS-26.
 Visible on Menu → Cart → Checkout:
 
 1. Method — Delivery | Takeaway | “Choose how”
-2. Location — confirmed address **or** collection point from server eligibility |
+2. Location — confirmed address **or** collection place from server eligibility |
    honest missing CTAs | market orientation “Ordering in Dehradun” must **not** look like Deliver to
 3. Time — Now | Schedule summary | “Choose time” | Schedule **UNCONFIRMED** when ineligible
 
@@ -122,10 +126,14 @@ Rules:
 - Preserve eligible cart lines; explain fee, availability, offer changes from **mode-sensitive
   server cart evaluate** (advisory), including Takeaway without Delivery address (GP-02)
 - When open Checkout quote is reused, show **Checkout’s** effective mode as authoritative (AS-29)
+- On the Checkout surface, the bar reflects Checkout-owned mode/outlet/timing and routes edits
+  through Checkout APIs (not sessionStorage intent alone)
 - Require final authoritative Checkout Review before pay
 - Never mutate a previous `PAYMENT_PENDING` checkout from a new browsing preference
 - No client-owned payable amount
-- Presentation storage is **tab-scoped**; other tabs must revalidate server facts (GP-04)
+- Presentation storage is **tab-scoped**; other tabs must revalidate server facts (GP-04). Cart /
+  Checkout credentials may be shared across tabs; money consistency comes from server reuse rules,
+  not presentation sync. A duplicated tab copies sessionStorage at open then diverges — revalidate.
 
 ## First-use and empty-cart presentation (GP-03)
 
@@ -162,8 +170,9 @@ Anonymous Menu browsing remains allowed throughout.
 |---|---|---|
 | Browse | Bar shows intent / gaps / proposed Takeaway place | delivery-context; eligibility read (Now vs Schedule-capable); menu projection |
 | Cart quote | Impact of mode/outlet on fees/offers/availability | cart evaluate (advisory, mode-sensitive; open-Checkout reuse when applicable) |
-| Confirm place | Deliver to / Collect from | serviceability; eligibility; checkout pickup-options + confirm |
-| Confirm time | Now / Schedule slot | ASAP path; scheduled windows + seal (checkout-eligible) |
+| Confirm place | Deliver to / Collect from | serviceability; eligibility; **timing-aware** checkout pickup-options + confirm |
+| Confirm time | Now / Schedule slot | ASAP path; scheduled windows + seal (checkout-eligible); empty → recovery |
+| Cart quote with open Checkout | Show Checkout mode/money when reuse applies | reuse before Delivery early return; fail-closed if evaluation evidence missing |
 | Pay | Review totals | Snapshot; prepare; payment; bind revalidate |
 | Collect / deliver | Customer promise words | Ops tasks + existing execution |
 | Notify | Same-meaning words on WhatsApp + in-app | `customer-visible-content` (+ Meta template body/variable rules) (DR-04) |
@@ -179,10 +188,11 @@ Anonymous Menu browsing remains allowed throughout.
 | Schedule before checkout eligibility | Refinement C — unconfirmed intent; DR-02 defer exact Menu slots |
 | Split geo state | Refinement D — one owner |
 | Takeaway place opaque until Checkout | DR-05 eligibility read |
-| Closed-now false denial of Schedule Takeaway | GP-01 Now vs Schedule-capable |
+| Closed-now false denial of Schedule Takeaway | GP-01 Now vs Schedule-capable (Menu **and** Checkout composition) |
+| Checkout Mode→Now-list→bind→evaluate(ASAP)→Timing | AS-34 Checkout contract (candidate defect; UOE-DR-06) |
 | Empty-cart “no outlets” | GP-03 state split |
 | Fee surprise at Checkout | DR-05 mode-sensitive cart evaluate + impact banner + Review |
-| Browse quote fights open Checkout | AS-29 / GP-02 precedence |
+| Browse quote fights open Checkout | AS-29 / AS-39–40 / GP-02 precedence |
 | Cross-tab money bleed | GP-04 tab-scoped presentation |
 | Pending payment vs new intent | PAYMENT_PENDING isolation |
 | Channel wording drift | DR-04 implemented-channel consistency |

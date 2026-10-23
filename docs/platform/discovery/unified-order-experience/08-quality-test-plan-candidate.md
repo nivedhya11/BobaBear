@@ -25,9 +25,9 @@ architecture/invariants before UI cosmetics.
 |---|---|---|
 | Unit | Presentation maps; order-context reducer; timing bucketing helpers | Labels; UNCONFIRMED; legacy dual-read |
 | Component | Bar, sheet, TimingChooser, MethodChooser, PlaceChooser | AS-12, AS-13, empty/selected/disabled |
-| Integration | Client ↔ cart evaluate (mode/outlet) ↔ eligibility read ↔ checkout/pickup/scheduled APIs | AS-02–11, AS-14–16, AS-24–33 |
+| Integration | Client ↔ cart evaluate (mode/outlet) ↔ eligibility read ↔ checkout/pickup/scheduled APIs | AS-02–11, AS-14–16, AS-24–40 |
 | Concurrency | Stale async generation; revision conflicts; eligibility races; tab-scoped multi-tab | AS-16, AS-22, AS-27 |
-| Recovery | PAYMENT_PENDING; cart_changed_unresolved; window expiry; open-Checkout reuse; empty-cart honesty | AS-11, AS-17, AS-18, AS-29–33 |
+| Recovery | PAYMENT_PENDING; cart_changed_unresolved; window expiry; open-Checkout reuse; missing evaluation evidence; empty-cart honesty | AS-11, AS-17, AS-18, AS-29–40 |
 | Content QA | Customer + workforce primary labels; WhatsApp + in-app; no fulfil jargon | AS-19, AS-28, UX-A |
 | A11y / responsive QA | Keyboard, SR, mobile strip | AS-12, AS-13 |
 | Regression | Snapshot money; payment prepare; serviceability; scheduled bind; pickup-options bind | Must remain green |
@@ -43,12 +43,20 @@ architecture/invariants before UI cosmetics.
 - No client-authored payable amount
 - AUTO_SELECT does not bind without confirm (AS-05 / AS-24)
 - Schedule cannot invent slots when API empty
-- Schedule Takeaway is not denied solely because outlet is closed NOW (AS-08 / GP-01)
+- Schedule Takeaway is not denied solely because outlet is closed NOW (AS-08 / AS-34 / GP-01)
+- Checkout pickup-options must not remain accepting-now-only when Schedule path is active (AS-34)
+- Checkout evaluate must not run for PICKUP between outlet bind and timing selection on the Schedule path (AS-34 / Contract C)
+- Schedule-capable list merchandise check uses `ignoreCurrentScheduleDenial: true` parity (Contract C)
+- AUTO_SELECT is per timing intent; never over Now∪Schedule union (AS-05 / AS-38)
+- Now-eligible outlet with empty future windows recovers honestly; Now offered only if accepting-now eligible (AS-35 / AS-37)
+- Invalid selected outlet forces reselect; no silent bind (AS-36 / AS-38)
+- Checkout pickup-options error must not present permanent UNAVAILABLE without recovery (AS-33)
 - Empty / no cart must not present brand-level “no outlets available” (AS-30)
 - Proposed outlet alone does not unlock scheduled windows (AS-26)
-- Domain enums unchanged in network payloads
+- Domain enums unchanged in network payloads; no new lifecycle states
 - Pre-checkout eligibility must not require fabricating a checkoutId
-- Open-Checkout reuse conveys effective Checkout mode; Takeaway reuse without Delivery location (AS-29/AS-31)
+- Open-Checkout reuse conveys effective Checkout mode; Takeaway reuse without Delivery location (AS-29/AS-31/AS-40)
+- Missing commercial-evaluation evidence with active Snapshot must not fall through to divergent browse money (AS-39)
 - Presentation storage must not sync payable/seal across tabs (AS-22 / GP-04)
 
 ## Non-goals for this plan
@@ -60,7 +68,7 @@ architecture/invariants before UI cosmetics.
 
 ## Exit criteria (for a future authorized implementation)
 
-- AS-01–33 mapped to automated and/or scripted Founder UAT evidence
+- AS-01–40 mapped to automated and/or scripted Founder UAT evidence
 - No invariant regressions listed in Architecture Fit
 - Content QA sign-off on primary surfaces + WhatsApp / in-app
 - X3 a11y/responsive QA recorded

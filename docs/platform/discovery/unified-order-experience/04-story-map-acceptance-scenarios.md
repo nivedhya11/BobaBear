@@ -23,18 +23,18 @@ Customer
   Choose method
     S-04 Select Delivery or Takeaway intent from bar; confirm at checkout
     S-05 Pre-checkout: server Takeaway eligibility proposes/lists outlets (DR-05; Now vs Schedule-capable)
-    S-06 At Checkout: confirm proposed / selected outlet before bind
+    S-06 At Checkout: timing-aware pickup-options + confirm proposed / selected outlet before bind
     S-07 Multiple Takeaway outlets require explicit choice
     S-08 Unsupported Delivery address: browse OK; pay blocked with recovery
   Choose time
     S-09 Select Now (earliest available meaning)
     S-10 Select Schedule intent when ineligible (UNCONFIRMED + reason) — no Menu exact slots (DR-02)
     S-11 Select exact window from server list when eligible checkout exists
-    S-12 Outlet closed / Now unavailable / Schedule-capable Takeaway / no windows recovery
+    S-12 Outlet closed / Now unavailable / Schedule-capable Takeaway / no windows / invalid outlet recovery (AS-34–38)
   Cart confidence
     S-13 Preserve eligible lines across mode/location/time edits
     S-14 Mode-sensitive server Cart evaluate surfaces fee / availability / offer changes (DR-05)
-    S-14b Takeaway cart quote without Delivery address; open-Checkout reuse precedence (GP-02)
+    S-14b Takeaway cart quote without Delivery address; open-Checkout reuse + missing-evidence fail-closed (GP-02 / AS-39)
   Checkout & pay
     S-15 Authoritative Checkout Review before pay
     S-16 Window expires / terms drift → revalidate; no stale pay
@@ -49,9 +49,15 @@ Workforce
   W-03 Admin/scheduling may keep precise operational vocabulary
 ```
 
-## Mandatory acceptance scenarios (AS-01 – AS-33)
+## Mandatory acceptance scenarios (AS-01 – AS-40)
 
 States to cover where relevant: default / loading / empty / selected / disabled / error / recovery.
+
+**Defect vs improvement:** AS-34 proves remediation of the **candidate Checkout composition defect**
+(accepting-now-only list **and** post-bind `evaluateCheckout` under default ASAP before Timing;
+Founder confirms classification under UOE-DR-06). AS-35–AS-38 are recovery / invariant proofs
+around that path. AS-39–AS-40 prove cart-evaluate Snapshot precedence / missing-evidence
+fail-closed. Compact chrome polish remains future UX improvement, not proof that the defect exists.
 
 | ID | Scenario | Expect |
 |---|---|---|
@@ -59,10 +65,10 @@ States to cover where relevant: default / loading / empty / selected / disabled 
 | AS-02 | Delivery → Takeaway | Mode intent switches; collection place chrome from **server eligibility**; mode-sensitive **cart evaluate** quote updates; valid cart lines kept; ineligible lines explained (AS-20); no client-invented outlets/fees |
 | AS-03 | Takeaway → Delivery | Needs address/serviceability; fees/offers recompute via server evaluate; unsupported area explained |
 | AS-04 | Mode-dependent charges and offers | Clear attention copy; money from server cart evaluate / checkout evaluate / Snapshot only; pre-checkout quote is advisory |
-| AS-05 | One Takeaway outlet (pre-checkout + Checkout) | Server `AUTO_SELECT` may propose pre-checkout; customer confirm required before Checkout bind; not silently bound from browse |
+| AS-05 | One Takeaway outlet (pre-checkout + Checkout) | Server `AUTO_SELECT` may propose **per timing intent** only (never over a Now∪Schedule union); customer confirm required before Checkout bind; not silently bound from browse; when timing unset + flags, no AUTO_SELECT / no client pre-select |
 | AS-06 | Multiple Takeaway outlets | Explicit select from server list; no silent nearest invent |
 | AS-07 | Unsupported Delivery address | Browse OK; checkout/pay blocked with recovery |
-| AS-08 | Outlet closed / Now unavailable (GP-01) | **Delivery:** explain; Schedule if server windows exist at eligible checkout; else empty recovery. **Takeaway Now:** accepting-now; closed → Now unavailable; if schedule-capable, offer Schedule intent (no Menu exact slots). **Takeaway Schedule:** must **not** be rejected solely because closed NOW; exact times only at eligible checkout; no guaranteed-availability claim |
+| AS-08 | Outlet closed / Now unavailable (GP-01) | **Delivery:** explain; Schedule if server windows exist at eligible checkout; else empty recovery. **Takeaway Now:** accepting-now; closed → Now unavailable; if schedule-capable candidates exist, server must expose a truthful hint so “offer Schedule” is not a blind suggestion (no Menu exact slots). **Takeaway Schedule:** must **not** be rejected solely because closed NOW; exact times only at eligible checkout; no guaranteed-availability claim |
 | AS-09 | No Schedule windows | Empty + recovery; Now if eligible |
 | AS-10 | Cross-midnight / local-time formatting | Today/Tomorrow + labels match outlet TZ |
 | AS-11 | Window expires before payment | Revalidate; force reselect; no stale Snapshot pay |
@@ -87,7 +93,14 @@ States to cover where relevant: default / loading / empty / selected / disabled 
 | AS-30 | No Cart / Empty Cart eligibility (GP-03) | Distinct `NO_CART` / `EMPTY_CART` (or equivalent); UI invites add items; must not present brand-level “no outlets available” |
 | AS-31 | Takeaway quote without Delivery address (GP-02) | With Takeaway mode (+ outlet when known), evaluate returns advisory quote without Delivery coordinates; no invented delivery fee |
 | AS-32 | CART evaluation provenance (GP-02) | New CART-scope persisted evaluations record evaluated mode/outlet (or Delivery fingerprint); reuse retains Checkout provenance |
-| AS-33 | Eligibility error vs UNAVAILABLE (GP-03) | Network/server error shows calm retry; not permanent UNAVAILABLE without recovery |
+| AS-33 | Eligibility / pickup-options error vs UNAVAILABLE (GP-03) | Network/server error on **pre-checkout eligibility or Checkout pickup-options** shows calm retry; must not set permanent UNAVAILABLE / “no location can take this order” without recovery (today’s `loadPickupOptions` error→`UNAVAILABLE` is defect evidence) |
+| AS-34 | Closed now but Scheduled Takeaway possible (Checkout) | Schedule-capable outlet appears for Schedule path; bind outlet **without** triggering `evaluateCheckout`; windows listed; evaluate only after SCHEDULED+window set; Timing step disables Now with reason when outlet not accepting-now; **no** Menu exact slots; **no** guaranteed-availability claim; **no** silent Checkout bind |
+| AS-35 | Outlet valid for Now but no future Schedule slots | Now-eligible outlet remains selectable for Now; Schedule path shows honest empty windows + recovery (try Now / another outlet / later); no invented slots |
+| AS-36 | Selected Checkout outlet becomes invalid | After confirm or before pay, server rejects / revalidation fails → force reselect; prior selection not silently kept as payable bind; calm recovery; Checkout authorization unchanged |
+| AS-37 | No Schedule times at eligible Checkout | Empty server window list + recovery; Now offered only if accepting-now still eligible (not unconditional ASAP copy); no fake promises; no new lifecycle state |
+| AS-38 | No silent Checkout binding from browse / list | AUTO_SELECT propose ≠ bind (per timing); browse eligibility never sets `pickupOutletId`; customer must confirm; PAYMENT_PENDING still frozen |
+| AS-39 | Open Checkout Snapshot without retrievable commercial evaluation | Reuse before any browse-dependent computation; missing evaluation/wire **or** reuse probe throw → fail-closed (`EVALUATION_INDETERMINATE` or equivalent) **or** Snapshot-sourced display only; **never** fall through to divergent browse money; PAYMENT_PENDING freeze intact |
+| AS-40 | Checkout effective mode/timing in UI under reuse | When `reusedCheckoutEvaluation`, UI shows Checkout fulfilment mode + material timing; browse intent does not imply a different payable |
 
 ## Challenge coverage matrix
 
@@ -97,7 +110,10 @@ States to cover where relevant: default / loading / empty / selected / disabled 
 | One / multiple Takeaway outlets | AS-05, AS-06, AS-24 |
 | Unsupported Delivery address | AS-07 |
 | Outlet closed and Now unavailable | AS-08 (Now vs Schedule-capable) |
-| No Schedule windows | AS-09 |
+| Closed now but Schedule Takeaway possible at Checkout | AS-34 |
+| Now-valid outlet / no future Schedule slots | AS-35 |
+| Selected outlet becomes invalid | AS-36 |
+| No Schedule windows | AS-09, AS-37 |
 | Cross-midnight / local-time formatting | AS-10 |
 | Window expires before payment | AS-11 |
 | Mode-dependent delivery charges and offers | AS-04, AS-25, AS-31 |
@@ -113,9 +129,11 @@ States to cover where relevant: default / loading / empty / selected / disabled 
 | Takeaway Schedule with unconfirmed AUTO_SELECT outlet | AS-26 |
 | Pre-checkout eligibility without second money authority | AS-24, AS-25 |
 | Implemented channel terminology | AS-28 |
-| Open Checkout vs browse mode conflict | AS-29 |
+| Open Checkout vs browse mode conflict | AS-29, AS-40 |
+| Missing commercial-evaluation evidence | AS-39 |
 | Empty / first-use vs no outlets | AS-30, AS-33 |
 | Takeaway quote without address + provenance | AS-31, AS-32 |
+| No silent Checkout bind | AS-38 |
 
 ## Definition of Ready (candidate checklist — not claimed passed)
 

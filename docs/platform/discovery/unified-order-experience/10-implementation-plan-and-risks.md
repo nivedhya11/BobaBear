@@ -22,8 +22,9 @@ GATE_PRECISION_REVISION = YES
 | UX-B | Compact scheduling UI wired to existing scheduled APIs at eligible checkout |
 | UX-C | Universal bar + **tab-scoped** order-context coordinator + PAYMENT_PENDING guard |
 | DR-05 server reads/quotes | Timing-aware pre-checkout Takeaway eligibility + mode-sensitive cart evaluate (Fit contracts; GP-01…04) |
+| Checkout Schedule path | Timing-aware `listCheckoutPickupOptions` (or timing-intent-before-list) + AS-34–38 recovery; remediates accepting-now-only defect |
 | Not in V1 | Menu-level exact window preview API (UOE-DR-02 deferred); cross-tab presentation sync |
-| Never | Domain/API renames; Snapshot/payment authority changes; second commercial authority; new PAYMENT_PENDING server guards (preserve existing); Schedule denied solely because closed NOW |
+| Never | Domain/API renames; Snapshot/payment authority changes; second commercial authority; new lifecycle states; new PAYMENT_PENDING server guards (preserve existing); Schedule denied solely because closed NOW; divergent browse money when Snapshot reuse evidence missing |
 
 ## Tranche plan (candidate)
 
@@ -42,9 +43,10 @@ GATE_PRECISION_REVISION = YES
 - Replace primary long grid in checkout; reusable from future bar
 - Preserve windows/TZ/cutoff/bind revalidation; Menu remains Schedule intent-only
 - Server: timing-aware pre-checkout eligibility read + cart evaluate mode/outlet input (Fit contracts)
-- Open-Checkout reuse precedence for evaluate (AS-29/AS-31/AS-32) must be preserved / explicit — including Takeaway without Delivery location
+- Checkout: timing-aware pickup-options (Contract C) so Schedule-capable closed-now outlets are selectable
+- Open-Checkout reuse before Delivery-location early return; missing commercial-evaluation evidence fail-closed (AS-29/AS-31/AS-32/AS-39/AS-40)
 - Empty/no-cart distinct from UNAVAILABLE (AS-30)
-- **Exit:** AS-08–11, AS-24–27, AS-29–33 (API+client foundation); scheduled regression green
+- **Exit:** AS-08–11, AS-24–27, AS-29–40 (API+client foundation); scheduled regression green; no new lifecycle states
 
 ### Tranche 3 — UX-C universal bar + context owner
 

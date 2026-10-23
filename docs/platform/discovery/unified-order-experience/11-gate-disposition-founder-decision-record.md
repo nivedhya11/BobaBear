@@ -49,8 +49,8 @@ REFERENCE_CANDIDATE_2_HEAD = 5a4583eba34dff93082c49a1e0edce1efce4d07c
 
 | ID | Finding | Disposition |
 |---|---|---|
-| GP-01 | CANDIDATE-2 claimed no Schedule-for-later Takeaway / accepting-now-only, contradicting accepted IMP-036I PICKUP+SCHEDULED and evaluate/prepare scheduled-pickup gates | **CORRECTED** — Takeaway Now = accepting-now; Takeaway Schedule = schedule-capable; closed NOW must not alone deny Schedule; DR-02 still defers Menu exact slots; no guaranteed future availability |
-| GP-02 | Cart evaluate / Checkout precedence incomplete for Takeaway-without-address, effective mode conveyance, DRAFT/READY/PAYMENT_PENDING, CART provenance | **SPECIFIED** — Contract B + AS-29 extended + AS-31/AS-32; reuse wins; no Checkout mutation from browse; no second money authority |
+| GP-01 | CANDIDATE-2 claimed no Schedule-for-later Takeaway / accepting-now-only; **Checkout** composition still applies accepting-now at list **and** post-bind evaluate before Timing | **CORRECTED** — Takeaway Now = accepting-now; Takeaway Schedule = schedule-capable + merchandise denial parity; viable bind→windows→evaluate sequence; Contract C + AS-34–38; Founder confirms classification / remediation vehicle under **UOE-DR-06** (AC-036I-040 for; US-036I-002 ambiguity against); DR-02 defers Menu exact slots |
+| GP-02 | Cart evaluate / Checkout precedence incomplete for Takeaway-without-address, reuse-before-location, missing commercial-evaluation evidence, effective mode conveyance, DRAFT/READY/PAYMENT_PENDING, CART provenance | **SPECIFIED** — Contract B + AS-29/AS-31/AS-32/AS-39/AS-40; reuse before Delivery early return; missing evidence fail-closed (no divergent browse money); no Checkout mutation from browse; no second money authority |
 | GP-03 | Empty-cart ASAP list `[]` risked “no outlets available” UX; first-use states under-specified | **CORRECTED** — No Cart / Empty Cart / no eligible / error distinguished (AS-30/AS-33); anonymous Menu browse preserved |
 | GP-04 | Cross-tab “last-write” language overstated `sessionStorage` + same-tab events | **CORRECTED** — tab-scoped presentation intent; each tab revalidates server facts; no cross-tab payable/seal sync (AS-22) |
 
@@ -90,15 +90,18 @@ not canonical PASS.
 |---|---|---|
 | Product Definition | Ready for independent Product review | UOE-DR-01 identity; UOE-DR-03 verdict; Founder confirm GP-01 Schedule-capable presentation |
 | Experience | Ready for independent Experience review | Finalize UNCONFIRMED copy variants; workforce admin noun table; Meta body-vs-variable; full IA still PARTIAL vs #379 bound |
-| Architecture Fit | Contracts reviewable; **not** lock-ready | Confirm evaluate entry ordering for Takeaway-without-location reuse; CART provenance fields; WhatsApp template body-vs-variable; formal Fit only after Experience Gate |
+| Architecture Fit | Contracts reviewable; **not** lock-ready | Checkout timing-aware pickup-options (Contract C); evaluate reuse-before-location + missing-evidence fail-closed; CART provenance; WhatsApp body-vs-variable; formal Fit only after Experience Gate |
 
 ### Architecture Fit blockers (candidate — before formal Fit)
 
 1. Formal Product Definition Gate + Experience Gate not performed (X2/X3 prerequisite)
 2. Evaluate entry must place open-Checkout reuse ahead of Delivery-only `location` early return for Takeaway open Checkouts (GP-02) — contract specified, not implemented
-3. Pre-checkout eligibility must emit distinct empty/no-cart states (GP-03) — contract specified, not implemented
-4. WhatsApp DR-04 wording body-vs-variable confirmation still open
-5. UOE-DR-01 future IMP identity / sequencing unresolved (blocks implementation authorization, not Fit contract review)
+3. Missing CHECKOUT commercial-evaluation evidence must fail closed (AS-39) — contract specified, not implemented
+4. Checkout composition must become timing-aware **and** bind-without-evaluate before Timing, with Schedule-capable merchandise `ignoreCurrentScheduleDenial` parity (GP-01 Contract C / AS-34) — contract specified, not implemented
+5. Pre-checkout eligibility must emit distinct empty/no-cart states (GP-03) — contract specified, not implemented
+6. WhatsApp DR-04 wording body-vs-variable confirmation still open
+7. UOE-DR-01 future IMP identity / sequencing unresolved (blocks implementation authorization, not Fit contract review)
+8. UOE-DR-06 Founder confirmation of Schedule-capable entitlement + Checkout defect classification / remediation vehicle
 
 ## C. Remaining consequential Founder decisions
 
@@ -109,7 +112,7 @@ not canonical PASS.
 | UOE-DR-03 | Formal Product Definition Gate + Experience Gate verdicts on this package | Gate ownership | NOT_PERFORMED |
 | UOE-DR-04 | WhatsApp + in-app implemented-channel consistency | Slicing | **INCORPORATED — INCLUDE WhatsApp + in-app** |
 | UOE-DR-05 | Pre-checkout Takeaway eligibility / mode-aware Cart evaluate | Same gap class as refinement C, strengthened | **INCORPORATED — STRENGTHEN V1** (refined by GP-01…04) |
-| UOE-DR-06 | Confirm Schedule-capable Takeaway pre-checkout presentation (no Menu slots; no guaranteed availability) as Founder-accepted GP-01 correction | Product entitlement vs CANDIDATE-2 text | **DECISION_REQUIRED** (recommended accept; aligns IMP-036I) |
+| UOE-DR-06 | Confirm Schedule-capable Takeaway presentation (no Menu slots; no guaranteed availability) **and** classify Checkout Mode→accepting-now-list→bind→evaluate(ASAP)→Timing as a defect vs IMP-036I (AC-036I-040 for; US-036I-002 ambiguity against). Choose remediation vehicle: (a) inside future UOE IMP after DR-01, or (b) standalone GREEN/AMBER defect fix ahead of UOE | Product entitlement + sequencing | **DECISION_REQUIRED** (recommended accept Schedule-capable + defect classification; vehicle is Founder) |
 
 Non-consequential implementation choices (exact route path strings within Fit bounds) remain
 deferrable to authorized engineering after gates.
@@ -121,8 +124,9 @@ deferrable to authorized engineering after gates.
 | CANDIDATE-1 review | Independent Cursor agent — READY_FOR_FOUNDER_REVIEW after F-01…F-15 |
 | CANDIDATE-2 review | Independent Cursor agent (`claude-fable-5-1-thinking-high`) — [review](f7f0fe65-556a-4e5d-a2ea-a7a2963d0591); post-fix READY_FOR_FOUNDER_REVIEW |
 | CANDIDATE-3 revision | Gate-precision doc-only against approved CANDIDATE-2 head `5a4583eba34dff93082c49a1e0edce1efce4d07c` — GP-01…GP-04 |
-| Required next | Independent Product / Experience / Architecture review of CANDIDATE-3 (not performed by this delivery agent as formal gate) |
-| Checkout/Payment safety | SAFE AS DESIGNED: Snapshot/payment/serviceability/materialization untouched; PAYMENT_PENDING guards preserved; eligibility/evaluate are read/quote only; open-Checkout reuse wins; Schedule Takeaway aligns IMP-036I |
+| CANDIDATE-3 Checkout precision | Same-scope `PACKAGE_REVISION = CANDIDATE-3 / CHECKOUT-PRECISION-1` on PR #424 after main `00ef486e9…` (#425); prior CANDIDATE-3 head `aff6d9b40…`; **no** UOE-CANDIDATE-4; AS-34–40 + Architecture Contracts B/C |
+| Independent reviews (this delivery) | Product [`906437b5-80d5-4fbc-8b19-2075ca545a2a`](906437b5-80d5-4fbc-8b19-2075ca545a2a); Experience [`16f640ff-1498-4101-a996-73f135640a38`](16f640ff-1498-4101-a996-73f135640a38); Architecture [`fa8feb20-4d28-4cda-8702-3b5a22f61ffd`](fa8feb20-4d28-4cda-8702-3b5a22f61ffd) — findings resolved in-docs; **≠ formal gate PASS** |
+| Checkout/Payment safety | SAFE AS DESIGNED (docs only this delivery): Snapshot/payment/serviceability/materialization untouched; PAYMENT_PENDING guards preserved; eligibility/evaluate are read/quote only; open-Checkout reuse + fail-closed missing evidence specified; Schedule Takeaway Checkout path aligns IMP-036I without new lifecycle states |
 | Package path | `docs/platform/discovery/unified-order-experience/` |
 
 ## E. Explicit non-mutations

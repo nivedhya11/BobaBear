@@ -19,8 +19,11 @@ FORMAL_IMP_IDENTITY = NOT_ALLOCATED
 NOT_IMP_036J = YES
 NOT_IMP_036K = YES
 AUTHORITY = NON_AUTHORITATIVE_DISCOVERY_DRAFT
-BASE_MAIN_SHA = 4cc24d1a4ea4f4dace4d71d48a40a961a64086d8
+BASE_MAIN_SHA = 00ef486e9dbeb1a30ba32e76fcd7b8b43507a53f
 REFERENCE_CANDIDATE_2_HEAD = 5a4583eba34dff93082c49a1e0edce1efce4d07c
+REFERENCE_CANDIDATE_3_PRIOR_HEAD = aff6d9b403a91dea2dea9492ac4e9098d3008159
+PACKAGE_REVISION = CANDIDATE-3 / CHECKOUT-PRECISION-1
+CHECKOUT_CONTRACT_PRECISION = YES
 EXPERIENCE_CRITICALITY = X3
 CHANGE_RISK = CR2 (CR3 at checkout/payment boundaries)
 FOUNDER_EXPERIENCE_DIRECTION = ACCEPTED_IN_CONVERSATION
@@ -37,10 +40,13 @@ IMPLEMENTATION_AUTHORIZED = NO
 PRE_GTM_EXPERIENCE_AUDIT = NOT_PERFORMED
 FORMAL_GATES = NOT_PERFORMED
 ROADMAP_STATE = UNCHANGED
+UOE_CANDIDATE_4 = NOT_INTRODUCED
 ```
 
 This package revises **UOE-CANDIDATE-2** for gate precision before formal Product /
-Experience / Architecture evaluation. It keeps UX-A / UX-B / UX-C, language decisions
+Experience / Architecture evaluation, then adds **same-scope Checkout contract precision**
+(Scheduled Takeaway outlet listing + cart-evaluate Snapshot precedence / missing-evidence)
+without allocating UOE-CANDIDATE-4. It keeps UX-A / UX-B / UX-C, language decisions
 (D1–D6 + refinements A–D), DR-02 / DR-04 / DR-05, and accepted Checkout / Payment /
 serviceability / fulfilment invariants.
 
@@ -48,10 +54,13 @@ serviceability / fulfilment invariants.
 
 | ID | Finding | Disposition |
 |---|---|---|
-| GP-01 | Scheduled Takeaway vs Takeaway Now | **CORRECTED** — distinguish accepting-now (Now) from schedule-capable future-window eligibility (Schedule); do not reject Schedule solely because closed NOW; DR-02 still defers Menu exact slots |
-| GP-02 | Cart evaluate / Checkout precedence | **SPECIFIED** — Takeaway quote without Delivery address; open-Checkout Snapshot reuse wins; effective Checkout mode conveyed; DRAFT/READY/PAYMENT_PENDING conflict rules; mode/outlet evaluation provenance; no second money authority; no Checkout mutation from browse |
+| GP-01 | Scheduled Takeaway vs Takeaway Now | **CORRECTED** — distinguish accepting-now (Now) from schedule-capable; do not reject Schedule solely because closed NOW; **Checkout composition** must be timing-aware (listing + no accepting-now evaluate between outlet bind and timing); Founder confirm under **UOE-DR-06**; DR-02 still defers Menu exact slots |
+| GP-02 | Cart evaluate / Checkout precedence | **SPECIFIED** — reuse before Delivery-location early return; Takeaway quote without Delivery address; open-Checkout Snapshot reuse wins; **missing commercial-evaluation evidence must not fall through to divergent browse money**; effective Checkout mode conveyed; DRAFT/READY/PAYMENT_PENDING conflict rules; mode/outlet evaluation provenance; no second money authority; no Checkout mutation from browse |
 | GP-03 | First-use / empty cart | **CORRECTED** — distinguish No Cart / Empty Cart / no eligible outlet / eligibility error; never “no outlets” merely because no items; preserve anonymous Menu browsing |
 | GP-04 | Multi-tab presentation storage | **CORRECTED** — `sessionStorage` is tab-scoped presentation intent; no cross-tab sync of payable/sealed Checkout; each tab revalidates server facts |
+
+Open Founder decisions still required for gates / sequencing: **UOE-DR-01**, **UOE-DR-03**,
+**UOE-DR-06** (Schedule-capable entitlement + Checkout defect classification / remediation vehicle).
 
 Formal PD-2 X3 gates remain `NOT_PERFORMED`. This package does **not**:
 
@@ -81,7 +90,7 @@ Founder evaluation. It is **not** canonical PASS.
 | [`01-business-outcome-personas-journeys.md`](./01-business-outcome-personas-journeys.md) | Outcome, personas, journeys |
 | [`02-product-definition-candidate.md`](./02-product-definition-candidate.md) | Product Definition candidate + entitlement |
 | [`03-experience-definition-candidate.md`](./03-experience-definition-candidate.md) | Experience Definition + UX-A/B/C |
-| [`04-story-map-acceptance-scenarios.md`](./04-story-map-acceptance-scenarios.md) | Story map + AS-01–AS-33 + challenge cases |
+| [`04-story-map-acceptance-scenarios.md`](./04-story-map-acceptance-scenarios.md) | Story map + AS-01–AS-40 + challenge cases |
 | [`05-gate-evidence-candidates.md`](./05-gate-evidence-candidates.md) | Product Gate / Experience Gate evidence |
 | [`06-architecture-fit-candidate.md`](./06-architecture-fit-candidate.md) | Architecture Fit candidate + read contracts |
 | [`07-design-readiness-candidate.md`](./07-design-readiness-candidate.md) | Design Readiness candidate |
