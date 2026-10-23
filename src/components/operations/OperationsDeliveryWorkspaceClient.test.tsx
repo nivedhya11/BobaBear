@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -151,5 +151,96 @@ describe("OperationsDeliveryWorkspaceClient", () => {
     await user.click(screen.getByTestId("delivery-queue-item-ord-b"));
     expect(screen.getByTestId("mock-delivery-panel")).toHaveAttribute("data-order-id", "ord-b");
     expect(screen.getByTestId("delivery-selected-meta")).toHaveTextContent("ORD-B");
+  });
+
+  it("preserves the latest selection when Load more completes after a mid-flight selection change", async () => {
+    const user = userEvent.setup();
+    let resolveMore: ((value: unknown) => void) | undefined;
+    const morePage = new Promise((resolve) => {
+      resolveMore = resolve;
+    });
+    listWorkforceOrders
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          items: [
+            summary({ orderId: "ord-a", orderNumber: "ORD-A", fulfilmentMode: "DELIVERY" }),
+            summary({ orderId: "ord-b", orderNumber: "ORD-B", fulfilmentMode: "DELIVERY" }),
+          ],
+          nextCursor: "cursor-2",
+        },
+      })
+      .mockImplementationOnce(() => morePage);
+
+    render(<OperationsDeliveryWorkspaceClient />);
+    await waitFor(() => expect(screen.getByTestId("delivery-queue-load-more")).toBeInTheDocument());
+    expect(screen.getByTestId("mock-delivery-panel")).toHaveAttribute("data-order-id", "ord-a");
+
+    await user.click(screen.getByTestId("delivery-queue-load-more"));
+    await user.click(screen.getByTestId("delivery-queue-item-ord-b"));
+    expect(screen.getByTestId("mock-delivery-panel")).toHaveAttribute("data-order-id", "ord-b");
+
+    await act(async () => {
+      resolveMore?.({
+        ok: true,
+        status: 200,
+        data: {
+          items: [
+            summary({ orderId: "ord-c", orderNumber: "ORD-C", fulfilmentMode: "DELIVERY" }),
+          ],
+          nextCursor: null,
+        },
+      });
+    });
+
+    await waitFor(() => expect(screen.getByTestId("delivery-queue-item-ord-c")).toBeInTheDocument());
+    expect(screen.getByTestId("mock-delivery-panel")).toHaveAttribute("data-order-id", "ord-b");
+    expect(screen.getByTestId("delivery-selected-meta")).toHaveTextContent("ORD-B");
+  });
+
+  it("preserves loaded queue results on pagination failure and allows retry", async () => {
+    const user = userEvent.setup();
+    listWorkforceOrders
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          items: [
+            summary({ orderId: "ord-a", orderNumber: "ORD-A", fulfilmentMode: "DELIVERY" }),
+          ],
+          nextCursor: "cursor-2",
+        },
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        code: "INTERNAL",
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          items: [
+            summary({ orderId: "ord-b", orderNumber: "ORD-B", fulfilmentMode: "DELIVERY" }),
+          ],
+          nextCursor: null,
+        },
+      });
+
+    render(<OperationsDeliveryWorkspaceClient />);
+    await waitFor(() => expect(screen.getByTestId("delivery-queue-item-ord-a")).toBeInTheDocument());
+    await user.click(screen.getByTestId("delivery-queue-load-more"));
+    await waitFor(() =>
+      expect(screen.getByTestId("delivery-queue-pagination-error")).toBeInTheDocument(),
+    );
+    expect(screen.getByTestId("delivery-queue-item-ord-a")).toBeInTheDocument();
+    expect(screen.getByTestId("mock-delivery-panel")).toHaveAttribute("data-order-id", "ord-a");
+    expect(screen.getByTestId("delivery-queue-load-more")).toHaveTextContent("Retry loading more");
+
+    await user.click(screen.getByTestId("delivery-queue-load-more"));
+    await waitFor(() => expect(screen.getByTestId("delivery-queue-item-ord-b")).toBeInTheDocument());
+    expect(screen.queryByTestId("delivery-queue-pagination-error")).not.toBeInTheDocument();
+    expect(screen.getByTestId("mock-delivery-panel")).toHaveAttribute("data-order-id", "ord-a");
   });
 });

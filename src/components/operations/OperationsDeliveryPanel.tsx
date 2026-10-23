@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   OperationsDeliveryConsequenceDialog,
@@ -22,6 +22,8 @@ type PanelState =
 type PendingConsequence = Readonly<{
   action: DeliveryConsequenceAction;
   command: string;
+  orderId: string;
+  deliveryId: string;
   payload: Record<string, unknown>;
   summaryLines: readonly string[];
 }>;
@@ -82,6 +84,23 @@ function isHttpsUrl(value: string): boolean {
 const INACTIVITY_ACK_LABEL =
   "I acknowledge that no active external booking remains for this delivery. This is an operator acknowledgment only — not verified external-provider evidence.";
 
+function emptyEvidenceFields() {
+  return {
+    providerLabel: "",
+    externalBookingReference: "",
+    trackingUrl: "",
+    assignmentKey: "",
+    courierReference: "",
+    handoffReference: "",
+    proofReference: "",
+    failureCode: "",
+    failureReason: "",
+    cancellationCode: "",
+    cancellationReason: "",
+    inactiveBookingAcknowledged: false,
+  };
+}
+
 export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
   const { orderId } = props;
   const [state, setState] = useState<PanelState>({ kind: "loading" });
@@ -102,44 +121,116 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
   const [fieldError, setFieldError] = useState("");
   const [pendingConsequence, setPendingConsequence] = useState<PendingConsequence | null>(null);
 
+  const activeOrderIdRef = useRef(orderId);
+  const activeDeliveryIdRef = useRef<string | null>(null);
+  const loadGenerationRef = useRef(0);
+  const commandGenerationRef = useRef(0);
+
+  const resetOperatorLocalState = useCallback(() => {
+    const empty = emptyEvidenceFields();
+    setProviderLabel(empty.providerLabel);
+    setExternalBookingReference(empty.externalBookingReference);
+    setTrackingUrl(empty.trackingUrl);
+    setAssignmentKey(empty.assignmentKey);
+    setCourierReference(empty.courierReference);
+    setHandoffReference(empty.handoffReference);
+    setProofReference(empty.proofReference);
+    setFailureCode(empty.failureCode);
+    setFailureReason(empty.failureReason);
+    setCancellationCode(empty.cancellationCode);
+    setCancellationReason(empty.cancellationReason);
+    setInactiveBookingAcknowledged(empty.inactiveBookingAcknowledged);
+    setBusy(false);
+    setMessage("");
+    setFieldError("");
+    setPendingConsequence(null);
+  }, []);
+
+  const applyLoadedDetail = useCallback(
+    (detail: OperationsDeliveryDetail | null) => {
+      if (!detail) {
+        activeDeliveryIdRef.current = null;
+        setState({ kind: "empty" });
+        return;
+      }
+      const nextDeliveryId = detail.delivery.id;
+      if (
+        activeDeliveryIdRef.current !== null &&
+        activeDeliveryIdRef.current !== nextDeliveryId
+      ) {
+        // Delivery identity changed under the same Order — discard prior evidence/dialog state.
+        resetOperatorLocalState();
+      }
+      activeDeliveryIdRef.current = nextDeliveryId;
+      setState({ kind: "ready", detail });
+    },
+    [resetOperatorLocalState],
+  );
+
   const reload = useCallback(async () => {
-    const result = await getWorkforceDelivery(orderId);
+    const requestOrderId = orderId;
+    const generation = loadGenerationRef.current;
+    const result = await getWorkforceDelivery(requestOrderId);
+    if (
+      generation !== loadGenerationRef.current ||
+      activeOrderIdRef.current !== requestOrderId
+    ) {
+      return;
+    }
     if (!result.ok) {
       setState({ kind: "error", message: "Delivery details could not be loaded." });
       return;
     }
-    if (!result.data.delivery) {
-      setState({ kind: "empty" });
-      return;
-    }
-    setState({ kind: "ready", detail: result.data.delivery });
-  }, [orderId]);
+    applyLoadedDetail(result.data.delivery);
+  }, [applyLoadedDetail, orderId]);
 
   useEffect(() => {
+    activeOrderIdRef.current = orderId;
+    activeDeliveryIdRef.current = null;
+    loadGenerationRef.current += 1;
+    commandGenerationRef.current += 1;
+    const generation = loadGenerationRef.current;
+    resetOperatorLocalState();
+    setState({ kind: "loading" });
+
     let cancelled = false;
     void (async () => {
       const result = await getWorkforceDelivery(orderId);
-      if (cancelled) return;
+      if (cancelled || generation !== loadGenerationRef.current) return;
       if (!result.ok) {
         setState({ kind: "error", message: "Delivery details could not be loaded." });
         return;
       }
-      if (!result.data.delivery) {
-        setState({ kind: "empty" });
-        return;
-      }
-      setState({ kind: "ready", detail: result.data.delivery });
+      applyLoadedDetail(result.data.delivery);
     })();
     return () => {
       cancelled = true;
     };
-  }, [orderId]);
+  }, [applyLoadedDetail, orderId, resetOperatorLocalState]);
 
-  async function run(action: string, payload: Record<string, unknown>) {
+  async function run(
+    action: string,
+    payload: Record<string, unknown>,
+    identity: Readonly<{ orderId: string; deliveryId: string | null }>,
+  ) {
+    const generation = ++commandGenerationRef.current;
     setBusy(true);
     setMessage("");
     setFieldError("");
-    const result = await postDeliveryCommand(orderId, action, payload);
+    const result = await postDeliveryCommand(identity.orderId, action, payload);
+    if (
+      generation !== commandGenerationRef.current ||
+      activeOrderIdRef.current !== identity.orderId
+    ) {
+      return;
+    }
+    if (
+      identity.deliveryId !== null &&
+      activeDeliveryIdRef.current !== null &&
+      activeDeliveryIdRef.current !== identity.deliveryId
+    ) {
+      return;
+    }
     setBusy(false);
     setPendingConsequence(null);
     if (!result.ok) {
@@ -169,9 +260,17 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
     command: string,
     payload: Record<string, unknown>,
     summaryLines: readonly string[],
+    identity: Readonly<{ orderId: string; deliveryId: string }>,
   ) {
     setFieldError("");
-    setPendingConsequence({ action, command, payload, summaryLines });
+    setPendingConsequence({
+      action,
+      command,
+      orderId: identity.orderId,
+      deliveryId: identity.deliveryId,
+      payload,
+      summaryLines,
+    });
   }
 
   if (state.kind === "loading") {
@@ -188,9 +287,13 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
           type="button"
           disabled={busy}
           onClick={() =>
-            void run("arrange", {
-              requestFingerprint: `ops-${orderId.slice(0, 8)}`,
-            })
+            void run(
+              "arrange",
+              {
+                requestFingerprint: `ops-${orderId.slice(0, 8)}`,
+              },
+              { orderId, deliveryId: null },
+            )
           }
         >
           Arrange delivery
@@ -209,12 +312,14 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
   const commands = detail.permittedCommands;
   const hint = externalBookingHint(d.status);
   const has = (command: string) => commands.includes(command);
+  const commandIdentity = { orderId, deliveryId: d.id };
 
   return (
     <section
       className="space-y-3 rounded-md border border-[var(--border-subtle)] p-4"
       data-testid="operations-delivery-panel"
       data-order-id={orderId}
+      data-delivery-id={d.id}
     >
       <h2 className="font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
         Delivery
@@ -290,7 +395,7 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
             onClick={() => {
               const provider = requireNonEmpty(providerLabel, "Provider label");
               if (!provider) return;
-              void run("begin-manual-booking", { ...base, provider });
+              void run("begin-manual-booking", { ...base, provider }, commandIdentity);
             }}
           >
             Begin manual booking
@@ -337,11 +442,15 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
                 setFieldError("Tracking URL must be a valid HTTPS URL when provided.");
                 return;
               }
-              void run("confirm-manual-booking", {
-                ...base,
-                externalBookingReference: external,
-                ...(tracking.length > 0 ? { trackingUrl: tracking } : {}),
-              });
+              void run(
+                "confirm-manual-booking",
+                {
+                  ...base,
+                  externalBookingReference: external,
+                  ...(tracking.length > 0 ? { trackingUrl: tracking } : {}),
+                },
+                commandIdentity,
+              );
             }}
           >
             Confirm manual booking
@@ -409,6 +518,7 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
                   `Failure reason: ${reason}`,
                   "Operator inactivity acknowledgment provided (not verified courier evidence).",
                 ],
+                commandIdentity,
               );
             }}
           >
@@ -477,6 +587,7 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
                   `Cancellation reason: ${reason}`,
                   "Operator inactivity acknowledgment provided (not verified courier evidence).",
                 ],
+                commandIdentity,
               );
             }}
           >
@@ -520,12 +631,16 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
                 setFieldError("Provider label is required when the delivery has no provider yet.");
                 return;
               }
-              void run("record-assignment", {
-                ...base,
-                provider,
-                assignmentKey: key,
-                courierReference: courierReference.trim() || undefined,
-              });
+              void run(
+                "record-assignment",
+                {
+                  ...base,
+                  provider,
+                  assignmentKey: key,
+                  courierReference: courierReference.trim() || undefined,
+                },
+                commandIdentity,
+              );
             }}
           >
             Record assignment
@@ -553,10 +668,14 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
             onClick={() => {
               const handoff = requireNonEmpty(handoffReference, "Handoff reference");
               if (!handoff) return;
-              void run("confirm-pickup", {
-                ...base,
-                handoffReference: handoff,
-              });
+              void run(
+                "confirm-pickup",
+                {
+                  ...base,
+                  handoffReference: handoff,
+                },
+                commandIdentity,
+              );
             }}
           >
             Confirm pickup
@@ -595,6 +714,7 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
                   proofReference: proof,
                 },
                 [`Proof reference: ${proof}`],
+                commandIdentity,
               );
             }}
           >
@@ -644,6 +764,7 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
                   failureReason: reason,
                 },
                 [`Failure code: ${code}`, `Failure reason: ${reason}`],
+                commandIdentity,
               );
             }}
           >
@@ -693,6 +814,7 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
                   cancellationReason: reason,
                 },
                 [`Cancellation code: ${code}`, `Cancellation reason: ${reason}`],
+                commandIdentity,
               );
             }}
           >
@@ -708,7 +830,9 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
       ) : null}
       {message ? <p className="text-sm text-[var(--text-secondary)]">{message}</p> : null}
 
-      {pendingConsequence ? (
+      {pendingConsequence &&
+      pendingConsequence.orderId === orderId &&
+      pendingConsequence.deliveryId === d.id ? (
         <OperationsDeliveryConsequenceDialog
           action={pendingConsequence.action}
           orderId={orderId}
@@ -721,7 +845,19 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
             setPendingConsequence(null);
           }}
           onConfirm={() => {
-            void run(pendingConsequence.command, pendingConsequence.payload);
+            if (
+              pendingConsequence.orderId !== orderId ||
+              pendingConsequence.deliveryId !== d.id ||
+              pendingConsequence.deliveryId !== activeDeliveryIdRef.current
+            ) {
+              setPendingConsequence(null);
+              setFieldError("Selection changed. Review the current delivery before continuing.");
+              return;
+            }
+            void run(pendingConsequence.command, pendingConsequence.payload, {
+              orderId: pendingConsequence.orderId,
+              deliveryId: pendingConsequence.deliveryId,
+            });
           }}
         />
       ) : null}
