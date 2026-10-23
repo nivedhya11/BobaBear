@@ -26,6 +26,9 @@ PROPOSAL_BASE_HEAD = ecbfb4f4f7f06a888e0a3c4417bc1c647239974b
 INDEPENDENT_ARCHITECTURE_REVIEW = 8a05654d-23bf-423a-b63a-bba025b63f3f
 INDEPENDENT_SECURITY_REVIEW = b6c13c64-b4af-44b8-879f-5ba7fc60015f
 INDEPENDENT_FINANCIAL_INTEGRITY_REVIEW = 6c0c9948-4755-4e6e-8002-e4fc5456cb2b
+PRECISION1_ARCHITECTURE_REVIEW = e11b73be-218b-4746-b261-2264c5d8b7fd
+PRECISION1_SECURITY_REVIEW = 63db0312-197e-493a-b093-5f767e723206
+PRECISION1_FINANCIAL_INTEGRITY_REVIEW = b5b7649c-9a16-4911-9865-e3dc0cccbdb8
 REVIEW_FINDINGS_RESOLVED_IN_DOCS = YES
 ```
 
@@ -109,7 +112,11 @@ migration only — **not** performed by this proposal):
 **Constraints (proposed, future migration):**
 
 - Check: `evaluation_context_digest is null or octet_length(evaluation_context_digest) = 32`
-- Check: mode/timing values restricted to known enums when non-null
+- Check: mode/timing values restricted to known enums when non-null (`DELIVERY`\|`PICKUP`;
+  `ASAP`\|`SCHEDULED`). Schema may allow `SCHEDULED` for CHECKOUT symmetry / future rows;
+  **V1 application invariant for new CART persists:** `evaluated_fulfilment_timing` is `ASAP` or
+  NULL only — never client-claimed browse `SCHEDULED` (enforced by CART evaluate **400** + server
+  author of digest; not solely by DB CHECK)
 - Check: `evaluated_pickup_outlet_id IS NULL OR evaluated_fulfilment_mode = 'PICKUP'`
 - Check: `evaluated_delivery_location_hmac IS NULL OR evaluated_fulfilment_mode IS DISTINCT FROM 'PICKUP'`
 - Check: HMAC column null or `octet_length = 32`
@@ -224,7 +231,7 @@ Rules:
 |---|---|
 | Same price, different fulfilment mode | Distinct digest; new CART evaluation even if `result_fingerprint` collides |
 | Same price, Schedule UNCONFIRMED (timing omitted) vs later explicit `ASAP` | Distinct digest (null timing vs `ASAP`); provisional Offer rules unchanged; V1 does **not** mint evaluated CART `SCHEDULED` from browse intent |
-| Client supplies `fulfilmentTiming=SCHEDULED` on CART evaluate | **V1 unsupported** → **400** (strict allowlist / timing enum). Must not silently qualify SCHEDULED-only promotions |
+| Client supplies `fulfilmentTiming=SCHEDULED` on CART evaluate | **V1 unsupported** → **400** (**value rejection** on an allowlisted field — not an unknown-key allowlist miss). Must not silently qualify SCHEDULED-only promotions |
 | Same price, different Takeaway outlet | Distinct digest (`pickup_outlet_id` / `priced_outlet_id`); new evaluation |
 | Same price, different Delivery priced outlet (same or different coords) | Distinct digest via `priced_outlet_id`; new evaluation |
 | Same price, same priced outlet, coordinate-only change (V1) | **Reuse** CART evaluation when money+digest match — bounded V1 limitation (`delivery_location_hmac: null`). Distinct per-coordinate CART identity is **future / non-V1** pending separate privacy decision |
@@ -276,7 +283,7 @@ are the proposed Architecture Lock surface for variant
 | Surface | Existing `POST /api/v1/cart/evaluate` (or same `evaluateCart` entry) |
 | Authority | Existing commercial engine only — extended input + precedence |
 | Body allowlist | Strict allowlist only (`brandId`, `location`, `fulfilmentMode`, `pickupOutletId`, `fulfilmentTiming`, request-key/generation fields). Money / fingerprint / digest / `evaluationId` / `checkoutId` / sealed-window fields → **400** |
-| `fulfilmentTiming` on CART evaluate (V1) | **`ASAP` only** when Now is explicitly requested. **Omit** the field for Schedule UNCONFIRMED / timing-absent quotes. Client-supplied `fulfilmentTiming=SCHEDULED` is **unsupported** → **400** (must not silently qualify SCHEDULED-only promotions). Contract A may still accept `SCHEDULED` as **capability-discovery intent** — that is not CART promotion authority |
+| `fulfilmentTiming` on CART evaluate (V1) | **`ASAP` only** when Now is explicitly requested. **Omit** the field for Schedule UNCONFIRMED / timing-absent quotes. Client-supplied `fulfilmentTiming=SCHEDULED` is **unsupported** → **400** (**value rejection**; field remains on the allowlist). Must not silently qualify SCHEDULED-only promotions. Contract A may still accept `SCHEDULED` as **capability-discovery intent** — that is not CART promotion authority |
 | Takeaway without Delivery address | Required; must not invent delivery fee/execution |
 | PICKUP outlet re-assertion | Server re-asserts supplied `pickupOutletId` belongs to `cart.brandId` **before** quoting. When evaluated/request `fulfilmentTiming=ASAP`: accepting-now gate. When `fulfilmentTiming` is **omitted** (Schedule UNCONFIRMED / timing-absent): composed Contract A gate — outlet must be accepting-now **or** schedule-capable (so a Schedule-selected place can still quote) **without** evaluating promotions as `SCHEDULED`. Failure → same generic non-money problem class for nonexistent, cross-brand, and ineligible ids (no existence oracle) |
 | PICKUP without outlet | After reuse attempt fails: non-money `REQUIRES_FULFILMENT_CONTEXT` (or equivalent); never brand-level guess quote |
@@ -286,7 +293,7 @@ are the proposed Architecture Lock surface for variant
 | Missing CHECKOUT evaluation + active Snapshot | Fail-closed distinct status; no divergent browse money (triggers: no CHECKOUT evaluation row; undecodable explanation wire; reuse probe throw) |
 | DRAFT without Snapshot | May fall through to advisory CART quote |
 | Provenance | §2 fields + digest on new CART persists (`delivery_location_hmac: null` in V1); CHECKOUT reuse retains Snapshot provenance; CHECKOUT scheduled timing / window validation / payment authority unchanged |
-| Client request context key | `cartRevision` + requested mode + **browsing** timing key + outlet\|delivery key + **generation** — stale-response **discard** key only; ≠ `result_fingerprint`; ≠ `evaluation_context_digest`; must not mint evaluated CART `SCHEDULED` |
+| Client request context key | `cartRevision` + requested mode + **browsing** timing key + outlet\|delivery **change** key + **generation** — stale-response **discard** key only; ≠ `result_fingerprint`; ≠ `evaluation_context_digest`; must not mint evaluated CART `SCHEDULED`. Server may **echo** the key for discard UX; must **not** persist, log, or treat it as commercial provenance. The delivery change key must **not** be implemented as a coordinate-derived hash that undercuts V1 HMAC-disabled privacy (opaque generation / revision token is sufficient) |
 | PAYMENT_PENDING reuse | Read-only; writes **zero** Checkout mutations and **zero** new CART provenance rows when reuse hits |
 | Sealing | Evaluate remains non-sealing; pay requires Checkout prepare + Snapshot |
 
@@ -454,11 +461,21 @@ CONTRACT_LOCK_READINESS = READY_FOR_FOUNDER_ARCHITECTURE_LOCK_DECISION
 
 ## 7. Independent review evidence
 
-| Review | Agent id | Verdict | Material fixes applied in this revision |
+### 7.1 Prior Lock-proposal reviews (historical)
+
+| Review | Agent id | Verdict | Material fixes applied in that revision |
 |---|---|---|---|
 | Architecture | [`8a05654d-23bf-423a-b63a-bba025b63f3f`](8a05654d-23bf-423a-b63a-bba025b63f3f) | APPROVE_WITH_DOC_FIXES | Removed `cart_revision`/`cart_id` from digest; post-migration digest always written; priced outlet + keyed HMAC; cardinality disclosure; CHECK wording; reuse/A→B→A; guest reuse; Fit-recommended wording in `06-…` |
 | Security | [`b6c13c64-b4af-44b8-879f-5ba7fc60015f`](b6c13c64-b4af-44b8-879f-5ba7fc60015f) | APPROVE_WITH_DOC_FIXES | Reject≠ignore allowlist; keyed HMAC; rate-limit key hashing/bounded store; outlet re-assertion; binary credential rule; expanded §4.4; residual risks recorded |
 | Financial Integrity | [`6c0c9948-4755-4e6e-8002-e4fc5456cb2b`](6c0c9948-4755-4e6e-8002-e4fc5456cb2b) | APPROVE_WITH_DOC_FIXES | CART-only digest in reuse comparator; CHECKOUT fingerprint-only; priced outlet provenance; CART fingerprint scope wording; fail-closed distinct return; PICKUP delivery-line rule |
+
+### 7.2 Precision correction reviews (`UOE-ARCH-LOCK-PRECISION-1`)
+
+| Review | Agent id | Reviewed commit | Verdict | Findings → resolution |
+|---|---|---|---|---|
+| Architecture | [`e11b73be-218b-4746-b261-2264c5d8b7fd`](e11b73be-218b-4746-b261-2264c5d8b7fd) | `40fd29a6f673484bf43ec8128e9b5411ba0cc017` | APPROVE_WITH_DOC_FIXES | MEDIUM: disclose composed PICKUP outlet gate when timing omitted + mirror in `06-…` — **resolved in follow-up**. LOW: client delivery change key echo-only / not coordinate-hash provenance — **resolved** |
+| Security | [`63db0312-197e-493a-b093-5f767e723206`](63db0312-197e-493a-b093-5f767e723206) | `40fd29a6f673484bf43ec8128e9b5411ba0cc017` | APPROVE | NONE |
+| Financial Integrity | [`b5b7649c-9a16-4911-9865-e3dc0cccbdb8`](b5b7649c-9a16-4911-9865-e3dc0cccbdb8) | `40fd29a6f673484bf43ec8128e9b5411ba0cc017` | APPROVE | LOW notes only (DB enum vs app invariant; 400 = value rejection; HMAC-off reuse limitation already disclosed) — **wording tightened in follow-up** |
 
 Reviews are **documentation validation**. They do **not** grant Fit PASS or Architecture Lock.
 
@@ -471,6 +488,7 @@ Reviews are **documentation validation**. They do **not** grant Fit PASS or Arch
 5. Guest Snapshot-reuse exclusion must be revisited if guest checkouts are later authorized
 6. WhatsApp DR-04 on-wire parity deferred to Content QA / Design Readiness
 7. UOE-DR-06 Checkout composition defect remains in production code and is not remediated here
+8. When CART `fulfilmentTiming` is omitted, PICKUP outlet re-assertion uses composed accepting-now **or** schedule-capable eligibility (Correction A consequence) so Schedule-selected places can quote without evaluating promotions as `SCHEDULED`
 
 ---
 
@@ -483,6 +501,10 @@ Reviews are **documentation validation**. They do **not** grant Fit PASS or Arch
 5. **Design Readiness / Quality / Measurement finalization** — after Fit PASS + Lock (includes Offer-result cardinality reconciliation and WhatsApp Meta inventory)
 6. **Implementation authorization / merge / deploy** — not authorized by this proposal
 7. **Accept per-process rate-limit residual** (or require a later shared-limiter decision — out of this proposal’s service non-goal)
+
+Composed PICKUP outlet re-assertion when CART timing is omitted (accepting-now **or**
+schedule-capable) is part of the §3.2 Lock surface as a Correction A consequence — not a separate
+decision ID. Founder Lock feedback may still reject or amend that gate.
 
 ```text
 STOP_BEFORE = FIT_PASS | ARCHITECTURE_LOCK | DESIGN_READINESS | IMPLEMENTATION | MERGE | DEPLOY
