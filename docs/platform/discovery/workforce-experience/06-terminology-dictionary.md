@@ -32,7 +32,7 @@ Do **not** present Founder direction as if already implemented in accepted histo
 | Concept | Preferred primary label | Allowed contextual verbs / cues | Avoid as peer primary |
 |---|---|---|---|
 | Delivery mode | **Delivery** | — | — |
-| Pickup mode | **Takeaway** | UOE UX-A verbs only: Prepare for collection; Ready for collection; Hand over order; Collection time | “Pickup” as peer to Delivery (except where verification copy needs “picked up”); do not add “Mark collected” unless UOE UX-A later approves it |
+| Pickup mode | **Takeaway** | UOE UX-A verbs only: Prepare for collection; Ready for collection; Hand over order; Collection time. **“Ready for collection” is customer/operator presentation**, not a new kitchen READY lifecycle state | “Pickup” as peer Delivery label (except verification copy / Delivery-panel “confirm pickup” handoff language, which is Delivery-mode logistics — not renaming Takeaway back to Pickup); do not add “Mark collected” unless UOE UX-A later approves it |
 | Immediate timing | **Now** | — | Guaranteeing arrival time |
 | Timed timing | **Schedule** / **Scheduled** | Due soon; Overdue | — |
 

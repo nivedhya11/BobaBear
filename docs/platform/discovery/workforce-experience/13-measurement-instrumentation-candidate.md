@@ -23,7 +23,7 @@ during peak windows.
 |---|---|
 | Delivery command failure rate after P0-A | Catch over-blocking empty fields vs real errors |
 | Hub empty-state rate for authenticated sessions | Detect entry-list gaps (P1-ENTRY) |
-| Commercial Review tab visits without subsequent domain publish | Misleading IA signal (P1-B) |
+| Commercial Review tab visits without subsequent domain publish | Misleading IA signal (P1-D / P2-D) |
 | Consequence-dialog cancel rate on menu retire | Whether review adds friction vs safety |
 | AccessDenied on `/workforce/admin/commercial/` | Entry misconfiguration |
 

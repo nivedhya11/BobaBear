@@ -95,17 +95,18 @@ V1_ACCEPTANCE_SLICE | FOLLOW_UP | DEFERRED | SEPARATE_CORRECTIVE | OUT_OF_SCOPE
 | Proprietary POS / KOT / counter billing / new READY kitchen state | **OUT_OF_SCOPE** / **DEFERRED** | WXE-UPD-04; future governed slice |
 | Customer UOE surfaces | **OUT_OF_SCOPE** | Owned by UOE package |
 
-**V1 entry/routing rule until Founder decides UPD-02/03:** document current shipped entry behaviour as the interim V1 baseline for acceptance scenarios that do not depend on A; mark AS-01/02 and related scenarios as **Founder-choice dependent** where A would change product promises.
+**V1 entry/routing rule until Founder decides UPD-02/03:** do **not** treat current behaviour as an approved deferral (that would be silent **B**). AS-01/02, GJ-W8, P1-ENTRY/P1-COMM, and kitchen/delivery Admin entry remain **Founder-choice dependent**. Until A or B is chosen, those items are pre-Gate blockers for any V1 promise that depends on them; other V1 chrome/safety items may proceed for Gate sitting preparation.
 
 ### Acceptance scenarios → slice map
 
 | Scenario | Slice |
 |---|---|
 | WXE-AS-01, WXE-AS-02 | Founder-choice dependent (UPD-02); if B → FOLLOW_UP with current-entry V1 baseline |
-| WXE-AS-03…07, WXE-AS-10, WXE-AS-11, WXE-AS-13…15 | V1_ACCEPTANCE_SLICE |
+| WXE-AS-03, WXE-AS-05…07, WXE-AS-10, WXE-AS-11, WXE-AS-13…15, WXE-AS-23, WXE-AS-24 | V1_ACCEPTANCE_SLICE |
+| WXE-AS-04 | SEPARATE_CORRECTIVE (P0-A / PR #427) + V1 non-claims once merged; V1 must not claim provider-verified proof |
 | WXE-AS-08, WXE-AS-09 | V1_ACCEPTANCE_SLICE (P1-C / Review) |
 | WXE-AS-12 | V1_ACCEPTANCE_SLICE (diagnostic framing) |
-| WXE-AS-16…22 (X3 journey ASs) | See journey doc — V1 where supported by accepted domain; else DEFERRED / SEPARATE |
+| WXE-AS-16…22 (X3 journey ASs) | V1 where grounded in accepted domain; AS-18 depends on PR #427 merge for terminal-confirm hygiene |
 | Commercial deep-link ASs | FOLLOW_UP |
 
 ## 6. In scope / out of scope
@@ -121,8 +122,8 @@ Navigation from effective permissions **and** resource scope. Server authorizati
 | Variant | Expected |
 |---|---|
 | Multi-app principal | Hub chooser |
-| Ops-only | Operations landing = first authorized ops nav item (**UPD-02**) |
-| Admin/commercial | Administration reachable per UPD-02 choice; interim = current entry unions |
+| Ops-only | **UPD-02 A:** Operations landing = first authorized ops nav item. **UPD-02 B:** preserve current `order.read`-gated Ops destination / Today landing |
+| Admin/commercial | **UPD-02 A:** Administration reachable with commercial-read union + operable Commercial. **UPD-02 B:** preserve current entry unions; P1-COMM deferred |
 | Unauthorized deep link | AccessDenied → Applications |
 | Multi-outlet | Outlet switch preserves context |
 | Kitchen/Delivery Admin entry | Current: via `outlet.read`; change only under UPD-03 |

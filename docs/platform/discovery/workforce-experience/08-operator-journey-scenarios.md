@@ -18,13 +18,13 @@ payment behaviour.
 | ID | Journey | Criticality | Primary section | Spec depth |
 |---|---|---|---|---|
 | GJ-W1 | Start of shift → Today → accept/fulfil orders | X2 | Dashboard / Daily Operations | AS-03 + ops matrix |
-| GJ-W2 | Delivery order → book/assign/handoff/proof without fabricated defaults | X3 | Daily Operations | AS-04; P0-A |
+| GJ-W2 | Delivery order → book/assign/handoff/proof without fabricated defaults | X3 | Daily Operations | **Expanded** (+ AS-04; P0-A) |
 | GJ-W3 | Takeaway order → verify → hand over (prepare off-system; no READY state) | X2 | Daily Operations | AS-05 |
 | GJ-W4 | Pause store / edit hours / scheduling lead times | X2 | Store Management | AS-11, AS-14 |
 | GJ-W5 | Mark variant sold out; confirm assortment is separate | X2 | Store / Commercial | Theme story |
 | GJ-W6 | Publish menu or activate price/promotion with review | X3 | Menu & Commercial | **Expanded** |
 | GJ-W7 | Membership create; role grant/revoke; effective-permission diagnosis | X3 | People & Access | **Expanded** |
-| GJ-W8 | Commercial-only operator reaches Commercial Workspace | X2 | Entry / Menu & Commercial | AS-01; UPD-02 |
+| GJ-W8 | Commercial-only operator reaches Commercial Workspace | X2 | Entry / Menu & Commercial | AS-01; **UPD-02 A only** (unsupported as V1 promise under B) |
 | GJ-W9 | Refund captured payment with step-up | X3 | Order detail | **Expanded** |
 | GJ-W10 | Inspect access audit and system health | X1/X2 | Audit & System | Theme story |
 | GJ-W11 | Delivery failure → authorized recovery (no new re-book UI) | X3 | Daily Operations | **Expanded** |
@@ -44,6 +44,22 @@ Each included journey specifies: (1) authorized actor/scope, (2) entry + startin
 (3) success path, (4) denied/ineligible, (5) confirmation + existing step-up, (6) network/server
 failure recovery, (7) stale revision / changed state, (8) durable result + user-visible confirmation,
 (9) existing authority / evidence.
+
+### GJ-W2 — Delivery evidence hygiene (book / assign / handoff / proof)
+
+| # | Contract |
+|---|---|
+| 1 | Delivery coordinator / outlet manager with applicable delivery command permissions |
+| 2 | Delivery workspace or Order detail Delivery panel; Delivery mode order; starting fields empty (post P0-A) |
+| 3 | Enter real refs → attest where required → confirm terminal deliver/fail/cancel → server advances Delivery |
+| 4 | Takeaway not actionable here; missing caps denied; no fabricated UAT defaults |
+| 5 | Terminal confirms + explicit resolve attestation in UI (PR #427); **does not** claim provider-verified proof |
+| 6 | Network failure: retain local inputs; retry; no silent success |
+| 7 | Order/Delivery identity change resets dialogs; drop stale async (client mitigation for Gap 3) |
+| 8 | Durable Delivery state from server; UI status confirmation |
+| 9 | IMP-032/036D; AS-04; P0-A; Gaps 1–3 remain SEPARATE_CORRECTIVE |
+
+GJ-W11 covers failure/ambiguity recovery using the same command surface; it does not replace GJ-W2.
 
 ### GJ-W6 — Commercial publishing, activation, consequence handling
 
@@ -141,13 +157,17 @@ failure recovery, (7) stale revision / changed state, (8) durable result + user-
 |---|---|
 | 1 | Any principal attempting a step-up-gated mutation (refund, access grant/revoke/status, other existing step-up classes) |
 | 2 | Mid-dialog or mid-submit; step-up challenge presented or session near expiry |
-| 3 | After successful re-auth/step-up, operator may retry the **same** intended mutation with fresh confirmation if required |
+| 3 | After successful re-auth/step-up, operator may retry the **same** intended mutation with fresh confirmation if required; focus returns per XD §10 |
 | 4 | Failed step-up / expired session: mutation **not** applied; no bypass |
 | 5 | Existing step-up controls only — WXE does not weaken or replace MFA classes |
 | 6 | Network during step-up: treat as failure; require clean retry |
 | 7 | Underlying entity changed during challenge: reload; discard stale confirm payload |
 | 8 | No durable change until server accepts post-step-up mutation; UI confirms success only then |
 | 9 | Access/payment step-up foundations; AS-21 |
+
+**Session expiry (existing behaviour — do not invent new session product):** on expiry, operator is returned to the existing workforce login entry (`/workforce/login/` or equivalent shipped route). In-flight dialog/confirm state is discarded; dirty form drafts are not silently submitted. After re-login, operator re-enters the task (deep-link if still authorized) and re-confirms the mutation.
+
+**MFA enrolment gap (documented unimplemented destination):** inventory lists MFA enrolment UI as unimplemented. If step-up requires enrolment the operator does not have, WXE V1 must show an honest blocked/recovery message (contact admin / use existing supported recovery) — **not** invent an enrolment product surface. Classify full enrolment UX as OUT_OF_SCOPE / separate product decision.
 
 ---
 
@@ -172,11 +192,13 @@ failure recovery, (7) stale revision / changed state, (8) durable result + user-
 | WXE-AS-15 | Outlet context | Breadcrumb + sub-nav preserve `outletId` | V1 |
 | WXE-AS-16 | GJ-W7 grant then diagnose | After grant, Effective Permissions reflects new effective set after refresh | V1 |
 | WXE-AS-17 | GJ-W9 refund with step-up | Without step-up success, no refund; with success, panel shows server status | V1 (existing entitlements) |
-| WXE-AS-18 | GJ-W11 failure recovery | Operator completes an existing authorized recovery command; no re-book UI promised | V1 |
+| WXE-AS-18 | GJ-W11 failure recovery | Operator completes an existing authorized recovery command; no re-book UI promised; terminal confirm hygiene depends on PR #427 merge | V1 (depends SEPARATE_CORRECTIVE merge) |
 | WXE-AS-19 | GJ-W12 suspend/revoke | Status/role change persists; EP diagnosis shows loss after refresh | V1 |
 | WXE-AS-20 | GJ-W13 cancel then refund | Cancel and refund each follow own authz; honest partial failure | V1 |
-| WXE-AS-21 | GJ-W14 step-up/session failure | Failed challenge leaves no durable mutation; retry path clear | V1 |
+| WXE-AS-21 | GJ-W14 step-up/session failure | Failed challenge leaves no durable mutation; expiry returns to login without silent submit; enrolment gap shows honest block (no new enrolment UI) | V1 |
 | WXE-AS-22 | GJ-W6 publish with review | Publish/effect blocked without review confirm; success shows live clarity | V1 |
+| WXE-AS-23 | Desktop nav collapse | At 1366×768, Operations shows one persistent section nav (not triple redundant bars); Store subsections remain under Store Management | V1 |
+| WXE-AS-24 | Orders single H1 / main | Orders list and detail expose exactly one H1 and one main landmark | V1 |
 
 ## Journey Completeness Matrix (package-level)
 
@@ -195,9 +217,9 @@ failure recovery, (7) stale revision / changed state, (8) durable result + user-
 | RECOVERY | Refund pending; delivery reload; step-up retry |
 | CONCURRENCY | Revision-aware store/commercial saves; stale confirm drop |
 | DESTRUCTIVE ACTION | Consequence review + X3 confirm rows |
-| SUCCESS FEEDBACK | Announcements / status lines per journey §8 |
+| SUCCESS FEEDBACK | Announcements / status lines per journey contract row 8 + XD §10 |
 | DOWNSTREAM EFFECT | Service blueprint + commercial/access/delivery rows |
-| REVISIT/RELOAD | Direct-link matrix; commercial deep-link FOLLOW_UP |
+| REVISIT/RELOAD | Doc 04 Direct-link and history; commercial deep-link FOLLOW_UP |
 | RESPONSIVE/MOBILE | Desktop-first + XD minimum narrow-screen task set |
 | ACCESSIBILITY | WCAG target + dual-H1 removal + focus restoration |
 

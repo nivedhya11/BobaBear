@@ -118,13 +118,15 @@ Readiness may refine copy; they must not contradict these contracts.
 |---|---|
 | Empty / first-use | Orders/Delivery/Memberships/Commercial lists explain next authorized action; never show fabricated sample evidence |
 | Loading | Polite busy state; no layout jump that hides primary lifecycle actions at 1366×768 |
-| No access / missing scope | AccessDenied or hidden affordance; recovery to Applications; no empty “broken” Commercial (P1-COMM) |
+| No access / missing scope | AccessDenied or hidden affordance; recovery to Applications. **P1-COMM** (“no empty/broken Commercial”) is a V1 requirement **only under UPD-02 A**; under **B**, current unusable Commercial for some principals remains a documented deferred defect |
 | Deep-link failures | Unknown `orderId` / `membershipId` / outlet → not-found + recovery; commercial section deep-links remain FOLLOW_UP |
 | Stale Order/Delivery/Checkout-adjacent state | On identity or revision change, reset confirms/dialogs; drop stale async; reload server truth (GJ-W2/W11/W14) |
 | Network interruption + retry | Recoverable message; retry safe; no double-submit without revision check |
 | Consequence-dialog cancel | Esc/Cancel closes without mutation; **focus returns** to invoking control |
 | Consequence-dialog confirm | Focus moves to success/status region or primary next action; announce result |
-| Unsaved form changes | Hours/area/takeaway/scheduling/commercial drafts protect navigate-away (AS-14) |
+| After step-up return | Focus returns to the control that initiated the gated mutation, or to the dialog’s primary action if still open; never to a random landmark |
+| After stale reload / not-found | Focus to page status/alert explaining reload or recovery link (Applications / Orders list) |
+| Unsaved form changes | Protect navigate-away on dirty **Hours** (AS-14), and on dirty **Delivery Area / Takeaway settings / Scheduling / membership create / commercial draft** editors in V1 chrome scope |
 | Multi-outlet context | Switching outlet preserves task family where authorized; breadcrumbs keep `outletId` (AS-15) |
 | Conflicting revision | Conflict message + reload; no silent overwrite (GJ-W6/W7) |
 | Screen-reader status | Mutation outcomes via polite live region / status text; breadcrumbs `aria-current` |

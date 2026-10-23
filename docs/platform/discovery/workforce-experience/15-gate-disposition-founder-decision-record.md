@@ -79,14 +79,22 @@ STATUS = HISTORICAL_EVIDENCE
 Material themes addressed in refinement: V1/FOLLOW_UP slicing; X3 journey depth; UPD register
 freshness (incl. UPD-05 vs open #427); Gaps 1–3 register; T0 vs T1 Admin-entry matrix.
 
-### D2 — Post-refinement reviews (to be attached)
+### D2 — Post-refinement independent reviews
 
 ```text
 REVIEW_WAVE = WXE_PD_XD_REFINEMENT_R2_INDEPENDENT
-PRODUCT_VERDICT = PENDING_THIS_PUBLICATION
-EXPERIENCE_VERDICT = PENDING_THIS_PUBLICATION
-REVIEWED_COMMIT = PENDING_EXACT_HEAD_AFTER_PUSH
+PRODUCT_REVIEWED_COMMIT = c7564db307fd6242d87fd63e577b0f7e27282948
+PRODUCT_VERDICT = RECOMMENDED_PASS
+EXPERIENCE_REVIEWED_COMMIT = c7564db307fd6242d87fd63e577b0f7e27282948
+EXPERIENCE_VERDICT = RECOMMENDED_STOP
+FOLLOW_ON_DOC_FIXES = same-scope repair after Experience STOP (P1-COMM conditionalization, GJ-W2/W14 depth, AS-23/24, metadata)
+FORMAL_PRODUCT_DEFINITION_GATE = NOT_GRANTED
+FORMAL_EXPERIENCE_GATE = NOT_GRANTED
 ```
+
+Product reviewer: ready for Founder PD/XD decision sitting with UPD-02/03/06 still Founder-owned.
+Experience reviewer: prior blockers mostly closed; remaining doc deficits repaired in follow-on commit
+(exact HEAD after push supersedes for Experience re-check).
 
 | Finding theme (prior) | Severity | Disposition after refinement |
 |---|---|---|
