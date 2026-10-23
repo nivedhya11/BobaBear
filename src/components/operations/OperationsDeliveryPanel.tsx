@@ -2,6 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import {
+  OperationsDeliveryConsequenceDialog,
+  type DeliveryConsequenceAction,
+} from "@/components/operations/OperationsDeliveryConsequenceDialog";
 import { Button } from "@/components/ui/Button";
 import {
   getWorkforceDelivery,
@@ -14,6 +18,13 @@ type PanelState =
   | Readonly<{ kind: "empty" }>
   | Readonly<{ kind: "ready"; detail: OperationsDeliveryDetail }>
   | Readonly<{ kind: "error"; message: string }>;
+
+type PendingConsequence = Readonly<{
+  action: DeliveryConsequenceAction;
+  command: string;
+  payload: Record<string, unknown>;
+  summaryLines: readonly string[];
+}>;
 
 function externalBookingHint(status: string): string | null {
   if (status === "REQUESTED") {
@@ -59,22 +70,37 @@ function deliveryBasePayload(delivery: OperationsDeliveryDetail["delivery"]) {
   };
 }
 
+function isHttpsUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+const INACTIVITY_ACK_LABEL =
+  "I acknowledge that no active external booking remains for this delivery. This is an operator acknowledgment only — not verified external-provider evidence.";
+
 export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
   const { orderId } = props;
   const [state, setState] = useState<PanelState>({ kind: "loading" });
-  const [providerLabel, setProviderLabel] = useState("dehradun-courier");
+  const [providerLabel, setProviderLabel] = useState("");
   const [externalBookingReference, setExternalBookingReference] = useState("");
-  const [trackingUrl, setTrackingUrl] = useState("https://track.example.com/uat");
-  const [assignmentKey, setAssignmentKey] = useState("rider-uat-1");
+  const [trackingUrl, setTrackingUrl] = useState("");
+  const [assignmentKey, setAssignmentKey] = useState("");
   const [courierReference, setCourierReference] = useState("");
-  const [handoffReference, setHandoffReference] = useState("pickup-uat-1");
-  const [proofReference, setProofReference] = useState("proof-uat-1");
-  const [failureCode, setFailureCode] = useState("NO_BOOKING");
-  const [failureReason, setFailureReason] = useState("Courier unavailable");
-  const [cancellationCode, setCancellationCode] = useState("COURIER_CANCEL");
-  const [cancellationReason, setCancellationReason] = useState("External booking cancelled");
+  const [handoffReference, setHandoffReference] = useState("");
+  const [proofReference, setProofReference] = useState("");
+  const [failureCode, setFailureCode] = useState("");
+  const [failureReason, setFailureReason] = useState("");
+  const [cancellationCode, setCancellationCode] = useState("");
+  const [cancellationReason, setCancellationReason] = useState("");
+  const [inactiveBookingAcknowledged, setInactiveBookingAcknowledged] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [fieldError, setFieldError] = useState("");
+  const [pendingConsequence, setPendingConsequence] = useState<PendingConsequence | null>(null);
 
   const reload = useCallback(async () => {
     const result = await getWorkforceDelivery(orderId);
@@ -112,8 +138,10 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
   async function run(action: string, payload: Record<string, unknown>) {
     setBusy(true);
     setMessage("");
+    setFieldError("");
     const result = await postDeliveryCommand(orderId, action, payload);
     setBusy(false);
+    setPendingConsequence(null);
     if (!result.ok) {
       if (result.code === "DELIVERY_REVISION_CONFLICT" || result.code === "DELIVERY_STATE_CONFLICT") {
         setMessage("Delivery changed since load. Refreshing…");
@@ -124,7 +152,26 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
       return;
     }
     setMessage("Updated.");
+    setInactiveBookingAcknowledged(false);
     await reload();
+  }
+
+  function requireNonEmpty(value: string, label: string): string | null {
+    if (value.trim().length === 0) {
+      setFieldError(`${label} is required.`);
+      return null;
+    }
+    return value.trim();
+  }
+
+  function requestConsequence(
+    action: DeliveryConsequenceAction,
+    command: string,
+    payload: Record<string, unknown>,
+    summaryLines: readonly string[],
+  ) {
+    setFieldError("");
+    setPendingConsequence({ action, command, payload, summaryLines });
   }
 
   if (state.kind === "loading") {
@@ -164,7 +211,11 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
   const has = (command: string) => commands.includes(command);
 
   return (
-    <section className="space-y-3 rounded-md border border-[var(--border-subtle)] p-4">
+    <section
+      className="space-y-3 rounded-md border border-[var(--border-subtle)] p-4"
+      data-testid="operations-delivery-panel"
+      data-order-id={orderId}
+    >
       <h2 className="font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
         Delivery
       </h2>
@@ -228,17 +279,19 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
               className="rounded border border-[var(--border-subtle)] px-2 py-1"
               value={providerLabel}
               onChange={(e) => setProviderLabel(e.target.value)}
+              data-testid="delivery-provider-label"
+              autoComplete="off"
             />
           </label>
           <Button
             type="button"
             disabled={busy}
-            onClick={() =>
-              void run("begin-manual-booking", {
-                ...base,
-                provider: providerLabel.trim(),
-              })
-            }
+            data-testid="delivery-begin-manual-booking"
+            onClick={() => {
+              const provider = requireNonEmpty(providerLabel, "Provider label");
+              if (!provider) return;
+              void run("begin-manual-booking", { ...base, provider });
+            }}
           >
             Begin manual booking
           </Button>
@@ -254,27 +307,42 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
               className="rounded border border-[var(--border-subtle)] px-2 py-1"
               value={externalBookingReference}
               onChange={(e) => setExternalBookingReference(e.target.value)}
-              placeholder="EXT-123"
+              placeholder="Courier booking reference"
+              data-testid="delivery-external-booking-reference"
+              autoComplete="off"
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            Tracking URL (HTTPS)
+            Tracking URL (HTTPS, optional)
             <input
               className="rounded border border-[var(--border-subtle)] px-2 py-1"
               value={trackingUrl}
               onChange={(e) => setTrackingUrl(e.target.value)}
+              data-testid="delivery-tracking-url"
+              autoComplete="off"
             />
           </label>
           <Button
             type="button"
             disabled={busy}
-            onClick={() =>
+            data-testid="delivery-confirm-manual-booking"
+            onClick={() => {
+              const external = requireNonEmpty(
+                externalBookingReference,
+                "External booking reference",
+              );
+              if (!external) return;
+              const tracking = trackingUrl.trim();
+              if (tracking.length > 0 && !isHttpsUrl(tracking)) {
+                setFieldError("Tracking URL must be a valid HTTPS URL when provided.");
+                return;
+              }
               void run("confirm-manual-booking", {
                 ...base,
-                externalBookingReference: externalBookingReference.trim() || undefined,
-                trackingUrl: trackingUrl.trim() || undefined,
-              })
-            }
+                externalBookingReference: external,
+                ...(tracking.length > 0 ? { trackingUrl: tracking } : {}),
+              });
+            }}
           >
             Confirm manual booking
           </Button>
@@ -290,6 +358,8 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
               className="rounded border border-[var(--border-subtle)] px-2 py-1"
               value={failureCode}
               onChange={(e) => setFailureCode(e.target.value)}
+              data-testid="delivery-failure-code"
+              autoComplete="off"
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
@@ -298,19 +368,49 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
               className="rounded border border-[var(--border-subtle)] px-2 py-1"
               value={failureReason}
               onChange={(e) => setFailureReason(e.target.value)}
+              data-testid="delivery-failure-reason"
+              autoComplete="off"
             />
+          </label>
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="mt-1"
+              checked={inactiveBookingAcknowledged}
+              onChange={(e) => setInactiveBookingAcknowledged(e.target.checked)}
+              data-testid="delivery-inactive-booking-ack"
+            />
+            <span>{INACTIVITY_ACK_LABEL}</span>
           </label>
           <Button
             type="button"
             disabled={busy}
-            onClick={() =>
-              void run("resolve-manual-booking-failure", {
-                ...base,
-                failureCode: failureCode.trim(),
-                failureReason: failureReason.trim(),
-                inactiveBookingConfirmed: true,
-              })
-            }
+            data-testid="delivery-resolve-failure"
+            onClick={() => {
+              const code = requireNonEmpty(failureCode, "Failure code");
+              if (!code) return;
+              const reason = requireNonEmpty(failureReason, "Failure reason");
+              if (!reason) return;
+              if (!inactiveBookingAcknowledged) {
+                setFieldError("Operator acknowledgment of booking inactivity is required.");
+                return;
+              }
+              requestConsequence(
+                "resolve-manual-booking-failure",
+                "resolve-manual-booking-failure",
+                {
+                  ...base,
+                  failureCode: code,
+                  failureReason: reason,
+                  inactiveBookingConfirmed: true,
+                },
+                [
+                  `Failure code: ${code}`,
+                  `Failure reason: ${reason}`,
+                  "Operator inactivity acknowledgment provided (not verified courier evidence).",
+                ],
+              );
+            }}
           >
             Resolve booking failure
           </Button>
@@ -326,6 +426,8 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
               className="rounded border border-[var(--border-subtle)] px-2 py-1"
               value={cancellationCode}
               onChange={(e) => setCancellationCode(e.target.value)}
+              data-testid="delivery-cancellation-code"
+              autoComplete="off"
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
@@ -334,19 +436,49 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
               className="rounded border border-[var(--border-subtle)] px-2 py-1"
               value={cancellationReason}
               onChange={(e) => setCancellationReason(e.target.value)}
+              data-testid="delivery-cancellation-reason"
+              autoComplete="off"
             />
+          </label>
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="mt-1"
+              checked={inactiveBookingAcknowledged}
+              onChange={(e) => setInactiveBookingAcknowledged(e.target.checked)}
+              data-testid="delivery-inactive-booking-ack-cancel"
+            />
+            <span>{INACTIVITY_ACK_LABEL}</span>
           </label>
           <Button
             type="button"
             disabled={busy}
-            onClick={() =>
-              void run("resolve-manual-booking-cancellation", {
-                ...base,
-                cancellationCode: cancellationCode.trim(),
-                cancellationReason: cancellationReason.trim(),
-                inactiveBookingConfirmed: true,
-              })
-            }
+            data-testid="delivery-resolve-cancellation"
+            onClick={() => {
+              const code = requireNonEmpty(cancellationCode, "Cancellation code");
+              if (!code) return;
+              const reason = requireNonEmpty(cancellationReason, "Cancellation reason");
+              if (!reason) return;
+              if (!inactiveBookingAcknowledged) {
+                setFieldError("Operator acknowledgment of booking inactivity is required.");
+                return;
+              }
+              requestConsequence(
+                "resolve-manual-booking-cancellation",
+                "resolve-manual-booking-cancellation",
+                {
+                  ...base,
+                  cancellationCode: code,
+                  cancellationReason: reason,
+                  inactiveBookingConfirmed: true,
+                },
+                [
+                  `Cancellation code: ${code}`,
+                  `Cancellation reason: ${reason}`,
+                  "Operator inactivity acknowledgment provided (not verified courier evidence).",
+                ],
+              );
+            }}
           >
             Resolve booking cancellation
           </Button>
@@ -362,6 +494,8 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
               className="rounded border border-[var(--border-subtle)] px-2 py-1"
               value={assignmentKey}
               onChange={(e) => setAssignmentKey(e.target.value)}
+              data-testid="delivery-assignment-key"
+              autoComplete="off"
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
@@ -370,19 +504,29 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
               className="rounded border border-[var(--border-subtle)] px-2 py-1"
               value={courierReference}
               onChange={(e) => setCourierReference(e.target.value)}
+              data-testid="delivery-courier-reference"
+              autoComplete="off"
             />
           </label>
           <Button
             type="button"
             disabled={busy}
-            onClick={() =>
+            data-testid="delivery-record-assignment"
+            onClick={() => {
+              const key = requireNonEmpty(assignmentKey, "Assignment key");
+              if (!key) return;
+              const provider = (d.provider ?? providerLabel).trim();
+              if (provider.length === 0) {
+                setFieldError("Provider label is required when the delivery has no provider yet.");
+                return;
+              }
               void run("record-assignment", {
                 ...base,
-                provider: (d.provider ?? providerLabel).trim(),
-                assignmentKey: assignmentKey.trim(),
+                provider,
+                assignmentKey: key,
                 courierReference: courierReference.trim() || undefined,
-              })
-            }
+              });
+            }}
           >
             Record assignment
           </Button>
@@ -398,17 +542,22 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
               className="rounded border border-[var(--border-subtle)] px-2 py-1"
               value={handoffReference}
               onChange={(e) => setHandoffReference(e.target.value)}
+              data-testid="delivery-handoff-reference"
+              autoComplete="off"
             />
           </label>
           <Button
             type="button"
             disabled={busy}
-            onClick={() =>
+            data-testid="delivery-confirm-pickup"
+            onClick={() => {
+              const handoff = requireNonEmpty(handoffReference, "Handoff reference");
+              if (!handoff) return;
               void run("confirm-pickup", {
                 ...base,
-                handoffReference: handoffReference.trim(),
-              })
-            }
+                handoffReference: handoff,
+              });
+            }}
           >
             Confirm pickup
           </Button>
@@ -424,17 +573,30 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
               className="rounded border border-[var(--border-subtle)] px-2 py-1"
               value={proofReference}
               onChange={(e) => setProofReference(e.target.value)}
+              data-testid="delivery-proof-reference"
+              autoComplete="off"
             />
           </label>
+          <p className="text-xs text-[var(--text-tertiary)]">
+            Operator-entered proof reference only. This UI does not verify external-provider evidence.
+          </p>
           <Button
             type="button"
             disabled={busy}
-            onClick={() =>
-              void run("confirm-delivery", {
-                ...base,
-                proofReference: proofReference.trim(),
-              })
-            }
+            data-testid="delivery-confirm-delivery"
+            onClick={() => {
+              const proof = requireNonEmpty(proofReference, "Proof reference");
+              if (!proof) return;
+              requestConsequence(
+                "confirm-delivery",
+                "confirm-delivery",
+                {
+                  ...base,
+                  proofReference: proof,
+                },
+                [`Proof reference: ${proof}`],
+              );
+            }}
           >
             Confirm delivery
           </Button>
@@ -444,16 +606,46 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
       {has("REPORT_DELIVERY_FAILURE") ? (
         <div className="space-y-2 rounded-sm border border-[var(--border-subtle)] p-3">
           <p className="text-sm font-medium">Report delivery failure</p>
+          <label className="flex flex-col gap-1 text-sm">
+            Failure code
+            <input
+              className="rounded border border-[var(--border-subtle)] px-2 py-1"
+              value={failureCode}
+              onChange={(e) => setFailureCode(e.target.value)}
+              data-testid="delivery-report-failure-code"
+              autoComplete="off"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            Failure reason
+            <input
+              className="rounded border border-[var(--border-subtle)] px-2 py-1"
+              value={failureReason}
+              onChange={(e) => setFailureReason(e.target.value)}
+              data-testid="delivery-report-failure-reason"
+              autoComplete="off"
+            />
+          </label>
           <Button
             type="button"
             disabled={busy}
-            onClick={() =>
-              void run("report-failure", {
-                ...base,
-                failureCode: failureCode.trim(),
-                failureReason: failureReason.trim(),
-              })
-            }
+            data-testid="delivery-report-failure"
+            onClick={() => {
+              const code = requireNonEmpty(failureCode, "Failure code");
+              if (!code) return;
+              const reason = requireNonEmpty(failureReason, "Failure reason");
+              if (!reason) return;
+              requestConsequence(
+                "report-failure",
+                "report-failure",
+                {
+                  ...base,
+                  failureCode: code,
+                  failureReason: reason,
+                },
+                [`Failure code: ${code}`, `Failure reason: ${reason}`],
+              );
+            }}
           >
             Report delivery failure
           </Button>
@@ -461,22 +653,78 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
       ) : null}
 
       {has("CANCEL_DELIVERY") ? (
-        <Button
-          type="button"
-          disabled={busy}
-          onClick={() =>
-            void run("cancel", {
-              ...base,
-              cancellationCode: cancellationCode.trim(),
-              cancellationReason: cancellationReason.trim(),
-            })
-          }
-        >
-          Cancel delivery
-        </Button>
+        <div className="space-y-2 rounded-sm border border-[var(--border-subtle)] p-3">
+          <p className="text-sm font-medium">Cancel delivery</p>
+          <label className="flex flex-col gap-1 text-sm">
+            Cancellation code
+            <input
+              className="rounded border border-[var(--border-subtle)] px-2 py-1"
+              value={cancellationCode}
+              onChange={(e) => setCancellationCode(e.target.value)}
+              data-testid="delivery-cancel-code"
+              autoComplete="off"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            Cancellation reason
+            <input
+              className="rounded border border-[var(--border-subtle)] px-2 py-1"
+              value={cancellationReason}
+              onChange={(e) => setCancellationReason(e.target.value)}
+              data-testid="delivery-cancel-reason"
+              autoComplete="off"
+            />
+          </label>
+          <Button
+            type="button"
+            disabled={busy}
+            data-testid="delivery-cancel"
+            onClick={() => {
+              const code = requireNonEmpty(cancellationCode, "Cancellation code");
+              if (!code) return;
+              const reason = requireNonEmpty(cancellationReason, "Cancellation reason");
+              if (!reason) return;
+              requestConsequence(
+                "cancel",
+                "cancel",
+                {
+                  ...base,
+                  cancellationCode: code,
+                  cancellationReason: reason,
+                },
+                [`Cancellation code: ${code}`, `Cancellation reason: ${reason}`],
+              );
+            }}
+          >
+            Cancel delivery
+          </Button>
+        </div>
       ) : null}
 
+      {fieldError ? (
+        <p role="alert" className="text-sm text-rose-700" data-testid="delivery-field-error">
+          {fieldError}
+        </p>
+      ) : null}
       {message ? <p className="text-sm text-[var(--text-secondary)]">{message}</p> : null}
+
+      {pendingConsequence ? (
+        <OperationsDeliveryConsequenceDialog
+          action={pendingConsequence.action}
+          orderId={orderId}
+          deliveryId={d.id}
+          deliveryStatus={deliveryStatusLabel(d.status)}
+          summaryLines={pendingConsequence.summaryLines}
+          pending={busy}
+          onDismiss={() => {
+            if (busy) return;
+            setPendingConsequence(null);
+          }}
+          onConfirm={() => {
+            void run(pendingConsequence.command, pendingConsequence.payload);
+          }}
+        />
+      ) : null}
     </section>
   );
 }

@@ -31,9 +31,9 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2325,
-    "executableTestFiles": 523,
-    "sourceTestFiles": 157,
+    "trackedPathsConsidered": 2329,
+    "executableTestFiles": 525,
+    "sourceTestFiles": 159,
     "testsTreeExecutableFiles": 278,
     "scriptTestFiles": 88,
     "playwrightSpecs": 12,
@@ -60,7 +60,9 @@
     "src/components/Nav.test.tsx",
     "src/components/account/AccountShell.test.tsx",
     "src/components/account/AddressForm.validation.test.ts",
+    "src/components/operations/OperationsDeliveryConsequenceDialog.test.tsx",
     "src/components/operations/OperationsDeliveryPanel.test.tsx",
+    "src/components/operations/OperationsDeliveryWorkspaceClient.test.tsx",
     "src/components/operations/OperationsLifecycleConfirmationDialog.test.tsx",
     "src/components/operations/OperationsOrderDetailClient.test.tsx",
     "src/components/operations/OperationsOrderDetailShell.test.ts",
@@ -3239,7 +3241,43 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "src/components/operations/OperationsDeliveryConsequenceDialog.test.tsx",
+      "runner": "vitest",
+      "domain": "components/operations",
+      "testType": "component-or-tsx",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "2-component"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "src/components/operations/OperationsDeliveryPanel.test.tsx",
+      "runner": "vitest",
+      "domain": "components/operations",
+      "testType": "component-or-tsx",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "2-component"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/components/operations/OperationsDeliveryWorkspaceClient.test.tsx",
       "runner": "vitest",
       "domain": "components/operations",
       "testType": "component-or-tsx",
