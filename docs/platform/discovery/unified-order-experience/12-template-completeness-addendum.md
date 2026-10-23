@@ -18,7 +18,10 @@ GATE_PRECISION_REVISION: YES
 
 This addendum supplies canonical PD-2 / EXP-1 template fields for
 `PD-UOE-CANDIDATE-3` / `XD-UOE-CANDIDATE-3`. Product Definition and Experience gates are
-recorded PASS per Founder decision. Architecture Fit PASS is not granted here.
+recorded PASS per Founder decision. This addendum does **not** itself grant Architecture Fit
+PASS; Fit PASS and Architecture Lock were recorded later (Founder 2026-10-23) and live in
+`11-…` plus binding capability architecture
+`docs/platform/capabilities/UOE-unified-order-experience.md`.
 
 ## A. Acceptance slicing dispositions
 
@@ -142,7 +145,9 @@ Founder Recommendations Incorporated: UOE-DR-02 (defer), UOE-DR-04 (WhatsApp+in-
 UOE-DR-06: Schedule-capable ACCEPTED; Checkout composition ACCEPTED_CAPABILITY_CONFORMANCE_DEFECT; separate corrective preferred; implementation NOT_AUTHORIZED
 UOE-DR-01: FUTURE_IMP_ID=NOT_ALLOCATED; sequencing DEFERRED; D-383 / IMP-036K unchanged
 Gate Precision: GP-01…GP-04 + Checkout contract precision + final contract completeness (AS-34–46); UOE-CANDIDATE-4 NOT_INTRODUCED
-PASS_SCOPE: Product specification only — not implemented behaviour, not Fit PASS, not implementation authorization
+PASS_SCOPE: Product specification only — not implemented behaviour. (Historical: this Product Gate
+did not itself grant Fit PASS.) Subsequent Founder Architecture Fit PASS + Lock (2026-10-23) are
+recorded separately and still do not authorize Design Readiness, implementation, merge, or deploy.
 ```
 
 ## F. Canonical Experience Gate block (PERFORMED / PASS)
@@ -174,7 +179,10 @@ EXPERIENCE_GATE_EXECUTION: PERFORMED
 Result: PASS
 
 Pre-GTM audit: NOT_PERFORMED
-PASS_SCOPE: Experience definition only — not Design Readiness, not Fit PASS, not implementation authorization
+PASS_SCOPE: Experience definition only — not Design Readiness, not implementation authorization.
+(Historical: this Experience Gate did not itself grant Fit PASS.) Subsequent Founder Architecture
+Fit PASS + Lock (2026-10-23) are recorded separately and still do not authorize Design Readiness,
+implementation, merge, or deploy.
 ```
 
 ## G. Refinement A — per-surface label disposition

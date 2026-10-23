@@ -42,8 +42,11 @@ register live in
 
 **Formal gate status:** `PERFORMED` / `PASS` (Founder).
 
-**Binding limit:** Product specification PASS only — not implemented behaviour, not Fit PASS, not
-implementation authorization.
+**Binding limit (historical + current):** Product Definition Gate PASS grants product
+specification only. It did **not** itself grant Architecture Fit PASS, Design Readiness, or
+implementation authorization. Architecture Fit PASS and Architecture Lock were recorded later
+(Founder 2026-10-23; see `11-…` and binding capability architecture). Those later gates still do
+**not** authorize Design Readiness PASS, implementation, merge, or deploy.
 
 ## Experience Gate — evidence summary
 
@@ -60,19 +63,29 @@ implementation authorization.
 
 **Formal gate status:** `PERFORMED` / `PASS` (Founder).
 
-**Binding limit:** Experience definition PASS only — not Design Readiness, not Fit PASS, not
-implementation authorization.
+**Binding limit (historical + current):** Experience Gate PASS grants experience definition only.
+It did **not** itself grant Architecture Fit PASS, Design Readiness, or implementation
+authorization. Later Founder Architecture Fit PASS + Lock (2026-10-23) are recorded separately and
+still do **not** authorize Design Readiness PASS, implementation, merge, or deploy.
 
 ## Prerequisites for later gates
 
 ```text
-Architecture Fit final PASS  → Experience Gate PASS satisfied (X2/X3); Fit evaluation performed;
-                               formal Fit PASS / lock NOT_GRANTED (Founder / independent Fit verdict)
-Design Readiness PASS        → requires Fit PASS (+ prior gates)
+Architecture Fit PASS + Lock → RECORDED (Founder 2026-10-23; variant PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1;
+                               contract ARCH-UOE-LOCK-PROPOSAL-1; binding path
+                               docs/platform/capabilities/UOE-unified-order-experience.md;
+                               reviewed contract HEAD 9a9e3f71789a4cce5141eb88b3ab606f72b2c54e)
+                               Historical note: Product/Experience Gate PASS (2026-10-23, HEAD
+                               dbe078628…) did not itself grant Fit PASS — Fit evaluation + Founder
+                               Fit/Lock decisions followed as separate steps.
+Design Readiness PASS        → requires Fit PASS (+ prior gates); formal Design Readiness still
+                               NOT_PERFORMED (candidate in 07-…)
 Implementation authorization → requires Design Readiness + Quality plan + (X3) Measurement plan
                               + explicit Founder / ROADMAP authorization (UOE-DR-01 still NOT_ALLOCATED)
 ```
 
 Architecture Fit evaluation for UOE-DR-05 + GP-01…GP-04 (including Checkout Contract C,
 timing-sensitive quotes, missing-evaluation fail-closed, fingerprint/dedup, WhatsApp optional
-scope) is recorded in `06-…`. Formal Fit remains `NOT_GRANTED`.
+scope) is recorded in `06-…`. Formal Fit PASS and Architecture Lock are **PASS / APPROVED**
+(Founder-recorded). Design Readiness, Quality plan finalization, Measurement plan finalization,
+and implementation remain unauthorized.

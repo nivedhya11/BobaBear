@@ -9,10 +9,18 @@ STATUS = PLAN_CANDIDATE_ONLY
 AUTHORITY = NON_AUTHORITATIVE_DISCOVERY_DRAFT
 IMPLEMENTATION_AUTHORIZED = NO
 FORMAL_IMP_IDENTITY = NOT_ALLOCATED
-UOE_DR_01 = NOT_ALLOCATED_SEQUENCING_DEFERRED
+UOE_DR_01 = FUTURE_IMP_ID_NOT_ALLOCATED / SEQUENCING_DEFERRED
 PRODUCT_DEFINITION_GATE = PASS
 EXPERIENCE_GATE = PASS
-ARCHITECTURE_FIT_PASS = NOT_GRANTED
+ARCHITECTURE_FIT_PASS = PASS
+ARCHITECTURE_LOCK = APPROVED
+ARCHITECTURE_CONTRACT = ARCH-UOE-LOCK-PROPOSAL-1
+BINDING_CAPABILITY_ARCHITECTURE = docs/platform/capabilities/UOE-unified-order-experience.md
+DESIGN_READINESS_PASS = NOT_GRANTED
+QUALITY_PLAN_FINALIZATION = NOT_GRANTED
+MEASUREMENT_PLAN_FINALIZATION = NOT_GRANTED
+UOE_DR_06 = ACCEPTED_CAPABILITY_CONFORMANCE_DEFECT
+UOE_DR_06_REMEDIATION = NOT_AUTHORIZED
 PREFERRED_SHAPE = ONE_FUTURE_IMP_WITH_THREE_TRANCHES
 VARIANT = PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
 GATE_PRECISION_REVISION = YES
@@ -26,9 +34,9 @@ GATE_PRECISION_REVISION = YES
 | UX-B | Compact scheduling UI wired to existing scheduled APIs at eligible checkout |
 | UX-C | Universal bar + **tab-scoped** order-context coordinator + PAYMENT_PENDING guard |
 | DR-05 server reads/quotes | Timing-aware pre-checkout Takeaway eligibility + mode-sensitive cart evaluate (Fit contracts; GP-01…04) |
-| Checkout Schedule path | Timing-aware `listCheckoutPickupOptions` (or timing-intent-before-list) + AS-34–38 recovery; remediates accepting-now-only defect |
+| Checkout Schedule path (Contract C) | **Specified** in Design Readiness (`07-…`) and Quality plan (`08-…`) for truthful Schedule-capable Takeaway. **Code remediation** of accepting-now-only Checkout composition remains `UOE-DR-06` / `REMEDIATION_NOT_AUTHORIZED` — requires a separately governed corrective or later explicitly authorized delivery scope. Design Readiness revision does **not** authorize Checkout mutation. |
 | Not in V1 | Menu-level exact window preview API (UOE-DR-02 deferred); cross-tab presentation sync |
-| Never | Domain/API renames; Snapshot/payment authority changes; second commercial authority; new lifecycle states; new PAYMENT_PENDING server guards (preserve existing); Schedule denied solely because closed NOW; divergent browse money when Snapshot reuse evidence missing |
+| Never | Domain/API renames; Snapshot/payment authority changes; second commercial authority; new lifecycle states; new PAYMENT_PENDING server guards (preserve existing); Schedule denied solely because closed NOW; divergent browse money when Snapshot reuse evidence missing; silent Checkout remediation via Design docs alone |
 
 ## Tranche plan (candidate)
 
@@ -44,14 +52,14 @@ GATE_PRECISION_REVISION = YES
 ### Tranche 2 — UX-B compact scheduling + DR-05 evaluate/eligibility foundations
 
 - TimingChooser sheet/popover; Now meaning microcopy
-- Replace primary long grid in checkout; reusable from future bar
+- Replace primary long grid in checkout **when Checkout Schedule-path remediation is separately authorized**; reusable from future bar
 - Preserve windows/TZ/cutoff/bind revalidation; Menu remains Schedule intent-only
-- Server: timing-aware pre-checkout eligibility read + cart evaluate mode/outlet/timing input (Fit contracts; promotion context)
-- Checkout: timing-aware pickup-options + bind→windows→evaluate→prepare journey (Contract C / AS-41)
-- Open-Checkout reuse before Delivery-location early return; missing commercial-evaluation evidence fail-closed; fingerprint/dedup (AS-29/AS-31/AS-32/AS-39/AS-40/AS-45–46)
+- Server: timing-aware pre-checkout eligibility read + cart evaluate mode/outlet/timing input (Fit contracts; promotion context) — Contracts A/B
+- **Contract C (Checkout Schedule sequencing):** Design and test plans **specify** timing-aware pickup-options + bind→windows→evaluate→prepare (AS-34–38 / AS-41). **Implementation of Checkout composition fix** = `UOE-DR-06` remediation → `REMEDIATION_NOT_AUTHORIZED` under this package / Design Readiness revision. Preferred separately scoped corrective after urgent payment work; do not treat T2 design exit as Checkout-mutation authorization.
+- Open-Checkout reuse before Delivery-location early return; missing commercial-evaluation evidence fail-closed; fingerprint/dedup (AS-29/AS-31/AS-32/AS-39/AS-40/AS-45–46) — Contracts A/B paths that do not require DR-06 Checkout rewrite may proceed only under future implementation authorization
 - Timing-sensitive provisional Offers when Schedule UNCONFIRMED (AS-42–44)
 - Empty/no-cart distinct from UNAVAILABLE (AS-30)
-- **Exit:** AS-08–11, AS-24–27, AS-29–46 (API+client foundation); scheduled regression green; no new lifecycle states
+- **Exit (when implementation authorized):** AS-08–11, AS-24–27, AS-29–46 for **authorized** surfaces; scheduled regression green; no new lifecycle states. AS-34/AS-41 Checkout remediation evidence remains blocked until UOE-DR-06 remediation is explicitly authorized.
 
 ### Tranche 3 — UX-C universal bar + context owner
 
@@ -110,9 +118,12 @@ No conversion lift promised.
 NO implementation tranche may start without:
   Product Definition Gate PASS          ← recorded PASS (2026-10-23)
   Experience Gate PASS                  ← recorded PASS (2026-10-23)
-  Architecture Fit PASS + lock as required  ← evaluation recommended; PASS NOT_GRANTED
-  Design Readiness PASS
-  Quality / Test Plan finalized
-  Measurement Plan finalized (X3)
-  Explicit future IMP identity + implementation authorization  ← UOE-DR-01 still NOT_ALLOCATED
+  Architecture Fit PASS + Architecture Lock  ← recorded PASS / APPROVED (2026-10-23)
+  Design Readiness PASS                 ← NOT_GRANTED (candidate in 07-…)
+  Quality / Test Plan finalized         ← NOT_PERFORMED (candidate in 08-…)
+  Measurement Plan finalized (X3)       ← NOT_PERFORMED (candidate in 09-…)
+  Explicit future IMP identity + implementation authorization  ← UOE-DR-01 still NOT_ALLOCATED / SEQUENCING_DEFERRED
+
+Checkout Contract C code remediation additionally requires:
+  UOE-DR-06 remediation authorization   ← NOT_AUTHORIZED (separate corrective or later explicit scope)
 ```
