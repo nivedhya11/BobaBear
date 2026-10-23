@@ -5,7 +5,10 @@
 ```text
 IA_ID = WXE-IA-CANDIDATE-1
 PRESENTATION_GROUPS_ARE_DOMAIN_AUTHORITIES = NO
-REFINEMENT = WXE-PD-XD-REFINEMENT-R2
+WXE_UPD_02 = A
+WXE_UPD_03 = B
+WXE_UPD_06 = YES
+FOUNDER_GATE_RECORD = WXE-FOUNDER-PD-XD-GATE-RECORD-R3
 ```
 
 ## Proposed top-level presentation groups
@@ -25,33 +28,39 @@ Assortment, Availability, Pricing, Access, etc.) remain unchanged.
 
 ## Authorization separation
 
-**Founder dependency:** WXE-UPD-02 / UPD-03 — options **A** (include in V1) vs **B** (preserve current for V1). Do not silent-select.
+**Founder-approved V1:** WXE-UPD-02 = **OPTION_A**; WXE-UPD-03 = **OPTION_B**; WXE-UPD-06 = **YES**.
 
-| Rule | Candidate behaviour (UPD-02 **A**) | V1 if UPD-02 **B** |
-|---|---|---|
-| Operations destination visible | Least-privilege may include store coarse caps — **landing must be first authorized Operations nav item**, never Today if Today will 403 | Preserve current `order.read`-gated Ops destination / Today landing |
-| Administration destination visible | Existing org/access keys **union** commercial reads (P1-ENTRY) | Preserve current Admin entry unions |
-| Commercial nav item | Show only when operable (P1-COMM / `outlet_manager` + missing `brand.read`) | Preserve current visibility; document unusable Commercial as known defect deferred |
-| Kitchen/Delivery Admin entry | Subject to UPD-03 **A** narrowing vs `role-destination-safety` | UPD-03 **B**: preserve `outlet.read` entry |
-| `delivery.read` alone | Insufficient for Operations destination if landing needs orders list | Same |
-| Cross-links | Allowed; never create a second authoritative editor | Same |
-| Unimplemented | Never listed (MFA enrolment UI, password reset UI, profile, date-exceptions UI, delivery return/cost UI, etc.) | Same |
+| Rule | V1 binding behaviour |
+|---|---|
+| Operations destination visible | Least-privilege may include store coarse caps — **landing must be first authorized usable Operations nav item**, never Today if Today will 403 (**UPD-02 A**) |
+| Administration destination visible | Existing org/access keys **union** commercial reads (P1-ENTRY) (**UPD-02 A**) |
+| Commercial nav item | Show only when operable (P1-COMM); correct `outlet_manager` handling **without** assuming or granting `brand.read` (**UPD-02 A**) |
+| Kitchen/Delivery Admin entry | **Preserve** existing `outlet.read` entry (**UPD-03 B**); do not narrow/revoke in WXE V1; preserve `role-destination-safety` |
+| Unusable Commercial affordance | May be hidden/adjusted; must **not** silently revoke server permission or remove approved Administration entry |
+| `delivery.read` alone | Insufficient for Operations destination if landing needs orders list |
+| Cross-links | Allowed; never create a second authoritative editor |
+| Unimplemented | Never listed (MFA enrolment UI, password reset UI, profile, date-exceptions UI, delivery return/cost UI, etc.) |
+| Scheduling | First-class Store Management nav item (**UPD-06 YES**); reuse existing scheduling capabilities only |
 
 ```text
-ADMINISTRATION_ENTRY_ANY_OF (candidate under UPD-02 A) =
+ADMINISTRATION_ENTRY_ANY_OF (V1 under UPD-02 A) =
   existing ADMINISTRATION_ENTRY_PERMISSIONS
   UNION (catalog.read | menu.read | assortment.read | pricing.read |
          promotions.read | coupons.read)
 
-OPERATIONS_LANDING (candidate under UPD-02 A) =
+OPERATIONS_LANDING (V1 under UPD-02 A) =
   first authorized among: Today (order.read), Orders (order.read),
   Delivery (delivery.read + order.read practical), Store (store coarse caps),
   Operational Status (order.read)
+
+PERMISSION_BOUNDARY =
+  UPD-02 A does NOT grant new permissions, broaden server RBAC,
+  authorize a new API, or invent a second Commercial authority.
+  Escalate exact API/permission conflicts at Architecture Fit.
 ```
 
-Server authorization remains authoritative for every mutation. Entry/routing changes are **T1 IA
-proposal** ownership — never T0 / PR #427.
-
+Server authorization remains authoritative for every mutation. Entry/routing changes remain
+post-gate Architecture Fit / T1 IA ownership — never T0 / PR #427.
 ## Navigation layers (collapse intent)
 
 | Slice | Content |
@@ -59,7 +68,7 @@ proposal** ownership — never T0 / PR #427.
 | **V1_ACCEPTANCE_SLICE** | Collapse Operations’ triple stack — (1) shell SideNavigation, (2) `OperationsWorkspaceNav` tabs, (3) Store sub-nav — to **one persistent section nav** on desktop; retain Store subsection list under Store Management |
 | **FOLLOW_UP** | Micro-interaction polish after collapse (animation, density tweaks) — not a substitute for V1 chrome |
 
-Scheduling appears as a **first-class** Store Management item in V1 (UPD-06 ratification).
+Scheduling appears as a **first-class** Store Management item in V1 (Founder **UPD-06 = YES**).
 
 ## Feature placement map
 
@@ -79,7 +88,7 @@ Scheduling appears as a **first-class** Store Management item in V1 (UPD-06 rati
 | Brand Assortment editor | Menu & Commercial | Assortment | Admin commercial |
 | Store Status | Store Management | Store Status | Rename from Operating Status |
 | Store Hours | Store Management | Store Hours | |
-| Scheduling (lead times) | Store Management | Scheduling | **V1** promote from buried Hours section (P2-C); UPD-06 |
+| Scheduling (lead times) | Store Management | Scheduling | **V1** promote from buried Hours section (P2-C); Founder **UPD-06 = YES** |
 | Delivery Area | Store Management | Delivery Area | Rename Serviceability |
 | Takeaway settings | Store Management | Takeaway settings | Rename Pickup Profile |
 | Store Team | People & Access | Store Team | Outlet scope |

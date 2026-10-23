@@ -5,10 +5,13 @@
 ```text
 XD_ID = XD-WXE-CANDIDATE-1
 PACKAGE = WXE-CANDIDATE-1
-EXPERIENCE_GATE = NOT_PERFORMED
+EXPERIENCE_GATE = PASS
+EXPERIENCE_GATE_EXECUTION = PERFORMED
 EXPERIENCE_CRITICALITY = X3 (highest boundary; X2 workflows remain inside)
-FOUNDER_EXPERIENCE_DIRECTION = ACCEPTED_IN_CONVERSATION
-REFINEMENT = WXE-PD-XD-REFINEMENT-R2
+FOUNDER_EXPERIENCE_DIRECTION = ACCEPTED
+REVIEWED_CONTRACT_HEAD = 560048ffc4d7e1fea410ebfcb9bc1d554cbeaf89
+FOUNDER_GATE_RECORD = WXE-FOUNDER-PD-XD-GATE-RECORD-R3
+IMPLEMENTATION_AUTHORIZED = NO
 ```
 
 ## 1. Experience Intent
@@ -35,14 +38,14 @@ misleading “publish” destinations.
 - Commercial authoring is a single route with section tabs (not deep-linked) — deep-link = FOLLOW_UP
 - Order lifecycle primary actions sit below secondary panels; buttons are status-gated only (**P1-A**)
 - Delivery panel ships UAT prefills; workspace may include Takeaway orders (**P0-A** / PR #427 corrective published, not merged)
-- Entry lists omit commercial keys (**LATENT** for built-ins; **P1-ENTRY**); `outlet_manager` Commercial likely unusable (**P1-COMM**)
+- Entry lists omit commercial keys (**P1-ENTRY** — V1 under UPD-02 A); `outlet_manager` Commercial likely unusable (**P1-COMM** — V1 under UPD-02 A)
 - Dual H1 / nested main on Orders (**P1-B**); Admin dual titles (**P2-B-ADMIN**)
-- Scheduling profile buried under Hours (**P2-C**) — V1 promote; UPD-06 ratification
+- Scheduling profile buried under Hours (**P2-C**) — V1 first-class nav; Founder **UPD-06 = YES**
 
 ## 4. Desired journey shape
 
 1. Sign in → Applications hub (or auto-route if single app)
-2. Enter Operations or Administration based on effective permissions + scope (**UPD-02/03**)
+2. Enter Operations or Administration based on effective permissions + scope (**UPD-02 A** / **UPD-03 B**)
 3. Persistent desktop nav + Brand/Outlet context where relevant (**V1 chrome = nav-layer collapse**)
 4. Section → subsection → page with one H1 and clear primary action
 5. List → detail (or workspace section) with filters/search
@@ -77,12 +80,12 @@ misleading “publish” destinations.
 | Permission-blind lifecycle buttons | P1 | Accidental | Gate before promoting placement |
 | Lifecycle actions below fold | P1 | Accidental | Mode-sensitive placement |
 | Dual H1 / nested main on Orders | P1 | Accidental | A11y fix |
-| Outlet manager unusable Commercial | P1 | Accidental | Hide or outlet-scope (UPD-02) |
-| Latent commercial-only entry list | P1/P2 | Accidental | UPD-02 A/B |
+| Outlet manager unusable Commercial | P1 | Accidental | Hide or outlet-scope without inventing `brand.read` (**UPD-02 A** V1) |
+| Latent commercial-only entry list | P1/P2 | Accidental | Admin entry union (**UPD-02 A** V1) |
 | Menu section/entry retire without review | P1 | Protective gap | Consequence review (V1) |
-| Kitchen/Delivery Admin via `outlet.read` | P1 | Product decision | UPD-03 A/B |
+| Kitchen/Delivery Admin via `outlet.read` | P1 | Product decision | **UPD-03 B** — preserve for V1; narrowing FOLLOW_UP |
 | Review tab label / Admin titles | P2 | Accidental | Polish |
-| Scheduling buried | P2 | Accidental | V1 first-class nav (UPD-06) |
+| Scheduling buried | P2 | Accidental | V1 first-class nav (**UPD-06 YES**) |
 | Step-up MFA | — | Protective | Retain |
 
 Evidence class for this package: `FOUNDER_HEURISTIC_REVIEW` + source-backed `INTERNAL_USABILITY_REVIEW`. No customer research claimed.
@@ -118,7 +121,7 @@ Readiness may refine copy; they must not contradict these contracts.
 |---|---|
 | Empty / first-use | Orders/Delivery/Memberships/Commercial lists explain next authorized action; never show fabricated sample evidence |
 | Loading | Polite busy state; no layout jump that hides primary lifecycle actions at 1366×768 |
-| No access / missing scope | AccessDenied or hidden affordance; recovery to Applications. **P1-COMM** (“no empty/broken Commercial”) is a V1 requirement **only under UPD-02 A**; under **B**, current unusable Commercial for some principals remains a documented deferred defect |
+| No access / missing scope | AccessDenied or hidden affordance; recovery to Applications. **P1-COMM** (“no empty/broken Commercial”) is a **V1 requirement** under Founder **UPD-02 A**; hiding unusable Commercial must not revoke UPD-03 B Administration entry |
 | Deep-link failures | Unknown `orderId` / `membershipId` / outlet → not-found + recovery; commercial section deep-links remain FOLLOW_UP |
 | Stale Order/Delivery/Checkout-adjacent state | On identity or revision change, reset confirms/dialogs; drop stale async; reload server truth (GJ-W2/W11/W14) |
 | Network interruption + retry | Recoverable message; retry safe; no double-submit without revision check |
@@ -163,15 +166,38 @@ Collapsed nav: keyboard focus order must remain logical; do not trap focus in of
 | Nav-layer collapse is V1 chrome (not polish) | Low if ratified | UPD/IA gate sitting |
 | UOE UX-A verbs are sufficient for Takeaway hand-over | Medium | Consume approved UX-A; no WXE fork |
 | Deferring commercial deep-links does not block V1 tasks | Low | UPD-07 FOLLOW_UP |
-| UPD-02/03 choice B keeps Gate meaningful if V1 ACs freeze current entry | Medium | Founder A/B; pre-Gate blocker if promises need A |
+| UPD-02 A + UPD-03 B compatibility (operable Commercial without revoking Kitchen/Delivery Admin entry) | Medium | Architecture Fit escalation if conflict; do not invent permissions |
 
-## 13. Experience Gate block (pre-gate)
+## 13. Experience Gate block (Founder-executed)
 
 ```text
-Experience Gate: NOT_PERFORMED
-Experience Definition: XD-WXE-CANDIDATE-1
-Unresolved experience decisions: WXE-UPD-02, WXE-UPD-03, WXE-UPD-06 (ratify Scheduling)
-Shared product decisions affecting experience: WXE-UPD-01, WXE-UPD-07, WXE-UPD-08
-Resolved direction (not Experience Gate design open): WXE-UPD-05 prior P0 auth (merge still open); WXE-UPD-09 UOE owns labels
-Result: NOT_PERFORMED
+EXPERIENCE_GATE
+Experience Intent defined: YES (§1)
+User goal understood: YES (§2)
+Entry / discoverability defined: YES (§4 + nav doc; UPD-02 A / UPD-03 B)
+End-to-end journey defined: YES (doc 08 GJ-W1–W15)
+Information architecture defined: YES (§6 + nav doc; seven presentation groups)
+Information hierarchy defined: YES (breadcrumbs / single H1 / V1 chrome)
+Primary interaction defined: YES (§7 friction + desktop standard)
+Mental model / cognitive load considered: YES (§7 + assumption register)
+Friction reviewed: YES (§7)
+Trust-sensitive moments considered: YES (delivery proof, refunds, access revoke, publish/effect)
+Content strategy defined: YES (§9; UPD-09 UOE owns shared labels; WXE consumes)
+Error / recovery defined: YES (§10 + X3 journey contracts)
+Mobile / responsive defined: YES (§11 desktop-first + minimum narrow-screen task set)
+Accessibility considered: YES (§11 + WCAG 2.2 AA where applicable)
+Service / operational promise aligned where applicable: YES (§8)
+Performance experience considered: YES (§11 + QAP)
+Measurement intent defined: YES (measurement candidate; plan not finalized)
+Research / evidence level disclosed: YES (FOUNDER_HEURISTIC_REVIEW + INTERNAL_USABILITY_REVIEW)
+Unresolved experience decisions: NONE (within approved Product/Experience Gate scope)
+Deferred beyond Experience Gate (not erased): UPD-01 IMP identity; UPD-07 Commercial deep-linking; UPD-08 server Gaps 1–3; UPD-05 merge/deploy; Architecture Fit / Design / Quality / Measurement / Implementation Authorization
+EXPERIENCE_GATE_EXECUTION: PERFORMED
+Result: PASS
+Founder Authority: Explicit "proceed" on 2026-10-24 Asia/Kolkata
+Reviewed Contract HEAD: 560048ffc4d7e1fea410ebfcb9bc1d554cbeaf89
+Experience Criticality: X3
+Implementation Authorized: NO
 ```
+
+PASS approves specification completeness only. It does not grant Architecture Fit, Design Readiness, Quality/Measurement finalization, Implementation Authorization, merge, or deploy.

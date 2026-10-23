@@ -1,7 +1,7 @@
 <!--
   AUTHORITY: NON_AUTHORITATIVE_DISCOVERY_DRAFT
   PACKAGE: WXE-CANDIDATE-1
-  STATUS: PD-2_CANDIDATE_FOR_FOUNDER_REVIEW
+  STATUS: FOUNDER_PD_XD_GATES_PASS_RECORDED
   APPLICATION_CODE_MUTATION: NO
   CANONICAL_LIFECYCLE_MUTATION: NO
   IMPLEMENTATION_AUTHORIZED: NO
@@ -19,15 +19,19 @@ NOT_IMP_036J = YES
 NOT_IMP_036K = YES
 AUTHORITY = NON_AUTHORITATIVE_DISCOVERY_DRAFT
 BASE_MAIN_SHA = 4cc24d1a4ea4f4dace4d71d48a40a961a64086d8
+REVIEWED_CONTRACT_HEAD = 560048ffc4d7e1fea410ebfcb9bc1d554cbeaf89
 EXPERIENCE_CRITICALITY = X3 (capability rated at highest boundary; X2 workflows remain inside)
 CHANGE_RISK = CR2 (capability rated at highest boundary: refund / access-mutation / commercial publish-effect / delivery-proof)
-FOUNDER_EXPERIENCE_DIRECTION = ACCEPTED_IN_CONVERSATION (desktop-first Workforce & Administration)
-PRODUCT_DEFINITION_GATE = NOT_PERFORMED
-EXPERIENCE_GATE = NOT_PERFORMED
-ARCHITECTURE_FIT = CANDIDATE_ONLY
-DESIGN_READINESS = CANDIDATE_ONLY
-QUALITY_TEST_PLAN = REVIEWABLE_DRAFT
-MEASUREMENT_PLAN = REVIEWABLE_DRAFT
+FOUNDER_EXPERIENCE_DIRECTION = ACCEPTED (desktop-first Workforce & Administration)
+PRODUCT_DEFINITION_GATE = PASS
+EXPERIENCE_GATE = PASS
+WXE_UPD_02 = A
+WXE_UPD_03 = B
+WXE_UPD_06 = YES
+ARCHITECTURE_FIT = CANDIDATE_ONLY (NOT_GRANTED)
+DESIGN_READINESS = CANDIDATE_ONLY (NOT_GRANTED)
+QUALITY_TEST_PLAN = REVIEWABLE_DRAFT (NOT_FINALIZED)
+MEASUREMENT_PLAN = REVIEWABLE_DRAFT (NOT_FINALIZED)
 IMPLEMENTATION_AUTHORIZED = NO
 PRE_GTM_EXPERIENCE_AUDIT = NOT_PERFORMED
 ```
@@ -39,17 +43,23 @@ Founder-approved **desktop-first** design direction into one coherent PD-2 candi
 Founder milestone review. It covers **all implemented** Workforce Hub, Operations, Store, and
 Administration surfaces discovered on `BASE_MAIN_SHA`.
 
-Formal PD-2 gates remain `NOT_PERFORMED` until legitimately evaluated. This package does **not**:
+Founder Product Definition Gate **PASS** and Experience Gate **PASS** are recorded
+(2026-10-24 Asia/Kolkata; reviewed contract HEAD `560048ffc…`) as **two separate** Founder
+decisions. See [`15-gate-disposition-founder-decision-record.md`](./15-gate-disposition-founder-decision-record.md).
+Those PASSes approve **specification completeness** only.
+
+This package still does **not**:
 
 - allocate or activate a future IMP
 - mutate ROADMAP, STATE, the decision register, D-377, or accepted Product Definitions
 - authorize implementation, merge, deploy, staging, runtime, DB, or payment operations
-- claim formal Product / Experience / Fit / Design / Quality / Measurement gate PASS
+- grant Architecture Fit, Design Readiness, Quality/Measurement finalization, or Implementation Authorization
+- invent new permissions, APIs, or a second Commercial / scheduling authority
 - implement the redesign in application source
 - overwrite the separate customer Unified Order Experience package (PR #424)
 
-`RECOMMENDED_PASS` / `RECOMMENDED_READY_FOR_EVALUATION` means agent-recommended readiness for
-Founder evaluation. It is **not** canonical PASS.
+Historical agent `RECOMMENDED_PASS` is preserved as independent-review evidence. Formal Gate PASS
+is Founder-only and is now recorded for Product and Experience Gates only.
 
 ## Links
 

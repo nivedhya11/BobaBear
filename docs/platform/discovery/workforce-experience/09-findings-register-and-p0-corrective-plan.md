@@ -19,10 +19,10 @@ Consequence marked **PROVEN** (code path) or **POSSIBLE** / **LATENT**.
 |---|---|
 | P0-A / `WXE-P0-CORRECTIVE-1` | **SEPARATE_CORRECTIVE** (PR #427) |
 | Server Gaps 1–3 | **SEPARATE_CORRECTIVE** (not closed by UI) |
-| P1-ENTRY / P1-COMM | **V1 or FOLLOW_UP** per Founder UPD-02 A/B |
-| Kitchen/Delivery Admin entry | **V1 or FOLLOW_UP** per Founder UPD-03 A/B |
+| P1-ENTRY / P1-COMM | **V1_ACCEPTANCE_SLICE** (Founder UPD-02 = A) |
+| Kitchen/Delivery Admin entry | **V1 preserve current** (Founder UPD-03 = B); narrowing FOLLOW_UP |
 | P1-A / P1-B / P1-C | **V1_ACCEPTANCE_SLICE** |
-| P2-C Scheduling nav | **V1_ACCEPTANCE_SLICE** (UPD-06 ratify) |
+| P2-C Scheduling nav | **V1_ACCEPTANCE_SLICE** (Founder UPD-06 = YES) |
 | P2-G store immediate-effect confirms | **FOLLOW_UP** |
 | P2-E commercial deep-link semantics | **FOLLOW_UP** (UPD-07) |
 | POS / new READY / unimplemented return-cost UI | **OUT_OF_SCOPE** |

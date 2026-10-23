@@ -6,11 +6,13 @@
 PD_ID = PD-WXE-CANDIDATE-1
 PACKAGE = WXE-CANDIDATE-1
 FORMAL_IMP_IDENTITY = NOT_ALLOCATED
-PRODUCT_DEFINITION_GATE = NOT_PERFORMED
+PRODUCT_DEFINITION_GATE = PASS
+PRODUCT_DEFINITION_GATE_EXECUTION = PERFORMED
 EXPERIENCE_CRITICALITY = X3 (capability rated at highest boundary; X2 workflows remain inside)
 CHANGE_RISK = CR2 (capability rated at highest boundary: refund / access-mutation / commercial publish-effect / delivery-proof)
 IMPLEMENTATION_AUTHORIZED = NO
-REFINEMENT = WXE-PD-XD-REFINEMENT-R2
+REVIEWED_CONTRACT_HEAD = 560048ffc4d7e1fea410ebfcb9bc1d554cbeaf89
+FOUNDER_GATE_RECORD = WXE-FOUNDER-PD-XD-GATE-RECORD-R3
 ```
 
 ## 1. Capability statement
@@ -82,32 +84,32 @@ V1_ACCEPTANCE_SLICE | FOLLOW_UP | DEFERRED | SEPARATE_CORRECTIVE | OUT_OF_SCOPE
 | Admin breadcrumbs + single H1 (incl. Orders dual-H1 / nested main = P1-B) | **V1_ACCEPTANCE_SLICE** | |
 | Order detail safety — capability-gated lifecycle + mode-sensitive placement (P1-A) | **V1_ACCEPTANCE_SLICE** | |
 | Delivery/Takeaway + Now/Schedule presentation labels | **V1_ACCEPTANCE_SLICE** | Consumes UOE UX-A shared map when that contract is approved; sequencing dependency on UOE PR #424 |
-| Scheduling first-class nav discoverability (P2-C) | **V1_ACCEPTANCE_SLICE** | Candidate recommendation Yes; **Founder ratification WXE-UPD-06** |
-| Commercial section deep-linking | **FOLLOW_UP** | WXE-UPD-07 — deferred unless Founder expands V1 |
+| Scheduling first-class nav discoverability (P2-C) | **V1_ACCEPTANCE_SLICE** | Founder **WXE-UPD-06 = YES** |
+| Commercial section deep-linking | **FOLLOW_UP** | WXE-UPD-07 |
 | Store settings immediate customer-effect confirmations (P2-G) | **FOLLOW_UP** | Protective friction classification after V1 chrome |
 | Measurement instrumentation pipeline | **FOLLOW_UP** | |
-| P1-ENTRY — Administration entry union + Operations landing | **V1_ACCEPTANCE_SLICE *or* FOLLOW_UP** | **Depends on Founder WXE-UPD-02 choice A vs B** (see §13). Do not silently pick B. |
-| P1-COMM — outlet_manager Commercial operability | **V1_ACCEPTANCE_SLICE *or* FOLLOW_UP** | Tied to UPD-02 commercial operability rule; same A/B dependency |
-| Kitchen/Delivery Administration entry via `outlet.read` (UPD-03) | **V1_ACCEPTANCE_SLICE *or* FOLLOW_UP** | **Depends on Founder WXE-UPD-03 choice A vs B**. Current behaviour remains until Founder decides. |
+| P1-ENTRY — Administration entry union + Operations landing | **V1_ACCEPTANCE_SLICE** | Founder **WXE-UPD-02 = OPTION_A** |
+| P1-COMM — outlet_manager Commercial operability | **V1_ACCEPTANCE_SLICE** | Founder **WXE-UPD-02 = OPTION_A**; no silent `brand.read` grant |
+| Kitchen/Delivery Administration entry via `outlet.read` (UPD-03) | **V1_ACCEPTANCE_SLICE** (preserve current) | Founder **WXE-UPD-03 = OPTION_B** — do not narrow/revoke; further restriction = FOLLOW_UP |
 | P1-C — menu section/entry activate/retire consequence review | **V1_ACCEPTANCE_SLICE** | X3 commercial safety; implementation proposed in T3 planning only |
-| P0-A / `WXE-P0-CORRECTIVE-1` delivery evidence UI hygiene | **SEPARATE_CORRECTIVE** | Founder-authorized; published on PR #427; **not merged, not deployed, not formally accepted** as of verified checkpoint. **Do not say “already shipped.”** |
-| Server Gaps 1–3 (proof policy, cancel auto-attestation, URL/body identity) | **SEPARATE_CORRECTIVE** | Documented; UI does not close; WXE-UPD-08 |
+| P0-A / `WXE-P0-CORRECTIVE-1` delivery evidence UI hygiene | **SEPARATE_CORRECTIVE** | Founder-authorized; published on PR #427; **not merged, not deployed, not formally accepted**. **Do not say “already shipped.”** |
+| Server Gaps 1–3 (proof policy, cancel auto-attestation, URL/body identity) | **SEPARATE_CORRECTIVE** | Documented; UI does not close; WXE-UPD-08; **no risk acceptance granted** |
 | Proprietary POS / KOT / counter billing / new READY kitchen state | **OUT_OF_SCOPE** / **DEFERRED** | WXE-UPD-04; future governed slice |
 | Customer UOE surfaces | **OUT_OF_SCOPE** | Owned by UOE package |
 
-**V1 entry/routing rule until Founder decides UPD-02/03:** do **not** treat current behaviour as an approved deferral (that would be silent **B**). AS-01/02, GJ-W8, P1-ENTRY/P1-COMM, and kitchen/delivery Admin entry remain **Founder-choice dependent**. Until A or B is chosen, those items are pre-Gate blockers for any V1 promise that depends on them; other V1 chrome/safety items may proceed for Gate sitting preparation.
+**V1 entry/routing (Founder-approved):** UPD-02 **A** + UPD-03 **B**. AS-01/02, GJ-W8, P1-ENTRY, and P1-COMM are V1 promises for operable destinations/Commercial. Kitchen/Delivery keep existing Administration entry via `outlet.read`. Hiding an unusable Commercial affordance must not revoke that Administration entry or invent permissions. Architecture Fit must escalate API/RBAC conflicts — do not silently grant `brand.read`.
 
 ### Acceptance scenarios → slice map
 
 | Scenario | Slice |
 |---|---|
-| WXE-AS-01, WXE-AS-02 | Founder-choice dependent (UPD-02); if B → FOLLOW_UP with current-entry V1 baseline |
+| WXE-AS-01, WXE-AS-02 | **V1_ACCEPTANCE_SLICE** (UPD-02 A); capability-fixture tests required |
 | WXE-AS-03, WXE-AS-05…07, WXE-AS-10, WXE-AS-11, WXE-AS-13…15, WXE-AS-23, WXE-AS-24 | V1_ACCEPTANCE_SLICE |
 | WXE-AS-04 | SEPARATE_CORRECTIVE (P0-A / PR #427) + V1 non-claims once merged; V1 must not claim provider-verified proof |
 | WXE-AS-08, WXE-AS-09 | V1_ACCEPTANCE_SLICE (P1-C / Review) |
 | WXE-AS-12 | V1_ACCEPTANCE_SLICE (diagnostic framing) |
 | WXE-AS-16…22 (X3 journey ASs) | V1 where grounded in accepted domain; AS-18 depends on PR #427 merge for terminal-confirm hygiene |
-| Commercial deep-link ASs | FOLLOW_UP |
+| Commercial deep-link ASs | FOLLOW_UP (UPD-07) |
 
 ## 6. In scope / out of scope
 
@@ -122,11 +124,12 @@ Navigation from effective permissions **and** resource scope. Server authorizati
 | Variant | Expected |
 |---|---|
 | Multi-app principal | Hub chooser |
-| Ops-only | **UPD-02 A:** Operations landing = first authorized ops nav item. **UPD-02 B:** preserve current `order.read`-gated Ops destination / Today landing |
-| Admin/commercial | **UPD-02 A:** Administration reachable with commercial-read union + operable Commercial. **UPD-02 B:** preserve current entry unions; P1-COMM deferred |
+| Ops-only | **UPD-02 A (approved):** Operations landing = first authorized usable Operations nav item (never Today if Today will 403) |
+| Admin/commercial | **UPD-02 A (approved):** Administration reachable with commercial-read union + operable Commercial; capability-fixture tests required |
 | Unauthorized deep link | AccessDenied → Applications |
 | Multi-outlet | Outlet switch preserves context |
-| Kitchen/Delivery Admin entry | Current: via `outlet.read`; change only under UPD-03 |
+| Kitchen/Delivery Admin entry | **UPD-03 B (approved):** preserve existing `outlet.read` entry; do not narrow/revoke in WXE V1 |
+| `outlet_manager` Commercial | **UPD-02 A:** never knowingly lead into unusable Commercial; no false assumption of `brand.read` |
 
 ## 8. Observable behaviour + paths
 
@@ -184,58 +187,72 @@ external-provider evidence**.
 | PR #427 `WXE-P0-CORRECTIVE-1` | Separate UI corrective; authorized/published; merge/deploy unapproved |
 | Enterprise DS; ADR-003/010/006/018; LANG-1/EXP-1/PD-2/TEST-1 | Binding process/architecture |
 
-## 13. Unresolved product decisions (WXE-UPD-01…09)
+## 13. Product decisions (WXE-UPD-01…09) — Founder dispositions
 
 Canonical dispositions live in
 [`15-gate-disposition-founder-decision-record.md`](./15-gate-disposition-founder-decision-record.md).
-Summary:
 
-| ID | Topic | Disposition for Gate sitting |
+### Resolved for Product Definition Gate scope
+
+| ID | Topic | Binding disposition |
 |---|---|---|
-| UPD-01 | IMP identity / sequencing | **DEFERRED** before implementation authorization |
-| UPD-02 | Admin entry + Ops landing | **Founder choice A/B required** — alternatives in §15; do not self-grant |
-| UPD-03 | Kitchen/Delivery Admin entry | **Founder choice A/B required** — alternatives in §15; do not self-grant |
-| UPD-04 | Future proprietary POS | **OUT_OF_SCOPE** for V1; separately governed |
-| UPD-05 | P0-A authorize | **Prior authorization recorded** for PR #427 impl/publication; merge/deploy remain unapproved |
-| UPD-06 | Scheduling first-class nav | Recommend Yes; **Founder ratification** if not formally approved |
-| UPD-07 | Commercial deep-linking | **FOLLOW_UP** unless Founder changes scope |
-| UPD-08 | Server Gaps 1–3 | **SEPARATE_CORRECTIVE**; unauthorized here |
-| UPD-09 | UOE shared labels | **Resolved direction**: UOE owns; WXE consumes (PR #424 still candidate) |
+| UPD-02 | Admin entry + Ops landing + P1-COMM | **OPTION_A** — V1; capability-fixture + landing tests; no new RBAC / no silent `brand.read` |
+| UPD-03 | Kitchen/Delivery Admin entry | **OPTION_B** — preserve `outlet.read` entry for V1; narrowing FOLLOW_UP |
+| UPD-06 | Scheduling first-class nav | **YES** — V1 under Store Management; reuse existing scheduling only |
+| UPD-09 | UOE shared labels | **UOE_UX_A_OWNS_SHARED_LABELS**; WXE consumes |
 
-### UPD-02 alternatives (do not silent-select)
+### Intentionally deferred beyond Product Definition Gate (not erased)
 
-| Option | Meaning | V1 impact |
+| ID | Topic | Binding disposition |
 |---|---|---|
-| **A** | Include permission-correct Admin entry union + Ops landing + P1-COMM operability in WXE V1 | Requires capability-fixture + landing tests; AS-01/02 become V1 promises |
-| **B** | Preserve current entry/routing for V1; defer change | V1 ACs assert current entry behaviour; P1-ENTRY/P1-COMM → FOLLOW_UP; still document latent defects |
+| UPD-01 | IMP identity / sequencing | **DEFERRED** |
+| UPD-04 | Future proprietary POS / KOT / new kitchen states | **OUT_OF_V1** |
+| UPD-05 | P0-A PR #427 | Prior impl/publication auth recorded; **merge/deploy NOT_AUTHORIZED** |
+| UPD-07 | Commercial deep-linking | **FOLLOW_UP** |
+| UPD-08 | Server Gaps 1–3 | **SEPARATE_CORRECTIVE**; **SERVER_SECURITY_RISK_ACCEPTANCE = NOT_GRANTED** |
 
-### UPD-03 alternatives (do not silent-select)
+### UPD-02 / UPD-03 approved options (historical alternatives retained)
 
-| Option | Meaning | V1 impact |
+| Decision | Approved | Meaning |
 |---|---|---|
-| **A** | Narrow kitchen/delivery Administration entry away from bare `outlet.read` (with `role-destination-safety` test update) | Authorization-presentation change in V1; RED-class decision |
-| **B** | Preserve current kitchen/delivery Administration entry for V1 | V1 ACs state current behaviour unchanged; narrowing → FOLLOW_UP |
+| UPD-02 | **A** | Permission-correct Admin entry union + Ops landing + P1-COMM operability in V1 |
+| UPD-02 | ~~B~~ | Not selected — would have deferred P1-ENTRY/P1-COMM |
+| UPD-03 | ~~A~~ | Not selected — would have narrowed kitchen/delivery Admin entry |
+| UPD-03 | **B** | Preserve current kitchen/delivery Administration entry for V1 |
 
-If Founder wants Gate PASS while leaving A/B open, the open choice is a **pre-Gate blocker** for any V1 promise that depends on the unsettled option.
+Permission boundary: UPD-02 A does **not** invent permissions, broaden server RBAC, authorize a new API, or create a second Commercial authority. Escalate conflicts at Architecture Fit.
 
-## 14. Product Definition Gate block (pre-gate)
+## 14. Product Definition Gate block (Founder-executed)
 
 ```text
-Product Definition Gate: NOT_PERFORMED
+PRODUCT_DEFINITION_GATE
 Capability: Workforce Experience (WXE-CANDIDATE-1)
 Product Definition Version: PD-WXE-CANDIDATE-1
-Experience Criticality: X3 (highest boundary)
-Change Risk: CR2 (highest boundary)
+Experience Criticality: X3
+Change Risk: CR2
 Linked Experience Definition: XD-WXE-CANDIDATE-1
-Business Outcome: defined (§2)
-Primary Personas: defined (§4)
-Journeys / Story Map: linked (§5 + doc 08)
-Acceptance Slice: V1 / FOLLOW_UP / DEFERRED / SEPARATE_CORRECTIVE / OUT_OF_SCOPE (§5)
-Happy/Alternate/Empty/Error/Authz/Concurrency/Destructive: journey contracts in doc 08 + XD
-Service/operational impact: defined (§9)
-Security/abuse overlay: defined (§10) incl. Gaps 1–3
-Quality Attribute Profile: defined (§11)
-Unresolved Product Decisions: WXE-UPD-01…09 (UPD-05 prior auth recorded; UPD-09 direction resolved; UPD-02/03 Founder A/B open)
-Architecture Conflicts: presentation NONE; DELIVERY_PROOF / Gaps 1–3 = ESCALATE (see Fit + findings)
-Result: NOT_PERFORMED
+Business Outcome: YES (§2)
+Primary Personas: YES (§4)
+Journeys Defined: YES (§5 + doc 08)
+Story Map Complete: YES (§5)
+Acceptance Slice Defined: YES (§5 V1 / FOLLOW_UP / DEFERRED / SEPARATE_CORRECTIVE / OUT_OF_SCOPE)
+Happy Paths Defined: YES (doc 08 + XD)
+Alternate Paths Defined: YES (doc 08 + XD)
+Empty / First-Use States Defined: YES (XD §10)
+Error / Recovery Paths Defined: YES (doc 08 + XD)
+Authorization Variants Defined: YES (§7; UPD-02 A / UPD-03 B)
+Cross-Scope Scenarios Defined: YES (multi-outlet, hub chooser, AS-13/15)
+Concurrency Considered: YES (§11 + journey contracts)
+Destructive Actions Defined: YES (§8 + X3 journeys)
+Service / operational impact: YES (§9)
+Quality Attribute Profile: YES (§11)
+Unresolved Product Decisions: NONE within approved Product Definition Gate scope; deferred beyond gate: UPD-01, UPD-04, UPD-05 merge/deploy, UPD-07, UPD-08
+Architecture Conflicts: presentation NONE invented; DELIVERY_PROOF / Gaps 1–3 = ESCALATE at Architecture Fit (UPD-08); UPD-02 A permission conflicts must escalate (no silent brand.read)
+PRODUCT_DEFINITION_GATE_EXECUTION: PERFORMED
+Gate Result: PASS
+Founder Authority: Explicit "proceed" on 2026-10-24 Asia/Kolkata
+Reviewed Contract HEAD: 560048ffc4d7e1fea410ebfcb9bc1d554cbeaf89
+Implementation Authorized: NO
 ```
+
+PASS approves specification completeness only. It does not grant Architecture Fit, Design Readiness, Quality/Measurement finalization, Implementation Authorization, merge, or deploy.

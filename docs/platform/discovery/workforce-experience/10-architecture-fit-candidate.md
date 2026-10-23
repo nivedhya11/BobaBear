@@ -70,8 +70,8 @@ aggregates, or duplicate commercial authorities.
 | Server Gap 2 — cancel-path automatic inactivity attestation | UPD-08; separate server corrective |
 | Server Gap 3 — URL `orderId` vs body `deliveryId` binding | Integrity concern; not claimed exploited; UPD-08 |
 | Commercial section URL deep-links | FOLLOW_UP / UPD-07; avoid inventing domain routes |
-| Narrowing Admin entry for kitchen/delivery | Product decision WXE-UPD-03 A/B (not T0) |
-| Administration entry union / Ops landing | Product decision WXE-UPD-02 A/B (T1 proposal) |
+| Narrowing Admin entry for kitchen/delivery | Founder **UPD-03 = B** — preserve for V1; narrowing not in V1 (not T0) |
+| Administration entry union / Ops landing | Founder **UPD-02 = A** — V1 desired behaviour; escalate API/RBAC conflicts; no silent `brand.read` |
 
 ## Architecture Conflicts
 

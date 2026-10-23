@@ -5,7 +5,10 @@
 ```text
 JOURNEY_ID = WXE-JRN-CANDIDATE-1
 AS_PREFIX = WXE-AS
-REFINEMENT = WXE-PD-XD-REFINEMENT-R2
+WXE_UPD_02 = A
+WXE_UPD_03 = B
+WXE_UPD_06 = YES
+FOUNDER_GATE_RECORD = WXE-FOUNDER-PD-XD-GATE-RECORD-R3
 ```
 
 Traceability rule: journey → activity → acceptance scenario. New redundant IDs are avoided when
@@ -24,7 +27,7 @@ payment behaviour.
 | GJ-W5 | Mark variant sold out; confirm assortment is separate | X2 | Store / Commercial | Theme story |
 | GJ-W6 | Publish menu or activate price/promotion with review | X3 | Menu & Commercial | **Expanded** |
 | GJ-W7 | Membership create; role grant/revoke; effective-permission diagnosis | X3 | People & Access | **Expanded** |
-| GJ-W8 | Commercial-only operator reaches Commercial Workspace | X2 | Entry / Menu & Commercial | AS-01; **UPD-02 A only** (unsupported as V1 promise under B) |
+| GJ-W8 | Commercial-only operator reaches Commercial Workspace | X2 | Entry / Menu & Commercial | AS-01; **V1** under Founder **UPD-02 A** |
 | GJ-W9 | Refund captured payment with step-up | X3 | Order detail | **Expanded** |
 | GJ-W10 | Inspect access audit and system health | X1/X2 | Audit & System | Theme story |
 | GJ-W11 | Delivery failure → authorized recovery (no new re-book UI) | X3 | Daily Operations | **Expanded** |
@@ -175,8 +178,8 @@ GJ-W11 covers failure/ambiguity recovery using the same command surface; it does
 
 | ID | Scenario | Pass criteria | Slice |
 |---|---|---|---|
-| WXE-AS-01 | Operator with only commercial reads opens Applications | Sees Administration (or Commercial) entry per UPD-02 **A**; under **B**, document current built-in behaviour | UPD-02 dependent |
-| WXE-AS-02 | Store-capable user without `order.read` (fixture) | If Ops destination shown, lands on first usable Store surface — not Today error (**A**); under **B**, retain current `order.read`-gated Ops destination | UPD-02 dependent |
+| WXE-AS-01 | Operator with only commercial reads opens Applications | Sees Administration (or Commercial) entry per UPD-02 **A**; capability-fixture covers least-privilege commercial-read union; no new RBAC invented | **V1** (UPD-02 A) |
+| WXE-AS-02 | Store-capable user without `order.read` (fixture) | If Ops destination shown, lands on first usable authorized Operations/Store surface — not Today error | **V1** (UPD-02 A) |
 | WXE-AS-03 | Order detail for PLACED with `order.accept` | Accept/Cancel visible when permitted; denied capabilities hide buttons | V1 |
 | WXE-AS-04 | Delivery confirm pickup/delivery/fail/cancel | No UAT prefills; terminal commands confirm; cannot one-click fake proof; **does not claim provider-verified proof** | SEPARATE_CORRECTIVE (P0-A) + V1 non-claims |
 | WXE-AS-05 | Takeaway FULFIL | Uses **UOE UX-A** verb map; Delivery panel hidden on detail; not actionable in Delivery workspace | V1 |
@@ -185,7 +188,7 @@ GJ-W11 covers failure/ambiguity recovery using the same command surface; it does
 | WXE-AS-08 | Menu retire section | Consequence review before effect | V1 (P1-C) |
 | WXE-AS-09 | Open Review section | Clear that publish actions live in domain editors | V1 |
 | WXE-AS-10 | Admin Resources page | Single H1; breadcrumbs present | V1 |
-| WXE-AS-11 | Scheduling | Discoverable as Scheduling, not only buried under Hours | V1 (UPD-06) |
+| WXE-AS-11 | Scheduling | Discoverable as Scheduling, not only buried under Hours | **V1** (UPD-06 YES) |
 | WXE-AS-12 | Effective Permissions | Read-only framing; mutations elsewhere | V1 |
 | WXE-AS-13 | Unauthorized deep link | AccessDenied with recovery to Applications | V1 |
 | WXE-AS-14 | Unsaved hours edit + navigate | Protect or confirm discard | V1 |
@@ -204,14 +207,14 @@ GJ-W11 covers failure/ambiguity recovery using the same command surface; it does
 
 | Dimension | Coverage in candidate |
 |---|---|
-| ENTRY | WXE-AS-01/02/13 + UPD-02/03 A/B |
-| DISCOVERY | Nav placement doc + GJ-W* |
+| ENTRY | WXE-AS-01/02/13; UPD-02 A + UPD-03 B |
+| DISCOVERY | Nav placement doc + GJ-W* (incl. GJ-W8 V1) |
 | CONTEXT | Brand/Outlet rules; WXE-AS-15 |
 | EMPTY/FIRST USE | XD journey UX contracts + desktop standard |
 | HAPPY PATH | GJ-W1–W15 with X3 nine-point contracts for W6/W7/W9/W11–W14 |
 | ALTERNATE VALID PATHS | Delivery vs Takeaway; Now vs Scheduled; cancel↔refund ordering |
 | VALIDATION FAILURE | Forms standard + journey contracts |
-| AUTHORIZATION | P1-ENTRY/COMM; AS-01/02/13; denied rows in X3 contracts |
+| AUTHORIZATION | P1-ENTRY/COMM V1; AS-01/02/13; Kitchen/Delivery Admin preserved (UPD-03 B); denied rows in X3 contracts |
 | NOT FOUND/STALE | Outlet stale alert; Delivery/Order identity reset; AS-18/21 |
 | SERVER/NETWORK ERROR | Journey-specific recovery (not generic “all pages”) |
 | RECOVERY | Refund pending; delivery reload; step-up retry |
