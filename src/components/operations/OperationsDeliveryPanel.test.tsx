@@ -456,4 +456,53 @@ describe("OperationsDeliveryPanel cross-order and identity isolation", () => {
     expect(screen.queryByTestId("delivery-consequence-dialog")).not.toBeInTheDocument();
     expect(postDeliveryCommand).not.toHaveBeenCalled();
   });
+
+  it("clears evidence when active Delivery becomes empty before a replacement loads", async () => {
+    const user = userEvent.setup();
+    getWorkforceDelivery
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          delivery: detail(["CONFIRM_PICKUP"], {
+            deliveryId: DELIVERY_ID,
+            status: "BOOKED",
+          }),
+        },
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: { delivery: null },
+      })
+      .mockResolvedValue({
+        ok: true,
+        status: 200,
+        data: {
+          delivery: detail(["CONFIRM_PICKUP"], {
+            deliveryId: DELIVERY_B,
+            status: "BOOKED",
+            revision: "1",
+          }),
+        },
+      });
+    postDeliveryCommand.mockResolvedValue({ ok: true, status: 200, data: { result: {} } });
+
+    render(<OperationsDeliveryPanel orderId={ORDER_ID} />);
+    await waitFor(() => expect(screen.getByTestId("delivery-handoff-reference")).toBeInTheDocument());
+    await user.type(screen.getByTestId("delivery-handoff-reference"), "handoff-for-d1");
+    await user.click(screen.getByTestId("delivery-confirm-pickup"));
+
+    await waitFor(() => expect(screen.getByText("No active delivery request.")).toBeInTheDocument());
+
+    // Trigger a reload path that surfaces a replacement Delivery under the same Order.
+    await user.click(screen.getByRole("button", { name: "Arrange delivery" }));
+    await waitFor(() =>
+      expect(screen.getByTestId("operations-delivery-panel")).toHaveAttribute(
+        "data-delivery-id",
+        DELIVERY_B,
+      ),
+    );
+    expect(screen.getByTestId("delivery-handoff-reference")).toHaveValue("");
+  });
 });

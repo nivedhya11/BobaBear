@@ -149,6 +149,11 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
   const applyLoadedDetail = useCallback(
     (detail: OperationsDeliveryDetail | null) => {
       if (!detail) {
+        // Active → empty (e.g. terminalized): clear evidence before forgetting identity so a
+        // later replacement Delivery cannot inherit prior fields (null previous would skip reset).
+        if (activeDeliveryIdRef.current !== null) {
+          resetOperatorLocalState();
+        }
         activeDeliveryIdRef.current = null;
         setState({ kind: "empty" });
         return;
