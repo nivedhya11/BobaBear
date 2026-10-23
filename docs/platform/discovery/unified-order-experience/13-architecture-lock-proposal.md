@@ -473,9 +473,9 @@ CONTRACT_LOCK_READINESS = READY_FOR_FOUNDER_ARCHITECTURE_LOCK_DECISION
 
 | Review | Agent id | Reviewed commit | Verdict | Findings → resolution |
 |---|---|---|---|---|
-| Architecture | [`e11b73be-218b-4746-b261-2264c5d8b7fd`](e11b73be-218b-4746-b261-2264c5d8b7fd) | `40fd29a6f673484bf43ec8128e9b5411ba0cc017` | APPROVE_WITH_DOC_FIXES | MEDIUM: disclose composed PICKUP outlet gate when timing omitted + mirror in `06-…` — **resolved in follow-up**. LOW: client delivery change key echo-only / not coordinate-hash provenance — **resolved** |
-| Security | [`63db0312-197e-493a-b093-5f767e723206`](63db0312-197e-493a-b093-5f767e723206) | `40fd29a6f673484bf43ec8128e9b5411ba0cc017` | APPROVE | NONE |
-| Financial Integrity | [`b5b7649c-9a16-4911-9865-e3dc0cccbdb8`](b5b7649c-9a16-4911-9865-e3dc0cccbdb8) | `40fd29a6f673484bf43ec8128e9b5411ba0cc017` | APPROVE | LOW notes only (DB enum vs app invariant; 400 = value rejection; HMAC-off reuse limitation already disclosed) — **wording tightened in follow-up** |
+| Architecture | [`e11b73be-218b-4746-b261-2264c5d8b7fd`](e11b73be-218b-4746-b261-2264c5d8b7fd) | `40fd29a6f…` then reconfirm `7ce69ae99e6f96a4304c1ad66f1b4c6037a0dac9` | APPROVE_WITH_DOC_FIXES → **APPROVE** (reconfirm) | MEDIUM composed PICKUP outlet gate + LOW discard-key constraints **resolved**; reconfirm: no new material findings |
+| Security | [`63db0312-197e-493a-b093-5f767e723206`](63db0312-197e-493a-b093-5f767e723206) | `40fd29a6f673484bf43ec8128e9b5411ba0cc017` (follow-up `7ce69ae99…` disclosure-only) | APPROVE | NONE |
+| Financial Integrity | [`b5b7649c-9a16-4911-9865-e3dc0cccbdb8`](b5b7649c-9a16-4911-9865-e3dc0cccbdb8) | `40fd29a6f673484bf43ec8128e9b5411ba0cc017` (follow-up `7ce69ae99…` disclosure-only) | APPROVE | LOW notes only (DB enum vs app invariant; 400 = value rejection; HMAC-off reuse limitation already disclosed) — **wording tightened in follow-up** |
 
 Reviews are **documentation validation**. They do **not** grant Fit PASS or Architecture Lock.
 
