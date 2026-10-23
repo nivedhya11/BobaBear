@@ -190,6 +190,8 @@ export function OperationsDeliveryPanel(props: Readonly<{ orderId: string }>) {
     loadGenerationRef.current += 1;
     commandGenerationRef.current += 1;
     const generation = loadGenerationRef.current;
+    // Order identity sync: clear operator-local evidence before workforce delivery fetch.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Order identity change resets local delivery evidence before external sync
     resetOperatorLocalState();
     setState({ kind: "loading" });
 
