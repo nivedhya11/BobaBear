@@ -160,7 +160,7 @@ still has no HTTP API, and still has no business-domain table.
   are never named in a `COPY` instruction. Runtime/migration credentials reach a tooling container
   only via Compose `env_file` at `docker compose run` time.
 - **Never use a floating image tag.** `Dockerfile` and `compose.yaml` pin exact versions
-  (`node:22.23.1-bookworm-slim`, `nginx:1.30.4-alpine3.24`, `postgres:18.4-trixie`) — no `latest`, no
+  (`node:22.23.1-bookworm-slim`, `nginx:1.30.6-alpine3.24`, `postgres:18.4-trixie`) — no `latest`, no
   bare `node`/`nginx`/`postgres`. `npm run audit:docker` enforces this statically.
 - **Never expose the Docker socket or run a container privileged.** No service mounts
   `/var/run/docker.sock`, sets `privileged: true`, or uses `network_mode: host`.
