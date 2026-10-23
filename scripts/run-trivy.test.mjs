@@ -3,18 +3,32 @@
  * Unit tests for IMP-038 Trivy production-image scan gate (no live builds).
  */
 import assert from "node:assert/strict";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { test } from "node:test";
+import { fileURLToPath } from "node:url";
 
 import {
   TRIVY_VERSION,
   TRIVY_SHA256,
   PRODUCTION_IMAGE_TARGETS,
+  REGISTER_REL,
   buildArgsForTarget,
   trivyImageArgs,
   resolveContainerCli,
   imageExists,
   ensureImageBuilt,
+  isActiveExpiry,
+  parseTrivyExceptionRegister,
+  parseTrivyIgnoreFile,
+  enforceTrivyExceptionPolicy,
+  materializeIgnorefileForImage,
+  interpretTrivyJson,
+  loadTrivyExceptionPolicy,
 } from "./run-trivy.mjs";
+
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 test("Trivy pin is immutable version + sha256 hex", () => {
   assert.equal(TRIVY_VERSION, "0.69.3");
@@ -73,7 +87,7 @@ test("buildArgsForTarget includes --target when set", () => {
   );
 });
 
-test("trivyImageArgs uses image mode fail-closed CRITICAL,HIGH + ignorefile", () => {
+test("trivyImageArgs enables image-config misconfig + vuln scanners fail-closed", () => {
   const args = trivyImageArgs("boba-bear-app:trivy", "/repo/.trivyignore");
   assert.equal(args[0], "image");
   assert.equal(args[1], "boba-bear-app:trivy");
@@ -81,7 +95,10 @@ test("trivyImageArgs uses image mode fail-closed CRITICAL,HIGH + ignorefile", ()
   assert.ok(args.includes("--exit-code"));
   assert.ok(args.includes("1"));
   assert.ok(args.includes("vuln,misconfig"));
+  assert.ok(args.includes("--image-config-scanners"));
+  assert.ok(args.includes("misconfig"));
   assert.ok(args.includes("--ignore-unfixed"));
+  assert.ok(args.includes("json"));
   assert.ok(args.includes("/repo/.trivyignore"));
   assert.ok(!args.includes("fs"));
 });
@@ -158,4 +175,179 @@ test("imageExists accepts podman image exists success", () => {
     }),
     true,
   );
+});
+
+test("isActiveExpiry is inclusive on the expiry calendar day", () => {
+  assert.equal(isActiveExpiry("2026-10-23", "2026-10-23"), true);
+  assert.equal(isActiveExpiry("2026-10-24", "2026-10-23"), false);
+  assert.equal(isActiveExpiry("2026-10-22", "2026-10-23"), true);
+});
+
+const SAMPLE_REGISTER = `# Vulnerability exception register
+
+## Active exceptions
+
+| id | package/cve | severity | owner | rationale | authority | compensating_controls | retest_date | expiry |
+|---|---|---|---|---|---|---|---|---|
+
+## Container / Trivy exceptions
+
+Prose before the table is ignored.
+
+| id | finding_id | image | severity | owner | rationale | authority | compensating_controls | retest_date | expiry |
+|---|---|---|---|---|---|---|---|---|---|
+| VEX-TRIVY-001 | DS-0002 | postgres | high | platform-security | root bootstrap | IMP-038 §15 | DB not public | 2026-10-15 | 2026-10-23 |
+`;
+
+test("parseTrivyExceptionRegister reads machine table with image scope", () => {
+  const { rows, errors } = parseTrivyExceptionRegister(SAMPLE_REGISTER);
+  assert.deepEqual(errors, []);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].id, "VEX-TRIVY-001");
+  assert.equal(rows[0].finding_id, "DS-0002");
+  assert.equal(rows[0].image, "postgres");
+  assert.equal(rows[0].expiry, "2026-10-23");
+});
+
+test("parseTrivyIgnoreFile requires exp: for dated suppressions", () => {
+  const parsed = parseTrivyIgnoreFile("# comment\nDS-0002 exp:2026-10-23\n");
+  assert.deepEqual(parsed.errors, []);
+  assert.equal(parsed.entries.length, 1);
+  assert.equal(parsed.entries[0].id, "DS-0002");
+  assert.equal(parsed.entries[0].expiry, "2026-10-23");
+});
+
+test("enforceTrivyExceptionPolicy fails closed on expired ignore even if register row exists", () => {
+  const { rows } = parseTrivyExceptionRegister(SAMPLE_REGISTER);
+  const { entries } = parseTrivyIgnoreFile("DS-0002 exp:2026-10-23\n");
+  const expired = enforceTrivyExceptionPolicy({
+    ignoreEntries: entries,
+    registerRows: rows,
+    todayIso: "2026-10-24",
+  });
+  assert.ok(expired.errors.some((e) => e.startsWith("TRIVY_EXCEPTION_EXPIRED")));
+  assert.equal(expired.activeByFinding.size, 0);
+});
+
+test("enforceTrivyExceptionPolicy rejects unauthorized ignore IDs", () => {
+  const { rows } = parseTrivyExceptionRegister(SAMPLE_REGISTER);
+  const bad = enforceTrivyExceptionPolicy({
+    ignoreEntries: [{ id: "DS-9999", expiry: "2026-10-23", raw: "DS-9999 exp:2026-10-23" }],
+    registerRows: rows,
+    todayIso: "2026-10-23",
+  });
+  assert.ok(bad.errors.some((e) => e.startsWith("TRIVY_IGNORE_UNAUTHORIZED")));
+});
+
+test("enforceTrivyExceptionPolicy rejects permanent ignore without exp:", () => {
+  const { rows } = parseTrivyExceptionRegister(SAMPLE_REGISTER);
+  const bad = enforceTrivyExceptionPolicy({
+    ignoreEntries: [{ id: "DS-0002", expiry: null, raw: "DS-0002" }],
+    registerRows: rows,
+    todayIso: "2026-10-23",
+  });
+  assert.ok(bad.errors.some((e) => e.startsWith("TRIVY_IGNORE_MISSING_EXPIRY")));
+});
+
+test("enforceTrivyExceptionPolicy accepts ACTIVE scoped exception on expiry day", () => {
+  const { rows } = parseTrivyExceptionRegister(SAMPLE_REGISTER);
+  const { entries } = parseTrivyIgnoreFile("DS-0002 exp:2026-10-23\n");
+  const ok = enforceTrivyExceptionPolicy({
+    ignoreEntries: entries,
+    registerRows: rows,
+    todayIso: "2026-10-23",
+  });
+  assert.deepEqual(ok.errors, []);
+  assert.equal(ok.activeByFinding.get("DS-0002")?.image, "postgres");
+});
+
+test("materializeIgnorefileForImage scopes DS-0002 to postgres only", () => {
+  const { rows } = parseTrivyExceptionRegister(SAMPLE_REGISTER);
+  const { entries } = parseTrivyIgnoreFile("DS-0002 exp:2026-10-23\n");
+  const { activeByFinding } = enforceTrivyExceptionPolicy({
+    ignoreEntries: entries,
+    registerRows: rows,
+    todayIso: "2026-10-23",
+  });
+  const dir = mkdtempSync(path.join(os.tmpdir(), "boba-trivy-test-"));
+  try {
+    const postgresIgnore = materializeIgnorefileForImage({
+      imageId: "postgres",
+      activeByFinding,
+      ignoreEntries: entries,
+      dir,
+    });
+    const webIgnore = materializeIgnorefileForImage({
+      imageId: "web-runtime",
+      activeByFinding,
+      ignoreEntries: entries,
+      dir,
+    });
+    const postgresText = readFileSync(postgresIgnore, "utf8");
+    assert.match(postgresText, /^DS-0002$/m);
+    assert.match(postgresText, /register_expiry=2026-10-23/);
+    // Must not use Trivy exclusive exp: on the inclusive register expiry day.
+    assert.doesNotMatch(postgresText, /^DS-0002 exp:/m);
+    assert.doesNotMatch(readFileSync(webIgnore, "utf8"), /^DS-0002$/m);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("interpretTrivyJson fails closed on empty or malformed scanner output", () => {
+  assert.ok(interpretTrivyJson("", "img").errors.some((e) => e.includes("TRIVY_EMPTY_OUTPUT")));
+  assert.ok(
+    interpretTrivyJson("not-json", "img").errors.some((e) => e.includes("TRIVY_JSON_UNPARSEABLE")),
+  );
+  assert.ok(
+    interpretTrivyJson("[]", "img").errors.some((e) => e.includes("TRIVY_JSON_UNSUPPORTED_SHAPE")),
+  );
+});
+
+test("interpretTrivyJson extracts DS-0002 misconfig findings", () => {
+  const payload = JSON.stringify({
+    Results: [
+      {
+        Target: "boba-bear-postgres:trivy",
+        Misconfigurations: [
+          { ID: "DS-0002", Severity: "HIGH", Title: "Image user should not be 'root'" },
+        ],
+      },
+    ],
+  });
+  const out = interpretTrivyJson(payload, "boba-bear-postgres:trivy");
+  assert.deepEqual(out.errors, []);
+  assert.equal(out.findings.length, 1);
+  assert.equal(out.findings[0].id, "DS-0002");
+  assert.equal(out.findings[0].type, "misconfig");
+});
+
+test("committed register + .trivyignore are consistent on VEX-TRIVY-001 expiry day", () => {
+  const policy = loadTrivyExceptionPolicy({
+    root: repoRoot,
+    todayIso: "2026-10-23",
+  });
+  assert.deepEqual(policy.errors, []);
+  const row = policy.activeByFinding.get("DS-0002");
+  assert.ok(row);
+  assert.equal(row.id, "VEX-TRIVY-001");
+  assert.equal(row.image, "postgres");
+  assert.equal(row.expiry, "2026-10-23");
+  assert.equal(policy.ignoreEntries[0]?.expiry, "2026-10-23");
+});
+
+test("committed register + .trivyignore fail closed the day after VEX-TRIVY-001 expiry", () => {
+  const policy = loadTrivyExceptionPolicy({
+    root: repoRoot,
+    todayIso: "2026-10-24",
+  });
+  assert.ok(policy.errors.some((e) => e.startsWith("TRIVY_EXCEPTION_EXPIRED")));
+  assert.ok(policy.errors.some((e) => e.includes("VEX-TRIVY-001")));
+});
+
+test("register file documents Container / Trivy exceptions section at expected path", () => {
+  const md = readFileSync(path.join(repoRoot, REGISTER_REL), "utf8");
+  assert.match(md, /^## Container \/ Trivy exceptions\s*$/m);
+  assert.match(md, /VEX-TRIVY-001/);
+  assert.match(md, /finding_id/);
 });
