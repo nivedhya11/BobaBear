@@ -7,12 +7,13 @@ PACKAGE = UOE-CANDIDATE-3
 SUPERSEDES = UOE-CANDIDATE-2
 VARIANT = PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
 GATE_PRECISION_REVISION = YES
-PACKAGE_REVISION = CANDIDATE-3 / GATES-RECORDED-FIT-EVAL-1
+PACKAGE_REVISION = CANDIDATE-3 / ARCHITECTURE-LOCK-PROPOSAL-1
 FOUNDER_EXPERIENCE_DIRECTION = ACCEPTED_IN_CONVERSATION
 FOUNDER_REVIEW_RECOMMENDATIONS = UOE-DR-02 | UOE-DR-04 | UOE-DR-05
 FOUNDER_GATE_DECISION_REFERENCE = https://github.com/nivedhya11/BobaBear/pull/424#issuecomment-6365686428
 FOUNDER_GATE_DECISION_DATE = 2026-10-23
 REVIEWED_PACKAGE_HEAD = dbe0786280fac4ba80ba727c7510b8c23da69ed1
+FIT_EVALUATION_HEAD = ecbfb4f4f7f06a888e0a3c4417bc1c647239974b
 PRODUCT_DEFINITION = PD-UOE-CANDIDATE-3
 PRODUCT_DEFINITION_GATE_EXECUTION = PERFORMED
 PRODUCT_DEFINITION_GATE_RESULT = PASS
@@ -22,6 +23,9 @@ EXPERIENCE_GATE_RESULT = PASS
 ARCHITECTURE_FIT_EVALUATION = PERFORMED
 ARCHITECTURE_FIT_PASS = NOT_GRANTED
 ARCHITECTURE_LOCK = NO
+ARCHITECTURE_LOCK_PROPOSAL = ARCH-UOE-LOCK-PROPOSAL-1
+ARCHITECTURE_LOCK_PROPOSAL_STATUS = DECISION_READY
+PROVENANCE_STORAGE_PROPOSAL = ADDITIVE_NULLABLE_CONTEXT_FIELDS_PLUS_SERVER_CONTEXT_DIGEST
 IMPLEMENTATION_AUTHORIZED = NO
 REFERENCE_CANDIDATE_2_HEAD = 5a4583eba34dff93082c49a1e0edce1efce4d07c
 ```
@@ -83,7 +87,8 @@ REFERENCE_CANDIDATE_2_HEAD = 5a4583eba34dff93082c49a1e0edce1efce4d07c
 | Product Definition Gate | **PERFORMED / PASS** | `PD-UOE-CANDIDATE-3`; Founder comment 6365686428; canonical block in `12-…` §E |
 | Experience Gate | **PERFORMED / PASS** | `XD-UOE-CANDIDATE-3`; Founder comment 6365686428; canonical block in `12-…` §F |
 | Architecture Fit evaluation | **PERFORMED** | Recommendation in `06-…`; **PASS NOT_GRANTED**; lock **NO** |
-| Architecture lock | **NO** | — |
+| Architecture Lock proposal | **DECISION_READY** | `13-…` / `ARCH-UOE-LOCK-PROPOSAL-1`; provenance + contracts + abuse/privacy + WhatsApp assignment |
+| Architecture lock | **NO** | Awaiting Founder; proposal must not be read as Lock |
 | Design Readiness | NOT_PERFORMED | Candidate only |
 | Quality / Test Plan | NOT_PERFORMED | Reviewable draft `QT-UOE-CANDIDATE-3` |
 | Measurement / Instrumentation | NOT_PERFORMED | Reviewable draft `MI-UOE-CANDIDATE-3` (X3 required before impl auth) |
@@ -92,18 +97,19 @@ REFERENCE_CANDIDATE_2_HEAD = 5a4583eba34dff93082c49a1e0edce1efce4d07c
 | Founder Functional + Experience UAT | NOT_PERFORMED | After implementation |
 | Pre-GTM experience audit | NOT_PERFORMED | Experience Debt Register |
 
-### Architecture Fit remaining open items (do not self-grant PASS)
+### Architecture Fit / Lock remaining open items (do not self-grant PASS or Lock)
 
-1. Formal Fit PASS / lock verdict (Founder / independent Fit authority) — evaluation recommendation ready
+1. Formal Fit PASS / Architecture Lock verdict (Founder / independent Fit authority) — recommendation + Lock proposal ready; **NOT_GRANTED**
 2. Evaluate entry must place open-Checkout reuse ahead of Delivery-only `location` early return (GP-02) — contract specified, not implemented
 3. Missing CHECKOUT commercial-evaluation evidence must fail closed (AS-39 / AS-45) — contract specified, not implemented
 4. Checkout composition timing-aware + bind-without-evaluate (GP-01 Contract C / AS-34 / AS-41) — contract specified; defect **ACCEPTED**; remediation **NOT_AUTHORIZED** here
 5. Cart evaluate mode/outlet (+ omit timing while Schedule UNCONFIRMED) (AS-42–44 / AS-31) — contract specified, not implemented
-6. CART provenance storage choice (additive columns / sibling table / `expected_components` JSON) — **OPEN at Fit lock** (AS-32 / AS-46)
+6. CART provenance storage choice — **PROPOSED_FOR_LOCK** in `13-…` §2 (`ADDITIVE_NULLABLE_CONTEXT_FIELDS_PLUS_SERVER_CONTEXT_DIGEST`); Lock **NOT_GRANTED** (AS-32 / AS-46)
 7. Pre-checkout eligibility distinct empty/no-cart states (GP-03) — contract specified, not implemented
 8. Timing-step Now disable uses pickup-options `nowEligible` — contract specified, not implemented
-9. WhatsApp DR-04 Meta template body-vs-variable — **OPEN** for Fit/Content QA; WhatsApp remains optional/noop-safe
-10. UOE-DR-01 future IMP identity / sequencing — **DEFERRED** (blocks implementation authorization, not Fit contract recommendation)
+9. WhatsApp DR-04 Meta template body-vs-variable — **ASSIGNED** Content QA + Design Readiness (`13-…` §5); no invented Meta templates; WhatsApp remains optional/noop-safe
+10. Abuse limits / performance budgets / privacy / negative security tests — **PROPOSED** in `13-…` §4; Lock / Quality finalization pending
+11. UOE-DR-01 future IMP identity / sequencing — **DEFERRED** (blocks implementation authorization, not Fit contract recommendation)
 
 ## C. Founder decisions — recorded dispositions
 
@@ -120,7 +126,8 @@ REFERENCE_CANDIDATE_2_HEAD = 5a4583eba34dff93082c49a1e0edce1efce4d07c
 
 - Product Definition + Experience Gate verdicts only — specification, not implemented behaviour
 - Do not retroactively rewrite accepted IMPs or alter canonical ROADMAP / STATE / decision-register through this PR
-- Exact microcopy, WhatsApp Meta body-vs-variable, provenance-storage choice, performance budgets, instrumentation schema → Architecture Fit / Design Readiness / Content QA / Quality and Measurement
+- Exact microcopy and instrumentation schema → Design Readiness / Content QA / Quality and Measurement
+- Provenance-storage, contract bounds, abuse/perf/privacy, WhatsApp Meta **assignment** → proposed in `13-…` for Founder Architecture Lock (not locked until Founder grants)
 - None of those may change approved user promise, eligibility, pricing truth, or payment safeguards without returning to Product / Experience Gate
 - `ARCHITECTURE_FIT_PASS=NOT_GRANTED`, `ARCHITECTURE_LOCK=NO`, `DESIGN_READINESS_PASS=NO`, `IMPLEMENTATION_AUTHORIZATION=NO`
 - `PR_MERGE=NO`, `DEPLOYMENT=NO`, `PAYMENT/SNAPSHOT_MUTATION=NO`, `NEW_IMP_ACTIVATION=NO`
@@ -137,8 +144,12 @@ REFERENCE_CANDIDATE_2_HEAD = 5a4583eba34dff93082c49a1e0edce1efce4d07c
 | Independent reviews (Checkout precision) | Product [`906437b5-80d5-4fbc-8b19-2075ca545a2a`](906437b5-80d5-4fbc-8b19-2075ca545a2a); Experience [`16f640ff-1498-4101-a996-73f135640a38`](16f640ff-1498-4101-a996-73f135640a38); Architecture [`fa8feb20-4d28-4cda-8702-3b5a22f61ffd`](fa8feb20-4d28-4cda-8702-3b5a22f61ffd) — findings resolved in-docs; **≠ formal gate PASS** |
 | Independent reviews (Final contract completeness) | Product [`449f5a96-d5ea-40eb-9814-524f776bcd8e`](449f5a96-d5ea-40eb-9814-524f776bcd8e); Experience [`bea12444-84db-4c54-8ffc-f8e478ae159b`](bea12444-84db-4c54-8ffc-f8e478ae159b); Architecture [`3312e452-89de-4553-b50c-d2aaaf352eb9`](3312e452-89de-4553-b50c-d2aaaf352eb9) — MEDIUM findings resolved in follow-up commit; **≠ formal gate PASS** |
 | Founder Product + Experience Gate | PASS / PASS recorded from [comment 6365686428](https://github.com/nivedhya11/BobaBear/pull/424#issuecomment-6365686428) against reviewed head `dbe0786280fac4ba80ba727c7510b8c23da69ed1` |
-| Architecture Fit evaluation (this revision) | Independent docs-only evaluation in `06-…`; recommendation `PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1`; **PASS NOT self-granted** |
-| Checkout/Payment safety | SAFE AS DESIGNED (docs only this delivery): Snapshot/payment/serviceability/materialization untouched; PAYMENT_PENDING guards preserved; eligibility/evaluate are read/quote only; open-Checkout reuse + fail-closed missing evidence specified; Schedule Takeaway Checkout path aligns IMP-036I without new lifecycle states; promotion mode/timing gates reused without Menu seal claims |
+| Architecture Fit evaluation | Independent docs-only evaluation in `06-…`; recommendation `PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1`; **PASS NOT self-granted** |
+| Architecture Lock proposal | `13-…` / `ARCH-UOE-LOCK-PROPOSAL-1` on PR #424 after Fit-eval head `ecbfb4f4f…`; provenance + contracts + abuse/privacy + WhatsApp assignment; **Lock NOT self-granted** |
+| Independent Architecture review | [`8a05654d-23bf-423a-b63a-bba025b63f3f`](8a05654d-23bf-423a-b63a-bba025b63f3f) — APPROVE_WITH_DOC_FIXES; material findings resolved in-docs |
+| Independent Security review | [`b6c13c64-b4af-44b8-879f-5ba7fc60015f`](b6c13c64-b4af-44b8-879f-5ba7fc60015f) — APPROVE_WITH_DOC_FIXES; material findings resolved in-docs |
+| Independent Financial Integrity review | [`6c0c9948-4755-4e6e-8002-e4fc5456cb2b`](6c0c9948-4755-4e6e-8002-e4fc5456cb2b) — APPROVE_WITH_DOC_FIXES; material findings resolved in-docs |
+| Checkout/Payment safety | SAFE AS DESIGNED (docs only this delivery): Snapshot/payment/serviceability/materialization untouched; PAYMENT_PENDING guards preserved; eligibility/evaluate are read/quote only; open-Checkout reuse + fail-closed missing evidence specified; Schedule Takeaway Checkout path aligns IMP-036I without new lifecycle states; promotion mode/timing gates reused without Menu seal claims; CART provenance digest distinct from `result_fingerprint`; CHECKOUT reuse remains fingerprint-only |
 | Package path | `docs/platform/discovery/unified-order-experience/` |
 
 ## E. Explicit non-mutations
@@ -155,8 +166,9 @@ This candidate package must not be read as authority to change:
 ## F. Next milestone motion
 
 1. ~~Pass Product Definition Gate and Experience Gate~~ **DONE**
-2. Independent Architecture Fit evaluation recommendation recorded — await formal Fit PASS / lock (not self-granted)
-3. Design Readiness → Quality / Measurement plans → UOE-DR-01 identity when Founder allocates
-4. Separately: governed remediation vehicle for ACCEPTED_CAPABILITY_CONFORMANCE_DEFECT (Checkout composition) after urgent payment work — **not authorized by this package**
+2. ~~Independent Architecture Fit evaluation recommendation~~ **DONE** (`PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1`)
+3. ~~Architecture Lock proposal (decision-ready)~~ **DONE** as docs proposal (`13-…`) — await formal Fit PASS / Architecture Lock (not self-granted)
+4. Design Readiness → Quality / Measurement plans → UOE-DR-01 identity when Founder allocates
+5. Separately: governed remediation vehicle for ACCEPTED_CAPABILITY_CONFORMANCE_DEFECT (Checkout composition) after urgent payment work — **not authorized by this package**
 
-**STOP before Fit lock, merge, implementation, or deployment.**
+**STOP before Fit PASS, Architecture Lock grant, Design Readiness, merge, implementation, or deployment.**

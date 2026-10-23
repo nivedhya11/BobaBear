@@ -82,6 +82,22 @@ Minimum event meanings (PII-minimized; no raw PAN; no exact street in analytics 
 Exact schema, retention, and vendor remain **DECISION_REQUIRED** with analytics ownership —
 do not invent a second telemetry platform here.
 
+## Architecture Lock proposal — CART measurement cardinality note
+
+Architecture Lock proposal [`13-architecture-lock-proposal.md`](./13-architecture-lock-proposal.md)
+§2 proposes additive CART provenance (`evaluation_context_digest` + context columns) so
+equal-money / different mode·timing·outlet quotes do not silently reuse a CART `evaluation_id`.
+
+```text
+CART_COUNTED_VIEW_CARDINALITY_MAY_INCREASE_WHEN_CONTEXT_DIFFERS_AT_EQUAL_MONEY = YES
+CHECKOUT_OFFER_RESULT_AND_JOURNEY_MEASUREMENT = UNCHANGED
+RESULT_FINGERPRINT_SEMANTICS = PRESERVED
+```
+
+Measurement Plan finalization (after Fit PASS + Lock) must reconcile Offer-result-view counting
+with this CART cardinality effect. Do not change CHECKOUT fingerprint-only reuse or
+`COMMERCIAL_STATE_CHANGE` semantics. No schema or runtime mutation is authorized by this note.
+
 ## Evidence gaps (explicit)
 
 | Gap | Status |

@@ -2,7 +2,7 @@
   AUTHORITY: NON_AUTHORITATIVE_DISCOVERY_DRAFT
   PACKAGE: UOE-CANDIDATE-3
   SUPERSEDES_PACKAGE: UOE-CANDIDATE-2
-  STATUS: GATES_RECORDED_FIT_EVALUATION_READY
+  STATUS: GATES_RECORDED_ARCHITECTURE_LOCK_PROPOSAL_READY
   APPLICATION_CODE_MUTATION: NO
   CANONICAL_LIFECYCLE_MUTATION: NO
   IMPLEMENTATION_AUTHORIZED: NO
@@ -24,9 +24,11 @@ REFERENCE_CANDIDATE_2_HEAD = 5a4583eba34dff93082c49a1e0edce1efce4d07c
 REFERENCE_CANDIDATE_3_PRIOR_HEAD = aff6d9b403a91dea2dea9492ac4e9098d3008159
 REFERENCE_CHECKOUT_PRECISION_HEAD = 25d3b5d210306ad15bf28f87335d3e50a9d45c0f
 REVIEWED_PACKAGE_HEAD = dbe0786280fac4ba80ba727c7510b8c23da69ed1
-PACKAGE_REVISION = CANDIDATE-3 / GATES-RECORDED-FIT-EVAL-1
+FIT_EVALUATION_HEAD = ecbfb4f4f7f06a888e0a3c4417bc1c647239974b
+PACKAGE_REVISION = CANDIDATE-3 / ARCHITECTURE-LOCK-PROPOSAL-1
 CHECKOUT_CONTRACT_PRECISION = YES
 FINAL_CONTRACT_COMPLETENESS = YES
+ARCHITECTURE_LOCK_PROPOSAL = ARCH-UOE-LOCK-PROPOSAL-1
 EXPERIENCE_CRITICALITY = X3
 CHANGE_RISK = CR2 (CR3 at checkout/payment boundaries)
 FOUNDER_EXPERIENCE_DIRECTION = ACCEPTED_IN_CONVERSATION
@@ -44,10 +46,12 @@ ARCHITECTURE_FIT_EVALUATION = PERFORMED
 ARCHITECTURE_FIT_RECOMMENDATION = PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
 ARCHITECTURE_FIT_PASS = NOT_GRANTED
 ARCHITECTURE_LOCK = NO
+ARCHITECTURE_LOCK_PROPOSAL_STATUS = DECISION_READY
 DESIGN_READINESS = CANDIDATE_ONLY
 QUALITY_TEST_PLAN = PROPOSED_FOR_INDEPENDENT_REVIEW
 MEASUREMENT_PLAN = PROPOSED_FOR_INDEPENDENT_REVIEW
 VARIANT = PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
+PROVENANCE_STORAGE_PROPOSAL = ADDITIVE_NULLABLE_CONTEXT_FIELDS_PLUS_SERVER_CONTEXT_DIGEST
 IMPLEMENTATION_AUTHORIZED = NO
 PRE_GTM_EXPERIENCE_AUDIT = NOT_PERFORMED
 ROADMAP_STATE = UNCHANGED
@@ -57,9 +61,9 @@ UOE_CANDIDATE_4 = NOT_INTRODUCED
 This package revises **UOE-CANDIDATE-2** for gate precision, Checkout contract precision, and
 final contract completeness, then records Founder **Product Definition Gate PASS** and
 **Experience Gate PASS** on the reviewed package head, followed by an independent
-documentation-only Architecture Fit evaluation. Formal Architecture Fit PASS, Architecture
-Lock, Design Readiness PASS, implementation authorization, merge, and deploy remain **not**
-granted.
+documentation-only Architecture Fit evaluation and a decision-ready **Architecture Lock
+proposal** (`13-…`). Formal Architecture Fit PASS, Architecture Lock, Design Readiness PASS,
+implementation authorization, merge, and deploy remain **not** granted.
 
 ## Founder gate dispositions (recorded)
 
@@ -72,11 +76,12 @@ granted.
 | UOE-DR-01 | `FUTURE_IMP_ID=NOT_ALLOCATED`; sequencing **DEFERRED**; D-383 / IMP-036K unchanged; D-377 holds preserved |
 | UOE-DR-02 / 04 / 05 | Preserve previously approved dispositions (defer Menu slots; WhatsApp+in-app; strengthen eligibility/evaluate) |
 
-Exact microcopy variants, WhatsApp Meta template body-versus-variable mechanics, performance
-budgets, provenance-storage choice, and instrumentation schema remain owned by Architecture Fit
-lock / Design Readiness / Content QA / Quality and Measurement finalization. None may change the
-approved user promise, eligibility, pricing truth, or payment safeguards without returning to
-Product / Experience Gate.
+Exact microcopy variants and instrumentation schema remain owned by Design Readiness / Content QA /
+Quality and Measurement finalization. Provenance-storage choice, contract bounds, abuse/perf/
+privacy controls, and WhatsApp Meta template **assignment** are proposed for Architecture Lock in
+[`13-architecture-lock-proposal.md`](./13-architecture-lock-proposal.md) — **not** locked until
+Founder grants Fit PASS / Lock. None may change the approved user promise, eligibility, pricing
+truth, or payment safeguards without returning to Product / Experience Gate.
 
 ## Gate-precision dispositions (retained)
 
@@ -124,6 +129,7 @@ does **not**:
 | [`10-implementation-plan-and-risks.md`](./10-implementation-plan-and-risks.md) | Three-tranche plan + risk/dependency matrix |
 | [`11-gate-disposition-founder-decision-record.md`](./11-gate-disposition-founder-decision-record.md) | Gate matrix + Founder decision record |
 | [`12-template-completeness-addendum.md`](./12-template-completeness-addendum.md) | Canonical PD-2/EXP-1 gate fields, slicing, assumptions, surface table |
+| [`13-architecture-lock-proposal.md`](./13-architecture-lock-proposal.md) | Decision-ready Architecture Lock proposal (Fit PASS / Lock not granted) |
 
 ## Provisional candidate identifiers
 
@@ -133,6 +139,7 @@ does **not**:
 | `PD-UOE-CANDIDATE-3` | Product Definition (gate PASS) |
 | `XD-UOE-CANDIDATE-3` | Experience Definition (gate PASS) |
 | `ARCH-UOE-FIT-CANDIDATE-3` | Architecture Fit candidate / evaluation |
+| `ARCH-UOE-LOCK-PROPOSAL-1` | Architecture Lock proposal (decision-ready; Lock not granted) |
 | `DR-UOE-CANDIDATE-3` | Design Readiness candidate |
 | `QT-UOE-CANDIDATE-3` | Quality / Test Plan candidate |
 | `MI-UOE-CANDIDATE-3` | Measurement / Instrumentation candidate |

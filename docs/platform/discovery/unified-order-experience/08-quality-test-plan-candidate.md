@@ -62,9 +62,24 @@ architecture/invariants before UI cosmetics.
 - Mode-gated / timing-gated promotions honour evaluate context; Schedule UNCONFIRMED Offers are provisional only (AS-42–44)
 - Menu must not guarantee scheduled slot or final promotional price (AS-44)
 - Evaluate/eligibility fingerprint mismatch drops stale responses; no competing payables (AS-46)
+- Same money / different mode·timing·outlet must not reuse CART `evaluation_id` solely via `result_fingerprint` — `evaluation_context_digest` must differ (`13-…` §2 / AS-32)
+- CHECKOUT reuse / `COMMERCIAL_STATE_CHANGE` remain fingerprint-only (digest must not alter CHECKOUT measurement)
+- Client-supplied context digest / money fingerprint / `evaluationId` / sealed-window fields are **rejected (400)** under strict allowlist — never read as authority
 - Eligible-Checkout Scheduled Takeaway preserves server windows, optimistic revisions, post-window evaluate, then prepare (AS-41)
 - WhatsApp may be noop; tests must not require WhatsApp sending in every environment (AS-28)
 - Presentation storage must not sync payable/seal across tabs (AS-22 / GP-04)
+
+## Abuse / performance / privacy proofs (Architecture Lock proposal — `13-…` §4)
+
+Candidate controls for future authorized implementation; formal Quality plan remains
+`NOT_PERFORMED`.
+
+| Class | Proof intent |
+|---|---|
+| Abuse | Eligibility / evaluate rate limits return 429 without leaking extra outlet inventory; wrong-cart credential denied; fabricated `checkoutId` rejected for pre-checkout reads |
+| Performance | Eligibility and evaluate p95 budgets degrade to calm retry — never weaken Snapshot/payment to go faster; stale generation drops |
+| Privacy | Eligibility returns customer-safe outlet fields only; no hierarchy/legal dump; analytics avoid exact street when avoidable |
+| Negative security | Full list in `13-architecture-lock-proposal.md` §4.4 (BOLA, PAYMENT_PENDING freeze, fail-closed missing evaluation, digest non-authority, cross-tab seal) |
 
 ## Non-goals for this plan
 
