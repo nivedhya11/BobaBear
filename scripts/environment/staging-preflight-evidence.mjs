@@ -124,11 +124,17 @@ export function readArtifact(filePath, readFile = readFileSync) {
 function artifactProvenance(probe, artifact, fallbackSources) {
   if (!artifact) return liveProvenance(probe, fallbackSources);
   const declared = artifact.provenance && typeof artifact.provenance === "object" ? artifact.provenance : null;
-  const observedAt = declared?.observedAt ?? artifact.observedAt ?? null;
+  const observedAt = declared?.observedAt ?? artifact.observedAt ?? artifact.measuredAt ?? null;
   if (declared?.kind === EVIDENCE_PROVENANCE.SYNTHETIC) {
     return { kind: EVIDENCE_PROVENANCE.SYNTHETIC, observedAt, probe, sources: fallbackSources };
   }
   return recordedProvenance(probe, observedAt, fallbackSources);
+}
+
+/** Attach CLI-capped provenance onto a nested capacity artifact without mutating the file parse. */
+function withArtifactProvenance(artifact, probe, fallbackSources) {
+  if (!artifact || typeof artifact !== "object") return null;
+  return { ...artifact, provenance: artifactProvenance(probe, artifact, fallbackSources) };
 }
 
 function readJsonDir(dir) {
@@ -250,9 +256,21 @@ export function gatherObservations(options, deps = {}) {
   const capacity = probeCapacityObservation({
     candidateHead: source.head,
     snapshots,
-    buildFootprint: readArtifact(options.buildFootprint),
-    peakMemoryDemand: readArtifact(options.peakMemory),
-    preservation: readArtifact(options.preservation),
+    buildFootprint: withArtifactProvenance(
+      readArtifact(options.buildFootprint),
+      "build-footprint-artifact",
+      [options.buildFootprint ?? "build footprint NOT measured"],
+    ),
+    peakMemoryDemand: withArtifactProvenance(
+      readArtifact(options.peakMemory),
+      "peak-memory-artifact",
+      [options.peakMemory ?? "peak memory NOT measured"],
+    ),
+    preservation: withArtifactProvenance(
+      readArtifact(options.preservation),
+      "preservation-artifact",
+      [options.preservation ?? "preservation facts NOT measured"],
+    ),
     now,
   });
 
