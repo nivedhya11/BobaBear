@@ -39,6 +39,7 @@ import type {
   PersistenceTransactionContext,
 } from "../persistence/types";
 import { assertApplicationRole, assertTransactionContext } from "./assert-role";
+import { withCanonicalSnapshotSelectionOrder } from "./selection-order";
 
 export type CheckoutRow = typeof checkoutsTable.$inferSelect;
 export type CheckoutDestinationRow =
@@ -934,7 +935,7 @@ async function loadSnapshotAggregate(
     }),
   );
 
-  return Object.freeze({
+  return withCanonicalSnapshotSelectionOrder({
     id: snapshotRow.id,
     checkoutId: snapshotRow.checkoutId,
     checkoutRevision: snapshotRow.checkoutRevision,

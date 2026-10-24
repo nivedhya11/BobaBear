@@ -31,10 +31,10 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2325,
-    "executableTestFiles": 523,
+    "trackedPathsConsidered": 2327,
+    "executableTestFiles": 524,
     "sourceTestFiles": 157,
-    "testsTreeExecutableFiles": 278,
+    "testsTreeExecutableFiles": 279,
     "scriptTestFiles": 88,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
@@ -444,6 +444,7 @@
     "tests/payment-razorpay/refund.adapter.test.ts",
     "tests/payment-reconciliation/payment.reconciliation.test.ts",
     "tests/payment-security/payment.security.test.ts",
+    "tests/payment/gtm-391-payment-review-loop.domain.test.ts",
     "tests/payment/payment.domain.test.ts",
     "tests/payment/payment.pickup.domain.test.ts",
     "tests/payment/payment.scheduled-bind-race.domain.test.ts",
@@ -10149,6 +10150,24 @@
       "ciInclusion": "YES",
       "test1Layers": [
         "7-authorization-security"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/payment/gtm-391-payment-review-loop.domain.test.ts",
+      "runner": "vitest",
+      "domain": "payment",
+      "testType": "unit-or-domain",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:payment"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
       ],
       "classificationConfidence": "HEURISTIC"
     },
