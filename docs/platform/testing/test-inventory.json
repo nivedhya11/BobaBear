@@ -31,10 +31,10 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2327,
-    "executableTestFiles": 525,
+    "trackedPathsConsidered": 2329,
+    "executableTestFiles": 526,
     "sourceTestFiles": 159,
-    "testsTreeExecutableFiles": 278,
+    "testsTreeExecutableFiles": 279,
     "scriptTestFiles": 88,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
@@ -47,7 +47,7 @@
     "packageCoverageCommands": 1,
     "packageInventoryCommands": 2,
     "ciWorkflowFiles": 4,
-    "ciValidationSteps": 130,
+    "ciValidationSteps": 131,
     "protectedEvidenceTrackedFiles": 3,
     "archiveTrackedFiles": 92
   },
@@ -446,6 +446,7 @@
     "tests/payment-razorpay/refund.adapter.test.ts",
     "tests/payment-reconciliation/payment.reconciliation.test.ts",
     "tests/payment-security/payment.security.test.ts",
+    "tests/payment/gtm-391-payment-review-loop.domain.test.ts",
     "tests/payment/payment.domain.test.ts",
     "tests/payment/payment.pickup.domain.test.ts",
     "tests/payment/payment.scheduled-bind-race.domain.test.ts",
@@ -1107,6 +1108,10 @@
         {
           "name": "IMP-036J Tranche 4 proof",
           "run": "npm run test:imp036j:tranche4"
+        },
+        {
+          "name": "GTM-391 payment-start Snapshot comparison regression",
+          "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/payment/gtm-391-payment-review-loop.domain.test.ts"
         },
         {
           "name": "Install Playwright Chromium for IMP-036J T5 responsive proof",
@@ -10189,6 +10194,24 @@
       "ciInclusion": "YES",
       "test1Layers": [
         "7-authorization-security"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/payment/gtm-391-payment-review-loop.domain.test.ts",
+      "runner": "vitest",
+      "domain": "payment",
+      "testType": "unit-or-domain",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:payment"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
       ],
       "classificationConfidence": "HEURISTIC"
     },

@@ -179,6 +179,12 @@ jobs:
       - name: IMP-036J Tranche 4 proof
         run: npm run test:imp036j:tranche4
 
+      - name: GTM-391 payment-start Snapshot comparison regression
+        run: >-
+          node scripts/run-vitest.mjs run
+          --config vitest.database.config.mts
+          tests/payment/gtm-391-payment-review-loop.domain.test.ts
+
       - name: Install Playwright Chromium for IMP-036J T5 responsive proof
         run: npx playwright install --with-deps chromium
 
