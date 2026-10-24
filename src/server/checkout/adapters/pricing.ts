@@ -49,6 +49,7 @@ import {
   loadEffectiveVariantContent,
 } from "../../catalog/revisions";
 import { assertApplicationRole } from "../assert-role";
+import { withCanonicalCartSelectionOrder } from "../selection-order";
 import type { CatalogLineLabels } from "./catalog";
 
 export type CheckoutCommercialLine = Readonly<{
@@ -314,6 +315,8 @@ export async function buildCheckoutCommercialResult(
 ): Promise<CheckoutCommercialResult> {
   assertApplicationRole(context, "buildCheckoutCommercialResult");
   const fulfilmentMode = input.fulfilmentMode ?? "DELIVERY";
+  // Sealed and re-validated Snapshots must derive from the same selection order.
+  const cart = withCanonicalCartSelectionOrder(input.cart);
 
   let chargeDefs;
   try {
@@ -355,7 +358,7 @@ export async function buildCheckoutCommercialResult(
         amountPaise: c.amountPaise,
         taxCategoryId: c.taxCategoryId,
       })),
-      lines: input.cart.lines.map((line) => ({
+      lines: cart.lines.map((line) => ({
         lineId: line.id,
         variantId: line.variantId,
         quantity: line.quantity,
@@ -422,7 +425,7 @@ export async function buildCheckoutCommercialResult(
         amountPaise: c.amountPaise,
         taxCategoryId: c.taxCategoryId,
       })),
-      lines: input.cart.lines.map((line) => ({
+      lines: cart.lines.map((line) => ({
         lineId: line.id,
         variantId: line.variantId,
         quantity: line.quantity,
@@ -479,7 +482,7 @@ export async function buildCheckoutCommercialResult(
 
   const lines: CheckoutCommercialLine[] = [];
   let sequence = 0;
-  for (const line of input.cart.lines) {
+  for (const line of cart.lines) {
     const labels = input.labels.get(line.id);
     if (!labels) {
       throw new CheckoutError(

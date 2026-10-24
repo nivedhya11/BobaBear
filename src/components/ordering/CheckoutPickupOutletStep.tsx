@@ -101,6 +101,19 @@ export function CheckoutPickupOutletStep(props: {
           >
             Back
           </Button>
+          <Button asChild variant="outline" className="min-h-[44px]">
+            <a
+              href="/order/cart/"
+              data-testid="checkout-pickup-review-cart"
+              aria-disabled={pending ? "true" : undefined}
+              tabIndex={pending ? -1 : undefined}
+              onClick={(event) => {
+                if (pending) event.preventDefault();
+              }}
+            >
+              Review cart
+            </a>
+          </Button>
         </div>
       </section>
     );

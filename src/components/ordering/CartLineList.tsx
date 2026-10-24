@@ -16,10 +16,35 @@ export type CartLineListProps = Readonly<{
   lines: readonly CartLinePresentation[];
   pending?: boolean;
   compact?: boolean;
+  /** Customer copy for authoritative evaluation problems, keyed by cart line id. */
+  lineProblems?: ReadonlyMap<string, readonly string[]>;
   onChangeQuantity: (lineId: string, quantity: number) => void;
   onEdit?: (lineId: string) => void;
   onRemove?: (lineId: string) => void;
 }>;
+
+function lineProblemId(lineId: string): string {
+  return `cart-line-problem-${lineId}`;
+}
+
+function LineProblem(props: { lineId: string; messages: readonly string[] }) {
+  return (
+    <ul
+      id={lineProblemId(props.lineId)}
+      data-testid="cart-line-problem"
+      className="mt-1.5 flex flex-col gap-0.5 rounded-md border border-[var(--border-warning)] px-2 py-1.5"
+    >
+      {props.messages.map((message) => (
+        <li
+          key={message}
+          className="font-body text-[12px] font-semibold leading-snug text-[var(--text-primary)]"
+        >
+          {message}
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 function ModifierSummary(props: { presentation: CartLinePresentation; compact?: boolean }) {
   const { presentation, compact = false } = props;
@@ -78,13 +103,15 @@ function RemoveButton(props: {
   pending: boolean;
   onRemove: () => void;
   className?: string;
+  describedBy?: string;
 }) {
-  const { itemName, pending, onRemove, className } = props;
+  const { itemName, pending, onRemove, className, describedBy } = props;
   return (
     <button
       type="button"
       disabled={pending}
       aria-label={`Remove ${itemName} from cart`}
+      aria-describedby={describedBy}
       onClick={onRemove}
       className={
         className ??
@@ -100,7 +127,16 @@ function RemoveButton(props: {
  * Presentation-only Cart line list. Mutations stay with the parent controller.
  */
 export function CartLineList(props: CartLineListProps) {
-  const { lines, pending = false, compact = false, onChangeQuantity, onEdit, onRemove } = props;
+  const {
+    lines,
+    pending = false,
+    compact = false,
+    lineProblems,
+    onChangeQuantity,
+    onEdit,
+    onRemove,
+  } = props;
+  const problemsFor = (lineId: string): readonly string[] => lineProblems?.get(lineId) ?? [];
 
   if (lines.length === 0) {
     return (
@@ -113,6 +149,8 @@ export function CartLineList(props: CartLineListProps) {
       {lines.map((presentation) => (
         <li
           key={presentation.lineId}
+          data-cart-line-id={presentation.lineId}
+          data-line-attention={problemsFor(presentation.lineId).length > 0 ? "true" : undefined}
           className={
             compact
               ? "border-b border-[var(--border-default)] py-3 first:pt-0 last:border-b-0 last:pb-0"
@@ -174,6 +212,13 @@ export function CartLineList(props: CartLineListProps) {
                 <ModifierSummary presentation={presentation} compact={compact} />
               </div>
 
+              {problemsFor(presentation.lineId).length > 0 ? (
+                <LineProblem
+                  lineId={presentation.lineId}
+                  messages={problemsFor(presentation.lineId)}
+                />
+              ) : null}
+
               {!compact && presentation.editEligible && onEdit ? (
                 <button
                   type="button"
@@ -226,6 +271,11 @@ export function CartLineList(props: CartLineListProps) {
                   itemName={presentation.itemName}
                   pending={pending}
                   onRemove={() => onRemove(presentation.lineId)}
+                  describedBy={
+                    problemsFor(presentation.lineId).length > 0
+                      ? lineProblemId(presentation.lineId)
+                      : undefined
+                  }
                 />
               ) : (
                 <span aria-hidden="true" className="h-10 w-10 shrink-0" />

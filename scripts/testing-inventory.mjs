@@ -241,6 +241,7 @@ export function isDefaultVitestIncludedPath(pathRel) {
     { prefix: "tests/enterprise/", ext: /\.test\.ts$/ },
     { prefix: "tests/imp-036b/", ext: /\.test\.(ts|tsx)$/ },
     { prefix: "tests/imp-036c/", ext: /\.test\.(ts|tsx)$/ },
+    { prefix: "tests/gtm-closure/", ext: /\.test\.(ts|tsx)$/ },
   ];
   for (const { prefix, ext } of directoryIncludes) {
     if (pathRel.startsWith(prefix) && ext.test(pathRel)) return true;

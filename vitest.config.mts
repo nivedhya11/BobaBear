@@ -74,6 +74,8 @@ export default defineConfig({
       "tests/scheduled-fulfilment/**/*.test.ts",
       // IMP-036J T8: AC/XR/BR executable-evidence completeness (no database).
       "tests/imp036j/**/*.test.ts",
+      // GTM closure: accepted customer and operator journey regression (no database).
+      "tests/gtm-closure/**/*.test.{ts,tsx}",
     ],
     exclude: [
       "**/node_modules/**",
