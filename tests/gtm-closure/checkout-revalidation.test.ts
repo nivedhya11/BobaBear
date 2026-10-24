@@ -11,9 +11,33 @@ import {
   payableChangedVsValidAlternative,
   selectBestCandidate,
 } from "../../src/shared/promotions";
+import { isCartCheckoutBlocked } from "../../src/components/ordering/serviceability-copy";
+import { commerceErrorCopy } from "../../src/components/ordering/error-copy";
 import { checkoutSnapshotsStructurallyEqual } from "../../src/server/checkout/compare-snapshots";
 import { explainCheckoutSnapshotStructuralDifference } from "../../src/server/checkout/explain-snapshot-difference";
+import type { CheckoutSnapshot } from "../../src/shared/checkout";
 import { sealedSnapshot } from "./support/checkout-snapshot";
+
+function modifier(optionId: string, quantity = 1) {
+  return {
+    variantModifierGroupId: "group-1",
+    modifierGroupOptionId: optionId,
+    quantity,
+    groupName: "Toppings",
+    optionName: optionId,
+    unitDeltaPaise: BigInt(0),
+  };
+}
+
+function snapshotWithModifiers(
+  modifiers: CheckoutSnapshot["lines"][number]["modifiers"],
+): CheckoutSnapshot {
+  const base = sealedSnapshot();
+  const line = base.lines[0]!;
+  return sealedSnapshot({
+    lines: [{ ...line, modifiers }],
+  });
+}
 
 describe("checkout revalidation refuses equal-money structural drift", () => {
   it("accepts an unchanged sealed snapshot", () => {
@@ -135,5 +159,59 @@ describe("checkout revalidation refuses equal-money structural drift", () => {
       new Map(),
     );
     expect(winner.promotionIds).toEqual(["gift"]);
+  });
+
+  it("refuses a different modifier option when the payable amount is unchanged", () => {
+    const shown = snapshotWithModifiers([modifier("opt-a")]);
+    const prepared = snapshotWithModifiers([modifier("opt-b")]);
+    expect(shown.grandTotalPaise).toBe(prepared.grandTotalPaise);
+    expect(explainCheckoutSnapshotStructuralDifference(shown, prepared)).toEqual({
+      equal: false,
+      firstDifferenceCategory: "MODIFIER_STRUCTURE",
+    });
+  });
+
+  it("refuses a different modifier quantity when the payable amount is unchanged", () => {
+    const shown = snapshotWithModifiers([modifier("opt-a", 1)]);
+    const prepared = snapshotWithModifiers([modifier("opt-a", 2)]);
+    expect(shown.grandTotalPaise).toBe(prepared.grandTotalPaise);
+    expect(explainCheckoutSnapshotStructuralDifference(shown, prepared)).toEqual({
+      equal: false,
+      firstDifferenceCategory: "MODIFIER_STRUCTURE",
+    });
+  });
+
+  it("refuses a missing modifier when the payable amount is unchanged", () => {
+    const shown = snapshotWithModifiers([modifier("opt-a"), modifier("opt-b")]);
+    const prepared = snapshotWithModifiers([modifier("opt-a")]);
+    expect(shown.grandTotalPaise).toBe(prepared.grandTotalPaise);
+    expect(explainCheckoutSnapshotStructuralDifference(shown, prepared)).toEqual({
+      equal: false,
+      firstDifferenceCategory: "MODIFIER_STRUCTURE",
+    });
+  });
+
+  it("refuses a genuine payable change as a monetary difference", () => {
+    const shown = sealedSnapshot();
+    const prepared = sealedSnapshot({ grandTotalPaise: shown.grandTotalPaise - BigInt(100) });
+    expect(checkoutSnapshotsStructurallyEqual(shown, prepared)).toBe(false);
+    expect(explainCheckoutSnapshotStructuralDifference(shown, prepared)).toEqual({
+      equal: false,
+      firstDifferenceCategory: "MONETARY_COMPONENT",
+    });
+  });
+});
+
+describe("checkout stays blocked while cart evaluation is invalid", () => {
+  it("blocks CART_INVALID and allows a complete evaluation", () => {
+    expect(isCartCheckoutBlocked(null)).toBe(false);
+    expect(isCartCheckoutBlocked({ status: "COMPLETE" } as never)).toBe(false);
+    expect(isCartCheckoutBlocked({ status: "CART_INVALID" } as never)).toBe(true);
+  });
+
+  it("uses the accepted item sentence and does not show the raw availability code", () => {
+    const sentence = commerceErrorCopy("LINE_VARIANT_UNAVAILABLE");
+    expect(sentence).toBe("That item can't be ordered right now.");
+    expect(sentence).not.toContain("LINE_VARIANT_UNAVAILABLE");
   });
 });

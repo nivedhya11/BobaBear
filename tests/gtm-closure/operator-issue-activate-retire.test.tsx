@@ -15,6 +15,7 @@ import {
   isLegalCouponLifecycleTransition,
   PromotionAdminError,
 } from "../../src/shared/promotions";
+import { normalizeCouponCode } from "../../src/shared/promotions/coupon-code";
 import {
   COPY_CANCEL,
   COPY_OP_RETIRED,
@@ -102,5 +103,37 @@ describe("operator coupon issue, activate, and retire", () => {
     await user.click(screen.getByRole("button", { name: COPY_CANCEL }));
     expect(onCancel).toHaveBeenCalledOnce();
     expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it("canonicalises a coupon code an operator can issue and refuses a too-short code", () => {
+    expect(normalizeCouponCode(" save20 ")).toBe("SAVE20");
+    expect(() => normalizeCouponCode("no")).toThrow(PromotionAdminError);
+  });
+
+  it("confirms retirement from the keyboard without using the cancel control", async () => {
+    const user = userEvent.setup();
+    const onCancel = vi.fn();
+    const onConfirm = vi.fn();
+    render(
+      <ConsequenceReviewDialog
+        open
+        title={COPY_RETIRE_TITLE}
+        draftLabel={COPY_RETIRE_BODY}
+        effectiveLabel={COPY_OP_RETIRED}
+        dimensions={[]}
+        revisionLabel="Expected revision"
+        revisionValue="3"
+        confirmLabel={COPY_RETIRE_CONFIRM}
+        cancelLabel={COPY_CANCEL}
+        onCancel={onCancel}
+        onConfirm={onConfirm}
+      />,
+    );
+
+    const confirm = screen.getByRole("button", { name: COPY_RETIRE_CONFIRM });
+    confirm.focus();
+    await user.keyboard("{Enter}");
+    expect(onConfirm).toHaveBeenCalledOnce();
+    expect(onCancel).not.toHaveBeenCalled();
   });
 });

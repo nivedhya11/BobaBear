@@ -192,6 +192,47 @@ describe("coupon journeys on the accepted evaluator", () => {
     ).toBe(IMP036J_COPY.INAPPLICABLE_DELIVERY);
   });
 
+  it("keeps a pickup-only coupon inapplicable on delivery", () => {
+    const promotion = offer({
+      id: "promo-pickup",
+      triggerType: "coupon",
+      eligibleFulfilmentModes: ["PICKUP"],
+    });
+    const evaluated = evaluatePromotions({
+      context: evaluationContext({ fulfilmentMode: "DELIVERY" }),
+      snapshot: merchandiseSnapshot(MERCHANDISE),
+      promotions: [promotion],
+      submittedCoupon: {
+        rawCode: "PICKUP",
+        coupon: couponRecord({
+          id: "coupon-pickup",
+          promotionId: promotion.id,
+          canonicalCode: "PICKUP",
+        }),
+        promotion,
+      },
+    });
+
+    expect(evaluated.submittedCouponResult).toMatchObject({
+      status: "NOT_APPLICABLE",
+      reasonCode: "FULFILMENT_MODE_MISMATCH",
+    });
+    expect(evaluated.eligiblePromotionIds).not.toContain("promo-pickup");
+    expect(
+      couponStatusCopy({
+        explanation: explanation({
+          submittedCouponResult: {
+            status: "NOT_APPLICABLE",
+            reasonCode: "FULFILMENT_MODE_MISMATCH",
+            canonicalCode: "PICKUP",
+          },
+        }),
+        fulfilmentMode: "DELIVERY",
+      })?.text,
+    ).toBe(IMP036J_COPY.INAPPLICABLE_PICKUP);
+    expect(IMP036J_COPY.INAPPLICABLE_PICKUP).not.toBe(IMP036J_COPY.INAPPLICABLE_DELIVERY);
+  });
+
   it("drops the coupon saving when the shared code is removed", () => {
     const promotion = offer({ id: "promo-save", triggerType: "coupon" });
     const withCoupon = evaluatePromotions({
