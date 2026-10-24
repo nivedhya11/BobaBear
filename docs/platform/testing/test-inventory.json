@@ -31,11 +31,11 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2327,
-    "executableTestFiles": 525,
+    "trackedPathsConsidered": 2335,
+    "executableTestFiles": 529,
     "sourceTestFiles": 159,
     "testsTreeExecutableFiles": 278,
-    "scriptTestFiles": 88,
+    "scriptTestFiles": 92,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
     "playwrightConfigs": 7,
@@ -525,6 +525,10 @@
     "scripts/environment/hygiene.test.mjs",
     "scripts/environment/podman-compose.test.mjs",
     "scripts/environment/postgres-init-identity.test.mjs",
+    "scripts/environment/staging-config-projection.test.mjs",
+    "scripts/environment/staging-evidence-binders.test.mjs",
+    "scripts/environment/staging-evidence-probes.test.mjs",
+    "scripts/environment/staging-preflight-evidence.test.mjs",
     "scripts/environment/staging-preflight.test.mjs",
     "scripts/environment/staging.test.mjs",
     "scripts/generate-nginx-security-headers.test.mjs",
@@ -2084,6 +2088,74 @@
     },
     {
       "path": "scripts/environment/postgres-init-identity.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/environment/staging-config-projection.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/environment/staging-evidence-binders.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/environment/staging-evidence-probes.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/environment/staging-preflight-evidence.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
       "testType": "script-unit",
