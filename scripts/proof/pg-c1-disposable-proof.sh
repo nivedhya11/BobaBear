@@ -40,8 +40,11 @@ RESTORE_CONF_IN_VOL="/var/lib/postgresql/boba-pgbackrest-restore.conf"
 TARGET_OWNER_MARKER="/var/lib/postgresql/.boba-recovery-target-owner"
 PGDATA_IN_VOL="/var/lib/postgresql/18/docker"
 
-CIPHER_PASS="c1-proof-cipher-${STAMP}"
-PG_PASS="c1-proof-pg-${STAMP}"
+# Disposable, run-local secrets. Random (not STAMP-derived) so committed
+# evidence cannot be used to reconstruct them; never echoed into logs.
+rand_token() { head -c 48 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 32; }
+CIPHER_PASS="c1-proof-cipher-$(rand_token)"
+PG_PASS="c1-proof-pg-$(rand_token)"
 STANZA="boba"
 GENERATION="1"
 

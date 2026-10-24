@@ -102,20 +102,20 @@ Rev 1 recorded `wal_archival PASS` when `pg_stat_archiver.archived_count > 0` **
 ## Executed proof run (Rev 2)
 
 ```text
-RUN_ID = boba-pgc1-disp-20261024T074915Z-112269
+RUN_ID = boba-pgc1-disp-20261024T080543Z-144666
 HOST_UID = 1000
 subuid = ajoshi:100000:65536
 EXPECTED_HOST_UID_FOR_CONTAINER_999 = 100998
 VERIFIED_MAPPING = container UID 999 -> host UID 100998
-POST_BACKUP_MARKER = post-backup-marker-boba-pgc1-disp-20261024T074915Z-112269  lsn=0/4007190  segment=000000010000000000000004
-ARCHIVED_SEGMENT_FILE = 18-1/0000000100000000/000000010000000000000004-97a3ff5d1b395a787d5899b35d2d390f70f375df.zst
-RESTORE_TARGET = boba-pgc1-disp-20261024T074915Z-112269-restore-pgdata (timeline 2, archive_mode=off, replay_lsn=0/5000000)
-NEGATIVE_MARKER = neg-unarchived-marker-boba-pgc1-disp-20261024T074915Z-112269  lsn=0/5004918  segment=000000010000000000000005
+POST_BACKUP_MARKER = post-backup-marker-boba-pgc1-disp-20261024T080543Z-144666  lsn=0/4007158  segment=000000010000000000000004
+ARCHIVED_SEGMENT_FILE = 18-1/0000000100000000/000000010000000000000004-3901bb8a29263d0d9ab956e4984889e8c50dc40e.zst
+RESTORE_TARGET = boba-pgc1-disp-20261024T080543Z-144666-restore-pgdata (timeline 2, archive_mode=off, replay_lsn=0/5000000)
+NEGATIVE_MARKER = neg-unarchived-marker-boba-pgc1-disp-20261024T080543Z-144666  lsn=0/5004918  segment=000000010000000000000005
 NEGATIVE_ARCHIVER = failed_count=6 last_failed_wal=000000010000000000000005 (archived_count stayed 5)
-NEGATIVE_TARGET = boba-pgc1-disp-20261024T074915Z-112269-restore-neg-pgdata (id=2 present, id=3 absent)
+NEGATIVE_TARGET = boba-pgc1-disp-20261024T080543Z-144666-restore-neg-pgdata (id=2 present, id=3 absent)
 ```
 
-A prior run of the same Rev 2 harness (`boba-pgc1-disp-20261024T074334Z-104068`, before a cosmetic note-format fix and the addition of the `legacy_archive_count_check_insufficient` row) produced the identical PASS/UNVERIFIED matrix and identical LSN/segment values; it is not committed. No run of Rev 2 failed.
+Two earlier runs of the Rev 2 harness (`boba-pgc1-disp-20261024T074334Z-104068`, `boba-pgc1-disp-20261024T074915Z-112269`) produced the same PASS/UNVERIFIED matrix and the same segment names (`…04` marker archived, `…05` negative unarchived); they differ from the committed run only by a note-format fix, the added `legacy_archive_count_check_insufficient` row, and (after the independent security review LOW finding) switching disposable cipher/PG passwords from STAMP-derived to random values. They are not committed. No run of Rev 2 produced a FAIL row.
 
 ### Proof matrix (Rev 2)
 
@@ -130,8 +130,8 @@ A prior run of the same Rev 2 harness (`boba-pgc1-disp-20261024T074334Z-104068`,
 | archive_on_startup | PASS | archive_mode via C1 entrypoint |
 | pgbackrest_stanza | PASS | stanza-create + check |
 | pgbackrest_backup_info_verify | PASS | full backup + info + verify |
-| post_backup_marker_committed | PASS | lsn=0/4007190 segment=…04 |
-| wal_marker_segment_archived | PASS | exact file `…04-97a3ff5d….zst` present; `last_archived_wal` ≥ …04 |
+| post_backup_marker_committed | PASS | lsn=0/4007158 segment=…04 |
+| wal_marker_segment_archived | PASS | exact file `…04-3901bb8a….zst` present; `last_archived_wal` ≥ …04 |
 | isolated_restore_recovery_complete | PASS | owned target; recovery finished; replay 0/5000000 ≥ marker; timeline 2; archive_mode=off; `…04` fetched from archive |
 | restored_post_backup_marker | PASS | `before-backup` and `post-backup-marker-<RUN_ID>` both present |
 | negative_interrupted_archive_detected | PASS | same verifier returned FAIL within 30 s; failed_count=6; last_failed_wal=…05 |
@@ -204,7 +204,22 @@ ARCHITECTURE_RECOVERY_VERDICT = PASS               AGENT = architecture-recovery
 
 ### Rev 2 (WAL recovery closure)
 
-Recorded in `.wave-20261024-w2/AGENT_A_RESULT.md` (primary checkout, untracked wave artifact) and in the PR #431 conversation.
+```text
+SECURITY_REVIEW_VERDICT = PASS (branch vs main; reviewed HEAD d47d441ad739c3dda3266b756a3d13ddb148ae9f)
+AGENT = security-review f9406fd3-f8fb-44f1-bfcc-0bc2ccc65215
+BLOCKING_FINDINGS = 0
+LOW_FINDINGS = 1 -> remediated in the following commit (disposable cipher/PG passwords now random, not STAMP-derived; harness re-run, evidence replaced)
+```
+
+- Podman isolation run-scoped (`${RUN_ID}-*` only; `:Z`, never `:U`); no shared-volume references.
+- No literal cipher/PG password in committed evidence; pgBackRest redacts `--repo1-cipher-pass`; S3 placeholder secret excluded from rendered file.
+- WAL proof: no identified path to PASS without archiving the marker segment and replaying it into an owned target; negative case exercises the same verifier.
+- No runtime chown / ownership migration; entrypoint refuses UID 0.
+- Interpolated values in `bash -c` / SQL are constrained (timestamp+pid, `^[0-9A-F]{24}$`-validated segment names, fixed literals).
+- No SCA/Trivy/VEX bypass; `package.json` / lockfile equal `main` baseline.
+- Informational: build-time `chown` in the Dockerfile is image-layer only; Trivy scope is DS-0002 image-config (not the full production vuln gate); `archive_command` embeds `STANZA` from env (fixed to `boba` in the harness).
+
+Full report: `.wave-20261024-w2/AGENT_A_RESULT.md` (primary checkout wave artifact) and the PR #431 conversation.
 
 ## Reproduce
 
@@ -218,4 +233,4 @@ bash scripts/proof/pg-c1-disposable-proof.sh
 Slim copies (no image tarball, no full Trivy JSON):
 
 - Rev 1: `docs/platform/operations/evidence/pg-c1-disp-20261024T060031Z-71079/`
-- Rev 2: `docs/platform/operations/evidence/pg-c1-disp-20261024T074915Z-112269/` (`matrix.tsv`, `summary.md`, `proof.log`, `restore-target.log`, `restore-target-negative.log`, `s3-shape-render.conf`, `trivy-ds0002-extract.json`, `image-user.txt`)
+- Rev 2: `docs/platform/operations/evidence/pg-c1-disp-20261024T080543Z-144666/` (`matrix.tsv`, `summary.md`, `proof.log`, `restore-target.log`, `restore-target-negative.log`, `s3-shape-render.conf`, `trivy-ds0002-extract.json`, `image-user.txt`)
