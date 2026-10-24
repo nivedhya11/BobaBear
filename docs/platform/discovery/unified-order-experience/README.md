@@ -64,6 +64,10 @@ ANALYTICS_OWNERSHIP_ROLES = RATIFIED (Founder interim; delegates NOT_NAMED)
 PRIMARY_CONVERSION_DENOMINATOR = CHECKOUT_STARTS
 DESIGN_READINESS_PASS = NOT_GRANTED
 UOE_QT_MI_FINALIZATION = NOT_GRANTED
+CONSOLIDATED_GATE_PACKAGE = 16-consolidated-design-qt-mi-final-decision-package.md
+CONSOLIDATED_GATE_DECISION = PREPARED_FOR_FOUNDER
+TRANCHE_CONTRACTS = UX-A 17 | UX-B 18 | UX-C 19 (PLANS ONLY)
+UOE_DR06_WORK_PACKAGE = 20-uoe-dr-06-test-first-work-package.md
 UOE_DR06_CHECKOUT_REMEDIATION = NOT_AUTHORIZED
 VARIANT = PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
 PROVENANCE_STORAGE_DECISION = ADDITIVE_NULLABLE_CONTEXT_FIELDS_PLUS_SERVER_CONTEXT_DIGEST
@@ -98,7 +102,14 @@ Exact microcopy variants, WhatsApp Meta body evidence, Quality evidence finaliza
 instrumentation schema remain owned by Design Readiness / Content QA / Quality / Measurement.
 Owner-decision packaging for Founder ratification is in
 [`14-design-qt-mi-owner-decision-package.md`](./14-design-qt-mi-owner-decision-package.md)
-(`UOE_DESIGN_READINESS_PASS` / `UOE_QT_MI_FINALIZATION` remain **NOT_GRANTED**). The Founder's
+(`UOE_DESIGN_READINESS_PASS` / `UOE_QT_MI_FINALIZATION` remain **NOT_GRANTED**). The single
+Founder decision that joins Design Readiness, Quality plan finalization, and Measurement plan
+finalization — with vendor, retention, and WhatsApp body left unknown — is
+[`16-consolidated-design-qt-mi-final-decision-package.md`](./16-consolidated-design-qt-mi-final-decision-package.md).
+That decision is **prepared, not granted**. UX-A / UX-B / UX-C tranche contracts
+(`17-…`, `18-…`, `19-…`) are plans. UOE-DR-06 stays
+[`20-uoe-dr-06-test-first-work-package.md`](./20-uoe-dr-06-test-first-work-package.md)
+and **NOT_AUTHORIZED**. The Founder's
 W2 **working-baseline** approval of the proposed primary in-app microcopy, analytics ownership
 roles, and checkout-start denominator — and the NOT_APPROVED status of on-wire WhatsApp wording —
 is recorded in
@@ -169,6 +180,11 @@ does **not**:
 | [`13-architecture-lock-proposal.md`](./13-architecture-lock-proposal.md) | Historical Lock proposal provenance (superseded by capability architecture) |
 | [`14-design-qt-mi-owner-decision-package.md`](./14-design-qt-mi-owner-decision-package.md) | Founder Design/Content + WhatsApp inventory + Quality evidence + Measurement ownership + DR-06 corrective proposal (PASS NOT_GRANTED) |
 | [`15-founder-decision-record-and-gate-readiness-package.md`](./15-founder-decision-record-and-gate-readiness-package.md) | W2 record of Founder-approved working baseline (microcopy, WhatsApp NOT_APPROVED on-wire, analytics ownership roles, denominator, DR-06 obligations retained) + Design/Quality/Measurement gate records **for decision** + review lanes (no gate granted) |
+| [`16-consolidated-design-qt-mi-final-decision-package.md`](./16-consolidated-design-qt-mi-final-decision-package.md) | One Founder decision for Design Readiness + TEST-1 Quality plan + Measurement plan. Unknown vendor, retention, and WhatsApp bodies explicit. PASS **NOT_GRANTED** |
+| [`17-ux-a-tranche-contract.md`](./17-ux-a-tranche-contract.md) | UX-A plan and test matrix. Implementation not authorized. On-wire WhatsApp excluded |
+| [`18-ux-b-tranche-contract.md`](./18-ux-b-tranche-contract.md) | UX-B plan and test matrix (Contracts A/B). Checkout composition excluded |
+| [`19-ux-c-tranche-contract.md`](./19-ux-c-tranche-contract.md) | UX-C plan and test matrix. Tab-scoped bar. No analytics vendor |
+| [`20-uoe-dr-06-test-first-work-package.md`](./20-uoe-dr-06-test-first-work-package.md) | UOE-DR-06 test-first corrective plan. **NOT_AUTHORIZED**. AS-34 and AS-41 stay RED |
 | [`../../capabilities/UOE-unified-order-experience.md`](../../capabilities/UOE-unified-order-experience.md) | **CURRENT** locked capability architecture |
 
 ## Provisional candidate identifiers

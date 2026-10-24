@@ -51,6 +51,13 @@ Wave authorization (packaging only — not gate PASS):
 Row `Status` values in §1.2 below are the pre-decision values; the post-decision dispositions live
 in `15-…` §1.3. No gate PASS is granted by either document.
 
+The Founder-facing join of those records is
+[`16-consolidated-design-qt-mi-final-decision-package.md`](./16-consolidated-design-qt-mi-final-decision-package.md)
+(`PREPARED_FOR_FOUNDER`, still **NOT_GRANTED**). Tranche plans are `17-…`, `18-…`, and `19-…`.
+The Checkout corrective plan is
+[`20-uoe-dr-06-test-first-work-package.md`](./20-uoe-dr-06-test-first-work-package.md)
+and remains **NOT_AUTHORIZED**. This ledger stays the string, registry, and proposal source.
+
 ---
 
 ## 0. Walls (unchanged)

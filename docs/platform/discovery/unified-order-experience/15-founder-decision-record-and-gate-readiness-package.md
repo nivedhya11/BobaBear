@@ -47,6 +47,13 @@ Readiness, Quality finalization, and Measurement finalization gate records **for
 does not grant any of those gates, does not authorize implementation, does not allocate an IMP,
 and does not remediate Checkout composition code.
 
+The single decision that uses this record is
+[`16-consolidated-design-qt-mi-final-decision-package.md`](./16-consolidated-design-qt-mi-final-decision-package.md).
+That decision is prepared for the Founder and is **not** granted here. UX tranche plans are
+`17-…`, `18-…`, and `19-…`. UOE-DR-06 remains
+[`20-uoe-dr-06-test-first-work-package.md`](./20-uoe-dr-06-test-first-work-package.md)
+with remediation **NOT_AUTHORIZED**.
+
 ## 0. Provenance of the recorded Founder decisions
 
 | Field | Value | Verification |
