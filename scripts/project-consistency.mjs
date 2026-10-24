@@ -18343,10 +18343,10 @@ function checkImp028ArchitectureLock(roadmap, state, architecture, decision) {
   }
 
   if (decision) {
-    // GOV-2 CURRENT tip may advance the live register (DR-25 / D-384 programme baseline).
+    // GOV-2 CURRENT tip may advance the live register (DR-26 / D-384 + D-385/D-386).
     // Historical IMP-036K Fit/Design/gate checkpoints remain anchored to source-era DR-24.
     const expectedDecisionRegisterVersion = isGov2AuthorityDocuments(roadmap, state)
-      ? "DR-25"
+      ? "DR-26"
       : isImp036kDesignReadinessPassCheckpoint(roadmap, state) ||
       isImp036kArchitectureLockCheckpoint(roadmap, state) ||
       isImp036kProductExperienceGateCheckpoint(roadmap, state) ||
@@ -42183,7 +42183,106 @@ export function collectDecisionRegisterIdRows(decisionText, decisionId) {
 }
 
 /**
- * GOV-2 CURRENT tip register progression for D-384 programme baseline (DR-25).
+ * D-385 / AD-PF-01 must be uniquely CURRENT when allocated under DR-26+.
+ * @param {string} decisionText
+ * @returns {{ ok: true, status: "CURRENT" } | { ok: false, code: string, message: string, status?: string }}
+ */
+export function evaluateD385Current(decisionText) {
+  const rows = collectDecisionRegisterIdRows(decisionText, "D-385");
+  if (rows.length === 0) {
+    return {
+      ok: false,
+      code: "D385_MISSING",
+      message: "DR-26 must register CURRENT D-385 / AD-PF-01 Founder Podman Local UAT vs strict staging",
+    };
+  }
+  if (rows.length > 1) {
+    return {
+      ok: false,
+      code: "D385_DUPLICATE",
+      message: `D-385 must appear exactly once in the decision-register table (found ${rows.length} rows)`,
+    };
+  }
+  const row = evaluateDecisionRegisterRowStatus(decisionText, "D-385");
+  if (!row.ok) {
+    return {
+      ok: false,
+      code: "D385_MISSING",
+      message: "DR-26 must register CURRENT D-385 / AD-PF-01 Founder Podman Local UAT vs strict staging",
+    };
+  }
+  if (row.status !== "CURRENT") {
+    return {
+      ok: false,
+      code: "D385_STATUS",
+      status: row.status,
+      message: `D-385 status cell must be CURRENT (got ${row.status})`,
+    };
+  }
+  const line = rows[0] ?? "";
+  if (!/AD-PF-01/.test(line) || !/Local UAT/.test(line) || !/staging/.test(line)) {
+    return {
+      ok: false,
+      code: "D385_CONTRACT",
+      message:
+        "D-385 must lock AD-PF-01 Founder Podman Local UAT versus strict staging configuration authority",
+    };
+  }
+  return { ok: true, status: "CURRENT" };
+}
+
+/**
+ * D-386 / AD-PF-02 must be uniquely CURRENT when allocated under DR-26+.
+ * @param {string} decisionText
+ * @returns {{ ok: true, status: "CURRENT" } | { ok: false, code: string, message: string, status?: string }}
+ */
+export function evaluateD386Current(decisionText) {
+  const rows = collectDecisionRegisterIdRows(decisionText, "D-386");
+  if (rows.length === 0) {
+    return {
+      ok: false,
+      code: "D386_MISSING",
+      message: "DR-26 must register CURRENT D-386 / AD-PF-02 Founder staging capacity proof",
+    };
+  }
+  if (rows.length > 1) {
+    return {
+      ok: false,
+      code: "D386_DUPLICATE",
+      message: `D-386 must appear exactly once in the decision-register table (found ${rows.length} rows)`,
+    };
+  }
+  const row = evaluateDecisionRegisterRowStatus(decisionText, "D-386");
+  if (!row.ok) {
+    return {
+      ok: false,
+      code: "D386_MISSING",
+      message: "DR-26 must register CURRENT D-386 / AD-PF-02 Founder staging capacity proof",
+    };
+  }
+  if (row.status !== "CURRENT") {
+    return {
+      ok: false,
+      code: "D386_STATUS",
+      status: row.status,
+      message: `D-386 status cell must be CURRENT (got ${row.status})`,
+    };
+  }
+  const line = rows[0] ?? "";
+  if (!/AD-PF-02/.test(line) || !/40 GiB/.test(line) || !/8 GiB/.test(line)) {
+    return {
+      ok: false,
+      code: "D386_CONTRACT",
+      message:
+        "D-386 must lock AD-PF-02 Founder staging capacity floors (40 GiB disk / 8 GiB memory) as policy",
+    };
+  }
+  return { ok: true, status: "CURRENT" };
+}
+
+/**
+ * GOV-2 register progression for D-384 programme baseline (DR-25 introduction; DR-26 successor).
+ * Accepts legitimate successor tip versions that preserve D-384; rejects earlier checkpoints.
  * Independent of IMP-036K source-era Fit/Design provenance (DR-24 / no D-384 then).
  * @param {{ meta?: { decisionRegisterVersion?: string, supersedes?: string }, text?: string }} decision
  * @returns {{ ok: true, message: string } | { ok: false, code: string, message: string }}
@@ -42191,18 +42290,24 @@ export function collectDecisionRegisterIdRows(decisionText, decisionId) {
 export function evaluateD384ProgrammeBaselineProgression(decision) {
   const meta = decision?.meta ?? {};
   const text = decision?.text ?? "";
-  if (meta.decisionRegisterVersion !== "DR-25") {
+  /** @type {Record<string, { supersedes: string, nextId: string, requireAdPf: boolean }>} */
+  const versionRules = {
+    "DR-25": { supersedes: "DR-24", nextId: "D-385", requireAdPf: false },
+    "DR-26": { supersedes: "DR-25", nextId: "D-387", requireAdPf: true },
+  };
+  const rules = versionRules[meta.decisionRegisterVersion ?? ""];
+  if (!rules) {
     return {
       ok: false,
       code: "D384_DR_VERSION",
-      message: `Programme baseline requires decisionRegisterVersion DR-25, got ${meta.decisionRegisterVersion ?? "(missing)"}`,
+      message: `Programme baseline requires decisionRegisterVersion DR-25 or legitimate successor DR-26, got ${meta.decisionRegisterVersion ?? "(missing)"}`,
     };
   }
-  if (meta.supersedes !== "DR-24") {
+  if (meta.supersedes !== rules.supersedes) {
     return {
       ok: false,
       code: "D384_DR_SUPERSEDES",
-      message: `DR-25 must supersede DR-24, got ${meta.supersedes ?? "(missing)"}`,
+      message: `${meta.decisionRegisterVersion} must supersede ${rules.supersedes}, got ${meta.supersedes ?? "(missing)"}`,
     };
   }
   const d384Rows = collectDecisionRegisterIdRows(text, "D-384");
@@ -42210,7 +42315,7 @@ export function evaluateD384ProgrammeBaselineProgression(decision) {
     return {
       ok: false,
       code: "D384_MISSING",
-      message: "DR-25 must register CURRENT D-384 Tactical Closure and Pre-GTM Strategic Programme Baseline",
+      message: `${meta.decisionRegisterVersion} must register CURRENT D-384 Tactical Closure and Pre-GTM Strategic Programme Baseline`,
     };
   }
   if (d384Rows.length > 1) {
@@ -42225,7 +42330,7 @@ export function evaluateD384ProgrammeBaselineProgression(decision) {
     return {
       ok: false,
       code: "D384_MISSING",
-      message: "DR-25 must register CURRENT D-384 Tactical Closure and Pre-GTM Strategic Programme Baseline",
+      message: `${meta.decisionRegisterVersion} must register CURRENT D-384 Tactical Closure and Pre-GTM Strategic Programme Baseline`,
     };
   }
   if (row.status !== "CURRENT") {
@@ -42259,19 +42364,33 @@ export function evaluateD384ProgrammeBaselineProgression(decision) {
         "D-384 must explicitly preserve D-377/D-382/D-383, leave PD-2 unamended, and keep IMP-036K implementation unauthorized",
     };
   }
-  if (!/next ID \*\*D-385\*\*/.test(text)) {
+  const nextIdPattern = new RegExp(`next ID \\*\\*${rules.nextId}\\*\\*`);
+  if (!nextIdPattern.test(text)) {
     return {
       ok: false,
       code: "D384_NEXT_ID",
-      message: "DR-25 ID rules must advance next free decision ID to D-385 after D-384",
+      message: `${meta.decisionRegisterVersion} ID rules must advance next free decision ID to ${rules.nextId}`,
     };
   }
   if (/next ID \*\*D-384\*\*/.test(text)) {
     return {
       ok: false,
       code: "D384_NEXT_ID_STALE",
-      message: "DR-25 must not leave next free decision ID at D-384 after allocating D-384",
+      message: `${meta.decisionRegisterVersion} must not leave next free decision ID at D-384 after allocating D-384`,
     };
+  }
+  if (meta.decisionRegisterVersion === "DR-26" && /next ID \*\*D-385\*\*/.test(text)) {
+    return {
+      ok: false,
+      code: "D384_NEXT_ID_STALE",
+      message: "DR-26 must not leave next free decision ID at D-385 after allocating D-385/D-386",
+    };
+  }
+  if (rules.requireAdPf) {
+    const d385 = evaluateD385Current(text);
+    if (!d385.ok) return d385;
+    const d386 = evaluateD386Current(text);
+    if (!d386.ok) return d386;
   }
   const d383 = evaluateD383Current(text);
   if (!d383.ok) return d383;
@@ -42279,7 +42398,9 @@ export function evaluateD384ProgrammeBaselineProgression(decision) {
   if (!d382.ok) return d382;
   return {
     ok: true,
-    message: "D-384 / DR-25 programme baseline progression valid (next free ID D-385; D-383 CURRENT; D-382 AMENDED by D-383)",
+    message: rules.requireAdPf
+      ? "D-384 / DR-26 programme baseline progression valid (D-385/D-386 CURRENT; next free ID D-387; D-383 CURRENT; D-382 AMENDED by D-383)"
+      : "D-384 / DR-25 programme baseline progression valid (next free ID D-385; D-383 CURRENT; D-382 AMENDED by D-383)",
   };
 }
 
