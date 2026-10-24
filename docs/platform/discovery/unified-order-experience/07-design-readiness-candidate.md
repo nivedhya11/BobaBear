@@ -18,6 +18,8 @@ BINDING_CAPABILITY_ARCHITECTURE = docs/platform/capabilities/UOE-unified-order-e
 CONTENT_QA_STATUS = CONTENT_QA_PENDING
 WHATSAPP_META_TEMPLATES = NOT_INVENTED / PLATFORM_REGISTRY_INVENTORIED / META_BODY_NOT_ACCESSIBLE
 OWNER_DECISION_PACKAGE = docs/platform/discovery/unified-order-experience/14-design-qt-mi-owner-decision-package.md
+FOUNDER_DECISION_RECORD = docs/platform/discovery/unified-order-experience/15-founder-decision-record-and-gate-readiness-package.md
+PRIMARY_MICROCOPY_WORKING_BASELINE = FOUNDER_APPROVED (W2, 2026-10-24) — not Design Readiness PASS
 ```
 
 ## Readiness claim boundary

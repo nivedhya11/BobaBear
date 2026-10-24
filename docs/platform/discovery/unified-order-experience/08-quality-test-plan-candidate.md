@@ -17,6 +17,8 @@ SECURITY_NEGATIVE_AUTHORITY = docs/platform/capabilities/UOE-unified-order-exper
 NEGATIVE_SECURITY_REQUIREMENTS = 21
 ARCHITECTURE_CONTRACT = ARCH-UOE-LOCK-PROPOSAL-1
 OWNER_DECISION_PACKAGE = docs/platform/discovery/unified-order-experience/14-design-qt-mi-owner-decision-package.md
+FOUNDER_DECISION_RECORD = docs/platform/discovery/unified-order-experience/15-founder-decision-record-and-gate-readiness-package.md
+QT_01_TO_04_WORKING_DISPOSITION = RECORDED (W2) — finalization NOT_GRANTED
 EVIDENCE_STATUS_VOCABULARY = PLANNED | EXECUTED | BLOCKED_DR06 | PRESERVE_RED
 ```
 

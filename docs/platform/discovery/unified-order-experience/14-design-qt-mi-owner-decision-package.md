@@ -45,6 +45,12 @@ Wave authorization (packaging only — not gate PASS):
 [PR #424 comment 6380384569](https://github.com/nivedhya11/BobaBear/pull/424#issuecomment-6380384569)
 (“Founder-approved parallel execution wave — UOE owner and gate packaging”, 2026-10-24).
 
+**Decision recording (W2):** the Founder's working-baseline approval of the proposals below
+(`(A)+(B)` microcopy, WhatsApp on-wire NOT_APPROVED, MI-01…05, QT-01…04, DR06-B/C) is recorded in
+[`15-founder-decision-record-and-gate-readiness-package.md`](./15-founder-decision-record-and-gate-readiness-package.md).
+Row `Status` values in §1.2 below are the pre-decision values; the post-decision dispositions live
+in `15-…` §1.3. No gate PASS is granted by either document.
+
 ---
 
 ## 0. Walls (unchanged)

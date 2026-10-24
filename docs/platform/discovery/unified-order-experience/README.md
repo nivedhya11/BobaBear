@@ -56,6 +56,12 @@ DESIGN_READINESS = CANDIDATE_ONLY
 QUALITY_TEST_PLAN = PROPOSED_FOR_INDEPENDENT_REVIEW
 MEASUREMENT_PLAN = PROPOSED_FOR_INDEPENDENT_REVIEW
 OWNER_DECISION_PACKAGE = UOE-FOUNDER-DESIGN-QT-MI-GATE-PACKAGE-R2
+FOUNDER_DECISION_RECORD = UOE-FOUNDER-DECISION-RECORD-AND-GATE-READINESS-W2
+PRIMARY_IN_APP_MICROCOPY = FOUNDER_APPROVED_WORKING_BASELINE (2026-10-24; not a gate PASS)
+SECONDARY_MICROCOPY = CONTENT_QA_AT_TRANCHE_EXIT
+WHATSAPP_META_ON_WIRE = NOT_APPROVED
+ANALYTICS_OWNERSHIP_ROLES = RATIFIED (Founder interim; delegates NOT_NAMED)
+PRIMARY_CONVERSION_DENOMINATOR = CHECKOUT_STARTS
 DESIGN_READINESS_PASS = NOT_GRANTED
 UOE_QT_MI_FINALIZATION = NOT_GRANTED
 UOE_DR06_CHECKOUT_REMEDIATION = NOT_AUTHORIZED
@@ -92,7 +98,13 @@ Exact microcopy variants, WhatsApp Meta body evidence, Quality evidence finaliza
 instrumentation schema remain owned by Design Readiness / Content QA / Quality / Measurement.
 Owner-decision packaging for Founder ratification is in
 [`14-design-qt-mi-owner-decision-package.md`](./14-design-qt-mi-owner-decision-package.md)
-(`UOE_DESIGN_READINESS_PASS` / `UOE_QT_MI_FINALIZATION` remain **NOT_GRANTED**).
+(`UOE_DESIGN_READINESS_PASS` / `UOE_QT_MI_FINALIZATION` remain **NOT_GRANTED**). The Founder's
+W2 **working-baseline** approval of the proposed primary in-app microcopy, analytics ownership
+roles, and checkout-start denominator — and the NOT_APPROVED status of on-wire WhatsApp wording —
+is recorded in
+[`15-founder-decision-record-and-gate-readiness-package.md`](./15-founder-decision-record-and-gate-readiness-package.md),
+which also prepares the Design Readiness / Quality / Measurement gate records **for decision**
+without granting them.
 Provenance-storage choice, contract bounds, abuse/perf/privacy controls, and WhatsApp Meta
 template **assignment** are **LOCKED** in
 [`UOE-unified-order-experience.md`](../../capabilities/UOE-unified-order-experience.md)
@@ -129,7 +141,9 @@ does **not**:
 | Founder Product + Experience Gate | [PR #424 comment 6365686428](https://github.com/nivedhya11/BobaBear/pull/424#issuecomment-6365686428) |
 | Founder Fit PASS + Architecture Lock | [PR #424 comment 6371582324](https://github.com/nivedhya11/BobaBear/pull/424#issuecomment-6371582324) |
 | Founder Design/QT/MI packaging wave | [PR #424 comment 6380384569](https://github.com/nivedhya11/BobaBear/pull/424#issuecomment-6380384569) |
+| Founder W2 working-baseline approval (coordination record) | [GitHub #432](https://github.com/nivedhya11/BobaBear/issues/432) |
 | Owner decision package | [`14-design-qt-mi-owner-decision-package.md`](./14-design-qt-mi-owner-decision-package.md) |
+| Founder decision record + gate-readiness package | [`15-founder-decision-record-and-gate-readiness-package.md`](./15-founder-decision-record-and-gate-readiness-package.md) |
 | Binding capability architecture | [`../../capabilities/UOE-unified-order-experience.md`](../../capabilities/UOE-unified-order-experience.md) |
 | Reviewed Product/Experience head | `dbe0786280fac4ba80ba727c7510b8c23da69ed1` |
 | Reviewed Architecture contract head | `9a9e3f71789a4cce5141eb88b3ab606f72b2c54e` |
@@ -154,6 +168,7 @@ does **not**:
 | [`12-template-completeness-addendum.md`](./12-template-completeness-addendum.md) | Canonical PD-2/EXP-1 gate fields, slicing, assumptions, surface table |
 | [`13-architecture-lock-proposal.md`](./13-architecture-lock-proposal.md) | Historical Lock proposal provenance (superseded by capability architecture) |
 | [`14-design-qt-mi-owner-decision-package.md`](./14-design-qt-mi-owner-decision-package.md) | Founder Design/Content + WhatsApp inventory + Quality evidence + Measurement ownership + DR-06 corrective proposal (PASS NOT_GRANTED) |
+| [`15-founder-decision-record-and-gate-readiness-package.md`](./15-founder-decision-record-and-gate-readiness-package.md) | W2 record of Founder-approved working baseline (microcopy, WhatsApp NOT_APPROVED on-wire, analytics ownership roles, denominator, DR-06 obligations retained) + Design/Quality/Measurement gate records **for decision** + review lanes (no gate granted) |
 | [`../../capabilities/UOE-unified-order-experience.md`](../../capabilities/UOE-unified-order-experience.md) | **CURRENT** locked capability architecture |
 
 ## Provisional candidate identifiers

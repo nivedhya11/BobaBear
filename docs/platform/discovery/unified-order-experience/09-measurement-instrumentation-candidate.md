@@ -22,6 +22,9 @@ BINDING_CAPABILITY_ARCHITECTURE = docs/platform/capabilities/UOE-unified-order-e
 OWNER_DECISION_PACKAGE = docs/platform/discovery/unified-order-experience/14-design-qt-mi-owner-decision-package.md
 PROPOSED_PRODUCT_ANALYTICS_OWNER = FOUNDER_UNTIL_DELEGATED
 PROPOSED_COMMERCE_ANALYTICS_OWNER = FOUNDER_UNTIL_DELEGATED
+FOUNDER_DECISION_RECORD = docs/platform/discovery/unified-order-experience/15-founder-decision-record-and-gate-readiness-package.md
+OWNERSHIP_ROLES_AND_CHECKOUT_START_DENOMINATOR = RATIFIED_AS_WORKING_BASELINE (W2) — finalization NOT_GRANTED
+VENDOR_TRANSPORT_RETENTION_BASELINE = OWNER_DECISIONS_PENDING
 ```
 
 ## Business intent to observe
