@@ -74,7 +74,7 @@ record "docker_env" "UNVERIFIED" "docker CLI absent; rootless Podman only"
 # --- build ---
 echo "=== build base + C1 images ==="
 podman build --network=host -f docker/postgres/Dockerfile -t "${IMAGE_BASE}" .
-podman build --network=host -f docker/postgres/Dockerfile.c1-nonroot \
+podman build --network=host -f proof/pg-c1/Dockerfile.c1-nonroot \
   --build-arg "BASE_IMAGE=${IMAGE_BASE}" \
   -t "${IMAGE_C1}" .
 podman inspect "${IMAGE_C1}" --format 'Config.User={{.Config.User}}' | tee "${EVIDENCE_DIR}/image-user.txt"

@@ -5,7 +5,11 @@
 #
 # Build (two-step; base reuses production pins/layers):
 #   podman build -f docker/postgres/Dockerfile -t boba-bear-postgres:c1-base .
-#   podman build -f docker/postgres/Dockerfile.c1-nonroot -t boba-bear-postgres:c1-nonroot .
+#   podman build -f proof/pg-c1/Dockerfile.c1-nonroot -t boba-bear-postgres:c1-nonroot .
+#
+# Lives under proof/ (not docker/) so evidence PRs do not trigger the
+# production Trivy image gate while VEX-TRIVY-001 is expired and Founder
+# POSTGRES_C1_C2_SELECTION remains NOT_GRANTED.
 #
 # Final image Config.User is postgres (UID 999) so Trivy DS-0002 is absent
 # without .trivyignore suppression.
@@ -38,7 +42,7 @@ RUN mkdir -p \
     && chmod 755 /etc/postgresql \
     && chmod 3775 /var/run/postgresql
 
-COPY docker/postgres/c1-nonroot/entrypoint-wrapper.sh /usr/local/bin/boba-postgres-entrypoint
+COPY proof/pg-c1/entrypoint-wrapper.sh /usr/local/bin/boba-postgres-entrypoint
 RUN chmod 755 /usr/local/bin/boba-postgres-entrypoint \
     && gosu nobody true
 

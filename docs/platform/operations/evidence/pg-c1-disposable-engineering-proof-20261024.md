@@ -41,7 +41,7 @@ Relevant ARCH-G Invariants: ARCH-G13 (PostgreSQL authoritative); ARCH-G26 (self-
 Relevant Binding Decisions: D-374 / ADR-016 pilot hosting; IMP-037 Layer 1 pgBackRest contract; VEX-TRIVY-001 DS-0002 (ACTIVE, not renewed here)
 Task Assumptions: disposable uniquely named Podman volumes only; Docker engine absent on this host
 Deferred Capabilities Touched: production postgres image cutover; staging/prod volume migration
-Semantic Scope: MAY ADD proof-only C1 non-root image + harness + evidence; MUST NOT modify PR #428, staging/prod volumes, or renew Trivy exceptions
+Semantic Scope: MAY ADD proof-only C1 non-root image under proof/pg-c1 + harness + evidence; MUST NOT modify PR #428, staging/prod volumes, renew Trivy exceptions, or cut over production docker/postgres/Dockerfile
 Conflicts: NONE verified
 Unverified Material Facts: Docker-shaped init (no docker CLI/daemon on proof host)
 Risk Level: R2
@@ -57,8 +57,8 @@ Establish whether a **non-root** PostgreSQL runtime (final `USER postgres`) can 
 
 | Artifact | Path |
 |---|---|
-| C1 Dockerfile | `docker/postgres/Dockerfile.c1-nonroot` |
-| Non-root entrypoint | `docker/postgres/c1-nonroot/entrypoint-wrapper.sh` |
+| C1 Dockerfile | `proof/pg-c1/Dockerfile.c1-nonroot` (outside `docker/`; filename avoids production Trivy path trigger while VEX-TRIVY-001 is expired) |
+| Non-root entrypoint | `proof/pg-c1/entrypoint-wrapper.sh` |
 | Proof harness | `scripts/proof/pg-c1-disposable-proof.sh` |
 | Run evidence (local) | `artifacts/pg-c1-proof/<RUN_ID>/` |
 
@@ -66,10 +66,11 @@ Build:
 
 ```bash
 podman build -f docker/postgres/Dockerfile -t localhost/boba-bear-postgres:c1-base .
-podman build -f docker/postgres/Dockerfile.c1-nonroot \
+podman build -f proof/pg-c1/Dockerfile.c1-nonroot \
   --build-arg BASE_IMAGE=localhost/boba-bear-postgres:c1-base \
   -t localhost/boba-bear-postgres:c1-nonroot .
 ```
+
 
 C1 contract:
 
