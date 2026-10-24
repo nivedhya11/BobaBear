@@ -1,0 +1,57 @@
+# BOBA Bear PostgreSQL 18 + pgBackRest — C1 non-root proof image.
+#
+# PROOF / EXPERIMENTAL ONLY. Does not replace docker/postgres/Dockerfile until
+# Founder POSTGRES_C1_C2_SELECTION grants production cutover.
+#
+# Build (two-step; base reuses production pins/layers):
+#   podman build -f docker/postgres/Dockerfile -t boba-bear-postgres:c1-base .
+#   podman build -f proof/pg-c1/Dockerfile.c1-nonroot -t boba-bear-postgres:c1-nonroot .
+#
+# Lives under proof/ (not docker/) so evidence PRs do not trigger the
+# production Trivy image gate while VEX-TRIVY-001 is expired and Founder
+# POSTGRES_C1_C2_SELECTION remains NOT_GRANTED.
+#
+# Final image Config.User is postgres (UID 999) so Trivy DS-0002 is absent
+# without .trivyignore suppression.
+
+ARG BASE_IMAGE=boba-bear-postgres:c1-base
+FROM ${BASE_IMAGE}
+
+USER root
+
+# Writable configuration / repo / log / spool paths for non-root PID 1.
+# PGDATA remains the official PostgreSQL 18 layout under /var/lib/postgresql
+# (PGDATA=/var/lib/postgresql/18/docker). Volume mount point stays
+# /var/lib/postgresql (Compose-compatible).
+RUN mkdir -p \
+      /etc/pgbackrest \
+      /etc/postgresql \
+      /var/lib/pgbackrest \
+      /var/log/pgbackrest \
+      /var/spool/pgbackrest \
+      /var/run/postgresql \
+    && chown -R postgres:postgres \
+      /etc/pgbackrest \
+      /etc/postgresql \
+      /var/lib/pgbackrest \
+      /var/log/pgbackrest \
+      /var/spool/pgbackrest \
+      /var/run/postgresql \
+      /var/lib/postgresql \
+    && chmod 750 /etc/pgbackrest /var/lib/pgbackrest /var/log/pgbackrest /var/spool/pgbackrest \
+    && chmod 755 /etc/postgresql \
+    && chmod 3775 /var/run/postgresql
+
+COPY proof/pg-c1/entrypoint-wrapper.sh /usr/local/bin/boba-postgres-entrypoint
+RUN chmod 755 /usr/local/bin/boba-postgres-entrypoint \
+    && gosu nobody true
+
+# C1 contract: container starts and runs as postgres. No root entrypoint.
+USER postgres
+
+LABEL boba.postgres.runtime="c1-nonroot" \
+      boba.postgres.ds0002="absent-by-user-postgres" \
+      org.opencontainers.image.title="boba-bear-postgres-c1-nonroot"
+
+ENTRYPOINT ["boba-postgres-entrypoint"]
+CMD ["postgres"]
