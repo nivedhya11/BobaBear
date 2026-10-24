@@ -79,3 +79,8 @@ next-env.d.ts
 
 # IMP-037 local/disposable recovery evidence (operator-owned; never commit)
 .recovery-evidence/
+
+# PG-C1 local proof runs (image tars + logs). Committed evidence lives under
+# docs/platform/operations/evidence/pg-c1-*
+/artifacts/pg-c1-proof/
+
