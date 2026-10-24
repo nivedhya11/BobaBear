@@ -277,7 +277,7 @@
     "react-dom": "19.3.0",
     "server-only": "0.0.1",
     "tailwind-merge": "3.7.0",
-    "zod": "4.6.7"
+    "zod": "4.4.3"
   },
   "overrides": {
     "lodash": "4.18.1",
@@ -291,9 +291,7 @@
     },
     "@tailwindcss/postcss": {
       "postcss": "8.5.26"
-    },
-    "undici@7": "7.30.1",
-    "undici@8": "8.12.2"
+    }
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
