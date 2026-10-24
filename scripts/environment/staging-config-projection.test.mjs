@@ -14,6 +14,8 @@ const adapter = path.join(repositoryRoot, "scripts", "environment", "staging-con
 
 const SECRET = "fixture-secret-DO-NOT-PRINT-9f3a7c";
 const PASSWORD = "fixture-db-password-DO-NOT-PRINT-51b0";
+const DB_HOST = "fixture-db-host-do-not-print.invalid";
+const DB_HOST_PATTERN = new RegExp(DB_HOST.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
 
 function runAdapter(envDir) {
   const stdout = execFileSync(process.execPath, ["--import", "tsx", adapter, "--json", "--env-dir", envDir, "--repository-root", repositoryRoot], {
@@ -25,7 +27,7 @@ function runAdapter(envDir) {
 }
 
 function writeStack(dir, { environment, origin, sslMode = "verify-full", extra = "" }) {
-  const dbUrl = `postgresql://app_user:${PASSWORD}@db.internal.example.com/boba_bear`;
+  const dbUrl = `postgresql://app_user:${PASSWORD}@${DB_HOST}/boba_bear`;
   writeFileSync(
     path.join(dir, ".env.runtime.docker.local"),
     [
@@ -45,7 +47,7 @@ function writeStack(dir, { environment, origin, sslMode = "verify-full", extra =
       `BOBA_BEAR_PUBLIC_ORIGIN=${origin}`,
       "BOBA_BEAR_RELEASE=rel-fixture",
       `BOBA_BEAR_DATABASE_URL=${dbUrl}`,
-      `BOBA_BEAR_DATABASE_MIGRATION_URL=postgresql://migrator:${PASSWORD}@db.internal.example.com/boba_bear`,
+      `BOBA_BEAR_DATABASE_MIGRATION_URL=postgresql://migrator:${PASSWORD}@${DB_HOST}/boba_bear`,
       `BOBA_BEAR_DATABASE_SSL_MODE=${sslMode}`,
       "",
     ].join("\n"),
@@ -85,7 +87,7 @@ test("adapter: strict staging stack validates for every service and never emits 
     assert.equal(parsed.schema, CONFIG_PROJECTION_SCHEMA);
     assert.equal(stdout.includes(SECRET), false, "secret value must not appear in adapter output");
     assert.equal(stdout.includes(PASSWORD), false, "database password must not appear in adapter output");
-    assert.equal(stdout.includes("db.internal.example.com"), false, "connection string must not appear in adapter output");
+    assert.doesNotMatch(stdout, DB_HOST_PATTERN, "database host must not appear in adapter output");
     for (const projection of parsed.projections) {
       assert.equal(isSecretSafeProjection(projection), true, projection.service);
       assert.equal(projection.environment, "staging");
@@ -124,7 +126,7 @@ test("adapter: strict staging violations surface as value-free issues (HTTP orig
     assert.ok(keys.includes("BOBA_BEAR_DATABASE_SSL_MODE"), keys.join(","));
     for (const issue of runtime.issues) {
       assert.equal(Object.keys(issue).sort().join(","), "key,message");
-      assert.equal(/http:\/\/staging|example\.com|fixture/.test(issue.message), false, issue.message);
+      assert.equal(/http:\/\/staging|do-not-print|fixture/.test(issue.message), false, issue.message);
     }
     const bound = bindConfigurationEvidence({ provenance: liveProvenance("t"), projections: parsed.projections, requiredEnvFilesPresent: true, diagnostic: { enabled: false, projectionKnown: true, conflict: false } });
     assert.equal(bound.outcome, BINDER_OUTCOME.BLOCKED);
