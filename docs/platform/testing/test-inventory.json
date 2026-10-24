@@ -31,10 +31,10 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2332,
-    "executableTestFiles": 528,
+    "trackedPathsConsidered": 2338,
+    "executableTestFiles": 532,
     "sourceTestFiles": 160,
-    "testsTreeExecutableFiles": 280,
+    "testsTreeExecutableFiles": 284,
     "scriptTestFiles": 88,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
@@ -47,7 +47,7 @@
     "packageCoverageCommands": 1,
     "packageInventoryCommands": 2,
     "ciWorkflowFiles": 4,
-    "ciValidationSteps": 131,
+    "ciValidationSteps": 133,
     "protectedEvidenceTrackedFiles": 3,
     "archiveTrackedFiles": 92
   },
@@ -257,7 +257,9 @@
     "tests/administration/commercial-money.test.ts",
     "tests/administration/commercial-types.test.ts",
     "tests/administration/imp036g-proofs.integration.test.ts",
+    "tests/administration/imp036j-381-create-promotion.diagnostic.integration.test.ts",
     "tests/administration/portal-session.integration.test.ts",
+    "tests/administration/promotion-readiness.test.ts",
     "tests/assortment-availability/assortment-consequence-preview.test.ts",
     "tests/assortment-availability/assortment-revision-concurrency.test.ts",
     "tests/assortment-availability/assortment-rules.test.ts",
@@ -291,10 +293,12 @@
     "tests/checkout-security/checkout.security.test.ts",
     "tests/checkout/checkout.domain.test.ts",
     "tests/checkout/checkout.pickup.domain.test.ts",
+    "tests/checkout/imp036j-385-line-presentation-options.fixture.test.ts",
     "tests/checkout/imp036j-391-equal-payable-repricing.diagnostic.test.ts",
     "tests/checkout/imp036j-391b-prepare-observer-lazy.diagnostic.test.ts",
     "tests/checkout/imp036j-391b-prepare-observer.diagnostic.test.ts",
     "tests/checkout/imp036j-coupon-recovery.domain.test.ts",
+    "tests/checkout/imp036j-gtm-committed-cart-authority.domain.test.ts",
     "tests/checkout/legacy-outlet-price-book-retirement.domain.test.ts",
     "tests/checkout/parse-fulfilment-input.test.ts",
     "tests/checkout/scheduled-fulfilment.domain.test.ts",
@@ -1116,6 +1120,10 @@
           "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/payment/gtm-391-payment-review-loop.domain.test.ts"
         },
         {
+          "name": "IMP-036J GTM coupon authority and #385 line-presentation evidence",
+          "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/checkout/imp036j-gtm-committed-cart-authority.domain.test.ts\ntests/checkout/imp036j-385-line-presentation-options.fixture.test.ts"
+        },
+        {
           "name": "Install Playwright Chromium for IMP-036J T5 responsive proof",
           "run": "npx playwright install --with-deps chromium"
         },
@@ -1302,6 +1310,10 @@
         {
           "name": "Administration tests",
           "run": "npm run test:administration"
+        },
+        {
+          "name": "IMP-036J #381 create-promotion diagnostic",
+          "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/administration/imp036j-381-create-promotion.diagnostic.integration.test.ts"
         },
         {
           "name": "Operations HTTP tests",
@@ -6910,6 +6922,24 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "tests/administration/imp036j-381-create-promotion.diagnostic.integration.test.ts",
+      "runner": "vitest",
+      "domain": "administration",
+      "testType": "integration",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:administration"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "4-integration",
+        "5-database-integration"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "tests/administration/portal-session.integration.test.ts",
       "runner": "vitest",
       "domain": "administration",
@@ -6924,6 +6954,25 @@
       "test1Layers": [
         "4-integration",
         "5-database-integration"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/administration/promotion-readiness.test.ts",
+      "runner": "vitest",
+      "domain": "administration",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:administration",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
       ],
       "classificationConfidence": "HEURISTIC"
     },
@@ -7498,6 +7547,23 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "tests/checkout/imp036j-385-line-presentation-options.fixture.test.ts",
+      "runner": "vitest",
+      "domain": "checkout",
+      "testType": "unit-or-domain",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:checkout"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "tests/checkout/imp036j-391-equal-payable-repricing.diagnostic.test.ts",
       "runner": "vitest",
       "domain": "checkout",
@@ -7564,6 +7630,24 @@
         "1-unit",
         "3-domain-use-case",
         "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/checkout/imp036j-gtm-committed-cart-authority.domain.test.ts",
+      "runner": "vitest",
+      "domain": "checkout",
+      "testType": "unit-or-domain",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:checkout"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
       ],
       "classificationConfidence": "HEURISTIC"
     },

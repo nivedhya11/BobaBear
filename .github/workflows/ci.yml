@@ -185,6 +185,13 @@ jobs:
           --config vitest.database.config.mts
           tests/payment/gtm-391-payment-review-loop.domain.test.ts
 
+      - name: IMP-036J GTM coupon authority and #385 line-presentation evidence
+        run: >-
+          node scripts/run-vitest.mjs run
+          --config vitest.database.config.mts
+          tests/checkout/imp036j-gtm-committed-cart-authority.domain.test.ts
+          tests/checkout/imp036j-385-line-presentation-options.fixture.test.ts
+
       - name: Install Playwright Chromium for IMP-036J T5 responsive proof
         run: npx playwright install --with-deps chromium
 
@@ -494,6 +501,12 @@ jobs:
 
       - name: Administration tests
         run: npm run test:administration
+
+      - name: IMP-036J #381 create-promotion diagnostic
+        run: >-
+          node scripts/run-vitest.mjs run
+          --config vitest.database.config.mts
+          tests/administration/imp036j-381-create-promotion.diagnostic.integration.test.ts
 
       - name: Operations HTTP tests
         run: npm run test:operations:http
