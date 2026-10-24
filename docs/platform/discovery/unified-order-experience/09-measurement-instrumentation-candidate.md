@@ -19,6 +19,9 @@ NO_INVENTED_TELEMETRY_VENDOR = YES
 NO_RUNTIME_SCHEMA_CHANGE = YES
 ARCHITECTURE_CONTRACT = ARCH-UOE-LOCK-PROPOSAL-1
 BINDING_CAPABILITY_ARCHITECTURE = docs/platform/capabilities/UOE-unified-order-experience.md
+OWNER_DECISION_PACKAGE = docs/platform/discovery/unified-order-experience/14-design-qt-mi-owner-decision-package.md
+PROPOSED_PRODUCT_ANALYTICS_OWNER = FOUNDER_UNTIL_DELEGATED
+PROPOSED_COMMERCE_ANALYTICS_OWNER = FOUNDER_UNTIL_DELEGATED
 ```
 
 ## Business intent to observe
@@ -91,21 +94,27 @@ Exact vendor, final schema, retention policy, and analytics-owner approval remai
 Never emit `evaluation_context_digest`, protected provenance fields, raw PAN, or exact street
 (capability architecture §4.3; exact street forbidden in analytics).
 
+**Concrete ownership / identity / retention / baseline proposals** for Founder ratification:
+[`14-design-qt-mi-owner-decision-package.md`](./14-design-qt-mi-owner-decision-package.md) §4.
+Until ratified: Product analytics owner = Founder (or delegate) for UX funnel events; Commerce
+analytics owner = Founder (or delegate) for checkout-start → payment-success; IMP-036J authority
+preserved for CHECKOUT fingerprint-only `order_commercial_state_change`.
+
 | Event | Trigger | Unit / grain | Attribution | Deduplication | Denominator use | Owner | Data classification | Retention decision | Status |
 |---|---|---|---|---|---|---|---|---|---|
-| `order_context_bar_view` | Bar visible | page view / surface | surface=menu\|cart\|checkout | Once per surface per session (candidate) | Exposure | Product analytics | Operational UX | DECISION_REQUIRED | CANDIDATE |
-| `order_method_intent_set` | Delivery/Takeaway selected | intent change | mode | Dedupe identical consecutive mode | Mode-correction KPI | Product analytics | Operational UX | DECISION_REQUIRED | CANDIDATE |
-| `order_place_state` | orientation \| missing \| proposed \| confirmed | place transition | place_kind | Per transition | Place funnel | Product analytics | Coarse place only | DECISION_REQUIRED | CANDIDATE |
-| `order_takeaway_eligibility_result` | Server eligibility returned | request result | selection_policy; outlet_count_bucket; timing_intent; cart_state | Per request id / generation | Discovery KPI | Product analytics | No hierarchy/profile internals | DECISION_REQUIRED | CANDIDATE |
-| `order_cart_evaluate_impact` | Mode-sensitive evaluate changes presented quote | evaluate occurrence | reason_class; reused_checkout | Per matching context key result | Impact KPI — **not** conversion denominator | Product analytics | No digest/money fingerprint | DECISION_REQUIRED | CANDIDATE |
-| `order_cart_evaluate_reuse` | Open Checkout quote reused | reuse hit | checkout_mode | Per checkout revision | Integrity / GP-02 | Product analytics | Mode only | DECISION_REQUIRED | CANDIDATE |
-| `order_timing_intent_set` | Now/Schedule | timing intent | timing; confirmation=unconfirmed\|confirmed | Per change | Schedule funnel | Product analytics | Operational UX | DECISION_REQUIRED | CANDIDATE |
-| `order_schedule_window_selected` | Server window chosen | window select | day_bucket; checkout_bound=true | Per checkout window bind | Schedule confirm rate | Product analytics | No raw window secrets | DECISION_REQUIRED | CANDIDATE |
-| `order_impact_banner_shown` | Fee/offer/availability change UI | banner impression | reason_class | Once per reason_class per context key | Impact → pay | Product analytics | Coarse reason | DECISION_REQUIRED | CANDIDATE |
-| `order_pending_payment_guard` | Browse blocked from mutating pending | guard fire | — | Once per pending checkout episode | Guardrail | Product analytics | No payment tokens | DECISION_REQUIRED | CANDIDATE |
-| `order_checkout_start` | Checkout journey start | checkout id | entry_surface | Once per checkout id | **Primary denominator** | Commerce analytics | Journey id | DECISION_REQUIRED | CANDIDATE |
-| `order_payment_success` | Successful payment | payment / order id | checkout id | Once per successful pay | **Primary numerator** | Commerce analytics | Existing payment analytics authority | DECISION_REQUIRED | CANDIDATE |
-| `order_commercial_state_change` | CHECKOUT commercial state change (existing) | checkout evaluation occurrence | fingerprint-based | Existing IMP-036J semantics | CHECKOUT journey — **unchanged** | Existing measurement | Existing | PRESERVE | LOCKED_SEMANTICS |
+| `order_context_bar_view` | Bar visible | page view / surface | surface=menu\|cart\|checkout | Once per surface per session (candidate) | Exposure | Product analytics (Founder until delegated) | Operational UX | DECISION_REQUIRED (90d/13mo candidate in `14-…`) | CANDIDATE |
+| `order_method_intent_set` | Delivery/Takeaway selected | intent change | mode | Dedupe identical consecutive mode | Mode-correction KPI | Product analytics (Founder until delegated) | Operational UX | DECISION_REQUIRED | CANDIDATE |
+| `order_place_state` | orientation \| missing \| proposed \| confirmed | place transition | place_kind | Per transition | Place funnel | Product analytics (Founder until delegated) | Coarse place only | DECISION_REQUIRED | CANDIDATE |
+| `order_takeaway_eligibility_result` | Server eligibility returned | request result | selection_policy; outlet_count_bucket; timing_intent; cart_state | Per request id / generation | Discovery KPI | Product analytics (Founder until delegated) | No hierarchy/profile internals | DECISION_REQUIRED | CANDIDATE |
+| `order_cart_evaluate_impact` | Mode-sensitive evaluate changes presented quote | evaluate occurrence | reason_class; reused_checkout | Per matching context key result | Impact KPI — **not** conversion denominator | Product analytics (Founder until delegated) | No digest/money fingerprint | DECISION_REQUIRED | CANDIDATE |
+| `order_cart_evaluate_reuse` | Open Checkout quote reused | reuse hit | checkout_mode | Per checkout revision | Integrity / GP-02 | Product analytics (Founder until delegated) | Mode only | DECISION_REQUIRED | CANDIDATE |
+| `order_timing_intent_set` | Now/Schedule | timing intent | timing; confirmation=unconfirmed\|confirmed | Per change | Schedule funnel | Product analytics (Founder until delegated) | Operational UX | DECISION_REQUIRED | CANDIDATE |
+| `order_schedule_window_selected` | Server window chosen | window select | day_bucket; checkout_bound=true | Per checkout window bind | Schedule confirm rate | Product analytics (Founder until delegated) | No raw window secrets | DECISION_REQUIRED | CANDIDATE |
+| `order_impact_banner_shown` | Fee/offer/availability change UI | banner impression | reason_class | Once per reason_class per context key | Impact → pay | Product analytics (Founder until delegated) | Coarse reason | DECISION_REQUIRED | CANDIDATE |
+| `order_pending_payment_guard` | Browse blocked from mutating pending | guard fire | — | Once per pending checkout episode | Guardrail | Product analytics (Founder until delegated) | No payment tokens | DECISION_REQUIRED | CANDIDATE |
+| `order_checkout_start` | Checkout journey start | checkout id | entry_surface | Once per checkout id | **Primary denominator** | Commerce analytics (Founder until delegated) | Journey id | DECISION_REQUIRED | CANDIDATE |
+| `order_payment_success` | Successful payment | payment / order id | checkout id | Once per successful pay | **Primary numerator** | Commerce analytics (Founder until delegated) | Existing payment analytics authority | DECISION_REQUIRED | CANDIDATE |
+| `order_commercial_state_change` | CHECKOUT commercial state change (existing) | checkout evaluation occurrence | fingerprint-based | Existing IMP-036J semantics | CHECKOUT journey — **unchanged** | Existing IMP-036J measurement | Existing | PRESERVE | LOCKED_SEMANTICS |
 
 ---
 

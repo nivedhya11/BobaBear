@@ -16,6 +16,8 @@ IMPLEMENTATION_AUTHORIZED = NO
 SECURITY_NEGATIVE_AUTHORITY = docs/platform/capabilities/UOE-unified-order-experience.md §4.4
 NEGATIVE_SECURITY_REQUIREMENTS = 21
 ARCHITECTURE_CONTRACT = ARCH-UOE-LOCK-PROPOSAL-1
+OWNER_DECISION_PACKAGE = docs/platform/discovery/unified-order-experience/14-design-qt-mi-owner-decision-package.md
+EVIDENCE_STATUS_VOCABULARY = PLANNED | EXECUTED | BLOCKED_DR06 | PRESERVE_RED
 ```
 
 ## Proof strategy
@@ -128,9 +130,17 @@ AS_WITH_CHECKOUT_COMPOSITION_DEPENDENCY = AS-08 (Checkout list), AS-09/AS-33 (Ch
   AS-34, AS-35, AS-36, AS-37, AS-41
 INTERACTION_AND_TEST_SPEC = AUTHORIZED_IN_CANDIDATE_DOCS
 PASSING_IMPLEMENTATION_EVIDENCE = BLOCKED_UNTIL_UOE_DR_06_REMEDIATION_AUTHORIZED
+PRESERVE_RED_BEFORE_REMEDIATION = YES
 PREFERRED_VEHICLE = SEPARATELY_SCOPED_CORRECTIVE
-FOUNDER_DECIDES = keep blocked until corrective OR explicitly defer those AS from V1 exit
+SMALLEST_CORRECTIVE_PROPOSAL = 14-design-qt-mi-owner-decision-package.md §5
+FOUNDER_DECIDES = keep blocked until corrective (RECOMMENDED) OR explicit deferral language that
+  still retains the AS obligation — never silent delete to obtain PASS
 ```
+
+Acceptance rollup (Contracts A–D, future vs executed, payment-prepare non-claim) is finalized for
+Founder/independent review in
+[`14-design-qt-mi-owner-decision-package.md`](./14-design-qt-mi-owner-decision-package.md) §3.
+Every AS/negative row above remains **PLANNED** under this package (`EXECUTED = NONE`).
 
 ---
 

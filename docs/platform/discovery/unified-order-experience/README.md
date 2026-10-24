@@ -55,6 +55,10 @@ PER_PROCESS_RATE_LIMIT_RESIDUAL = ACCEPTED_FOR_V1_PILOT
 DESIGN_READINESS = CANDIDATE_ONLY
 QUALITY_TEST_PLAN = PROPOSED_FOR_INDEPENDENT_REVIEW
 MEASUREMENT_PLAN = PROPOSED_FOR_INDEPENDENT_REVIEW
+OWNER_DECISION_PACKAGE = UOE-FOUNDER-DESIGN-QT-MI-GATE-PACKAGE-R2
+DESIGN_READINESS_PASS = NOT_GRANTED
+UOE_QT_MI_FINALIZATION = NOT_GRANTED
+UOE_DR06_CHECKOUT_REMEDIATION = NOT_AUTHORIZED
 VARIANT = PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
 PROVENANCE_STORAGE_DECISION = ADDITIVE_NULLABLE_CONTEXT_FIELDS_PLUS_SERVER_CONTEXT_DIGEST
 IMPLEMENTATION_AUTHORIZED = NO
@@ -84,9 +88,13 @@ Design Readiness PASS, implementation authorization, merge, and deploy remain **
 | Architecture Fit | **PASS** — `PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1` at `9a9e3f717…` (Founder 2026-10-23) |
 | Architecture Lock | **APPROVED** — `ARCH-UOE-LOCK-PROPOSAL-1`; per-process rate-limit residual **ACCEPTED_FOR_V1_PILOT** |
 
-Exact microcopy variants and instrumentation schema remain owned by Design Readiness / Content QA /
-Quality and Measurement finalization. Provenance-storage choice, contract bounds, abuse/perf/
-privacy controls, and WhatsApp Meta template **assignment** are **LOCKED** in
+Exact microcopy variants, WhatsApp Meta body evidence, Quality evidence finalization, and
+instrumentation schema remain owned by Design Readiness / Content QA / Quality / Measurement.
+Owner-decision packaging for Founder ratification is in
+[`14-design-qt-mi-owner-decision-package.md`](./14-design-qt-mi-owner-decision-package.md)
+(`UOE_DESIGN_READINESS_PASS` / `UOE_QT_MI_FINALIZATION` remain **NOT_GRANTED**).
+Provenance-storage choice, contract bounds, abuse/perf/privacy controls, and WhatsApp Meta
+template **assignment** are **LOCKED** in
 [`UOE-unified-order-experience.md`](../../capabilities/UOE-unified-order-experience.md)
 (historical proposal provenance:
 [`13-architecture-lock-proposal.md`](./13-architecture-lock-proposal.md)). None may change the
@@ -120,6 +128,8 @@ does **not**:
 | Experience Debt Register | [`../../EXPERIENCE-DEBT-REGISTER.md`](../../EXPERIENCE-DEBT-REGISTER.md) (`auditStatus=NOT_PERFORMED`) |
 | Founder Product + Experience Gate | [PR #424 comment 6365686428](https://github.com/nivedhya11/BobaBear/pull/424#issuecomment-6365686428) |
 | Founder Fit PASS + Architecture Lock | [PR #424 comment 6371582324](https://github.com/nivedhya11/BobaBear/pull/424#issuecomment-6371582324) |
+| Founder Design/QT/MI packaging wave | [PR #424 comment 6380384569](https://github.com/nivedhya11/BobaBear/pull/424#issuecomment-6380384569) |
+| Owner decision package | [`14-design-qt-mi-owner-decision-package.md`](./14-design-qt-mi-owner-decision-package.md) |
 | Binding capability architecture | [`../../capabilities/UOE-unified-order-experience.md`](../../capabilities/UOE-unified-order-experience.md) |
 | Reviewed Product/Experience head | `dbe0786280fac4ba80ba727c7510b8c23da69ed1` |
 | Reviewed Architecture contract head | `9a9e3f71789a4cce5141eb88b3ab606f72b2c54e` |
@@ -143,6 +153,7 @@ does **not**:
 | [`11-gate-disposition-founder-decision-record.md`](./11-gate-disposition-founder-decision-record.md) | Gate matrix + Founder decision record |
 | [`12-template-completeness-addendum.md`](./12-template-completeness-addendum.md) | Canonical PD-2/EXP-1 gate fields, slicing, assumptions, surface table |
 | [`13-architecture-lock-proposal.md`](./13-architecture-lock-proposal.md) | Historical Lock proposal provenance (superseded by capability architecture) |
+| [`14-design-qt-mi-owner-decision-package.md`](./14-design-qt-mi-owner-decision-package.md) | Founder Design/Content + WhatsApp inventory + Quality evidence + Measurement ownership + DR-06 corrective proposal (PASS NOT_GRANTED) |
 | [`../../capabilities/UOE-unified-order-experience.md`](../../capabilities/UOE-unified-order-experience.md) | **CURRENT** locked capability architecture |
 
 ## Provisional candidate identifiers

@@ -95,9 +95,9 @@ REFERENCE_CANDIDATE_2_HEAD = 5a4583eba34dff93082c49a1e0edce1efce4d07c
 | Architecture Fit PASS | **PASS** | Founder 2026-10-23; variant `PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1`; reviewed HEAD `9a9e3f717…` |
 | Architecture Lock | **YES / ARCHITECTURE_LOCKED** | Contract `ARCH-UOE-LOCK-PROPOSAL-1`; binding path `capabilities/UOE-unified-order-experience.md` |
 | Per-process rate-limit residual | **ACCEPTED_FOR_V1_PILOT** | Founder Lock; multi-instance must reassess |
-| Design Readiness | NOT_PERFORMED | Candidate only |
-| Quality / Test Plan | NOT_PERFORMED | Reviewable draft `QT-UOE-CANDIDATE-3` |
-| Measurement / Instrumentation | NOT_PERFORMED | Reviewable draft `MI-UOE-CANDIDATE-3` (X3 required before impl auth) |
+| Design Readiness | NOT_PERFORMED | Candidate only; owner package `14-…` (`UOE-FOUNDER-DESIGN-QT-MI-GATE-PACKAGE-R2`); **PASS NOT_GRANTED** |
+| Quality / Test Plan | NOT_PERFORMED | Reviewable draft `QT-UOE-CANDIDATE-3` + `14-…` §3 evidence matrix; **finalization NOT_GRANTED** |
+| Measurement / Instrumentation | NOT_PERFORMED | Reviewable draft `MI-UOE-CANDIDATE-3` + `14-…` §4 ownership proposal; **finalization NOT_GRANTED** |
 | Implementation authorization | NOT_PERFORMED | STOP — requires Design Readiness + plans + UOE-DR-01 |
 | Future IMP identity / activation | **NOT_ALLOCATED / NOT_AUTHORIZED** | UOE-DR-01 deferred; D-383 / IMP-036K unchanged |
 | Founder Functional + Experience UAT | NOT_PERFORMED | After implementation |
@@ -113,9 +113,11 @@ REFERENCE_CANDIDATE_2_HEAD = 5a4583eba34dff93082c49a1e0edce1efce4d07c
 6. CART provenance storage choice — **LOCKED** in capability architecture §2 (`ADDITIVE_NULLABLE_CONTEXT_FIELDS_PLUS_SERVER_CONTEXT_DIGEST`); schema migration **not** authorized (AS-32 / AS-46)
 7. Pre-checkout eligibility distinct empty/no-cart states (GP-03) — contract **locked**, not implemented
 8. Timing-step Now disable uses pickup-options `nowEligible` — contract **locked**, not implemented
-9. WhatsApp DR-04 Meta template body-vs-variable — **LOCKED ASSIGNMENT** Content QA + Design Readiness (capability architecture §5); no invented Meta templates; WhatsApp remains optional/noop-safe
+9. WhatsApp DR-04 Meta template body-vs-variable — **LOCKED ASSIGNMENT** Content QA + Design Readiness (capability architecture §5); platform registry inventoried in `14-…` §2; Meta bodies `NOT_ACCESSIBLE` in-repo; no invented Meta templates; WhatsApp remains optional/noop-safe
 10. Abuse limits / performance budgets / privacy / negative security tests — **LOCKED** in capability architecture §4; Quality finalization pending; per-process residual **ACCEPTED_FOR_V1_PILOT**
 11. UOE-DR-01 future IMP identity / sequencing — **DEFERRED** (blocks implementation authorization)
+12. Design/Content/Quality/Measurement owner decisions — packaged in [`14-design-qt-mi-owner-decision-package.md`](./14-design-qt-mi-owner-decision-package.md) for Founder ratification; gates remain NOT_GRANTED
+13. UOE-DR-06 smallest corrective proposal — `14-…` §5; remediation still **NOT_AUTHORIZED**
 
 ## C. Founder decisions — recorded dispositions
 
@@ -205,7 +207,9 @@ This candidate package must not be read as authority to change:
 2. ~~Independent Architecture Fit evaluation recommendation~~ **DONE** (`PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1`)
 3. ~~Architecture Lock proposal (decision-ready)~~ **DONE**
 4. ~~Founder Architecture Fit PASS + Architecture Lock~~ **RECORDED** (2026-10-23; HEAD `9a9e3f717…`)
-5. Design Readiness → Quality / Measurement plans → UOE-DR-01 identity when Founder allocates
-6. Separately: governed remediation vehicle for ACCEPTED_CAPABILITY_CONFORMANCE_DEFECT (Checkout composition) after urgent payment work — **not authorized by this package**
+5. ~~Owner-decision packaging for Design / Quality / Measurement~~ **PACKAGED** in `14-…` (wave 2026-10-24) — **PASS / finalization NOT_GRANTED**
+6. Independent Design / Quality / Measurement review of `14-…` + candidates → Founder Design Readiness decision
+7. Quality / Measurement finalization → UOE-DR-01 identity when Founder allocates
+8. Separately: governed remediation vehicle for ACCEPTED_CAPABILITY_CONFORMANCE_DEFECT (Checkout composition) after urgent payment work — proposal in `14-…` §5; **not authorized by this package**
 
 **STOP before Design Readiness grant, merge, implementation, or deployment.**

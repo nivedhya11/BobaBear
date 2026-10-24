@@ -16,7 +16,8 @@ IMPLEMENTATION_AUTHORIZED = NO
 ARCHITECTURE_CONTRACT = ARCH-UOE-LOCK-PROPOSAL-1
 BINDING_CAPABILITY_ARCHITECTURE = docs/platform/capabilities/UOE-unified-order-experience.md
 CONTENT_QA_STATUS = CONTENT_QA_PENDING
-WHATSAPP_META_TEMPLATES = NOT_INVENTED / CONTENT_QA_PENDING
+WHATSAPP_META_TEMPLATES = NOT_INVENTED / PLATFORM_REGISTRY_INVENTORIED / META_BODY_NOT_ACCESSIBLE
+OWNER_DECISION_PACKAGE = docs/platform/discovery/unified-order-experience/14-design-qt-mi-owner-decision-package.md
 ```
 
 ## Readiness claim boundary
@@ -178,33 +179,39 @@ All rows are **candidates**. Unapproved variants remain `CONTENT_QA_PENDING`. Do
 approved Meta WhatsApp templates; WhatsApp Meta ownership stays per capability architecture §5.
 Aligned strings from Experience Definition (`03-…`) are carried forward as candidates, not sign-off.
 
-| Topic | Candidate primary (customer) | Candidate alt / notes | Status |
-|---|---|---|---|
-| Delivery vs Takeaway | Delivery / Takeaway | Never Pickup as peer of Delivery | CONTENT_QA_PENDING |
-| Now vs Schedule | Now / Schedule | Now = earliest available, not “immediate” | CONTENT_QA_PENDING |
-| UNCONFIRMED scheduling (mode-aware) | Takeaway: “Time not confirmed yet — choose your collection window at checkout”; Delivery: “…delivery window at checkout” | Bar chip: “Schedule · not confirmed” | CONTENT_QA_PENDING |
-| Provisional fees/offers | “Prices and offers may change when you confirm how and when” | ImpactBanner: fee change / offer change / availability change lines still CONTENT_QA_PENDING | CONTENT_QA_PENDING |
-| Indeterminate commercial evaluation | “Couldn’t load your checkout total — continue checkout to see your total” | Never show competing browse total (`03-…`) | CONTENT_QA_PENDING |
-| Outlet proposal vs confirmed | Proposed: “Suggested collection place”; Confirmed: “Collect from {name}” | Visual distinct chrome required | CONTENT_QA_PENDING |
-| Checkout outlet schedule-only (closed now) | “Schedule only — not open for collection now” | Per-outlet list label (`03-…`) | CONTENT_QA_PENDING |
-| Checkout Timing Now disabled | “Not open for collection right now — choose a Schedule time” | `03-…` | CONTENT_QA_PENDING |
-| Payment-pending recovery | “Finish or recover your payment before changing this order” | Align with existing recovery copy | CONTENT_QA_PENDING |
-| Empty / no-cart Takeaway | “Add items to see collection places” | Must not say brand-level “no outlets available” | CONTENT_QA_PENDING |
-| Eligibility / pickup-options error | “Couldn’t load collection places — try again” | Must not become permanent UNAVAILABLE | CONTENT_QA_PENDING |
-| No eligible outlet for timing | “No collection place can take this order for {Now\|Schedule} — try another time or method” | Distinct from empty-cart | CONTENT_QA_PENDING |
-| No Schedule windows | “No times available — try Now if offered, another place, or come back later” | AS-09 / AS-35 / AS-37 | CONTENT_QA_PENDING |
-| Invalid outlet / force reselect | “That collection place isn’t available — choose another” | AS-36 | CONTENT_QA_PENDING |
-| Window expired / CHECKOUT_EXPIRED | “That time is no longer available — choose a new time” | AS-11 / AS-23 | CONTENT_QA_PENDING |
-| Mode-switch / ineligible lines | Explain removal; confirm destructive clear | AS-20; default safe action = keep browsing / cancel clear | CONTENT_QA_PENDING |
-| Orientation | “Ordering in {market}” | Never “Deliver to {market}” without address | CONTENT_QA_PENDING |
-| Date/time/money format | Outlet-TZ Today/Tomorrow; money from server only | LANG-1; AS-10 | CONTENT_QA_PENDING |
-| Loading / capitalisation | Sentence case for status; avoid ALL-CAPS enums | LANG-1 | CONTENT_QA_PENDING |
-| Sign-in for exact windows | “Sign in to choose your time” (or existing auth prompt pattern) | Guest browse OK; exact windows need Checkout auth | CONTENT_QA_PENDING |
-| WhatsApp Meta body | — | Inventory APPROVED templates; no invented ids | CONTENT_QA_PENDING / META_WORKFLOW |
+**Owner classification** (Founder immediate vs Content QA before tranche) is authoritative in
+[`14-design-qt-mi-owner-decision-package.md`](./14-design-qt-mi-owner-decision-package.md) §1
+(MC-01…MC-34). Summary table below remains the Design Readiness surface list.
+
+| Topic | Candidate primary (customer) | Candidate alt / notes | Owner class | Status |
+|---|---|---|---|---|
+| Delivery vs Takeaway | Delivery / Takeaway | Never Pickup as peer of Delivery | FOUNDER_IMMEDIATE (chrome) / LOCKED_MEANING | CONTENT_QA_PENDING |
+| Now vs Schedule | Now / Schedule | Now = earliest available, not “immediate” | FOUNDER_IMMEDIATE (protective) / LOCKED_MEANING | CONTENT_QA_PENDING |
+| UNCONFIRMED scheduling (mode-aware) | Takeaway: “Time not confirmed yet — choose your collection window at checkout”; Delivery: “…delivery window at checkout” | Bar chip: “Schedule · not confirmed” | FOUNDER_IMMEDIATE | CONTENT_QA_PENDING |
+| Provisional fees/offers | “Prices and offers may change when you confirm how and when” | ImpactBanner fee/offer/availability lines: Content QA polish | FOUNDER_IMMEDIATE | CONTENT_QA_PENDING |
+| Stale commercial values | Hide prior money until matching context returns (AS-46) | Never ghost prior ₹ | FOUNDER_IMMEDIATE | CONTENT_QA_PENDING |
+| Indeterminate commercial evaluation | “Couldn’t load your checkout total — continue checkout to see your total” | Never show competing browse total (`03-…`) | FOUNDER_IMMEDIATE | CONTENT_QA_PENDING |
+| Outlet proposal vs confirmed | Proposed: “Suggested collection place”; Confirmed: “Collect from {name}” | Visual distinct chrome required | FOUNDER_IMMEDIATE | CONTENT_QA_PENDING |
+| Checkout outlet schedule-only (closed now) | “Schedule only — not open for collection now” | Per-outlet list label (`03-…`) | FOUNDER_IMMEDIATE | CONTENT_QA_PENDING |
+| Checkout Timing Now disabled | “Not open for collection right now — choose a Schedule time” | `03-…` | FOUNDER_IMMEDIATE | CONTENT_QA_PENDING |
+| Payment-pending recovery | “Finish or recover your payment before changing this order” | Align with existing recovery copy | FOUNDER_IMMEDIATE | CONTENT_QA_PENDING |
+| Empty / no-cart Takeaway | “Add items to see collection places” | Must not say brand-level “no outlets available” | CONTENT_QA_BEFORE_TRANCHE | CONTENT_QA_PENDING |
+| Eligibility / pickup-options error | “Couldn’t load collection places — try again” | Must not become permanent UNAVAILABLE | CONTENT_QA_BEFORE_TRANCHE | CONTENT_QA_PENDING |
+| No eligible outlet for timing | “No collection place can take this order for {Now\|Schedule} — try another time or method” | Distinct from empty-cart | CONTENT_QA_BEFORE_TRANCHE | CONTENT_QA_PENDING |
+| No Schedule windows | “No times available — try Now if offered, another place, or come back later” | AS-09 / AS-35 / AS-37 | CONTENT_QA_BEFORE_TRANCHE | CONTENT_QA_PENDING |
+| Invalid outlet / force reselect | “That collection place isn’t available — choose another” | AS-36 | CONTENT_QA_BEFORE_TRANCHE | CONTENT_QA_PENDING |
+| Window expired / CHECKOUT_EXPIRED | “That time is no longer available — choose a new time” | AS-11 / AS-23 | FOUNDER_IMMEDIATE | CONTENT_QA_PENDING |
+| Mode-switch / ineligible lines | Explain removal; confirm destructive clear | AS-20; default safe action = keep browsing / cancel clear | FOUNDER_IMMEDIATE | CONTENT_QA_PENDING |
+| Orientation | “Ordering in {market}” | Never “Deliver to {market}” without address | LOCKED_MEANING | CONTENT_QA_PENDING |
+| Date/time/money format | Outlet-TZ Today/Tomorrow; money from server only | LANG-1; AS-10 | CONTENT_QA_BEFORE_TRANCHE | CONTENT_QA_PENDING |
+| Loading / capitalisation | Sentence case for status; avoid ALL-CAPS enums | LANG-1 | CONTENT_QA_BEFORE_TRANCHE | CONTENT_QA_PENDING |
+| Sign-in for exact windows | “Sign in to choose your time” (or existing auth prompt pattern) | Guest browse OK; exact windows need Checkout auth | CONTENT_QA_BEFORE_TRANCHE | CONTENT_QA_PENDING |
+| In-app Pickup → Takeaway (DR-04) | Platform `customer-visible-content` today says Pickup for PICKUP | API enum unchanged; customer primary → Takeaway/collection | FOUNDER_IMMEDIATE | CONTENT_QA_PENDING |
+| WhatsApp Meta body | Platform registry inventoried in `14-…` §2; Meta bodies `NOT_ACCESSIBLE` | No invented ids; noop-safe preserved | FOUNDER_IMMEDIATE (on-wire deferral) | META_INVENTORY_INCOMPLETE |
 
 Workforce primary labels follow refinement A (`12-…` §G). Ops collection verbs remain contextual.
-Founder decides at Design Readiness whether remaining `CONTENT_QA_PENDING` rows may stay owned by
-Content QA exit of T1, or must be fully listed before Design Readiness PASS.
+**Recommended Founder disposition** (`14-…` §1.3): approve `FOUNDER_IMMEDIATE` primaries at Design
+Readiness; allow `CONTENT_QA_BEFORE_TRANCHE` rows to close at T1/T2/T3 Content QA exit.
 
 ---
 

@@ -109,7 +109,7 @@ No conversion lift promised.
 | D2 | delivery-context + LocationSelector | Dep | Extend, don’t fork |
 | D3 | listCheckoutScheduledWindows(checkoutId) | Dep | Checkout-bound exact times |
 | D4 | Future ROADMAP ID vs IMP-036J/K | Dep | UOE-DR-01 NOT_ALLOCATED / sequencing DEFERRED |
-| D6 | Checkout composition defect remediation | Dep | UOE-DR-06 ACCEPTED_CAPABILITY_CONFORMANCE_DEFECT; preferred separate corrective; NOT_AUTHORIZED here |
+| D6 | Checkout composition defect remediation | Dep | UOE-DR-06 ACCEPTED_CAPABILITY_CONFORMANCE_DEFECT; preferred separate corrective; smallest proposal in `14-…` §5; NOT_AUTHORIZED here |
 | D5 | ASAP pickup eligibility + scheduled-pickup profile + evaluateCart | Dep | Reuse for DR-05 reads/quotes |
 
 ## Authorization wall
