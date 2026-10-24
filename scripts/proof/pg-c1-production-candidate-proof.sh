@@ -5,12 +5,15 @@
 # Does not check out Agent A's branch and does not modify docker/postgres.
 # The old proof Dockerfile is not the candidate. Docker Engine is not used.
 #
-# Resources are named with c1-proof-b- and the source SHA prefix. Cleanup
-# removes only those resources. No staging project, no live Spaces calls.
+# Run-owned cleanup removes only this run's exact container names, container
+# IDs, volumes, and image tag. RUN_ID is that identity. No staging project,
+# no live Spaces calls.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${ROOT}"
+# shellcheck source=lib/c1-proof-cleanup.sh
+source "${ROOT}/scripts/proof/lib/c1-proof-cleanup.sh"
 
 if [ "$(git rev-parse --show-toplevel)" != "/home/ajoshi/repos/boba-bear-c1-pg-proof" ]; then
   echo "refusing: proof script must run in /home/ajoshi/repos/boba-bear-c1-pg-proof" >&2
@@ -56,7 +59,7 @@ RUN_ID="c1-proof-b-${SHA12}-$(date -u +%H%M%S)"
 TMP="/tmp/boba-c1-proof-${SOURCE_SHA}"
 HOST_BAD="/tmp/boba-c1-proof-${SOURCE_SHA}-bad"
 EVIDENCE_DIR="${ROOT}/docs/platform/operations/evidence/pg-c1-prod-candidate-${STAMP}"
-IMAGE="localhost/boba-bear-postgres:c1-proof-b-${SHA12}"
+IMAGE="localhost/boba-bear-postgres:${RUN_ID}"
 TRIVY_BIN="/snap/bin/trivy"
 TRIVY_WD="/tmp/boba-c1-proof-${SOURCE_SHA}-trivy"
 
@@ -94,63 +97,108 @@ fact() {
   printf '%s=%s\n' "$1" "$2" | tee -a "${FACTS_FILE}"
 }
 
-CREATED_VOLUMES=()
-CREATED_CONTAINERS=()
+C1_RUN_ID="${RUN_ID}"
+C1_CLEANUP_EVIDENCE="${EVIDENCE_DIR}/cleanup.txt"
+C1_IMAGE_REF="${IMAGE}"
+C1_CONTAINER_NAMES=()
+C1_CONTAINER_IDS=()
+C1_VOLUME_NAMES=()
+C1_CLEANED=0
+C1_CLEANUP_EXIT=0
+C1_REGISTRY_DIR="/tmp/boba-c1-proof-registry-${RUN_ID}"
+mkdir -p "${C1_REGISTRY_DIR}"
+C1_CONTAINER_NAME_FILE="${C1_REGISTRY_DIR}/names"
+C1_CONTAINER_ID_FILE="${C1_REGISTRY_DIR}/ids"
+C1_VOLUME_NAME_FILE="${C1_REGISTRY_DIR}/volumes"
+: > "${C1_CONTAINER_NAME_FILE}"
+: > "${C1_CONTAINER_ID_FILE}"
+: > "${C1_VOLUME_NAME_FILE}"
+
+c1_proof_append_unique_file() {
+  local file="$1"
+  local -n dest="$2"
+  local line existing seen
+  [ -f "${file}" ] || return 0
+  while IFS= read -r line || [ -n "${line}" ]; do
+    [ -n "${line}" ] || continue
+    seen=0
+    if [ "${#dest[@]}" -gt 0 ]; then
+      for existing in "${dest[@]}"; do
+        if [ "${existing}" = "${line}" ]; then
+          seen=1
+          break
+        fi
+      done
+    fi
+    if [ "${seen}" -eq 0 ]; then
+      dest+=("${line}")
+    fi
+  done < "${file}"
+}
+
+c1_proof_load_registration() {
+  C1_CONTAINER_NAMES=()
+  C1_CONTAINER_IDS=()
+  C1_VOLUME_NAMES=()
+  c1_proof_append_unique_file "${C1_CONTAINER_NAME_FILE}" C1_CONTAINER_NAMES
+  c1_proof_append_unique_file "${C1_CONTAINER_ID_FILE}" C1_CONTAINER_IDS
+  c1_proof_append_unique_file "${C1_VOLUME_NAME_FILE}" C1_VOLUME_NAMES
+}
+
+c1_proof_cleanup_hook() {
+  rm -rf "${HOST_BAD}" "${TMP}" "${TRIVY_WD}" "${C1_REGISTRY_DIR}" >/dev/null 2>&1 || true
+  rm -f "${EVIDENCE_DIR}/image.tar" >/dev/null 2>&1 || true
+  return 0
+}
+
+c1_podman_run() {
+  local name="" prev="" arg rc=0 id="" errexit=0
+  for arg in "$@"; do
+    if [ "${prev}" = "--name" ]; then
+      name="${arg}"
+    fi
+    prev="${arg}"
+  done
+  if [ -z "${name}" ]; then
+    echo "refusing: podman run without --name" >&2
+    return 1
+  fi
+  case "${name}" in
+    "${RUN_ID}"|"${RUN_ID}-"*) ;;
+    *)
+      echo "refusing: container name ${name} is not owned by RUN_ID ${RUN_ID}" >&2
+      return 1
+      ;;
+  esac
+  printf '%s\n' "${name}" >> "${C1_CONTAINER_NAME_FILE}"
+  case $- in
+    *e*) errexit=1 ;;
+  esac
+  set +e
+  podman run --label "boba.c1.run=${RUN_ID}" "$@"
+  rc=$?
+  id="$(podman inspect "${name}" --format '{{.Id}}' 2>/dev/null || true)"
+  if [ "${errexit}" -eq 1 ]; then
+    set -e
+  fi
+  if [ -n "${id}" ]; then
+    printf '%s\n' "${id}" >> "${C1_CONTAINER_ID_FILE}"
+  fi
+  return "${rc}"
+}
 
 remember_volume() {
-  CREATED_VOLUMES+=("$1")
+  printf '%s\n' "$1" >> "${C1_VOLUME_NAME_FILE}"
   podman volume inspect "$1" --format 'volume_name={{.Name}} mountpoint={{.Mountpoint}} created={{.CreatedAt}}' \
     | tee -a "${FACTS_FILE}"
 }
 
 remember_container() {
-  CREATED_CONTAINERS+=("$1")
   podman inspect "$1" --format 'container_name={{.Name}} id={{.Id}} image={{.Image}}' \
     | tee -a "${FACTS_FILE}" || true
 }
 
-CLEANED=0
-cleanup() {
-  if [ "${CLEANED}" = "1" ]; then
-    return 0
-  fi
-  CLEANED=1
-  set +e
-  local rc=0
-  if [ "${#CREATED_CONTAINERS[@]}" -gt 0 ]; then
-    podman rm -f "${CREATED_CONTAINERS[@]}" >/dev/null 2>&1 || rc=$?
-  fi
-  podman rm -f "${CTR}" "${CTR_RESTORE}" "${CTR_RESTORE_NEG}" "${CTR_BAD}" "${CTR_ROOT}" "${CTR_S3FAIL}" "${CTR_ARCHOFF}" \
-    "${CTR_RESTORE}-job" "${CTR_RESTORE_NEG}-job" >/dev/null 2>&1 || true
-  if [ "${#CREATED_VOLUMES[@]}" -gt 0 ]; then
-    podman volume rm -f "${CREATED_VOLUMES[@]}" >/dev/null 2>&1 || rc=$?
-  fi
-  podman volume rm -f "${VOL_PG}" "${VOL_REPO}" "${VOL_RESTORE}" "${VOL_RESTORE_NEG}" "${VOL_S3FAIL}" >/dev/null 2>&1 || true
-  rm -rf "${HOST_BAD}" "${TMP}" "${TRIVY_WD}" >/dev/null 2>&1 || true
-  rm -f "${EVIDENCE_DIR}/image.tar" >/dev/null 2>&1 || true
-  local left_c left_v
-  left_c="$(podman ps -a --filter "name=c1-proof-b-${SHA12}" --format '{{.ID}} {{.Names}}' || true)"
-  left_v="$(podman volume ls --filter "name=c1-proof-b-${SHA12}" --format '{{.Name}}' || true)"
-  if [ -n "${left_c}" ] || [ -n "${left_v}" ]; then
-    rc=1
-  fi
-  {
-    echo "cleanup_exit=${rc}"
-    echo "leftover_containers<<EOF"
-    printf '%s\n' "${left_c}"
-    echo "EOF"
-    echo "leftover_volumes<<EOF"
-    printf '%s\n' "${left_v}"
-    echo "EOF"
-  } | tee "${EVIDENCE_DIR}/cleanup.txt" | tee -a "${FACTS_FILE}"
-  if [ "${rc}" -eq 0 ]; then
-    record "cleanup" "PASS" "no leftover containers or volumes for c1-proof-b-${SHA12}; cleanup_exit=0"
-  else
-    record "cleanup" "FAIL" "cleanup_exit=${rc}; leftovers recorded in cleanup.txt"
-  fi
-  set -e
-}
-trap cleanup EXIT
+c1_proof_install_exit_trap
 
 echo "=== production-candidate proof RUN_ID=${RUN_ID} SOURCE_SHA=${SOURCE_SHA} ==="
 fact RUN_ID "${RUN_ID}"
@@ -212,6 +260,7 @@ else
   podman rmi -f "${IMAGE}" >/dev/null 2>&1 || true
   podman build --network=host \
     --label "boba.c1.proof=c1-proof-b-${SHA12}" \
+    --label "boba.c1.run=${RUN_ID}" \
     --label "boba.c1.source-sha=${SOURCE_SHA}" \
     -f "${TMP}/docker/postgres/Dockerfile" \
     -t "${IMAGE}" \
@@ -232,10 +281,10 @@ fact CONFIG_USER "${CONFIG_USER}"
 podman image inspect "${IMAGE}" --format 'Id={{.Id}} User={{.Config.User}} Entrypoint={{.Config.Entrypoint}} Cmd={{.Config.Cmd}}' \
   | tee -a "${EVIDENCE_DIR}/image-inspect.txt"
 
-RUNTIME_ID_TEXT="$(podman run --rm --name "${RUN_ID}-id" --entrypoint id "${IMAGE}")"
+RUNTIME_ID_TEXT="$(c1_podman_run --rm --name "${RUN_ID}-id" --entrypoint id "${IMAGE}")"
 echo "${RUNTIME_ID_TEXT}" | tee -a "${EVIDENCE_DIR}/image-inspect.txt"
-RUNTIME_UID="$(podman run --rm --name "${RUN_ID}-id-uid" --entrypoint id "${IMAGE}" -u)"
-RUNTIME_USER="$(podman run --rm --name "${RUN_ID}-id-user" --entrypoint id "${IMAGE}" -un)"
+RUNTIME_UID="$(c1_podman_run --rm --name "${RUN_ID}-id-uid" --entrypoint id "${IMAGE}" -u)"
+RUNTIME_USER="$(c1_podman_run --rm --name "${RUN_ID}-id-user" --entrypoint id "${IMAGE}" -un)"
 fact RUNTIME_UID "${RUNTIME_UID}"
 fact RUNTIME_USER "${RUNTIME_USER}"
 if { [ "${CONFIG_USER}" = "postgres" ] || [ "${CONFIG_USER}" = "999" ] || [ "${CONFIG_USER}" = "999:999" ]; } \
@@ -313,9 +362,9 @@ archiver_stats() {
 
 provision_target() {
   local vol="$1"
-  podman volume create --label "boba.c1.proof=c1-proof-b-${SHA12}" "${vol}" >/dev/null
+  podman volume create --label "boba.c1.proof=c1-proof-b-${SHA12}" --label "boba.c1.run=${RUN_ID}" "${vol}" >/dev/null
   remember_volume "${vol}"
-  podman run --rm --name "${vol}-provision" \
+  c1_podman_run --rm --name "${vol}-provision" \
     --label "boba.c1.proof=c1-proof-b-${SHA12}" \
     -v "${vol}:/var/lib/postgresql:Z" \
     --entrypoint bash "${IMAGE}" \
@@ -324,7 +373,7 @@ provision_target() {
 
 restore_into_target() {
   local vol="$1" job_name="$2"
-  podman run --rm --name "${job_name}" \
+  c1_podman_run --rm --name "${job_name}" \
     --label "boba.c1.proof=c1-proof-b-${SHA12}" \
     "${common_env[@]}" \
     -e BOBA_PGBACKREST_ARCHIVE=0 \
@@ -354,7 +403,7 @@ restore_into_target() {
 
 start_target_and_wait_promoted() {
   local vol="$1" ctr="$2"
-  podman run -d --name "${ctr}" \
+  c1_podman_run -d --name "${ctr}" \
     --label "boba.c1.proof=c1-proof-b-${SHA12}" \
     "${common_env[@]}" \
     -e BOBA_PGBACKREST_ARCHIVE=0 \
@@ -385,11 +434,11 @@ snapshot_tree() {
 }
 
 echo "=== row 2: fresh start and restart on a new volume ==="
-podman volume create --label "boba.c1.proof=c1-proof-b-${SHA12}" "${VOL_PG}" >/dev/null
+podman volume create --label "boba.c1.proof=c1-proof-b-${SHA12}" --label "boba.c1.run=${RUN_ID}" "${VOL_PG}" >/dev/null
 remember_volume "${VOL_PG}"
-podman volume create --label "boba.c1.proof=c1-proof-b-${SHA12}" "${VOL_REPO}" >/dev/null
+podman volume create --label "boba.c1.proof=c1-proof-b-${SHA12}" --label "boba.c1.run=${RUN_ID}" "${VOL_REPO}" >/dev/null
 remember_volume "${VOL_REPO}"
-podman run -d --name "${CTR}" \
+c1_podman_run -d --name "${CTR}" \
   --label "boba.c1.proof=c1-proof-b-${SHA12}" \
   "${common_env[@]}" \
   -e BOBA_PGBACKREST_ARCHIVE=0 \
@@ -425,7 +474,7 @@ fi
 if [ "${FRESH_OK}" = "1" ]; then
   podman stop "${CTR}" >/dev/null
   podman rm "${CTR}" >/dev/null
-  podman run -d --name "${CTR}" \
+  c1_podman_run -d --name "${CTR}" \
     --label "boba.c1.proof=c1-proof-b-${SHA12}" \
     "${common_env[@]}" \
     -e BOBA_PGBACKREST_ARCHIVE=0 \
@@ -454,7 +503,7 @@ chmod 755 "${HOST_BAD}" "${HOST_BAD}/18" "${HOST_BAD}/18/docker"
 chown "$(id -u):$(id -g)" "${HOST_BAD}" "${HOST_BAD}/18" "${HOST_BAD}/18/docker" "${HOST_BAD}/.mount-sentinel" "${HOST_BAD}/18/docker/.pgdata-sentinel" || true
 BEFORE_SNAP="$(snapshot_tree "${HOST_BAD}")"
 BEFORE_HASH="$(sha256sum "${HOST_BAD}/.mount-sentinel" "${HOST_BAD}/18/docker/.pgdata-sentinel" | sha256sum | awk '{print $1}')"
-podman run -d --name "${CTR_BAD}" \
+c1_podman_run -d --name "${CTR_BAD}" \
   --label "boba.c1.proof=c1-proof-b-${SHA12}" \
   "${common_env[@]}" \
   -e BOBA_PGBACKREST_ARCHIVE=0 \
@@ -487,7 +536,7 @@ printf '%s\n' "${AFTER_SNAP}" > "${EVIDENCE_DIR}/bad-owner-after.txt"
 echo "=== row 4: forced root rejection ==="
 # No proof-data volume: uid 0 is rejected before PGDATA is touched.
 set +e
-podman run -d --name "${CTR_ROOT}" \
+c1_podman_run -d --name "${CTR_ROOT}" \
   --label "boba.c1.proof=c1-proof-b-${SHA12}" \
   --user 0:0 \
   "${common_env[@]}" \
@@ -628,7 +677,7 @@ if [ "${RESTART_OK}" != "1" ]; then
 else
   podman stop "${CTR}" >/dev/null
   podman rm "${CTR}" >/dev/null
-  podman run -d --name "${CTR}" \
+  c1_podman_run -d --name "${CTR}" \
     --label "boba.c1.proof=c1-proof-b-${SHA12}" \
     "${common_env[@]}" \
     -e BOBA_PGBACKREST_ARCHIVE=1 \
@@ -744,7 +793,7 @@ else
         read -r NEG_ARCHIVED_COUNT _NEG_LAST_OK NEG_FAILED_COUNT NEG_LAST_FAILED <<<"${STATS_AFTER}"
         podman stop "${CTR}" >/dev/null || true
         set +e
-        podman run --rm --name "${RUN_ID}-chmod-restore" \
+        c1_podman_run --rm --name "${RUN_ID}-chmod-restore" \
           --label "boba.c1.proof=c1-proof-b-${SHA12}" \
           -v "${VOL_REPO}:/var/lib/pgbackrest:Z" \
           --entrypoint bash "${IMAGE}" \
@@ -790,7 +839,7 @@ fi
 echo "=== row 11: synthetic S3 render, network none ==="
 S3_RENDER="${EVIDENCE_DIR}/s3-shape-render.conf"
 set +e
-podman run --rm --network=none --name "${RUN_ID}-s3-render" \
+c1_podman_run --rm --network=none --name "${RUN_ID}-s3-render" \
   --label "boba.c1.proof=c1-proof-b-${SHA12}" \
   -e BOBA_PGBACKREST_REPO_MODE=s3 \
   -e BOBA_PGBACKREST_GENERATION="${GENERATION}" \
@@ -806,14 +855,14 @@ podman run --rm --network=none --name "${RUN_ID}-s3-render" \
   -e BOBA_RECOVERY_LOGICAL_SPACES_BUCKET="c1-proof-logical-bucket-placeholder" \
   --entrypoint /usr/local/bin/boba-render-pgbackrest-conf "${IMAGE}" > "${S3_RENDER}"
 S3_RC=$?
-podman run --rm --network=none --name "${RUN_ID}-s3-missing" \
+c1_podman_run --rm --network=none --name "${RUN_ID}-s3-missing" \
   --label "boba.c1.proof=c1-proof-b-${SHA12}" \
   -e BOBA_PGBACKREST_REPO_MODE=s3 \
   -e BOBA_PGBACKREST_GENERATION="${GENERATION}" \
   -e PGBACKREST_CIPHER_PASS="${CIPHER_PASS}" \
   --entrypoint /usr/local/bin/boba-render-pgbackrest-conf "${IMAGE}" >/dev/null 2>"${EVIDENCE_DIR}/s3-missing.stderr.txt"
 S3_MISSING_RC=$?
-podman run --rm --network=none --name "${RUN_ID}-s3-same" \
+c1_podman_run --rm --network=none --name "${RUN_ID}-s3-same" \
   --label "boba.c1.proof=c1-proof-b-${SHA12}" \
   -e BOBA_PGBACKREST_REPO_MODE=s3 \
   -e BOBA_PGBACKREST_GENERATION="${GENERATION}" \
@@ -828,9 +877,9 @@ podman run --rm --network=none --name "${RUN_ID}-s3-same" \
 S3_SAME_RC=$?
 set -e
 
-podman volume create --label "boba.c1.proof=c1-proof-b-${SHA12}" "${VOL_S3FAIL}" >/dev/null
+podman volume create --label "boba.c1.proof=c1-proof-b-${SHA12}" --label "boba.c1.run=${RUN_ID}" "${VOL_S3FAIL}" >/dev/null
 remember_volume "${VOL_S3FAIL}"
-podman run -d --name "${CTR_S3FAIL}" \
+c1_podman_run -d --name "${CTR_S3FAIL}" \
   --network=none \
   --label "boba.c1.proof=c1-proof-b-${SHA12}" \
   -e POSTGRES_USER=postgres \
@@ -858,7 +907,7 @@ fi
 S3FAIL_RC="$(podman inspect "${CTR_S3FAIL}" --format '{{.State.ExitCode}}' 2>/dev/null || echo 999)"
 podman logs "${CTR_S3FAIL}" > "${EVIDENCE_DIR}/s3-fail-closed.log" 2>&1 || true
 set +e
-podman run --rm --name "${RUN_ID}-s3fail-check" \
+c1_podman_run --rm --name "${RUN_ID}-s3fail-check" \
   -v "${VOL_S3FAIL}:/var/lib/postgresql:Z" \
   --entrypoint bash "${IMAGE}" \
   -c "if test -f '${PGDATA_PATH}/PG_VERSION'; then echo present; exit 0; else echo absent; exit 1; fi"
@@ -873,7 +922,7 @@ fi
 ARCHOFF_READY="no"
 if [ "${RESTART_OK}" = "1" ]; then
   podman rm -f "${CTR}" >/dev/null 2>&1 || true
-  podman run -d --name "${CTR_ARCHOFF}" \
+  c1_podman_run -d --name "${CTR_ARCHOFF}" \
     --network=none \
     --label "boba.c1.proof=c1-proof-b-${SHA12}" \
     -e POSTGRES_USER=postgres \
@@ -921,7 +970,12 @@ else
 fi
 record "s3_live_spaces" "UNVERIFIED" "S3_LIVE_SPACES=UNVERIFIED; no credentials and no bucket changes; synthetic network-free render only"
 
-cleanup
+c1_proof_cleanup_registered || true
+cat "${EVIDENCE_DIR}/cleanup.txt" >> "${FACTS_FILE}" || true
+cleanup_result="$(c1_proof_cleanup_matrix_result "${EVIDENCE_DIR}/cleanup.txt")"
+cleanup_note="$(c1_proof_cleanup_matrix_note "${EVIDENCE_DIR}/cleanup.txt")"
+record "cleanup" "${cleanup_result}" "${cleanup_note}"
+c1_proof_cleanup_hook || true
 
 python3 - <<'PY'
 import os, pathlib
@@ -966,9 +1020,8 @@ echo "=== matrix ==="
 cat "${MATRIX_FILE}"
 echo "EVIDENCE_DIR=${EVIDENCE_DIR}"
 
-if awk -F'\t' '$2=="FAIL"{found=1} END{exit found?1:0}' "${MATRIX_FILE}"; then
-  echo "PROOF_RESULT=PASS_WITH_UNVERIFIED"
-  exit 0
-fi
-echo "PROOF_RESULT=FAIL"
-exit 1
+set +e
+c1_proof_classify_result "${MATRIX_FILE}" "${EVIDENCE_DIR}/cleanup.txt"
+classify_rc=$?
+set -e
+exit "${classify_rc}"
