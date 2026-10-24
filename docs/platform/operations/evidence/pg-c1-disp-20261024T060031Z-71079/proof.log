@@ -1,0 +1,197 @@
+=== PG-C1 disposable proof RUN_ID=boba-pgc1-disp-20261024T060031Z-71079 ===
+ROOT=/home/ajoshi/repos/boba-bear-wave-b-pg
+EVIDENCE_DIR=/home/ajoshi/repos/boba-bear-wave-b-pg/artifacts/pg-c1-proof/boba-pgc1-disp-20261024T060031Z-71079
+podman version 4.9.3
+1000
+1000
+subuid: ajoshi:100000:65536
+subgid: ajoshi:100000:65536
+EXPECTED_HOST_UID_FOR_CONTAINER_999=100998
+docker_env	UNVERIFIED	docker CLI absent; rootless Podman only
+=== build base + C1 images ===
+[1/2] STEP 1/5: FROM docker.io/library/golang:1.26.10-bookworm@sha256:fe3da92a5cb2881e4aa75e625cb0b7c50571632fb4cf340cbe53e6ccdcffdd51 AS gosu-builder
+[1/2] STEP 2/5: ARG GOSU_VERSION
+--> Using cache de23844f959c5d49ee2c10c87f52edd951e9ddcc6314dd67250fc80f5f8c0490
+--> de23844f959c
+[1/2] STEP 3/5: ARG GOSU_GIT_SHA
+--> Using cache 63e6fbae1ebe79c9e9163e45de9522d6f5b831a6aee04073618e079acfe8d863
+--> 63e6fbae1ebe
+[1/2] STEP 4/5: WORKDIR /src
+--> Using cache db79d61d95e307bdb5180443fd2664cc18f1a2451ee0a65895cd2ed4f5345b9d
+--> db79d61d95e3
+[1/2] STEP 5/5: RUN apt-get update   && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git ca-certificates   && rm -rf /var/lib/apt/lists/*   && git clone --filter=blob:none https://github.com/tianon/gosu.git .   && git fetch --depth 1 origin "${GOSU_GIT_SHA}"   && git checkout --detach "${GOSU_GIT_SHA}"   && test "$(git rev-parse HEAD)" = "${GOSU_GIT_SHA}"   && CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.Version=${GOSU_VERSION}" -o /gosu .
+--> Using cache 78ce3efc5115663b8b89893f18f5e3220adb11f2260967f04390cab74bea5ada
+--> 78ce3efc5115
+[2/2] STEP 1/16: FROM docker.io/library/postgres:18.4-trixie
+[2/2] STEP 2/16: ARG PGBACKREST_VERSION=2.56.0
+--> Using cache 2e34db91772b6838d3cd8f7818857d1ccff2992608bea26129d9859825c50d8e
+--> 2e34db91772b
+[2/2] STEP 3/16: ARG GOSU_VERSION=1.19
+--> Using cache 4c0608332d5a67178785911620e2891ca97bb77a162df173e5c9ca9363b63ece
+--> 4c0608332d5a
+[2/2] STEP 4/16: LABEL org.opencontainers.image.title="boba-bear-postgres"       org.opencontainers.image.description="PostgreSQL 18 with pinned pgBackRest >= 2.55 for IMP-037"       boba.pgbackrest.version="${PGBACKREST_VERSION}"       boba.pgbackrest.min_version="2.55.0"       boba.gosu.version="${GOSU_VERSION}"
+--> Using cache da32900c950898704dd9c4b1216d30cb3a3926c0b9f5fc737696c7b436a6f818
+--> da32900c9508
+[2/2] STEP 5/16: USER root
+--> Using cache 1cf974cec1a255e2b8811f0fd4ad8382aa70d0718eedf970c92b5ceb77796a7d
+--> 1cf974cec1a2
+[2/2] STEP 6/16: COPY --from=gosu-builder /gosu /usr/local/bin/gosu
+--> Using cache f88bdca84d586f60d2aebf8430556b55df2eb206a626023157bd90ad72ed3928
+--> f88bdca84d58
+[2/2] STEP 7/16: RUN chmod 0755 /usr/local/bin/gosu   && gosu nobody true   && gosu version 2>&1 | grep -F "gosu version: ${GOSU_VERSION}"   && gosu version 2>&1 | grep -F "go1.26.10"
+--> Using cache 78f353f68232eae928b6727fcd4fd6a5b0853f9a938e739c3d32b3aef174d098
+--> 78f353f68232
+[2/2] STEP 8/16: RUN apt-get update   && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y --no-install-recommends   && rm -rf /var/lib/apt/lists/*
+--> Using cache f4d11c4ba497c5054b41dfb87fae238c7fc09c869a0345e9cb210bb1db59efbf
+--> f4d11c4ba497
+[2/2] STEP 9/16: RUN set -eux;     apt-get update;     apt-get install -y --no-install-recommends       build-essential       libssl-dev       libxml2-dev       liblz4-dev       libzstd-dev       libbz2-dev       libyaml-dev       libssh2-1-dev       libpq-dev       pkg-config       meson       ninja-build       curl       ca-certificates       python3;     curl -fsSL --retry 3       "https://github.com/pgbackrest/pgbackrest/archive/refs/tags/release/${PGBACKREST_VERSION}.tar.gz"       -o /tmp/pgbackrest.tar.gz;     test -s /tmp/pgbackrest.tar.gz;     mkdir -p /tmp/pgbackrest-src;     tar -xzf /tmp/pgbackrest.tar.gz -C /tmp/pgbackrest-src --strip-components=1;     meson setup /tmp/pgbackrest-build /tmp/pgbackrest-src;     ninja -C /tmp/pgbackrest-build;     ninja -C /tmp/pgbackrest-build install;     pgbackrest version;     installed="$(pgbackrest version | head -n1 | sed -n 's/.* \([0-9][0-9.]*\).*/\1/p')";     python3 -c "import sys; v=tuple(int(x) for x in sys.argv[1].split('.')); assert v >= (2,55,0), f'pgBackRest {sys.argv[1]} below locked floor 2.55.0'; print(f'pgBackRest pin OK: {sys.argv[1]}')" "$installed";     apt-get purge -y --auto-remove       build-essential meson ninja-build pkg-config       libssl-dev libxml2-dev liblz4-dev libzstd-dev libbz2-dev libyaml-dev libssh2-1-dev libpq-dev;     apt-get install -y --no-install-recommends       libssl3       libxml2       liblz4-1       libzstd1       libbz2-1.0       libyaml-0-2       libssh2-1       age;     rm -rf /tmp/pgbackrest.tar.gz /tmp/pgbackrest-src /tmp/pgbackrest-build /var/lib/apt/lists/*
+--> Using cache 97c52622a20db3ba5b4abe30d013d5618b3ebe9a2b776a5dbae6993e41eb888c
+--> 97c52622a20d
+[2/2] STEP 10/16: RUN mkdir -p /etc/pgbackrest /var/lib/pgbackrest /var/log/pgbackrest /var/spool/pgbackrest     && chown -R postgres:postgres /etc/pgbackrest /var/lib/pgbackrest /var/log/pgbackrest /var/spool/pgbackrest     && chmod 750 /etc/pgbackrest /var/lib/pgbackrest /var/log/pgbackrest /var/spool/pgbackrest
+--> Using cache 92634e7cd8906562183b57fa6138d9fc5d71fc2c018b812e0ee4899abcf746d4
+--> 92634e7cd890
+[2/2] STEP 11/16: COPY docker/postgres/pgbackrest/pgbackrest.conf.template /etc/pgbackrest/pgbackrest.conf.template
+--> Using cache 3da08e9ce4539981ff25a93fbccd2d0fa99c0cc356826bd3fcdff3e6cc486f76
+--> 3da08e9ce453
+[2/2] STEP 12/16: COPY docker/postgres/pgbackrest/render-conf.sh /usr/local/bin/boba-render-pgbackrest-conf
+--> Using cache 8d43e6463db437e037f8dc02389a023454691161ed25a71960a067f041bb6e05
+--> 8d43e6463db4
+[2/2] STEP 13/16: COPY docker/postgres/pgbackrest/entrypoint-wrapper.sh /usr/local/bin/boba-postgres-entrypoint
+--> Using cache 549b3969becc8bb5fa9cff31c69250fa146626b7b4dac1871b641d81fa55294c
+--> 549b3969becc
+[2/2] STEP 14/16: RUN chmod 755 /usr/local/bin/boba-render-pgbackrest-conf /usr/local/bin/boba-postgres-entrypoint
+--> Using cache 063e63e1aaab84fcdd3d320c3208551beb7de11b20bbd2ad1721ba0e003aac7a
+--> 063e63e1aaab
+[2/2] STEP 15/16: ENTRYPOINT ["boba-postgres-entrypoint"]
+--> Using cache 1cad1b172dddfdfac69c0aca28ddbaa775c038742b5ca9dd3acf1438d8acf670
+--> 1cad1b172ddd
+[2/2] STEP 16/16: CMD ["postgres"]
+--> Using cache 5386280757a26bd5f44626603e6fcca49e7057ca2e47e1ee39de358eeb9c3304
+[2/2] COMMIT localhost/boba-bear-postgres:c1-base
+--> 5386280757a2
+Successfully tagged localhost/boba-bear-postgres:c1-base
+Successfully tagged localhost/boba-bear-postgres:trivy
+Successfully tagged localhost/boba-bear-postgres:gosu-12610-task394
+Successfully tagged localhost/boba-bear-postgres:trivy-gosu-12610
+5386280757a26bd5f44626603e6fcca49e7057ca2e47e1ee39de358eeb9c3304
+STEP 1/9: FROM localhost/boba-bear-postgres:c1-base
+STEP 2/9: USER root
+--> Using cache 582d9cc2a3f5fadbcf2165498eceeeab82d2616e15f7ada599994a5908dfea04
+--> 582d9cc2a3f5
+STEP 3/9: RUN mkdir -p       /etc/pgbackrest       /etc/postgresql       /var/lib/pgbackrest       /var/log/pgbackrest       /var/spool/pgbackrest       /var/run/postgresql     && chown -R postgres:postgres       /etc/pgbackrest       /etc/postgresql       /var/lib/pgbackrest       /var/log/pgbackrest       /var/spool/pgbackrest       /var/run/postgresql       /var/lib/postgresql     && chmod 750 /etc/pgbackrest /var/lib/pgbackrest /var/log/pgbackrest /var/spool/pgbackrest     && chmod 755 /etc/postgresql     && chmod 3775 /var/run/postgresql
+--> Using cache da7617d84499a40aa30b3074647549737831dd55f4fe06df756655d13d810859
+--> da7617d84499
+STEP 4/9: COPY docker/postgres/c1-nonroot/entrypoint-wrapper.sh /usr/local/bin/boba-postgres-entrypoint
+--> Using cache ced38b21fc2654ebec4a53fccd23c5fa3c7a13280e866e3742cbe6b0be1dbc4f
+--> ced38b21fc26
+STEP 5/9: RUN chmod 755 /usr/local/bin/boba-postgres-entrypoint     && gosu nobody true
+--> Using cache 78a50333e0123bb811e97cf6eac0cf9da8efc44b819ad18eaf298a4b012c1c88
+--> 78a50333e012
+STEP 6/9: USER postgres
+--> Using cache 65c220afb429f7a553db67e48305b4ed07bba2499bdb308188919b90ab27c3d1
+--> 65c220afb429
+STEP 7/9: LABEL boba.postgres.runtime="c1-nonroot"       boba.postgres.ds0002="absent-by-user-postgres"       org.opencontainers.image.title="boba-bear-postgres-c1-nonroot"
+--> Using cache 3d399b556b7fdc7d8c7c6dc2b25f4481e17510ec8e593aa5a2df389db9b4938b
+--> 3d399b556b7f
+STEP 8/9: ENTRYPOINT ["boba-postgres-entrypoint"]
+--> Using cache a2ef4106d3c43ba92844fe4732379dbf51e6485453e4d3ddc8f43dcaebe067ff
+--> a2ef4106d3c4
+STEP 9/9: CMD ["postgres"]
+--> Using cache 6e4d119e3b7a478a030382612688d908a3450092afde3f236ccca3a75f7d1d1f
+COMMIT localhost/boba-bear-postgres:c1-nonroot
+--> 6e4d119e3b7a
+Successfully tagged localhost/boba-bear-postgres:c1-nonroot
+6e4d119e3b7a478a030382612688d908a3450092afde3f236ccca3a75f7d1d1f
+Config.User=postgres
+image_user_postgres	PASS	Config.User=postgres
+=== Trivy image-config DS-0002 (unsuppressed) ===
+Downloading pinned Trivy via node helper (scripts/run-trivy.mjs ensure)…
+Copying blob sha256:6f94328331290cbd81edab450664d42da7b64c191416c9346cd5d28c84f76035
+Copying blob sha256:fff5f6ec2c1f54e658f647137034e787217ef87423067bb1f1d40ceb796176e3
+Copying blob sha256:5d564305ddc93bdc4ad1ddd267af634c662e332cba4b0352d5aff11b1261e6fa
+Copying blob sha256:f0751144d8b5fa53dac1835a5a437f6da04da4776a2e86c19f437b6c89807aad
+Copying blob sha256:4097e154e51946d5485a291f0fb840a00d3f936b641366a0d7cb280850ea4b51
+Copying blob sha256:41d676c0a0a7f4f3c729cfdd858b9d20c83c1da751e4b51d2ba96486a999d393
+Copying blob sha256:b77d4252ea3eb18bdb59c21965168fda9e7c0ed21ccd1d413837c13d960340f1
+Copying blob sha256:5bdd861a04aff5becbf663c6422d66b18fcf20c247aef63d9765f1897dc0a361
+Copying blob sha256:00be126d2054699cd80b7dd85ac3c4b7f267a7d10fe258b9e0f203e6b1b9812e
+Copying blob sha256:111c2456384aeadd44b469c665accfdb6696eb80e4c89801814324d3f33c9b83
+Copying blob sha256:51570c20ff313742846a7344073fb6d151cc948753cf17cbec9733f9e5ef33f8
+Copying blob sha256:dcdf666a16a2af6652ee6568723e6d6e87ce2eb981be1a59cae99eb98d390b31
+Copying blob sha256:28dc842318aa7edda87414ef9452a47f09e983366146b45ad0518f0c1bf21152
+Copying blob sha256:d002121afd12ec54ac39a871ff0c70d37263dac45748bcccee8cbd05bfb3f92b
+Copying blob sha256:8c80ab8edd7a0deec8f8a0a652dbd295920d8125aadb1ad75119d26d4cffb6c1
+Copying blob sha256:879a275e60cedb89d8ab6d062246ddacf2106df4c3609e01e0bd0193eb5a4f04
+Copying blob sha256:01b09d82b544f73e5d13f5a50539f324cfee3613418b860aaffbcb02db894a5e
+Copying blob sha256:7df633a3b60091b86e2ddfce5d9a7c37442b857ae406439bd7a47ea36d98be4c
+Copying blob sha256:75659447f8df2e3f7f35164df1d981c38aaae2e8db186a6b35fb8e16177637a5
+Copying blob sha256:135873825b1fd480c86af82cb42671e3f52446fe4160e8b9937f35f6c6b8a9e4
+Copying blob sha256:c0cfecca6be797f7eedc3104ab7b27091861af66b4f316a98e54f67522c7d690
+Copying blob sha256:875b09bedb5751660a7d4bd10dd7f4a318424b570794f1ad4d1192b11362376b
+Copying blob sha256:9ea573088c88f51fc317edf5e934560985cf29ea832492824bac174029aba129
+Copying blob sha256:fb9ac410ae03c07f3c6105182c10f59f51115702effadf407f6875717d4940db
+Copying blob sha256:8f4cecadac4975e7956d57292cea59a987fcc158a72e35bb3f11f5e7007d98b7
+Copying config sha256:6e4d119e3b7a478a030382612688d908a3450092afde3f236ccca3a75f7d1d1f
+Writing manifest to image destination
+trivy_ds0002	PASS	DS-0002 absent in unsuppressed image-config scan (tar input)
+=== fresh PostgreSQL startup (archive off) ===
+0d3ce6af45f03cb1ab2e18a45f9f2d8b45ec8bf533b93bec9ad19c733ad5383e
+fresh_startup_archive_off	PASS	uid=999 user=postgres PGDATA=/var/lib/postgresql/18/docker
+=== rootless UID/GID mapping ===
+volume_mountpoint=/home/ajoshi/.local/share/containers/storage/volumes/boba-pgc1-disp-20261024T060031Z-71079-pgdata/_data
+host_owner_sample=100998:100998
+container_uid=999
+rootless_uid_mapping	PASS	container 999 -> host 100998 (subuid start 100000)
+=== restart from same disposable volume ===
+d42a825b7d4aba83b517797df79daece30bfcef6c94e1c96e22d4845c15e2d46
+restart_same_volume	PASS	reused boba-pgc1-disp-20261024T060031Z-71079-pgdata
+=== archive-on + pgBackRest stanza/backup/WAL/restore ===
+7689b5318227322c387402e8f4b467a84a53ec4cd7099cebb8298a76dcbed9d3
+archive_on_startup	PASS	archive_mode enabled via C1 entrypoint
+pgbackrest_stanza	PASS	stanza-create + check
+CREATE TABLE
+INSERT 0 1
+stanza: boba
+    status: ok
+    cipher: aes-256-cbc
+
+    db (current)
+        wal archive min/max (18): 000000010000000000000001/000000010000000000000003
+
+        full backup: 20261024-060202F
+            timestamp start/stop: 2026-10-24 06:02:02+00 / 2026-10-24 06:02:31+00
+            wal start/stop: 000000010000000000000003 / 000000010000000000000003
+            database size: 22.6MB, database backup size: 22.6MB
+            repo1: backup set size: 2.7MB, backup size: 2.7MB
+pgbackrest_backup_info_verify	PASS	full backup + info + verify
+INSERT 0 1
+ pg_switch_wal 
+---------------
+ 0/4055040
+(1 row)
+
+wal_archival	PASS	archived_count or repo archive files present
+ccfd79d8ee777830fbd6ec993898a4663e354299abd1e6cc25956246d499bebe
+isolated_restore	PASS	restored into boba-pgc1-disp-20261024T060031Z-71079-restore-pgdata; row verified
+=== wrong-permission bind mount (must fail closed) ===
+mkdir: cannot create directory ‘/var/lib/postgresql/18’: Permission denied
+wrong_permission_fail_closed	PASS	exit=1; marker unchanged; no PGDATA created
+=== C1 refuses root start ===
+BOBA C1 postgres: refusing to start as root (C1 non-root contract)
+refuse_root_start	PASS	exit=1
+=== matrix ===
+docker_env                     UNVERIFIED  docker CLI absent; rootless Podman only
+image_user_postgres            PASS        Config.User=postgres
+trivy_ds0002                   PASS        DS-0002 absent in unsuppressed image-config scan (tar input)
+fresh_startup_archive_off      PASS        uid=999 user=postgres PGDATA=/var/lib/postgresql/18/docker
+rootless_uid_mapping           PASS        container 999 -> host 100998 (subuid start 100000)
+restart_same_volume            PASS        reused boba-pgc1-disp-20261024T060031Z-71079-pgdata
+archive_on_startup             PASS        archive_mode enabled via C1 entrypoint
+pgbackrest_stanza              PASS        stanza-create + check
+pgbackrest_backup_info_verify  PASS        full backup + info + verify
+wal_archival                   PASS        archived_count or repo archive files present
+isolated_restore               PASS        restored into boba-pgc1-disp-20261024T060031Z-71079-restore-pgdata; row verified
+wrong_permission_fail_closed   PASS        exit=1; marker unchanged; no PGDATA created
+refuse_root_start              PASS        exit=1
+SUMMARY=/home/ajoshi/repos/boba-bear-wave-b-pg/artifacts/pg-c1-proof/boba-pgc1-disp-20261024T060031Z-71079/summary.md
+PROOF_RESULT=PASS_WITH_UNVERIFIED_ALLOWED
