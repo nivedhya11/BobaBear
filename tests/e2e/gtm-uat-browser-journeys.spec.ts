@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Browser, type BrowserContext, type Page, type TestInfo } from "@playwright/test";
 
 import { installRazorpayCheckoutMock } from "./support/razorpay-checkout-mock";
 import {
@@ -12,19 +12,78 @@ import {
  *
  * The imported menu fixture has zero modifier groups, so the modifier
  * selection-order loop is not claimed here.
+ *
+ * Database controls receive the cart, outlet, line, checkout, and snapshot
+ * the browser captured. The per-run token is never written to logs.
  */
 
 const FIXED_OTP_CODE = process.env.CUSTOMER_OTP_LOCAL_FIXED_CODE;
-const CONTROL_TOKEN = process.env.E2E_HARNESS_CONTROL_TOKEN ?? "gtm-uat-browser-control";
+const PUBLIC_CONTROL_TOKEN = "gtm-uat-browser-control";
 
 const PHONE = {
   scheduledDelivery: "9876500271",
   bindingDrift: "9876500272",
+  isolationA: "9876500273",
+  isolationB: "9876500274",
 } as const;
+
+type BrowserCartLine = Readonly<{ id: string; variantId: string }>;
+type BrowserCart = Readonly<{
+  id: string;
+  ownerMode?: string;
+  revision: string | number;
+  lines: readonly BrowserCartLine[];
+}>;
+type PromotionEffect = Readonly<{ id?: string; effectKind?: string; promotionCode?: string }>;
+type BrowserCheckout = Readonly<{
+  id: string;
+  status: string;
+  revision: string | number;
+  customerAuthUserId?: string;
+  activeSnapshotId?: string | null;
+  activeSnapshot?: { id?: string; promotionEffects?: readonly PromotionEffect[] } | null;
+}>;
+type OwnedCart = Readonly<{
+  cartId: string;
+  outletId: string;
+  lineId: string;
+  siblingLineId: string;
+  variantId: string;
+  siblingVariantId: string;
+  customerAuthUserId: null;
+  expectedRevision: string;
+}>;
+type OwnedCheckout = Readonly<{
+  checkoutId: string;
+  activeSnapshotId: string;
+  promotionEffectId: string;
+  expectedPromotionCode: string;
+  expectedStatus: "READY_FOR_PAYMENT";
+  customerAuthUserId: string;
+  expectedRevision: string;
+}>;
 
 test.beforeEach(() => {
   test.skip(!FIXED_OTP_CODE, "CUSTOMER_OTP_LOCAL_FIXED_CODE must be set.");
+  const token = process.env.E2E_HARNESS_CONTROL_TOKEN ?? "";
+  const runId = process.env.E2E_HARNESS_RUN_ID ?? "";
+  test.skip(token.length < 32 || token === PUBLIC_CONTROL_TOKEN, "per-run control token must be set.");
+  test.skip(!/^[0-9a-f-]{36}$/i.test(runId), "per-run control identity must be set.");
 });
+
+function controlToken(): string {
+  const token = process.env.E2E_HARNESS_CONTROL_TOKEN ?? "";
+  if (token.length < 32 || token === PUBLIC_CONTROL_TOKEN) {
+    throw new Error("per-run control token is not configured");
+  }
+  return token;
+}
+
+function controlRunId(): string {
+  const runId = process.env.E2E_HARNESS_RUN_ID ?? "";
+  if (!/^[0-9a-f-]{36}$/i.test(runId)) throw new Error("per-run control identity is not configured");
+  return runId;
+}
 
 function phoneField(page: Page) {
   return page.getByLabel("Mobile number", { exact: true });
@@ -38,13 +97,14 @@ function visibleCheckout(page: Page) {
   return page.locator("#main-content").locator("button:visible", { hasText: /^Checkout$/ });
 }
 
-async function control(page: Page, action: string): Promise<Record<string, unknown>> {
+async function control(page: Page, input: Record<string, unknown>): Promise<Record<string, unknown>> {
   const response = await page.request.post("/__e2e/control", {
-    headers: { "x-e2e-control-token": CONTROL_TOKEN },
-    data: { action },
+    headers: { "x-e2e-control-token": controlToken() },
+    data: { ...input, runId: input.runId ?? controlRunId() },
   });
-  expect(response.ok(), await response.text()).toBeTruthy();
-  return (await response.json()) as Record<string, unknown>;
+  const text = await response.text();
+  if (!response.ok()) throw new Error(`control http ${response.status()}`);
+  return JSON.parse(text) as Record<string, unknown>;
 }
 
 function trackMenuFailures(page: Page): {
@@ -67,6 +127,141 @@ function trackMenuFailures(page: Page): {
   });
   return {
     drain: async () => (await Promise.all(pending)).filter((row) => row !== null),
+  };
+}
+
+function watchOwnedIdentity(page: Page): {
+  snapshot: () => Promise<{
+    cart: BrowserCart | null;
+    outletId: string | null;
+    checkout: BrowserCheckout | null;
+    addedVariantIds: readonly string[];
+  }>;
+} {
+  const addedVariantIds: string[] = [];
+  let cart: BrowserCart | null = null;
+  let outletId: string | null = null;
+  let checkout: BrowserCheckout | null = null;
+  const pending: Array<Promise<void>> = [];
+
+  page.on("request", (request) => {
+    if (request.method() !== "POST" || !request.url().includes("/api/v1/cart/lines")) return;
+    try {
+      const body = request.postDataJSON() as { variantId?: unknown };
+      if (typeof body?.variantId === "string") addedVariantIds.push(body.variantId);
+    } catch {
+      /* The cart response remains the identity source. */
+    }
+  });
+
+  page.on("response", (response) => {
+    if (!response.ok()) return;
+    const url = response.url();
+    const cartHit = url.includes("/api/v1/cart") && !url.includes("/cart/evaluate");
+    const serviceHit = url.includes("/api/v1/serviceability/evaluate");
+    const checkoutHit = url.includes("/api/v1/checkouts");
+    if (!cartHit && !serviceHit && !checkoutHit) return;
+    pending.push(
+      (async () => {
+        let json: {
+          cart?: BrowserCart;
+          decision?: { selectedOutletId?: string };
+          checkout?: BrowserCheckout;
+        };
+        try {
+          json = (await response.json()) as typeof json;
+        } catch {
+          return;
+        }
+        if (cartHit && json.cart?.id && Array.isArray(json.cart.lines)) cart = json.cart;
+        if (serviceHit && typeof json.decision?.selectedOutletId === "string") {
+          outletId = json.decision.selectedOutletId;
+        }
+        if (
+          checkoutHit &&
+          json.checkout?.status === "READY_FOR_PAYMENT" &&
+          json.checkout.activeSnapshotId
+        ) {
+          checkout = json.checkout;
+        }
+      })(),
+    );
+  });
+
+  return {
+    snapshot: async () => {
+      for (let guard = 0; pending.length > 0 && guard < 8; guard += 1) {
+        const batch = pending.splice(0, pending.length);
+        await Promise.all(batch);
+      }
+      return { cart, outletId, checkout, addedVariantIds: [...addedVariantIds] };
+    },
+  };
+}
+
+function uniqueLine(lines: readonly BrowserCartLine[], variantId: string): BrowserCartLine {
+  const matches = lines.filter((line) => line.variantId === variantId);
+  if (matches.length !== 1) {
+    throw new Error(`browser cart did not contain exactly one line for an added item (${matches.length})`);
+  }
+  return matches[0]!;
+}
+
+function requireOwnedCart(snapshot: {
+  cart: BrowserCart | null;
+  outletId: string | null;
+  addedVariantIds: readonly string[];
+}): OwnedCart {
+  if (!snapshot.outletId) throw new Error("serviceability did not return an outlet for this cart");
+  const cart = snapshot.cart;
+  if (!cart?.id || cart.lines.length < 2) throw new Error("browser cart did not return two lines");
+  if (cart.ownerMode !== "guest") throw new Error("this cart journey expected a guest cart");
+  if (snapshot.addedVariantIds.length < 2) throw new Error("browser did not record two cart-line adds");
+  const target = uniqueLine(cart.lines, snapshot.addedVariantIds[0]!);
+  const sibling = uniqueLine(cart.lines, snapshot.addedVariantIds[1]!);
+  if (target.id === sibling.id) throw new Error("browser cart lines were not distinct");
+  return {
+    cartId: cart.id,
+    outletId: snapshot.outletId,
+    lineId: target.id,
+    siblingLineId: sibling.id,
+    variantId: target.variantId,
+    siblingVariantId: sibling.variantId,
+    customerAuthUserId: null,
+    expectedRevision: String(cart.revision),
+  };
+}
+
+function requireOwnedCheckout(checkout: BrowserCheckout | null): OwnedCheckout {
+  if (!checkout || checkout.status !== "READY_FOR_PAYMENT" || !checkout.id) {
+    throw new Error("browser checkout was not READY_FOR_PAYMENT");
+  }
+  const snapshotId = checkout.activeSnapshotId;
+  const snapshot = checkout.activeSnapshot;
+  if (!snapshotId || !snapshot || snapshot.id !== snapshotId) {
+    throw new Error("browser checkout snapshot was not the active snapshot");
+  }
+  const effects = snapshot.promotionEffects ?? [];
+  const effect =
+    effects.find(
+      (row) =>
+        row.effectKind === "applied_promotion" &&
+        typeof row.id === "string" &&
+        typeof row.promotionCode === "string",
+    ) ??
+    effects.find((row) => typeof row.id === "string" && typeof row.promotionCode === "string");
+  if (!effect?.id || !effect.promotionCode) throw new Error("ready checkout had no promotion effect to bind");
+  if (typeof checkout.customerAuthUserId !== "string" || checkout.customerAuthUserId.length === 0) {
+    throw new Error("ready checkout had no customer identity");
+  }
+  return {
+    checkoutId: checkout.id,
+    activeSnapshotId: snapshotId,
+    promotionEffectId: effect.id,
+    expectedPromotionCode: effect.promotionCode,
+    expectedStatus: "READY_FOR_PAYMENT",
+    customerAuthUserId: checkout.customerAuthUserId,
+    expectedRevision: String(checkout.revision),
   };
 }
 
@@ -112,16 +307,41 @@ async function confirmServiceableContext(
 }
 
 async function addTwoMenuItems(page: Page): Promise<void> {
-  const addButtons = page.locator("#main-content").getByRole("button", { name: /^add .+/i });
+  const menu = page.locator("#main-content");
+  // "Add one …" is the stepper for a line already in the cart. Selecting it
+  // would raise that line's quantity instead of adding the sibling product.
+  const addButtons = menu.getByRole("button", { name: /^add (?!one\b)/i });
   await expect(addButtons.nth(1)).toBeVisible();
-  await addButtons.nth(0).click();
+  const firstName = await addButtons.nth(0).getAttribute("aria-label");
+  const secondName = await addButtons.nth(1).getAttribute("aria-label");
+  if (!firstName || !secondName || firstName === secondName) {
+    throw new Error("menu did not expose two distinct products to add");
+  }
+  await menu.getByRole("button", { name: firstName, exact: true }).click();
   await expect(page.locator("header").getByRole("link", { name: /^cart \(1\)$/i })).toBeVisible({
     timeout: 15_000,
   });
-  await addButtons.nth(1).click();
+  await menu.getByRole("button", { name: secondName, exact: true }).click();
   await expect(page.locator("header").getByRole("link", { name: /^cart \(2\)$/i })).toBeVisible({
     timeout: 15_000,
   });
+}
+
+async function buildTwoLineGuestCart(page: Page): Promise<OwnedCart> {
+  const watch = watchOwnedIdentity(page);
+  await installLocationMocks(page, { stubServiceability: false });
+  await page.goto("/order/");
+  await expect(page.getByRole("heading", { name: /^the bar$/i, level: 1 })).toBeVisible();
+  // Add both lines before location confirmation. Confirming the pin reloads
+  // the outlet menu; adding during that reload can drop the second line.
+  await addTwoMenuItems(page);
+  await confirmServiceableContext(page, { navigate: false });
+  await expect.poll(async () => (await watch.snapshot()).outletId, { timeout: 20_000 }).toBeTruthy();
+  await expect
+    .poll(async () => (await watch.snapshot()).cart?.lines.length ?? 0, { timeout: 20_000 })
+    .toBeGreaterThanOrEqual(2);
+  await expect(page.locator("header").getByRole("link", { name: /^cart \(2\)$/i })).toBeVisible();
+  return requireOwnedCart(await watch.snapshot());
 }
 
 async function signIn(page: Page, phoneNumber: string): Promise<void> {
@@ -156,18 +376,76 @@ async function chooseDeliveryAndAddress(page: Page, phoneNumber: string): Promis
   await checkout.getByRole("button", { name: "Save address" }).click();
 }
 
-async function assertItemUnavailableRecovery(page: Page): Promise<void> {
-  const menuFailures = trackMenuFailures(page);
-  await installLocationMocks(page, { stubServiceability: false });
+async function reachPaymentStart(page: Page, phoneNumber: string): Promise<OwnedCheckout> {
+  const watch = watchOwnedIdentity(page);
+  await installLocationMocks(page);
   await page.goto("/order/");
   await expect(page.getByRole("heading", { name: /^the bar$/i, level: 1 })).toBeVisible();
-  await addTwoMenuItems(page);
-  const marked = await control(page, "mark-first-cart-line-unavailable");
-  expect(marked.ok, JSON.stringify(marked)).toBe(true);
-  await confirmServiceableContext(page, { navigate: false });
+  const addButtons = page.locator("#main-content").getByRole("button", { name: /^add .+/i });
+  await addButtons.first().click();
+  await page.locator("header").getByRole("link", { name: /^cart \(1\)$/i }).click();
+  await expect(page.getByRole("heading", { name: /your cart/i })).toBeVisible();
+  await page.getByRole("button", { name: /^checkout$/i }).click();
+  await signIn(page, phoneNumber);
+  await chooseDeliveryAndAddress(page, phoneNumber);
+  const asap = page.getByTestId("checkout-timing-asap");
+  await expect(page.getByTestId("checkout-timing-choice")).toBeVisible({ timeout: 20_000 });
+  await asap.click();
+  await expect(page.getByTestId("checkout-review")).toBeVisible({ timeout: 20_000 });
+  await page.getByRole("button", { name: /Continue to payment/i }).click();
+  await expect(page.getByTestId("payment-start")).toBeVisible({ timeout: 20_000 });
+  await expect.poll(async () => (await watch.snapshot()).checkout?.status).toBe("READY_FOR_PAYMENT");
+  return requireOwnedCheckout((await watch.snapshot()).checkout);
+}
+
+function cartMarkInput(owned: OwnedCart, overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    action: "mark-first-cart-line-unavailable",
+    cartId: owned.cartId,
+    outletId: owned.outletId,
+    lineId: owned.lineId,
+    siblingLineId: owned.siblingLineId,
+    customerAuthUserId: owned.customerAuthUserId,
+    expectedRevision: owned.expectedRevision,
+    ...overrides,
+  };
+}
+
+function checkoutDriftInput(
+  owned: OwnedCheckout,
+  overrides: Record<string, unknown> = {},
+): Record<string, unknown> {
+  return {
+    action: "drift-sealed-promotion-code",
+    checkoutId: owned.checkoutId,
+    activeSnapshotId: owned.activeSnapshotId,
+    promotionEffectId: owned.promotionEffectId,
+    expectedPromotionCode: owned.expectedPromotionCode,
+    expectedStatus: owned.expectedStatus,
+    customerAuthUserId: owned.customerAuthUserId,
+    expectedRevision: owned.expectedRevision,
+    ...overrides,
+  };
+}
+
+function effectCodes(body: Record<string, unknown>): string[] {
+  const checkout = body.checkout as { effects?: Array<{ promotionCode?: string }> } | undefined;
+  return (checkout?.effects ?? []).map((effect) => effect.promotionCode ?? "");
+}
+
+async function assertItemUnavailableRecovery(page: Page): Promise<void> {
+  const menuFailures = trackMenuFailures(page);
+  const owned = await buildTwoLineGuestCart(page);
+  const marked = await control(page, cartMarkInput(owned));
+  expect(marked.ok, JSON.stringify({ ok: marked.ok, reason: marked.reason, mutated: marked.mutated })).toBe(
+    true,
+  );
+  expect(marked.mutated).toBe(1);
+  expect(marked.cartId).toBe(owned.cartId);
+  expect(marked.outletId).toBe(owned.outletId);
+  expect(marked.lineId).toBe(owned.lineId);
+  expect(marked.siblingLineId).toBe(owned.siblingLineId);
   const retry = page.getByTestId("commerce-retry-panel");
-  const located = page.getByRole("button", { name: /Delivering to Rajpur Road, Dehradun/i });
-  await expect(located.or(retry)).toBeVisible({ timeout: 20_000 });
   if ((await retry.count()) > 0 && (await retry.isVisible())) {
     const failures = await menuFailures.drain();
     throw new Error(
@@ -208,8 +486,61 @@ async function assertItemUnavailableRecovery(page: Page): Promise<void> {
   await page.keyboard.press("Enter");
   await expect(page.getByTestId("cart-evaluation-problems")).toHaveCount(0, { timeout: 20_000 });
   await expect(visibleCheckout(page)).toBeEnabled();
-  await control(page, "restore-availability");
+  const restored = await control(page, {
+    action: "restore-availability",
+    outletId: owned.outletId,
+    variantId: marked.variantId,
+  });
+  expect(restored.ok).toBe(true);
+  expect(restored.restored).toBe(1);
+  expect(restored.mutated).toBe(1);
 }
+
+async function secondContext(
+  browser: Browser,
+  testInfo: TestInfo,
+  viewport: { width: number; height: number } | null,
+): Promise<{ context: BrowserContext; page: Page }> {
+  const context = await browser.newContext({
+    baseURL: testInfo.project.use.baseURL,
+    viewport: viewport ?? { width: 1440, height: 900 },
+  });
+  const page = await context.newPage();
+  return { context, page };
+}
+
+test("control rejects an empty or wrong token and a foreign run without mutating", async ({ page }) => {
+  const missing = await page.request.post("/__e2e/control", {
+    data: { action: "counts", runId: controlRunId() },
+  });
+  expect(missing.status()).toBe(404);
+
+  const wrong = await page.request.post("/__e2e/control", {
+    headers: { "x-e2e-control-token": "0".repeat(32) },
+    data: { action: "counts", runId: controlRunId() },
+  });
+  expect(wrong.status()).toBe(404);
+
+  const publicToken = await page.request.post("/__e2e/control", {
+    headers: { "x-e2e-control-token": PUBLIC_CONTROL_TOKEN },
+    data: { action: "mark-first-cart-line-unavailable", runId: controlRunId() },
+  });
+  expect(publicToken.status()).toBe(404);
+
+  const foreignRun = await control(page, {
+    action: "mark-first-cart-line-unavailable",
+    runId: "00000000-0000-4000-8000-000000000099",
+    cartId: "00000000-0000-4000-8000-000000000098",
+    outletId: "00000000-0000-4000-8000-000000000097",
+    lineId: "00000000-0000-4000-8000-000000000096",
+    siblingLineId: "00000000-0000-4000-8000-000000000095",
+    customerAuthUserId: null,
+    expectedRevision: "1",
+  });
+  expect(foreignRun.ok).toBe(false);
+  expect(foreignRun.reason).toBe("RUN_MISMATCH");
+  expect(foreignRun.mutated).toBe(0);
+});
 
 test("item unavailable names the line, leaves the other line, and blocks checkout", async ({
   page,
@@ -233,7 +564,6 @@ test("scheduled delivery applies a coupon and reaches My Orders through fake che
   test.setTimeout(180_000);
   await installRazorpayCheckoutMock(page, "succeed");
   await installLocationMocks(page);
-  await control(page, "restore-availability");
   await page.goto("/order/");
   await expect(page.getByRole("heading", { name: /^the bar$/i, level: 1 })).toBeVisible();
   const addButtons = page.locator("#main-content").getByRole("button", { name: /^add .+/i });
@@ -280,27 +610,16 @@ test("payment start fails closed on sealed promotion drift without a provider op
 }) => {
   test.setTimeout(180_000);
   await installRazorpayCheckoutMock(page, "succeed");
-  await installLocationMocks(page);
-  await control(page, "restore-availability");
-  await page.goto("/order/");
-  await expect(page.getByRole("heading", { name: /^the bar$/i, level: 1 })).toBeVisible();
-  const addButtons = page.locator("#main-content").getByRole("button", { name: /^add .+/i });
-  await addButtons.first().click();
-  await page.locator("header").getByRole("link", { name: /^cart \(1\)$/i }).click();
-  await expect(page.getByRole("heading", { name: /your cart/i })).toBeVisible();
-  await page.getByRole("button", { name: /^checkout$/i }).click();
-  await signIn(page, PHONE.bindingDrift);
-  await chooseDeliveryAndAddress(page, PHONE.bindingDrift);
-  const asap = page.getByTestId("checkout-timing-asap");
-  await expect(page.getByTestId("checkout-timing-choice")).toBeVisible({ timeout: 20_000 });
-  await asap.click();
-  await expect(page.getByTestId("checkout-review")).toBeVisible({ timeout: 20_000 });
-  await page.getByRole("button", { name: /Continue to payment/i }).click();
-  await expect(page.getByTestId("payment-start")).toBeVisible({ timeout: 20_000 });
-
-  const before = await control(page, "counts");
-  const drifted = await control(page, "drift-sealed-promotion-code");
-  expect(drifted.ok, JSON.stringify(drifted)).toBe(true);
+  const owned = await reachPaymentStart(page, PHONE.bindingDrift);
+  const before = await control(page, { action: "counts" });
+  const drifted = await control(page, checkoutDriftInput(owned));
+  expect(drifted.ok, JSON.stringify({ ok: drifted.ok, reason: drifted.reason, mutated: drifted.mutated })).toBe(
+    true,
+  );
+  expect(drifted.mutated).toBe(1);
+  expect(drifted.checkoutId).toBe(owned.checkoutId);
+  expect(drifted.activeSnapshotId).toBe(owned.activeSnapshotId);
+  expect(drifted.promotionEffectId).toBe(owned.promotionEffectId);
   await page.getByTestId("payment-start").click();
   await expect(page.getByTestId("copy-stale")).toContainText(
     "We couldn't confirm your checkout for payment.",
@@ -313,7 +632,201 @@ test("payment start fails closed on sealed promotion drift without a provider op
     return state?.openCount ?? 0;
   });
   expect(openCount).toBe(0);
-  const after = await control(page, "counts");
+  const after = await control(page, { action: "counts" });
   expect(after.paymentCount).toBe(before.paymentCount);
   expect(after.orderCount).toBe(before.orderCount);
+});
+
+test("two carts reject the wrong identity and leave both carts unchanged", async ({ page, browser }, testInfo) => {
+  test.setTimeout(240_000);
+  const other = await secondContext(browser, testInfo, page.viewportSize());
+  try {
+    const cartA = await buildTwoLineGuestCart(page);
+    const cartB = await buildTwoLineGuestCart(other.page);
+    expect(cartA.cartId).not.toBe(cartB.cartId);
+    expect(cartA.lineId).not.toBe(cartB.lineId);
+
+    const beforeA = await control(page, {
+      action: "read-binding",
+      cartId: cartA.cartId,
+      outletId: cartA.outletId,
+      variantId: cartA.variantId,
+    });
+    const beforeSibling = await control(page, {
+      action: "read-binding",
+      outletId: cartA.outletId,
+      variantId: cartA.siblingVariantId,
+    });
+    expect(beforeA.cartFound).toBe(true);
+    expect(beforeA.availability === null || (beforeA.availability as { state?: string }).state === "available").toBe(
+      true,
+    );
+    expect(
+      beforeSibling.availability === null ||
+        (beforeSibling.availability as { state?: string }).state === "available",
+    ).toBe(true);
+
+    const wrongLine = await control(page, cartMarkInput(cartA, { lineId: cartB.lineId, siblingLineId: cartB.siblingLineId }));
+    expect(wrongLine.ok).toBe(false);
+    expect(wrongLine.mutated).toBe(0);
+
+    const wrongCart = await control(page, cartMarkInput(cartA, { cartId: cartB.cartId }));
+    expect(wrongCart.ok).toBe(false);
+    expect(wrongCart.mutated).toBe(0);
+
+    const missing = await control(
+      page,
+      cartMarkInput(cartA, { cartId: "00000000-0000-4000-8000-000000000099" }),
+    );
+    expect(missing.ok).toBe(false);
+    expect(missing.reason).toBe("MISSING_CART");
+    expect(missing.mutated).toBe(0);
+
+    const wrongCustomer = await control(page, cartMarkInput(cartA, { customerAuthUserId: "wrong-customer" }));
+    expect(wrongCustomer.ok).toBe(false);
+    expect(wrongCustomer.reason).toBe("WRONG_CUSTOMER");
+    expect(wrongCustomer.mutated).toBe(0);
+
+    const stale = await control(page, cartMarkInput(cartA, { expectedRevision: "999999999" }));
+    expect(stale.ok).toBe(false);
+    expect(stale.reason).toBe("STALE_CART");
+    expect(stale.mutated).toBe(0);
+
+    const afterReject = await control(page, {
+      action: "read-binding",
+      cartId: cartA.cartId,
+      outletId: cartA.outletId,
+      variantId: cartA.variantId,
+    });
+    const afterB = await control(page, {
+      action: "read-binding",
+      cartId: cartB.cartId,
+      outletId: cartB.outletId,
+      variantId: cartB.variantId,
+    });
+    expect(afterReject.availability).toEqual(beforeA.availability);
+    expect((afterB.availability as { state?: string } | null)?.state ?? null).not.toBe("sold_out");
+    expect(afterReject.lineIds).toEqual(expect.arrayContaining([cartA.lineId, cartA.siblingLineId]));
+    expect(afterB.lineIds).toEqual(expect.arrayContaining([cartB.lineId, cartB.siblingLineId]));
+
+    const marked = await control(page, cartMarkInput(cartA));
+    expect(marked.ok).toBe(true);
+    expect(marked.mutated).toBe(1);
+    expect(marked.cartId).toBe(cartA.cartId);
+    expect(marked.lineId).toBe(cartA.lineId);
+    const sold = await control(page, {
+      action: "read-binding",
+      outletId: cartA.outletId,
+      variantId: cartA.variantId,
+    });
+    const siblingLeft = await control(page, {
+      action: "read-binding",
+      outletId: cartA.outletId,
+      variantId: cartA.siblingVariantId,
+    });
+    expect(sold.availability).toEqual({ state: "sold_out", reasonMatchesRun: true });
+    expect((siblingLeft.availability as { state?: string } | null)?.state ?? null).not.toBe("sold_out");
+
+    const wrongRestore = await control(page, {
+      action: "restore-availability",
+      outletId: cartA.outletId,
+      variantId: cartA.siblingVariantId,
+    });
+    expect(wrongRestore.mutated).toBe(0);
+    const stillSold = await control(page, {
+      action: "read-binding",
+      outletId: cartA.outletId,
+      variantId: cartA.variantId,
+    });
+    expect(stillSold.availability).toEqual({ state: "sold_out", reasonMatchesRun: true });
+
+    await page.locator("header").getByRole("link", { name: /^cart \(2\)$/i }).click();
+    await expect(page.getByTestId("cart-evaluation-problems")).toContainText(String(marked.unavailableProductName), {
+      timeout: 20_000,
+    });
+    await expect(page.getByRole("button", { name: `Remove ${String(marked.unavailableProductName)} from cart` })).toBeVisible();
+
+    const restored = await control(page, {
+      action: "restore-availability",
+      outletId: cartA.outletId,
+      variantId: cartA.variantId,
+    });
+    expect(restored.restored).toBe(1);
+    expect(restored.mutated).toBe(1);
+  } finally {
+    await other.context.close();
+  }
+});
+
+test("two ready checkouts reject the wrong identity and leave the unrelated snapshot unchanged", async ({
+  page,
+  browser,
+}, testInfo) => {
+  test.setTimeout(360_000);
+  const other = await secondContext(browser, testInfo, page.viewportSize());
+  try {
+    const checkoutA = await reachPaymentStart(page, PHONE.isolationA);
+    const checkoutB = await reachPaymentStart(other.page, PHONE.isolationB);
+    expect(checkoutA.checkoutId).not.toBe(checkoutB.checkoutId);
+    expect(checkoutA.activeSnapshotId).not.toBe(checkoutB.activeSnapshotId);
+
+    const beforeA = await control(page, { action: "read-binding", checkoutId: checkoutA.checkoutId });
+    const beforeB = await control(page, { action: "read-binding", checkoutId: checkoutB.checkoutId });
+    const codesA = effectCodes(beforeA);
+    const codesB = effectCodes(beforeB);
+    expect(codesA).toContain(checkoutA.expectedPromotionCode);
+    expect(codesB).toContain(checkoutB.expectedPromotionCode);
+
+    const wrongSnapshot = await control(
+      page,
+      checkoutDriftInput(checkoutA, {
+        activeSnapshotId: checkoutB.activeSnapshotId,
+        promotionEffectId: checkoutB.promotionEffectId,
+        expectedPromotionCode: checkoutB.expectedPromotionCode,
+      }),
+    );
+    expect(wrongSnapshot.ok).toBe(false);
+    expect(wrongSnapshot.mutated).toBe(0);
+
+    const wrongEffect = await control(
+      page,
+      checkoutDriftInput(checkoutA, {
+        promotionEffectId: checkoutB.promotionEffectId,
+        expectedPromotionCode: checkoutB.expectedPromotionCode,
+      }),
+    );
+    expect(wrongEffect.ok).toBe(false);
+    expect(wrongEffect.mutated).toBe(0);
+
+    const missing = await control(
+      page,
+      checkoutDriftInput(checkoutA, { checkoutId: "00000000-0000-4000-8000-000000000099" }),
+    );
+    expect(missing.ok).toBe(false);
+    expect(missing.reason).toBe("MISSING_CHECKOUT");
+    expect(missing.mutated).toBe(0);
+
+    const unchangedA = effectCodes(await control(page, { action: "read-binding", checkoutId: checkoutA.checkoutId }));
+    const unchangedB = effectCodes(await control(page, { action: "read-binding", checkoutId: checkoutB.checkoutId }));
+    expect(unchangedA).toEqual(codesA);
+    expect(unchangedB).toEqual(codesB);
+
+    const drifted = await control(page, checkoutDriftInput(checkoutA));
+    expect(drifted.ok, JSON.stringify({ ok: drifted.ok, reason: drifted.reason, mutated: drifted.mutated })).toBe(
+      true,
+    );
+    expect(drifted.mutated).toBe(1);
+    expect(drifted.checkoutId).toBe(checkoutA.checkoutId);
+    expect(drifted.activeSnapshotId).toBe(checkoutA.activeSnapshotId);
+
+    const afterA = await control(page, { action: "read-binding", checkoutId: checkoutA.checkoutId });
+    const afterB = await control(page, { action: "read-binding", checkoutId: checkoutB.checkoutId });
+    const afterEffects = (afterA.checkout as { effects?: Array<{ id: string; promotionCode: string }> }).effects ?? [];
+    const driftedEffect = afterEffects.find((effect) => effect.id === checkoutA.promotionEffectId);
+    expect(driftedEffect?.promotionCode).toBe("drifted-seal");
+    expect(effectCodes(afterB)).toEqual(codesB);
+    expect((afterB.checkout as { activeSnapshotId?: string }).activeSnapshotId).toBe(checkoutB.activeSnapshotId);
+  } finally {
+    await other.context.close();
+  }
 });
