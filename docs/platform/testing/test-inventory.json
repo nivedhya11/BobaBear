@@ -9155,8 +9155,11 @@
       "dbRequired": "UNKNOWN",
       "browserRequired": "NO",
       "externalProviderSubstitute": "UNKNOWN",
-      "packageCommands": [],
-      "ciInclusion": "NO",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
       "test1Layers": [
         "2-component"
       ],
@@ -9170,8 +9173,11 @@
       "dbRequired": "UNKNOWN",
       "browserRequired": "NO",
       "externalProviderSubstitute": "UNKNOWN",
-      "packageCommands": [],
-      "ciInclusion": "NO",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
       "test1Layers": [
         "1-unit"
       ],
@@ -9185,8 +9191,11 @@
       "dbRequired": "UNKNOWN",
       "browserRequired": "NO",
       "externalProviderSubstitute": "UNKNOWN",
-      "packageCommands": [],
-      "ciInclusion": "NO",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
       "test1Layers": [
         "1-unit"
       ],
@@ -9200,8 +9209,11 @@
       "dbRequired": "UNKNOWN",
       "browserRequired": "NO",
       "externalProviderSubstitute": "UNKNOWN",
-      "packageCommands": [],
-      "ciInclusion": "NO",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
       "test1Layers": [
         "1-unit"
       ],
@@ -9215,8 +9227,11 @@
       "dbRequired": "UNKNOWN",
       "browserRequired": "NO",
       "externalProviderSubstitute": "UNKNOWN",
-      "packageCommands": [],
-      "ciInclusion": "NO",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
       "test1Layers": [
         "1-unit"
       ],
@@ -9230,8 +9245,11 @@
       "dbRequired": "UNKNOWN",
       "browserRequired": "NO",
       "externalProviderSubstitute": "UNKNOWN",
-      "packageCommands": [],
-      "ciInclusion": "NO",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
       "test1Layers": [
         "2-component"
       ],
@@ -9245,8 +9263,11 @@
       "dbRequired": "UNKNOWN",
       "browserRequired": "NO",
       "externalProviderSubstitute": "UNKNOWN",
-      "packageCommands": [],
-      "ciInclusion": "NO",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
       "test1Layers": [
         "1-unit",
         "9-recovery-idempotency"
