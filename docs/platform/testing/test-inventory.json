@@ -31,10 +31,10 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2325,
-    "executableTestFiles": 523,
+    "trackedPathsConsidered": 2331,
+    "executableTestFiles": 527,
     "sourceTestFiles": 157,
-    "testsTreeExecutableFiles": 278,
+    "testsTreeExecutableFiles": 282,
     "scriptTestFiles": 88,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
@@ -254,7 +254,9 @@
     "tests/administration/commercial-money.test.ts",
     "tests/administration/commercial-types.test.ts",
     "tests/administration/imp036g-proofs.integration.test.ts",
+    "tests/administration/imp036j-381-create-promotion.diagnostic.integration.test.ts",
     "tests/administration/portal-session.integration.test.ts",
+    "tests/administration/promotion-readiness.test.ts",
     "tests/assortment-availability/assortment-consequence-preview.test.ts",
     "tests/assortment-availability/assortment-revision-concurrency.test.ts",
     "tests/assortment-availability/assortment-rules.test.ts",
@@ -288,10 +290,12 @@
     "tests/checkout-security/checkout.security.test.ts",
     "tests/checkout/checkout.domain.test.ts",
     "tests/checkout/checkout.pickup.domain.test.ts",
+    "tests/checkout/imp036j-385-line-presentation-options.fixture.test.ts",
     "tests/checkout/imp036j-391-equal-payable-repricing.diagnostic.test.ts",
     "tests/checkout/imp036j-391b-prepare-observer-lazy.diagnostic.test.ts",
     "tests/checkout/imp036j-391b-prepare-observer.diagnostic.test.ts",
     "tests/checkout/imp036j-coupon-recovery.domain.test.ts",
+    "tests/checkout/imp036j-gtm-committed-cart-authority.domain.test.ts",
     "tests/checkout/legacy-outlet-price-book-retirement.domain.test.ts",
     "tests/checkout/parse-fulfilment-input.test.ts",
     "tests/checkout/scheduled-fulfilment.domain.test.ts",
@@ -6844,6 +6848,24 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "tests/administration/imp036j-381-create-promotion.diagnostic.integration.test.ts",
+      "runner": "vitest",
+      "domain": "administration",
+      "testType": "integration",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:administration"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "4-integration",
+        "5-database-integration"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "tests/administration/portal-session.integration.test.ts",
       "runner": "vitest",
       "domain": "administration",
@@ -6858,6 +6880,25 @@
       "test1Layers": [
         "4-integration",
         "5-database-integration"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/administration/promotion-readiness.test.ts",
+      "runner": "vitest",
+      "domain": "administration",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:administration",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
       ],
       "classificationConfidence": "HEURISTIC"
     },
@@ -7432,6 +7473,23 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "tests/checkout/imp036j-385-line-presentation-options.fixture.test.ts",
+      "runner": "vitest",
+      "domain": "checkout",
+      "testType": "unit-or-domain",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:checkout"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "tests/checkout/imp036j-391-equal-payable-repricing.diagnostic.test.ts",
       "runner": "vitest",
       "domain": "checkout",
@@ -7498,6 +7556,24 @@
         "1-unit",
         "3-domain-use-case",
         "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/checkout/imp036j-gtm-committed-cart-authority.domain.test.ts",
+      "runner": "vitest",
+      "domain": "checkout",
+      "testType": "unit-or-domain",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:checkout"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
       ],
       "classificationConfidence": "HEURISTIC"
     },
