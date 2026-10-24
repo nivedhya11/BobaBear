@@ -1,0 +1,24 @@
+{
+  "ds0002_hits": [],
+  "ds0002_absent": true,
+  "result_targets": [
+    {
+      "Target": "/home/ajoshi/repos/boba-bear-wave-b-pg/artifacts/pg-c1-proof/boba-pgc1-disp-20261024T074915Z-112269/c1-nonroot.tar (debian 13.7)",
+      "Class": "os-pkgs",
+      "Type": "debian",
+      "MisconfCount": 0
+    },
+    {
+      "Target": "usr/local/bin/gosu",
+      "Class": "lang-pkgs",
+      "Type": "gobinary",
+      "MisconfCount": 0
+    },
+    {
+      "Target": "/home/ajoshi/repos/boba-bear-wave-b-pg/artifacts/pg-c1-proof/boba-pgc1-disp-20261024T074915Z-112269/c1-nonroot.tar",
+      "Class": "config",
+      "Type": "dockerfile",
+      "MisconfCount": 0
+    }
+  ]
+}
