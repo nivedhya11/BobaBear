@@ -31,10 +31,10 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2329,
-    "executableTestFiles": 526,
-    "sourceTestFiles": 159,
-    "testsTreeExecutableFiles": 279,
+    "trackedPathsConsidered": 2332,
+    "executableTestFiles": 528,
+    "sourceTestFiles": 160,
+    "testsTreeExecutableFiles": 280,
     "scriptTestFiles": 88,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
@@ -86,6 +86,7 @@
     "src/components/ordering/PaymentPanel.test.tsx",
     "src/components/ordering/PreviousPaymentRecoveryView.test.tsx",
     "src/components/ordering/ReconcileConflictDialog.test.tsx",
+    "src/components/ordering/availability-377-recovery.test.tsx",
     "src/components/ordering/cart-changed-recovery-presentation.test.ts",
     "src/components/ordering/cart-presentation.test.ts",
     "src/components/ordering/checkout-snapshot-presentation.test.ts",
@@ -403,6 +404,7 @@
     "tests/imp-036b/profile-welcome.test.tsx",
     "tests/imp-036b/serviceability-copy.test.ts",
     "tests/imp-036b/welcome-flow.test.ts",
+    "tests/imp-036c/checkout-destination-395-provider-readiness.test.tsx",
     "tests/imp-036c/checkout-destination-flow.test.tsx",
     "tests/imp-036c/customer-delivery-address-flow.test.tsx",
     "tests/imp036j/imp036j-tranche8-coverage.test.ts",
@@ -3711,6 +3713,25 @@
       "ciInclusion": "YES",
       "test1Layers": [
         "2-component"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/components/ordering/availability-377-recovery.test.tsx",
+      "runner": "vitest",
+      "domain": "components/ordering",
+      "testType": "component-or-tsx",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "2-component",
+        "9-recovery-idempotency"
       ],
       "classificationConfidence": "HEURISTIC"
     },
@@ -9434,6 +9455,24 @@
       "ciInclusion": "YES",
       "test1Layers": [
         "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/imp-036c/checkout-destination-395-provider-readiness.test.tsx",
+      "runner": "vitest",
+      "domain": "imp-036c",
+      "testType": "component-or-tsx",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "2-component"
       ],
       "classificationConfidence": "HEURISTIC"
     },
