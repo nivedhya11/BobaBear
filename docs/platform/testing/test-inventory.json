@@ -31,10 +31,10 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2325,
-    "executableTestFiles": 523,
+    "trackedPathsConsidered": 2336,
+    "executableTestFiles": 530,
     "sourceTestFiles": 157,
-    "testsTreeExecutableFiles": 278,
+    "testsTreeExecutableFiles": 285,
     "scriptTestFiles": 88,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
@@ -387,6 +387,13 @@
     "tests/e2e/workforce-auth.spec.ts",
     "tests/enterprise/dark-only-theme.test.ts",
     "tests/enterprise/portal-surfaces.test.ts",
+    "tests/gtm-closure/accessible-names.test.tsx",
+    "tests/gtm-closure/checkout-revalidation.test.ts",
+    "tests/gtm-closure/coupon-journeys.test.ts",
+    "tests/gtm-closure/first-returning-and-fulfilment.test.ts",
+    "tests/gtm-closure/my-orders-historical-savings.test.ts",
+    "tests/gtm-closure/operator-issue-activate-retire.test.tsx",
+    "tests/gtm-closure/payment-start-recovery.test.ts",
     "tests/imp-036b/addresses-client.test.tsx",
     "tests/imp-036b/delivery-context.test.ts",
     "tests/imp-036b/display-label.test.ts",
@@ -9139,6 +9146,112 @@
         "1-unit"
       ],
       "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/gtm-closure/accessible-names.test.tsx",
+      "runner": "vitest",
+      "domain": "gtm-closure",
+      "testType": "component-or-tsx",
+      "dbRequired": "UNKNOWN",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [],
+      "ciInclusion": "NO",
+      "test1Layers": [
+        "2-component"
+      ],
+      "classificationConfidence": "LOW"
+    },
+    {
+      "path": "tests/gtm-closure/checkout-revalidation.test.ts",
+      "runner": "vitest",
+      "domain": "gtm-closure",
+      "testType": "unit-or-domain",
+      "dbRequired": "UNKNOWN",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [],
+      "ciInclusion": "NO",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "LOW"
+    },
+    {
+      "path": "tests/gtm-closure/coupon-journeys.test.ts",
+      "runner": "vitest",
+      "domain": "gtm-closure",
+      "testType": "unit-or-domain",
+      "dbRequired": "UNKNOWN",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [],
+      "ciInclusion": "NO",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "LOW"
+    },
+    {
+      "path": "tests/gtm-closure/first-returning-and-fulfilment.test.ts",
+      "runner": "vitest",
+      "domain": "gtm-closure",
+      "testType": "unit-or-domain",
+      "dbRequired": "UNKNOWN",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [],
+      "ciInclusion": "NO",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "LOW"
+    },
+    {
+      "path": "tests/gtm-closure/my-orders-historical-savings.test.ts",
+      "runner": "vitest",
+      "domain": "gtm-closure",
+      "testType": "unit-or-domain",
+      "dbRequired": "UNKNOWN",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [],
+      "ciInclusion": "NO",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "LOW"
+    },
+    {
+      "path": "tests/gtm-closure/operator-issue-activate-retire.test.tsx",
+      "runner": "vitest",
+      "domain": "gtm-closure",
+      "testType": "component-or-tsx",
+      "dbRequired": "UNKNOWN",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [],
+      "ciInclusion": "NO",
+      "test1Layers": [
+        "2-component"
+      ],
+      "classificationConfidence": "LOW"
+    },
+    {
+      "path": "tests/gtm-closure/payment-start-recovery.test.ts",
+      "runner": "vitest",
+      "domain": "gtm-closure",
+      "testType": "unit-or-domain",
+      "dbRequired": "UNKNOWN",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [],
+      "ciInclusion": "NO",
+      "test1Layers": [
+        "1-unit",
+        "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "LOW"
     },
     {
       "path": "tests/imp-036b/addresses-client.test.tsx",
