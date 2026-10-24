@@ -1,0 +1,2 @@
+production-shaped Layer 1 requires physical Spaces bucket, endpoint, region, and distinct BOBA_PHYSICAL_SPACES credentials
+BOBA pgBackRest: concrete config render failed; refusing to start PostgreSQL

@@ -1,0 +1,13 @@
+docker_engine	UNVERIFIED	docker CLI absent; DOCKER_ENGINE=UNVERIFIED; Podman is additional evidence only
+final_image_uid	PASS	Config.User=postgres; runtime id=999(postgres); image_id=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+fresh_start_restart	PASS	new volume c1-proof-b-27be227a1753-171813-pgdata owned inside by 999 and on host by 100998; fresh start and restart ready; no :U
+volume_ownership_fail_closed	PASS	correctly owned new volume succeeded; incorrect host-owned bind exit=1; both sentinels and tree snapshot unchanged
+forced_root_rejection	PASS	--user 0 exit=1; log refuses root
+trivy_unsuppressed	PASS	DS-0002 absent; empty ignorefile; VEX not passed; bound to 27be227a1753d5a3897b186c2a2f9bb7650c317d 7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5; high_critical_count=86; not the six-image CI gate
+pgbackrest_full_backup	PASS	stanza-create + check + backup --type=full + info + verify
+post_backup_wal_segment	PASS	pg_current_wal_lsn=0/5006B50 pg_walfile_name=000000010000000000000005 after pg_switch_wal=0/5006B68; exact file /var/lib/pgbackrest/repo-gen-1/archive/boba/18-1/0000000100000000/000000010000000000000005-2968a326826d0dceec40080157ad731a78351567.zst
+isolated_restore_marker	PASS	restored database contains post-backup-marker-c1-proof-b-27be227a1753-171813; replay_lsn=0/7000000 >= marker_lsn=0/5006B50
+interrupted_archive_failure	PASS	verifier failed for 000000010000000000000007; failed_count=24; last_failed_wal=000000010000000000000007; second restore lacks neg-unarchived-marker-c1-proof-b-27be227a1753-171813; bare archived_count=7 would have been a false PASS
+s3_synthetic_render	PASS	network=none render repo1-type=s3; secret not written; missing-creds rc=1; same-bucket rc=1; archive=1 incomplete S3 exit=1 and PGDATA absent; archive=0 with incomplete S3 became_ready=yes (fail-closed only when archive is enabled)
+s3_live_spaces	UNVERIFIED	S3_LIVE_SPACES=UNVERIFIED; no credentials and no bucket changes; synthetic network-free render only
+cleanup	PASS	script cleanup_exit=1 left two exited containers (bad-owner, root); follow-up podman rm -f of those IDs exited 0; final container and volume lists for c1-proof-b-27be227a1753 are empty

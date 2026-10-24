@@ -1,0 +1,1 @@
+Layer 1 physical Spaces credentials/bucket must be distinct from Layer 2 logical Spaces

@@ -1,0 +1,34 @@
+RUN_ID=c1-proof-b-27be227a1753-171004
+SOURCE_SHA=27be227a1753d5a3897b186c2a2f9bb7650c317d
+SOURCE_BRANCH=fix/postgres-c1-nonroot-runtime-20261024
+PROOF_HEAD=a6155378b799e06a95b28c593ac1a340d7ca9245
+ENGINE=podman
+DOCKER_ENGINE=UNVERIFIED
+PODMAN_VERSION=4.9.3
+TRIVY_BIN=/snap/bin/trivy
+TRIVY_VERSION=0.52.2
+HOST_UID=1000
+SUBUID_START=100000
+EXPECTED_HOST_UID_FOR_CONTAINER_999=100998
+DOCKER_CLI=ABSENT_OR_UNUSED
+DOCKERFILE_SHA256=4cf227e7f50139eb6cf812e47a3e0d42ac2451642103d7cc54f940263ca6c537
+ENTRYPOINT_SHA256=9151655a078cc62bdedd7e757f82eada44c2162afc50c482b2af96a834345d6d
+IMAGE_REF=localhost/boba-bear-postgres:c1-proof-b-27be227a1753
+IMAGE_ID=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+CONFIG_USER=postgres
+RUNTIME_UID=999
+RUNTIME_USER=postgres
+PGDATA_PATH=/var/lib/postgresql/18/docker
+volume_name=c1-proof-b-27be227a1753-171004-pgdata mountpoint=/home/ajoshi/.local/share/containers/storage/volumes/c1-proof-b-27be227a1753-171004-pgdata/_data created=2026-10-24 17:10:49.365219075 +0000 UTC
+volume_name=c1-proof-b-27be227a1753-171004-pgbackrest mountpoint=/home/ajoshi/.local/share/containers/storage/volumes/c1-proof-b-27be227a1753-171004-pgbackrest/_data created=2026-10-24 17:10:53.485714488 +0000 UTC
+container_name=c1-proof-b-27be227a1753-171004-pg id=d89222ea10ad2a8fdec2780ba2487a0773af37a7a1a3f07e7665a6fdc2325d5d image=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+container_name=c1-proof-b-27be227a1753-171004-pg id=78054db6cfb2039249537b8cab1ea0c8dfc183036f3e3c214b66a787410bfb3f image=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+container_name=c1-proof-b-27be227a1753-171004-bad-owner id=dd4990e282b6bd62c71cdd6bd374e5ab6957d71f21394312482d178e50a3268d image=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+container_name=c1-proof-b-27be227a1753-171004-root id=7834ffa4191e96e41b145f57b5ede5a12ba392ae974d89696948bd2932c6e3f4 image=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+cleanup_exit=0
+leftover_containers<<EOF
+
+EOF
+leftover_volumes<<EOF
+
+EOF
