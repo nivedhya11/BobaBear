@@ -309,7 +309,7 @@ async function runFullCommercialJourney(
   await page.getByRole("button", { name: /Promotions & coupons/i }).click();
   await expect(page.getByTestId("promotions-editor")).toBeVisible();
   const promoCode = `cpn${stamp.replace(/[^a-z0-9]/g, "").slice(-10)}`;
-  await page.getByLabel("Promotion code").fill(promoCode);
+  await page.getByLabel("Promotion identifier").fill(promoCode);
   await page.getByLabel("Promotion display name").fill(`F6B Coupon Promo ${opts.suffix}`);
   await page.getByLabel("Trigger type").selectOption("coupon");
   await page.getByTestId("promotions-editor").getByRole("button", { name: /^Create$/i }).click();
@@ -341,7 +341,7 @@ async function runFullCommercialJourney(
 
   // Automatic promo must not offer coupon creation
   const autoCode = `auto${stamp.replace(/[^a-z0-9]/g, "").slice(-10)}`;
-  await page.getByLabel("Promotion code").fill(autoCode);
+  await page.getByLabel("Promotion identifier").fill(autoCode);
   await page.getByLabel("Promotion display name").fill(`F6B Auto ${opts.suffix}`);
   await page.getByLabel("Trigger type").selectOption("automatic");
   await page.getByTestId("promotions-editor").getByRole("button", { name: /^Create$/i }).click();

@@ -46,10 +46,16 @@ import {
   COPY_CANCEL,
   COPY_OP_AUTO,
   COPY_OP_COUPON,
+  COPY_OP_COUPON_CODE_HELP,
+  COPY_OP_COUPON_CODE_LABEL,
+  COPY_OP_COUPON_CODE_REQUIRED,
+  COPY_OP_COUPON_CREATED_DRAFT,
   COPY_OP_DELIVERY,
-  COPY_OP_DRAFT,
   COPY_OP_GIFT,
-  COPY_OP_LIVE,
+  COPY_OP_IDENTIFIER_HELP,
+  COPY_OP_IDENTIFIER_INVALID,
+  COPY_OP_IDENTIFIER_LABEL,
+  COPY_OP_NO_COUPON_CODES,
   COPY_OP_ORDER,
   COPY_OP_RETIRED,
   COPY_RETIRE_BODY,
@@ -59,6 +65,13 @@ import {
 
 import { ConsequenceReviewDialog } from "./ConsequenceReviewDialog";
 import type { CommercialCapabilities, CommercialContext } from "./commercial-types";
+import {
+  describeBenefitForOperator,
+  describeEligibilityForOperator,
+  isValidCouponCode,
+  isValidPromotionIdentifier,
+  promotionReadiness,
+} from "./promotion-readiness";
 
 type PromotionsEditorProps = Readonly<{
   context: CommercialContext;
@@ -120,6 +133,7 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
   const [qualifierTargets, setQualifierTargets] = useState<readonly PromotionTarget[]>([]);
   const [benefitTargets, setBenefitTargets] = useState<readonly PromotionTarget[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [couponsLoaded, setCouponsLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [activationError, setActivationError] = useState<string | null>(null);
@@ -159,6 +173,8 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
   } | null>(null);
   const [redemptionCounts, setRedemptionCounts] = useState<RedemptionCounts | null>(null);
   const [couponCode, setCouponCode] = useState("");
+  const [identifierError, setIdentifierError] = useState<string | null>(null);
+  const [couponCodeError, setCouponCodeError] = useState<string | null>(null);
 
   const [review, setReview] = useState<ReviewState | null>(null);
   const [reviewBusy, setReviewBusy] = useState(false);
@@ -183,6 +199,7 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
       setQualifierTargets([]);
       setBenefitTargets([]);
       setCoupons([]);
+      setCouponsLoaded(false);
       return;
     }
     setLoading(true);
@@ -272,8 +289,10 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
       promoResult.data.promotion.triggerType === "coupon"
     ) {
       setCoupons(couponResult.data.coupons);
+      setCouponsLoaded(true);
     } else {
       setCoupons([]);
+      setCouponsLoaded(false);
     }
   }, [capabilities.couponsRead, capabilities.promotionsRead, context.brandId, selectedId]);
 
@@ -311,6 +330,12 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
 
   async function handleCreatePromotion() {
     if (!canManagePromo || !context.brandId) return;
+    if (!isValidPromotionIdentifier(code)) {
+      setIdentifierError(COPY_OP_IDENTIFIER_INVALID);
+      props.onStatus(COPY_OP_IDENTIFIER_INVALID);
+      return;
+    }
+    setIdentifierError(null);
     const outletId =
       createScopeType === "outlet"
         ? createOutletId.trim() || context.outletId || ""
@@ -741,10 +766,19 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
 
   async function handleCreateCoupon() {
     if (!canManageCoupon || !context.brandId || !selectedId) return;
+    if (!couponCode.trim()) {
+      setCouponCodeError(COPY_OP_COUPON_CODE_REQUIRED);
+      return;
+    }
+    if (!isValidCouponCode(couponCode)) {
+      setCouponCodeError(COPY_OP_COUPON_CODE_HELP);
+      return;
+    }
+    setCouponCodeError(null);
     setBusy(true);
     const result = await createCoupon(context.brandId, selectedId, {
       origin: "manual",
-      ...(couponCode.trim() ? { canonicalCode: couponCode.trim() } : {}),
+      canonicalCode: couponCode.trim(),
     });
     setBusy(false);
     if (!result.ok) {
@@ -752,7 +786,7 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
       return;
     }
     setCouponCode("");
-    props.onStatus(`Coupon created (${result.data.coupon.canonicalCode}).`);
+    props.onStatus(`${COPY_OP_COUPON_CREATED_DRAFT} Code: ${result.data.coupon.canonicalCode}.`);
     await loadDetail();
   }
 
@@ -761,6 +795,10 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
     if (status === "retired" || status === "disabled") return "danger" as const;
     return "neutral" as const;
   }
+
+  const readiness = promotion
+    ? promotionReadiness({ promotion, benefit, coupons, couponsReadable: couponsLoaded })
+    : null;
 
   return (
     <div data-testid="promotions-editor" className="space-y-4">
@@ -796,7 +834,10 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
                   )}
                   onClick={() => setSelectedId(p.id)}
                 >
-                  {p.displayName} ({p.code})
+                  {p.displayName}{" "}
+                  <span className="text-xs font-normal text-[var(--enterprise-muted,#C4D4A8)]">
+                    (identifier: {p.code})
+                  </span>
                   <StatusBadge className="ml-2" tone={statusTone(p.status)}>
                     {p.status}
                   </StatusBadge>
@@ -809,20 +850,43 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
         {canManagePromo ? (
           <fieldset className="grid gap-2 sm:grid-cols-4" disabled={busy}>
             <legend className="mb-1 text-sm font-semibold">Create promotion</legend>
-            <input
-              className={cn(enterpriseFieldClass)}
-              placeholder="Code"
-              aria-label="Promotion code"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-            />
-            <input
-              className={cn(enterpriseFieldClass)}
-              placeholder="Display name"
-              aria-label="Promotion display name"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-            />
+            <label className="flex flex-col gap-1 text-sm">
+              <span>{COPY_OP_IDENTIFIER_LABEL}</span>
+              <input
+                className={cn(enterpriseFieldClass)}
+                placeholder="e.g. summer-10"
+                aria-label="Promotion identifier"
+                aria-invalid={identifierError ? true : undefined}
+                aria-describedby={identifierError ? "promotion-identifier-error" : "promotion-identifier-help"}
+                value={code}
+                onChange={(e) => {
+                  setCode(e.target.value);
+                  if (identifierError) setIdentifierError(null);
+                }}
+              />
+              {identifierError ? (
+                <span id="promotion-identifier-error" role="alert" className="text-xs">
+                  {identifierError}
+                </span>
+              ) : (
+                <span
+                  id="promotion-identifier-help"
+                  className="text-xs text-[var(--enterprise-muted,#C4D4A8)]"
+                >
+                  {COPY_OP_IDENTIFIER_HELP}
+                </span>
+              )}
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              <span>Display name</span>
+              <input
+                className={cn(enterpriseFieldClass)}
+                placeholder="e.g. Summer 10% off"
+                aria-label="Promotion display name"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+              />
+            </label>
             <label className="flex flex-col gap-1 text-sm">
               <span>Trigger type</span>
               <select
@@ -893,14 +957,14 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
             <h3 className="text-base font-semibold">{promotion.displayName}</h3>
             <StatusBadge tone={statusTone(promotion.status)}>{promotion.status}</StatusBadge>
             <span className="text-xs text-[var(--enterprise-muted,#C4D4A8)]">
-              {promotion.status === "active"
-                ? COPY_OP_LIVE
-                : promotion.status === "retired"
-                  ? COPY_OP_RETIRED
-                  : COPY_OP_DRAFT}
+              Trigger: {promotion.triggerType} —{" "}
+              {promotion.triggerType === "coupon" ? COPY_OP_COUPON : COPY_OP_AUTO}
             </span>
-            <span className="text-xs text-[var(--enterprise-muted,#C4D4A8)]">
-              Trigger: {promotion.triggerType}
+            <span
+              className="text-xs text-[var(--enterprise-muted,#C4D4A8)]"
+              data-testid="promotion-identifier"
+            >
+              Promotion identifier: {promotion.code} (internal, not a coupon code)
             </span>
             <span className="text-xs text-[var(--enterprise-muted,#C4D4A8)]" data-testid="promotion-scope">
               Scope: {promotion.scopeType}
@@ -911,6 +975,44 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
             <span className="text-xs text-[var(--enterprise-muted,#C4D4A8)]">
               Revision {promotion.revision}
             </span>
+          </div>
+
+          {readiness ? (
+            <div data-testid="promotion-readiness">
+              <Alert
+                tone={readiness.tone === "neutral" ? "info" : readiness.tone}
+                title="Customer readiness"
+              >
+                <p>{readiness.headline}</p>
+                {readiness.activeCouponCodes.length > 0 ? (
+                  <p>Active coupon codes: {readiness.activeCouponCodes.join(", ")}</p>
+                ) : null}
+                {readiness.nextStep ? <p className="font-semibold">{readiness.nextStep}</p> : null}
+                <ol className="mt-2 list-decimal space-y-0.5 pl-5">
+                  {readiness.steps.map((step) => (
+                    <li key={step.label}>
+                      {step.label} — {step.done ? "done" : "to do"}
+                    </li>
+                  ))}
+                </ol>
+              </Alert>
+            </div>
+          ) : null}
+
+          <div
+            className="space-y-1 text-sm text-[var(--enterprise-text-secondary,#EBD9A6)]"
+            data-testid="promotion-customer-meaning"
+          >
+            <p className="font-semibold">What customers get (saved settings)</p>
+            <p>
+              {promotion.triggerType === "coupon" ? COPY_OP_COUPON : COPY_OP_AUTO}.{" "}
+              {describeBenefitForOperator(benefit)}
+            </p>
+            <ul className="list-disc pl-5">
+              {describeEligibilityForOperator(promotion).map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
           </div>
 
           {canManagePromo && promotion.status === "draft" ? (
@@ -1298,15 +1400,6 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
             Released: {redemptionCounts?.releasedCount ?? 0}.
           </div>
 
-          <div className="text-sm text-[var(--enterprise-text-secondary,#EBD9A6)]">
-            Current benefit:{" "}
-            {benefit == null
-              ? "None configured"
-              : typeof benefit === "object"
-                ? "Configured (server)"
-                : String(benefit)}
-          </div>
-
           <div className="flex flex-wrap gap-2">
             {promotion.status === "draft" && canCompletePromotionActivation ? (
               <Button type="button" variant="secondary" onClick={() => void openPromotionReview("active")}>
@@ -1330,6 +1423,13 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
                 </Alert>
               ) : (
                 <div className="space-y-3" data-testid="coupon-authoring">
+                  <p className="text-xs text-[var(--enterprise-muted,#C4D4A8)]">
+                    Customers type a coupon code at Cart or Checkout. The promotion identifier
+                    above does not work as a coupon code.
+                    {promotion.status === "draft"
+                      ? " Coupon codes can be activated after the promotion is active."
+                      : ""}
+                  </p>
                   <ul className="space-y-2 text-sm">
                     {coupons.map((c) => (
                       <li key={c.id} className="flex flex-wrap items-center justify-between gap-2">
@@ -1382,20 +1482,45 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
                         ) : null}
                       </li>
                     ))}
-                    {coupons.length === 0 ? (
-                      <li className="text-[var(--enterprise-muted,#C4D4A8)]">No coupons.</li>
+                    {coupons.length === 0 && couponsLoaded ? (
+                      <li
+                        className="text-[var(--enterprise-muted,#C4D4A8)]"
+                        data-testid="coupon-empty-state"
+                      >
+                        {COPY_OP_NO_COUPON_CODES}
+                      </li>
                     ) : null}
                   </ul>
                   {canManageCoupon ? (
-                    <fieldset className="flex flex-wrap gap-2" disabled={busy}>
+                    <fieldset className="flex flex-wrap items-end gap-2" disabled={busy}>
                       <legend className="sr-only">Create coupon</legend>
-                      <input
-                        className={cn(enterpriseFieldClass)}
-                        placeholder="Canonical code (optional)"
-                        aria-label="Coupon code"
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value)}
-                      />
+                      <label className="flex flex-col gap-1 text-sm">
+                        <span>{COPY_OP_COUPON_CODE_LABEL}</span>
+                        <input
+                          className={cn(enterpriseFieldClass)}
+                          placeholder="e.g. SUMMER10"
+                          aria-label="Coupon code"
+                          aria-invalid={couponCodeError ? true : undefined}
+                          aria-describedby={couponCodeError ? "coupon-code-error" : "coupon-code-help"}
+                          value={couponCode}
+                          onChange={(e) => {
+                            setCouponCode(e.target.value);
+                            if (couponCodeError) setCouponCodeError(null);
+                          }}
+                        />
+                        {couponCodeError ? (
+                          <span id="coupon-code-error" role="alert" className="text-xs">
+                            {couponCodeError}
+                          </span>
+                        ) : (
+                          <span
+                            id="coupon-code-help"
+                            className="text-xs text-[var(--enterprise-muted,#C4D4A8)]"
+                          >
+                            {COPY_OP_COUPON_CODE_HELP}
+                          </span>
+                        )}
+                      </label>
                       <Button type="button" onClick={() => void handleCreateCoupon()}>
                         Create coupon
                       </Button>

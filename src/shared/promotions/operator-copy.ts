@@ -24,5 +24,26 @@ export const COPY_RETIRE_CONFIRM = "Retire offer";
 export const COPY_CANCEL = "Cancel";
 export const COPY_DENIED = "You can't change this.";
 
+export const COPY_OP_IDENTIFIER_LABEL = "Promotion identifier (internal)";
+export const COPY_OP_IDENTIFIER_HELP =
+  "For your team only. Customers can't type this at checkout — they type a coupon code.";
+export const COPY_OP_IDENTIFIER_INVALID =
+  "Use lowercase letters, numbers, hyphens or underscores, starting with a letter or number (for example summer-10).";
+export const COPY_OP_COUPON_CODE_LABEL = "Coupon code customers type";
+export const COPY_OP_COUPON_CODE_HELP =
+  "3 to 64 letters, numbers, hyphens or underscores. Saved in capitals.";
+export const COPY_OP_COUPON_CODE_REQUIRED = "Enter the coupon code customers will type.";
+export const COPY_OP_COUPON_CREATED_DRAFT =
+  "Coupon created as a draft. Activate it so customers can use it.";
+export const COPY_OP_NO_COUPON_CODES =
+  "No coupon codes yet. Customers can't use this offer until you create a coupon code and activate it.";
+export const COPY_OP_NO_ACTIVE_COUPON_CODES =
+  "No active coupon codes. Customers can't use this offer until a coupon code is active.";
+export const COPY_OP_LIVE_WITHOUT_COUPON =
+  "Active, but customers can't use it yet: no coupon code is active.";
+export const COPY_OP_LIVE_WITH_COUPON = "Customers can receive this offer by typing an active coupon code.";
+export const COPY_OP_COUPONS_UNREADABLE =
+  "Coupon codes couldn't be checked, so customer readiness is unknown.";
+
 export const COMPLIMENTARY_ACTIVE_UNIQUE_INDEX =
   "promotions_one_active_complimentary_per_brand_uidx";
