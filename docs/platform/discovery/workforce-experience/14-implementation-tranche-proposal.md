@@ -75,3 +75,16 @@ T1 or later start: NOT_AUTHORIZED
 Merge/deploy from this documentation PR: NO
 PLANNING_PROPOSAL_ONLY = YES
 ```
+
+## Engineering packages (PLANNED)
+
+Docs 18–22 package the same tranches for a later human gate. They do not authorize T1 or change
+this proposal’s order. Option R stays the only Commercial operability choice.
+
+| Tranche | Package | Status |
+|---|---|---|
+| Fit F-1..F-7 | [`18-consolidated-architecture-fit-decision-package.md`](./18-consolidated-architecture-fit-decision-package.md) | PREPARED_FOR_FOUNDER_DECISION — Fit NOT_GRANTED |
+| T1 | [`19-t1-fit-design-quality-and-ia-work-package.md`](./19-t1-fit-design-quality-and-ia-work-package.md) | PLANNED |
+| T2 | [`20-t2-daily-operations-ui-work-package.md`](./20-t2-daily-operations-ui-work-package.md) | PLANNED |
+| T3 | [`21-t3-commercial-uat-ux-work-package.md`](./21-t3-commercial-uat-ux-work-package.md) | PLANNED |
+| T4 | [`22-t4-people-accessibility-work-package.md`](./22-t4-people-accessibility-work-package.md) | PLANNED |

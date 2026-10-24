@@ -114,6 +114,11 @@ ratification is a scope amendment record, not an additional Gate PASS.
 | [`15-gate-disposition-founder-decision-record.md`](./15-gate-disposition-founder-decision-record.md) | Gate matrix + Founder decision record + independent review |
 | [`16-option-r-p1-comm-amendment-and-proof-matrix.md`](./16-option-r-p1-comm-amendment-and-proof-matrix.md) | OPTION_R P1-COMM amendment + role/API proof matrix (ratified text) |
 | [`17-option-r-founder-ratification-record-and-fit-decision-package.md`](./17-option-r-founder-ratification-record-and-fit-decision-package.md) | OPTION_R Founder ratification record + W2 focused review + Architecture Fit decision package (Fit/Lock NOT_GRANTED) |
+| [`18-consolidated-architecture-fit-decision-package.md`](./18-consolidated-architecture-fit-decision-package.md) | Consolidated F-1..F-7 Fit dispositions (prepared, not granted). Preserves Option R. |
+| [`19-t1-fit-design-quality-and-ia-work-package.md`](./19-t1-fit-design-quality-and-ia-work-package.md) | T1 Fit and Design/Quality decision set plus IA/chrome/Scheduling/Commercial presentation package (PLANNED) |
+| [`20-t2-daily-operations-ui-work-package.md`](./20-t2-daily-operations-ui-work-package.md) | T2 daily Operations UI package (PLANNED) |
+| [`21-t3-commercial-uat-ux-work-package.md`](./21-t3-commercial-uat-ux-work-package.md) | T3 Commercial UAT UX package (PLANNED) |
+| [`22-t4-people-accessibility-work-package.md`](./22-t4-people-accessibility-work-package.md) | T4 People and accessibility package (PLANNED) |
 
 ## Provisional candidate identifiers
 

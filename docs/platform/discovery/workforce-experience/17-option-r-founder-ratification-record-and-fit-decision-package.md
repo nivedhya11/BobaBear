@@ -204,7 +204,14 @@ LOCK_STATUS = NOT_GRANTED; BLOCKED for UPD-08-affected journeys regardless of Fi
 - No new PD/XD Gate PASS, Architecture Fit, Architecture Lock, Implementation Authorization
 - No merge or deploy of PR #426 or PR #427
 
-## 7. Alignment snapshot (recording agent)
+## 7. Later packaging pointer (does not amend §§1–6)
+
+[`18-consolidated-architecture-fit-decision-package.md`](./18-consolidated-architecture-fit-decision-package.md)
+packages the same F-1..F-7 questions for one Founder decision. Docs 19–22 are PLANNED T1–T4 work
+packages. They do not change this ratification, do not add a Commercial option, and do not record
+Architecture Fit PASS or Architecture Lock.
+
+## 8. Alignment snapshot (recording agent)
 
 ```text
 Repository Authority: VERIFIED remote nivedhya11/BobaBear
