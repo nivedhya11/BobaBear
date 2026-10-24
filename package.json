@@ -42,6 +42,7 @@
     "env:hygiene": "node scripts/environment/hygiene.mjs",
     "env:staging:status": "node scripts/environment/staging.mjs status",
     "env:staging:deploy:dry-run": "node scripts/environment/staging.mjs deploy-dry-run",
+    "env:staging:preflight:evidence": "node scripts/environment/staging-preflight-evidence.mjs",
     "env:staging:deploy": "node scripts/environment/staging.mjs deploy",
     "env:staging:recover-postgres": "node scripts/environment/staging.mjs recover-postgres",
     "env:staging:workforce:user:create": "node scripts/environment/staging.mjs workforce-user-create",
@@ -277,7 +278,7 @@
     "react-dom": "19.3.0",
     "server-only": "0.0.1",
     "tailwind-merge": "3.7.0",
-    "zod": "4.4.3"
+    "zod": "4.6.7"
   },
   "overrides": {
     "lodash": "4.18.1",
@@ -286,6 +287,8 @@
     "js-yaml": "4.3.2",
     "brace-expansion@1": "1.1.21",
     "brace-expansion@5": "5.0.12",
+    "undici@7": "7.30.1",
+    "undici@8": "8.12.2",
     "vite": {
       "postcss": "8.5.26"
     },

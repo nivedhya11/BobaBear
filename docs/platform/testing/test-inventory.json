@@ -31,11 +31,11 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2325,
-    "executableTestFiles": 523,
-    "sourceTestFiles": 157,
+    "trackedPathsConsidered": 2352,
+    "executableTestFiles": 529,
+    "sourceTestFiles": 159,
     "testsTreeExecutableFiles": 278,
-    "scriptTestFiles": 88,
+    "scriptTestFiles": 92,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
     "playwrightConfigs": 7,
@@ -140,6 +140,7 @@
     "src/platform/observability/metrics.test.ts",
     "src/platform/observability/redact-log.test.ts",
     "src/platform/observability/request-id.test.ts",
+    "src/platform/security/undici-zod-remediation.test.ts",
     "src/platform/startup/bootstrap.test.ts",
     "src/server/assortment/outlet-eligibility-session.test.ts",
     "src/server/auth/customer/runtime.test.ts",
@@ -162,6 +163,7 @@
     "src/server/customer-commerce/checkout-prepare-diagnostic-log.test.ts",
     "src/server/customer-commerce/checkout-prepare-diagnostic-startup.test.ts",
     "src/server/customer-commerce/http/helpers.test.ts",
+    "src/server/customer-commerce/http/request.test.ts",
     "src/server/customer-commerce/measurement/compare-presentation.test.ts",
     "src/server/customer-commerce/measurement/report-window.test.ts",
     "src/server/customer-commerce/menu/project-customer-menu.test.ts",
@@ -523,6 +525,10 @@
     "scripts/environment/hygiene.test.mjs",
     "scripts/environment/podman-compose.test.mjs",
     "scripts/environment/postgres-init-identity.test.mjs",
+    "scripts/environment/staging-config-projection.test.mjs",
+    "scripts/environment/staging-evidence-binders.test.mjs",
+    "scripts/environment/staging-evidence-probes.test.mjs",
+    "scripts/environment/staging-preflight-evidence.test.mjs",
     "scripts/environment/staging-preflight.test.mjs",
     "scripts/environment/staging.test.mjs",
     "scripts/generate-nginx-security-headers.test.mjs",
@@ -2082,6 +2088,74 @@
     },
     {
       "path": "scripts/environment/postgres-init-identity.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/environment/staging-config-projection.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/environment/staging-evidence-binders.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/environment/staging-evidence-probes.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/environment/staging-preflight-evidence.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
       "testType": "script-unit",
@@ -4692,6 +4766,25 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "src/platform/security/undici-zod-remediation.test.ts",
+      "runner": "vitest",
+      "domain": "platform/security",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "7-authorization-security"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "src/platform/startup/bootstrap.test.ts",
       "runner": "vitest",
       "domain": "platform/startup",
@@ -5092,6 +5185,25 @@
     },
     {
       "path": "src/server/customer-commerce/http/helpers.test.ts",
+      "runner": "vitest",
+      "domain": "server/customer-commerce",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/server/customer-commerce/http/request.test.ts",
       "runner": "vitest",
       "domain": "server/customer-commerce",
       "testType": "unit-or-domain",
