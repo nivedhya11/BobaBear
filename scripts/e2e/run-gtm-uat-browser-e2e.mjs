@@ -5,7 +5,7 @@
  */
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
-import { randomInt } from "node:crypto";
+import { randomBytes, randomInt, randomUUID } from "node:crypto";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
@@ -43,6 +43,22 @@ function resolveFixedCode() {
   return String(randomInt(100000, 1000000));
 }
 
+const PUBLIC_CONTROL_TOKEN = "gtm-uat-browser-control";
+const RUN_ID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function harnessControlToken() {
+  const existing = process.env.E2E_HARNESS_CONTROL_TOKEN;
+  if (existing && existing.length >= 32 && existing !== PUBLIC_CONTROL_TOKEN) return existing;
+  return randomBytes(32).toString("hex");
+}
+
+function harnessRunId() {
+  const existing = process.env.E2E_HARNESS_RUN_ID;
+  if (existing && RUN_ID_RE.test(existing)) return existing;
+  return randomUUID();
+}
+
 const result = spawnSync(
   "npx",
   ["playwright", "test", "--config=playwright.gtm-uat-browser.config.ts"],
@@ -50,9 +66,11 @@ const result = spawnSync(
     cwd: projectRoot,
     env: {
       ...process.env,
+      BOBA_BEAR_ENV: "test",
       CUSTOMER_OTP_LOCAL_FIXED_CODE: resolveFixedCode(),
       E2E_GTM_UAT_FIXTURES: "1",
-      E2E_HARNESS_CONTROL_TOKEN: process.env.E2E_HARNESS_CONTROL_TOKEN ?? "gtm-uat-browser-control",
+      E2E_HARNESS_CONTROL_TOKEN: harnessControlToken(),
+      E2E_HARNESS_RUN_ID: harnessRunId(),
     },
     stdio: "inherit",
   },

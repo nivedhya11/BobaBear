@@ -275,11 +275,18 @@ async function main(): Promise<void> {
     staticExportDir = copyStaticExportToLinuxTmp();
     const staticHandler = createStaticExportHandler(staticExportDir);
     const controlToken = process.env.E2E_HARNESS_CONTROL_TOKEN ?? "";
+    const controlRunId = process.env.E2E_HARNESS_RUN_ID ?? "";
+    const controlTestMode = process.env.BOBA_BEAR_ENV === "test";
     const databaseUrl = containerHandle.adminConnectionInfo.connectionString;
     outerServer = http.createServer((req, res) => {
       const url = req.url ?? "/";
-      if (controlToken && url.startsWith("/__e2e/control")) {
-        void handleGtmUatBrowserControl(req, res, databaseUrl, controlToken);
+      if (url.startsWith("/__e2e/control")) {
+        void handleGtmUatBrowserControl(req, res, {
+          databaseUrl,
+          expectedToken: controlToken,
+          expectedRunId: controlRunId,
+          testMode: controlTestMode,
+        });
         return;
       }
       if (url.startsWith(CUSTOMER_AUTH_PROXY_PREFIX)) {
@@ -323,9 +330,25 @@ async function main(): Promise<void> {
   process.on("SIGTERM", handleSignal);
 }
 
+function redactHarnessDiagnostic(value: string): string {
+  return value
+    .replace(/postgres(?:ql)?:\/\/\S+/gi, "[redacted-database-url]")
+    .replace(/password[=:][^\s&'"]+/gi, "password=[redacted]");
+}
+
+function harnessErrorChain(error: unknown): string {
+  const parts: string[] = [];
+  let current: unknown = error;
+  for (let depth = 0; depth < 6 && current instanceof Error; depth += 1) {
+    parts.push(redactHarnessDiagnostic(current.message));
+    current = current.cause;
+  }
+  return parts.join(" | caused by: ");
+}
+
 main().catch((error: unknown) => {
   console.error(
-    `customer-ordering E2E harness: ${error instanceof Error ? error.message : "failed to start."}`,
+    `customer-ordering E2E harness: ${error instanceof Error ? harnessErrorChain(error) : "failed to start."}`,
   );
   process.exitCode = 1;
 });

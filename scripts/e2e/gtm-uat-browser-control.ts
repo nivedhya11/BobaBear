@@ -5,7 +5,17 @@
 import { timingSafeEqual } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
 
-import { runGtmUatBrowserControl } from "../database/gtm-uat-browser-control-db";
+import { runGtmUatBrowserControl, type GtmUatControlInput } from "../database/gtm-uat-browser-control-db";
+
+const PUBLIC_CONTROL_TOKEN = "gtm-uat-browser-control";
+
+export function isLoopbackAddress(address: string | undefined): boolean {
+  return address === "127.0.0.1" || address === "::1" || address === "::ffff:127.0.0.1";
+}
+
+export function isUsableControlToken(token: string): boolean {
+  return token.length >= 32 && token !== PUBLIC_CONTROL_TOKEN;
+}
 
 function tokensMatch(presented: string, expected: string): boolean {
   const left = Buffer.from(presented);
@@ -14,13 +24,18 @@ function tokensMatch(presented: string, expected: string): boolean {
   return timingSafeEqual(left, right);
 }
 
+function deny(res: ServerResponse): void {
+  res.writeHead(404, { "Content-Type": "application/json; charset=utf-8" });
+  res.end(JSON.stringify({ ok: false }));
+}
+
 function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
     let size = 0;
     req.on("data", (chunk: Buffer) => {
       size += chunk.length;
-      if (size > 4_096) {
+      if (size > 8_192) {
         reject(new Error("control body too large"));
         req.destroy();
         return;
@@ -35,37 +50,75 @@ function readBody(req: IncomingMessage): Promise<string> {
 export async function handleGtmUatBrowserControl(
   req: IncomingMessage,
   res: ServerResponse,
-  databaseUrl: string,
-  expectedToken: string,
+  options: Readonly<{
+    databaseUrl: string;
+    expectedToken: string;
+    expectedRunId: string;
+    testMode: boolean;
+  }>,
 ): Promise<void> {
+  const remote = req.socket.remoteAddress;
   const presented = req.headers["x-e2e-control-token"];
   const token = Array.isArray(presented) ? presented[0] : presented;
-  if (!token || !tokensMatch(token, expectedToken) || (req.method ?? "GET") !== "POST") {
-    res.writeHead(404, { "Content-Type": "application/json; charset=utf-8" });
-    res.end(JSON.stringify({ ok: false }));
+  if (
+    !options.testMode ||
+    !isLoopbackAddress(remote) ||
+    (req.method ?? "GET") !== "POST" ||
+    !isUsableControlToken(options.expectedToken) ||
+    !token ||
+    !tokensMatch(token, options.expectedToken)
+  ) {
+    deny(res);
     return;
   }
-  let action = "";
+  if (
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      options.expectedRunId,
+    )
+  ) {
+    deny(res);
+    return;
+  }
+
+  let input: GtmUatControlInput = {};
   try {
-    const parsed = JSON.parse(await readBody(req)) as { action?: unknown };
-    action = typeof parsed.action === "string" ? parsed.action : "";
+    const parsed = JSON.parse(await readBody(req)) as unknown;
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+      res.writeHead(400, { "Content-Type": "application/json; charset=utf-8" });
+      res.end(JSON.stringify({ ok: false, mutated: 0, reason: "BAD_BODY" }));
+      return;
+    }
+    input = parsed as GtmUatControlInput;
   } catch {
     res.writeHead(400, { "Content-Type": "application/json; charset=utf-8" });
-    res.end(JSON.stringify({ ok: false, reason: "BAD_BODY" }));
+    res.end(JSON.stringify({ ok: false, mutated: 0, reason: "BAD_BODY" }));
     return;
   }
+
+  const presentedRunId = typeof input.runId === "string" ? input.runId : "";
+  if (!presentedRunId || !tokensMatch(presentedRunId, options.expectedRunId)) {
+    res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+    res.end(JSON.stringify({ ok: false, mutated: 0, reason: "RUN_MISMATCH" }));
+    return;
+  }
+
   try {
-    const result = await runGtmUatBrowserControl(databaseUrl, action);
+    const result = await runGtmUatBrowserControl(options.databaseUrl, input, options.expectedRunId);
     res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
     res.end(JSON.stringify(result));
   } catch (error) {
     const message = error instanceof Error ? error.message : "CONTROL_FAILED";
+    const redacted = [options.expectedToken, options.expectedRunId].reduce((value, secret) => {
+      if (secret.length < 8) return value;
+      return value.split(secret).join("[redacted]");
+    }, message);
     res.writeHead(500, { "Content-Type": "application/json; charset=utf-8" });
     res.end(
       JSON.stringify({
         ok: false,
+        mutated: 0,
         reason: "CONTROL_FAILED",
-        message: message.replace(/postgres(?:ql)?:\/\/\S+/gi, "[redacted]").slice(0, 300),
+        message: redacted.replace(/postgres(?:ql)?:\/\/\S+/gi, "[redacted]").slice(0, 300),
       }),
     );
   }
