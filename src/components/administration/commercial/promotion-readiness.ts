@@ -10,13 +10,25 @@ import {
   COPY_OP_COUPONS_UNREADABLE,
   COPY_OP_DELIVERY,
   COPY_OP_DRAFT,
+  COPY_OP_EXPIRED,
+  COPY_OP_EXPIRED_NEXT,
   COPY_OP_GIFT,
   COPY_OP_LIVE,
   COPY_OP_LIVE_WITH_COUPON,
   COPY_OP_LIVE_WITHOUT_COUPON,
   COPY_OP_NO_ACTIVE_COUPON_CODES,
   COPY_OP_NO_COUPON_CODES,
+  COPY_OP_NOT_CURRENTLY_EFFECTIVE,
+  COPY_OP_READINESS_CUE,
   COPY_OP_RETIRED,
+  COPY_OP_SCHEDULED,
+  COPY_OP_SCHEDULED_NEXT,
+  COPY_OP_STATE_CURRENT,
+  COPY_OP_STATE_ENDED,
+  COPY_OP_STATE_INACTIVE,
+  COPY_OP_STATE_NOT_STARTED,
+  COPY_OP_STATE_UNKNOWN,
+  COPY_OP_WINDOW_UNREADABLE,
 } from "@/shared/promotions/operator-copy";
 
 /** Mirrors the `promotions_code_format_check` database constraint. */
@@ -121,80 +133,349 @@ export type ReadinessTone = "neutral" | "success" | "warning";
 
 export type ReadinessStep = Readonly<{ label: string; done: boolean }>;
 
+/**
+ * Operator workflow cue for saved windows. Not eligibility.
+ * `scheduled` is not-yet-effective. `currently_effective` is inside the window.
+ * `inactive` is draft, disabled, or retired. `unknown` is an unreadable fact.
+ */
+export type CustomerReadinessState =
+  | "currently_effective"
+  | "scheduled"
+  | "expired"
+  | "inactive"
+  | "unknown";
+
+export type CouponReadinessRow = Readonly<{
+  id: string;
+  code: string;
+  state: CustomerReadinessState;
+  label: string;
+}>;
+
 export type PromotionReadiness = Readonly<{
   tone: ReadinessTone;
   headline: string;
   nextStep: string | null;
+  /** Lifecycle `active` codes. Not proof of customer readiness. */
   activeCouponCodes: readonly string[];
+  /** Codes whose status and both saved windows are currently effective. */
+  customerReadyCouponCodes: readonly string[];
+  couponReadiness: readonly CouponReadinessRow[];
+  promotionWindowLabel: string;
+  cue: string;
   steps: readonly ReadinessStep[];
 }>;
+
+type WindowBound = Date | null | "invalid";
+
+/**
+ * Visible saved instants only. A timezone-less or impossible calendar value is
+ * unreadable. Null means the bound was not saved.
+ */
+function parseVisibleInstant(value: string): Date | "invalid" {
+  const match =
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,3}))?(Z|[+-](\d{2}):(\d{2}))$/.exec(
+      value.trim(),
+    );
+  if (!match) return "invalid";
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const hour = Number(match[4]);
+  const minute = Number(match[5]);
+  const second = Number(match[6]);
+  const fraction = match[7] ?? "";
+  const millisecond = Number((fraction + "000").slice(0, 3));
+  if (month < 1 || month > 12 || hour > 23 || minute > 59 || second > 59) return "invalid";
+  const calendar = new Date(Date.UTC(year, month - 1, day));
+  if (
+    calendar.getUTCFullYear() !== year ||
+    calendar.getUTCMonth() !== month - 1 ||
+    calendar.getUTCDate() !== day
+  ) {
+    return "invalid";
+  }
+  let offsetMinutes = 0;
+  if (match[8] !== "Z") {
+    const offsetHour = Number(match[9]);
+    const offsetMinute = Number(match[10]);
+    if (offsetHour > 23 || offsetMinute > 59) return "invalid";
+    offsetMinutes = offsetHour * 60 + offsetMinute;
+    if (match[8].startsWith("-")) offsetMinutes = -offsetMinutes;
+  }
+  const utc = Date.UTC(year, month - 1, day, hour, minute, second, millisecond) - offsetMinutes * 60_000;
+  if (!Number.isFinite(utc)) return "invalid";
+  return new Date(utc);
+}
+
+function parseWindowBound(value: string | null | undefined, required: boolean): WindowBound {
+  if (value == null) return required ? "invalid" : null;
+  if (typeof value !== "string" || value.trim() === "") return "invalid";
+  return parseVisibleInstant(value);
+}
+
+function validClock(at: Date): boolean {
+  return at instanceof Date && Number.isFinite(at.getTime());
+}
+
+/**
+ * Start is inclusive and end is exclusive, matching `isPromotionEffective` and
+ * the coupon window checks in the promotion evaluator. This does not decide
+ * eligibility, money, or per-customer applicability.
+ */
+export function classifySavedWindow(input: {
+  startsAt: string | null;
+  endsAt: string | null;
+  at: Date;
+  requireStartsAt: boolean;
+}): Exclude<CustomerReadinessState, "inactive"> {
+  if (!validClock(input.at)) return "unknown";
+  const start = parseWindowBound(input.startsAt, input.requireStartsAt);
+  const end = parseWindowBound(input.endsAt, false);
+  if (start === "invalid" || end === "invalid") return "unknown";
+  if (start && end && end.getTime() <= start.getTime()) return "unknown";
+  const at = input.at.getTime();
+  if (end && at >= end.getTime()) return "expired";
+  if (start && at < start.getTime()) return "scheduled";
+  return "currently_effective";
+}
+
+function combineWindows(
+  left: Exclude<CustomerReadinessState, "inactive">,
+  right: Exclude<CustomerReadinessState, "inactive">,
+): Exclude<CustomerReadinessState, "inactive"> {
+  if (left === "unknown" || right === "unknown") return "unknown";
+  if (left === "expired" || right === "expired") return "expired";
+  if (left === "scheduled" || right === "scheduled") return "scheduled";
+  return "currently_effective";
+}
+
+export function customerReadinessLabel(state: CustomerReadinessState): string {
+  switch (state) {
+    case "currently_effective":
+      return COPY_OP_STATE_CURRENT;
+    case "scheduled":
+      return COPY_OP_STATE_NOT_STARTED;
+    case "expired":
+      return COPY_OP_STATE_ENDED;
+    case "inactive":
+      return COPY_OP_STATE_INACTIVE;
+    case "unknown":
+      return COPY_OP_STATE_UNKNOWN;
+  }
+}
+
+export function classifyPromotionCustomerReadiness(input: {
+  promotion: Pick<Promotion, "status" | "startsAt" | "endsAt">;
+  at: Date;
+}): CustomerReadinessState {
+  if (input.promotion.status !== "active") return "inactive";
+  return classifySavedWindow({
+    startsAt: input.promotion.startsAt,
+    endsAt: input.promotion.endsAt,
+    at: input.at,
+    requireStartsAt: true,
+  });
+}
+
+export function classifyCouponCustomerReadiness(input: {
+  coupon: Pick<Coupon, "status" | "startsAt" | "endsAt" | "promotionId">;
+  promotion: Pick<Promotion, "id" | "status" | "startsAt" | "endsAt"> | null;
+  at: Date;
+}): CustomerReadinessState {
+  const promotion = input.promotion;
+  if (!promotion || promotion.id !== input.coupon.promotionId) return "unknown";
+  if (input.coupon.status !== "active" || promotion.status !== "active") return "inactive";
+  return combineWindows(
+    classifySavedWindow({
+      startsAt: input.coupon.startsAt,
+      endsAt: input.coupon.endsAt,
+      at: input.at,
+      requireStartsAt: false,
+    }),
+    classifySavedWindow({
+      startsAt: promotion.startsAt,
+      endsAt: promotion.endsAt,
+      at: input.at,
+      requireStartsAt: true,
+    }),
+  );
+}
+
+function readinessResult(
+  partial: Omit<PromotionReadiness, "cue" | "promotionWindowLabel"> & {
+    promotionWindowLabel: string;
+  },
+): PromotionReadiness {
+  return { ...partial, cue: COPY_OP_READINESS_CUE };
+}
 
 export function promotionReadiness(input: {
   promotion: Promotion;
   benefit: unknown;
   coupons: readonly Coupon[];
   couponsReadable: boolean;
+  /** Fixed clock for the saved windows. Defaults to the render instant. */
+  at?: Date;
 }): PromotionReadiness {
   const { promotion, coupons, couponsReadable } = input;
+  const at = input.at ?? new Date();
   const isCoupon = promotion.triggerType === "coupon";
   const activeCouponCodes = couponsReadable
     ? coupons.filter((c) => c.status === "active").map((c) => c.canonicalCode)
     : [];
+  const couponReadiness: CouponReadinessRow[] =
+    isCoupon && couponsReadable
+      ? coupons.map((coupon) => {
+          const state = classifyCouponCustomerReadiness({ coupon, promotion, at });
+          return {
+            id: coupon.id,
+            code: coupon.canonicalCode,
+            state,
+            label: customerReadinessLabel(state),
+          };
+        })
+      : [];
+  const customerReadyCouponCodes = couponReadiness
+    .filter((row) => row.state === "currently_effective")
+    .map((row) => row.code);
+  const promotionState = classifyPromotionCustomerReadiness({ promotion, at });
+  const promotionWindowLabel = `Saved promotion window: ${customerReadinessLabel(promotionState)}`;
   const benefitSet = input.benefit != null && typeof input.benefit === "object";
-  const isActive = promotion.status === "active";
-
   const steps: ReadinessStep[] = [
     { label: "Set the benefit and who gets it", done: benefitSet },
     { label: "Activate the promotion", done: promotion.status !== "draft" },
+    { label: "Inside the saved window", done: promotionState === "currently_effective" },
   ];
   if (isCoupon) {
     steps.push(
       { label: "Create a coupon code customers type", done: couponsReadable && coupons.length > 0 },
       { label: "Activate the coupon code", done: activeCouponCodes.length > 0 },
+      {
+        label: "Coupon code is inside both saved windows",
+        done: customerReadyCouponCodes.length > 0,
+      },
     );
   }
   steps.push({ label: "Check applications and redemptions below", done: false });
 
+  const base = {
+    activeCouponCodes,
+    customerReadyCouponCodes,
+    couponReadiness,
+    promotionWindowLabel,
+    steps,
+  };
+
   if (promotion.status === "retired") {
-    return { tone: "neutral", headline: COPY_OP_RETIRED, nextStep: null, activeCouponCodes, steps };
+    return readinessResult({
+      ...base,
+      tone: "neutral",
+      headline: COPY_OP_RETIRED,
+      nextStep: null,
+    });
   }
-  if (!isActive) {
-    return {
+  if (promotion.status !== "active") {
+    return readinessResult({
+      ...base,
       tone: "neutral",
       headline: COPY_OP_DRAFT,
       nextStep: isCoupon
         ? "Set the benefit, then Review & activate. After that, create a coupon code and activate it."
         : "Set the benefit, then Review & activate.",
-      activeCouponCodes,
-      steps,
-    };
+    });
+  }
+  const activeIds = new Set(
+    coupons.filter((coupon) => coupon.status === "active").map((coupon) => coupon.id),
+  );
+  const activeRows = couponReadiness.filter((row) => activeIds.has(row.id));
+  const activeCouponExplainsWindow = isCoupon && couponsReadable && activeRows.length > 0;
+  if (!activeCouponExplainsWindow && promotionState === "unknown") {
+    return readinessResult({
+      ...base,
+      tone: "warning",
+      headline: COPY_OP_WINDOW_UNREADABLE,
+      nextStep: null,
+    });
+  }
+  if (!activeCouponExplainsWindow && promotionState === "scheduled") {
+    return readinessResult({
+      ...base,
+      tone: "warning",
+      headline: COPY_OP_SCHEDULED,
+      nextStep: COPY_OP_SCHEDULED_NEXT,
+    });
+  }
+  if (!activeCouponExplainsWindow && promotionState === "expired") {
+    return readinessResult({
+      ...base,
+      tone: "warning",
+      headline: COPY_OP_EXPIRED,
+      nextStep: COPY_OP_EXPIRED_NEXT,
+    });
   }
   if (!isCoupon) {
-    return { tone: "success", headline: COPY_OP_LIVE, nextStep: null, activeCouponCodes, steps };
+    return readinessResult({
+      ...base,
+      tone: "success",
+      headline: COPY_OP_LIVE,
+      nextStep: null,
+    });
   }
   if (!couponsReadable) {
-    return {
+    return readinessResult({
+      ...base,
       tone: "warning",
       headline: COPY_OP_COUPONS_UNREADABLE,
       nextStep: null,
-      activeCouponCodes,
-      steps,
-    };
+    });
   }
-  if (activeCouponCodes.length > 0) {
-    return {
+  if (customerReadyCouponCodes.length > 0) {
+    return readinessResult({
+      ...base,
       tone: "success",
       headline: COPY_OP_LIVE_WITH_COUPON,
       nextStep: null,
-      activeCouponCodes,
-      steps,
-    };
+    });
   }
-  return {
+  if (activeRows.some((row) => row.state === "unknown")) {
+    return readinessResult({
+      ...base,
+      tone: "warning",
+      headline: COPY_OP_WINDOW_UNREADABLE,
+      nextStep: null,
+    });
+  }
+  const hasScheduled = activeRows.some((row) => row.state === "scheduled");
+  const hasExpired = activeRows.some((row) => row.state === "expired");
+  if (hasScheduled && hasExpired) {
+    return readinessResult({
+      ...base,
+      tone: "warning",
+      headline: COPY_OP_NOT_CURRENTLY_EFFECTIVE,
+      nextStep: null,
+    });
+  }
+  if (hasScheduled) {
+    return readinessResult({
+      ...base,
+      tone: "warning",
+      headline: COPY_OP_SCHEDULED,
+      nextStep: COPY_OP_SCHEDULED_NEXT,
+    });
+  }
+  if (hasExpired) {
+    return readinessResult({
+      ...base,
+      tone: "warning",
+      headline: COPY_OP_EXPIRED,
+      nextStep: COPY_OP_EXPIRED_NEXT,
+    });
+  }
+  return readinessResult({
+    ...base,
     tone: "warning",
     headline: COPY_OP_LIVE_WITHOUT_COUPON,
     nextStep: coupons.length === 0 ? COPY_OP_NO_COUPON_CODES : COPY_OP_NO_ACTIVE_COUPON_CODES,
-    activeCouponCodes,
-    steps,
-  };
+  });
 }

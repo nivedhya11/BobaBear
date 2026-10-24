@@ -58,6 +58,7 @@ import {
   COPY_OP_NO_COUPON_CODES,
   COPY_OP_ORDER,
   COPY_OP_RETIRED,
+  COPY_OP_STATE_UNKNOWN,
   COPY_RETIRE_BODY,
   COPY_RETIRE_CONFIRM,
   COPY_RETIRE_TITLE,
@@ -984,9 +985,16 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
                 title="Customer readiness"
               >
                 <p>{readiness.headline}</p>
-                {readiness.activeCouponCodes.length > 0 ? (
-                  <p>Active coupon codes: {readiness.activeCouponCodes.join(", ")}</p>
+                <p data-testid="promotion-window-readiness">{readiness.promotionWindowLabel}</p>
+                <p>{readiness.cue}</p>
+                {readiness.customerReadyCouponCodes.length > 0 ? (
+                  <p>Customer-ready coupon codes: {readiness.customerReadyCouponCodes.join(", ")}</p>
                 ) : null}
+                {readiness.couponReadiness.map((row) => (
+                  <p key={row.id} data-testid={`readiness-coupon-${row.code}`}>
+                    {row.code}: {row.label}
+                  </p>
+                ))}
                 {readiness.nextStep ? <p className="font-semibold">{readiness.nextStep}</p> : null}
                 <ol className="mt-2 list-decimal space-y-0.5 pl-5">
                   {readiness.steps.map((step) => (
@@ -1004,6 +1012,7 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
             data-testid="promotion-customer-meaning"
           >
             <p className="font-semibold">What customers get (saved settings)</p>
+            <p data-testid="promotion-window-claim">{readiness?.promotionWindowLabel}</p>
             <p>
               {promotion.triggerType === "coupon" ? COPY_OP_COUPON : COPY_OP_AUTO}.{" "}
               {describeBenefitForOperator(benefit)}
@@ -1435,7 +1444,11 @@ export function PromotionsEditor(props: PromotionsEditorProps) {
                       <li key={c.id} className="flex flex-wrap items-center justify-between gap-2">
                         <span>
                           {c.canonicalCode}{" "}
-                          <StatusBadge tone={statusTone(c.status)}>{c.status}</StatusBadge>
+                          <StatusBadge tone={statusTone(c.status)}>{c.status}</StatusBadge>{" "}
+                          <span data-testid={`coupon-readiness-${c.canonicalCode}`}>
+                            {readiness?.couponReadiness.find((row) => row.id === c.id)?.label ??
+                              COPY_OP_STATE_UNKNOWN}
+                          </span>
                         </span>
                         {canManageCoupon ? (
                           <div className="flex flex-wrap gap-1">

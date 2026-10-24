@@ -14,7 +14,8 @@ export const COPY_OP_SECOND =
 export const COPY_OP_RACE =
   "This activation did not become the active offer. Check the offer that is active, then try again if you still need a change.";
 export const COPY_OP_CONFLICT = "Someone else changed this. Reload it and try again.";
-export const COPY_OP_LIVE = "Customers can receive this offer.";
+export const COPY_OP_LIVE =
+  "Customer-ready now. Currently effective. This is a workflow cue, not a promise that a particular customer qualifies.";
 export const COPY_OP_DRAFT = "Not live yet. Customers do not receive this.";
 export const COPY_OP_RETIRED = "Retired. New orders will not receive it.";
 export const COPY_RETIRE_TITLE = "Retire this offer?";
@@ -41,9 +42,27 @@ export const COPY_OP_NO_ACTIVE_COUPON_CODES =
   "No active coupon codes. Customers can't use this offer until a coupon code is active.";
 export const COPY_OP_LIVE_WITHOUT_COUPON =
   "Active, but customers can't use it yet: no coupon code is active.";
-export const COPY_OP_LIVE_WITH_COUPON = "Customers can receive this offer by typing an active coupon code.";
+export const COPY_OP_LIVE_WITH_COUPON =
+  "Customer-ready now. Currently effective inside both saved windows. This is a workflow cue, not a promise that a particular customer qualifies.";
 export const COPY_OP_COUPONS_UNREADABLE =
   "Coupon codes couldn't be checked, so customer readiness is unknown.";
+export const COPY_OP_STATE_CURRENT = "Currently effective";
+export const COPY_OP_STATE_NOT_STARTED = "Not started yet";
+export const COPY_OP_STATE_ENDED = "Past the saved end";
+export const COPY_OP_STATE_INACTIVE = "Not active";
+export const COPY_OP_STATE_UNKNOWN = "Readiness unknown";
+export const COPY_OP_SCHEDULED =
+  "Not started yet. Not customer-ready until the saved start time.";
+export const COPY_OP_EXPIRED = "Past the saved end. Not customer-ready.";
+export const COPY_OP_NOT_CURRENTLY_EFFECTIVE =
+  "Not customer-ready. No coupon code is currently effective inside both saved windows.";
+export const COPY_OP_WINDOW_UNREADABLE =
+  "Readiness unknown. A saved start or end time is missing, unreadable, or invalid, or the parent promotion is missing.";
+export const COPY_OP_READINESS_CUE =
+  "Workflow cue only. It does not promise that a particular customer qualifies.";
+export const COPY_OP_SCHEDULED_NEXT = "Customer-ready begins at the saved start time.";
+export const COPY_OP_EXPIRED_NEXT =
+  "The saved end time has been reached, so this is not customer-ready.";
 
 export const COMPLIMENTARY_ACTIVE_UNIQUE_INDEX =
   "promotions_one_active_complimentary_per_brand_uidx";

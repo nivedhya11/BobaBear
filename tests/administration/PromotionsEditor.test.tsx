@@ -14,9 +14,15 @@ import {
   COPY_OP_COUPONS_UNREADABLE,
   COPY_OP_GIFT,
   COPY_OP_IDENTIFIER_INVALID,
+  COPY_OP_EXPIRED,
   COPY_OP_LIVE,
   COPY_OP_LIVE_WITH_COUPON,
   COPY_OP_LIVE_WITHOUT_COUPON,
+  COPY_OP_READINESS_CUE,
+  COPY_OP_SCHEDULED,
+  COPY_OP_STATE_CURRENT,
+  COPY_OP_STATE_ENDED,
+  COPY_OP_STATE_NOT_STARTED,
   COPY_OP_NO_ACTIVE_COUPON_CODES,
   COPY_OP_NO_COUPON_CODES,
   COPY_OP_RETIRED,
@@ -604,15 +610,19 @@ describe("PromotionsEditor", () => {
   });
 });
 
-function coupon(code: string, status: "draft" | "active" | "disabled" | "retired") {
+function coupon(
+  code: string,
+  status: "draft" | "active" | "disabled" | "retired",
+  overrides: { startsAt?: string | null; endsAt?: string | null } = {},
+) {
   return {
     id: `coupon-${code}`,
     promotionId: "promo-1",
     canonicalCode: code,
     origin: "manual" as const,
     status,
-    startsAt: null,
-    endsAt: null,
+    startsAt: overrides.startsAt === undefined ? null : overrides.startsAt,
+    endsAt: overrides.endsAt === undefined ? null : overrides.endsAt,
     maximumRedemptions: null,
     maximumRedemptionsPerCustomer: null,
     revision: "1",
@@ -624,9 +634,13 @@ function mockCouponPromotion(opts: {
   status: "draft" | "active" | "retired";
   coupons: ReturnType<typeof coupon>[];
   couponListOk?: boolean;
+  startsAt?: string;
+  endsAt?: string | null;
 }) {
   const promotion = {
     ...draftPromotion({ triggerType: "coupon", status: opts.status }),
+    startsAt: opts.startsAt ?? "2000-01-01T00:00:00.000Z",
+    endsAt: opts.endsAt === undefined ? null : opts.endsAt,
     eligibleFulfilmentModes: ["DELIVERY"],
     eligibleFulfilmentTimings: ["ASAP", "SCHEDULED"],
   };
@@ -699,8 +713,16 @@ describe("PromotionsEditor operator readiness (#376)", () => {
     await openWelcome();
     const readiness = screen.getByTestId("promotion-readiness");
     expect(readiness).toHaveTextContent(COPY_OP_LIVE_WITH_COUPON);
-    expect(readiness).toHaveTextContent("Active coupon codes: TEST123");
-    expect(readiness).not.toHaveTextContent("OLD1");
+    expect(readiness).toHaveTextContent(COPY_OP_READINESS_CUE);
+    expect(readiness).toHaveTextContent("Customer-ready coupon codes: TEST123");
+    expect(readiness).not.toHaveTextContent("Customer-ready coupon codes: TEST123, OLD1");
+    expect(screen.getByTestId("readiness-coupon-TEST123")).toHaveTextContent(COPY_OP_STATE_CURRENT);
+    expect(screen.getByTestId("coupon-readiness-TEST123")).toHaveTextContent(COPY_OP_STATE_CURRENT);
+    expect(screen.getByTestId("readiness-coupon-OLD1")).toHaveTextContent("Not active");
+    expect(screen.getByTestId("coupon-readiness-OLD1")).toHaveTextContent("Not active");
+    expect(screen.getByTestId("promotion-window-readiness").textContent).toBe(
+      screen.getByTestId("promotion-window-claim").textContent,
+    );
     expect(screen.getByTestId("promotion-identifier")).toHaveTextContent(
       "Promotion identifier: welcome (internal, not a coupon code)",
     );
@@ -720,6 +742,62 @@ describe("PromotionsEditor operator readiness (#376)", () => {
     expect(meaning).toHaveTextContent("Customers enter a coupon. 10% off eligible items.");
     expect(meaning).toHaveTextContent("Delivery orders only. Pickup orders don't get it.");
     expect(screen.queryByText(/Configured \(server\)/)).not.toBeInTheDocument();
+  });
+
+  it("does not present an active coupon as customer-ready before its saved start", async () => {
+    mockCouponPromotion({
+      status: "active",
+      coupons: [
+        coupon("SOON", "active", {
+          startsAt: "2099-01-01T00:00:00.000Z",
+          endsAt: "2099-02-01T00:00:00.000Z",
+        }),
+      ],
+    });
+    await openWelcome();
+    const readiness = screen.getByTestId("promotion-readiness");
+    expect(readiness).toHaveTextContent(COPY_OP_SCHEDULED);
+    expect(readiness).toHaveTextContent(COPY_OP_STATE_NOT_STARTED);
+    expect(readiness).not.toHaveTextContent(COPY_OP_LIVE_WITH_COUPON);
+    expect(readiness).not.toHaveTextContent("Customer-ready coupon codes:");
+    expect(screen.getByTestId("coupon-readiness-SOON")).toHaveTextContent(COPY_OP_STATE_NOT_STARTED);
+    expect(screen.getByTestId("readiness-coupon-SOON")).toHaveTextContent(COPY_OP_STATE_NOT_STARTED);
+    expect(screen.getByTestId("promotion-window-claim")).toHaveTextContent(COPY_OP_STATE_CURRENT);
+  });
+
+  it("does not present an active coupon as customer-ready at or after its saved end", async () => {
+    mockCouponPromotion({
+      status: "active",
+      coupons: [
+        coupon("OLD", "active", {
+          startsAt: "2020-01-01T00:00:00.000Z",
+          endsAt: "2020-02-01T00:00:00.000Z",
+        }),
+      ],
+    });
+    await openWelcome();
+    const readiness = screen.getByTestId("promotion-readiness");
+    expect(readiness).toHaveTextContent(COPY_OP_EXPIRED);
+    expect(readiness).not.toHaveTextContent(COPY_OP_LIVE_WITH_COUPON);
+    expect(screen.getByTestId("coupon-readiness-OLD")).toHaveTextContent(COPY_OP_STATE_ENDED);
+    expect(screen.getByTestId("readiness-coupon-OLD")).toHaveTextContent(COPY_OP_STATE_ENDED);
+  });
+
+  it("uses the parent promotion window for an otherwise open active coupon", async () => {
+    mockCouponPromotion({
+      status: "active",
+      startsAt: "2099-03-01T00:00:00.000Z",
+      endsAt: "2099-04-01T00:00:00.000Z",
+      coupons: [coupon("OPEN", "active")],
+    });
+    await openWelcome();
+    expect(screen.getByTestId("promotion-readiness")).toHaveTextContent(COPY_OP_SCHEDULED);
+    expect(screen.getByTestId("promotion-readiness")).not.toHaveTextContent(COPY_OP_LIVE_WITH_COUPON);
+    expect(screen.getByTestId("coupon-readiness-OPEN")).toHaveTextContent(COPY_OP_STATE_NOT_STARTED);
+    expect(screen.getByTestId("promotion-window-readiness").textContent).toBe(
+      screen.getByTestId("promotion-window-claim").textContent,
+    );
+    expect(screen.getByTestId("promotion-window-claim")).toHaveTextContent(COPY_OP_STATE_NOT_STARTED);
   });
 
   it("draft coupon promotion explains that coupon activation follows promotion activation", async () => {
