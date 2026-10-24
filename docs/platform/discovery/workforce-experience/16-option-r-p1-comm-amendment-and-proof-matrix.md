@@ -6,7 +6,7 @@
 AMENDMENT_ID = WXE-OPTION-R-P1-COMM-AMENDMENT-1
 PACKAGE = WXE-CANDIDATE-1
 TASK = WXE-OPTION-R-FIT-REFINEMENT-R2
-FOUNDER_DECISION_STATUS = APPROVED_IN_WAVE_CONTRACT — PENDING_PACKAGE_RATIFICATION_RECORD
+FOUNDER_DECISION_STATUS = RATIFIED — RECORDED (W2; see doc 17 WXE-OPTION-R-RATIFICATION-RECORD-1)
 FORMAL_NEW_PD_XD_GATE_PASS = NOT_GRANTED
 FORMAL_ARCHITECTURE_FIT_OR_LOCK = NOT_GRANTED
 APPLICATION_CODE_MUTATION = NO
@@ -197,14 +197,20 @@ Proofs are for a **future authorized implementation**. This amendment does not e
 ```text
 HISTORICAL_FOUNDER_PD_GATE_PASS = RECORDED @ 560048ffc4d7e1fea410ebfcb9bc1d554cbeaf89
 HISTORICAL_FOUNDER_XD_GATE_PASS = RECORDED @ 560048ffc4d7e1fea410ebfcb9bc1d554cbeaf89
-OPTION_R_SCOPE_AMENDMENT = PROPOSED_FOR_FOUNDER_RATIFICATION_RECORD
+OPTION_R_SCOPE_AMENDMENT = RATIFIED — RECORDED (doc 17 §2; 2026-10-24 Asia/Kolkata)
 POST_PASS_AMENDMENT_NOT_COVERED_BY_HISTORICAL_PASS = YES
 FORMAL_NEW_PD_XD_GATE_PASS = NOT_GRANTED
 FORMAL_ARCHITECTURE_FIT_OR_LOCK = NOT_GRANTED
 IMPLEMENTATION_AUTHORIZED = NO
 ```
 
-### Founder decision request (consolidated)
+### Founder decision request (consolidated) — disposition
+
+Items 1–3 below were **ratified / confirmed** by the Founder (W2, 2026-10-24 Asia/Kolkata) and
+recorded in [`17-option-r-founder-ratification-record-and-fit-decision-package.md`](./17-option-r-founder-ratification-record-and-fit-decision-package.md).
+Item 4 holds: Architecture Fit/Lock, Implementation Authorization, #426/#427 merge, and UPD-08
+risk acceptance remain **NOT_GRANTED**. Item 5 is now in effect: amended PD/XD clauses are
+in-force candidate scope; no new formal Gate PASS has been granted.
 
 1. **Ratify** `WXE-P1-COMM = OPTION_R` as recorded in §2–§4 (brand-scoped Commercial; static `brand.read`+commercial-read operability predicate; hide when not brand-operable; preserve Store ops / read-only assortment / static escalation; no invented `brand.read`).
 2. **Confirm** P1-ENTRY × OPTION_R reconciliation (§3): commercial-read keys without `brand.read` must not alone create an empty Administration shell; Ops landing + UPD-03 B + UPD-06 + UPD-09 unchanged.

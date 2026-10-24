@@ -6,7 +6,7 @@
 XD_ID = XD-WXE-CANDIDATE-1
 PACKAGE = WXE-CANDIDATE-1
 EXPERIENCE_GATE = PASS (historical @ 560048ffc…; see §13)
-EXPERIENCE_AMENDMENT = WXE-P1-COMM_OPTION_R — PENDING_FOUNDER_RATIFICATION_RECORD
+EXPERIENCE_AMENDMENT = WXE-P1-COMM_OPTION_R — RATIFIED_RECORDED (doc 17; not a new Gate PASS)
 FORMAL_NEW_PD_XD_GATE_PASS = NOT_GRANTED
 EXPERIENCE_GATE_EXECUTION = PERFORMED (historical)
 EXPERIENCE_CRITICALITY = X3 (highest boundary; X2 workflows remain inside)
@@ -201,7 +201,7 @@ Founder Authority: Explicit "proceed" on 2026-10-24 Asia/Kolkata
 Reviewed Contract HEAD: 560048ffc4d7e1fea410ebfcb9bc1d554cbeaf89
 Experience Criticality: X3
 Implementation Authorized: NO
-FORMAL_NEW_PD_XD_GATE_PASS: NOT_GRANTED (OPTION_R amendment pending ratification record)
+FORMAL_NEW_PD_XD_GATE_PASS: NOT_GRANTED (OPTION_R amendment ratified and recorded in doc 17; ratification ≠ new Gate PASS)
 ```
 
 Historical PASS approves specification completeness at the reviewed contract HEAD only and does **not** cover OPTION_R post-PASS amendment text. It does not grant Architecture Fit, Design Readiness, Quality/Measurement finalization, Implementation Authorization, merge, or deploy. OPTION_R amendments are packaged for Founder ratification and do **not** self-grant a new Gate PASS.

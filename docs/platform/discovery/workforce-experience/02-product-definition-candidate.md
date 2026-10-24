@@ -7,7 +7,7 @@ PD_ID = PD-WXE-CANDIDATE-1
 PACKAGE = WXE-CANDIDATE-1
 FORMAL_IMP_IDENTITY = NOT_ALLOCATED
 PRODUCT_DEFINITION_GATE = PASS (historical @ 560048ffc…; see §15)
-PRODUCT_DEFINITION_AMENDMENT = WXE-P1-COMM_OPTION_R — PENDING_FOUNDER_RATIFICATION_RECORD
+PRODUCT_DEFINITION_AMENDMENT = WXE-P1-COMM_OPTION_R — RATIFIED_RECORDED (doc 17; not a new Gate PASS)
 FORMAL_NEW_PD_XD_GATE_PASS = NOT_GRANTED
 PRODUCT_DEFINITION_GATE_EXECUTION = PERFORMED (historical)
 EXPERIENCE_CRITICALITY = X3 (capability rated at highest boundary; X2 workflows remain inside)
@@ -202,7 +202,7 @@ Canonical dispositions live in
 | ID | Topic | Binding disposition |
 |---|---|---|
 | UPD-02 | Admin entry + Ops landing + P1-COMM baseline | **OPTION_A** — V1; P1-ENTRY + Ops landing retained; P1-COMM **refined by OPTION_R**; capability-fixture + landing tests; no new RBAC / no silent `brand.read` |
-| P1-COMM | Brand Commercial operability | **OPTION_R** — brand-scoped Workspace; hide unusable Commercial for outlet roles without brand authority; preserve Store ops / read-only assortment / escalation (ratification record pending; see doc 16) |
+| P1-COMM | Brand Commercial operability | **OPTION_R** — brand-scoped Workspace; hide unusable Commercial for outlet roles without brand authority; preserve Store ops / read-only assortment / escalation (**ratified — recorded** in doc 17; see doc 16) |
 | UPD-03 | Kitchen/Delivery Admin entry | **OPTION_B** — preserve `outlet.read` entry for V1; narrowing FOLLOW_UP |
 | UPD-06 | Scheduling first-class nav | **YES** — V1 under Store Management; reuse existing scheduling only |
 | UPD-09 | UOE shared labels | **UOE_UX_A_OWNS_SHARED_LABELS**; WXE consumes (PR #424 sequencing) |
@@ -261,7 +261,7 @@ Gate Result: PASS (historical @ 560048ffc… only — does **not** cover OPTION_
 Founder Authority: Explicit "proceed" on 2026-10-24 Asia/Kolkata
 Reviewed Contract HEAD: 560048ffc4d7e1fea410ebfcb9bc1d554cbeaf89
 Implementation Authorized: NO
-FORMAL_NEW_PD_XD_GATE_PASS: NOT_GRANTED (OPTION_R amendment pending ratification record)
+FORMAL_NEW_PD_XD_GATE_PASS: NOT_GRANTED (OPTION_R amendment ratified and recorded in doc 17; ratification ≠ new Gate PASS)
 ```
 
 Historical PASS approves specification completeness at the reviewed contract HEAD only and does **not** cover OPTION_R post-PASS amendment text. It does not grant Architecture Fit, Design Readiness, Quality/Measurement finalization, Implementation Authorization, merge, or deploy. OPTION_R amendments are packaged for Founder ratification and do **not** self-grant a new Gate PASS.

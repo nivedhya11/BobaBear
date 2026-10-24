@@ -25,8 +25,9 @@ CHANGE_RISK = CR2 (capability rated at highest boundary: refund / access-mutatio
 FOUNDER_EXPERIENCE_DIRECTION = ACCEPTED (desktop-first Workforce & Administration)
 PRODUCT_DEFINITION_GATE = PASS (historical @ 560048ffc…)
 EXPERIENCE_GATE = PASS (historical @ 560048ffc…)
-PRODUCT_DEFINITION_AMENDMENT = WXE-P1-COMM_OPTION_R — PENDING_FOUNDER_RATIFICATION_RECORD
-EXPERIENCE_AMENDMENT = WXE-P1-COMM_OPTION_R — PENDING_FOUNDER_RATIFICATION_RECORD
+PRODUCT_DEFINITION_AMENDMENT = WXE-P1-COMM_OPTION_R — RATIFIED_RECORDED (doc 17)
+EXPERIENCE_AMENDMENT = WXE-P1-COMM_OPTION_R — RATIFIED_RECORDED (doc 17)
+OPTION_R_FOUNDER_RATIFICATION = RECORDED (W2 2026-10-24; not a new Gate PASS)
 FORMAL_NEW_PD_XD_GATE_PASS = NOT_GRANTED
 WXE_UPD_02 = A
 WXE_P1_COMM = OPTION_R
@@ -55,8 +56,14 @@ Those PASSes approve **specification completeness** only at that historical HEAD
 
 **OPTION_R amendment:** Founder-approved `WXE-P1-COMM = OPTION_R` is reconciled in
 [`16-option-r-p1-comm-amendment-and-proof-matrix.md`](./16-option-r-p1-comm-amendment-and-proof-matrix.md)
-and related Product/Experience/Fit candidates. Agents must **not** self-grant a new PD/XD Gate
-PASS; package is for Founder ratification record. `FORMAL_ARCHITECTURE_FIT_OR_LOCK = NOT_GRANTED`.
+and related Product/Experience/Fit candidates. Founder **ratification is recorded** (W2,
+2026-10-24 Asia/Kolkata) in
+[`17-option-r-founder-ratification-record-and-fit-decision-package.md`](./17-option-r-founder-ratification-record-and-fit-decision-package.md),
+together with a focused independent review and a Founder-ready Architecture Fit decision
+package for the permitted presentation scope. Ratification is a bounded post-PASS scope
+amendment — **not** a new PD/XD Gate PASS. `FORMAL_ARCHITECTURE_FIT_OR_LOCK = NOT_GRANTED`.
+UPD-08 Delivery Gaps 1–3 remain unresolved, separately governed, and block Architecture Lock
+for affected X3 delivery-proof/cancellation journeys.
 
 This package still does **not**:
 
@@ -69,7 +76,8 @@ This package still does **not**:
 - overwrite the separate customer Unified Order Experience package (PR #424)
 
 Historical agent `RECOMMENDED_PASS` is preserved as independent-review evidence. Formal Gate PASS
-is Founder-only and is now recorded for Product and Experience Gates only.
+is Founder-only and is recorded for the historical Product and Experience Gates only; the OPTION_R
+ratification is a scope amendment record, not an additional Gate PASS.
 
 ## Links
 
@@ -104,7 +112,8 @@ is Founder-only and is now recorded for Product and Experience Gates only.
 | [`13-measurement-instrumentation-candidate.md`](./13-measurement-instrumentation-candidate.md) | Measurement / Instrumentation candidate |
 | [`14-implementation-tranche-proposal.md`](./14-implementation-tranche-proposal.md) | Small tranche proposal (P0 first, then UX) |
 | [`15-gate-disposition-founder-decision-record.md`](./15-gate-disposition-founder-decision-record.md) | Gate matrix + Founder decision record + independent review |
-| [`16-option-r-p1-comm-amendment-and-proof-matrix.md`](./16-option-r-p1-comm-amendment-and-proof-matrix.md) | OPTION_R P1-COMM amendment + role/API proof matrix + Founder ratification request |
+| [`16-option-r-p1-comm-amendment-and-proof-matrix.md`](./16-option-r-p1-comm-amendment-and-proof-matrix.md) | OPTION_R P1-COMM amendment + role/API proof matrix (ratified text) |
+| [`17-option-r-founder-ratification-record-and-fit-decision-package.md`](./17-option-r-founder-ratification-record-and-fit-decision-package.md) | OPTION_R Founder ratification record + W2 focused review + Architecture Fit decision package (Fit/Lock NOT_GRANTED) |
 
 ## Provisional candidate identifiers
 

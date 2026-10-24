@@ -66,7 +66,7 @@ A Gate `PASS` approves **specification completeness**, not implementation readin
 |---|---|---|---|
 | **UPD-01** | Formal IMP identity / sequencing | **DEFERRED** | Not required for PD/XD Gate PASS |
 | **UPD-02** | Administration entry + Ops landing + P1-COMM baseline | **OPTION_A APPROVED** for V1 Product/Experience scope | P1-ENTRY, Ops landing, AS-01/02 retained; P1-COMM refined by OPTION_R |
-| **P1-COMM** | Brand Commercial operability | **OPTION_R** (wave-approved; **ratification record pending**) | Brand-scoped Workspace; hide unusable Commercial; preserve Store ops/assortment/escalation; AS-25/26; GJ-W8 re-scoped |
+| **P1-COMM** | Brand Commercial operability | **OPTION_R** (**RATIFIED — recorded** W2, doc 17) | Brand-scoped Workspace; hide unusable Commercial; preserve Store ops/assortment/escalation; AS-25/26/27; GJ-W8 re-scoped |
 | **UPD-03** | Kitchen/Delivery Administration entry via `outlet.read` | **OPTION_B APPROVED** — preserve current behaviour for V1 | Narrowing → **FOLLOW_UP**; preserve `role-destination-safety` |
 | **UPD-04** | Future proprietary POS / KOT / new kitchen states | **OUT_OF_V1** / OUT_OF_SCOPE | Non-blocking |
 | **UPD-05** | `WXE-P0-CORRECTIVE-1` | Prior Founder auth for PR #427 **impl/publication**; **merge/deploy NOT_AUTHORIZED** | Separate R3 |
@@ -91,11 +91,14 @@ V1 must include:
 
 **Critical boundary (binding):** This approval is for desired navigation and operability behaviour. It does **not** grant new permissions, broaden server RBAC, authorize a new API, or invent a second Commercial authority. If existing API or permission constraints prevent the desired outcome, Architecture Fit must identify the exact conflict and escalate. Do **not** silently grant `brand.read`.
 
-### P1-COMM = OPTION_R (scope amendment — ratification record pending)
+### P1-COMM = OPTION_R (scope amendment — RATIFIED, recorded)
 
-**Founder decision (wave contract): `WXE-P1-COMM = OPTION_R`** — bounded Product/Experience
-scope amendment refining UPD-02 A Commercial operability. Packaged in
-[`16-option-r-p1-comm-amendment-and-proof-matrix.md`](./16-option-r-p1-comm-amendment-and-proof-matrix.md).
+**Founder decision: `WXE-P1-COMM = OPTION_R` RATIFIED** (W2, 2026-10-24 Asia/Kolkata; GitHub
+#432 wave approval + W2 Agent B task contract) — bounded Product/Experience scope amendment
+refining UPD-02 A Commercial operability. Packaged in
+[`16-option-r-p1-comm-amendment-and-proof-matrix.md`](./16-option-r-p1-comm-amendment-and-proof-matrix.md);
+ratification recorded in
+[`17-option-r-founder-ratification-record-and-fit-decision-package.md`](./17-option-r-founder-ratification-record-and-fit-decision-package.md).
 
 Binding intent:
 
@@ -216,6 +219,20 @@ Post-remediation re-reviews: Product `RECOMMENDED_PASS`; Experience `RECOMMENDED
 only; residual MINOR wording only; **no blockers** for Founder ratification packaging).
 Agent `RECOMMENDED_PASS` is **not** formal Gate PASS.
 
+### D4 — W2 focused review of the ratified OPTION_R text
+
+```text
+REVIEW_WAVE = WXE_OPTION_R_RATIFICATION_W2_FOCUSED
+REVIEWED_HEAD = a1437e5643504814ceebcc2732cd4eed7bf0338e
+PRODUCT_VERDICT = RECOMMENDED_COHERENT (advisory)
+EXPERIENCE_VERDICT = RECOMMENDED_COHERENT (advisory)
+BLOCKING_FINDINGS = NONE
+RESIDUAL_MINOR = Ops destination predicate to be named at Fit (S4); AS-26 escalation copy LANG-1 check at Design Readiness
+FORMAL_GATE_EFFECT = NONE
+```
+
+Full notes in doc 17 §4. Advisory only; not a Gate, Fit, or Lock.
+
 ## E. Explicit non-mutations
 
 This package and its PR must not:
@@ -232,7 +249,7 @@ This package and its PR must not:
 
 ## F. Post-Gate next steps (not authorized by this record)
 
-1. Founder ratification record for OPTION_R amendment (doc 16) — without self-granted new PD/XD PASS
+1. ~~Founder ratification record for OPTION_R amendment (doc 16)~~ — **DONE** (doc 17, W2); no new PD/XD PASS self-granted
 2. Architecture Fit evaluation against UPD-02 A / OPTION_R / UPD-03 B / UPD-06 YES (escalate API/RBAC conflicts; do not invent permissions); no Lock for X3 delivery-proof/cancel journeys without UPD-08 disposition
 3. Design Readiness, Quality Plan, Measurement Plan finalization under PD-2
 4. Separate R3 for PR #427 merge/deploy; UPD-08 server corrective
@@ -307,18 +324,22 @@ Deferred beyond these gates (intentionally not erased): UPD-01 IMP identity; UPD
 
 Evidence: same Founder **"proceed"** sitting; Experience Gate PASS recorded as a **separate** Founder decision from Product Definition Gate PASS.
 
-### H3 — OPTION_R amendment packaging (not a new Gate PASS)
+### H3 — OPTION_R amendment ratification (not a new Gate PASS)
 
 ```text
 DECISION_ID = WXE-FOUNDER-P1-COMM-OPTION-R-RATIFICATION
-STATUS = PACKAGED_FOR_FOUNDER_RATIFICATION_RECORD
+STATUS = RATIFIED — RECORDED (W2 2026-10-24 Asia/Kolkata; record doc 17)
 WAVE_CONTRACT_APPROVAL = YES (BOBA-PREGTM-PARALLEL-EXECUTION-20261024)
+RATIFICATION_AUTHORITY = Founder "proceed" on GitHub #432 + W2 Agent B task contract
+RATIFIED_SOURCE_HEAD = a1437e5643504814ceebcc2732cd4eed7bf0338e
 FORMAL_NEW_PD_XD_GATE_PASS = NOT_GRANTED
 FORMAL_ARCHITECTURE_FIT_OR_LOCK = NOT_GRANTED
 IMPLEMENTATION_AUTHORIZED = NO
 AUTHORITY_DOC = 16-option-r-p1-comm-amendment-and-proof-matrix.md
 ```
 
-Preserves §H1/H2 historical PASS records. Requests Founder ratification of the OPTION_R scope
-amendment and compatibility confirmations listed in doc 16 §10. Agents must not record a new
-Gate PASS from review `RECOMMENDED_PASS` alone.
+Preserves §H1/H2 historical PASS records. The OPTION_R scope amendment and compatibility
+confirmations listed in doc 16 §10 (items 1–3) are **ratified** and recorded in doc 17 §2.
+This ratification is a bounded post-PASS scope amendment; it is **not** a new Product Definition
+Gate PASS or Experience Gate PASS, and does not grant Architecture Fit/Lock. Agents must not
+record a new Gate PASS from review `RECOMMENDED_PASS` alone.

@@ -88,7 +88,7 @@ aggregates, or duplicate commercial authorities.
 | Commercial section URL deep-links | FOLLOW_UP / UPD-07; avoid inventing domain routes |
 | Narrowing Admin entry for kitchen/delivery | Founder **UPD-03 = B** — preserve for V1; narrowing not in V1 (not T0) |
 | Administration entry union / Ops landing | Founder **UPD-02 = A** — V1 desired behaviour; escalate API/RBAC conflicts; no silent `brand.read` |
-| P1-COMM brand operability | Founder **OPTION_R** — hide unusable Brand Commercial; no Store-as-Brand-Commercial; ratification record pending |
+| P1-COMM brand operability | Founder **OPTION_R** — hide unusable Brand Commercial; no Store-as-Brand-Commercial; **ratified — recorded** (doc 17); Fit decision package in doc 17 §5 — Fit/Lock still NOT_GRANTED |
 
 ## Architecture Conflicts
 
