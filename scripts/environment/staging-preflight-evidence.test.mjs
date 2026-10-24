@@ -7,7 +7,7 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
 import { BINDER_OUTCOME, EVIDENCE_PROVENANCE, STAGING_PREFLIGHT_PASS } from "./staging-evidence-binders.mjs";
-import { gatherObservations, parseArgs, readArtifact, runReport } from "./staging-preflight-evidence.mjs";
+import { EXIT_NOT_ESTABLISHED, gatherObservations, parseArgs, readArtifact, runReport } from "./staging-preflight-evidence.mjs";
 import { PREFLIGHT_OUTCOME } from "./staging-preflight.mjs";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -63,7 +63,7 @@ test("offline read-only run: overall BLOCKED, STAGING_PREFLIGHT_PASS NOT_ESTABLI
   assert.equal(result.binders.S2_PUBLISHING.outcome, BINDER_OUTCOME.BLOCKED);
 });
 
-test("recorded artifacts never become genuine unless they declare non-synthetic provenance, and synthetic ones poison the result", () => {
+test("file artifacts are at most RECORDED_ARTIFACT (never self-declared LIVE_PROBE); synthetic ones poison the result", () => {
   const dir = mkdtempSync(path.join(os.tmpdir(), "boba-preflight-evidence-"));
   try {
     const ledger = path.join(dir, "ledger.json");
@@ -73,11 +73,17 @@ test("recorded artifacts never become genuine unless they declare non-synthetic 
     assert.ok(result.provenance.synthetic.includes("S4_DATABASE"));
     assert.equal(result.stagingPreflightPass, STAGING_PREFLIGHT_PASS.NOT_ESTABLISHED);
 
-    const forged = path.join(dir, "forged.json");
-    writeFileSync(forged, JSON.stringify({ provenance: { kind: "TOTALLY_REAL" }, reachable: true, rows: [] }));
-    const forgedRun = runReport(["--offline", "--applied-ledger", forged], INERT_DEPS);
-    assert.equal(forgedRun.result.binders.S4_DATABASE.provenance.kind, EVIDENCE_PROVENANCE.MISSING);
-    assert.ok(forgedRun.result.provenance.nonGenuine.includes("S4_DATABASE"));
+    const selfDeclaredLive = path.join(dir, "live.json");
+    writeFileSync(selfDeclaredLive, JSON.stringify({ provenance: { kind: EVIDENCE_PROVENANCE.LIVE_PROBE, observedAt: new Date().toISOString() }, reachable: true, rows: [] }));
+    const liveRun = runReport(["--offline", "--applied-ledger", selfDeclaredLive], INERT_DEPS);
+    assert.equal(liveRun.result.binders.S4_DATABASE.provenance.kind, EVIDENCE_PROVENANCE.RECORDED_ARTIFACT, "a file cannot claim to be a live probe");
+
+    const undated = path.join(dir, "undated.json");
+    writeFileSync(undated, JSON.stringify({ provenance: { kind: "TOTALLY_REAL" }, reachable: true, rows: [] }));
+    const undatedRun = runReport(["--offline", "--applied-ledger", undated], INERT_DEPS);
+    assert.equal(undatedRun.result.binders.S4_DATABASE.provenance.kind, EVIDENCE_PROVENANCE.RECORDED_ARTIFACT);
+    assert.equal(undatedRun.result.binders.S4_DATABASE.provenance.observedAt, null);
+    assert.ok(undatedRun.result.provenance.nonGenuine.includes("S4_DATABASE"), "an undated recording is not genuine");
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -98,8 +104,33 @@ test("gatherObservations never asserts S2 policy lock, runtime identity, or ledg
   assert.equal(observations.postgresInit.gitTreeManifest.digest, observations.postgresInit.candidateManifest.digest);
 });
 
-test("CLI --offline --json emits machine-readable NOT_ESTABLISHED and exits 0 without mutation", () => {
-  const stdout = execFileSync(process.execPath, [cli, "--offline", "--json"], { cwd: repositoryRoot, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+test("online mode queries GitHub by the LOCAL remote identity for both S1 and S2 (rename redirect observed, not assumed)", () => {
+  const seen = { remote: null, publishing: null };
+  const deps = {
+    ...INERT_DEPS,
+    fetchRemoteMain: ({ repository }) => { seen.remote = repository; return null; },
+    fetchPublishingApi: ({ repository }) => { seen.publishing = repository; return { workflowApiStates: null, pagesHosting: null }; },
+    inspectImage: () => { throw new Error("absent"); },
+    inspectContainer: () => { throw new Error("absent"); },
+  };
+  const observations = gatherObservations(parseArgs([]), deps);
+  assert.equal(typeof seen.remote, "string");
+  assert.match(seen.remote, /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/, "identity passed to gh api is a strict owner/repo");
+  assert.equal(seen.publishing, seen.remote);
+  assert.equal(observations.source.remoteMainSha, null);
+  assert.equal(observations.publishing.policyLock.locked, false);
+});
+
+test("CLI --offline --json emits machine-readable NOT_ESTABLISHED and exits non-zero (2) without mutation", () => {
+  let stdout = null;
+  let status = 0;
+  try {
+    stdout = execFileSync(process.execPath, [cli, "--offline", "--json"], { cwd: repositoryRoot, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+  } catch (error) {
+    stdout = String(error.stdout);
+    status = error.status;
+  }
+  assert.equal(status, EXIT_NOT_ESTABLISHED, "NOT_ESTABLISHED must never exit 0");
   const parsed = JSON.parse(stdout);
   assert.equal(parsed.stagingPreflightPass, STAGING_PREFLIGHT_PASS.NOT_ESTABLISHED);
   assert.equal(parsed.decision.outcome, PREFLIGHT_OUTCOME.BLOCKED);

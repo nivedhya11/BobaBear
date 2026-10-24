@@ -34,6 +34,7 @@ import {
   EXPECTED_STAGING_POSTGRES_VOLUME,
   EXPECTED_STAGING_COMPOSE_PROJECT,
   REQUIRED_STAGING_IMAGES,
+  STAGING_PREFLIGHT_PASS,
   bindStagingPreflightEvidence,
   canonicalizeRepositoryIdentity,
   decideBoundStagingPreflight,
@@ -69,6 +70,8 @@ const STAGING_ENV_FILES = [
   ".env.operations.docker.local",
 ];
 const INIT_RELATIVE_ROOT = "docker/postgres/init";
+/** CLI exit status when STAGING_PREFLIGHT_PASS is NOT_ESTABLISHED (never 0). */
+export const EXIT_NOT_ESTABLISHED = 2;
 
 export function parseArgs(argv) {
   const options = {
@@ -113,13 +116,19 @@ export function readArtifact(filePath, readFile = readFileSync) {
   }
 }
 
+/**
+ * A file supplied on the command line is at most a RECORDED_ARTIFACT: it can
+ * never promote itself to LIVE_PROBE by embedding a provenance block. A file
+ * that declares itself SYNTHETIC stays SYNTHETIC (and poisons genuineness).
+ */
 function artifactProvenance(probe, artifact, fallbackSources) {
   if (!artifact) return liveProvenance(probe, fallbackSources);
-  if (artifact.provenance && typeof artifact.provenance === "object") {
-    const kind = Object.values(EVIDENCE_PROVENANCE).includes(artifact.provenance.kind) ? artifact.provenance.kind : EVIDENCE_PROVENANCE.MISSING;
-    return { kind, observedAt: artifact.provenance.observedAt ?? artifact.observedAt ?? null, probe, sources: fallbackSources };
+  const declared = artifact.provenance && typeof artifact.provenance === "object" ? artifact.provenance : null;
+  const observedAt = declared?.observedAt ?? artifact.observedAt ?? null;
+  if (declared?.kind === EVIDENCE_PROVENANCE.SYNTHETIC) {
+    return { kind: EVIDENCE_PROVENANCE.SYNTHETIC, observedAt, probe, sources: fallbackSources };
   }
-  return recordedProvenance(probe, artifact.observedAt ?? null, fallbackSources);
+  return recordedProvenance(probe, observedAt, fallbackSources);
 }
 
 function readJsonDir(dir) {
@@ -156,7 +165,10 @@ export function gatherObservations(options, deps = {}) {
   const source = { ...localSource, remoteRepositoryIdentity: remoteMain?.fullName ?? null, remoteMainSha: remoteMain?.sha ?? null };
 
   // S2
-  const publishingApi = offline ? { workflowApiStates: null, pagesHosting: null } : (deps.fetchPublishingApi ?? fetchPublishingApiObservation)();
+  const publishingApi =
+    offline || !localIdentity
+      ? { workflowApiStates: null, pagesHosting: null }
+      : (deps.fetchPublishingApi ?? fetchPublishingApiObservation)({ repository: localIdentity });
   const publishing = probePublishingObservation({
     repositoryRoot,
     workflowApiStates: publishingApi.workflowApiStates,
@@ -325,6 +337,9 @@ if (isCli) {
     } else {
       for (const line of lines) console.log(line);
     }
+    // Exit status mirrors the decision so automation cannot misread
+    // NOT_ESTABLISHED as success: 0 only when ESTABLISHED, otherwise 2.
+    process.exitCode = result.stagingPreflightPass === STAGING_PREFLIGHT_PASS.ESTABLISHED ? 0 : EXIT_NOT_ESTABLISHED;
   } catch (error) {
     console.error(`STAGING_PREFLIGHT_EVIDENCE_ERROR ${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
