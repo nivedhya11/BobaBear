@@ -13,6 +13,7 @@ import { cpSync, existsSync, mkdtempSync, rmSync } from "node:fs";
 import os from "node:os";
 
 import { createStaticExportHandler } from "../serve-static-export.mjs";
+import { handleGtmUatBrowserControl } from "./gtm-uat-browser-control";
 import { applyMigrations } from "../../tests/database/support/test-database";
 import { startPostgresTestContainer, type TestContainerHandle } from "../../tests/database/support/test-container";
 
@@ -273,8 +274,14 @@ async function main(): Promise<void> {
 
     staticExportDir = copyStaticExportToLinuxTmp();
     const staticHandler = createStaticExportHandler(staticExportDir);
+    const controlToken = process.env.E2E_HARNESS_CONTROL_TOKEN ?? "";
+    const databaseUrl = containerHandle.adminConnectionInfo.connectionString;
     outerServer = http.createServer((req, res) => {
       const url = req.url ?? "/";
+      if (controlToken && url.startsWith("/__e2e/control")) {
+        void handleGtmUatBrowserControl(req, res, databaseUrl, controlToken);
+        return;
+      }
       if (url.startsWith(CUSTOMER_AUTH_PROXY_PREFIX)) {
         proxyTo(INNER_AUTH_PORT, req, res);
         return;
