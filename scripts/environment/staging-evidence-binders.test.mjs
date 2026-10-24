@@ -975,6 +975,28 @@ test("freshness: future-dated (2099) evidence is rejected across shared consumer
   const s7 = bindCapacityEvidence(futureCapacity);
   assert.equal(s7.outcome, BINDER_OUTCOME.BLOCKED);
   assert.ok(hasFinding(s7, BINDER_REASON.EVIDENCE_TIMESTAMP_FUTURE));
+
+  const futureRecovery = bindRecoveryEvidence(recoveryObservation({
+    evidenceRecords: [checkpointRecord({ recoveryPoint: FUTURE_2099 }), restoreRecord()],
+  }));
+  assert.equal(futureRecovery.outcome, BINDER_OUTCOME.BLOCKED);
+  assert.ok(hasFinding(futureRecovery, BINDER_REASON.EVIDENCE_TIMESTAMP_FUTURE));
+
+  const futureProvenance = bindSourceEvidence(sourceObservation({}, { kind: EVIDENCE_PROVENANCE.LIVE_PROBE, observedAt: FUTURE_2099, probe: "test-live" }));
+  assert.ok(hasFinding(futureProvenance, BINDER_REASON.EVIDENCE_TIMESTAMP_FUTURE));
+});
+
+test("S7: conflicting artifact vs componentProvenance stamps are non-BOUND", () => {
+  const observation = capacityObservation({}, LIVE);
+  observation.componentProvenance = {
+    buildFootprint: SYNTHETIC,
+    peakMemoryDemand: RECORDED,
+    preservation: RECORDED,
+  };
+  // Artifact itself claims RECORDED while componentProvenance claims SYNTHETIC.
+  const bound = bindCapacityEvidence(observation);
+  assert.notEqual(bound.outcome, BINDER_OUTCOME.BOUND);
+  assert.ok(hasFinding(bound, BINDER_REASON.CAPACITY_ARTIFACT_PROVENANCE_CONFLICT));
 });
 
 /* ------------------------------------------------------------------ */

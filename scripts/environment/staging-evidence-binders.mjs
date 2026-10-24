@@ -415,23 +415,38 @@ export function normalizeProvenance(provenance) {
   };
 }
 
-/** A provenance may contribute to genuine readiness only when live/recorded and timestamped. */
-export function isGenuineProvenance(provenance) {
+/**
+ * A provenance may contribute to genuine readiness only when live/recorded,
+ * timestamped, and not future-dated. Domain-field max-age is enforced separately
+ * per binder; this check only rejects future `observedAt` stamps.
+ *
+ * @param {unknown} provenance
+ * @param {Date | string | number} [now]
+ */
+export function isGenuineProvenance(provenance, now = new Date()) {
   const p = normalizeProvenance(provenance);
-  return (
-    (p.kind === EVIDENCE_PROVENANCE.LIVE_PROBE || p.kind === EVIDENCE_PROVENANCE.RECORDED_ARTIFACT) &&
-    p.observedAt != null
-  );
+  if (
+    !(
+      (p.kind === EVIDENCE_PROVENANCE.LIVE_PROBE || p.kind === EVIDENCE_PROVENANCE.RECORDED_ARTIFACT) &&
+      p.observedAt != null
+    )
+  ) {
+    return false;
+  }
+  return evaluateFreshness(p.observedAt, Number.MAX_SAFE_INTEGER, now).ok;
 }
 
 function makeResult(binder, observation) {
   const provenance = normalizeProvenance(observation?.provenance);
+  const now = resolveNow(observation?.now);
   /** @type {Array<{ code: string, detail?: string }>} */
   const findings = [];
   if (provenance.kind === EVIDENCE_PROVENANCE.MISSING) {
     findings.push({ code: BINDER_REASON.PROVENANCE_MISSING });
   } else if (provenance.kind === EVIDENCE_PROVENANCE.SYNTHETIC) {
     findings.push({ code: BINDER_REASON.PROVENANCE_SYNTHETIC, detail: "synthetic observation cannot establish genuine readiness" });
+  } else if (provenance.observedAt != null && evaluateFreshness(provenance.observedAt, Number.MAX_SAFE_INTEGER, now).reason === "FUTURE") {
+    findings.push({ code: BINDER_REASON.EVIDENCE_TIMESTAMP_FUTURE, detail: "provenance.observedAt" });
   }
   return { binder, provenance, findings };
 }
@@ -1209,9 +1224,15 @@ export function bindRecoveryEvidence(observation) {
     outcome = BINDER_OUTCOME.BLOCKED;
   }
   const freshness = evaluateRecoveryPointFreshness(checkpoint.recoveryPoint, checkpointMaxAgeMs, now);
+  // Shared future-date rejection: recovery freshness alone treats negative age as fresh.
+  const wallClockFreshness = evaluateFreshness(checkpoint.recoveryPoint, checkpointMaxAgeMs, now);
   const recoveryPointIdentifiable = nonEmptyString(checkpoint.recoveryPoint);
-  if (!recoveryPointIdentifiable || !freshness.ok) {
-    result.findings.push({ code: BINDER_REASON.RECOVERY_POINT_STALE_OR_UNIDENTIFIABLE, detail: freshness.reason });
+  if (!recoveryPointIdentifiable || !freshness.ok || !wallClockFreshness.ok) {
+    if (wallClockFreshness.reason === "FUTURE") {
+      pushFreshnessFinding(result, wallClockFreshness, BINDER_REASON.RECOVERY_POINT_STALE_OR_UNIDENTIFIABLE, "recoveryPoint");
+    } else {
+      result.findings.push({ code: BINDER_REASON.RECOVERY_POINT_STALE_OR_UNIDENTIFIABLE, detail: freshness.reason });
+    }
     outcome = BINDER_OUTCOME.BLOCKED;
   }
   const rollbackRevision = checkpoint.candidate?.commitSha;
@@ -1855,8 +1876,9 @@ export function bindStagingPreflightEvidence(observations = {}) {
 
   const provenanceByBinder = Object.fromEntries(Object.entries(binders).map(([id, b]) => [id, b.provenance]));
   provenanceByBinder.RUNTIME = runtime.provenance;
+  const genuinenessNow = resolveNow(o.capacity?.now ?? o.database?.now ?? o.security?.now ?? o.recovery?.now);
   const nonGenuine = Object.entries(provenanceByBinder)
-    .filter(([, p]) => !isGenuineProvenance(p))
+    .filter(([, p]) => !isGenuineProvenance(p, genuinenessNow))
     .map(([id]) => id);
   const synthetic = Object.entries(provenanceByBinder)
     .filter(([, p]) => p.kind === EVIDENCE_PROVENANCE.SYNTHETIC)
