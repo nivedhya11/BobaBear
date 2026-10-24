@@ -19,7 +19,7 @@ Consequence marked **PROVEN** (code path) or **POSSIBLE** / **LATENT**.
 |---|---|
 | P0-A / `WXE-P0-CORRECTIVE-1` | **SEPARATE_CORRECTIVE** (PR #427) |
 | Server Gaps 1–3 | **SEPARATE_CORRECTIVE** (not closed by UI) |
-| P1-ENTRY / P1-COMM | **V1_ACCEPTANCE_SLICE** (Founder UPD-02 = A) |
+| P1-ENTRY / P1-COMM | **V1_ACCEPTANCE_SLICE** (Founder UPD-02 = A; P1-COMM refined by **OPTION_R**) |
 | Kitchen/Delivery Admin entry | **V1 preserve current** (Founder UPD-03 = B); narrowing FOLLOW_UP |
 | P1-A / P1-B / P1-C | **V1_ACCEPTANCE_SLICE** |
 | P2-C Scheduling nav | **V1_ACCEPTANCE_SLICE** (Founder UPD-06 = YES) |
@@ -90,7 +90,9 @@ URL/body binding. Gaps are **not** resolved by the UI corrective.
 | ID | WXE-P1-COMM |
 | Source | Commercial nav gated on commercial reads; `CommercialWorkspaceClient` loads brands via `listAdminBrands()` requiring `brand.read`; `outlet_manager` lacks `brand.read` |
 | Consequence | **INFERRED/PROVEN structure**: Commercial appears but brand load fails → violates “no false empty / unusable destination” |
-| Required | Hide Commercial until operable **or** provide outlet-scoped commercial entry that does not require brand list |
+| Founder disposition | **OPTION_R** (wave-approved; ratification record pending in doc 16): Brand Commercial Workspace remains brand-scoped; **remove** misleading/unusable Commercial nav for outlet roles without sufficient brand authority; preserve Store ops, read-only assortment, escalation; do **not** invent `brand.read` or pretend Store functions are Brand Commercial authoring |
+| Required (OPTION_R) | Hide Brand Commercial nav until brand-operable; keep Store Assortment (read-only) + escalation under Store Management |
+| Rejected alternative | Outlet-scoped “Brand Commercial” entry that does not require brand list |
 | Boundary | R2 | Priority | P1 with IA/commercial tranche |
 
 ---

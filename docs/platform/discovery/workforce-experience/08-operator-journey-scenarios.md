@@ -6,9 +6,11 @@
 JOURNEY_ID = WXE-JRN-CANDIDATE-1
 AS_PREFIX = WXE-AS
 WXE_UPD_02 = A
+WXE_P1_COMM = OPTION_R
 WXE_UPD_03 = B
 WXE_UPD_06 = YES
 FOUNDER_GATE_RECORD = WXE-FOUNDER-PD-XD-GATE-RECORD-R3
+OPTION_R_AMENDMENT_DOC = 16-option-r-p1-comm-amendment-and-proof-matrix.md
 ```
 
 Traceability rule: journey → activity → acceptance scenario. New redundant IDs are avoided when
@@ -27,7 +29,7 @@ payment behaviour.
 | GJ-W5 | Mark variant sold out; confirm assortment is separate | X2 | Store / Commercial | Theme story |
 | GJ-W6 | Publish menu or activate price/promotion with review | X3 | Menu & Commercial | **Expanded** |
 | GJ-W7 | Membership create; role grant/revoke; effective-permission diagnosis | X3 | People & Access | **Expanded** |
-| GJ-W8 | Commercial-only operator reaches Commercial Workspace | X2 | Entry / Menu & Commercial | AS-01; **V1** under Founder **UPD-02 A** |
+| GJ-W8 | Brand-operable commercial operator reaches Brand Commercial Workspace | X2 | Entry / Menu & Commercial | AS-01 + AS-25/26/27; **V1** under **UPD-02 A** + **OPTION_R** |
 | GJ-W9 | Refund captured payment with step-up | X3 | Order detail | **Expanded** |
 | GJ-W10 | Inspect access audit and system health | X1/X2 | Audit & System | Theme story |
 | GJ-W11 | Delivery failure → authorized recovery (no new re-book UI) | X3 | Daily Operations | **Expanded** |
@@ -178,8 +180,8 @@ GJ-W11 covers failure/ambiguity recovery using the same command surface; it does
 
 | ID | Scenario | Pass criteria | Slice |
 |---|---|---|---|
-| WXE-AS-01 | Operator with only commercial reads opens Applications | Sees Administration (or Commercial) entry per UPD-02 **A**; capability-fixture covers least-privilege commercial-read union; no new RBAC invented | **V1** (UPD-02 A) |
-| WXE-AS-02 | Store-capable user without `order.read` (fixture) | If Ops destination shown, lands on first usable authorized Operations/Store surface — not Today error | **V1** (UPD-02 A) |
+| WXE-AS-01 | Brand-operable commercial principal (commercial read + `brand.read`) opens Applications | Sees Administration (via `brand.read` already in Admin entry keys); Brand Commercial nav shown; capability-fixture; no new RBAC invented | **V1** (UPD-02 A + OPTION_R) |
+| WXE-AS-02 | Store-capable user without `order.read` (fixture) | If Ops destination shown, lands on first usable authorized Operations/Store surface — not Today error; if Ops destination not shown, no Ops card | **V1** (UPD-02 A) |
 | WXE-AS-03 | Order detail for PLACED with `order.accept` | Accept/Cancel visible when permitted; denied capabilities hide buttons | V1 |
 | WXE-AS-04 | Delivery confirm pickup/delivery/fail/cancel | No UAT prefills; terminal commands confirm; cannot one-click fake proof; **does not claim provider-verified proof** | SEPARATE_CORRECTIVE (P0-A) + V1 non-claims |
 | WXE-AS-05 | Takeaway FULFIL | Uses **UOE UX-A** verb map; Delivery panel hidden on detail; not actionable in Delivery workspace | V1 |
@@ -202,19 +204,36 @@ GJ-W11 covers failure/ambiguity recovery using the same command surface; it does
 | WXE-AS-22 | GJ-W6 publish with review | Publish/effect blocked without review confirm; success shows live clarity | V1 |
 | WXE-AS-23 | Desktop nav collapse | At 1366×768, Operations shows one persistent section nav (not triple redundant bars); Store subsections remain under Store Management | V1 |
 | WXE-AS-24 | Orders single H1 / main | Orders list and detail expose exactly one H1 and one main landmark | V1 |
+| WXE-AS-25 | Commercial reads without `brand.read` (fixture; no other Admin entry keys) | Brand Commercial nav **hidden**; **no** Administration destination created from commercial reads alone (empty Admin shell prohibited); no invented `brand.read` | **V1** (OPTION_R) |
+| WXE-AS-26 | Outlet manager / store assortment entitled without brand Commercial | Store Assortment (read-only) + **static** escalation copy remain under Store Management; **no** Brand Commercial cross-link; not presented as Brand Commercial authoring | **V1** (OPTION_R) |
+| WXE-AS-27 | Direct link / return-to `/workforce/admin/commercial/` while not brand-operable | Deterministic recovery: Store Assortment if entitled in active scope, else Applications; **not** broken brand-list Commercial UX; use AS-27 (not AS-13) when principal has commercial reads but is not brand-operable | **V1** (OPTION_R) |
+
+### GJ-W8 — Brand Commercial entry (OPTION_R scoping)
+
+| # | Contract |
+|---|---|
+| 1 | Success actor: satisfies BRAND_OPERABLE_PREDICATE (commercial read **and** `brand.read`). Negative: commercial reads without `brand.read` (AS-25/27) |
+| 2 | Applications → Administration (via `brand.read` / existing Admin keys) → Menu & Commercial → Brand Commercial Workspace |
+| 3 | Success: reach operable Brand Commercial Workspace without dead brand-list landing |
+| 4 | Without `brand.read`: Brand Commercial nav hidden; no empty Admin from commercial reads alone; Store Assortment + static escalation where entitled (AS-26); Kitchen/Delivery Admin entry preserved when via `outlet.read` (UPD-03 B) |
+| 5 | N/A (entry/discoverability; no new step-up class) |
+| 6 | Deep-link while not brand-operable → AS-27 recovery (not AS-13 unless no relevant caps) |
+| 7 | Mixed brand/outlet scope: Commercial nav follows predicate for **active** scope (S9 / PF-12) |
+| 8 | Durable: presentation only; server RBAC unchanged |
+| 9 | UPD-02 A + OPTION_R; proof matrix WXE-PF-01…12 in doc 16 |
 
 ## Journey Completeness Matrix (package-level)
 
 | Dimension | Coverage in candidate |
 |---|---|
-| ENTRY | WXE-AS-01/02/13; UPD-02 A + UPD-03 B |
-| DISCOVERY | Nav placement doc + GJ-W* (incl. GJ-W8 V1) |
+| ENTRY | WXE-AS-01/02/13/25/26/27; UPD-02 A + UPD-03 B + OPTION_R |
+| DISCOVERY | Nav placement doc + GJ-W* (incl. GJ-W8 OPTION_R) |
 | CONTEXT | Brand/Outlet rules; WXE-AS-15 |
 | EMPTY/FIRST USE | XD journey UX contracts + desktop standard |
 | HAPPY PATH | GJ-W1–W15 with X3 nine-point contracts for W6/W7/W9/W11–W14 |
 | ALTERNATE VALID PATHS | Delivery vs Takeaway; Now vs Scheduled; cancel↔refund ordering |
 | VALIDATION FAILURE | Forms standard + journey contracts |
-| AUTHORIZATION | P1-ENTRY/COMM V1; AS-01/02/13; Kitchen/Delivery Admin preserved (UPD-03 B); denied rows in X3 contracts |
+| AUTHORIZATION | P1-ENTRY + OPTION_R P1-COMM V1; AS-01/02/13/25/26/27; Kitchen/Delivery Admin preserved (UPD-03 B); denied rows in X3 contracts |
 | NOT FOUND/STALE | Outlet stale alert; Delivery/Order identity reset; AS-18/21 |
 | SERVER/NETWORK ERROR | Journey-specific recovery (not generic “all pages”) |
 | RECOVERY | Refund pending; delivery reload; step-up retry |

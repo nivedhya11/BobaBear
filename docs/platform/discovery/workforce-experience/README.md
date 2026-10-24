@@ -23,12 +23,17 @@ REVIEWED_CONTRACT_HEAD = 560048ffc4d7e1fea410ebfcb9bc1d554cbeaf89
 EXPERIENCE_CRITICALITY = X3 (capability rated at highest boundary; X2 workflows remain inside)
 CHANGE_RISK = CR2 (capability rated at highest boundary: refund / access-mutation / commercial publish-effect / delivery-proof)
 FOUNDER_EXPERIENCE_DIRECTION = ACCEPTED (desktop-first Workforce & Administration)
-PRODUCT_DEFINITION_GATE = PASS
-EXPERIENCE_GATE = PASS
+PRODUCT_DEFINITION_GATE = PASS (historical @ 560048ffc…)
+EXPERIENCE_GATE = PASS (historical @ 560048ffc…)
+PRODUCT_DEFINITION_AMENDMENT = WXE-P1-COMM_OPTION_R — PENDING_FOUNDER_RATIFICATION_RECORD
+EXPERIENCE_AMENDMENT = WXE-P1-COMM_OPTION_R — PENDING_FOUNDER_RATIFICATION_RECORD
+FORMAL_NEW_PD_XD_GATE_PASS = NOT_GRANTED
 WXE_UPD_02 = A
+WXE_P1_COMM = OPTION_R
 WXE_UPD_03 = B
 WXE_UPD_06 = YES
 ARCHITECTURE_FIT = CANDIDATE_ONLY (NOT_GRANTED)
+FORMAL_ARCHITECTURE_FIT_OR_LOCK = NOT_GRANTED
 DESIGN_READINESS = CANDIDATE_ONLY (NOT_GRANTED)
 QUALITY_TEST_PLAN = REVIEWABLE_DRAFT (NOT_FINALIZED)
 MEASUREMENT_PLAN = REVIEWABLE_DRAFT (NOT_FINALIZED)
@@ -46,7 +51,12 @@ Administration surfaces discovered on `BASE_MAIN_SHA`.
 Founder Product Definition Gate **PASS** and Experience Gate **PASS** are recorded
 (2026-10-24 Asia/Kolkata; reviewed contract HEAD `560048ffc…`) as **two separate** Founder
 decisions. See [`15-gate-disposition-founder-decision-record.md`](./15-gate-disposition-founder-decision-record.md).
-Those PASSes approve **specification completeness** only.
+Those PASSes approve **specification completeness** only at that historical HEAD.
+
+**OPTION_R amendment:** Founder-approved `WXE-P1-COMM = OPTION_R` is reconciled in
+[`16-option-r-p1-comm-amendment-and-proof-matrix.md`](./16-option-r-p1-comm-amendment-and-proof-matrix.md)
+and related Product/Experience/Fit candidates. Agents must **not** self-grant a new PD/XD Gate
+PASS; package is for Founder ratification record. `FORMAL_ARCHITECTURE_FIT_OR_LOCK = NOT_GRANTED`.
 
 This package still does **not**:
 
@@ -94,6 +104,7 @@ is Founder-only and is now recorded for Product and Experience Gates only.
 | [`13-measurement-instrumentation-candidate.md`](./13-measurement-instrumentation-candidate.md) | Measurement / Instrumentation candidate |
 | [`14-implementation-tranche-proposal.md`](./14-implementation-tranche-proposal.md) | Small tranche proposal (P0 first, then UX) |
 | [`15-gate-disposition-founder-decision-record.md`](./15-gate-disposition-founder-decision-record.md) | Gate matrix + Founder decision record + independent review |
+| [`16-option-r-p1-comm-amendment-and-proof-matrix.md`](./16-option-r-p1-comm-amendment-and-proof-matrix.md) | OPTION_R P1-COMM amendment + role/API proof matrix + Founder ratification request |
 
 ## Provisional candidate identifiers
 

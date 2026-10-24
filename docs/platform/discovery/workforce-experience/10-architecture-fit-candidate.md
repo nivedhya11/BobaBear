@@ -5,7 +5,11 @@
 ```text
 FIT_ID = ARCH-WXE-FIT-CANDIDATE-1
 ARCHITECTURE_FIT = CANDIDATE_ONLY
+FORMAL_ARCHITECTURE_FIT_OR_LOCK = NOT_GRANTED
 BASE_ARCHITECTURE = ARCH-R23
+WXE_P1_COMM = OPTION_R
+OPTION_R_AMENDMENT_DOC = 16-option-r-p1-comm-amendment-and-proof-matrix.md
+WXE_UPD_08 = SEPARATE_CORRECTIVE (NOT closed by this candidate)
 ```
 
 ## Fit summary
@@ -62,21 +66,36 @@ aggregates, or duplicate commercial authorities.
 5. No second authoritative editor for the same effect
 6. Customer UOE package remains separate
 
+## OPTION_R fit reconciliation (P1-COMM)
+
+| Topic | Fit proposal |
+|---|---|
+| Brand Commercial Workspace | Remains brand-scoped IMP-036F/J reuse; no outlet-scoped second Commercial authority |
+| Outlet roles without brand authority | Hide Brand Commercial nav (static BRAND_OPERABLE_PREDICATE); AS-27 direct-link recovery; Store ops / read-only assortment / static escalation (ADR-006); no Brand Commercial cross-link when hidden |
+| P1-ENTRY Admin union / Ops landing | UPD-02 A retained; under OPTION_R commercial reads without `brand.read` must not alone create empty Admin (net V1 Admin entry unchanged; union nominal/future-proofing); Ops landing unchanged |
+| UPD-03 B Kitchen/Delivery Admin | Preserve `outlet.read` entry; Commercial hide must not revoke it |
+| Server RBAC / `brand.read` | **No grant**; escalate true API conflicts; Fit should confirm brand-list path requires `brand.read` in client effective-permission payload |
+| Proof matrix | Doc 16 WXE-PF-01…12 — future authorized proofs only |
+| Delivery Gaps 1–3 | UPD-08 separate; presentation Fit may be evaluated for non-delivery-proof surfaces, but affected X3 delivery-proof/cancellation journeys must **not** receive Architecture Lock without required security disposition |
+
 ## Unresolved fit items
 
 | Item | Notes |
 |---|---|
-| Server Gap 1 — arbitrary non-empty proof reference | UPD-08; UI does not close |
-| Server Gap 2 — cancel-path automatic inactivity attestation | UPD-08; separate server corrective |
-| Server Gap 3 — URL `orderId` vs body `deliveryId` binding | Integrity concern; not claimed exploited; UPD-08 |
+| Server Gap 1 — arbitrary non-empty proof reference | UPD-08; UI does not close; **not remediated in this task** |
+| Server Gap 2 — cancel-path automatic inactivity attestation | UPD-08; separate server corrective; **not remediated in this task** |
+| Server Gap 3 — URL `orderId` vs body `deliveryId` binding | Integrity concern; not claimed exploited; UPD-08; **not remediated in this task** |
 | Commercial section URL deep-links | FOLLOW_UP / UPD-07; avoid inventing domain routes |
 | Narrowing Admin entry for kitchen/delivery | Founder **UPD-03 = B** — preserve for V1; narrowing not in V1 (not T0) |
 | Administration entry union / Ops landing | Founder **UPD-02 = A** — V1 desired behaviour; escalate API/RBAC conflicts; no silent `brand.read` |
+| P1-COMM brand operability | Founder **OPTION_R** — hide unusable Brand Commercial; no Store-as-Brand-Commercial; ratification record pending |
 
 ## Architecture Conflicts
 
 ```text
 Architecture Conflicts vs ARCH-R23 for presentation redesign: NONE identified
+OPTION_R presentation constraints: compatible with ADR-006 assortment/availability separation
+  and existing brand-scoped Commercial workspace — no new domain authority invented.
 DELIVERY_PROOF_POLICY / Gaps 1–3:
   Gap 1 — Possible STATE_CODE_CONFLICT vs IMP-032 capability wording
     (server accepts non-empty free-text proof; capability text rejects arbitrary free text
@@ -85,5 +104,8 @@ DELIVERY_PROOF_POLICY / Gaps 1–3:
   Gap 3 — Potential URL/body identity mismatch; end-to-end authz bypass NOT proven.
   UI hotfix (WXE-P0-CORRECTIVE-1 / PR #427) reduces fabricated prefills and one-click terminals
   but does NOT close Gaps 1–3 — ESCALATE_FOUNDER (UPD-08).
-Fit Result: CANDIDATE_ONLY (Product/Experience Gates PASS recorded; Architecture Fit NOT_GRANTED / not locked)
+  Architecture Lock for affected X3 delivery-proof/cancellation journeys:
+    BLOCKED until UPD-08 security disposition — presentation Fit may still be evaluated separately.
+Fit Result: CANDIDATE_ONLY
+FORMAL_ARCHITECTURE_FIT_OR_LOCK = NOT_GRANTED
 ```

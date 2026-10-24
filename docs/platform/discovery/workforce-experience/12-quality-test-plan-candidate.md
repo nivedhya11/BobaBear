@@ -24,7 +24,7 @@ POLICY = TEST-1
 | Finding | Proof |
 |---|---|
 | P0-A (PR #427) | Defaults empty; submit blocked without refs; attestation required; no `track.example.com/uat` in initial state; **does not** prove Gaps 1–3 closed |
-| P1-ENTRY / P1-COMM | Capability fixtures for commercial-only / store-without-order.read / operable Commercial landings — **required** under Founder UPD-02 **A**; do not invent `brand.read` |
+| P1-ENTRY / P1-COMM | Capability fixtures: brand-operable (commercial+`brand.read`) Admin+Commercial; commercial-without-`brand.read` no empty Admin + Commercial hide; store-without-order.read Ops landing; AS-25…27 + WXE-PF-01…12 — **required** under UPD-02 **A** + **OPTION_R**; static predicate (no runtime nav probe); do not invent `brand.read`; Store Assortment ≠ Brand Commercial |
 | P1-A | Testid/section order: lifecycle actions before delivery panel; permission-gated buttons |
 | P1-B | Dual H1 / nested main absent on Orders |
 | P1-C | Retire section/entry opens consequence review |

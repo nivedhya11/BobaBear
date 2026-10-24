@@ -5,12 +5,15 @@
 ```text
 XD_ID = XD-WXE-CANDIDATE-1
 PACKAGE = WXE-CANDIDATE-1
-EXPERIENCE_GATE = PASS
-EXPERIENCE_GATE_EXECUTION = PERFORMED
+EXPERIENCE_GATE = PASS (historical @ 560048ffc…; see §13)
+EXPERIENCE_AMENDMENT = WXE-P1-COMM_OPTION_R — PENDING_FOUNDER_RATIFICATION_RECORD
+FORMAL_NEW_PD_XD_GATE_PASS = NOT_GRANTED
+EXPERIENCE_GATE_EXECUTION = PERFORMED (historical)
 EXPERIENCE_CRITICALITY = X3 (highest boundary; X2 workflows remain inside)
 FOUNDER_EXPERIENCE_DIRECTION = ACCEPTED
 REVIEWED_CONTRACT_HEAD = 560048ffc4d7e1fea410ebfcb9bc1d554cbeaf89
 FOUNDER_GATE_RECORD = WXE-FOUNDER-PD-XD-GATE-RECORD-R3
+OPTION_R_AMENDMENT_DOC = 16-option-r-p1-comm-amendment-and-proof-matrix.md
 IMPLEMENTATION_AUTHORIZED = NO
 ```
 
@@ -38,14 +41,14 @@ misleading “publish” destinations.
 - Commercial authoring is a single route with section tabs (not deep-linked) — deep-link = FOLLOW_UP
 - Order lifecycle primary actions sit below secondary panels; buttons are status-gated only (**P1-A**)
 - Delivery panel ships UAT prefills; workspace may include Takeaway orders (**P0-A** / PR #427 corrective published, not merged)
-- Entry lists omit commercial keys (**P1-ENTRY** — V1 under UPD-02 A); `outlet_manager` Commercial likely unusable (**P1-COMM** — V1 under UPD-02 A)
+- Entry lists omit commercial keys (**P1-ENTRY** — V1 under UPD-02 A); `outlet_manager` Brand Commercial likely unusable (**P1-COMM** — V1 under **OPTION_R**: hide misleading Commercial; preserve Store assortment/escalation)
 - Dual H1 / nested main on Orders (**P1-B**); Admin dual titles (**P2-B-ADMIN**)
 - Scheduling profile buried under Hours (**P2-C**) — V1 first-class nav; Founder **UPD-06 = YES**
 
 ## 4. Desired journey shape
 
 1. Sign in → Applications hub (or auto-route if single app)
-2. Enter Operations or Administration based on effective permissions + scope (**UPD-02 A** / **UPD-03 B**)
+2. Enter Operations or Administration based on effective permissions + scope (**UPD-02 A** / **UPD-03 B**); Brand Commercial nav only when brand-operable (**OPTION_R**)
 3. Persistent desktop nav + Brand/Outlet context where relevant (**V1 chrome = nav-layer collapse**)
 4. Section → subsection → page with one H1 and clear primary action
 5. List → detail (or workspace section) with filters/search
@@ -80,8 +83,8 @@ misleading “publish” destinations.
 | Permission-blind lifecycle buttons | P1 | Accidental | Gate before promoting placement |
 | Lifecycle actions below fold | P1 | Accidental | Mode-sensitive placement |
 | Dual H1 / nested main on Orders | P1 | Accidental | A11y fix |
-| Outlet manager unusable Commercial | P1 | Accidental | Hide or outlet-scope without inventing `brand.read` (**UPD-02 A** V1) |
-| Latent commercial-only entry list | P1/P2 | Accidental | Admin entry union (**UPD-02 A** V1) |
+| Outlet manager unusable Commercial | P1 | Accidental | **OPTION_R:** hide Brand Commercial nav unless static (commercial read ∧ `brand.read`); AS-27 for direct links; preserve Store ops / read-only assortment / static escalation (no Brand Commercial cross-link when hidden); do **not** invent `brand.read` or outlet-as-Brand-Commercial |
+| Latent commercial-only entry list | P1/P2 | Accidental | Admin entry union (**UPD-02 A** V1; retained with OPTION_R) |
 | Menu section/entry retire without review | P1 | Protective gap | Consequence review (V1) |
 | Kitchen/Delivery Admin via `outlet.read` | P1 | Product decision | **UPD-03 B** — preserve for V1; narrowing FOLLOW_UP |
 | Review tab label / Admin titles | P2 | Accidental | Polish |
@@ -121,7 +124,7 @@ Readiness may refine copy; they must not contradict these contracts.
 |---|---|
 | Empty / first-use | Orders/Delivery/Memberships/Commercial lists explain next authorized action; never show fabricated sample evidence |
 | Loading | Polite busy state; no layout jump that hides primary lifecycle actions at 1366×768 |
-| No access / missing scope | AccessDenied or hidden affordance; recovery to Applications. **P1-COMM** (“no empty/broken Commercial”) is a **V1 requirement** under Founder **UPD-02 A**; hiding unusable Commercial must not revoke UPD-03 B Administration entry |
+| No access / missing scope | AccessDenied or hidden affordance; recovery to Applications. **P1-COMM / OPTION_R** (“no empty/broken Brand Commercial”) is a **V1 requirement**: hide Brand Commercial unless (commercial read ∧ `brand.read`); AS-27 for direct links; preserve Store Assortment + static escalation; must not revoke UPD-03 B Administration entry, create empty Admin from commercial reads alone, or invent `brand.read` |
 | Deep-link failures | Unknown `orderId` / `membershipId` / outlet → not-found + recovery; commercial section deep-links remain FOLLOW_UP |
 | Stale Order/Delivery/Checkout-adjacent state | On identity or revision change, reset confirms/dialogs; drop stale async; reload server truth (GJ-W2/W11/W14) |
 | Network interruption + retry | Recoverable message; retry safe; no double-submit without revision check |
@@ -166,7 +169,7 @@ Collapsed nav: keyboard focus order must remain logical; do not trap focus in of
 | Nav-layer collapse is V1 chrome (not polish) | Low if ratified | UPD/IA gate sitting |
 | UOE UX-A verbs are sufficient for Takeaway hand-over | Medium | Consume approved UX-A; no WXE fork |
 | Deferring commercial deep-links does not block V1 tasks | Low | UPD-07 FOLLOW_UP |
-| UPD-02 A + UPD-03 B compatibility (operable Commercial without revoking Kitchen/Delivery Admin entry) | Medium | Architecture Fit escalation if conflict; do not invent permissions |
+| UPD-02 A + UPD-03 B + OPTION_R compatibility (hide unusable Brand Commercial without revoking Kitchen/Delivery Admin entry; Store ≠ Brand Commercial) | Medium | Architecture Fit escalation if conflict; do not invent permissions |
 
 ## 13. Experience Gate block (Founder-executed)
 
@@ -174,13 +177,13 @@ Collapsed nav: keyboard focus order must remain logical; do not trap focus in of
 EXPERIENCE_GATE
 Experience Intent defined: YES (§1)
 User goal understood: YES (§2)
-Entry / discoverability defined: YES (§4 + nav doc; UPD-02 A / UPD-03 B)
-End-to-end journey defined: YES (doc 08 GJ-W1–W15)
+Entry / discoverability defined: YES (§4 + nav doc; UPD-02 A / UPD-03 B / OPTION_R)
+End-to-end journey defined: YES (doc 08 GJ-W1–W15; GJ-W8 OPTION_R scoping)
 Information architecture defined: YES (§6 + nav doc; seven presentation groups)
 Information hierarchy defined: YES (breadcrumbs / single H1 / V1 chrome)
 Primary interaction defined: YES (§7 friction + desktop standard)
 Mental model / cognitive load considered: YES (§7 + assumption register)
-Friction reviewed: YES (§7)
+Friction reviewed: YES (§7; P1-COMM → OPTION_R)
 Trust-sensitive moments considered: YES (delivery proof, refunds, access revoke, publish/effect)
 Content strategy defined: YES (§9; UPD-09 UOE owns shared labels; WXE consumes)
 Error / recovery defined: YES (§10 + X3 journey contracts)
@@ -190,14 +193,15 @@ Service / operational promise aligned where applicable: YES (§8)
 Performance experience considered: YES (§11 + QAP)
 Measurement intent defined: YES (measurement candidate; plan not finalized)
 Research / evidence level disclosed: YES (FOUNDER_HEURISTIC_REVIEW + INTERNAL_USABILITY_REVIEW)
-Unresolved experience decisions: NONE (within approved Product/Experience Gate scope)
+Unresolved experience decisions: NONE (within approved Product/Experience Gate scope at historical PASS); **OPTION_R is a post-PASS amendment packaged for Founder ratification (doc 16) — not covered by this historical PASS**
 Deferred beyond Experience Gate (not erased): UPD-01 IMP identity; UPD-07 Commercial deep-linking; UPD-08 server Gaps 1–3; UPD-05 merge/deploy; Architecture Fit / Design / Quality / Measurement / Implementation Authorization
 EXPERIENCE_GATE_EXECUTION: PERFORMED
-Result: PASS
+Result: PASS (historical @ 560048ffc… only — does **not** cover OPTION_R post-PASS amendment)
 Founder Authority: Explicit "proceed" on 2026-10-24 Asia/Kolkata
 Reviewed Contract HEAD: 560048ffc4d7e1fea410ebfcb9bc1d554cbeaf89
 Experience Criticality: X3
 Implementation Authorized: NO
+FORMAL_NEW_PD_XD_GATE_PASS: NOT_GRANTED (OPTION_R amendment pending ratification record)
 ```
 
-PASS approves specification completeness only. It does not grant Architecture Fit, Design Readiness, Quality/Measurement finalization, Implementation Authorization, merge, or deploy.
+Historical PASS approves specification completeness at the reviewed contract HEAD only and does **not** cover OPTION_R post-PASS amendment text. It does not grant Architecture Fit, Design Readiness, Quality/Measurement finalization, Implementation Authorization, merge, or deploy. OPTION_R amendments are packaged for Founder ratification and do **not** self-grant a new Gate PASS.

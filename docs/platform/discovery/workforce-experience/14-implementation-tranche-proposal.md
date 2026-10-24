@@ -27,7 +27,7 @@ T1 start, or any application mutation. Tranche language must not be read as a ta
 | Tranche | Name | Scope | Risk | Depends on |
 |---|---|---|---|---|
 | T0 | `WXE-P0-CORRECTIVE-1` | **Already-published, separately authorized PR #427 scope only**: delivery prefills, attestation, terminal confirms, Delivery workspace Takeaway filter / queue honesty | R2 | Prior Founder Controlled Exception for impl/publication; **merge/deploy still unapproved** |
-| T1 | IA & chrome | Nav-layer collapse (V1 chrome), Admin breadcrumbs, single H1 (incl. Orders), Scheduling nav, **P1-ENTRY / P1-COMM / UPD-02/03 outcomes** | R2 | PD/XD gates as required; **Founder UPD-02/03 A/B**; UPD-06 ratify |
+| T1 | IA & chrome | Nav-layer collapse (V1 chrome), Admin breadcrumbs, single H1 (incl. Orders), Scheduling nav, **P1-ENTRY / P1-COMM OPTION_R / UPD-02/03 outcomes** | R2 | PD/XD gates as required; **Founder UPD-02/03 A/B**; **OPTION_R ratification**; UPD-06 YES |
 | T2 | Daily ops UX | Capability-gated lifecycle buttons + mode-sensitive order; consume **UOE UX-A** label map; narrow timing; enterprise reskin | R1/R2 | T1; UOE label ownership |
 | T3 | Commercial UX | Review relabel; menu section/entry consequence review (**P1-C**); draft/live clarity | R2 | T1; coordinate IMP-036J UAT for #376/#381 root causes (not owned by WXE alone) |
 | T4 | People & polish | Mutator vs diagnostic framing; a11y (2.4.11/2.5.7/2.5.8); measurement hooks; **P2-G** follow-up confirms if still deferred | R2 | T2/T3 |

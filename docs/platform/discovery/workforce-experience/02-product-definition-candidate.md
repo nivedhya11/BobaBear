@@ -6,13 +6,16 @@
 PD_ID = PD-WXE-CANDIDATE-1
 PACKAGE = WXE-CANDIDATE-1
 FORMAL_IMP_IDENTITY = NOT_ALLOCATED
-PRODUCT_DEFINITION_GATE = PASS
-PRODUCT_DEFINITION_GATE_EXECUTION = PERFORMED
+PRODUCT_DEFINITION_GATE = PASS (historical @ 560048ffc…; see §15)
+PRODUCT_DEFINITION_AMENDMENT = WXE-P1-COMM_OPTION_R — PENDING_FOUNDER_RATIFICATION_RECORD
+FORMAL_NEW_PD_XD_GATE_PASS = NOT_GRANTED
+PRODUCT_DEFINITION_GATE_EXECUTION = PERFORMED (historical)
 EXPERIENCE_CRITICALITY = X3 (capability rated at highest boundary; X2 workflows remain inside)
 CHANGE_RISK = CR2 (capability rated at highest boundary: refund / access-mutation / commercial publish-effect / delivery-proof)
 IMPLEMENTATION_AUTHORIZED = NO
 REVIEWED_CONTRACT_HEAD = 560048ffc4d7e1fea410ebfcb9bc1d554cbeaf89
 FOUNDER_GATE_RECORD = WXE-FOUNDER-PD-XD-GATE-RECORD-R3
+OPTION_R_AMENDMENT_DOC = 16-option-r-p1-comm-amendment-and-proof-matrix.md
 ```
 
 ## 1. Capability statement
@@ -88,8 +91,8 @@ V1_ACCEPTANCE_SLICE | FOLLOW_UP | DEFERRED | SEPARATE_CORRECTIVE | OUT_OF_SCOPE
 | Commercial section deep-linking | **FOLLOW_UP** | WXE-UPD-07 |
 | Store settings immediate customer-effect confirmations (P2-G) | **FOLLOW_UP** | Protective friction classification after V1 chrome |
 | Measurement instrumentation pipeline | **FOLLOW_UP** | |
-| P1-ENTRY — Administration entry union + Operations landing | **V1_ACCEPTANCE_SLICE** | Founder **WXE-UPD-02 = OPTION_A** |
-| P1-COMM — outlet_manager Commercial operability | **V1_ACCEPTANCE_SLICE** | Founder **WXE-UPD-02 = OPTION_A**; no silent `brand.read` grant |
+| P1-ENTRY — Administration entry union + Operations landing | **V1_ACCEPTANCE_SLICE** | Founder **WXE-UPD-02 = OPTION_A** retained; reconciled with OPTION_R so commercial reads without `brand.read` do not alone create an empty Admin shell; Ops first-usable landing unchanged |
+| P1-COMM — Brand Commercial operability | **V1_ACCEPTANCE_SLICE** | Founder **WXE-P1-COMM = OPTION_R** (**post-PASS amendment**): static predicate (commercial read **and** `brand.read`); hide otherwise; preserve Store ops / read-only assortment / static escalation; AS-25…27; **no** invented `brand.read`; **no** Store-as-Brand-Commercial |
 | Kitchen/Delivery Administration entry via `outlet.read` (UPD-03) | **V1_ACCEPTANCE_SLICE** (preserve current) | Founder **WXE-UPD-03 = OPTION_B** — do not narrow/revoke; further restriction = FOLLOW_UP |
 | P1-C — menu section/entry activate/retire consequence review | **V1_ACCEPTANCE_SLICE** | X3 commercial safety; implementation proposed in T3 planning only |
 | P0-A / `WXE-P0-CORRECTIVE-1` delivery evidence UI hygiene | **SEPARATE_CORRECTIVE** | Founder-authorized; published on PR #427; **not merged, not deployed, not formally accepted**. **Do not say “already shipped.”** |
@@ -97,13 +100,14 @@ V1_ACCEPTANCE_SLICE | FOLLOW_UP | DEFERRED | SEPARATE_CORRECTIVE | OUT_OF_SCOPE
 | Proprietary POS / KOT / counter billing / new READY kitchen state | **OUT_OF_SCOPE** / **DEFERRED** | WXE-UPD-04; future governed slice |
 | Customer UOE surfaces | **OUT_OF_SCOPE** | Owned by UOE package |
 
-**V1 entry/routing (Founder-approved):** UPD-02 **A** + UPD-03 **B**. AS-01/02, GJ-W8, P1-ENTRY, and P1-COMM are V1 promises for operable destinations/Commercial. Kitchen/Delivery keep existing Administration entry via `outlet.read`. Hiding an unusable Commercial affordance must not revoke that Administration entry or invent permissions. Architecture Fit must escalate API/RBAC conflicts — do not silently grant `brand.read`.
+**V1 entry/routing (Founder-approved):** UPD-02 **A** + UPD-03 **B**, with **P1-COMM refined by OPTION_R** (post-PASS amendment). AS-01/02 (entry/landing), AS-25/26/27 (OPTION_R Commercial hide + Store preserve + direct-link recovery), GJ-W8 (brand-operable Commercial), P1-ENTRY, and P1-COMM are V1 promises. Brand Commercial Workspace stays brand-scoped. Kitchen/Delivery keep existing Administration entry via `outlet.read`. Hiding an unusable Commercial affordance must not revoke that Administration entry, invent permissions, or pretend Store Assortment is Brand Commercial authoring. Architecture Fit must escalate API/RBAC conflicts — do not silently grant `brand.read`. See [`16-option-r-p1-comm-amendment-and-proof-matrix.md`](./16-option-r-p1-comm-amendment-and-proof-matrix.md).
 
 ### Acceptance scenarios → slice map
 
 | Scenario | Slice |
 |---|---|
 | WXE-AS-01, WXE-AS-02 | **V1_ACCEPTANCE_SLICE** (UPD-02 A); capability-fixture tests required |
+| WXE-AS-25, WXE-AS-26, WXE-AS-27 | **V1_ACCEPTANCE_SLICE** (OPTION_R P1-COMM); capability-fixture tests required |
 | WXE-AS-03, WXE-AS-05…07, WXE-AS-10, WXE-AS-11, WXE-AS-13…15, WXE-AS-23, WXE-AS-24 | V1_ACCEPTANCE_SLICE |
 | WXE-AS-04 | SEPARATE_CORRECTIVE (P0-A / PR #427) + V1 non-claims once merged; V1 must not claim provider-verified proof |
 | WXE-AS-08, WXE-AS-09 | V1_ACCEPTANCE_SLICE (P1-C / Review) |
@@ -125,11 +129,12 @@ Navigation from effective permissions **and** resource scope. Server authorizati
 |---|---|
 | Multi-app principal | Hub chooser |
 | Ops-only | **UPD-02 A (approved):** Operations landing = first authorized usable Operations nav item (never Today if Today will 403) |
-| Admin/commercial | **UPD-02 A (approved):** Administration reachable with commercial-read union + operable Commercial; capability-fixture tests required |
+| Admin entry (P1-ENTRY) | **UPD-02 A + OPTION_R reconciliation:** brand-operable principals enter via `brand.read` (already in Admin entry keys); commercial reads without `brand.read` must not alone create empty Admin; built-in outlet/kitchen/delivery entry via existing keys |
+| Brand Commercial (P1-COMM) | **OPTION_R:** static BRAND_OPERABLE_PREDICATE = (any commercial read) AND `brand.read`; hide otherwise; AS-27 for direct links; preserve Store ops / read-only assortment / static escalation |
 | Unauthorized deep link | AccessDenied → Applications |
 | Multi-outlet | Outlet switch preserves context |
 | Kitchen/Delivery Admin entry | **UPD-03 B (approved):** preserve existing `outlet.read` entry; do not narrow/revoke in WXE V1 |
-| `outlet_manager` Commercial | **UPD-02 A:** never knowingly lead into unusable Commercial; no false assumption of `brand.read` |
+| Outlet-without-brand Commercial | **OPTION_R:** hide misleading Brand Commercial nav; no invented `brand.read`; Store functions ≠ Brand Commercial authoring |
 
 ## 8. Observable behaviour + paths
 
@@ -196,10 +201,11 @@ Canonical dispositions live in
 
 | ID | Topic | Binding disposition |
 |---|---|---|
-| UPD-02 | Admin entry + Ops landing + P1-COMM | **OPTION_A** — V1; capability-fixture + landing tests; no new RBAC / no silent `brand.read` |
+| UPD-02 | Admin entry + Ops landing + P1-COMM baseline | **OPTION_A** — V1; P1-ENTRY + Ops landing retained; P1-COMM **refined by OPTION_R**; capability-fixture + landing tests; no new RBAC / no silent `brand.read` |
+| P1-COMM | Brand Commercial operability | **OPTION_R** — brand-scoped Workspace; hide unusable Commercial for outlet roles without brand authority; preserve Store ops / read-only assortment / escalation (ratification record pending; see doc 16) |
 | UPD-03 | Kitchen/Delivery Admin entry | **OPTION_B** — preserve `outlet.read` entry for V1; narrowing FOLLOW_UP |
 | UPD-06 | Scheduling first-class nav | **YES** — V1 under Store Management; reuse existing scheduling only |
-| UPD-09 | UOE shared labels | **UOE_UX_A_OWNS_SHARED_LABELS**; WXE consumes |
+| UPD-09 | UOE shared labels | **UOE_UX_A_OWNS_SHARED_LABELS**; WXE consumes (PR #424 sequencing) |
 
 ### Intentionally deferred beyond Product Definition Gate (not erased)
 
@@ -215,12 +221,14 @@ Canonical dispositions live in
 
 | Decision | Approved | Meaning |
 |---|---|---|
-| UPD-02 | **A** | Permission-correct Admin entry union + Ops landing + P1-COMM operability in V1 |
+| UPD-02 | **A** | Permission-correct Admin entry union + Ops landing + P1-COMM baseline in V1 |
 | UPD-02 | ~~B~~ | Not selected — would have deferred P1-ENTRY/P1-COMM |
+| P1-COMM | **OPTION_R** | Refines UPD-02 A Commercial operability: brand-scoped Workspace; hide when not brand-operable; reject outlet-as-Brand-Commercial |
+| P1-COMM | ~~outlet-scoped Brand Commercial entry~~ | Not selected under OPTION_R |
 | UPD-03 | ~~A~~ | Not selected — would have narrowed kitchen/delivery Admin entry |
 | UPD-03 | **B** | Preserve current kitchen/delivery Administration entry for V1 |
 
-Permission boundary: UPD-02 A does **not** invent permissions, broaden server RBAC, authorize a new API, or create a second Commercial authority. Escalate conflicts at Architecture Fit.
+Permission boundary: UPD-02 A + OPTION_R do **not** invent permissions, broaden server RBAC, authorize a new API, or create a second Commercial authority. Escalate conflicts at Architecture Fit.
 
 ## 14. Product Definition Gate block (Founder-executed)
 
@@ -240,19 +248,20 @@ Happy Paths Defined: YES (doc 08 + XD)
 Alternate Paths Defined: YES (doc 08 + XD)
 Empty / First-Use States Defined: YES (XD §10)
 Error / Recovery Paths Defined: YES (doc 08 + XD)
-Authorization Variants Defined: YES (§7; UPD-02 A / UPD-03 B)
-Cross-Scope Scenarios Defined: YES (multi-outlet, hub chooser, AS-13/15)
+Authorization Variants Defined: YES (§7; UPD-02 A / UPD-03 B / OPTION_R)
+Cross-Scope Scenarios Defined: YES (multi-outlet, hub chooser, AS-13/15/25/26/27) — AS-25…27 are **post-PASS OPTION_R** clauses
 Concurrency Considered: YES (§11 + journey contracts)
 Destructive Actions Defined: YES (§8 + X3 journeys)
 Service / operational impact: YES (§9)
 Quality Attribute Profile: YES (§11)
-Unresolved Product Decisions: NONE within approved Product Definition Gate scope; deferred beyond gate: UPD-01, UPD-04, UPD-05 merge/deploy, UPD-07, UPD-08
-Architecture Conflicts: presentation NONE invented; DELIVERY_PROOF / Gaps 1–3 = ESCALATE at Architecture Fit (UPD-08); UPD-02 A permission conflicts must escalate (no silent brand.read)
+Unresolved Product Decisions: NONE within approved Product Definition Gate scope at historical PASS; deferred beyond gate: UPD-01, UPD-04, UPD-05 merge/deploy, UPD-07, UPD-08; **OPTION_R is a post-PASS amendment packaged for Founder ratification (doc 16) — not covered by this historical PASS**
+Architecture Conflicts: presentation NONE invented; DELIVERY_PROOF / Gaps 1–3 = ESCALATE at Architecture Fit (UPD-08); UPD-02 A / OPTION_R permission conflicts must escalate (no silent brand.read)
 PRODUCT_DEFINITION_GATE_EXECUTION: PERFORMED
-Gate Result: PASS
+Gate Result: PASS (historical @ 560048ffc… only — does **not** cover OPTION_R post-PASS amendment)
 Founder Authority: Explicit "proceed" on 2026-10-24 Asia/Kolkata
 Reviewed Contract HEAD: 560048ffc4d7e1fea410ebfcb9bc1d554cbeaf89
 Implementation Authorized: NO
+FORMAL_NEW_PD_XD_GATE_PASS: NOT_GRANTED (OPTION_R amendment pending ratification record)
 ```
 
-PASS approves specification completeness only. It does not grant Architecture Fit, Design Readiness, Quality/Measurement finalization, Implementation Authorization, merge, or deploy.
+Historical PASS approves specification completeness at the reviewed contract HEAD only and does **not** cover OPTION_R post-PASS amendment text. It does not grant Architecture Fit, Design Readiness, Quality/Measurement finalization, Implementation Authorization, merge, or deploy. OPTION_R amendments are packaged for Founder ratification and do **not** self-grant a new Gate PASS.

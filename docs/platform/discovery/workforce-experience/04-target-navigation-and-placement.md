@@ -6,9 +6,11 @@
 IA_ID = WXE-IA-CANDIDATE-1
 PRESENTATION_GROUPS_ARE_DOMAIN_AUTHORITIES = NO
 WXE_UPD_02 = A
+WXE_P1_COMM = OPTION_R
 WXE_UPD_03 = B
 WXE_UPD_06 = YES
 FOUNDER_GATE_RECORD = WXE-FOUNDER-PD-XD-GATE-RECORD-R3
+OPTION_R_AMENDMENT_DOC = 16-option-r-p1-comm-amendment-and-proof-matrix.md
 ```
 
 ## Proposed top-level presentation groups
@@ -17,7 +19,7 @@ FOUNDER_GATE_RECORD = WXE-FOUNDER-PD-XD-GATE-RECORD-R3
 |---|---|---|
 | **Dashboard** | Attention + application choice + overview | Hub / Today / Admin overview |
 | **Daily Operations** | Orders, Delivery, Takeaway fulfilment actions | Operations |
-| **Menu & Commercial** | Catalog, menu, assortment, pricing, offers, charges, review | Administration (Commercial) + store Availability/Assortment views |
+| **Menu & Commercial** | Brand-scoped catalog, menu, assortment, pricing, offers, charges, review | Administration (Brand Commercial Workspace only when brand-operable). Store Availability/Assortment live under **Store Management** (not Brand Commercial) |
 | **Store Management** | Status, hours/scheduling, delivery area, takeaway profile | Operations Store |
 | **People & Access** | Memberships, roles, effective permissions | Admin + Store Team |
 | **Organization** | Brand / org / territory / legal entity / outlet resources | Administration Resources |
@@ -28,34 +30,53 @@ Assortment, Availability, Pricing, Access, etc.) remain unchanged.
 
 ## Authorization separation
 
-**Founder-approved V1:** WXE-UPD-02 = **OPTION_A**; WXE-UPD-03 = **OPTION_B**; WXE-UPD-06 = **YES**.
+**Founder-approved V1:** WXE-UPD-02 = **OPTION_A**; WXE-P1-COMM = **OPTION_R**; WXE-UPD-03 = **OPTION_B**; WXE-UPD-06 = **YES**.
 
 | Rule | V1 binding behaviour |
 |---|---|
 | Operations destination visible | Least-privilege may include store coarse caps — **landing must be first authorized usable Operations nav item**, never Today if Today will 403 (**UPD-02 A**) |
-| Administration destination visible | Existing org/access keys **union** commercial reads (P1-ENTRY) (**UPD-02 A**) |
-| Commercial nav item | Show only when operable (P1-COMM); correct `outlet_manager` handling **without** assuming or granting `brand.read` (**UPD-02 A**) |
+| Administration destination visible | Existing org/access keys **union** commercial reads (P1-ENTRY) (**UPD-02 A** — retained) |
+| Brand Commercial nav item | **OPTION_R static predicate:** show iff (any commercial read) **AND** `brand.read` from effective permissions — not a runtime brand-list probe; **do not** invent/grant `brand.read`; Store Assortment/Availability ≠ Brand Commercial authoring |
 | Kitchen/Delivery Admin entry | **Preserve** existing `outlet.read` entry (**UPD-03 B**); do not narrow/revoke in WXE V1; preserve `role-destination-safety` |
-| Unusable Commercial affordance | May be hidden/adjusted; must **not** silently revoke server permission or remove approved Administration entry |
+| Unusable Commercial affordance | **Hide** nav + block broken direct-link landings (AS-27); must **not** silently revoke server permission or remove approved Administration entry; preserve Store ops + read-only assortment + **static** escalation copy (no Brand Commercial cross-link when hidden) |
+| Commercial-read Admin union | Reconciled with OPTION_R: commercial reads **without** `brand.read` must **not** alone create an empty Administration shell (doc 16 §3) |
 | `delivery.read` alone | Insufficient for Operations destination if landing needs orders list |
 | Cross-links | Allowed; never create a second authoritative editor |
 | Unimplemented | Never listed (MFA enrolment UI, password reset UI, profile, date-exceptions UI, delivery return/cost UI, etc.) |
 | Scheduling | First-class Store Management nav item (**UPD-06 YES**); reuse existing scheduling capabilities only |
 
 ```text
-ADMINISTRATION_ENTRY_ANY_OF (V1 under UPD-02 A) =
+ADMINISTRATION_ENTRY_ANY_OF (V1 under UPD-02 A + OPTION_R) =
   existing ADMINISTRATION_ENTRY_PERMISSIONS
   UNION (catalog.read | menu.read | assortment.read | pricing.read |
          promotions.read | coupons.read)
+  NET V1 EFFECT UNDER OPTION_R:
+    Brand-operable principals already enter via brand.read (already in
+    ADMINISTRATION_ENTRY_PERMISSIONS). Commercial-read union is
+    nominal/future-proofing only — commercial-read keys WITHOUT brand.read
+    must NOT alone create an Administration destination.
+    Built-in outlet/kitchen/delivery entry continues via existing keys
+    (e.g. outlet.read) — UPD-03 B.
+
+BRAND_OPERABLE_PREDICATE (static) =
+  (any commercial read above) AND brand.read
+  — evaluated for the **active brand/outlet scope**; NOT runtime brand-list probe.
+  Empty brand catalogue for a brand.read holder still shows nav.
+
+BRAND_COMMERCIAL_NAV = SHOW iff BRAND_OPERABLE_PREDICATE else HIDE
+DIRECT_LINK when HIDE = honest recovery (AS-27); never broken brand-list UX
+STORE_ASSORTMENT = Store Management; static escalation copy; no Brand
+  Commercial cross-link when Brand Commercial nav is hidden
 
 OPERATIONS_LANDING (V1 under UPD-02 A) =
   first authorized among: Today (order.read), Orders (order.read),
   Delivery (delivery.read + order.read practical), Store (store coarse caps),
   Operational Status (order.read)
+  — applies only when Operations destination is shown
 
 PERMISSION_BOUNDARY =
-  UPD-02 A does NOT grant new permissions, broaden server RBAC,
-  authorize a new API, or invent a second Commercial authority.
+  UPD-02 A + OPTION_R do NOT grant new permissions, broaden server RBAC,
+  authorize a new API, invent brand.read, or invent a second Commercial authority.
   Escalate exact API/permission conflicts at Architecture Fit.
 ```
 
@@ -83,8 +104,8 @@ Scheduling appears as a **first-class** Store Management item in V1 (Founder **U
 | Notifications resend | Daily Operations | Order detail → Notifications | Not a top nav item |
 | Operational Status | Audit & System | Operational Status | Link from System Health |
 | Store overview | Store Management | Overview | |
-| Availability | Store Management → Availability | Cross-link from Commercial | One editor (store availability); **canonical home decided: Store Management** |
-| Assortment (store read) | Store Management → Assortment | Cross-link to Brand Assortment | Read-only at store |
+| Availability | Store Management → Availability | Cross-link from Brand Commercial **only when** BRAND_OPERABLE_PREDICATE holds | One editor (store availability); **canonical home decided: Store Management** |
+| Assortment (store read) | Store Management → Assortment | Static escalation copy only when Brand Commercial hidden; cross-link to Brand Assortment **only** if Brand Commercial nav is shown for the principal | Read-only at store; not Brand Commercial authoring |
 | Brand Assortment editor | Menu & Commercial | Assortment | Admin commercial |
 | Store Status | Store Management | Store Status | Rename from Operating Status |
 | Store Hours | Store Management | Store Hours | |
@@ -107,7 +128,7 @@ Scheduling appears as a **first-class** Store Management item in V1 (Founder **U
 | Commercial activity | Menu & Commercial | Activity | |
 | Access audit | Audit & System | Access Audit | |
 | System Health | Audit & System | System Health | |
-| Admin overview | Dashboard / Organization | Overview | Add Commercial card when authorized |
+| Admin overview | Dashboard / Organization | Overview | Add Commercial card **only** when BRAND_OPERABLE_PREDICATE holds |
 
 ## Nav structure (candidate desktop)
 
