@@ -47,7 +47,7 @@
     "packageCoverageCommands": 1,
     "packageInventoryCommands": 2,
     "ciWorkflowFiles": 4,
-    "ciValidationSteps": 130,
+    "ciValidationSteps": 132,
     "protectedEvidenceTrackedFiles": 3,
     "archiveTrackedFiles": 92
   },
@@ -1111,6 +1111,10 @@
           "run": "npm run test:imp036j:tranche4"
         },
         {
+          "name": "IMP-036J GTM coupon authority and #385 line-presentation evidence",
+          "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/checkout/imp036j-gtm-committed-cart-authority.domain.test.ts\ntests/checkout/imp036j-385-line-presentation-options.fixture.test.ts"
+        },
+        {
           "name": "Install Playwright Chromium for IMP-036J T5 responsive proof",
           "run": "npx playwright install --with-deps chromium"
         },
@@ -1297,6 +1301,10 @@
         {
           "name": "Administration tests",
           "run": "npm run test:administration"
+        },
+        {
+          "name": "IMP-036J #381 create-promotion diagnostic",
+          "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/administration/imp036j-381-create-promotion.diagnostic.integration.test.ts"
         },
         {
           "name": "Operations HTTP tests",
