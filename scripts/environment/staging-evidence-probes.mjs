@@ -18,7 +18,11 @@ import path from "node:path";
 import { hashMigrationFile } from "../database/lib/migration-integrity.mjs";
 import { readJournal, validateJournalShape } from "../database/lib/migration-history.mjs";
 import { POSTGRES_INIT_REASON } from "./postgres-init-identity.mjs";
-import { EVIDENCE_PROVENANCE, PROTECTED_CHECKOUT_PATHS } from "./staging-evidence-binders.mjs";
+import {
+  EVIDENCE_PROVENANCE,
+  PROTECTED_CHECKOUT_PATHS,
+  extractCapacityArtifactProvenance,
+} from "./staging-evidence-binders.mjs";
 
 /** Build a LIVE_PROBE provenance stamp. */
 export function liveProvenance(probe, sources = [], now = new Date()) {
@@ -506,6 +510,10 @@ export function probeCapacitySnapshots(options) {
 }
 
 /**
+ * Preserve independently validated provenance on each S7 nested artifact.
+ * Host `statfs`/`meminfo` readings are LIVE_PROBE; they never rewrite nested
+ * artifact provenance (synthetic stays synthetic; missing stays missing).
+ *
  * @param {{
  *   candidateHead: string | null,
  *   snapshots: { filesystems: object[], memory: object | null },
@@ -517,14 +525,36 @@ export function probeCapacitySnapshots(options) {
  */
 export function probeCapacityObservation(options) {
   const now = options.now ?? new Date();
+  const buildFootprint = options.buildFootprint ?? null;
+  const peakMemoryDemand = options.peakMemoryDemand ?? null;
+  const preservation = options.preservation ?? null;
+  const snapshotProvenance = liveProvenance(
+    "statfs+meminfo",
+    [
+      "fs.statfsSync",
+      "/proc/meminfo",
+      buildFootprint ? "footprint artifact (nested provenance preserved independently)" : "build footprint NOT measured (requires authorised build)",
+    ],
+    now,
+  );
+  const componentProvenance = {
+    snapshots: snapshotProvenance,
+    buildFootprint: extractCapacityArtifactProvenance(buildFootprint),
+    peakMemoryDemand: extractCapacityArtifactProvenance(peakMemoryDemand),
+    preservation: extractCapacityArtifactProvenance(preservation),
+  };
+  // Observation-level provenance remains the live host snapshot stamp. Binders
+  // reduce it with nested component provenance so mixed LIVE+SYNTHETIC cannot
+  // establish readiness. Do not upgrade nested kinds into this stamp.
   return {
-    provenance: liveProvenance("statfs+meminfo", ["fs.statfsSync", "/proc/meminfo", options.buildFootprint ? "footprint artifact" : "build footprint NOT measured (requires authorised build)"], now),
+    provenance: snapshotProvenance,
+    componentProvenance,
     candidateHead: options.candidateHead ?? undefined,
     filesystems: options.snapshots.filesystems,
-    buildFootprint: options.buildFootprint ?? null,
+    buildFootprint,
     memory: options.snapshots.memory,
-    peakMemoryDemand: options.peakMemoryDemand ?? null,
-    preservation: options.preservation ?? null,
+    peakMemoryDemand,
+    preservation,
     now,
   };
 }

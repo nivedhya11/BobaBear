@@ -141,6 +141,11 @@ export const BINDER_REASON = Object.freeze({
   CAPACITY_MEASUREMENT_STALE: "CAPACITY_MEASUREMENT_STALE",
   CAPACITY_PRESERVATION_UNKNOWN: "CAPACITY_PRESERVATION_UNKNOWN",
   CAPACITY_PRESERVATION_VIOLATED: "CAPACITY_PRESERVATION_VIOLATED",
+  CAPACITY_ARTIFACT_PROVENANCE_MISSING: "CAPACITY_ARTIFACT_PROVENANCE_MISSING",
+  CAPACITY_ARTIFACT_PROVENANCE_SYNTHETIC: "CAPACITY_ARTIFACT_PROVENANCE_SYNTHETIC",
+  CAPACITY_ARTIFACT_PROVENANCE_CONFLICT: "CAPACITY_ARTIFACT_PROVENANCE_CONFLICT",
+  // Shared freshness
+  EVIDENCE_TIMESTAMP_FUTURE: "EVIDENCE_TIMESTAMP_FUTURE",
   // S8
   POSTGRES_INIT_DISPOSITION_MISSING: "POSTGRES_INIT_DISPOSITION_MISSING",
   POSTGRES_INIT_CANDIDATE_TREE_DRIFT: "POSTGRES_INIT_CANDIDATE_TREE_DRIFT",
@@ -176,6 +181,12 @@ export const CAPACITY_POLICY = Object.freeze({
   /** Measured footprint / peak demand of the exact SHA is a recorded artifact; bounded, not infinite. */
   measurementArtifactMaxAgeMs: 24 * 60 * 60 * 1000,
 });
+
+/**
+ * Bound clock-skew allowance for freshness. Timestamps ahead of `now` by more
+ * than this are rejected as future-dated (e.g. 2099 artifacts must not pass).
+ */
+export const BINDER_CLOCK_SKEW_MAX_MS = 5 * 60 * 1000;
 
 /** Binder freshness defaults (engineering defaults, injectable per call; never silently infinite). */
 export const BINDER_FRESHNESS_DEFAULTS = Object.freeze({
@@ -242,11 +253,45 @@ function parseInstant(value) {
   return Date.parse(value);
 }
 
-function isFresh(observedAt, maxAgeMs, now) {
+/**
+ * Freshness evaluation shared by S4/S6/S7 (and any binder that ages evidence).
+ * Future-dated timestamps fail closed: age must be >= -clockSkew and <= maxAge.
+ *
+ * @returns {{ ok: boolean, reason: null | "MALFORMED" | "FUTURE" | "STALE" | "MAX_AGE_INVALID", ageMs: number | null }}
+ */
+export function evaluateFreshness(observedAt, maxAgeMs, now, clockSkewMaxMs = BINDER_CLOCK_SKEW_MAX_MS) {
   const ts = parseInstant(observedAt);
-  if (!Number.isFinite(ts)) return false;
-  if (typeof maxAgeMs !== "number" || !Number.isFinite(maxAgeMs) || maxAgeMs < 0) return false;
-  return now.getTime() - ts <= maxAgeMs;
+  if (!Number.isFinite(ts)) {
+    return { ok: false, reason: "MALFORMED", ageMs: null };
+  }
+  if (typeof maxAgeMs !== "number" || !Number.isFinite(maxAgeMs) || maxAgeMs < 0) {
+    return { ok: false, reason: "MAX_AGE_INVALID", ageMs: null };
+  }
+  const skew = typeof clockSkewMaxMs === "number" && Number.isFinite(clockSkewMaxMs) && clockSkewMaxMs >= 0
+    ? clockSkewMaxMs
+    : BINDER_CLOCK_SKEW_MAX_MS;
+  const ageMs = resolveNow(now).getTime() - ts;
+  if (ageMs < -skew) {
+    return { ok: false, reason: "FUTURE", ageMs };
+  }
+  if (ageMs > maxAgeMs) {
+    return { ok: false, reason: "STALE", ageMs };
+  }
+  return { ok: true, reason: null, ageMs };
+}
+
+/** @deprecated Prefer evaluateFreshness; retained as a boolean convenience for call sites. */
+export function isFresh(observedAt, maxAgeMs, now, clockSkewMaxMs = BINDER_CLOCK_SKEW_MAX_MS) {
+  return evaluateFreshness(observedAt, maxAgeMs, now, clockSkewMaxMs).ok;
+}
+
+function pushFreshnessFinding(result, freshness, staleCode, detail) {
+  if (freshness.ok) return;
+  if (freshness.reason === "FUTURE") {
+    result.findings.push({ code: BINDER_REASON.EVIDENCE_TIMESTAMP_FUTURE, detail });
+    return;
+  }
+  result.findings.push({ code: staleCode, detail });
 }
 
 function resolveNow(now) {
@@ -256,6 +301,98 @@ function resolveNow(now) {
     if (Number.isFinite(d.getTime())) return d;
   }
   return new Date();
+}
+
+/**
+ * D-386 / AD-PF-02 floors and headroom factors are Founder minima. Caller-supplied
+ * observation.policy may only tighten them (raise floors/factors, shorten max ages).
+ * It can never lower capacity minimums or extend freshness windows.
+ *
+ * @param {unknown} override
+ */
+export function resolveCapacityPolicy(override) {
+  const o = isObject(override) ? override : {};
+  const num = (value, fallback) => (typeof value === "number" && Number.isFinite(value) ? value : fallback);
+  const floor = (value, minimum) => Math.max(minimum, num(value, minimum));
+  const ageCeiling = (value, ceiling) => {
+    const requested = num(value, ceiling);
+    if (requested < 0) return 0;
+    return Math.min(requested, ceiling);
+  };
+  return Object.freeze({
+    diskFloorBytes: floor(o.diskFloorBytes, CAPACITY_POLICY.diskFloorBytes),
+    diskHeadroomFactor: floor(o.diskHeadroomFactor, CAPACITY_POLICY.diskHeadroomFactor),
+    memoryFloorBytes: floor(o.memoryFloorBytes, CAPACITY_POLICY.memoryFloorBytes),
+    memoryHeadroomFactor: floor(o.memoryHeadroomFactor, CAPACITY_POLICY.memoryHeadroomFactor),
+    snapshotMaxAgeMs: ageCeiling(o.snapshotMaxAgeMs, CAPACITY_POLICY.snapshotMaxAgeMs),
+    measurementArtifactMaxAgeMs: ageCeiling(o.measurementArtifactMaxAgeMs, CAPACITY_POLICY.measurementArtifactMaxAgeMs),
+  });
+}
+
+/**
+ * Provenance rank for reducing mixed observation + nested artifact provenance.
+ * Lower rank is worse (more non-genuine).
+ */
+function provenanceRank(kind) {
+  switch (kind) {
+    case EVIDENCE_PROVENANCE.MISSING:
+      return 0;
+    case EVIDENCE_PROVENANCE.SYNTHETIC:
+      return 1;
+    case EVIDENCE_PROVENANCE.RECORDED_ARTIFACT:
+      return 2;
+    case EVIDENCE_PROVENANCE.LIVE_PROBE:
+      return 3;
+    default:
+      return 0;
+  }
+}
+
+/** Worst (least genuine) provenance among the inputs; MISSING when empty. */
+export function reduceProvenance(...items) {
+  const normalized = items.map((item) => normalizeProvenance(item));
+  if (normalized.length === 0) {
+    return normalizeProvenance(null);
+  }
+  let worst = normalized[0];
+  for (let i = 1; i < normalized.length; i += 1) {
+    if (provenanceRank(normalized[i].kind) < provenanceRank(worst.kind)) {
+      worst = normalized[i];
+    } else if (
+      provenanceRank(normalized[i].kind) === provenanceRank(worst.kind) &&
+      worst.observedAt != null &&
+      normalized[i].observedAt == null
+    ) {
+      worst = normalized[i];
+    }
+  }
+  return worst;
+}
+
+/**
+ * Extract independently validated provenance for an S7 nested artifact.
+ * File/CLI artifacts cannot self-promote to LIVE_PROBE.
+ *
+ * @param {unknown} artifact
+ * @param {{ allowLiveProbe?: boolean }} [options]
+ */
+export function extractCapacityArtifactProvenance(artifact, options = {}) {
+  if (!isObject(artifact)) {
+    return normalizeProvenance(null);
+  }
+  const declared = normalizeProvenance(artifact.provenance);
+  if (declared.kind === EVIDENCE_PROVENANCE.MISSING) {
+    return declared;
+  }
+  if (declared.kind === EVIDENCE_PROVENANCE.LIVE_PROBE && options.allowLiveProbe !== true) {
+    return {
+      kind: EVIDENCE_PROVENANCE.RECORDED_ARTIFACT,
+      observedAt: declared.observedAt,
+      probe: declared.probe,
+      sources: declared.sources,
+    };
+  }
+  return declared;
 }
 
 /**
@@ -278,23 +415,38 @@ export function normalizeProvenance(provenance) {
   };
 }
 
-/** A provenance may contribute to genuine readiness only when live/recorded and timestamped. */
-export function isGenuineProvenance(provenance) {
+/**
+ * A provenance may contribute to genuine readiness only when live/recorded,
+ * timestamped, and not future-dated. Domain-field max-age is enforced separately
+ * per binder; this check only rejects future `observedAt` stamps.
+ *
+ * @param {unknown} provenance
+ * @param {Date | string | number} [now]
+ */
+export function isGenuineProvenance(provenance, now = new Date()) {
   const p = normalizeProvenance(provenance);
-  return (
-    (p.kind === EVIDENCE_PROVENANCE.LIVE_PROBE || p.kind === EVIDENCE_PROVENANCE.RECORDED_ARTIFACT) &&
-    p.observedAt != null
-  );
+  if (
+    !(
+      (p.kind === EVIDENCE_PROVENANCE.LIVE_PROBE || p.kind === EVIDENCE_PROVENANCE.RECORDED_ARTIFACT) &&
+      p.observedAt != null
+    )
+  ) {
+    return false;
+  }
+  return evaluateFreshness(p.observedAt, Number.MAX_SAFE_INTEGER, now).ok;
 }
 
 function makeResult(binder, observation) {
   const provenance = normalizeProvenance(observation?.provenance);
+  const now = resolveNow(observation?.now);
   /** @type {Array<{ code: string, detail?: string }>} */
   const findings = [];
   if (provenance.kind === EVIDENCE_PROVENANCE.MISSING) {
     findings.push({ code: BINDER_REASON.PROVENANCE_MISSING });
   } else if (provenance.kind === EVIDENCE_PROVENANCE.SYNTHETIC) {
     findings.push({ code: BINDER_REASON.PROVENANCE_SYNTHETIC, detail: "synthetic observation cannot establish genuine readiness" });
+  } else if (provenance.observedAt != null && evaluateFreshness(provenance.observedAt, Number.MAX_SAFE_INTEGER, now).reason === "FUTURE") {
+    findings.push({ code: BINDER_REASON.EVIDENCE_TIMESTAMP_FUTURE, detail: "provenance.observedAt" });
   }
   return { binder, provenance, findings };
 }
@@ -882,9 +1034,12 @@ export function bindDatabaseEvidence(observation) {
     result.findings.push({ code: BINDER_REASON.DATABASE_LEDGER_MISBOUND, detail: "ledger observation is not bound to the exact staging project/container/volume" });
     outcome = BINDER_OUTCOME.BLOCKED;
   }
-  if (!isFresh(ledger.observedAt, maxAgeMs, now)) {
-    result.findings.push({ code: BINDER_REASON.DATABASE_LEDGER_STALE });
-    outcome = BINDER_OUTCOME.BLOCKED;
+  {
+    const freshness = evaluateFreshness(ledger.observedAt, maxAgeMs, now);
+    if (!freshness.ok) {
+      pushFreshnessFinding(result, freshness, BINDER_REASON.DATABASE_LEDGER_STALE);
+      outcome = BINDER_OUTCOME.BLOCKED;
+    }
   }
 
   // Compare applied rows to committed journal in order.
@@ -917,9 +1072,15 @@ export function bindDatabaseEvidence(observation) {
     result.findings.push({ code: BINDER_REASON.DATABASE_BASELINE_MISSING, detail: "baseline classification not observed" });
     outcome = worst(outcome, BINDER_OUTCOME.UNKNOWN);
   } else {
-    if (!targetOk(baseline.target) || !isFresh(baseline.observedAt, maxAgeMs, now)) {
-      result.findings.push({ code: BINDER_REASON.DATABASE_LEDGER_MISBOUND, detail: "baseline observation misbound or stale" });
+    if (!targetOk(baseline.target)) {
+      result.findings.push({ code: BINDER_REASON.DATABASE_LEDGER_MISBOUND, detail: "baseline observation misbound" });
       outcome = BINDER_OUTCOME.BLOCKED;
+    } else {
+      const baselineFreshness = evaluateFreshness(baseline.observedAt, maxAgeMs, now);
+      if (!baselineFreshness.ok) {
+        pushFreshnessFinding(result, baselineFreshness, BINDER_REASON.DATABASE_LEDGER_STALE, "baseline observation");
+        outcome = BINDER_OUTCOME.BLOCKED;
+      }
     }
     baselineCompatibility = baseline.state;
     if (baseline.state === "PARTIAL_OR_INCOMPATIBLE") {
@@ -1063,9 +1224,15 @@ export function bindRecoveryEvidence(observation) {
     outcome = BINDER_OUTCOME.BLOCKED;
   }
   const freshness = evaluateRecoveryPointFreshness(checkpoint.recoveryPoint, checkpointMaxAgeMs, now);
+  // Shared future-date rejection: recovery freshness alone treats negative age as fresh.
+  const wallClockFreshness = evaluateFreshness(checkpoint.recoveryPoint, checkpointMaxAgeMs, now);
   const recoveryPointIdentifiable = nonEmptyString(checkpoint.recoveryPoint);
-  if (!recoveryPointIdentifiable || !freshness.ok) {
-    result.findings.push({ code: BINDER_REASON.RECOVERY_POINT_STALE_OR_UNIDENTIFIABLE, detail: freshness.reason });
+  if (!recoveryPointIdentifiable || !freshness.ok || !wallClockFreshness.ok) {
+    if (wallClockFreshness.reason === "FUTURE") {
+      pushFreshnessFinding(result, wallClockFreshness, BINDER_REASON.RECOVERY_POINT_STALE_OR_UNIDENTIFIABLE, "recoveryPoint");
+    } else {
+      result.findings.push({ code: BINDER_REASON.RECOVERY_POINT_STALE_OR_UNIDENTIFIABLE, detail: freshness.reason });
+    }
     outcome = BINDER_OUTCOME.BLOCKED;
   }
   const rollbackRevision = checkpoint.candidate?.commitSha;
@@ -1248,9 +1415,12 @@ export function bindSecurityEvidence(observation) {
     } else {
       entry.digestBound = true;
     }
-    if (!isFresh(report.scannedAt, scanMaxAgeMs, now)) {
-      result.findings.push({ code: BINDER_REASON.SECURITY_SCAN_STALE, detail: target.image });
-      outcome = BINDER_OUTCOME.BLOCKED;
+    {
+      const scanFreshness = evaluateFreshness(report.scannedAt, scanMaxAgeMs, now);
+      if (!scanFreshness.ok) {
+        pushFreshnessFinding(result, scanFreshness, BINDER_REASON.SECURITY_SCAN_STALE, target.image);
+        outcome = BINDER_OUTCOME.BLOCKED;
+      }
     }
     const interpreted = interpretTrivyJson(JSON.stringify(report.report), target.image);
     if (interpreted.errors.length > 0) {
@@ -1300,6 +1470,46 @@ function isNonNegativeNumber(value) {
 }
 
 /**
+ * Validate independently carried provenance for an S7 nested artifact.
+ * Live host metrics must never launder synthetic / missing workload facts.
+ *
+ * @returns {{ ok: boolean, provenance: ReturnType<typeof normalizeProvenance> }}
+ */
+function validateCapacityArtifactProvenance(result, artifact, label, options = {}) {
+  const fromArtifact = extractCapacityArtifactProvenance(artifact, options);
+  const fromComponentMap = isObject(options.componentProvenance)
+    ? normalizeProvenance(options.componentProvenance[label])
+    : normalizeProvenance(null);
+  let provenance = fromArtifact;
+  if (fromArtifact.kind === EVIDENCE_PROVENANCE.MISSING && fromComponentMap.kind !== EVIDENCE_PROVENANCE.MISSING) {
+    provenance = fromComponentMap;
+  } else if (
+    fromArtifact.kind !== EVIDENCE_PROVENANCE.MISSING &&
+    fromComponentMap.kind !== EVIDENCE_PROVENANCE.MISSING &&
+    (fromArtifact.kind !== fromComponentMap.kind || fromArtifact.observedAt !== fromComponentMap.observedAt)
+  ) {
+    result.findings.push({
+      code: BINDER_REASON.CAPACITY_ARTIFACT_PROVENANCE_CONFLICT,
+      detail: `${label}: artifact provenance conflicts with observation.componentProvenance`,
+    });
+    return { ok: false, provenance: reduceProvenance(fromArtifact, fromComponentMap) };
+  }
+  if (provenance.kind === EVIDENCE_PROVENANCE.MISSING) {
+    result.findings.push({ code: BINDER_REASON.CAPACITY_ARTIFACT_PROVENANCE_MISSING, detail: label });
+    return { ok: false, provenance };
+  }
+  if (provenance.kind === EVIDENCE_PROVENANCE.SYNTHETIC) {
+    result.findings.push({ code: BINDER_REASON.CAPACITY_ARTIFACT_PROVENANCE_SYNTHETIC, detail: label });
+    return { ok: false, provenance };
+  }
+  if (!isGenuineProvenance(provenance)) {
+    result.findings.push({ code: BINDER_REASON.CAPACITY_ARTIFACT_PROVENANCE_MISSING, detail: `${label}: non-genuine or undated` });
+    return { ok: false, provenance };
+  }
+  return { ok: true, provenance };
+}
+
+/**
  * S7 — bind capacity + preservation evidence under AD-PF-02 / D-386.
  *
  * Disk: for every filesystem with a build / image-store role, available >=
@@ -1309,14 +1519,20 @@ function isNonNegativeNumber(value) {
  * host totals). Footprint / peak measurements must be bound to the exact
  * candidate SHA.
  *
+ * Nested `buildFootprint`, `peakMemoryDemand`, and `preservation` each carry
+ * independently validated provenance. Live `statfs`/`meminfo` readings never
+ * promote synthetic or missing workload / preservation artifacts to BOUND.
+ * `observation.policy` cannot lower D-386 floors (see resolveCapacityPolicy).
+ *
  * @param {{
  *   provenance: object,
  *   candidateHead?: string,
  *   filesystems?: Array<{ id: string, mountPoint?: string, roles: string[], availableBytes?: number, measuredAt?: string }>,
- *   buildFootprint?: { candidateHead?: string, bytesByFilesystemId?: Record<string, number>, measuredAt?: string, source?: string } | null,
+ *   buildFootprint?: { provenance?: object, candidateHead?: string, bytesByFilesystemId?: Record<string, number>, measuredAt?: string, source?: string } | null,
  *   memory?: { availableBytes?: number, measuredAt?: string } | null,
- *   peakMemoryDemand?: { candidateHead?: string, bytes?: number, measuredAt?: string, source?: string } | null,
- *   preservation?: { priorImages?: Array<{ image: string, present: boolean }>, rollbackImagesPresent?: boolean, postgresVolumePresent?: boolean, unintendedPostgresReplacement?: boolean } | null,
+ *   peakMemoryDemand?: { provenance?: object, candidateHead?: string, bytes?: number, measuredAt?: string, source?: string } | null,
+ *   preservation?: { provenance?: object, priorImages?: Array<{ image: string, present: boolean }>, rollbackImagesPresent?: boolean, postgresVolumePresent?: boolean, unintendedPostgresReplacement?: boolean } | null,
+ *   componentProvenance?: { buildFootprint?: object, peakMemoryDemand?: object, preservation?: object, snapshots?: object },
  *   policy?: Partial<typeof CAPACITY_POLICY>,
  *   now?: Date | string,
  * }} observation
@@ -1330,10 +1546,13 @@ export function bindCapacityEvidence(observation) {
     result.findings.push({ code: BINDER_REASON.OBSERVATION_MISSING });
     return finalize(result, BINDER_OUTCOME.UNKNOWN, unknown);
   }
-  const policy = { ...CAPACITY_POLICY, ...(isObject(observation.policy) ? observation.policy : {}) };
+  const policy = resolveCapacityPolicy(observation.policy);
   const now = resolveNow(observation.now);
   const candidateHead = observation.candidateHead;
   let outcome = BINDER_OUTCOME.BOUND;
+  const componentProvenance = isObject(observation.componentProvenance) ? observation.componentProvenance : {};
+  /** @type {Record<string, ReturnType<typeof normalizeProvenance>>} */
+  const nestedProvenance = {};
 
   // Disk
   const filesystems = (Array.isArray(observation.filesystems) ? observation.filesystems : []).filter(isObject);
@@ -1349,14 +1568,25 @@ export function bindCapacityEvidence(observation) {
     result.findings.push({ code: BINDER_REASON.CAPACITY_BUILD_FOOTPRINT_UNMEASURED, detail: "measured incremental build footprint not supplied (requires a prior authorised measurement artifact)" });
     outcome = worst(outcome, BINDER_OUTCOME.UNKNOWN);
     diskSufficient = false;
-  } else if (!isFullGitSha(candidateHead) || footprint.candidateHead !== candidateHead) {
-    result.findings.push({ code: BINDER_REASON.CAPACITY_BUILD_FOOTPRINT_MISBOUND, detail: "footprint measurement is not bound to the exact candidate SHA" });
-    outcome = BINDER_OUTCOME.BLOCKED;
-    diskSufficient = false;
-  } else if (!isFresh(footprint.measuredAt, policy.measurementArtifactMaxAgeMs, now)) {
-    result.findings.push({ code: BINDER_REASON.CAPACITY_MEASUREMENT_STALE, detail: "build footprint artifact stale" });
-    outcome = BINDER_OUTCOME.BLOCKED;
-    diskSufficient = false;
+    nestedProvenance.buildFootprint = normalizeProvenance(null);
+  } else {
+    const footprintProvenance = validateCapacityArtifactProvenance(result, footprint, "buildFootprint", { componentProvenance });
+    nestedProvenance.buildFootprint = footprintProvenance.provenance;
+    if (!footprintProvenance.ok) {
+      outcome = worst(outcome, BINDER_OUTCOME.UNKNOWN);
+      diskSufficient = false;
+    } else if (!isFullGitSha(candidateHead) || footprint.candidateHead !== candidateHead) {
+      result.findings.push({ code: BINDER_REASON.CAPACITY_BUILD_FOOTPRINT_MISBOUND, detail: "footprint measurement is not bound to the exact candidate SHA" });
+      outcome = BINDER_OUTCOME.BLOCKED;
+      diskSufficient = false;
+    } else {
+      const footprintFreshness = evaluateFreshness(footprint.measuredAt, policy.measurementArtifactMaxAgeMs, now);
+      if (!footprintFreshness.ok) {
+        pushFreshnessFinding(result, footprintFreshness, BINDER_REASON.CAPACITY_MEASUREMENT_STALE, "build footprint artifact");
+        outcome = BINDER_OUTCOME.BLOCKED;
+        diskSufficient = false;
+      }
+    }
   }
   const perFilesystem = [];
   for (const fs of relevant) {
@@ -1369,10 +1599,13 @@ export function bindCapacityEvidence(observation) {
       continue;
     }
     entry.availableBytes = fs.availableBytes;
-    if (!isFresh(fs.measuredAt, policy.snapshotMaxAgeMs, now)) {
-      result.findings.push({ code: BINDER_REASON.CAPACITY_MEASUREMENT_STALE, detail: `${fs.id} availability snapshot` });
-      outcome = BINDER_OUTCOME.BLOCKED;
-      diskSufficient = false;
+    {
+      const snapFreshness = evaluateFreshness(fs.measuredAt, policy.snapshotMaxAgeMs, now);
+      if (!snapFreshness.ok) {
+        pushFreshnessFinding(result, snapFreshness, BINDER_REASON.CAPACITY_MEASUREMENT_STALE, `${fs.id} availability snapshot`);
+        outcome = BINDER_OUTCOME.BLOCKED;
+        diskSufficient = false;
+      }
     }
     if (fs.availableBytes < policy.diskFloorBytes) {
       result.findings.push({ code: BINDER_REASON.CAPACITY_DISK_BELOW_FLOOR, detail: fs.id });
@@ -1407,8 +1640,9 @@ export function bindCapacityEvidence(observation) {
     outcome = worst(outcome, BINDER_OUTCOME.UNKNOWN);
     memorySufficient = false;
   } else {
-    if (!isFresh(memory.measuredAt, policy.snapshotMaxAgeMs, now)) {
-      result.findings.push({ code: BINDER_REASON.CAPACITY_MEASUREMENT_STALE, detail: "memory availability snapshot" });
+    const memFreshness = evaluateFreshness(memory.measuredAt, policy.snapshotMaxAgeMs, now);
+    if (!memFreshness.ok) {
+      pushFreshnessFinding(result, memFreshness, BINDER_REASON.CAPACITY_MEASUREMENT_STALE, "memory availability snapshot");
       outcome = BINDER_OUTCOME.BLOCKED;
       memorySufficient = false;
     }
@@ -1422,18 +1656,29 @@ export function bindCapacityEvidence(observation) {
     result.findings.push({ code: BINDER_REASON.CAPACITY_PEAK_DEMAND_UNMEASURED, detail: "measured incremental peak memory demand not supplied" });
     outcome = worst(outcome, BINDER_OUTCOME.UNKNOWN);
     memorySufficient = false;
-  } else if (!isFullGitSha(candidateHead) || peak.candidateHead !== candidateHead) {
-    result.findings.push({ code: BINDER_REASON.CAPACITY_BUILD_FOOTPRINT_MISBOUND, detail: "peak demand measurement is not bound to the exact candidate SHA" });
-    outcome = BINDER_OUTCOME.BLOCKED;
-    memorySufficient = false;
-  } else if (!isFresh(peak.measuredAt, policy.measurementArtifactMaxAgeMs, now)) {
-    result.findings.push({ code: BINDER_REASON.CAPACITY_MEASUREMENT_STALE, detail: "peak demand artifact stale" });
-    outcome = BINDER_OUTCOME.BLOCKED;
-    memorySufficient = false;
-  } else if (memory && isNonNegativeNumber(memory.availableBytes) && memory.availableBytes < peak.bytes * policy.memoryHeadroomFactor) {
-    result.findings.push({ code: BINDER_REASON.CAPACITY_MEMORY_BELOW_HEADROOM });
-    outcome = BINDER_OUTCOME.BLOCKED;
-    memorySufficient = false;
+    nestedProvenance.peakMemoryDemand = normalizeProvenance(null);
+  } else {
+    const peakProvenance = validateCapacityArtifactProvenance(result, peak, "peakMemoryDemand", { componentProvenance });
+    nestedProvenance.peakMemoryDemand = peakProvenance.provenance;
+    if (!peakProvenance.ok) {
+      outcome = worst(outcome, BINDER_OUTCOME.UNKNOWN);
+      memorySufficient = false;
+    } else if (!isFullGitSha(candidateHead) || peak.candidateHead !== candidateHead) {
+      result.findings.push({ code: BINDER_REASON.CAPACITY_BUILD_FOOTPRINT_MISBOUND, detail: "peak demand measurement is not bound to the exact candidate SHA" });
+      outcome = BINDER_OUTCOME.BLOCKED;
+      memorySufficient = false;
+    } else {
+      const peakFreshness = evaluateFreshness(peak.measuredAt, policy.measurementArtifactMaxAgeMs, now);
+      if (!peakFreshness.ok) {
+        pushFreshnessFinding(result, peakFreshness, BINDER_REASON.CAPACITY_MEASUREMENT_STALE, "peak demand artifact");
+        outcome = BINDER_OUTCOME.BLOCKED;
+        memorySufficient = false;
+      } else if (memory && isNonNegativeNumber(memory.availableBytes) && memory.availableBytes < peak.bytes * policy.memoryHeadroomFactor) {
+        result.findings.push({ code: BINDER_REASON.CAPACITY_MEMORY_BELOW_HEADROOM });
+        outcome = BINDER_OUTCOME.BLOCKED;
+        memorySufficient = false;
+      }
+    }
   }
 
   // Preservation
@@ -1443,7 +1688,13 @@ export function bindCapacityEvidence(observation) {
   if (!preservation) {
     result.findings.push({ code: BINDER_REASON.CAPACITY_PRESERVATION_UNKNOWN });
     outcome = worst(outcome, BINDER_OUTCOME.UNKNOWN);
+    nestedProvenance.preservation = normalizeProvenance(null);
   } else {
+    const preservationProvenance = validateCapacityArtifactProvenance(result, preservation, "preservation", { componentProvenance });
+    nestedProvenance.preservation = preservationProvenance.provenance;
+    if (!preservationProvenance.ok) {
+      outcome = worst(outcome, BINDER_OUTCOME.UNKNOWN);
+    }
     const priorImages = Array.isArray(preservation.priorImages) ? preservation.priorImages : null;
     const imagesOk = priorImages != null && priorImages.length > 0 && priorImages.every((i) => isObject(i) && i.present === true);
     if (priorImages == null || preservation.rollbackImagesPresent == null || preservation.postgresVolumePresent == null || preservation.unintendedPostgresReplacement == null) {
@@ -1459,6 +1710,21 @@ export function bindCapacityEvidence(observation) {
     }
   }
 
+  // Binder-level provenance is the worst of host observation + nested artifacts so
+  // live snapshots cannot establish genuine readiness over synthetic workload facts.
+  result.provenance = reduceProvenance(
+    result.provenance,
+    nestedProvenance.buildFootprint,
+    nestedProvenance.peakMemoryDemand,
+    nestedProvenance.preservation,
+  );
+  if (result.provenance.kind === EVIDENCE_PROVENANCE.SYNTHETIC && !result.findings.some((f) => f.code === BINDER_REASON.PROVENANCE_SYNTHETIC)) {
+    result.findings.push({ code: BINDER_REASON.PROVENANCE_SYNTHETIC, detail: "synthetic capacity component(s) cannot establish genuine readiness" });
+  }
+  if (result.provenance.kind === EVIDENCE_PROVENANCE.MISSING && !result.findings.some((f) => f.code === BINDER_REASON.PROVENANCE_MISSING)) {
+    result.findings.push({ code: BINDER_REASON.PROVENANCE_MISSING });
+  }
+
   const bound = outcome === BINDER_OUTCOME.BOUND;
   return finalize(
     result,
@@ -1471,7 +1737,13 @@ export function bindCapacityEvidence(observation) {
         unintendedPostgresReplacement,
       },
     },
-    { policy, perFilesystem, memoryAvailableBytes: memory?.availableBytes ?? null, peakDemandBytes: peak?.bytes ?? null },
+    {
+      policy,
+      perFilesystem,
+      memoryAvailableBytes: memory?.availableBytes ?? null,
+      peakDemandBytes: peak?.bytes ?? null,
+      componentProvenance: nestedProvenance,
+    },
   );
 }
 
@@ -1604,8 +1876,9 @@ export function bindStagingPreflightEvidence(observations = {}) {
 
   const provenanceByBinder = Object.fromEntries(Object.entries(binders).map(([id, b]) => [id, b.provenance]));
   provenanceByBinder.RUNTIME = runtime.provenance;
+  const genuinenessNow = resolveNow(o.capacity?.now ?? o.database?.now ?? o.security?.now ?? o.recovery?.now);
   const nonGenuine = Object.entries(provenanceByBinder)
-    .filter(([, p]) => !isGenuineProvenance(p))
+    .filter(([, p]) => !isGenuineProvenance(p, genuinenessNow))
     .map(([id]) => id);
   const synthetic = Object.entries(provenanceByBinder)
     .filter(([, p]) => p.kind === EVIDENCE_PROVENANCE.SYNTHETIC)

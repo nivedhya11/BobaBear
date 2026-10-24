@@ -84,6 +84,24 @@ test("file artifacts are at most RECORDED_ARTIFACT (never self-declared LIVE_PRO
     assert.equal(undatedRun.result.binders.S4_DATABASE.provenance.kind, EVIDENCE_PROVENANCE.RECORDED_ARTIFACT);
     assert.equal(undatedRun.result.binders.S4_DATABASE.provenance.observedAt, null);
     assert.ok(undatedRun.result.provenance.nonGenuine.includes("S4_DATABASE"), "an undated recording is not genuine");
+
+    const footprint = path.join(dir, "footprint.json");
+    const peak = path.join(dir, "peak.json");
+    const preservation = path.join(dir, "preservation.json");
+    const syntheticStamp = { kind: EVIDENCE_PROVENANCE.SYNTHETIC, observedAt: new Date().toISOString() };
+    writeFileSync(footprint, JSON.stringify({ provenance: syntheticStamp, candidateHead: "a".repeat(40), bytesByFilesystemId: { repository: 1 }, measuredAt: new Date().toISOString() }));
+    writeFileSync(peak, JSON.stringify({ provenance: syntheticStamp, candidateHead: "a".repeat(40), bytes: 1, measuredAt: new Date().toISOString() }));
+    writeFileSync(preservation, JSON.stringify({ provenance: syntheticStamp, priorImages: [], rollbackImagesPresent: true, postgresVolumePresent: true, unintendedPostgresReplacement: false }));
+    const capacityRun = runReport(
+      ["--offline", "--build-footprint", footprint, "--peak-memory", peak, "--preservation", preservation],
+      INERT_DEPS,
+    );
+    assert.notEqual(capacityRun.result.binders.S7_CAPACITY.outcome, BINDER_OUTCOME.BOUND);
+    assert.equal(capacityRun.result.binders.S7_CAPACITY.provenance.kind, EVIDENCE_PROVENANCE.SYNTHETIC);
+    assert.ok(
+      capacityRun.result.binders.S7_CAPACITY.findings.some((f) => f.code === "CAPACITY_ARTIFACT_PROVENANCE_SYNTHETIC"),
+    );
+    assert.equal(capacityRun.result.stagingPreflightPass, STAGING_PREFLIGHT_PASS.NOT_ESTABLISHED);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

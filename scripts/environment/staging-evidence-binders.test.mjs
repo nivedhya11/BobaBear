@@ -26,13 +26,18 @@ import {
   bindStagingPreflightEvidence,
   canonicalizeRepositoryIdentity,
   decideBoundStagingPreflight,
+  evaluateFreshness,
   formatBinderReport,
+  isFresh,
   isSecretSafeProjection,
+  resolveCapacityPolicy,
 } from "./staging-evidence-binders.mjs";
 import { PREFLIGHT_OUTCOME, PREFLIGHT_REASON, evaluateStagingDeployPreflight } from "./staging-preflight.mjs";
+import { probeCapacityObservation } from "./staging-evidence-probes.mjs";
 
 const NOW = new Date("2026-10-24T08:00:00.000Z");
 const RECENT = "2026-10-24T07:58:00.000Z";
+const FUTURE_2099 = "2099-01-01T00:00:00.000Z";
 const HEAD = "a".repeat(40);
 const TREE = "b".repeat(40);
 const GiB = 1024 ** 3;
@@ -217,26 +222,43 @@ function securityObservation(overrides = {}, provenance = SYNTHETIC) {
   };
 }
 
+function withNestedProvenance(artifact, provenance) {
+  if (artifact == null) return null;
+  return { ...artifact, provenance };
+}
+
 function capacityObservation(overrides = {}, provenance = SYNTHETIC) {
-  return {
+  // Nested workload/preservation artifacts are RECORDED by default so amount /
+  // floor tests can reach BOUND. Top-level provenance still drives aggregate
+  // genuineness. Adversarial tests override nested provenance explicitly.
+  const base = {
     provenance,
     candidateHead: HEAD,
     filesystems: [
       { id: "repo", mountPoint: "/home", roles: ["build"], availableBytes: 120 * GiB, measuredAt: RECENT },
       { id: "podman", mountPoint: "/home/x/.local/share/containers/storage", roles: ["image-store"], availableBytes: 120 * GiB, measuredAt: RECENT },
     ],
-    buildFootprint: { candidateHead: HEAD, bytesByFilesystemId: { repo: 6 * GiB, podman: 14 * GiB }, measuredAt: RECENT, source: "authorised-measurement" },
+    buildFootprint: withNestedProvenance(
+      { candidateHead: HEAD, bytesByFilesystemId: { repo: 6 * GiB, podman: 14 * GiB }, measuredAt: RECENT, source: "authorised-measurement" },
+      RECORDED,
+    ),
     memory: { availableBytes: 24 * GiB, measuredAt: RECENT },
-    peakMemoryDemand: { candidateHead: HEAD, bytes: 9 * GiB, measuredAt: RECENT, source: "authorised-measurement" },
-    preservation: {
-      priorImages: REQUIRED_STAGING_IMAGES.map((t) => ({ image: t.image, present: true })),
-      rollbackImagesPresent: true,
-      postgresVolumePresent: true,
-      unintendedPostgresReplacement: false,
-    },
+    peakMemoryDemand: withNestedProvenance(
+      { candidateHead: HEAD, bytes: 9 * GiB, measuredAt: RECENT, source: "authorised-measurement" },
+      RECORDED,
+    ),
+    preservation: withNestedProvenance(
+      {
+        priorImages: REQUIRED_STAGING_IMAGES.map((t) => ({ image: t.image, present: true })),
+        rollbackImagesPresent: true,
+        postgresVolumePresent: true,
+        unintendedPostgresReplacement: false,
+      },
+      RECORDED,
+    ),
     now: NOW,
-    ...overrides,
   };
+  return { ...base, ...overrides };
 }
 
 const INIT_DIGEST = "c".repeat(64);
@@ -773,10 +795,16 @@ test("S7: floor and headroom are both required (AND), per relevant filesystem", 
   assert.equal(b2.outcome, BINDER_OUTCOME.BLOCKED);
   assert.ok(hasFinding(b2, BINDER_REASON.CAPACITY_DISK_BELOW_HEADROOM));
 
-  const memFloor = bindCapacityEvidence(capacityObservation({ memory: { availableBytes: 7 * GiB, measuredAt: RECENT }, peakMemoryDemand: { candidateHead: HEAD, bytes: 2 * GiB, measuredAt: RECENT } }));
+  const memFloor = bindCapacityEvidence(capacityObservation({
+    memory: { availableBytes: 7 * GiB, measuredAt: RECENT },
+    peakMemoryDemand: withNestedProvenance({ candidateHead: HEAD, bytes: 2 * GiB, measuredAt: RECENT, source: "authorised-measurement" }, RECORDED),
+  }));
   assert.ok(hasFinding(memFloor, BINDER_REASON.CAPACITY_MEMORY_BELOW_FLOOR));
 
-  const memHeadroom = bindCapacityEvidence(capacityObservation({ memory: { availableBytes: 9 * GiB, measuredAt: RECENT }, peakMemoryDemand: { candidateHead: HEAD, bytes: 7 * GiB, measuredAt: RECENT } }));
+  const memHeadroom = bindCapacityEvidence(capacityObservation({
+    memory: { availableBytes: 9 * GiB, measuredAt: RECENT },
+    peakMemoryDemand: withNestedProvenance({ candidateHead: HEAD, bytes: 7 * GiB, measuredAt: RECENT, source: "authorised-measurement" }, RECORDED),
+  }));
   assert.ok(hasFinding(memHeadroom, BINDER_REASON.CAPACITY_MEMORY_BELOW_HEADROOM));
   assert.equal(memHeadroom.outcome, BINDER_OUTCOME.BLOCKED);
 });
@@ -838,6 +866,137 @@ test("S7: preservation of prior images / rollback images / PG volume is required
   const incomplete = capacityObservation();
   delete incomplete.preservation.postgresVolumePresent;
   assert.equal(bindCapacityEvidence(incomplete).outcome, BINDER_OUTCOME.UNKNOWN);
+});
+
+test("S7: nested synthetic/missing provenance cannot be laundered by live host snapshots", () => {
+  const liveHostSyntheticWorkload = capacityObservation({}, LIVE);
+  liveHostSyntheticWorkload.buildFootprint = withNestedProvenance(
+    { candidateHead: HEAD, bytesByFilesystemId: { repo: 6 * GiB, podman: 14 * GiB }, measuredAt: RECENT, source: "fixture" },
+    SYNTHETIC,
+  );
+  liveHostSyntheticWorkload.peakMemoryDemand = withNestedProvenance(
+    { candidateHead: HEAD, bytes: 9 * GiB, measuredAt: RECENT, source: "fixture" },
+    SYNTHETIC,
+  );
+  liveHostSyntheticWorkload.preservation = withNestedProvenance(
+    {
+      priorImages: REQUIRED_STAGING_IMAGES.map((t) => ({ image: t.image, present: true })),
+      rollbackImagesPresent: true,
+      postgresVolumePresent: true,
+      unintendedPostgresReplacement: false,
+    },
+    SYNTHETIC,
+  );
+  const probed = probeCapacityObservation({
+    candidateHead: HEAD,
+    snapshots: { filesystems: liveHostSyntheticWorkload.filesystems, memory: liveHostSyntheticWorkload.memory },
+    buildFootprint: liveHostSyntheticWorkload.buildFootprint,
+    peakMemoryDemand: liveHostSyntheticWorkload.peakMemoryDemand,
+    preservation: liveHostSyntheticWorkload.preservation,
+    now: NOW,
+  });
+  assert.equal(probed.provenance.kind, EVIDENCE_PROVENANCE.LIVE_PROBE, "host snapshots remain live");
+  assert.equal(probed.componentProvenance.buildFootprint.kind, EVIDENCE_PROVENANCE.SYNTHETIC);
+  assert.equal(probed.componentProvenance.peakMemoryDemand.kind, EVIDENCE_PROVENANCE.SYNTHETIC);
+  assert.equal(probed.componentProvenance.preservation.kind, EVIDENCE_PROVENANCE.SYNTHETIC);
+  const bound = bindCapacityEvidence(probed);
+  assert.notEqual(bound.outcome, BINDER_OUTCOME.BOUND);
+  assert.ok(hasFinding(bound, BINDER_REASON.CAPACITY_ARTIFACT_PROVENANCE_SYNTHETIC));
+  assert.equal(bound.provenance.kind, EVIDENCE_PROVENANCE.SYNTHETIC, "binder provenance collapses to synthetic nested facts");
+
+  const missingNested = capacityObservation({}, LIVE);
+  delete missingNested.buildFootprint.provenance;
+  delete missingNested.peakMemoryDemand.provenance;
+  delete missingNested.preservation.provenance;
+  const missingBound = bindCapacityEvidence(missingNested);
+  assert.notEqual(missingBound.outcome, BINDER_OUTCOME.BOUND);
+  assert.ok(hasFinding(missingBound, BINDER_REASON.CAPACITY_ARTIFACT_PROVENANCE_MISSING));
+});
+
+test("S7: observation.policy cannot lower D-386 capacity minimums", () => {
+  const lowered = resolveCapacityPolicy({
+    diskFloorBytes: 1,
+    memoryFloorBytes: 1,
+    diskHeadroomFactor: 0.1,
+    memoryHeadroomFactor: 0.1,
+    snapshotMaxAgeMs: 365 * 24 * 60 * 60 * 1000,
+    measurementArtifactMaxAgeMs: 365 * 24 * 60 * 60 * 1000,
+  });
+  assert.equal(lowered.diskFloorBytes, CAPACITY_POLICY.diskFloorBytes);
+  assert.equal(lowered.memoryFloorBytes, CAPACITY_POLICY.memoryFloorBytes);
+  assert.equal(lowered.diskHeadroomFactor, CAPACITY_POLICY.diskHeadroomFactor);
+  assert.equal(lowered.memoryHeadroomFactor, CAPACITY_POLICY.memoryHeadroomFactor);
+  assert.equal(lowered.snapshotMaxAgeMs, CAPACITY_POLICY.snapshotMaxAgeMs);
+  assert.equal(lowered.measurementArtifactMaxAgeMs, CAPACITY_POLICY.measurementArtifactMaxAgeMs);
+
+  const observation = capacityObservation({
+    policy: { diskFloorBytes: 1 * GiB, memoryFloorBytes: 1 * GiB, diskHeadroomFactor: 1, memoryHeadroomFactor: 1 },
+    filesystems: [
+      { id: "repo", mountPoint: "/home", roles: ["build"], availableBytes: 39 * GiB, measuredAt: RECENT },
+      { id: "podman", mountPoint: "/home/x/.local/share/containers/storage", roles: ["image-store"], availableBytes: 39 * GiB, measuredAt: RECENT },
+    ],
+  });
+  const bound = bindCapacityEvidence(observation);
+  assert.equal(bound.outcome, BINDER_OUTCOME.BLOCKED);
+  assert.ok(hasFinding(bound, BINDER_REASON.CAPACITY_DISK_BELOW_FLOOR));
+  assert.equal(bound.facts.policy.diskFloorBytes, CAPACITY_POLICY.diskFloorBytes);
+
+  const tightened = resolveCapacityPolicy({ diskFloorBytes: 50 * GiB, snapshotMaxAgeMs: 60 * 1000 });
+  assert.equal(tightened.diskFloorBytes, 50 * GiB);
+  assert.equal(tightened.snapshotMaxAgeMs, 60 * 1000);
+});
+
+test("freshness: future-dated (2099) evidence is rejected across shared consumers", () => {
+  assert.equal(isFresh(FUTURE_2099, 24 * 60 * 60 * 1000, NOW), false);
+  assert.equal(evaluateFreshness(FUTURE_2099, 24 * 60 * 60 * 1000, NOW).reason, "FUTURE");
+  assert.equal(evaluateFreshness(RECENT, 24 * 60 * 60 * 1000, NOW).ok, true);
+
+  const futureLedger = databaseObservation({
+    appliedLedger: {
+      reachable: true,
+      target: TARGET,
+      rows: JOURNAL.entries.map((e) => ({ hash: e.sqlSha256, createdAt: e.when })),
+      observedAt: FUTURE_2099,
+    },
+  });
+  const s4 = bindDatabaseEvidence(futureLedger);
+  assert.equal(s4.outcome, BINDER_OUTCOME.BLOCKED);
+  assert.ok(hasFinding(s4, BINDER_REASON.EVIDENCE_TIMESTAMP_FUTURE));
+
+  const futureScan = securityObservation();
+  futureScan.trivyReports = futureScan.trivyReports.map((r) => ({ ...r, scannedAt: FUTURE_2099 }));
+  const s6 = bindSecurityEvidence(futureScan);
+  assert.equal(s6.outcome, BINDER_OUTCOME.BLOCKED);
+  assert.ok(hasFinding(s6, BINDER_REASON.EVIDENCE_TIMESTAMP_FUTURE));
+
+  const futureCapacity = capacityObservation();
+  futureCapacity.buildFootprint.measuredAt = FUTURE_2099;
+  futureCapacity.peakMemoryDemand.measuredAt = FUTURE_2099;
+  const s7 = bindCapacityEvidence(futureCapacity);
+  assert.equal(s7.outcome, BINDER_OUTCOME.BLOCKED);
+  assert.ok(hasFinding(s7, BINDER_REASON.EVIDENCE_TIMESTAMP_FUTURE));
+
+  const futureRecovery = bindRecoveryEvidence(recoveryObservation({
+    evidenceRecords: [checkpointRecord({ recoveryPoint: FUTURE_2099 }), restoreRecord()],
+  }));
+  assert.equal(futureRecovery.outcome, BINDER_OUTCOME.BLOCKED);
+  assert.ok(hasFinding(futureRecovery, BINDER_REASON.EVIDENCE_TIMESTAMP_FUTURE));
+
+  const futureProvenance = bindSourceEvidence(sourceObservation({}, { kind: EVIDENCE_PROVENANCE.LIVE_PROBE, observedAt: FUTURE_2099, probe: "test-live" }));
+  assert.ok(hasFinding(futureProvenance, BINDER_REASON.EVIDENCE_TIMESTAMP_FUTURE));
+});
+
+test("S7: conflicting artifact vs componentProvenance stamps are non-BOUND", () => {
+  const observation = capacityObservation({}, LIVE);
+  observation.componentProvenance = {
+    buildFootprint: SYNTHETIC,
+    peakMemoryDemand: RECORDED,
+    preservation: RECORDED,
+  };
+  // Artifact itself claims RECORDED while componentProvenance claims SYNTHETIC.
+  const bound = bindCapacityEvidence(observation);
+  assert.notEqual(bound.outcome, BINDER_OUTCOME.BOUND);
+  assert.ok(hasFinding(bound, BINDER_REASON.CAPACITY_ARTIFACT_PROVENANCE_CONFLICT));
 });
 
 /* ------------------------------------------------------------------ */
@@ -909,6 +1068,33 @@ test("aggregate: a single synthetic or missing-provenance section poisons genuin
   const undated = allObservations(LIVE);
   undated.source.provenance = { kind: EVIDENCE_PROVENANCE.LIVE_PROBE, observedAt: null };
   assert.equal(decideBoundStagingPreflight(bindStagingPreflightEvidence(undated)).stagingPreflightPass, STAGING_PREFLIGHT_PASS.NOT_ESTABLISHED);
+});
+
+test("aggregate: synthetic nested S7 artifacts with live host observation cannot establish ESTABLISHED", () => {
+  const observations = allObservations(LIVE);
+  observations.recovery = recoveryObservation({}, RECORDED);
+  observations.capacity = capacityObservation({}, LIVE);
+  observations.capacity.buildFootprint = withNestedProvenance(observations.capacity.buildFootprint, SYNTHETIC);
+  observations.capacity.peakMemoryDemand = withNestedProvenance(observations.capacity.peakMemoryDemand, SYNTHETIC);
+  observations.capacity.preservation = withNestedProvenance(observations.capacity.preservation, SYNTHETIC);
+  const result = decideBoundStagingPreflight(bindStagingPreflightEvidence(observations));
+  assert.equal(result.stagingPreflightPass, STAGING_PREFLIGHT_PASS.NOT_ESTABLISHED);
+  assert.ok(
+    result.reasons.some((r) => r.includes("S7_CAPACITY")) ||
+      result.reasons.some((r) => r.startsWith("SYNTHETIC_PROVENANCE")) ||
+      result.reasons.some((r) => r.startsWith("BINDERS_NOT_BOUND")),
+  );
+  assert.throws(() => assertGenuineStagingReadiness(result), /NOT_ESTABLISHED/);
+});
+
+test("aggregate: future-dated nested capacity measurement cannot establish ESTABLISHED", () => {
+  const observations = allObservations(LIVE);
+  observations.recovery = recoveryObservation({}, RECORDED);
+  observations.capacity = capacityObservation({}, LIVE);
+  observations.capacity.buildFootprint.measuredAt = FUTURE_2099;
+  const result = decideBoundStagingPreflight(bindStagingPreflightEvidence(observations));
+  assert.equal(result.stagingPreflightPass, STAGING_PREFLIGHT_PASS.NOT_ESTABLISHED);
+  assert.ok(hasFinding(result.binders.S7_CAPACITY, BINDER_REASON.EVIDENCE_TIMESTAMP_FUTURE));
 });
 
 test("aggregate: genuine provenance on every section with every binder BOUND reaches ESTABLISHED (guard is reachable, not vacuous)", () => {
