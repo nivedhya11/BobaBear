@@ -86,7 +86,7 @@ reopens Option R. The set is presentation and navigation over accepted capabilit
 | F-1 | Brand-operable Commercial | Static predicate over the existing client effective-permission payload. Brand Commercial Workspace stays the brand-scoped IMP-036F/J workspace. ADR-006 stays intact. No outlet-scoped Commercial editor. | ACCEPT / REJECT / AMEND |
 | F-2 | P1-ENTRY landing | `ADMINISTRATION_ENTRY_PERMISSIONS` stays semantically unchanged for V1. `brand.read` is already an entry key. Commercial-read keys without `brand.read` must not alone create an Administration destination. Operations landing stays first-usable and must not open Today when Today will 403. | ACCEPT / REJECT / AMEND |
 | F-3 | UPD-03 B Kitchen/Delivery Admin entry | `outlet.read` Administration entry stays. Hiding Brand Commercial does not revoke or narrow that entry. | ACCEPT / REJECT / AMEND |
-| F-4 | Operations destination predicate | Use the predicate already written in doc 04 and restated in §3 so synthetic actor S4 is testable. No product change beyond that presentation rule. | DEFINE_AT_FIT — ACCEPT / REJECT / AMEND |
+| F-4 | Operations destination predicate | Hub card when `order.read` or any `STORE_COARSE_NAV_PERMISSIONS` key is true. Hub href is Today only when `order.read` is true; otherwise Store. In-workspace Delivery stays `delivery.read` only. `delivery.read` alone does not show the hub card. | DEFINE_AT_FIT — ACCEPT / REJECT / AMEND |
 | F-5 | First-class Scheduling | Store Management nav exposes existing scheduling. Reuse `StoreSchedulingProfileClient` and the existing scheduling-profile operations route. No new scheduling API, permission, or order state. | ACCEPT / REJECT / AMEND |
 | F-6 | UOE-owned UX-A shared labels | UOE PR #424 UX-A remains the only shared Delivery/Takeaway and Now/Schedule label map. WXE consumes it after that contract is approved. WXE does not publish a second verb map. Option R navigation does not wait on UOE merge. | ACCEPT / REJECT / AMEND |
 | F-7 | Synthetic role/permission test oracle | WXE-PF-01..12 and actors S1–S9 are the future acceptance oracle. Fixtures are test-only effective-permission maps. They do not create production roles or permissions. | ACCEPT / REJECT / AMEND |
@@ -96,7 +96,7 @@ reopens Option R. The set is presentation and navigation over accepted capabilit
 ### F-1 — Brand-operable Commercial
 
 ```text
-BRAND_OPERABLE_PREDICATE (static; active scope) =
+BRAND_OPERABLE_PREDICATE (static; union payload from getAdminSession) =
   (catalog.read | menu.read | assortment.read | pricing.read |
    promotions.read | coupons.read)
   AND brand.read
@@ -104,8 +104,13 @@ SHOW_BRAND_COMMERCIAL_NAV = predicate true
 HIDE_BRAND_COMMERCIAL_NAV = predicate false
 ```
 
-- Evaluated from the effective-permission payload already loaded for the active scope.
-- Not a runtime brand-list probe. Absence of `brand.read` makes the predicate false.
+- Evaluated from the effective-permission payload already loaded for the signed-in principal.
+  Source conformance (annex 23): `getAdminSession` calls `getEffectivePermissions` with no
+  resource, so that payload is the union of permission keys across the principal’s grants.
+  It has no active brand or outlet field. Absence of `brand.read` on that union makes the
+  predicate false. A true per-active-scope show/hide (actor S9) is not available from this
+  payload and is not part of the prepared F-1 grant. Server `adminListBrands` remains the
+  brand-scope wall.
 - A `brand.read` holder with an empty brand catalogue still sees navigation. Empty is not hidden.
 - Direct `/workforce/admin/commercial/…` when hidden recovers by AS-27: Store Assortment when
   entitled in the active scope, otherwise the Applications hub. AS-13 remains the recovery when
@@ -135,28 +140,43 @@ Administration shell may remain. Narrowing that entry is not a V1 Fit dispositio
 
 ### F-4 — Operations destination predicate (candidate definition)
 
-This is the exact predicate the Fit decision is asked to adopt. It copies doc 04. It adds no
-landing product.
+This is the exact hub predicate the Fit decision is asked to adopt. It keeps the in-workspace
+item permissions already implemented in `OPERATIONS_NAV_ITEMS`. It does not add a landing
+product and it does not change the Delivery item’s current `delivery.read` gate. Annex 23
+records why an earlier draft of this block required `delivery.read` and `order.read` together:
+that conjunction is not the current Delivery item rule, and it is not needed to keep a
+store-only principal off Today.
 
 ```text
-OPERATIONS_DESTINATION_SHOWN =
-  at least one item in OPERATIONS_LANDING_ORDER is authorized
+OPERATIONS_HUB_SHOWN =
+  order.read
+  OR any key in STORE_COARSE_NAV_PERMISSIONS
+     (src/lib/operations/store-navigation.ts;
+      the same keys are inlined on the Store item in
+      src/lib/operations/navigation.ts and asserted equal by
+      src/lib/operations/navigation.test.ts)
 
-OPERATIONS_LANDING_ORDER (first authorized wins) =
-  1. Today            requires order.read
-  2. Orders           requires order.read
-  3. Delivery         requires delivery.read and order.read
-  4. Store            requires an existing store coarse capability
-                      (STORE_COARSE_NAV_PERMISSIONS in
-                      src/lib/operations/store-navigation.ts)
-  5. Operational Status requires order.read
+delivery.read alone does NOT show the Operations hub card.
+That matches current hub behaviour and doc 04.
 
-WHEN OPERATIONS_DESTINATION_SHOWN is false: no Operations card.
-WHEN it is true and order.read is absent: land on the first authorized later item
-  (Store, when a store coarse capability is present). Never land on Today.
+OPERATIONS_HUB_HREF (first match) =
+  1. order.read → /workforce/operations/          (existing Today page)
+  2. else any STORE_COARSE_NAV_PERMISSIONS
+                → /workforce/operations/store/
+  3. else no card
+
+Never set the hub href to Today when order.read is absent.
+
+IN_WORKSPACE_ITEMS stay OPERATIONS_NAV_ITEMS:
+  Today, Orders, Operational Status  require order.read
+  Delivery                           requires delivery.read only
+  Store                              requires STORE_COARSE_NAV_PERMISSIONS
 ```
 
-S4 (store capabilities, no `order.read`) is testable against that order. WXE-PF-04 is the oracle row.
+Current code still sets the hub card to `order.read` only and hard-codes the href to Today
+(`src/lib/workforce-hub/destinations.ts`). S4 is therefore hidden from the card today, and a
+direct visit to `/workforce/operations/` still mounts Today. WXE-PF-04 proves the hub href
+above, not a change to the Delivery item permission.
 
 ### F-5 — Scheduling
 
@@ -194,7 +214,7 @@ this oracle’s execution: it records that Delivery Gaps 1–3 are UPD-08 and ar
 | WXE-PF-09 | Server denials unchanged | PLANNED as a negative regression only |
 | WXE-PF-10 | UPD-08 excluded | NOT_IN_SCOPE |
 | WXE-PF-11 | AS-27 direct-link recovery | PLANNED |
-| WXE-PF-12 | Predicate follows active scope | PLANNED |
+| WXE-PF-12 | Predicate follows the union payload already loaded; no per-outlet nav switch | PLANNED — limited by annex 23. A scope-keyed session projection is not authorized |
 
 ## 3. Excluded from any Fit outcome of this package
 
@@ -220,3 +240,16 @@ this oracle’s execution: it records that Delivery Gaps 1–3 are UPD-08 and ar
 T1 implementation stays unauthorized until a human records the gates named in doc 19. T2–T4 stay
 unauthorized until T1’s human gate exists and their own dependencies in those packages are met.
 None of these files is an implementation.
+
+## 5. Source-conformance binding
+
+§0 above is the alignment recorded when this file was first packaged
+(`bc00c1302023feb429634c49b4fd87d75abff480` on `docs/wxe-pd2-candidate`). Its Gate Result PASS
+is that documentation alignment. It is not an Architecture Fit PASS. This closure does not
+reuse that PASS as a Fit grant.
+
+[`23-source-conformance-annex.md`](./23-source-conformance-annex.md) binds §2 to `origin/main`
+`a6155378b799e06a95b28c593ac1a340d7ca9245`. Where §2 and that annex disagree, the annex is the
+source fact and §2 as amended above is the prepared candidate. The Founder decision packet is
+[`24-founder-architecture-fit-decision-packet.md`](./24-founder-architecture-fit-decision-packet.md).
+This section does not record Architecture Fit PASS or Architecture Lock.
