@@ -32,6 +32,8 @@ type SnapshotLine = Readonly<{
   lineOrigin: string;
   lineTotalPaise: string;
   linePromotionDiscountPaise: string;
+  lineTaxablePaise: string;
+  lineTaxPaise: string;
 }>;
 
 type AuthoritativeSnapshot = Readonly<{
@@ -54,6 +56,13 @@ function formatPaise(paise: string): string {
 function positivePaise(raw: string): boolean {
   return /^[1-9][0-9]*$/.test(raw);
 }
+
+/** Wire paise from sendJson's bigint replacer: a non-negative decimal string. */
+function decimalPaise(raw: unknown): string | null {
+  return typeof raw === "string" && /^(0|[1-9][0-9]*)$/.test(raw) ? raw : null;
+}
+
+let sealedLineTaxGap: string | null = null;
 
 function asSnapshot(value: unknown): AuthoritativeSnapshot | null {
   if (!value || typeof value !== "object") return null;
@@ -85,11 +94,20 @@ function asSnapshot(value: unknown): AuthoritativeSnapshot | null {
     ) {
       return null;
     }
+    const lineTaxablePaise = decimalPaise(row.lineTaxablePaise);
+    const lineTaxPaise = decimalPaise(row.lineTaxPaise);
+    if (!lineTaxablePaise || !lineTaxPaise) {
+      sealedLineTaxGap =
+        "checkout activeSnapshot line is missing sealed lineTaxablePaise or lineTaxPaise";
+      return null;
+    }
     lines.push({
       productName: row.productName,
       lineOrigin: row.lineOrigin === "complimentary_offer" ? "complimentary_offer" : "cart",
       lineTotalPaise: row.lineTotalPaise,
       linePromotionDiscountPaise: row.linePromotionDiscountPaise,
+      lineTaxablePaise,
+      lineTaxPaise,
     });
   }
   return {
@@ -135,7 +153,9 @@ function moneySame(left: AuthoritativeSnapshot, right: AuthoritativeSnapshot): b
     );
     return (
       other?.lineTotalPaise === line.lineTotalPaise &&
-      other.linePromotionDiscountPaise === line.linePromotionDiscountPaise
+      other.linePromotionDiscountPaise === line.linePromotionDiscountPaise &&
+      other.lineTaxablePaise === line.lineTaxablePaise &&
+      other.lineTaxPaise === line.lineTaxPaise
     );
   });
 }
@@ -212,6 +232,7 @@ async function waitForSnapshot(
   const started = Date.now();
   let latest: AuthoritativeSnapshot | null = null;
   while (Date.now() - started < 20_000) {
+    if (sealedLineTaxGap) throw new Error(sealedLineTaxGap);
     const current = read();
     if (current) latest = current;
     if (current && predicate(current)) return current;
@@ -314,6 +335,35 @@ async function removeCoupon(page: Page, review: Locator): Promise<void> {
   await expect(review.getByText(/Coupon applied\./)).toHaveCount(0);
 }
 
+/**
+ * Delivery waiver must not relabel merchandise. A tax-remainder move on the
+ * last line is accepted only when that line's sealed taxable amount is
+ * unchanged and its displayed total is taxable plus its own sealed tax.
+ * The payable drop is the delivery discount plus the order-tax decrease.
+ */
+function deliveryWaiverKeepsMerchandise(
+  snapshot: AuthoritativeSnapshot,
+  baseline: AuthoritativeSnapshot,
+): boolean {
+  const paid = snapshot.lines.filter((line) => line.lineOrigin !== "complimentary_offer");
+  if (snapshot.lines.length !== 2 || paid.length !== 2) return false;
+  if (!positivePaise(snapshot.promotionDiscountPaise)) return false;
+  for (const line of paid) {
+    const before = baseline.lines.find(
+      (row) => row.productName === line.productName && row.lineOrigin === "cart",
+    );
+    if (!before) return false;
+    if (line.linePromotionDiscountPaise !== "0") return false;
+    if (line.lineTaxablePaise !== before.lineTaxablePaise) return false;
+    if (BigInt(line.lineTotalPaise) !== BigInt(line.lineTaxablePaise) + BigInt(line.lineTaxPaise)) {
+      return false;
+    }
+  }
+  const grandDecrease = BigInt(baseline.grandTotalPaise) - BigInt(snapshot.grandTotalPaise);
+  const taxDecrease = BigInt(baseline.taxPaise) - BigInt(snapshot.taxPaise);
+  return grandDecrease === BigInt(snapshot.promotionDiscountPaise) + taxDecrease;
+}
+
 async function assertReviewMatrix(
   page: Page,
   review: Locator,
@@ -368,16 +418,9 @@ async function assertReviewMatrix(
   await expect(review.getByTestId("payment-start")).toHaveCount(0);
 
   await applyCoupon(review, DELIVERY_CODE);
-  const deliveryOnly = await waitForSnapshot(read, (snapshot) => {
-    const paid = snapshot.lines.filter((line) => line.lineOrigin !== "complimentary_offer");
-    return (
-      snapshot.lines.length === 2 &&
-      paid.length === 2 &&
-      paid.every((line) => line.linePromotionDiscountPaise === "0") &&
-      positivePaise(snapshot.promotionDiscountPaise) &&
-      BigInt(snapshot.grandTotalPaise) < BigInt(baseline.grandTotalPaise)
-    );
-  });
+  const deliveryOnly = await waitForSnapshot(read, (snapshot) =>
+    deliveryWaiverKeepsMerchandise(snapshot, baseline),
+  );
   expect(BigInt(deliveryOnly.grandTotalPaise)).toBeLessThan(BigInt(baseline.grandTotalPaise));
   await expect(review.locator('[data-offer-component="DELIVERY_SAVING"]')).toHaveAttribute(
     "data-offer-amount",
