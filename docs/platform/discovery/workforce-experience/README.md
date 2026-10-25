@@ -30,7 +30,10 @@ EXPERIENCE_AMENDMENT = WXE-P1-COMM_OPTION_R — RATIFIED_RECORDED (doc 17)
 OPTION_R_FOUNDER_RATIFICATION = RECORDED (W2 2026-10-24; not a new Gate PASS)
 FORMAL_NEW_PD_XD_GATE_PASS = NOT_GRANTED
 AMENDED_EXPERIENCE_GATE_CANDIDATE = 25-amended-experience-gate-candidate.md
-AMENDED_EXPERIENCE_GATE = NOT_DECIDED
+AMENDED_EXPERIENCE_GATE = PASS
+AMENDED_EXPERIENCE_GATE_RECORD = 26-amended-experience-gate-founder-record.md
+AMENDED_EXPERIENCE_GATE_DECISION_ID = FOUNDER-B5-WXE-XD
+AMENDED_EXPERIENCE_GATE_EVALUATED_HEAD = 9f8fb0efe466eb9c70984a3572daf80077463eca
 WXE_UPD_02 = A
 WXE_P1_COMM = OPTION_R
 WXE_UPD_03 = B
@@ -78,8 +81,11 @@ decision request is
 Both are stacked on PR #426. Neither grants Architecture Fit or Architecture Lock.
 The amended Experience Gate candidate is
 [`25-amended-experience-gate-candidate.md`](./25-amended-experience-gate-candidate.md).
-Its verdict is `NOT_DECIDED`. It does not replace the historical Experience Gate PASS and it
-does not grant Architecture Fit or Architecture Lock.
+Its verdict is **PASS**, recorded in
+[`26-amended-experience-gate-founder-record.md`](./26-amended-experience-gate-founder-record.md)
+at evaluated head `9f8fb0efe466eb9c70984a3572daf80077463eca` (PR #461). It does not replace or
+re-date the historical Experience Gate PASS and it does not grant Architecture Fit or
+Architecture Lock.
 
 This package still does **not**:
 
@@ -92,8 +98,9 @@ This package still does **not**:
 - overwrite the separate customer Unified Order Experience package (PR #424)
 
 Historical agent `RECOMMENDED_PASS` is preserved as independent-review evidence. Formal Gate PASS
-is Founder-only and is recorded for the historical Product and Experience Gates only; the OPTION_R
-ratification is a scope amendment record, not an additional Gate PASS.
+is Founder-only. The historical Product Definition Gate and Experience Gate remain the 2026-10-24
+records and do not cover Option R. The amended Experience Gate PASS is a separate Founder record
+(doc 26). The OPTION_R ratification remains a scope amendment record, not that Experience Gate.
 
 ## Links
 
@@ -137,7 +144,8 @@ ratification is a scope amendment record, not an additional Gate PASS.
 | [`22-t4-people-accessibility-work-package.md`](./22-t4-people-accessibility-work-package.md) | T4 People and accessibility package (PLANNED) |
 | [`23-source-conformance-annex.md`](./23-source-conformance-annex.md) | Source-conformance annex for F-1..F-7 against `origin/main` (evidence, not a Fit grant) |
 | [`24-founder-architecture-fit-decision-packet.md`](./24-founder-architecture-fit-decision-packet.md) | Integrated Founder Architecture Fit decision packet (NOT_GRANTED) |
-| [`25-amended-experience-gate-candidate.md`](./25-amended-experience-gate-candidate.md) | Amended Experience Gate candidate for the Option R presentation scope (`NOT_DECIDED`; Fit stays blocked) |
+| [`25-amended-experience-gate-candidate.md`](./25-amended-experience-gate-candidate.md) | Amended Experience Gate candidate for the Option R presentation scope (PASS recorded; Fit and Lock stay `NOT_GRANTED`) |
+| [`26-amended-experience-gate-founder-record.md`](./26-amended-experience-gate-founder-record.md) | Founder record of `FOUNDER-B5-WXE-XD` PASS for the amended Experience Gate (Fit, Lock, and implementation not granted) |
 
 ## Provisional candidate identifiers
 
