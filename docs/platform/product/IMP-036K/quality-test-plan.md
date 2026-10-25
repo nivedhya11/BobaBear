@@ -76,6 +76,20 @@ named test or browser check on an implementation candidate, with command, result
 provenance. No row below is that evidence.
 
 ```text
+BATCH_3R_SAME_SCOPE_CORRECTION = YES
+BATCH_3R_CORRECTION_GRANTS_GATE = NO
+BATCH_3R_CORRECTION_FINALIZES_PLAN = NO
+```
+
+Batch 3R corrects section 19 item 6. Quality/Test Plan finalization depends on complete planned
+proof. It does not depend on a runnable implementation test or on a passing execution. Passing
+executable evidence and Founder UAT stay later QA and acceptance gates. Sections 11 and 13 match
+the paired measurement correction: `recommendationReadId` replay is limited to the authorized
+cart or customer that owns the issuance, and no existing anonymous commerce session is assumed.
+Planned proof is not reduced. This correction does not finalize the plan and does not grant the
+Quality gate.
+
+```text
 PROOF_EXECUTED = NO
 COVERAGE_PERCENTAGE_IS_ACCEPTANCE = NO
 FOUNDER_UAT_REQUIRED = YES
@@ -346,14 +360,14 @@ selected Measurement design is testable without activating production holdout.
 |---|---|---|---|
 | Enrollment of never-exposed session | Domain, HTTP | When a future holdout config is fixture-activated, an eligible active ordering session with no prior recommendation exposure under that experiment version can be enrolled | Enrollment of a previously exposed session is absent |
 | Previously exposed pre-activation session | Domain, database | A session with `SET_ISSUED` or validated presentation before activation is excluded from that experiment version and is not newly randomized | Retroactive HOLDOUT assignment after prior exposure is absent |
-| Assignment before exposure | Domain, concurrency, HTTP | When a fixture activates holdout, assignment exists before any recommendation-capable Product Detail/Customization/Cart read that could expose a module | Exposure-before-assignment sequence is absent |
-| Stable unit | Database, HTTP | Assignment is stable for `SERVER_OWNED_ACTIVE_ORDERING_SESSION`; later Cart create/reconcile/reload in the same journey reuses it | Flip after Cart creation/reconcile/reload is absent |
+| Assignment before exposure | Domain, concurrency, HTTP | When a fixture activates holdout and an ordering session is already bound to an existing guest cart credential or active brand cart, the assignment is written before that read returns a module. A read with no established ordering session does not enroll and returns no module. Commerce continues. No credential is invented | A module returned before assignment on a cart-bound session is absent. Pre-cart enrollment, an anonymous session, and a new credential are absent |
+| Stable unit | Database, HTTP | Assignment is stable for the server-owned ordering session bound to that existing guest cart credential or brand cart. Reload, claim, and reconcile of that same cart reuse the arm. There is no pre-cart session to merge. Customer auth user id, phone, and email are not the unit | Arm flip after reload, claim, or reconcile of the same cart is absent. A customer-id key or a second credential is absent |
 | Unknown assignment | Domain, browser | Suppresses recommendations; commerce available; no holdout label | Holdout explanation copy is absent |
 | Browser not authority | Security, HTTP | Browser/profile cannot choose or forge arm | Client-supplied arm ignored; no write |
 | Concurrent first requests | Concurrency, database | Race settles to one stable authoritative assignment | Two arms for one session are absent |
 | Inactive experiment configuration | Domain, database | Default/inactive configuration writes no experiment assignment row solely for experimentation | Production activation by this candidate is absent |
-| Neutral ordering-session correlation | Database | While holdout is inactive, a neutral `recommendation_ordering_sessions` row may still exist for issued-set/presentation correlation; that relation has no experiment arm | `holdout_arm` on the ordering-session row is absent |
-| Purchased-order assignment fact (`QT-036K-MQ-013`) | Domain, database | After a fixture-activated assignment, Order materialization copies the arm onto an immutable non-priced `recommendation_order_assignment_facts` row keyed by `(order_id, experiment_key)` with `checkout_snapshot_id`. Expiring the cart/session afterwards leaves that Order classifiable. A holdout Order with no issued set remains classifiable. The fact is ignored by price, tax, promotion, fulfilment, and payment. It is not written while holdout is inactive. Materialization retry does not create a second fact | Live cart/session used as purchased-order arm authority; priced fact; fact written solely because holdout is inactive; Order unclassifiable after cart/session expiry |
+| Neutral ordering-session correlation | Database | While holdout is inactive, a neutral `recommendation_ordering_sessions` row may exist only when bound to an existing guest cart credential or active brand cart, and only for issued-set or presentation correlation. It has no experiment arm. It is not written for a pre-cart guest | `holdout_arm` on the ordering-session row is absent. A pre-cart neutral session row is absent |
+| Purchased-order assignment fact (`QT-036K-MQ-013`) | Domain, database | After a fixture-activated assignment, Order materialization copies the arm onto an immutable non-priced `recommendation_order_assignment_facts` row keyed by `(order_id, experiment_key)` with `checkout_snapshot_id`. A unique conflict returns the existing fact and does not change the arm. A failed fact write does not fail Order materialization and does not mutate Order, Checkout Snapshot, or payment rows. Expiring the cart/session afterwards leaves that Order classifiable. A holdout Order with no issued set remains classifiable. The fact is ignored by price, tax, promotion, fulfilment, payment, and stock. It is not written while holdout is inactive. Materialization retry does not create a second fact | Live cart/session used as purchased-order arm authority; priced fact; arm changed on conflict; Order, snapshot, or payment mutation from a failed fact write; fact written solely because holdout is inactive; Order unclassifiable after cart/session expiry |
 
 `HOLDOUT_ACTIVATED_IN_THIS_CANDIDATE = NO`.
 `FUTURE_EXPERIMENT_ENABLED = NO`.
@@ -547,7 +561,7 @@ Real overlapping transactions, not sequential calls:
 | First holdout assignment race (fixture-activated) | One stable assignment |
 | Concurrent presentation observation retries | One authoritative occurrence |
 | Attribution mark after committed add retry | No second mark for same unit |
-| Order materialization retry of assignment-fact copy | One `recommendation_order_assignment_facts` row per `(order_id, experiment_key)` |
+| Order materialization retry of assignment-fact copy | One `recommendation_order_assignment_facts` row per `(order_id, experiment_key)`. A unique conflict returns the existing fact and does not change the arm. A failed fact write does not fail Order materialization and does not mutate Order, Checkout Snapshot, or payment rows |
 
 `CONCURRENCY_PROOF_PLANNED = YES`.
 
@@ -556,7 +570,7 @@ Real overlapping transactions, not sequential calls:
 | Case | Required result |
 |---|---|
 | Recommendation read timeout/error | No module; no issued set; commerce continues |
-| Lost GET after committed `SET_ISSUED` (`QT-036K-MQ-002`) | Retry with the same client-generated `recommendationReadId` returns that issued set and writes no second issuance. A new `recommendationReadId` may create a new issuance when a qualifying set is returned. No new service. Omitting the id may still return a qualifying set (commerce fail-open) but that path is not the retry-safe proof |
+| Lost GET after committed `SET_ISSUED` (`QT-036K-MQ-002`) | Retry with the same client-generated `recommendationReadId`, by the same authorized guest cart credential or customer cart that owns that issuance, returns that issued set and writes no second issuance. A different caller presenting only the id does not receive the set. A pre-cart guest has no such owner, so that lost GET is not durably retry-safe and is not replayed by id alone. A new `recommendationReadId` may create a new issuance when a qualifying set is returned for an authorized owner. No new service. Omitting the id may still return a qualifying set (commerce fail-open) but that path is not the retry-safe proof |
 | Lost HTTP response on `RECOMMENDATION_ACTION` | Retry returns the existing action occurrence; no second authoritative action |
 | Observation POST failure | Commerce continues; no presentation occurrence; attribution fails closed |
 | Stale recommendation add | Rejected; prior lines remain; existing recovery |
@@ -589,7 +603,7 @@ Product acceptance and without editing that file:
 
 - event meanings concretely distinguishable
 - holdout inactive by default; future 10/90 design testable
-- assignment unit = server-owned active ordering session before exposure
+- assignment unit = server-owned ordering session bound to an existing guest cart credential or active brand cart. Customer auth user id, phone, and email are not the key. No anonymous commerce session exists. Activated holdout uses Architecture 7.14 mechanism 2: a read with no established ordering session does not enroll and returns no module. Durable pre-cart guest correlation remains `MD-036K-008` and is not proved by inventing a credential
 - experiment population: never-exposed eligible sessions may enroll when future holdout is
   activated; already-exposed pre-activation sessions are excluded from that experiment version;
   retroactive enrollment is forbidden
@@ -625,7 +639,7 @@ meanings. Every row is planned proof only. `PROOF_EXECUTED = NO` for every id.
 | MQ | Meaning | Planned proof (not executed) | Existing Quality cite, or added row |
 |---|---|---|---|
 | `MQ-036K-001` | `SET_ISSUED` | Qualifying return writes one server-owned issuance with membership and bound actions; suppressed, empty, or failed read writes none; issuance is not render or impression | `QT-036K-009-01`; section 8 `SET_ISSUED`; section 7 server-returned set never shown; recovery recommendation-read timeout/error |
-| `MQ-036K-002` | `SET_ISSUED` retry | Same client-generated `recommendationReadId` after a committed `SET_ISSUED` and a lost GET returns that issued set and writes no second issuance; a new read id may create a new issuance; no new service | **Added** `QT-036K-MQ-002` in section 11 Recovery. No prior Quality row covered client GET retry identity after commit |
+| `MQ-036K-002` | `SET_ISSUED` retry | Same client-generated `recommendationReadId` after a committed `SET_ISSUED` and a lost GET returns that issued set only to the same authorized guest cart credential or customer cart that owns it, and writes no second issuance. A different caller presenting only the id does not receive the set. A pre-cart guest has no owner, so that path is not durably replayed by id alone. A new read id may create a new issuance for an authorized owner. No new service | **Added** `QT-036K-MQ-002` in section 11 Recovery. Batch 3R adds the owner-scope negative. No prior Quality row covered client GET retry identity after commit |
 | `MQ-036K-003` | `SET_RENDER` | Durable render only after server validation of actual module presentation; server return, hidden DOM, pre-render, remount of the same issued set, or unvalidated client input writes none | `QT-036K-009-01`; section 7 `SET_RENDER` rows including remount and invalid observation |
 | `MQ-036K-004` | `ITEM_IMPRESSION` | Durable impression only after server validation that that issued member was actually shown; membership, below-fold presence, or remount of the same member writes none | `QT-036K-009-01`; section 7 `ITEM_IMPRESSION` rows |
 | `MQ-036K-005` | `RECOMMENDATION_ACTION` | Explicit action on the bound issued member is distinct from add acceptance; lost HTTP retry returns the existing action occurrence | `QT-036K-009-01`; section 8 `RECOMMENDATION_ACTION`; section 11 lost-HTTP `RECOMMENDATION_ACTION` retry |
@@ -634,12 +648,12 @@ meanings. Every row is planned proof only. `PROOF_EXECUTED = NO` for every id.
 | `MQ-036K-008` | `REMOVAL` | Removing recommendation-origin units writes a measurement removal and starts suppression without becoming Cart or menu authority | `QT-036K-008-01`…`05`; section 8 `REMOVAL` |
 | `MQ-036K-009` | `ASSISTED_PURCHASE` | True only when Architecture 7.12's seven proofs hold and the Order is not Cancelled; view-through, issuance-only, parent-product survival, category survival, manual re-add, and unmarked coalesced units are not assistance | `QT-036K-009-02`…`06`; sections 6 and 8 assisted-purchase / exact-identity matrix |
 | `MQ-036K-010` | Attach / AOV projection | Attach uses exact assisted identities; AOV uses `checkout_snapshots.grand_total_paise` on successful direct Orders; menu display price is not used; conditional AOV is interpreted with Measurement §13 guardrails | Section 13 AOV/attach bullets; section 12 ARCH-G05; `QT-036K-009-02` |
-| `MQ-036K-011` | Holdout inactive | `HOLDOUT_ACTIVE = NO`. No `recommendation_holdout_assignments` row and no purchased-order assignment fact is written solely because the experiment is inactive. Neutral ordering-session correlation may still exist for issuance | Section 4 inactive configuration and neutral session rows; `HOLDOUT_ACTIVATED_IN_THIS_CANDIDATE = NO`; `QT-036K-013-01` directional |
+| `MQ-036K-011` | Holdout inactive | `HOLDOUT_ACTIVE = NO`. No `recommendation_holdout_assignments` row and no purchased-order assignment fact is written solely because the experiment is inactive. A neutral ordering-session row may exist only when bound to an existing guest cart credential or active brand cart. It is not written for a pre-cart guest and it has no experiment arm | Section 4 inactive configuration and neutral session rows; `HOLDOUT_ACTIVATED_IN_THIS_CANDIDATE = NO`; `QT-036K-013-01` directional |
 | `MQ-036K-012` | Holdout fixture only | If a test fixture activates holdout, assignment occurs before exposure or presentation stays suppressed; holdout suppresses presentation only; commerce is unchanged; unknown assignment fails open for commerce | `QT-036K-013-02`…`05`; section 4 enrollment / assignment-before-exposure / unknown-assignment rows |
-| `MQ-036K-013` | Purchased-order linkage | After a fixture-activated assignment, Order materialization copies the arm onto `recommendation_order_assignment_facts`. Expiring the cart/session afterwards does not make that Order unclassifiable. Holdout Orders with no issued set remain classifiable | **Added** `QT-036K-MQ-013` in section 4. Section 6 snapshot-copy remains assistance-mark provenance only and is not this fact |
-| `MQ-036K-014` | Forbidden payload | Events reject payment secrets, credentials, full address, names, full profile, another customer's cart, client-authored rank/membership/holdout/assistance, and internal margin | Section 11 authorization/privacy table; section 7 browser-echo and server-validation rows; `QT-036K-005-04` |
+| `MQ-036K-013` | Purchased-order linkage | After a fixture-activated assignment, Order materialization copies the arm onto `recommendation_order_assignment_facts`. A unique conflict returns the existing fact and does not change the arm. A failed fact write does not fail Order materialization and does not mutate Order, Checkout Snapshot, or payment rows. Expiring the cart/session afterwards does not make that Order unclassifiable. Holdout Orders with no issued set remain classifiable | **Added** `QT-036K-MQ-013` in section 4. Section 6 snapshot-copy remains assistance-mark provenance only and is not this fact |
+| `MQ-036K-014` | Forbidden payload | Events reject payment secrets, credentials, full address, names, phone, email, full profile, another customer's cart, client-authored rank/membership/holdout/assistance, and internal margin | Section 11 authorization/privacy table; section 7 browser-echo and server-validation rows; `QT-036K-005-04` |
 | `MQ-036K-015` | Fail-open / fail-closed | Measurement or observation failure does not block Product, Cart, Checkout, or Payment. Assistance is not claimed without the seven proofs | `QT-036K-007-01`, `QT-036K-007-02`, `QT-036K-013-05`; section 7 observation/reporting failure; section 11 recovery |
-| `MQ-036K-016` | Non-interference | Candidate events do not change entitlements, prices, promotions, fulfilment, or checkout totals | `QT-036K-013-02`, `QT-036K-013-03`, `QT-036K-005-02`; section 12 ARCH-G05 / G06 / G19 |
+| `MQ-036K-016` | Non-interference | Candidate events do not change entitlements, prices, promotions, fulfilment, checkout totals, stock, or Order lifecycle | `QT-036K-013-02`, `QT-036K-013-03`, `QT-036K-005-02`; section 12 ARCH-G05 / G06 / G19; Product `BR-036K-029` |
 | `MQ-036K-017` | Popular distinct | Popular 30-day / 30-order / top-3 evidence is not treated as the experiment window or as a retention period | `QT-036K-011-01`…`04`; section 9 Popular boundary. Popular's locked 30-day rule stays Popular-only |
 
 `MQ_TRACEABILITY_COUNT = 17`.
@@ -747,9 +761,14 @@ These are real gates, not percentage targets.
 4. Implementation Plan and `IMP036K_IMPLEMENTATION_AUTHORIZED` remain NO. Finalizing this
    Quality candidate later still does not authorize implementation by itself.
 5. Founder functional and Experience UAT remain later and human-owned.
-6. Missing executable proof for any mandatory YES AC, required XR, required GJ, or Fit §14
-   must-prove item will block later Quality-gate finalization and later acceptance. A coverage
-   percentage cannot waive that.
+6. Missing planned proof for any mandatory YES AC, required XR, required GJ, or Fit §14
+   must-prove item blocks Quality/Test Plan finalization. Planned proof is the named scenario,
+   applicable TEST-1 layers, oracle, and required negative, security, concurrency, recovery,
+   Golden Journey, and measurement-proof mapping in this document. This gate does not require a
+   runnable implementation test or a passing execution. Missing passing executable evidence for
+   any of those items blocks later implementation QA and later acceptance. Founder UAT remains a
+   later human gate. A coverage percentage cannot waive a missing planned mapping at this gate,
+   and it cannot waive a missing passing scenario at later QA or acceptance.
 
 Not blockers: historical CANDIDATE-1 count of 62; DR-24 Fit/Design provenance; PR #348
 conflict; D-384 existing as programme baseline; `AC-036K-013-01` remaining directional.

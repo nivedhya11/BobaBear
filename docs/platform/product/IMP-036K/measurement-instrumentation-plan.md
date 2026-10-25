@@ -86,9 +86,22 @@ by reconciling that encoding onto current `origin/main` `a6155378` and closing t
 `5397497359` defects that `0088475d` did not actually fix. PR #348 is not updated by this
 candidate.
 
-Paired Quality document: `IMP-036K-QUALITY-CANDIDATE-2`. This file does not create or edit that
-document. Quality traces the `MQ-036K-*` requirements listed in section 18; the paired Quality
-candidate maps each id in Quality §13.1 to a planned, not-executed proof.
+Paired Quality document: `IMP-036K-QUALITY-CANDIDATE-2`. Quality traces the `MQ-036K-*`
+requirements listed in section 18. The paired Quality candidate maps each id in Quality §13.1
+to a planned, not-executed proof.
+
+```text
+BATCH_3R_SAME_SCOPE_CORRECTION = YES
+BATCH_3R_CORRECTION_GRANTS_GATE = NO
+BATCH_3R_CORRECTION_FINALIZES_PLAN = NO
+```
+
+Batch 3R removes the claim that an existing anonymous commerce session binds a pre-cart guest.
+No such session exists. Cart-bound identity uses Architecture 7.14 mechanism 2. Durable pre-cart
+guest correlation stays `MD-036K-008` and is not implemented. `recommendationReadId` replay is
+limited to the authorized owner. Retention coverage is unverified. Holdout stays inactive. This
+correction does not finalize the plan, does not grant the Measurement gate, and does not
+authorize collection.
 
 ```text
 HISTORICAL_DESIGN_READINESS_STOP_5394618739 = STOP
@@ -128,19 +141,27 @@ NEW_PERMISSION = NO
 NEW_MONEY_AUTHORITY = NO
 FACADE = EXISTING /api/v1/*
 ADMIN_FACADE = EXISTING /api/admin/v1/*
-AUTH_BOUNDARY = EXISTING_CART_CREDENTIAL_AND_CUSTOMER_SESSION
+AUTH_BOUNDARY = EXISTING_GUEST_CART_CREDENTIAL_OR_BRAND_CART
+EXISTING_ANONYMOUS_COMMERCE_SESSION = NOT_FOUND
 EVENTS_ALTER_COMMERCIAL_ENTITLEMENTS = NO
 EVENTS_ALTER_PRICES = NO
 EVENTS_ALTER_PROMOTIONS = NO
 EVENTS_ALTER_FULFILMENT = NO
 EVENTS_ALTER_CHECKOUT = NO
+EVENTS_ALTER_STOCK = NO
+EVENTS_ALTER_ORDER_LIFECYCLE = NO
 ```
 
 Use existing customer-commerce and workforce boundaries. Do not introduce an external analytics
 vendor, queue, role, permission, or money authority (ARCH-G02, ARCH-G13, ARCH-G14).
 
+`AUTH_BOUNDARY` means the guest cart credential after `addCartLine` has minted it, or the active
+brand cart of an authenticated customer. It does not mean an anonymous commerce session.
+Customer auth user id is not the experiment key.
+
 Candidate events are measurement facts. They must not alter commercial entitlements, prices,
-promotions, fulfilment, or checkout.
+promotions, fulfilment, checkout, stock, or order lifecycle. Displaying a candidate does not
+reserve stock (`BR-036K-029`).
 
 Customer-facing copy stays LANG-1 and the Experience Definition. Measurement identifiers, arms,
 schema names, and strategy enums are not customer language.
@@ -302,7 +323,7 @@ APPROXIMATE_10_PERCENT = TARGET_DIRECTION_ONLY
 FUTURE_CONTROL_ALLOCATION = 10_PERCENT
 FUTURE_TREATMENT_ALLOCATION = 90_PERCENT
 ACTIVATION_REQUIRED_FOR_PRODUCT_ACCEPTANCE = NO
-ASSIGNMENT_UNIT = SERVER_OWNED_ACTIVE_ORDERING_SESSION
+ASSIGNMENT_UNIT = SERVER_OWNED_ORDERING_SESSION_BOUND_TO_EXISTING_GUEST_CART_CREDENTIAL_OR_BRAND_CART
 ASSIGNMENT_BEFORE_EXPOSURE = YES
 PREVIOUSLY_EXPOSED_SESSION_RETROACTIVE_ENROLLMENT = NO
 EXPERIMENT_POPULATION_DEFINED = YES
@@ -352,31 +373,57 @@ NEW_RECOMMENDATION_CREDENTIAL = NO
 
 The active ordering session:
 
-- is created by the server before the first Product Detail, Customization, or Cart recommendation
-  read that could expose a module, whenever holdout configuration is activated or whenever an
-  issued-set correlation needs a journey correlation under ordinary recommendation operation
-- is reusable by a Cart created later in the same active ordering journey
-- is not assigned from `cart_id` only after Product Detail may already have exposed recommendations
-- is not a customer-profile personalization flag
-- is not browser/local-storage authority
-- does not contain customer identity
+- is a server-minted opaque UUID
+- binds only to an existing commerce principal that the same caller can present again: the guest
+  cart credential minted by `addCartLine`, or the active brand cart of an authenticated customer
+- is not created from an anonymous commerce session. Customer-commerce has no such session. A
+  guest Product Detail visit before the first cart has no server session, cookie, or cart token
 - does not invent a new recommendation cookie, identity, role, or permission
-- binds only through the existing guest cart credential and existing customer session already used
-  by customer-commerce
-- expires with the existing active ordering-session/cart lifecycle rather than inventing a
+- is not a customer-profile personalization flag and does not contain customer identity
+- is not keyed by customer auth user id, phone, or email
+- is not browser or local-storage authority
+- is not assigned from `cart_id` only after Product Detail has already exposed recommendations
+- expires with the existing guest-cart or active-journey lifecycle rather than inventing a
   permanent profile
 
-Binding:
+Binding. This is the Measurement Plan's selection of Architecture 7.14 mechanism 2:
 
-- guest journey: ordering session is bound to the existing guest cart credential when a cart
-  exists, and otherwise to the existing anonymous commerce session already used by customer-commerce
-  APIs, then merged onto that cart without creating a second credential product
-- authenticated customer journey: ordering session is bound to the active brand cart when present,
-  and otherwise to the existing customer session, then merged onto that cart without changing
-  customer id into the experiment key
-- `claimGuestCart` / cart reconcile: surviving cart keeps the already-exposed ordering session; a
-  new unexposed journey may mint a new session. An already-exposed session does not roll a new
-  holdout arm because a cart appeared later
+- guest journey: an `ordering_session_id` exists only after `addCartLine` has minted the existing
+  guest cart credential. Before that credential exists, no `ordering_session_id` is established.
+  `EXISTING_ANONYMOUS_COMMERCE_SESSION = NOT_FOUND`
+- authenticated customer journey: an `ordering_session_id` binds to the active brand cart when
+  one exists. The authenticated session's `userId` is not the experiment key
+- activated holdout: a read with no established `ordering_session_id` does not enroll and returns
+  no module. Commerce continues (`AC-036K-013-05`). After the guest cart credential or brand cart
+  exists, assignment is written before exposure on that cart-bound session and is not rolled when
+  that same cart is later claimed or reloaded
+- inactive holdout: no experiment assignment is written. A durable
+  `recommendation_ordering_sessions` row and a replayable `SET_ISSUED` row are written only when
+  the server can authorize that same caller again with the guest cart credential or brand cart.
+  A pre-cart guest response has no such principal. This candidate does not write those durable
+  rows for it and does not invent a credential to create one
+- `claimGuestCart` / cart reconcile: a session already bound to the claimed guest cart stays on
+  the surviving cart. There is no pre-cart session to merge. An already-exposed cart-bound session
+  does not roll a new holdout arm because a customer cart appears later
+
+```text
+HOLDOUT_MECHANISM = ARCHITECTURE_7_14_MECHANISM_2
+EXISTING_ANONYMOUS_COMMERCE_SESSION = NOT_FOUND
+NEW_RECOMMENDATION_CREDENTIAL = NO
+PRE_CART_GUEST_DURABLE_BINDING = DECISION_REQUIRED
+PRE_CART_GUEST_DURABLE_BINDING_ID = MD-036K-008
+PRE_CART_IMPLEMENTATION_AND_COLLECTION = PROHIBITED
+```
+
+`MD-036K-008` asks which server-owned principal, if any, may bind one guest journey from the first
+Product Detail read through reload and later cart creation. This candidate does not answer it.
+Product Detail complements remain a Product requirement (`US-036K-001`). Architecture requires
+correlation when a qualifying set is returned. No current cart token, auth session, or location
+token survives that pre-cart read, a reload, and later cart creation. D-383 and D-384 do not
+authorize a new identity. Until a Founder decision, implementation must not collect a pre-cart
+ordering session, holdout assignment, or replayable issuance, and must not create a cookie, an
+empty cart, or a customer-id experiment key. Activated-holdout behaviour for a read that has no
+established session remains mechanism 2 above. That part is not `MD-036K-008`.
 
 ```text
 NEUTRAL_ORDERING_SESSION_ALLOWED_WHILE_HOLDOUT_INACTIVE = YES
@@ -389,9 +436,10 @@ INACTIVE_EXPERIMENT_CONFIGURATION !=
 ```
 
 Architecture 7.14 / 7.19: inactive configuration writes nothing — meaning no experiment
-assignment. A neutral `recommendation_ordering_sessions` row may still exist when needed to
-correlate issued sets and presentation for ordinary recommendation operation
-(`SET_ISSUED` / `SERVER_SET_CORRELATION` still requires a journey correlation).
+assignment. A neutral `recommendation_ordering_sessions` row may still exist when a guest cart credential
+or active brand cart can authorize the same caller again and issued-set or presentation
+correlation needs that journey. It is not written for a pre-cart guest.
+`SET_ISSUED` / `SERVER_SET_CORRELATION` still requires that authorized journey correlation.
 `recommendation_ordering_sessions` contains **no** experiment-arm authority and has **no**
 `holdout_arm` column. Arm exists only on `recommendation_holdout_assignments` after a valid
 enrollment assignment while the named experiment is activated.
@@ -521,7 +569,11 @@ durable `recommendation_holdout_assignments` row for the named experiment:
    authority (ARCH-G05 / ARCH-G06 / ARCH-G07);
 5. the browser cannot author the fact;
 6. the fact is not written when holdout is inactive, because no assignment row exists
-   (Architecture 7.14: inactive configuration writes nothing).
+   (Architecture 7.14: inactive configuration writes nothing);
+7. a unique conflict on `(order_id, experiment_key)` returns the existing fact and does not
+   change the stored arm;
+8. if the fact write fails, Order materialization still commits. The failure does not mutate
+   Order, Checkout Snapshot, or payment rows, and assistance is not claimed from a missing fact.
 
 Successful-Order arm classification for AOV and causal reporting reads this fact. It does not
 depend on the live cart, the live ordering-session row, or an issued set. A holdout Order that
@@ -738,7 +790,7 @@ revision.
 | Active ordering session | `ordering_session_id` UUID v4 | customer id, guest verifier plaintext, phone, email, browser-generated authority |
 | Holdout assignment | row unique on `(ordering_session_id, experiment_key)` with arm `TREATMENT` \| `HOLDOUT` | customer entitlement, profile flag |
 | Purchased-order assignment fact | unique `(order_id, experiment_key)` copied at Order materialization | live session row, issued-set fallback, price field |
-| Recommendation read retry identity | client-generated `recommendation_read_id` UUID v4, same class as existing payment `idempotencyKey` | eligibility, membership, holdout, or money authority |
+| Recommendation read retry identity | client-generated `recommendation_read_id` UUID v4, same class as existing payment `idempotencyKey`, replayable only by the authorized guest cart credential or customer cart that owns it | eligibility, membership, holdout, money authority, or a global lookup key |
 | Issued recommendation set | `issued_set_id` UUID v4; `SERVER_SET_CORRELATION` | presentation proof |
 | Issued member/candidate | `issued_member_id` UUID v4 bound to set, placement, marked identity, bound recommendation-action id, server rank | client-invented candidate |
 | Presentation occurrence | `presentation_occurrence_id` UUID v4 for accepted `SET_RENDER` or `ITEM_IMPRESSION` | DOM presence, issuance alone |
@@ -804,13 +856,19 @@ Contract:
 3. If the server commits `SET_ISSUED` for that id and the response is lost, the retry MUST send
    the same `recommendationReadId`. The server returns the already-issued set and writes no second
    issuance.
-4. A new navigation or genuinely new read generates a new `recommendationReadId` and may create a
-   new issuance when a qualifying set is returned.
-5. The id is a correlation token. It is not eligibility, membership, rank, holdout, attribution,
+4. That replay is returned only to the same authorized guest cart credential or customer cart
+   that owns the `recommendation_read_id`. A different caller presenting only the id receives
+   neither the issued set nor another customer's cart context. A pre-cart guest has no such
+   owner, so a lost GET before a cart credential exists is not durably retry-safe. Do not replay
+   by id alone.
+5. A new navigation or genuinely new read generates a new `recommendationReadId` and may create a
+   new issuance when a qualifying set is returned for an authorized owner.
+6. The id is a correlation token. It is not eligibility, membership, rank, holdout, attribution,
    or money authority (ARCH-G08, ARCH-G11).
-6. Commerce remains fail-open if the client omits the id: the server may still return a
+7. Commerce remains fail-open if the client omits the id: the server may still return a
    qualifying set. Durable `SET_ISSUED` without a retry identity is not retry-safe; Quality must
-   prove the keyed path (`MQ-036K-002`). Attribution still fails closed without the seven proofs.
+   prove the keyed, owner-scoped path (`MQ-036K-002`). Attribution still fails closed without the
+   seven proofs.
 
 No new telemetry platform, worker, or analytics vendor is required to honour this identity.
 
@@ -825,8 +883,10 @@ Concrete request shapes for later Implementation Plan (schema selected; not impl
 
 ### 9.1 Recommendation read
 
-`GET /api/v1/recommendations?placement=PRODUCT_DETAIL|CUSTOMIZATION|CART` with existing cart /
-outlet / fulfilment context from server session, plus `recommendationReadId` (section 8.1).
+`GET /api/v1/recommendations?placement=PRODUCT_DETAIL|CUSTOMIZATION|CART` with the existing
+guest cart credential or authenticated customer cart access already used by customer-commerce,
+plus `recommendationReadId` (section 8.1). There is no anonymous server session to supply outlet
+or fulfilment context.
 Response returns customer-safe fields plus opaque `issuedSetId` and per-member `issuedMemberId` /
 `recommendationActionId` only when a qualifying set is issued. No priority, margin, holdout arm,
 or suppression reason.
@@ -999,7 +1059,8 @@ WINDOW_LENGTH = UNRESOLVED
 MEASUREMENT_CALENDAR_TIMEZONE = UNRESOLVED
 IMP036J_28_DAY_WINDOW = NOT_IMP036K_AUTHORITY
 IMP036J_ASIA_KOLKATA = NOT_IMP036K_AUTHORITY
-RETENTION_AUTHORITY = EXISTING_COMMERCE_ANALYTICS_RETENTION
+RETENTION_AUTHORITY = UNRESOLVED
+EXISTING_COMMERCE_ANALYTICS_RETENTION_COVERAGE = UNVERIFIED
 NEW_NUMERIC_RETENTION = NO
 RETENTION_PERIOD_INVENTED = NO
 RETENTION_PERIOD = UNRESOLVED
@@ -1081,6 +1142,8 @@ Exclude at minimum (Product section 16, Architecture 7.13 / 7.20, Experience sec
 - credentials
 - full address
 - names
+- phone
+- email
 - full customer profile
 - internal margin/contribution rationale
 - raw authorization/session credentials
@@ -1088,7 +1151,9 @@ Exclude at minimum (Product section 16, Architecture 7.13 / 7.20, Experience sec
 - holdout explanations on the customer surface
 - psychographic or cross-session personalization profile (not created)
 
-Use opaque correlation identifiers. Follow existing commerce analytics retention authority.
+Use opaque correlation identifiers. Do not treat existing commerce-analytics retention as
+verified coverage of these relations. `RETENTION_AUTHORITY = UNRESOLVED`.
+`EXISTING_COMMERCE_ANALYTICS_RETENTION_COVERAGE = UNVERIFIED`.
 `NEW_NUMERIC_RETENTION = NO`. `RETENTION_PERIOD = UNRESOLVED`.
 
 Operational dependencies that remain unresolved and are not invented here:
@@ -1111,7 +1176,7 @@ executed evidence.
 | ID | Meaning | Quality must prove |
 |---|---|---|
 | `MQ-036K-001` | `SET_ISSUED` | A qualifying recommendation return writes one server-owned issuance with membership and bound actions. A suppressed, empty, or failed read writes none. Issuance is not a render or impression. |
-| `MQ-036K-002` | `SET_ISSUED` retry | The same client-generated `recommendationReadId` after a committed `SET_ISSUED` and a lost GET returns the same issued set and does not create a second issuance. A new read id may create a new issuance. No new service is required. |
+| `MQ-036K-002` | `SET_ISSUED` retry | The same client-generated `recommendationReadId` after a committed `SET_ISSUED` and a lost GET returns the same issued set only to the authorized guest cart credential or customer cart that owns it, and does not create a second issuance. A different caller presenting only the id does not receive the set. A pre-cart guest has no owner, so that path is not durably replayed by id alone. A new read id may create a new issuance for an authorized owner. No new service is required. |
 | `MQ-036K-003` | `SET_RENDER` | Durable render exists only after server validation of actual module presentation. Server return, hidden DOM, pre-render, remount of the same issued set, or unvalidated client input writes none. |
 | `MQ-036K-004` | `ITEM_IMPRESSION` | Durable impression exists only after server validation that that issued member was actually shown. Membership, below-fold presence, or remount of the same member writes none. |
 | `MQ-036K-005` | `RECOMMENDATION_ACTION` | Explicit action on the bound issued member is distinct from add acceptance. Lost HTTP retry returns the existing action occurrence. |
@@ -1120,12 +1185,12 @@ executed evidence.
 | `MQ-036K-008` | `REMOVAL` | Removing recommendation-origin units writes a measurement removal and starts suppression without becoming Cart or menu authority. |
 | `MQ-036K-009` | `ASSISTED_PURCHASE` | True only when Architecture 7.12's seven proofs hold and the Order is not Cancelled. View-through, issuance-only, parent-product survival, category survival, manual re-add, and unmarked coalesced units are not assistance. |
 | `MQ-036K-010` | Attach / AOV projection | Attach uses exact assisted identities. AOV uses `checkout_snapshots.grand_total_paise` on successful direct Orders. Menu display price is not used. Conditional AOV is interpreted with section 13 guardrails. |
-| `MQ-036K-011` | Holdout inactive | `HOLDOUT_ACTIVE = NO`. No `recommendation_holdout_assignments` row and no purchased-order assignment fact is written solely because the experiment is inactive. Neutral ordering-session correlation may still exist for issuance. |
+| `MQ-036K-011` | Holdout inactive | `HOLDOUT_ACTIVE = NO`. No `recommendation_holdout_assignments` row and no purchased-order assignment fact is written solely because the experiment is inactive. A neutral ordering-session row may exist only when bound to an existing guest cart credential or active brand cart. It is not written for a pre-cart guest and it has no experiment arm. |
 | `MQ-036K-012` | Holdout fixture only | If a test fixture activates holdout, assignment occurs before exposure or presentation stays suppressed; holdout suppresses presentation only; commerce is unchanged; unknown assignment fails open for commerce. |
-| `MQ-036K-013` | Purchased-order linkage | After a fixture-activated assignment, Order materialization copies the arm onto `recommendation_order_assignment_facts`. Expiring the cart/session afterwards does not make that Order unclassifiable. Holdout Orders with no issued set remain classifiable. |
-| `MQ-036K-014` | Forbidden payload | Events reject payment secrets, credentials, full address, names, full profile, another customer's cart, client-authored rank/membership/holdout/assistance, and internal margin. |
+| `MQ-036K-013` | Purchased-order linkage | After a fixture-activated assignment, Order materialization copies the arm onto `recommendation_order_assignment_facts`. A unique conflict returns the existing fact and does not change the arm. A failed fact write does not fail Order materialization and does not mutate Order, Checkout Snapshot, or payment rows. Expiring the cart/session afterwards does not make that Order unclassifiable. Holdout Orders with no issued set remain classifiable. |
+| `MQ-036K-014` | Forbidden payload | Events reject payment secrets, credentials, full address, names, phone, email, full profile, another customer's cart, client-authored rank/membership/holdout/assistance, and internal margin. |
 | `MQ-036K-015` | Fail-open / fail-closed | Measurement or observation failure does not block Product, Cart, Checkout, or Payment. Assistance is not claimed without the seven proofs. |
-| `MQ-036K-016` | Non-interference | Candidate events do not change entitlements, prices, promotions, fulfilment, or checkout totals. |
+| `MQ-036K-016` | Non-interference | Candidate events do not change entitlements, prices, promotions, fulfilment, checkout totals, stock, or Order lifecycle. |
 | `MQ-036K-017` | Popular distinct | Popular 30-day / 30-order / top-3 evidence is not treated as the experiment window or as a retention period. |
 
 Architecture section 14 Quality bullets for eligibility, stale add, suppression, Popular, and
@@ -1158,16 +1223,23 @@ This candidate does not resolve the following by invention:
 | `MD-036K-005` | Future pricing authority | Authoritative contribution / gross-profit projection. None exists. Do not invent a formula. |
 | `MD-036K-006` | Independent reviewer | Measurement plan review. Currently `NOT_PERFORMED`. |
 | `MD-036K-007` | Product / Founder | Any numeric success target. Currently `NONE`. Do not invent one. |
+| `MD-036K-008` | Founder, with architecture review | Which server-owned principal, if any, binds one guest journey from the first Product Detail read through reload and later cart creation. No existing anonymous commerce session, cart token, auth session, or location token does this. Do not invent a cookie, an empty cart, or a customer-id key. |
 
 ```text
-DECISION_REQUIRED = MD-036K-001, MD-036K-002, MD-036K-003, MD-036K-004, MD-036K-005
-DECISION_REQUIRED_BLOCKS_THIS_CANDIDATE_ENCODING = NO
+DECISION_REQUIRED = MD-036K-001, MD-036K-002, MD-036K-003, MD-036K-004, MD-036K-005, MD-036K-008
+DECISION_REQUIRED_BLOCKS_CART_BOUND_ENCODING = NO
+DECISION_REQUIRED_BLOCKS_PRE_CART_DURABLE_CORRELATION = MD-036K-008
+DECISION_REQUIRED_BLOCKS_IMPLEMENTATION_OF_PRE_CART_COLLECTION = YES
 DECISION_REQUIRED_BLOCKS_IMPLEMENTATION_AUTHORIZATION = EXISTING_PD2_GATES_REMAIN
 ```
 
-These unresolved decisions do not authorize inventing the missing numbers. They do not themselves
-authorize implementation. Implementation remains unauthorized until Quality / Measurement
-finalization, Implementation Plan, and explicit authorization.
+`MD-036K-001`, `MD-036K-002`, `MD-036K-003`, and `MD-036K-007` may stay unresolved in this
+candidate only because no windowed report, civil-day bucket, production measurement row, or
+numeric success target is authorized while they are open. `MD-036K-004` and `MD-036K-005` stay
+later decisions: holdout remains inactive, and no contribution formula is invented.
+`MD-036K-008` blocks durable pre-cart correlation and any collection that would require it.
+None of these decisions authorize implementation. Implementation remains unauthorized until
+Quality / Measurement finalization, Implementation Plan, and explicit authorization.
 
 ## 21. Measurement exit
 
@@ -1175,7 +1247,12 @@ finalization, Implementation Plan, and explicit authorization.
 EVENT_MEANINGS_CONCRETELY_ENCODED = YES
 HOLDOUT_UNIT_POPULATION_ALLOCATION_ACTIVATION_SELECTED = YES
 EXPERIMENT_POPULATION_DEFINED = YES
-ASSIGNMENT_SEQUENCING_RESOLVED = YES
+ASSIGNMENT_SEQUENCING_RESOLVED = CART_BOUND_PRINCIPALS_ONLY
+HOLDOUT_MECHANISM = ARCHITECTURE_7_14_MECHANISM_2
+EXISTING_ANONYMOUS_COMMERCE_SESSION = NOT_FOUND
+PRE_CART_GUEST_DURABLE_BINDING = DECISION_REQUIRED
+RECOMMENDATION_READ_REPLAY_SCOPED_TO_AUTHORIZED_OWNER = YES
+RETENTION_AUTHORITY_COVERAGE_VERIFIED = NO
 PREVIOUSLY_EXPOSED_SESSION_RETROACTIVE_ENROLLMENT = NO
 SCHEMA_SELECTED = YES
 EVENT_SCHEMA_VERSION_DEFINED = YES
@@ -1206,7 +1283,7 @@ HOLDOUT_ACTIVE = NO
 HOLDOUT_ACTIVATED = NO
 FUTURE_HOLDOUT_ALLOCATION = 10_PERCENT
 APPROXIMATE_10_PERCENT = TARGET_DIRECTION_ONLY
-ASSIGNMENT_UNIT = SERVER_OWNED_ACTIVE_ORDERING_SESSION
+ASSIGNMENT_UNIT = SERVER_OWNED_ORDERING_SESSION_BOUND_TO_EXISTING_GUEST_CART_CREDENTIAL_OR_BRAND_CART
 ASSIGNMENT_BEFORE_EXPOSURE = YES
 NEUTRAL_ORDERING_SESSION_ALLOWED_WHILE_HOLDOUT_INACTIVE = YES
 INACTIVE_CONFIGURATION_WRITES_EXPERIMENT_ASSIGNMENT = NO
