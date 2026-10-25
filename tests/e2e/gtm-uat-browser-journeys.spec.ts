@@ -25,6 +25,7 @@ const PHONE = {
   bindingDrift: "9876500272",
   isolationA: "9876500273",
   isolationB: "9876500274",
+  mobileCoupon: "9876500275",
 } as const;
 
 type BrowserCartLine = Readonly<{ id: string; variantId: string }>;
@@ -433,6 +434,82 @@ function effectCodes(body: Record<string, unknown>): string[] {
   return (checkout?.effects ?? []).map((effect) => effect.promotionCode ?? "");
 }
 
+async function payablePaise(review: ReturnType<Page["getByTestId"]>): Promise<bigint> {
+  const total = review.getByTestId("price-summary-total");
+  await expect(total).toBeVisible({ timeout: 20_000 });
+  const raw = await total.getAttribute("data-offer-amount");
+  if (!raw || !/^\d+$/.test(raw)) throw new Error("review payable amount was not rendered");
+  return BigInt(raw);
+}
+
+/**
+ * Invalid coupon, apply, keyboard remove, and payable restoration on Review.
+ * Does not start payment and does not choose a #385 price-presentation option.
+ */
+async function assertReviewCouponRecalculation(page: Page): Promise<void> {
+  const review = page.getByTestId("checkout-review");
+  await expect(review).toBeVisible();
+  const before = await payablePaise(review);
+  const input = review.getByTestId("coupon-input");
+  await input.focus();
+  await expect(input).toBeFocused();
+  await input.fill("NOT-A-CODE");
+  await review.getByTestId("coupon-apply").click();
+  const invalid = review.getByTestId("coupon-result");
+  await expect(invalid).toContainText("That code isn't valid. Check it and try again.", {
+    timeout: 20_000,
+  });
+  await expect(invalid).toHaveAttribute("role", "alert");
+  await expect(input).toHaveAttribute("aria-invalid", "true");
+  await expect(input).toBeFocused();
+  expect(await payablePaise(review)).toBe(before);
+
+  await input.fill("e2e10");
+  await review.getByTestId("coupon-apply").click();
+  await expect(review.getByTestId("coupon-result")).toContainText("Coupon applied.", {
+    timeout: 20_000,
+  });
+  const discounted = await payablePaise(review);
+  expect(discounted).toBeLessThan(before);
+  await expect(review.locator('[data-offer-component="ORDER_SAVING"]')).toBeVisible();
+
+  const remove = review.getByTestId("coupon-remove");
+  await remove.focus();
+  await expect(remove).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(review.getByTestId("coupon-apply")).toBeVisible({ timeout: 20_000 });
+  await expect(review.getByText("Coupon applied.")).toHaveCount(0);
+  const restored = await payablePaise(review);
+  expect(restored).toBe(before);
+  expect(restored).toBeGreaterThan(discounted);
+}
+
+async function assertPaymentCouponReadOnly(page: Page): Promise<void> {
+  await expect(page.getByTestId("checkout-ready")).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByTestId("coupon-input")).toHaveCount(0);
+  await expect(page.getByTestId("coupon-apply")).toHaveCount(0);
+  await expect(page.getByTestId("coupon-change")).toHaveCount(0);
+  await expect(page.getByTestId("coupon-remove")).toHaveCount(0);
+  await page.locator("#main-content").focus();
+  await expect(page.locator("#main-content")).toBeFocused();
+  const couponHits: string[] = [];
+  let reachedPay = false;
+  for (let i = 0; i < 25; i += 1) {
+    await page.keyboard.press("Tab");
+    const marker = await page.evaluate(() => {
+      const el = document.activeElement as HTMLElement | null;
+      return el?.getAttribute("data-testid") ?? "";
+    });
+    if (marker.startsWith("coupon-")) couponHits.push(marker);
+    if (marker === "payment-start") {
+      reachedPay = true;
+      break;
+    }
+  }
+  expect(couponHits).toEqual([]);
+  expect(reachedPay).toBe(true);
+}
+
 async function assertItemUnavailableRecovery(page: Page): Promise<void> {
   const menuFailures = trackMenuFailures(page);
   const owned = await buildTwoLineGuestCart(page);
@@ -584,18 +661,17 @@ test("scheduled delivery applies a coupon and reaches My Orders through fake che
   await page.keyboard.press("Enter");
   await expect(windowButton).toHaveAttribute("aria-pressed", "true");
 
+  await expect(page.getByTestId("checkout-review")).toBeVisible({ timeout: 20_000 });
+  await assertReviewCouponRecalculation(page);
   const review = page.getByTestId("checkout-review");
-  await expect(review).toBeVisible({ timeout: 20_000 });
   const couponInput = review.getByTestId("coupon-input");
-  await couponInput.focus();
-  await expect(couponInput).toBeFocused();
   await couponInput.fill("e2e10");
   await review.getByTestId("coupon-apply").click();
   await expect(review.getByTestId("coupon-result")).toContainText("Coupon applied.", {
     timeout: 20_000,
   });
   await page.getByRole("button", { name: /Continue to payment/i }).click();
-  await expect(page.getByTestId("checkout-ready")).toBeVisible({ timeout: 20_000 });
+  await assertPaymentCouponReadOnly(page);
   await page.getByTestId("payment-start").click();
 
   await expect(page.getByTestId("order-confirmation")).toBeVisible({ timeout: 30_000 });
@@ -603,6 +679,29 @@ test("scheduled delivery applies a coupon and reaches My Orders through fake che
   await expect(page.getByTestId("order-fulfilment-timing")).toContainText(/window/i);
   await page.getByRole("link", { name: /order history/i }).click();
   await expect(page.getByTestId("order-history-item").first()).toBeVisible();
+});
+
+test("mobile: review coupon removal restores the payable total", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile-chromium", "Mobile viewport evidence only");
+  test.setTimeout(180_000);
+  expect(page.viewportSize()?.width).toBeLessThanOrEqual(430);
+  await installLocationMocks(page);
+  await page.goto("/order/");
+  await expect(page.getByRole("heading", { name: /^the bar$/i, level: 1 })).toBeVisible();
+  const addButtons = page.locator("#main-content").getByRole("button", { name: /^add .+/i });
+  await addButtons.first().click();
+  await page.locator("header").getByRole("link", { name: /^cart \(1\)$/i }).click();
+  await expect(page.getByRole("heading", { name: /your cart/i })).toBeVisible();
+  await page.getByRole("button", { name: /^checkout$/i }).click();
+  await signIn(page, PHONE.mobileCoupon);
+  await chooseDeliveryAndAddress(page, PHONE.mobileCoupon);
+  await expect(page.getByTestId("checkout-timing-choice")).toBeVisible({ timeout: 20_000 });
+  const asap = page.getByTestId("checkout-timing-asap");
+  await asap.click();
+  await expect(asap).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByTestId("checkout-review")).toBeVisible({ timeout: 20_000 });
+  await assertReviewCouponRecalculation(page);
+  await expect(page.getByTestId("payment-start")).toHaveCount(0);
 });
 
 test("payment start fails closed on sealed promotion drift without a provider open", async ({
