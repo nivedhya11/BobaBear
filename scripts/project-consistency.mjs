@@ -18343,132 +18343,132 @@ function checkImp028ArchitectureLock(roadmap, state, architecture, decision) {
   }
 
   if (decision) {
-    // GOV-2 CURRENT tip may advance the live register (DR-25 / D-384 programme baseline).
+    // GOV-2 CURRENT tip: DR-26 floor (D-384 + D-385/D-386) with forward-compatible successors.
+    // Do not freeze an exact tip string; progression rules own successor acceptance.
     // Historical IMP-036K Fit/Design/gate checkpoints remain anchored to source-era DR-24.
-    const expectedDecisionRegisterVersion = isGov2AuthorityDocuments(roadmap, state)
-      ? "DR-25"
-      : isImp036kDesignReadinessPassCheckpoint(roadmap, state) ||
-      isImp036kArchitectureLockCheckpoint(roadmap, state) ||
-      isImp036kProductExperienceGateCheckpoint(roadmap, state) ||
-    isImp036jImplementationStartCheckpoint(roadmap, state) ||
-      isImp036kParallelDefinitionCheckpoint(roadmap, state)
-      ? "DR-24"
-      : isImp036jImplementationAuthorizationCheckpoint(roadmap, state) ||
-      isImp036jArchitectureLockCheckpoint(roadmap, state) ||
-      isImp036jExperienceGatePassCheckpoint(roadmap, state) ||
-      isImp036jPd2ExperienceTransitionCheckpoint(roadmap, state) ||
-      isImp036jProductDefinitionGatePassCheckpoint(roadmap, state) ||
-      isImp036jProductDefinitionDraftReadyCheckpoint(roadmap, state) ||
-      isImp036jProductDefinitionActivationCheckpoint(roadmap, state)
-      ? "DR-23"
-      : isImp036iImplementationCompleteCheckpoint(roadmap, state) ||
-      isImp036iAcceptanceCheckpoint(roadmap, state)
-      ? "DR-22"
-      : isImp036iArchitectureLockCheckpoint(roadmap, state) ||
-      isImp036iImplementationAuthorizationCheckpoint(roadmap, state) ||
-      isImp036iImplementationStartCheckpoint(roadmap, state) ||
-      isImp036iTranche2Checkpoint(roadmap, state) ||
-      isImp036iTranche3Checkpoint(roadmap, state) ||
-      isImp036iTranche4Checkpoint(roadmap, state) ||
-      isImp036iTranche5Checkpoint(roadmap, state)
-      ? "DR-21"
-      : isImp036hArchitectureLockCheckpoint(roadmap, state) ||
-      isImp036hImplementationAuthorizationCheckpoint(roadmap, state) ||
-    isImp036hImplementationStartCheckpoint(roadmap, state) ||
-    isImp036hImplementationCompleteCheckpoint(roadmap, state) ||
-    isImp036hAcceptanceCheckpoint(roadmap, state) ||
-    isImp036iProductDefinitionActivationCheckpoint(roadmap, state)
- ||
-    isImp036iProductDefinitionDraftReadyCheckpoint(roadmap, state) ||
-    isImp036iProductDefinitionGatePassCheckpoint(roadmap, state)
-      ? "DR-20"
-      : isImp036hProductDefinitionActivationCheckpoint(roadmap, state) ||
-      isImp036hProductDefinitionGatePassCheckpoint(roadmap, state)
-      ? "DR-19"
-      : isImp038ImplementationAuthorizeStartCheckpoint(roadmap, state)
-      ? "DR-18"
-      : isImp038ArchitectureLockCheckpoint(roadmap, state)
-      ? "DR-17"
-      : isD374CostOptimizedPilotInfrastructureCheckpoint(roadmap, state) ||
-    isImp037ArchitectureLockCheckpoint(roadmap, state) ||
-    isImp037ImplementationAuthorizationCheckpoint(roadmap, state) ||
-    isImp037ImplementationStartCheckpoint(roadmap, state) ||
-    isImp037PostMergeReconciliationCheckpoint(roadmap, state) ||
-    isImp038ControlledContinuationActivationCheckpoint(roadmap, state)
-      ? "DR-16"
-      : isArchR17GovernanceCheckpoint(roadmap, state) ||
-      isImp031ArchitectureDraftCheckpoint(roadmap, state) ||
-      isImp031ArchitectureLockCheckpoint(roadmap, state) ||
-      isImp031ImplementationAuthorizationCheckpoint(roadmap, state) ||
-      isImp031ImplementationStartCheckpoint(roadmap, state) ||
-      isImp031ImplementationCompletionCheckpoint(roadmap, state) ||
-      isImp031AcceptanceCheckpoint(roadmap, state) ||
-      isImp032ArchitectureActivationCheckpoint(roadmap, state) ||
-      isImp032ArchitectureDraftCheckpoint(roadmap, state) ||
-      isImp032ArchitectureLockCheckpoint(roadmap, state) ||
-      isImp032ImplementationAuthorizationCheckpoint(roadmap, state) ||
-      isImp032ImplementationStartCheckpoint(roadmap, state) ||
-      isImp032PermissionBootstrapClarificationCheckpoint(roadmap, state) ||
-      isImp032ImplementationCompletionCheckpoint(roadmap, state) ||
-      isImp032AcceptanceCheckpoint(roadmap, state) ||
-      isImp033ArchitectureActivationCheckpoint(roadmap, state) ||
-      isImp033ImplementationCompletionCheckpoint(roadmap, state) ||
-      isImp033AcceptanceCheckpoint(roadmap, state) ||
-      isImp034ImplementationCompletionCheckpoint(roadmap, state) ||
-      isImp034AcceptanceCheckpoint(roadmap, state)
-      ? "DR-14"
-      : isImp035ImplementationCompletionCheckpoint(roadmap, state) ||
-        isImp035AcceptanceCheckpoint(roadmap, state) ||
-        isImp036ImplementationCompletionCheckpoint(roadmap, state) ||
-        isImp036AcceptanceCheckpoint(roadmap, state) ||
-        isEnterpriseExperiencePlanningCheckpoint(roadmap, state) ||
-        isImp036aImplementationCompletionCheckpoint(roadmap, state) ||
-        isImp036aAcceptanceCheckpoint(roadmap, state) ||
-        isImp036bImplementationCompletionCheckpoint(roadmap, state) ||
-        isImp036bAcceptanceCheckpoint(roadmap, state) ||
-        isImp036cImplementationCompletionCheckpoint(roadmap, state) ||
-        isImp036cAcceptanceCheckpoint(roadmap, state) ||
-        isImp036dArchitectureActivationCheckpoint(roadmap, state) ||
-        isImp036dArchitectureLockCheckpoint(roadmap, state) ||
-        isImp036dImplementationAuthorizationCheckpoint(roadmap, state) ||
-        isImp036dImplementationStartCheckpoint(roadmap, state) ||
-        isImp036dImplementationCompletionCheckpoint(roadmap, state) ||
-        isImp036dAcceptanceCheckpoint(roadmap, state) ||
-        isImp036eArchitectureActivationCheckpoint(roadmap, state) ||
-        isImp036eArchitectureLockCheckpoint(roadmap, state) ||
-        isImp036eImplementationAuthorizationCheckpoint(roadmap, state) ||
-        isImp036eImplementationStartCheckpoint(roadmap, state) ||
-        isImp036eImplementationCompletionCheckpoint(roadmap, state) ||
-        isAuthorityCompressionCheckpoint(roadmap, state) ||
-        isImp036eAcceptanceCheckpoint(roadmap, state) ||
-        isImp036fActivationCheckpoint(roadmap, state) ||
-        isImp036fProductDefinitionDraftAuthorizedCheckpoint(roadmap, state) ||
-        isImp036fProductDefinitionGatePassCheckpoint(roadmap, state) ||
-        isImp036fArchitectureLockCheckpoint(roadmap, state) ||
-        isImp036fImplementationAuthorizationCheckpoint(roadmap, state) ||
-        isImp036fImplementationStartCheckpoint(roadmap, state) ||
-        isImp036fAcceptanceCheckpoint(roadmap, state) ||
-        isImp036gActivationCheckpoint(roadmap, state) ||
-        isImp036gProductDefinitionDraftCheckpoint(roadmap, state) ||
-        isImp036gProductDefinitionGatePassCheckpoint(roadmap, state) ||
-        isImp036gArchitectureLockCheckpoint(roadmap, state) ||
-        isImp036gImplementationStartCheckpoint(roadmap, state) ||
-        isImp036gImplementationCompletionCheckpoint(roadmap, state) ||
-        isImp036gAcceptanceCheckpoint(roadmap, state) ||
-        isImp037ActivationCheckpoint(roadmap, state) ||
-        isImp037ProductDefinitionGatePassCheckpoint(roadmap, state)
-        ? "DR-15"
-      : "DR-13";
-    if (decision.meta.decisionRegisterVersion !== expectedDecisionRegisterVersion) {
-      fail(
-        "IMP028_DR_VERSION",
-        `Decision register must be ${expectedDecisionRegisterVersion} for the current architecture checkpoint, got ${decision.meta.decisionRegisterVersion}`,
-      );
-    }
     if (isGov2AuthorityDocuments(roadmap, state)) {
-      const programme = evaluateD384ProgrammeBaselineProgression(decision);
-      if (!programme.ok) fail(programme.code, programme.message);
-      else note(programme.message);
+      const tip = evaluateGov2DecisionRegisterTip(decision);
+      if (!tip.ok) fail(tip.code, tip.message);
+      else note(tip.message);
+    } else {
+      const expectedDecisionRegisterVersion =
+        isImp036kDesignReadinessPassCheckpoint(roadmap, state) ||
+        isImp036kArchitectureLockCheckpoint(roadmap, state) ||
+        isImp036kProductExperienceGateCheckpoint(roadmap, state) ||
+        isImp036jImplementationStartCheckpoint(roadmap, state) ||
+        isImp036kParallelDefinitionCheckpoint(roadmap, state)
+          ? "DR-24"
+          : isImp036jImplementationAuthorizationCheckpoint(roadmap, state) ||
+              isImp036jArchitectureLockCheckpoint(roadmap, state) ||
+              isImp036jExperienceGatePassCheckpoint(roadmap, state) ||
+              isImp036jPd2ExperienceTransitionCheckpoint(roadmap, state) ||
+              isImp036jProductDefinitionGatePassCheckpoint(roadmap, state) ||
+              isImp036jProductDefinitionDraftReadyCheckpoint(roadmap, state) ||
+              isImp036jProductDefinitionActivationCheckpoint(roadmap, state)
+            ? "DR-23"
+            : isImp036iImplementationCompleteCheckpoint(roadmap, state) ||
+                isImp036iAcceptanceCheckpoint(roadmap, state)
+              ? "DR-22"
+              : isImp036iArchitectureLockCheckpoint(roadmap, state) ||
+                  isImp036iImplementationAuthorizationCheckpoint(roadmap, state) ||
+                  isImp036iImplementationStartCheckpoint(roadmap, state) ||
+                  isImp036iTranche2Checkpoint(roadmap, state) ||
+                  isImp036iTranche3Checkpoint(roadmap, state) ||
+                  isImp036iTranche4Checkpoint(roadmap, state) ||
+                  isImp036iTranche5Checkpoint(roadmap, state)
+                ? "DR-21"
+                : isImp036hArchitectureLockCheckpoint(roadmap, state) ||
+                    isImp036hImplementationAuthorizationCheckpoint(roadmap, state) ||
+                    isImp036hImplementationStartCheckpoint(roadmap, state) ||
+                    isImp036hImplementationCompleteCheckpoint(roadmap, state) ||
+                    isImp036hAcceptanceCheckpoint(roadmap, state) ||
+                    isImp036iProductDefinitionActivationCheckpoint(roadmap, state) ||
+                    isImp036iProductDefinitionDraftReadyCheckpoint(roadmap, state) ||
+                    isImp036iProductDefinitionGatePassCheckpoint(roadmap, state)
+                  ? "DR-20"
+                  : isImp036hProductDefinitionActivationCheckpoint(roadmap, state) ||
+                      isImp036hProductDefinitionGatePassCheckpoint(roadmap, state)
+                    ? "DR-19"
+                    : isImp038ImplementationAuthorizeStartCheckpoint(roadmap, state)
+                      ? "DR-18"
+                      : isImp038ArchitectureLockCheckpoint(roadmap, state)
+                        ? "DR-17"
+                        : isD374CostOptimizedPilotInfrastructureCheckpoint(roadmap, state) ||
+                            isImp037ArchitectureLockCheckpoint(roadmap, state) ||
+                            isImp037ImplementationAuthorizationCheckpoint(roadmap, state) ||
+                            isImp037ImplementationStartCheckpoint(roadmap, state) ||
+                            isImp037PostMergeReconciliationCheckpoint(roadmap, state) ||
+                            isImp038ControlledContinuationActivationCheckpoint(roadmap, state)
+                          ? "DR-16"
+                          : isArchR17GovernanceCheckpoint(roadmap, state) ||
+                              isImp031ArchitectureDraftCheckpoint(roadmap, state) ||
+                              isImp031ArchitectureLockCheckpoint(roadmap, state) ||
+                              isImp031ImplementationAuthorizationCheckpoint(roadmap, state) ||
+                              isImp031ImplementationStartCheckpoint(roadmap, state) ||
+                              isImp031ImplementationCompletionCheckpoint(roadmap, state) ||
+                              isImp031AcceptanceCheckpoint(roadmap, state) ||
+                              isImp032ArchitectureActivationCheckpoint(roadmap, state) ||
+                              isImp032ArchitectureDraftCheckpoint(roadmap, state) ||
+                              isImp032ArchitectureLockCheckpoint(roadmap, state) ||
+                              isImp032ImplementationAuthorizationCheckpoint(roadmap, state) ||
+                              isImp032ImplementationStartCheckpoint(roadmap, state) ||
+                              isImp032PermissionBootstrapClarificationCheckpoint(roadmap, state) ||
+                              isImp032ImplementationCompletionCheckpoint(roadmap, state) ||
+                              isImp032AcceptanceCheckpoint(roadmap, state) ||
+                              isImp033ArchitectureActivationCheckpoint(roadmap, state) ||
+                              isImp033ImplementationCompletionCheckpoint(roadmap, state) ||
+                              isImp033AcceptanceCheckpoint(roadmap, state) ||
+                              isImp034ImplementationCompletionCheckpoint(roadmap, state) ||
+                              isImp034AcceptanceCheckpoint(roadmap, state)
+                            ? "DR-14"
+                            : isImp035ImplementationCompletionCheckpoint(roadmap, state) ||
+                                isImp035AcceptanceCheckpoint(roadmap, state) ||
+                                isImp036ImplementationCompletionCheckpoint(roadmap, state) ||
+                                isImp036AcceptanceCheckpoint(roadmap, state) ||
+                                isEnterpriseExperiencePlanningCheckpoint(roadmap, state) ||
+                                isImp036aImplementationCompletionCheckpoint(roadmap, state) ||
+                                isImp036aAcceptanceCheckpoint(roadmap, state) ||
+                                isImp036bImplementationCompletionCheckpoint(roadmap, state) ||
+                                isImp036bAcceptanceCheckpoint(roadmap, state) ||
+                                isImp036cImplementationCompletionCheckpoint(roadmap, state) ||
+                                isImp036cAcceptanceCheckpoint(roadmap, state) ||
+                                isImp036dArchitectureActivationCheckpoint(roadmap, state) ||
+                                isImp036dArchitectureLockCheckpoint(roadmap, state) ||
+                                isImp036dImplementationAuthorizationCheckpoint(roadmap, state) ||
+                                isImp036dImplementationStartCheckpoint(roadmap, state) ||
+                                isImp036dImplementationCompletionCheckpoint(roadmap, state) ||
+                                isImp036dAcceptanceCheckpoint(roadmap, state) ||
+                                isImp036eArchitectureActivationCheckpoint(roadmap, state) ||
+                                isImp036eArchitectureLockCheckpoint(roadmap, state) ||
+                                isImp036eImplementationAuthorizationCheckpoint(roadmap, state) ||
+                                isImp036eImplementationStartCheckpoint(roadmap, state) ||
+                                isImp036eImplementationCompletionCheckpoint(roadmap, state) ||
+                                isAuthorityCompressionCheckpoint(roadmap, state) ||
+                                isImp036eAcceptanceCheckpoint(roadmap, state) ||
+                                isImp036fActivationCheckpoint(roadmap, state) ||
+                                isImp036fProductDefinitionDraftAuthorizedCheckpoint(roadmap, state) ||
+                                isImp036fProductDefinitionGatePassCheckpoint(roadmap, state) ||
+                                isImp036fArchitectureLockCheckpoint(roadmap, state) ||
+                                isImp036fImplementationAuthorizationCheckpoint(roadmap, state) ||
+                                isImp036fImplementationStartCheckpoint(roadmap, state) ||
+                                isImp036fAcceptanceCheckpoint(roadmap, state) ||
+                                isImp036gActivationCheckpoint(roadmap, state) ||
+                                isImp036gProductDefinitionDraftCheckpoint(roadmap, state) ||
+                                isImp036gProductDefinitionGatePassCheckpoint(roadmap, state) ||
+                                isImp036gArchitectureLockCheckpoint(roadmap, state) ||
+                                isImp036gImplementationStartCheckpoint(roadmap, state) ||
+                                isImp036gImplementationCompletionCheckpoint(roadmap, state) ||
+                                isImp036gAcceptanceCheckpoint(roadmap, state) ||
+                                isImp037ActivationCheckpoint(roadmap, state) ||
+                                isImp037ProductDefinitionGatePassCheckpoint(roadmap, state)
+                              ? "DR-15"
+                              : "DR-13";
+      if (decision.meta.decisionRegisterVersion !== expectedDecisionRegisterVersion) {
+        fail(
+          "IMP028_DR_VERSION",
+          `Decision register must be ${expectedDecisionRegisterVersion} for the current architecture checkpoint, got ${decision.meta.decisionRegisterVersion}`,
+        );
+      }
     }
   }
 }
@@ -42183,7 +42183,172 @@ export function collectDecisionRegisterIdRows(decisionText, decisionId) {
 }
 
 /**
- * GOV-2 CURRENT tip register progression for D-384 programme baseline (DR-25).
+ * Parse canonical decision-register revision `DR-<positive integer>`.
+ * Rejects zero-padded / malformed tokens (DR-0, DR-026, DR-26.5, DR-abc).
+ * @param {unknown} version
+ * @returns {number | null}
+ */
+export function parseDecisionRegisterVersionNumber(version) {
+  const match = /^DR-([1-9]\d*)$/.exec(String(version ?? ""));
+  return match ? Number(match[1]) : null;
+}
+
+/**
+ * GOV-2 live tip floor after AD-PF-01/02 allocation: DR-26 or legitimate successor.
+ * @param {unknown} version
+ * @returns {boolean}
+ */
+export function isGov2ProgrammeBaselineTipVersion(version) {
+  const n = parseDecisionRegisterVersionNumber(version);
+  return n !== null && n >= 26;
+}
+
+/**
+ * Numeric decision IDs present as decision-register table rows (`| D-N | ...`).
+ * @param {string} decisionText
+ * @returns {number[]}
+ */
+export function collectDecisionRegisterTableIds(decisionText) {
+  /** @type {number[]} */
+  const ids = [];
+  for (const line of String(decisionText ?? "").split("\n")) {
+    const match = /^\|\s*D-(\d+)\s*\|/.exec(line);
+    if (match) ids.push(Number(match[1]));
+  }
+  return ids;
+}
+
+/**
+ * Declared next-free decision ID from ID-rules prose (`next ID **D-N**`).
+ * Requires exactly one declaration.
+ * @param {string} decisionText
+ * @returns {{ ok: true, id: number } | { ok: false, code: string, message: string, count?: number }}
+ */
+export function parseDeclaredNextFreeDecisionId(decisionText) {
+  const matches = [...String(decisionText ?? "").matchAll(/next ID \*\*D-(\d+)\*\*/g)];
+  if (matches.length === 0) {
+    return {
+      ok: false,
+      code: "D384_NEXT_ID",
+      message: "Decision register ID rules must declare exactly one next free decision ID as next ID **D-N**",
+      count: 0,
+    };
+  }
+  if (matches.length > 1) {
+    return {
+      ok: false,
+      code: "D384_NEXT_ID_MALFORMED",
+      message: `Decision register ID rules must declare exactly one next free decision ID (found ${matches.length})`,
+      count: matches.length,
+    };
+  }
+  return { ok: true, id: Number(matches[0][1]) };
+}
+
+/**
+ * D-385 / AD-PF-01 must be uniquely CURRENT when allocated under DR-26+.
+ * @param {string} decisionText
+ * @returns {{ ok: true, status: "CURRENT" } | { ok: false, code: string, message: string, status?: string }}
+ */
+export function evaluateD385Current(decisionText) {
+  const rows = collectDecisionRegisterIdRows(decisionText, "D-385");
+  if (rows.length === 0) {
+    return {
+      ok: false,
+      code: "D385_MISSING",
+      message: "DR-26+ must register CURRENT D-385 / AD-PF-01 Founder Podman Local UAT vs strict staging",
+    };
+  }
+  if (rows.length > 1) {
+    return {
+      ok: false,
+      code: "D385_DUPLICATE",
+      message: `D-385 must appear exactly once in the decision-register table (found ${rows.length} rows)`,
+    };
+  }
+  const row = evaluateDecisionRegisterRowStatus(decisionText, "D-385");
+  if (!row.ok) {
+    return {
+      ok: false,
+      code: "D385_MISSING",
+      message: "DR-26+ must register CURRENT D-385 / AD-PF-01 Founder Podman Local UAT vs strict staging",
+    };
+  }
+  if (row.status !== "CURRENT") {
+    return {
+      ok: false,
+      code: "D385_STATUS",
+      status: row.status,
+      message: `D-385 status cell must be CURRENT (got ${row.status})`,
+    };
+  }
+  const line = rows[0] ?? "";
+  if (!/AD-PF-01/.test(line) || !/Local UAT/.test(line) || !/staging/.test(line)) {
+    return {
+      ok: false,
+      code: "D385_CONTRACT",
+      message:
+        "D-385 must lock AD-PF-01 Founder Podman Local UAT versus strict staging configuration authority",
+    };
+  }
+  return { ok: true, status: "CURRENT" };
+}
+
+/**
+ * D-386 / AD-PF-02 must be uniquely CURRENT when allocated under DR-26+.
+ * @param {string} decisionText
+ * @returns {{ ok: true, status: "CURRENT" } | { ok: false, code: string, message: string, status?: string }}
+ */
+export function evaluateD386Current(decisionText) {
+  const rows = collectDecisionRegisterIdRows(decisionText, "D-386");
+  if (rows.length === 0) {
+    return {
+      ok: false,
+      code: "D386_MISSING",
+      message: "DR-26+ must register CURRENT D-386 / AD-PF-02 Founder staging capacity proof",
+    };
+  }
+  if (rows.length > 1) {
+    return {
+      ok: false,
+      code: "D386_DUPLICATE",
+      message: `D-386 must appear exactly once in the decision-register table (found ${rows.length} rows)`,
+    };
+  }
+  const row = evaluateDecisionRegisterRowStatus(decisionText, "D-386");
+  if (!row.ok) {
+    return {
+      ok: false,
+      code: "D386_MISSING",
+      message: "DR-26+ must register CURRENT D-386 / AD-PF-02 Founder staging capacity proof",
+    };
+  }
+  if (row.status !== "CURRENT") {
+    return {
+      ok: false,
+      code: "D386_STATUS",
+      status: row.status,
+      message: `D-386 status cell must be CURRENT (got ${row.status})`,
+    };
+  }
+  const line = rows[0] ?? "";
+  if (!/AD-PF-02/.test(line) || !/40 GiB/.test(line) || !/8 GiB/.test(line) || !/2×/.test(line) || !/1\.5×/.test(line)) {
+    return {
+      ok: false,
+      code: "D386_CONTRACT",
+      message:
+        "D-386 must lock AD-PF-02 Founder staging capacity floors (40 GiB disk and 2× measured footprint / 8 GiB memory and 1.5× measured peak) as policy",
+    };
+  }
+  return { ok: true, status: "CURRENT" };
+}
+
+/**
+ * GOV-2 register progression for D-384 programme baseline.
+ * Locked anchors: DR-25 (D-384 intro) and DR-26+ (D-385/D-386 AD-PF required).
+ * Accepts legitimate numeric successors DR-N (N>=25) with supersedes DR-(N-1),
+ * preserved D-382/D-383/D-384 history, and next-free-ID = max(table D-id)+1.
+ * Rejects earlier checkpoints and malformed version tokens. Does not invent product decisions.
  * Independent of IMP-036K source-era Fit/Design provenance (DR-24 / no D-384 then).
  * @param {{ meta?: { decisionRegisterVersion?: string, supersedes?: string }, text?: string }} decision
  * @returns {{ ok: true, message: string } | { ok: false, code: string, message: string }}
@@ -42191,26 +42356,30 @@ export function collectDecisionRegisterIdRows(decisionText, decisionId) {
 export function evaluateD384ProgrammeBaselineProgression(decision) {
   const meta = decision?.meta ?? {};
   const text = decision?.text ?? "";
-  if (meta.decisionRegisterVersion !== "DR-25") {
+  const version = meta.decisionRegisterVersion ?? "";
+  const n = parseDecisionRegisterVersionNumber(version);
+  if (n === null || n < 25) {
     return {
       ok: false,
       code: "D384_DR_VERSION",
-      message: `Programme baseline requires decisionRegisterVersion DR-25, got ${meta.decisionRegisterVersion ?? "(missing)"}`,
+      message: `Programme baseline requires decisionRegisterVersion DR-25 or legitimate successor DR-26+, got ${version || "(missing)"}`,
     };
   }
-  if (meta.supersedes !== "DR-24") {
+  const expectedSupersedes = `DR-${n - 1}`;
+  if (meta.supersedes !== expectedSupersedes) {
     return {
       ok: false,
       code: "D384_DR_SUPERSEDES",
-      message: `DR-25 must supersede DR-24, got ${meta.supersedes ?? "(missing)"}`,
+      message: `${version} must supersede ${expectedSupersedes}, got ${meta.supersedes ?? "(missing)"}`,
     };
   }
+  const requireAdPf = n >= 26;
   const d384Rows = collectDecisionRegisterIdRows(text, "D-384");
   if (d384Rows.length === 0) {
     return {
       ok: false,
       code: "D384_MISSING",
-      message: "DR-25 must register CURRENT D-384 Tactical Closure and Pre-GTM Strategic Programme Baseline",
+      message: `${version} must register CURRENT D-384 Tactical Closure and Pre-GTM Strategic Programme Baseline`,
     };
   }
   if (d384Rows.length > 1) {
@@ -42225,7 +42394,7 @@ export function evaluateD384ProgrammeBaselineProgression(decision) {
     return {
       ok: false,
       code: "D384_MISSING",
-      message: "DR-25 must register CURRENT D-384 Tactical Closure and Pre-GTM Strategic Programme Baseline",
+      message: `${version} must register CURRENT D-384 Tactical Closure and Pre-GTM Strategic Programme Baseline`,
     };
   }
   if (row.status !== "CURRENT") {
@@ -42259,18 +42428,64 @@ export function evaluateD384ProgrammeBaselineProgression(decision) {
         "D-384 must explicitly preserve D-377/D-382/D-383, leave PD-2 unamended, and keep IMP-036K implementation unauthorized",
     };
   }
-  if (!/next ID \*\*D-385\*\*/.test(text)) {
+  if (requireAdPf) {
+    const d385 = evaluateD385Current(text);
+    if (!d385.ok) return d385;
+    const d386 = evaluateD386Current(text);
+    if (!d386.ok) return d386;
+  }
+  const tableIds = collectDecisionRegisterTableIds(text);
+  if (tableIds.length === 0) {
     return {
       ok: false,
       code: "D384_NEXT_ID",
-      message: "DR-25 ID rules must advance next free decision ID to D-385 after D-384",
+      message: `${version} must expose decision-register table IDs to compute next free decision ID`,
     };
   }
-  if (/next ID \*\*D-384\*\*/.test(text)) {
+  const highestAllocated = Math.max(...tableIds);
+  const expectedNextId = highestAllocated + 1;
+  if (requireAdPf && highestAllocated < 386) {
+    return {
+      ok: false,
+      code: "D384_NEXT_ID",
+      message: `${version} must allocate through D-386 before advancing next free decision ID (highest table id D-${highestAllocated})`,
+    };
+  }
+  if (!requireAdPf && expectedNextId !== 385) {
+    return {
+      ok: false,
+      code: "D384_NEXT_ID",
+      message: "DR-25 ID rules must advance next free decision ID to D-385 after allocating D-384",
+    };
+  }
+  const declared = parseDeclaredNextFreeDecisionId(text);
+  if (!declared.ok) return declared;
+  if (declared.id !== expectedNextId) {
+    return {
+      ok: false,
+      code: "D384_NEXT_ID",
+      message: `${version} ID rules must advance next free decision ID to D-${expectedNextId} (highest table id D-${highestAllocated}), got D-${declared.id}`,
+    };
+  }
+  if (declared.id === 384) {
     return {
       ok: false,
       code: "D384_NEXT_ID_STALE",
-      message: "DR-25 must not leave next free decision ID at D-384 after allocating D-384",
+      message: `${version} must not leave next free decision ID at D-384 after allocating D-384`,
+    };
+  }
+  if (requireAdPf && declared.id === 385) {
+    return {
+      ok: false,
+      code: "D384_NEXT_ID_STALE",
+      message: `${version} must not leave next free decision ID at D-385 after allocating D-385/D-386`,
+    };
+  }
+  if (requireAdPf && declared.id < 387) {
+    return {
+      ok: false,
+      code: "D384_NEXT_ID_STALE",
+      message: `${version} next free decision ID must be at least D-387 after D-385/D-386 allocation`,
     };
   }
   const d383 = evaluateD383Current(text);
@@ -42279,8 +42494,28 @@ export function evaluateD384ProgrammeBaselineProgression(decision) {
   if (!d382.ok) return d382;
   return {
     ok: true,
-    message: "D-384 / DR-25 programme baseline progression valid (next free ID D-385; D-383 CURRENT; D-382 AMENDED by D-383)",
+    message: requireAdPf
+      ? `D-384 / ${version} programme baseline progression valid (D-385/D-386 CURRENT; next free ID D-${declared.id}; D-383 CURRENT; D-382 AMENDED by D-383)`
+      : "D-384 / DR-25 programme baseline progression valid (next free ID D-385; D-383 CURRENT; D-382 AMENDED by D-383)",
   };
+}
+
+/**
+ * GOV-2 CURRENT tip: require DR-26+ floor (AD-PF allocated) and full programme progression.
+ * Forward-compatible: legitimate DR-27+ tips pass without rewriting a frozen tip string.
+ * @param {{ meta?: { decisionRegisterVersion?: string, supersedes?: string }, text?: string }} decision
+ * @returns {{ ok: true, message: string } | { ok: false, code: string, message: string }}
+ */
+export function evaluateGov2DecisionRegisterTip(decision) {
+  const version = decision?.meta?.decisionRegisterVersion;
+  if (!isGov2ProgrammeBaselineTipVersion(version)) {
+    return {
+      ok: false,
+      code: "IMP028_DR_VERSION",
+      message: `GOV-2 CURRENT tip requires decisionRegisterVersion DR-26 or legitimate successor, got ${version ?? "(missing)"}`,
+    };
+  }
+  return evaluateD384ProgrammeBaselineProgression(decision);
 }
 
 /**
