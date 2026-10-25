@@ -38,7 +38,13 @@ import {
 } from "../../shared/promotions";
 import { requireWorkforcePrincipal } from "../access-control/principal";
 import type { PersistenceQueryContext, PersistenceTransactionContext } from "../persistence/types";
-import { assertTransactionContext, assertUuid, isUniqueViolation } from "./assert-role";
+import {
+  assertPromotionCode,
+  assertTransactionContext,
+  assertUuid,
+  assertUuidShape,
+  isUniqueViolation,
+} from "./assert-role";
 import { insertPromotionAuditEvent } from "./audit";
 import { assertComplimentaryAuthoringSafe } from "./complimentary-authoring";
 import {
@@ -240,6 +246,9 @@ export async function createPromotionDraft(
   assertTransactionContext(context, "createPromotionDraft");
   const brandId = assertUuid(input.brandId, "brandId");
   validateScopeShape(input);
+  if (input.territoryId) assertUuidShape(input.territoryId, "territoryId");
+  if (input.organizationId) assertUuidShape(input.organizationId, "organizationId");
+  if (input.outletId) assertUuidShape(input.outletId, "outletId");
   if (input.endsAt && input.endsAt <= input.startsAt) {
     throw new PromotionAdminError("PROMOTION_TIME_WINDOW_INVALID", "endsAt must be after startsAt.");
   }
@@ -250,6 +259,7 @@ export async function createPromotionDraft(
     organizationId: input.organizationId,
     outletId: input.outletId,
   });
+  assertPromotionCode(input.code);
   const principal = requireWorkforcePrincipal(input.actor);
   const id = randomUUID();
   const now = new Date();
