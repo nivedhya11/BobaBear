@@ -13,12 +13,13 @@ import { defineConfig, devices } from "@playwright/test";
  * container that never comes up healthy fails the run instead of silently
  * falling back to starting one locally.
  *
- * `tests/e2e/customer-auth.spec.ts` (IMP-009) and
- * `tests/e2e/workforce-auth.spec.ts` (IMP-010) are deliberately excluded here
- * — they need a real auth service (a Testcontainers PostgreSQL database plus
- * the corresponding HTTP process) behind the same origin, which this config's
- * plain static-file `webServer` does not provide. Each has its own dedicated
- * Playwright config and `npm run test:e2e:*` script instead.
+ * `tests/e2e/customer-auth.spec.ts` (IMP-009),
+ * `tests/e2e/workforce-auth.spec.ts` (IMP-010), and
+ * `tests/e2e/b5-commerce-composite-qa.spec.ts` are deliberately excluded here
+ * — they need a real auth or commerce service (a Testcontainers PostgreSQL
+ * database plus the corresponding HTTP process) behind the same origin, which
+ * this config's plain static-file `webServer` does not provide. Each has its
+ * own dedicated Playwright config and `npm run test:e2e:*` script instead.
  *
  * Chromium only for this slice (desktop + mobile viewport). Firefox/WebKit
  * are deferred to a later slice.
@@ -35,6 +36,7 @@ export default defineConfig({
     "**/customer-auth.spec.ts",
     "**/workforce-auth.spec.ts",
     "**/customer-ordering.spec.ts",
+    "**/b5-commerce-composite-qa.spec.ts",
   ],
   fullyParallel: true,
   forbidOnly: isCI,

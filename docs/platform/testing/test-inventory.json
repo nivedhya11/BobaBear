@@ -31,18 +31,18 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2361,
-    "executableTestFiles": 544,
+    "trackedPathsConsidered": 2365,
+    "executableTestFiles": 545,
     "sourceTestFiles": 163,
-    "testsTreeExecutableFiles": 293,
+    "testsTreeExecutableFiles": 294,
     "scriptTestFiles": 88,
-    "playwrightSpecs": 13,
+    "playwrightSpecs": 14,
     "vitestConfigs": 2,
-    "playwrightConfigs": 8,
-    "testSupportScripts": 54,
+    "playwrightConfigs": 9,
+    "testSupportScripts": 56,
     "packageTestCommands": 94,
     "packageAuditCommands": 27,
-    "packageE2eCommands": 10,
+    "packageE2eCommands": 11,
     "packageCheckCommands": 17,
     "packageCoverageCommands": 1,
     "packageInventoryCommands": 2,
@@ -384,6 +384,7 @@
     "tests/delivery-application/delivery.pickup-fail-closed.test.ts",
     "tests/delivery-concurrency/delivery.concurrency.test.ts",
     "tests/delivery-manual/delivery.manual.test.ts",
+    "tests/e2e/b5-commerce-composite-qa.spec.ts",
     "tests/e2e/commercial-workspace.spec.ts",
     "tests/e2e/customer-auth.spec.ts",
     "tests/e2e/customer-ordering.spec.ts",
@@ -602,6 +603,7 @@
     "scripts/working-tree-fingerprint.test.mjs"
   ],
   "playwrightSpecs": [
+    "tests/e2e/b5-commerce-composite-qa.spec.ts",
     "tests/e2e/commercial-workspace.spec.ts",
     "tests/e2e/customer-auth.spec.ts",
     "tests/e2e/customer-ordering.spec.ts",
@@ -621,6 +623,7 @@
     "vitest.database.config.mts"
   ],
   "playwrightConfigs": [
+    "playwright.b5-commerce-qa.config.ts",
     "playwright.commercial-workspace.config.ts",
     "playwright.config.ts",
     "playwright.customer-auth.config.ts",
@@ -631,12 +634,14 @@
     "playwright.workforce-auth.config.ts"
   ],
   "testSupportScripts": [
+    "scripts/e2e/b5-commerce-qa-fixtures.ts",
     "scripts/e2e/build-commercial-workspace-seed.mjs",
     "scripts/e2e/build-operations-lifecycle-seed.mjs",
     "scripts/e2e/customer-auth-server.ts",
     "scripts/e2e/customer-ordering-server.ts",
     "scripts/e2e/gtm-uat-browser-control.ts",
     "scripts/e2e/gtm-uat-browser-fixtures.ts",
+    "scripts/e2e/run-b5-commerce-qa-e2e.mjs",
     "scripts/e2e/run-commercial-workspace-e2e.mjs",
     "scripts/e2e/run-customer-auth-e2e.mjs",
     "scripts/e2e/run-customer-ordering-e2e.mjs",
@@ -814,6 +819,7 @@
     ],
     "e2e": [
       "test:e2e",
+      "test:e2e:b5-commerce-qa",
       "test:e2e:commercial-workspace",
       "test:e2e:customer-auth",
       "test:e2e:customer-ordering",
@@ -944,6 +950,7 @@
     "test:database:serviceability": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/serviceability.integration.test.ts",
     "test:database:workforce-auth": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/workforce-auth.integration.test.ts",
     "test:e2e": "npm run build && playwright test",
+    "test:e2e:b5-commerce-qa": "NEXT_PUBLIC_BOBA_BEAR_GOOGLE_MAPS_BROWSER_KEY=e2e-maps-browser-key-fixture npm run build && npm run customer-auth:build && npm run customer-commerce:build && node scripts/e2e/run-b5-commerce-qa-e2e.mjs",
     "test:e2e:commercial-workspace": "node scripts/e2e/run-commercial-workspace-e2e.mjs",
     "test:e2e:customer-auth": "npm run build && npm run customer-auth:build && node scripts/e2e/run-customer-auth-e2e.mjs",
     "test:e2e:customer-ordering": "NEXT_PUBLIC_BOBA_BEAR_GOOGLE_MAPS_BROWSER_KEY=e2e-maps-browser-key-fixture npm run build && npm run customer-auth:build && npm run customer-commerce:build && node scripts/e2e/run-customer-ordering-e2e.mjs",
@@ -9151,6 +9158,24 @@
         "1-unit"
       ],
       "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/e2e/b5-commerce-composite-qa.spec.ts",
+      "runner": "playwright",
+      "domain": "e2e",
+      "testType": "e2e-spec",
+      "dbRequired": "UNKNOWN",
+      "browserRequired": "YES",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:e2e",
+        "test:e2e:b5-commerce-qa"
+      ],
+      "ciInclusion": "NO",
+      "test1Layers": [
+        "11-e2e-browser-ui"
+      ],
+      "classificationConfidence": "LOW"
     },
     {
       "path": "tests/e2e/commercial-workspace.spec.ts",
