@@ -17,7 +17,12 @@ IMPLEMENTATION_AUTHORIZED = NO
 DEPENDS_ON = T1 human gate and T1 landing/chrome (doc 19); UOE UX-A contract approval before final verb assertions (F-6)
 OPTION_R = PRESERVED
 UPD_08 = NOT_IN_SCOPE
-LABEL_OWNER = UOE UX-A (PR #424) — WXE CONSUMES
+LABEL_OWNER = UOE UX-A (PR #424 @ 3b207b3bb69f305353770315af7ad814a7e766d0)
+CONTRACT = UOE-TRANCHE-UX-A-1 in docs/platform/discovery/unified-order-experience/17-ux-a-tranche-contract.md
+MAP_FILE = src/shared/ordering/uoe-presentation-labels.ts — PROPOSED_NOT_CREATED
+VERBS = UOE PD-UOE-CANDIDATE-3 §3.A — Prepare for collection; Ready for collection; Hand over order
+WXE_CONSUMES = YES
+T1_BLOCKED_ON_THIS_MAP = NO
 ```
 
 T2 is the daily Operations presentation that sits on the T1 chrome: capability-gated lifecycle
@@ -107,7 +112,7 @@ All rows are **PLANNED**.
 | ID | Proves | Fixture | Expected | Must not |
 |---|---|---|---|---|
 | T2-P1A-ORDER | P1-A placement | Authorized order detail | Lifecycle actions precede delivery, refund, notifications, items | New command |
-| T2-P1A-GATE | Capability gating | Synthetic map lacking `order.accept` (or the existing server flag the UI already receives) | Accept control absent | Treat absence as a server grant |
+| T2-P1A-GATE | Capability gating | Session map from `fetchAdminSession` lacking `order.accept` (that key is already on `PORTAL_SESSION_CAPS`; `eligibleActions` today is status-only and is the defect) | Accept control absent even when status is `PLACED` | Treat a hidden button as a server grant; invent a new permission |
 | T2-PICKUP | GJ-W3 / AS-05 | `PICKUP` order | Delivery panel absent; hand-over uses UX-A verb once approved | Delivery aggregate; “Mark collected” unless UX-A says so |
 | T2-DELIVERY | GJ-W2 surface | `DELIVERY` order | Delivery panel still available to an entitled operator | Claim UPD-08 closed; ship fabricated proof defaults as success |
 | T2-PF-08 | F-6 | Approved UX-A map present | Workforce timing and method labels equal that map | A second map in WXE |

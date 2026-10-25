@@ -104,7 +104,12 @@ MAY MODIFY (future, presentation only)
 - src/components/operations/store/StoreShell.tsx
 - src/lib/operations/store-navigation.ts
     Add a Scheduling nav item. Visibility reuses the capability that already shows Hours
-    (outlet.operating_schedule.read). Point it at the existing scheduling client.
+    (outlet.operating_schedule.read). The client is already mounted by
+    src/app/workforce/(portal)/operations/store/hours/page.tsx. A Scheduling item may
+    open that existing Hours host or a page that only hosts the same client.
+    Load and save stay on GET/POST
+    /api/operations/v1/outlets/{outletId}/scheduling-profile, authorized by
+    outlet.operating_schedule.read and outlet.operating_schedule.manage.
 - src/components/operations/store/StoreSchedulingProfileClient.tsx
     Discoverability and heading only. Keep the existing load/save calls.
 - src/app/workforce/**/page.tsx
@@ -153,11 +158,11 @@ effective-permission maps (F-7), not production roles.
 | WXE-PF-01 | F-1 | S1 commercial read + `brand.read` | Administration and Brand Commercial visible; workspace renders | Invent a permission |
 | WXE-PF-02 | F-1 | S2/S3 without `brand.read` | Brand Commercial nav absent | Grant `brand.read`; outlet-scoped Commercial shell |
 | WXE-PF-06 | F-2 | Same commercial reads ± `brand.read` | S1 enters Admin; S2 does not gain Admin from commercial reads alone | Empty Admin shell |
-| WXE-PF-04 | F-4 | S4 store caps, no `order.read` | If Operations is shown, first usable Store item; Today is not the landing | Today 403 landing |
+| WXE-PF-04 | F-4 | S4 store caps, no `order.read` | Hub card is shown. Href is `/workforce/operations/store/`. Today is not the href | Today href; changing the Delivery item off `delivery.read` |
 | WXE-PF-05 | F-3 | S5/S6 `outlet.read` | Administration entry remains while Commercial is hidden | Revoke Admin via hide |
 | WXE-PF-03 | ADR-006 | S3/S5 with Store Assortment | Read-only assortment; static escalation; no Commercial cross-link | New escalation API |
 | WXE-PF-11 | AS-27 | S8 direct Commercial URL | Store Assortment if entitled, else Applications | Broken brand-list success |
-| WXE-PF-12 | Active scope | S9 brand A vs outlet B | Nav follows the active scope only | Sticky global show/hide |
+| WXE-PF-12 | Union payload | S9-shaped fixture | Nav follows the union payload from `getAdminSession`. It does not toggle when an outlet context changes | A new scoped session API; sticky client flag |
 | WXE-PF-07 | F-5 | Store actor with `outlet.operating_schedule.read` | Scheduling item visible and opens existing profile UI | New scheduling API |
 | WXE-PF-09 | Negative authz | Existing denied mutation | Current server denial unchanged | Broaden RBAC |
 | T1-H1 | P1-B | Orders and an Admin page | One H1; no nested `main` | — |

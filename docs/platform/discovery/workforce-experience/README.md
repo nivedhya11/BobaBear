@@ -35,6 +35,10 @@ WXE_UPD_03 = B
 WXE_UPD_06 = YES
 ARCHITECTURE_FIT = CANDIDATE_ONLY (NOT_GRANTED)
 FORMAL_ARCHITECTURE_FIT_OR_LOCK = NOT_GRANTED
+SOURCE_CONFORMANCE_ANNEX = 23-source-conformance-annex.md
+FOUNDER_FIT_DECISION_PACKET = 24-founder-architecture-fit-decision-packet.md
+FIT_CLOSURE_DEPENDS_ON_PR = 426
+FIT_CLOSURE_DOES_NOT_MERGE_426 = YES
 DESIGN_READINESS = CANDIDATE_ONLY (NOT_GRANTED)
 QUALITY_TEST_PLAN = REVIEWABLE_DRAFT (NOT_FINALIZED)
 MEASUREMENT_PLAN = REVIEWABLE_DRAFT (NOT_FINALIZED)
@@ -64,6 +68,12 @@ package for the permitted presentation scope. Ratification is a bounded post-PAS
 amendment — **not** a new PD/XD Gate PASS. `FORMAL_ARCHITECTURE_FIT_OR_LOCK = NOT_GRANTED`.
 UPD-08 Delivery Gaps 1–3 remain unresolved, separately governed, and block Architecture Lock
 for affected X3 delivery-proof/cancellation journeys.
+
+Source conformance for the prepared F-1..F-7 set is
+[`23-source-conformance-annex.md`](./23-source-conformance-annex.md). The integrated Founder
+decision request is
+[`24-founder-architecture-fit-decision-packet.md`](./24-founder-architecture-fit-decision-packet.md).
+Both are stacked on PR #426. Neither grants Architecture Fit or Architecture Lock.
 
 This package still does **not**:
 
@@ -119,6 +129,8 @@ ratification is a scope amendment record, not an additional Gate PASS.
 | [`20-t2-daily-operations-ui-work-package.md`](./20-t2-daily-operations-ui-work-package.md) | T2 daily Operations UI package (PLANNED) |
 | [`21-t3-commercial-uat-ux-work-package.md`](./21-t3-commercial-uat-ux-work-package.md) | T3 Commercial UAT UX package (PLANNED) |
 | [`22-t4-people-accessibility-work-package.md`](./22-t4-people-accessibility-work-package.md) | T4 People and accessibility package (PLANNED) |
+| [`23-source-conformance-annex.md`](./23-source-conformance-annex.md) | Source-conformance annex for F-1..F-7 against `origin/main` (evidence, not a Fit grant) |
+| [`24-founder-architecture-fit-decision-packet.md`](./24-founder-architecture-fit-decision-packet.md) | Integrated Founder Architecture Fit decision packet (NOT_GRANTED) |
 
 ## Provisional candidate identifiers
 
