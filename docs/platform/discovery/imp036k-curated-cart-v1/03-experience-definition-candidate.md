@@ -162,8 +162,10 @@ That current Cart is the primary task. The shelf is a secondary region on the sa
 3. When the shelf is enabled, the feature is available, the Cart menu read already has an
    authoritative outlet, and at least one eligible item exists, the customer sees the heading
    “A little extra?” and one to four cards. In V1 that outlet is the delivery-serviceable outlet
-   already used by the Cart menu read. A Pickup cart, and any cart with no such outlet, shows no
-   shelf. Cart and Checkout stay usable.
+   already used by the Cart menu read. No serviceable delivery outlet shows no shelf. A Pickup
+   checkout that leaves those coordinates in place can still show that delivery-current shelf.
+   That is not a Pickup availability or Pickup price promise. Whether V1 must hide it when
+   Checkout mode is Pickup is unresolved. Cart and Checkout stay usable.
 4. The customer may ignore the shelf and continue to Checkout and Payment.
 5. The customer may activate one card. “+” direct-adds only when that projected row has no
    modifier groups, using the same payload the menu add already sends (`variantId`, quantity 1,
@@ -198,9 +200,10 @@ The shelf is present only when all of the following are true:
 - Cart already has an item.
 - The shelf is enabled.
 - The feature is available.
-- The Cart menu read already has an authoritative outlet. In V1 that is the delivery-serviceable
-  outlet only. Pickup does not supply it on Cart, and this experience does not add an outlet
-  selector.
+- The Cart menu read already has a serviceable delivery outlet. Cart does not read Pickup
+  outlet or fulfilment mode into that menu. A Pickup checkout that leaves serviceable delivery
+  coordinates in place can still show the delivery-current shelf. Hiding that shelf is an
+  unresolved Architecture Fit dependency. This experience does not add an outlet selector.
 - At least one eligible item remains to show.
 
 Any other case shows no shelf region, no heading, and no explanation. The customer is not told
@@ -247,7 +250,7 @@ One action per card. The order of the remaining cards stays stable.
 | Full removal | When every line of that parent is gone, the card may return only if it is still curated, still on the effective menu, and still available. |
 | Same item added from the menu | The shelf card hides. The menu item stays on the menu. |
 | Fewer than four eligible items | Show that many cards. Leave the rest of the row empty of placeholders. |
-| No eligible item, no authoritative outlet, shelf off, or feature unavailable | Show nothing. Pickup without the delivery-serviceable outlet is this row. |
+| No eligible item, no serviceable delivery outlet, shelf off, or feature unavailable | Show nothing. Absence of that delivery outlet is this row. Pickup mode by itself is not. |
 
 Cognitive load stays small: one short heading, at most four cards, one action each, and the
 existing Cart controls still do their existing jobs. The shelf does not ask the customer to
@@ -376,7 +379,7 @@ see priority as a reason.
 | Failure | The card stays while the parent is still eligible (`XR-036K-CC-005`). Recovery copy is the existing ordering sentence. Ordering continues. |
 | No longer eligible | The card is absent. The shelf does not announce a successful add and does not silently substitute a different item. |
 | Empty Cart | Existing empty-Cart content. No shelf. |
-| Empty shelf | No region. This covers curated items that are all ineligible, a cart with no authoritative outlet, a Pickup cart under the V1 limitation, a disabled shelf, and an unavailable feature. |
+| Empty shelf | No region. This covers curated items that are all ineligible, a cart with no serviceable delivery outlet, a disabled shelf, and an unavailable feature. Pickup mode by itself is not this row. |
 | Loading | Cart lines, quantity, remove, coupons, and Checkout stay usable. The shelf does not reserve four blank cards. |
 | Unavailable | Same as empty shelf. No blocking error. |
 | Recovery | The customer remains on Cart, at the same scroll position, and can retry that card or continue. |
@@ -489,9 +492,11 @@ shelf.
 Experience QA, when implementation later exists, checks that the approved interaction is the one
 customers get:
 
-- The shelf appears only on a non-empty Cart, before Checkout, only when an authoritative outlet
-  already exists for the Cart menu read, and only with eligible items. In V1 that outlet is the
-  delivery-serviceable outlet. Pickup without it shows no shelf.
+- The shelf appears only on a non-empty Cart, before Checkout, only when the Cart menu read
+  already has a serviceable delivery outlet, and only with eligible items. No such outlet shows
+  no shelf. A Pickup checkout that leaves those coordinates in place can still show the
+  delivery-current shelf. That shelf is not a Pickup price or availability promise. Whether V1
+  hides it is unresolved.
 - Empty Cart has no shelf.
 - Ignoring the shelf still reaches Checkout and Payment.
 - At most four cards are reachable, including by scrolling on a narrow viewport.

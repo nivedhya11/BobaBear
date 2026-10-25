@@ -183,14 +183,29 @@ and does not teach assortment a fulfilment-mode argument.
 - Delivery states that can display eligible products are that `serviceable` state only, and
   only for projected items the outlet session leaves available. `no_location`,
   `not_orderable`, and `indeterminate` pass no outlet and display no shelf cards.
-- Pickup states that can display eligible products on Cart: none. Pickup outlet selection is
+- Shelf eligibility follows the existing delivery ordering context only.
+  `CartClient.refreshOrderingSurface` resolves the menu outlet only from
+  `readDeliveryContext()` via `menuOutletIdFromOrderingContext`. Pickup outlet selection is
   Checkout authority. `CheckoutClient.continuePickupWithOutlet` writes `fulfilmentMode:
   "PICKUP"` and `pickupOutletId` through `setCheckoutFulfilment`
-  (`src/components/ordering/CheckoutClient.tsx`). Checkout prepare then uses
-  `preload.pickupOutletId` as `selectedOutletId` for `PICKUP`, and the serviceability
-  `selectedOutletId` for `DELIVERY` (`src/server/checkout/prepare.ts`). `CartClient` does not
-  pass `pickupOutletId` into `getCustomerMenu`. It reads `activeCheckout.fulfilmentMode` only
+  (`src/components/ordering/CheckoutClient.tsx`). That call does not clear the delivery
+  sessionStorage coordinates. Checkout prepare then uses `preload.pickupOutletId` as
+  `selectedOutletId` for `PICKUP`, and the serviceability `selectedOutletId` for `DELIVERY`
+  (`src/server/checkout/prepare.ts`). Cart does not pass `pickupOutletId` or
+  `fulfilmentMode` into `getCustomerMenu`. It reads `activeCheckout.fulfilmentMode` only
   for coupon and total presentation when a checkout evaluation is being reused.
+- No serviceable delivery outlet means no shelf and no new Cart or Checkout block.
+- A Pickup checkout that leaves serviceable delivery coordinates in place can still produce
+  a shelf, because Cart does not read `pickupOutletId` or `fulfilmentMode` into the menu.
+  That shelf is the delivery-current projection. It is not a Pickup availability or Pickup
+  price promise.
+- Whether V1 must hide that shelf when `activeCheckout.fulfilmentMode` is `PICKUP` is an
+  unresolved Architecture Fit dependency. This candidate does not specify an implementation.
+  `PICKUP_DELIVERY_COVERAGE = DECISION_REQUIRED` for that mixed case only.
+- `PICKUP_V1_COVERAGE` stays the source rule: no shelf until a serviceable delivery outlet
+  already exists. Pickup mode itself does not suppress the shelf. Cart cannot establish a
+  Pickup outlet. No Cart outlet selector is added. Checkout is unchanged. `UOE-DR-06` stays
+  unauthorized. Its text is `NOT_FOUND` on this SHA.
 - Signed-in, returning, scheduled, and saved-context journeys do not change that Cart outlet.
   `fetchCustomerSession` in `CartClient` runs when the customer continues to Checkout. It does
   not resolve an outlet. `readDeliveryContext` is sessionStorage coordinates
@@ -210,9 +225,11 @@ and does not teach assortment a fulfilment-mode argument.
   the authority a Cart outlet selector would affect. No Cart outlet selector is added, and
   Checkout is not changed. Missing context never blocks Cart or Checkout.
 
-V1 disposition: retain the no-outlet / no-shelf fallback. Practical coverage is Delivery carts
-that already have a `serviceable` outlet. Pickup carts do not get a shelf in V1. That is a
-documented limitation. It is not a new way to establish a Pickup outlet.
+V1 disposition: retain the no-outlet / no-shelf fallback. No shelf until a serviceable delivery
+outlet already exists. Pickup mode itself does not suppress the shelf. The mixed case, a Pickup
+checkout that still has serviceable delivery coordinates, remains
+`PICKUP_DELIVERY_COVERAGE = DECISION_REQUIRED`. This is not a new way to establish a Pickup
+outlet.
 
 Fulfilment that is not orderable (`no_location`, `not_orderable`, `indeterminate`) yields no
 cards. Cart, coupon, Checkout, and Payment keep their existing behaviour.
@@ -702,7 +719,9 @@ ATTRIBUTION = DEFER purchased-unit provenance. An optional caller-supplied flag 
 
 OBSERVATION_SEMANTICS = M-CC-RSP is the eligible shelf response and is not exposure. M-CC-01 is the shelf actually rendered to the customer. M-CC-02 is the explicit shelf action. M-CC-03 is the authoritative successful Cart add. Rendered-exposure validation is an Architecture Fit dependency and is not implemented. Interaction and attach rates use M-CC-01 as denominator and are not computable from M-CC-RSP.
 
-PICKUP_V1_COVERAGE = NO_SHELF_UNTIL_SERVICEABLE_DELIVERY_OUTLET. Cart cannot establish a Pickup outlet. Checkout pickupOutletId is not read into the Cart menu. No Cart outlet selector. Checkout is unchanged. UOE-DR-06 text is NOT_FOUND on a6155378b799e06a95b28c593ac1a340d7ca9245.
+PICKUP_V1_COVERAGE = NO_SHELF_UNTIL_SERVICEABLE_DELIVERY_OUTLET. Pickup mode itself does not suppress the shelf. Cart cannot establish a Pickup outlet. Checkout pickupOutletId is not read into the Cart menu. No Cart outlet selector. Checkout is unchanged. UOE-DR-06 stays unauthorized. Its text is NOT_FOUND on a6155378b799e06a95b28c593ac1a340d7ca9245.
+
+PICKUP_DELIVERY_COVERAGE = DECISION_REQUIRED for the mixed case only. A Pickup checkout that leaves serviceable delivery coordinates in place can still produce the delivery-current shelf. Whether V1 must hide that shelf when activeCheckout.fulfilmentMode is PICKUP is an unresolved Architecture Fit dependency. No implementation is specified.
 
 SECURITY_OPEN_FOR_FIT = cross-brand enforcement on the not-yet-existing configuration; shelf display price versus payable quote; addCartLine does not re-check menu eligibility and this candidate does not add that gate; shelf-add replay is ordinary cart revision conflict or a real second add; two-tab and menu-versus-shelf races recompute only from the authoritative cart; claim keeps the same lines, reconcile unions parent products, and a signed-in session before claim excludes only the customer cart.
 
