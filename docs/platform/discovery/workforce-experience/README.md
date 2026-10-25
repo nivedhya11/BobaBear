@@ -29,6 +29,8 @@ PRODUCT_DEFINITION_AMENDMENT = WXE-P1-COMM_OPTION_R — RATIFIED_RECORDED (doc 1
 EXPERIENCE_AMENDMENT = WXE-P1-COMM_OPTION_R — RATIFIED_RECORDED (doc 17)
 OPTION_R_FOUNDER_RATIFICATION = RECORDED (W2 2026-10-24; not a new Gate PASS)
 FORMAL_NEW_PD_XD_GATE_PASS = NOT_GRANTED
+AMENDED_EXPERIENCE_GATE_CANDIDATE = 25-amended-experience-gate-candidate.md
+AMENDED_EXPERIENCE_GATE = NOT_DECIDED
 WXE_UPD_02 = A
 WXE_P1_COMM = OPTION_R
 WXE_UPD_03 = B
@@ -74,6 +76,10 @@ Source conformance for the prepared F-1..F-7 set is
 decision request is
 [`24-founder-architecture-fit-decision-packet.md`](./24-founder-architecture-fit-decision-packet.md).
 Both are stacked on PR #426. Neither grants Architecture Fit or Architecture Lock.
+The amended Experience Gate candidate is
+[`25-amended-experience-gate-candidate.md`](./25-amended-experience-gate-candidate.md).
+Its verdict is `NOT_DECIDED`. It does not replace the historical Experience Gate PASS and it
+does not grant Architecture Fit or Architecture Lock.
 
 This package still does **not**:
 
@@ -131,6 +137,7 @@ ratification is a scope amendment record, not an additional Gate PASS.
 | [`22-t4-people-accessibility-work-package.md`](./22-t4-people-accessibility-work-package.md) | T4 People and accessibility package (PLANNED) |
 | [`23-source-conformance-annex.md`](./23-source-conformance-annex.md) | Source-conformance annex for F-1..F-7 against `origin/main` (evidence, not a Fit grant) |
 | [`24-founder-architecture-fit-decision-packet.md`](./24-founder-architecture-fit-decision-packet.md) | Integrated Founder Architecture Fit decision packet (NOT_GRANTED) |
+| [`25-amended-experience-gate-candidate.md`](./25-amended-experience-gate-candidate.md) | Amended Experience Gate candidate for the Option R presentation scope (`NOT_DECIDED`; Fit stays blocked) |
 
 ## Provisional candidate identifiers
 
