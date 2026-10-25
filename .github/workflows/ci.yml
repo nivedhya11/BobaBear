@@ -213,6 +213,52 @@ jobs:
       - name: IMP-036J Tranche 8 proof
         run: npm run test:imp036j:tranche8
 
+  # Isolated from commerce-core. Same runner capabilities already proven by
+  # commerce-core (Podman + Testcontainers PostgreSQL + Chromium + production
+  # build) and by nightly e2e-customer-ordering (the same disposable-database
+  # server and fake Razorpay checkout outcome). Missing Podman or Chromium
+  # fails the job. No continue-on-error and no retries.
+  gtm-uat-browser:
+    name: GTM UAT browser
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020  # v7.0.0
+        with:
+          node-version: "22.23.1"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Ensure rootless Podman socket
+        run: |
+          socket="/run/user/$(id -u)/podman/podman.sock"
+          command -v podman
+          if [ ! -S "$socket" ]; then
+            systemctl --user start podman.socket
+          fi
+          test -S "$socket"
+          podman --version
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: GTM UAT browser Golden Journeys
+        run: npm run test:e2e:gtm-uat-browser
+
+      - name: Upload GTM UAT browser evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: gtm-uat-browser
+          path: test-results-gtm-uat-browser/**
+          if-no-files-found: ignore
+
   security-smoke:
     name: Security smoke
     runs-on: ubuntu-latest
