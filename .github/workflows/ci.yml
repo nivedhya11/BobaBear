@@ -57,6 +57,12 @@ jobs:
       - name: Testing inventory check
         run: npm run testing:inventory:check
 
+      - name: Repository hygiene
+        env:
+          REPO_HYGIENE_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          REPO_HYGIENE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: npm run audit:repo-hygiene
+
   unit-component:
     name: Unit / component
     runs-on: ubuntu-latest

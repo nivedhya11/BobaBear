@@ -111,6 +111,23 @@ convenience only. If the named skill cannot be read, STOP the affected action.
 | Founder UAT deployment or Founder-UAT acceptance evidence | [`.cursor/skills/boba-founder-uat/SKILL.md`](.cursor/skills/boba-founder-uat/SKILL.md) |
 | Governed working-tree fingerprint or post-merge branch hygiene | [`.cursor/skills/boba-branch-and-fingerprint/SKILL.md`](.cursor/skills/boba-branch-and-fingerprint/SKILL.md) |
 
+## Repository hygiene (RHS-1)
+
+[`docs/platform/engineering/repository-conventions.md`](docs/platform/engineering/repository-conventions.md)
+is a supporting engineering standard. It is not a product, architecture, lifecycle, security,
+payment, or agent-governance authority. This file remains the sole agent operating contract. Do not
+add a `.cursor/rules` layer or a duplicate `.agents` skill tree for these conventions.
+
+Before creating, moving, renaming, archiving, or removing an artifact:
+
+- Check the proposed file name and destination against that standard.
+- After the relevant repository edits, run `npm run audit:repo-hygiene`.
+- Verify moves and renames do not break imports, tests, scripts, or documentation references.
+- Classify retirement before removing anything. Age is a review trigger, not deletion authority.
+- Report the hygiene-check result in the normal delivery report.
+
+Do not mass-rename or delete legacy artifacts during ordinary feature work.
+
 ## Operating planes
 
 ```text

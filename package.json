@@ -131,6 +131,7 @@
     "audit:config": "node scripts/audit-config-boundary.mjs",
     "audit:database": "node scripts/audit-database.mjs",
     "audit:persistence": "node scripts/audit-persistence.mjs",
+    "audit:repo-hygiene": "node scripts/repository/check-repository-conventions.mjs",
     "audit:outbox-idempotency": "node scripts/audit-outbox-idempotency.mjs",
     "config:check": "tsx scripts/check-config.ts --process web",
     "config:check:web": "tsx scripts/check-config.ts --process web",
