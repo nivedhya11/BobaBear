@@ -60,7 +60,10 @@ Tranche plans: [`17-ux-a-tranche-contract.md`](./17-ux-a-tranche-contract.md),
 [`19-ux-c-tranche-contract.md`](./19-ux-c-tranche-contract.md).
 UOE-DR-06 stays a separate package:
 [`20-uoe-dr-06-test-first-work-package.md`](./20-uoe-dr-06-test-first-work-package.md)
-(`NOT_AUTHORIZED`).
+(`NOT_AUTHORIZED`). Source classification against the #424 head is
+[`21-design-qt-mi-evidence-delta.md`](./21-design-qt-mi-evidence-delta.md). The short decision
+surface is [`22-founder-gate-review-packet.md`](./22-founder-gate-review-packet.md). Neither
+document changes §1.1 or grants this gate.
 
 ---
 
