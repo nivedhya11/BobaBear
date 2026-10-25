@@ -38,6 +38,7 @@ import {
   setPromotionBenefit,
   setPromotionTargets,
 } from "../../src/server/promotions";
+import { seedGtmUatBrowserFixtures } from "./gtm-uat-browser-fixtures";
 import {
   setOutletServiceabilityDistancePolicy,
   setOutletServiceabilityRoutingPriority,
@@ -332,6 +333,10 @@ export async function seedCustomerOrderingCommerce(workerConfig: WorkerConfig): 
         instructions: "Ask at counter for BOBA order.",
       });
     });
+
+    if (process.env.E2E_GTM_UAT_FIXTURES === "1") {
+      await seedGtmUatBrowserFixtures(persistence, actor, imported.brandId, tree.outlet.id);
+    }
 
     return { brandId: imported.brandId, outletId: tree.outlet.id };
   } finally {
