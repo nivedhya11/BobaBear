@@ -15,7 +15,7 @@ import { defineConfig, devices } from "@playwright/test";
  *
  * `tests/e2e/customer-auth.spec.ts` (IMP-009),
  * `tests/e2e/workforce-auth.spec.ts` (IMP-010), and
- * `tests/e2e/b5-commerce-composite-qa.spec.ts` are deliberately excluded here
+ * `tests/e2e/checkout-discount-presentation.spec.ts` are deliberately excluded here
  * — they need a real auth or commerce service (a Testcontainers PostgreSQL
  * database plus the corresponding HTTP process) behind the same origin, which
  * this config's plain static-file `webServer` does not provide. Each has its
@@ -36,7 +36,7 @@ export default defineConfig({
     "**/customer-auth.spec.ts",
     "**/workforce-auth.spec.ts",
     "**/customer-ordering.spec.ts",
-    "**/b5-commerce-composite-qa.spec.ts",
+    "**/checkout-discount-presentation.spec.ts",
   ],
   fullyParallel: true,
   forbidOnly: isCI,

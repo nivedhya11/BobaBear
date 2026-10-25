@@ -38,7 +38,7 @@ import {
   setPromotionBenefit,
   setPromotionTargets,
 } from "../../src/server/promotions";
-import { seedB5CommerceQaFixtures } from "./b5-commerce-qa-fixtures";
+import { seedB5CommerceQaFixtures } from "./checkout-discount-fixtures";
 import { seedGtmUatBrowserFixtures } from "./gtm-uat-browser-fixtures";
 import {
   setOutletServiceabilityDistancePolicy,

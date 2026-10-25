@@ -49,7 +49,7 @@ process.env.E2E_B5_COMMERCE_QA = "1";
 
 export default defineConfig({
   testDir: "./tests/e2e",
-  testMatch: ["**/b5-commerce-composite-qa.spec.ts"],
+  testMatch: ["**/checkout-discount-presentation.spec.ts"],
   fullyParallel: false,
   workers: 1,
   forbidOnly: isCI,

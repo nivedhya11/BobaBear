@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Disposable-browser runner for B5 checkout price-clarity evidence.
+ * Disposable-browser runner for checkout discount presentation evidence.
  * Fake Razorpay only. Does not start staging containers.
  */
 import { spawnSync } from "node:child_process";
@@ -34,7 +34,7 @@ function harnessRunId() {
 
 const result = spawnSync(
   "npx",
-  ["playwright", "test", "--config=playwright.b5-commerce-qa.config.ts"],
+  ["playwright", "test", "--config=playwright.checkout-discount-presentation.config.ts"],
   {
     cwd: projectRoot,
     env: {

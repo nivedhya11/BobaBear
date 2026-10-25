@@ -61,7 +61,7 @@ const PLAYWRIGHT_CONFIG_BASENAMES = Object.freeze([
   "playwright.commercial-workspace.config.ts",
   "playwright.workforce-auth.config.ts",
   "playwright.gtm-uat-browser.config.ts",
-  "playwright.b5-commerce-qa.config.ts",
+  "playwright.checkout-discount-presentation.config.ts",
 ]);
 
 /** Verification workflows that may establish `ciInclusion` (not deploy). */
@@ -81,7 +81,10 @@ const DEDICATED_E2E_COMMAND_SPECS = Object.freeze({
   "test:e2e:operations-lifecycle": Object.freeze(["tests/e2e/operations-lifecycle.spec.ts"]),
   "test:e2e:commercial-workspace": Object.freeze(["tests/e2e/commercial-workspace.spec.ts"]),
   "test:e2e:gtm-uat-browser": Object.freeze(["tests/e2e/gtm-uat-browser-journeys.spec.ts"]),
-  "test:e2e:b5-commerce-qa": Object.freeze(["tests/e2e/b5-commerce-composite-qa.spec.ts"]),
+  "test:e2e:checkout-discount-presentation": Object.freeze([
+    "tests/e2e/checkout-discount-presentation.spec.ts",
+  ]),
+  "test:e2e:b5-commerce-qa": Object.freeze(["tests/e2e/checkout-discount-presentation.spec.ts"]),
   "test:e2e:location-selector-layout": Object.freeze([
     "tests/e2e/location-selector-layout.spec.ts",
     "tests/e2e/location-selector-search-map.spec.ts",
