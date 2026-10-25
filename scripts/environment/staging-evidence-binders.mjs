@@ -32,7 +32,7 @@
 import { ENVIRONMENT_CLASSIFICATION, CHECKSUM_INTEGRITY_STATUS, LAYER_2_MAX_AGE_MS_DEFAULT, OPERATION_STATUS, OPERATION_TYPE, PROOF_CODE } from "../recovery/constants.mjs";
 import { evaluateQualifyingRecoveryProof, validateEvidence } from "../recovery/evidence.mjs";
 import { evaluateRecoveryPointFreshness } from "../recovery/freshness.mjs";
-import { interpretTrivyJson } from "../run-trivy.mjs";
+import { interpretTrivyJson, isActiveExpiry, isIsoDate } from "../run-trivy.mjs";
 import { POSTGRES_INIT_DISPOSITION, POSTGRES_INIT_REASON } from "./postgres-init-identity.mjs";
 import { STAGING_BASELINE_STATES } from "./staging-baseline.mjs";
 import {
@@ -1372,6 +1372,38 @@ export function bindSecurityEvidence(observation) {
     if (isObject(raw)) return new Map(Object.entries(raw));
     return new Map();
   })();
+  // An empty error list must not launder an expired or undated active row.
+  // Expiry uses the same inclusive calendar contract as enforceTrivyExceptionPolicy.
+  const vettedActiveByFinding = new Map();
+  let expiredActiveRow = false;
+  let unprovableActiveRow = false;
+  const todayIso = typeof policy?.todayIso === "string" ? policy.todayIso : "";
+  for (const [findingId, row] of activeByFinding) {
+    const expiry = isObject(row) && typeof row.expiry === "string" ? row.expiry : "";
+    if (!isIsoDate(todayIso) || !isIsoDate(expiry)) {
+      unprovableActiveRow = true;
+      continue;
+    }
+    if (!isActiveExpiry(todayIso, expiry)) {
+      expiredActiveRow = true;
+      continue;
+    }
+    vettedActiveByFinding.set(findingId, row);
+  }
+  if (expiredActiveRow && !result.findings.some((f) => f.code === BINDER_REASON.SECURITY_EXCEPTION_EXPIRED)) {
+    result.findings.push({
+      code: BINDER_REASON.SECURITY_EXCEPTION_EXPIRED,
+      detail: "an active exception row is past its expiry; renewal requires Founder authority and never happens here",
+    });
+    outcome = BINDER_OUTCOME.BLOCKED;
+  }
+  if (unprovableActiveRow) {
+    result.findings.push({
+      code: BINDER_REASON.SECURITY_EXCEPTION_POLICY_ERROR,
+      detail: "active exception row lacks a comparable ISO expiry against todayIso",
+    });
+    outcome = BINDER_OUTCOME.BLOCKED;
+  }
 
   const required = Array.isArray(observation.requiredImages) ? observation.requiredImages : REQUIRED_STAGING_IMAGES;
   const inspected = new Map((Array.isArray(observation.inspectedImages) ? observation.inspectedImages : []).filter(isObject).map((i) => [i.image, i]));
@@ -1432,7 +1464,7 @@ export function bindSecurityEvidence(observation) {
     }
     const unexcepted = interpreted.findings.filter((f) => {
       if (f.severity !== "HIGH" && f.severity !== "CRITICAL") return false;
-      const row = activeByFinding.get(f.id);
+      const row = vettedActiveByFinding.get(f.id);
       return !(row && row.image === target.trivyTargetId);
     });
     if (unexcepted.length > 0) {

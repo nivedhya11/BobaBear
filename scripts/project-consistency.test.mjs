@@ -19617,6 +19617,7 @@ describe("D-384 programme baseline / IMP-036K source-era decision allocation", (
       d386,
       d386.replaceAll("40 GiB", "4 GiB").replaceAll("8 GiB", "1 GiB"),
     );
+    const bad386Headroom = liveDecision.replace(d386, d386.replaceAll("2×", "2x").replaceAll("1.5×", "1.5x"));
     assert.equal(
       evaluateD384ProgrammeBaselineProgression({ meta, text: bad384Contract }).code,
       "D384_CONTRACT",
@@ -19624,6 +19625,10 @@ describe("D-384 programme baseline / IMP-036K source-era decision allocation", (
     assert.equal(evaluateD384ProgrammeBaselineProgression({ meta, text: bad384Scope }).code, "D384_SCOPE");
     assert.equal(evaluateD384ProgrammeBaselineProgression({ meta, text: bad385 }).code, "D385_CONTRACT");
     assert.equal(evaluateD384ProgrammeBaselineProgression({ meta, text: bad386 }).code, "D386_CONTRACT");
+    assert.equal(
+      evaluateD384ProgrammeBaselineProgression({ meta, text: bad386Headroom }).code,
+      "D386_CONTRACT",
+    );
   });
 
   it("rejects DR-26 progression with stale next free ID D-385", () => {

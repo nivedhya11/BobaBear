@@ -42332,12 +42332,12 @@ export function evaluateD386Current(decisionText) {
     };
   }
   const line = rows[0] ?? "";
-  if (!/AD-PF-02/.test(line) || !/40 GiB/.test(line) || !/8 GiB/.test(line)) {
+  if (!/AD-PF-02/.test(line) || !/40 GiB/.test(line) || !/8 GiB/.test(line) || !/2×/.test(line) || !/1\.5×/.test(line)) {
     return {
       ok: false,
       code: "D386_CONTRACT",
       message:
-        "D-386 must lock AD-PF-02 Founder staging capacity floors (40 GiB disk / 8 GiB memory) as policy",
+        "D-386 must lock AD-PF-02 Founder staging capacity floors (40 GiB disk and 2× measured footprint / 8 GiB memory and 1.5× measured peak) as policy",
     };
   }
   return { ok: true, status: "CURRENT" };

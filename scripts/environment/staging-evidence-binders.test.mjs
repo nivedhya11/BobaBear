@@ -694,6 +694,53 @@ test("S6: an expired exception NEVER establishes PASS, even with clean scans", (
   assert.ok(hasFinding(bound, BINDER_REASON.SECURITY_EXCEPTION_EXPIRED));
   assert.equal(bound.evidence.security.imageSecurityEvidencePresent, false);
   assert.equal(engineCategory(bound, "security"), PREFLIGHT_OUTCOME.BLOCKED);
+
+  const laundered = bindSecurityEvidence(
+    securityObservation({
+      exceptionPolicy: {
+        todayIso: "2026-10-25",
+        errors: [],
+        activeByFinding: new Map([["DS-0002", { id: "VEX-TRIVY-001", image: "postgres", expiry: "2026-10-23" }]]),
+      },
+    }),
+  );
+  assert.equal(laundered.outcome, BINDER_OUTCOME.BLOCKED);
+  assert.ok(hasFinding(laundered, BINDER_REASON.SECURITY_EXCEPTION_EXPIRED));
+  assert.equal(laundered.evidence.security.imageSecurityEvidencePresent, false);
+  assert.equal(laundered.evidence.security.sourceImageCorrelated, false);
+  assert.equal(engineCategory(laundered, "security"), PREFLIGHT_OUTCOME.BLOCKED);
+
+  const postgres = REQUIRED_STAGING_IMAGES.find((t) => t.service === "postgres");
+  const idx = REQUIRED_STAGING_IMAGES.indexOf(postgres);
+  const withFinding = securityObservation({
+    exceptionPolicy: {
+      todayIso: "2026-10-25",
+      errors: [],
+      activeByFinding: new Map([["DS-0002", { id: "VEX-TRIVY-001", image: "postgres", expiry: "2026-10-23" }]]),
+    },
+  });
+  withFinding.trivyReports[idx] = {
+    image: postgres.image,
+    report: trivyReport(postgres.image, imageId(String(idx)), [{ ID: "DS-0002", Severity: "HIGH" }]),
+    scannedAt: RECENT,
+  };
+  const suppressed = bindSecurityEvidence(withFinding);
+  assert.equal(suppressed.outcome, BINDER_OUTCOME.BLOCKED);
+  assert.ok(hasFinding(suppressed, BINDER_REASON.SECURITY_EXCEPTION_EXPIRED));
+  assert.ok(hasFinding(suppressed, BINDER_REASON.SECURITY_UNEXCEPTED_FINDING));
+
+  const undated = bindSecurityEvidence(
+    securityObservation({
+      exceptionPolicy: {
+        todayIso: "2026-10-25",
+        errors: [],
+        activeByFinding: new Map([["DS-0002", { id: "VEX-TRIVY-001", image: "postgres" }]]),
+      },
+    }),
+  );
+  assert.equal(undated.outcome, BINDER_OUTCOME.BLOCKED);
+  assert.ok(hasFinding(undated, BINDER_REASON.SECURITY_EXCEPTION_POLICY_ERROR));
+  assert.equal(undated.evidence.security.imageSecurityEvidencePresent, false);
 });
 
 test("S6: exceptions apply only to the justified image; unexcepted HIGH/CRITICAL blocks", () => {
