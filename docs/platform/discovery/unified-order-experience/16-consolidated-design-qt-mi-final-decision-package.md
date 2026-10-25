@@ -185,7 +185,7 @@ exports stay open.
 
 | Responsibility | Status | Source | What is closed |
 |---|---|---|---|
-| Primary in-app strings MC-01–MC-33 | CLOSED as working baseline | Issue #432; `15-…` §1. `EDITS_RECORDED = NONE`. `(C)` full freeze before Design Readiness was not selected | Working baseline and Content QA latitude `(A)+(B)`. Design Readiness PASS is still the §1 decision |
+| Primary in-app strings MC-01–MC-33 | CLOSED as working baseline | Issue #432; `15-…` §1. `EDITS_RECORDED = NONE`. `(C)` full freeze before Design Readiness was not selected | Working baseline and Content QA latitude `(A)+(B)`. Design Readiness PASS is recorded on 2026-10-25 in §1.1 and [`23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md`](./23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md), with exclusions still in force |
 | Secondary rows MC-08, MC-09, MC-12, MC-14, MC-23–MC-27, MC-30, MC-31 | CLOSED as tranche-exit Content QA | `15-…` §1.3 | Polish may close at T1/T2/T3 exit without reopening Product or Experience. Meaning stays locked |
 | WhatsApp on-wire (MC-34) | CLOSED as not approved | Issue #432; `15-…` §2 | On-wire DR-04 is excluded. Bodies remain unknown (§4.3) |
 | Seven platform WhatsApp registry rows | CLOSED as internal registry only | `14-…` §2.1 from `drizzle/0033`, `0034`, `0046` | Internal `APPROVED` + `provider_template_ref`. This is not Meta body evidence |
@@ -194,7 +194,7 @@ exports stay open.
 | Primary conversion denominator | CLOSED | `15-…` MI-02 | Checkout starts at `checkout_id` grain. Raw CART evaluation counts are forbidden as that denominator |
 | CHECKOUT fingerprint-only commercial-state events | CLOSED | Capability §2.5 / §4.4 #19; `15-…` MI-03 | `order_commercial_state_change` stays IMP-036J fingerprint semantics |
 | Privacy bans | CLOSED as bans | Capability §4.3 | No `evaluation_context_digest`, no PAN, no exact street in analytics; V1 `evaluated_delivery_location_hmac` stays null |
-| QT-01–QT-04 and DR06-B/C | CLOSED as working dispositions | `15-…` §4 | Plan candidate retained; AS-34/AS-41 stay blocking; packaging allowed while remediation is unauthorized. Finalization is still §1 |
+| QT-01–QT-04 and DR06-B/C | CLOSED as working dispositions | `15-…` §4 | Quality finalization is recorded on 2026-10-25 in §1.1 and [`23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md`](./23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md). AS-34 and AS-41 stay RED. UOE-DR-06 remediation stays `NOT_AUTHORIZED`. Tests stay unexecuted |
 | UOE-DR-06 product commitment | CLOSED as accepted defect | Founder gate record; capability §3.3 | Schedule-capable Takeaway is in the product. Remediation is not authorized |
 | Telemetry vendor / transport | OPEN | §4.1 | No vendor is named by a UOE source |
 | Retention durations | OPEN | §4.2 | No duration is ratified |

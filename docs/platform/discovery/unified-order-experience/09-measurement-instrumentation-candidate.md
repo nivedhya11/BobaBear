@@ -187,7 +187,7 @@ V1_NEW_CART_EVALUATED_SCHEDULED_FROM_BROWSE_INTENT = NO
 | Exact telemetry vendor | DECISION_REQUIRED |
 | Final event schema + versioning | DECISION_REQUIRED |
 | Retention / privacy policy sign-off | DECISION_REQUIRED |
-| Analytics-owner approval of denominators | DECISION_REQUIRED |
+| Primary checkout-start denominator | CLOSED / ratified (`16-…` §3; `15-…` MI-02) |
 | Causal conversion claim | Forbidden until measured |
 
 **Formal Measurement Plan:** `FINALIZED` under `GRANT_WITH_EXCLUSIONS` in `23-…`.  

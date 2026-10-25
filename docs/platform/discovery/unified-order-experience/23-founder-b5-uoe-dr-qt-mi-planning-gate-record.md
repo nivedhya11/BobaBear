@@ -107,6 +107,8 @@ a retention duration was chosen
 - `IMPLEMENTATION_AUTHORIZED = NO`.
 - Existing Checkout is not asserted to implement the locked UOE architecture. Product Definition PASS, Experience PASS, Architecture Fit PASS, and Architecture Lock already recorded on #424 stay in force.
 
+Doc 06's former unqualified `DESIGN_READINESS_PASS = NO` was the Fit-time boundary on 2026-10-23 and is not the current Design gate status.
+
 ## Outstanding implementation decisions
 
 ```text
