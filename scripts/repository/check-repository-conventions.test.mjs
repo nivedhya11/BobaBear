@@ -464,6 +464,45 @@ test("a new generated file fails against a real git comparison", () => {
   }
 });
 
+test("an ordinary valid new file passes", () => {
+  const repo = initRepo();
+  try {
+    writeRepoFile(repo, "README.md", "# fixture\n");
+    const base = commitAll(repo, "init");
+    writeRepoFile(repo, "scripts/pricing/format-order-total.mjs", "export const amount = 1;\n");
+    git(repo, ["add", "scripts/pricing/format-order-total.mjs"]);
+    const head = git(repo, ["rev-parse", "HEAD"]);
+    const before = statusZ(repo);
+    const staged = runChecker(repo, ["--base", base, "--head", base]);
+    assert.equal(staged.status, 0, staged.stdout);
+    assert.match(staged.stdout, /REPO_HYGIENE_PASS/);
+    assert.equal(
+      staged.stdout.split("\n").some((line) => line.startsWith("REPO_HYGIENE_NAMING_VIOLATION")),
+      false,
+    );
+    assert.equal(
+      staged.stdout.split("\n").some((line) => line.startsWith("REPO_HYGIENE_PLACEMENT_VIOLATION")),
+      false,
+    );
+    assert.equal(statusZ(repo), before);
+    assert.equal(git(repo, ["rev-parse", "HEAD"]), head);
+
+    const committedHead = commitAll(repo, "add pricing total");
+    const committedBefore = statusZ(repo);
+    const committed = runChecker(repo, ["--base", base, "--no-worktree"]);
+    assert.equal(committed.status, 0, committed.stdout);
+    assert.match(committed.stdout, /REPO_HYGIENE_PASS/);
+    assert.equal(
+      committed.stdout.split("\n").some((line) => line.startsWith("REPO_HYGIENE_NAMING_VIOLATION")),
+      false,
+    );
+    assert.equal(statusZ(repo), committedBefore);
+    assert.equal(git(repo, ["rev-parse", "HEAD"]), committedHead);
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
 /**
  * @param {string} repo
  */
