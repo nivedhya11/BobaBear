@@ -31,11 +31,11 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2350,
-    "executableTestFiles": 540,
+    "trackedPathsConsidered": 2351,
+    "executableTestFiles": 541,
     "sourceTestFiles": 160,
     "testsTreeExecutableFiles": 291,
-    "scriptTestFiles": 89,
+    "scriptTestFiles": 90,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
     "playwrightConfigs": 7,
@@ -587,6 +587,7 @@
     "scripts/recovery/spaces/local.test.mjs",
     "scripts/recovery/spaces/s3.test.mjs",
     "scripts/recovery/systemd/validate.test.mjs",
+    "scripts/recovery/tools/age-tools.test.mjs",
     "scripts/recovery/validate/business-integrity.test.mjs",
     "scripts/recovery/validate/isolation.test.mjs",
     "scripts/recovery/validate/recovered-app.test.mjs",
@@ -2968,6 +2969,24 @@
     },
     {
       "path": "scripts/recovery/systemd/validate.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/recovery/tools/age-tools.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
       "testType": "script-unit",
