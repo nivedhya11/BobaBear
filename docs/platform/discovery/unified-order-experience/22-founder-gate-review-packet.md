@@ -1,9 +1,12 @@
 <!--
   AUTHORITY: NON_AUTHORITATIVE_DISCOVERY_DRAFT
   ID: UOE-FOUNDER-GATE-REVIEW-PACKET-1
-  DESIGN_READINESS_PASS: NOT_GRANTED
-  QUALITY_PLAN_FINALIZATION: NOT_GRANTED
-  MEASUREMENT_PLAN_FINALIZATION: NOT_GRANTED
+  DESIGN_READINESS_PASS: PASS
+  QUALITY_PLAN_FINALIZATION: FINALIZED
+  MEASUREMENT_PLAN_FINALIZATION: FINALIZED
+  FOUNDER_VERDICT: GRANT_WITH_EXCLUSIONS
+  FOUNDER_RECORD: 23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md
+  THIS_PACKET_DOES_NOT_GRANT: YES
   IMPLEMENTATION_AUTHORIZED: NO
   NOT_MERGED_MAIN_AUTHORITY: YES
 -->
@@ -12,18 +15,24 @@
 
 ```text
 DECISION_OWNER = HUMAN_FOUNDER
-STATUS = NOT_GRANTED
+STATUS = RECORDED_IN_23
+RECORDED_VERDICT = GRANT_WITH_EXCLUSIONS
+RECORDED_IN = 23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md
+RECORDED_DATE = 2026-10-25
+THIS_PACKET_DOES_NOT_GRANT = YES
 AGENT_MAY_NOT_SELECT = YES
-GATE_READINESS = READY_FOR_FOUNDER_DECISION
-PASS_OR_STOP_DECISION_REQUIRED = YES
+GATE_READINESS = RECORDED_GRANT_WITH_EXCLUSIONS
+PASS_OR_STOP_DECISION_REQUIRED = NO
 EVIDENCE = 21-design-qt-mi-evidence-delta.md
 GRANT_TEXT_IF_CHOSEN = 16-consolidated-design-qt-mi-final-decision-package.md §1.1
 SOURCE = PR #424 @ 3b207b3bb69f305353770315af7ad814a7e766d0
 THIS_PACKET_IS_NOT_MERGED_MAIN = YES
 ```
 
-One decision. Grant the three PD-2 prerequisites together, with the exclusions already
-written in `16-…` §1.1, or withhold all three. This packet does not grant either outcome.
+The recorded outcome is `GRANT_WITH_EXCLUSIONS`. Founder "proceed" on 2026-10-25 adopted
+`16-…` §1.1, and the exclusions in that block remain in force. This packet is not an open
+decision between grant and withhold. `THIS_PACKET_DOES_NOT_GRANT = YES`. The record is
+[`23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md`](./23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md).
 
 Preserved and not reopened: Product Definition PASS, Experience Gate PASS, Architecture Fit
 PASS, Architecture Lock, the W2 in-app baseline MC-01–MC-33, checkout-start denominator,
@@ -80,25 +89,30 @@ blocking, and packaging this review does not authorize the corrective.
 
 ## Decision
 
-```text
-option_grant_with_exclusions:
-  Adopt 16-… §1.1. Unknowns above stay unknown.
-option_withhold:
-  Withhold all three gates.
-cursor_recommendation:
-  None. The agent does not choose.
-```
+Recorded outcome: `GRANT_WITH_EXCLUSIONS` in `23-…`. This packet is not an open choice
+between grant and withhold. `THIS_PACKET_DOES_NOT_GRANT = YES`. Exclusions in `16-…` §1.1
+remain in force: AS-34 and AS-41 stay RED, UOE-DR-06 remediation stays `NOT_AUTHORIZED`,
+tests stay unexecuted, WhatsApp on-wire stays excluded, and vendor, retention, and Meta
+bodies stay unknown.
 
-A grant is still short of implementation. PD-2 implementation authorization also needs an
-allocated IMP, which UOE-DR-01 does not provide.
+The recorded grant is still short of implementation. PD-2 implementation authorization also
+needs an allocated IMP, which UOE-DR-01 does not provide.
 
 ```text
-DESIGN_READINESS_PASS = NOT_GRANTED
-QUALITY_PLAN_FINALIZATION = NOT_GRANTED
-MEASUREMENT_PLAN_FINALIZATION = NOT_GRANTED
+DESIGN_READINESS_PASS = PASS
+QUALITY_PLAN_FINALIZATION = FINALIZED
+MEASUREMENT_PLAN_FINALIZATION = FINALIZED
+FOUNDER_VERDICT = GRANT_WITH_EXCLUSIONS
+FOUNDER_PLANNING_GATE_RECORD = 23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md
+THIS_PACKET_DOES_NOT_GRANT = YES
 IMPLEMENTATION_AUTHORIZED = NO
 UOE_DR06_REMEDIATION = NOT_AUTHORIZED
 FORMAL_IMP_IDENTITY = NOT_ALLOCATED
+EXECUTED_TESTS = NONE
+TELEMETRY_VENDOR = UNKNOWN
+RETENTION_DURATIONS = UNKNOWN
+WHATSAPP_ON_WIRE = EXCLUDED
+ANALYTICS_COLLECTION_OR_STORAGE = NOT_AUTHORIZED
 PR_MERGE = NO
 COMPLETE_AND_ACCEPTED = NOT_CLAIMED
 ```

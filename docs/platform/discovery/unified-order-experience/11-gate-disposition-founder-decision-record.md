@@ -95,9 +95,9 @@ REFERENCE_CANDIDATE_2_HEAD = 5a4583eba34dff93082c49a1e0edce1efce4d07c
 | Architecture Fit PASS | **PASS** | Founder 2026-10-23; variant `PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1`; reviewed HEAD `9a9e3f717…` |
 | Architecture Lock | **YES / ARCHITECTURE_LOCKED** | Contract `ARCH-UOE-LOCK-PROPOSAL-1`; binding path `capabilities/UOE-unified-order-experience.md` |
 | Per-process rate-limit residual | **ACCEPTED_FOR_V1_PILOT** | Founder Lock; multi-instance must reassess |
-| Design Readiness | NOT_PERFORMED | Candidate only; owner package `14-…` (`UOE-FOUNDER-DESIGN-QT-MI-GATE-PACKAGE-R2`); **PASS NOT_GRANTED** |
-| Quality / Test Plan | NOT_PERFORMED | Reviewable draft `QT-UOE-CANDIDATE-3` + `14-…` §3 evidence matrix; **finalization NOT_GRANTED** |
-| Measurement / Instrumentation | NOT_PERFORMED | Reviewable draft `MI-UOE-CANDIDATE-3` + `14-…` §4 ownership proposal; **finalization NOT_GRANTED** |
+| Design Readiness | **PASS** `DR-UOE-CANDIDATE-3` | `GRANT_WITH_EXCLUSIONS` recorded in `23-…` (Founder proceed 2026-10-25). Operative text `16-…` §1.1. Spec remains `07-…` |
+| Quality / Test Plan | **FINALIZED** `QT-UOE-CANDIDATE-3` | Planned TEST-1 matrix in `08-…`. `EXECUTED_TESTS = NONE`. AS-34 and AS-41 remain RED |
+| Measurement / Instrumentation | **FINALIZED** `MI-UOE-CANDIDATE-3` | Roles, checkout-start denominator, fingerprint-only CHECKOUT events, and privacy bans. Vendor and retention not selected |
 | Implementation authorization | NOT_PERFORMED | STOP — requires Design Readiness + plans + UOE-DR-01 |
 | Future IMP identity / activation | **NOT_ALLOCATED / NOT_AUTHORIZED** | UOE-DR-01 deferred; D-383 / IMP-036K unchanged |
 | Founder Functional + Experience UAT | NOT_PERFORMED | After implementation |
@@ -114,9 +114,9 @@ REFERENCE_CANDIDATE_2_HEAD = 5a4583eba34dff93082c49a1e0edce1efce4d07c
 7. Pre-checkout eligibility distinct empty/no-cart states (GP-03) — contract **locked**, not implemented
 8. Timing-step Now disable uses pickup-options `nowEligible` — contract **locked**, not implemented
 9. WhatsApp DR-04 Meta template body-vs-variable — **LOCKED ASSIGNMENT** Content QA + Design Readiness (capability architecture §5); platform registry inventoried in `14-…` §2; Meta bodies `NOT_ACCESSIBLE` in-repo; no invented Meta templates; WhatsApp remains optional/noop-safe
-10. Abuse limits / performance budgets / privacy / negative security tests — **LOCKED** in capability architecture §4; Quality finalization pending; per-process residual **ACCEPTED_FOR_V1_PILOT**
+10. Abuse limits / performance budgets / privacy / negative security tests — **LOCKED** in capability architecture §4; Quality plan **FINALIZED** as planned proof (`EXECUTED_TESTS = NONE`); per-process residual **ACCEPTED_FOR_V1_PILOT**
 11. UOE-DR-01 future IMP identity / sequencing — **DEFERRED** (blocks implementation authorization)
-12. Design/Content/Quality/Measurement owner decisions — packaged in [`14-design-qt-mi-owner-decision-package.md`](./14-design-qt-mi-owner-decision-package.md) for Founder ratification; gates remain NOT_GRANTED
+12. Design/Content/Quality/Measurement owner decisions — packaged in [`14-design-qt-mi-owner-decision-package.md`](./14-design-qt-mi-owner-decision-package.md); Founder `GRANT_WITH_EXCLUSIONS` recorded in [`23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md`](./23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md)
 13. UOE-DR-06 smallest corrective proposal — `14-…` §5; remediation still **NOT_AUTHORIZED**
 
 ## C. Founder decisions — recorded dispositions
@@ -128,17 +128,18 @@ REFERENCE_CANDIDATE_2_HEAD = 5a4583eba34dff93082c49a1e0edce1efce4d07c
 | UOE-DR-03 | Formal Product Definition Gate + Experience Gate verdicts | **PERFORMED — PASS / PASS** on reviewed head `dbe078628…` |
 | UOE-DR-04 | WhatsApp + in-app implemented-channel consistency | **INCORPORATED — INCLUDE WhatsApp + in-app** |
 | UOE-DR-05 | Pre-checkout Takeaway eligibility / mode-aware Cart evaluate | **INCORPORATED — STRENGTHEN V1** (refined by GP-01…04) |
-| UOE-DR-06 | Schedule-capable Takeaway entitlement + Checkout defect classification / remediation vehicle | **RECORDED:** Schedule-capable Takeaway **ACCEPTED** (no Menu slots; no guaranteed availability). Checkout Mode→accepting-now-list→bind→evaluate(ASAP)→Timing = **ACCEPTED_CAPABILITY_CONFORMANCE_DEFECT**. Preferred **separately scoped corrective** after urgent payment work. **Implementation NOT_AUTHORIZED** by this decision. Governed remediation vehicle + risk gates still required before any fix |
+| UOE-DR-06 | Schedule-capable Takeaway entitlement + Checkout defect classification / remediation vehicle | **RECORDED:** Schedule-capable Takeaway **ACCEPTED** (no Menu slots; no guaranteed availability). Checkout Mode→accepting-now-list→bind→evaluate(ASAP)→Timing = **ACCEPTED_CAPABILITY_CONFORMANCE_DEFECT**. Preferred **separately scoped corrective** after urgent payment work. **Implementation NOT_AUTHORIZED** by this decision. Governed remediation vehicle + risk gates still required before any fix. Checkout correction stays owned by UOE-DR-06. Existing Checkout is not the locked UOE architecture |
+| FOUNDER-B5-UOE-DR-QT-MI | Design Readiness, Quality / Test Plan, and Measurement / Instrumentation Plan | **RECORDED 2026-10-25:** Founder **proceed**. Verdict **GRANT_WITH_EXCLUSIONS**. `DR-UOE-CANDIDATE-3` PASS. `QT-UOE-CANDIDATE-3` FINALIZED. `MI-UOE-CANDIDATE-3` FINALIZED. Operative text `16-…` §1.1 unchanged. AS-34 and AS-41 stay RED. Tests not executed. Vendor, retention, and Meta bodies unknown. No analytics collection or storage. IMP not allocated. Implementation not authorized |
 
 ### Binding limits on recorded Founder gates
 
 - Product Definition + Experience Gate verdicts remain specification, not implemented behaviour
-- Architecture Fit PASS + Architecture Lock are recorded for the reviewed contract only; they do **not** authorize Design Readiness, implementation, merge, or deploy
+- Architecture Fit PASS + Architecture Lock are recorded for the reviewed contract only; they do **not** authorize implementation, merge, or deploy. Design Readiness PASS is the later Founder grant in `23-…`
 - Do not retroactively rewrite accepted IMPs or alter canonical ROADMAP / STATE / decision-register through this PR
 - Exact microcopy and instrumentation schema → Design Readiness / Content QA / Quality and Measurement
 - Provenance-storage, contract bounds, abuse/perf/privacy, WhatsApp Meta **assignment** → **LOCKED** in `capabilities/UOE-unified-order-experience.md`
 - None of those may change approved user promise, eligibility, pricing truth, or payment safeguards without returning to Product / Experience Gate
-- `ARCHITECTURE_FIT_PASS=PASS`, `ARCHITECTURE_LOCK=YES`, `DESIGN_READINESS_PASS=NO`, `IMPLEMENTATION_AUTHORIZATION=NO`
+- `ARCHITECTURE_FIT_PASS=PASS`, `ARCHITECTURE_LOCK=YES`, `DESIGN_READINESS_PASS=PASS` (`GRANT_WITH_EXCLUSIONS`; record `23-…`), `QUALITY_PLAN=FINALIZED`, `MEASUREMENT_PLAN=FINALIZED`, `IMPLEMENTATION_AUTHORIZATION=NO`
 - `PR_MERGE=NO`, `DEPLOYMENT=NO`, `PAYMENT/SNAPSHOT_MUTATION=NO`, `NEW_IMP_ACTIVATION=NO`
 - UOE-DR-01 remains DEFERRED; UOE-DR-06 remediation remains NOT_AUTHORIZED
 
@@ -198,7 +199,7 @@ This candidate package must not be read as authority to change:
 - Accepted Product Definitions or Architecture locks
 - IMP-036J or IMP-036K identities
 - Application source, runtime, database, provider, or staging
-- Design Readiness / implementation authorization / merge / deploy
+- implementation authorization / merge / deploy. Design Readiness PASS is recorded only by `23-…` under `GRANT_WITH_EXCLUSIONS`
 - UOE-DR-01 IMP allocation or ROADMAP/STATE lifecycle advancement
 
 ## F. Next milestone motion
@@ -207,9 +208,9 @@ This candidate package must not be read as authority to change:
 2. ~~Independent Architecture Fit evaluation recommendation~~ **DONE** (`PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1`)
 3. ~~Architecture Lock proposal (decision-ready)~~ **DONE**
 4. ~~Founder Architecture Fit PASS + Architecture Lock~~ **RECORDED** (2026-10-23; HEAD `9a9e3f717…`)
-5. ~~Owner-decision packaging for Design / Quality / Measurement~~ **PACKAGED** in `14-…` (wave 2026-10-24) — **PASS / finalization NOT_GRANTED**
-6. Independent Design / Quality / Measurement review of `14-…` + candidates → Founder Design Readiness decision
-7. Quality / Measurement finalization → UOE-DR-01 identity when Founder allocates
-8. Separately: governed remediation vehicle for ACCEPTED_CAPABILITY_CONFORMANCE_DEFECT (Checkout composition) after urgent payment work — proposal in `14-…` §5; **not authorized by this package**
+5. ~~Owner-decision packaging for Design / Quality / Measurement~~ **PACKAGED** in `14-…` (wave 2026-10-24)
+6. ~~Founder Design Readiness, Quality plan, and Measurement plan~~ **RECORDED** `GRANT_WITH_EXCLUSIONS` in `23-…` (2026-10-25). Independent Architecture, Quality, and Measurement reviews of that grant are **not** performed by the recording
+7. UOE-DR-01 identity when the Founder allocates an IMP. Implementation authorization is still absent
+8. Separately: governed remediation vehicle for ACCEPTED_CAPABILITY_CONFORMANCE_DEFECT (Checkout composition) — proposal in `14-…` §5 and `20-…`; **NOT_AUTHORIZED**
 
-**STOP before Design Readiness grant, merge, implementation, or deployment.**
+**STOP before implementation authorization, IMP allocation, merge, or deployment.**

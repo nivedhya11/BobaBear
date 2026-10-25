@@ -13,6 +13,12 @@
 
 # Design / Quality / Measurement — Founder owner-decision package
 
+Current planning-gate status is
+[`23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md`](./23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md)
+(`FOUNDER-B5-UOE-DR-QT-MI`, `GRANT_WITH_EXCLUSIONS`, 2026-10-25). This package remains the
+pre-grant owner ledger. Its `NOT_GRANTED` lines are that earlier status. It does not itself
+grant the gates.
+
 ```text
 PACKAGE_ID = UOE-FOUNDER-DESIGN-QT-MI-GATE-PACKAGE-R2
 PACKAGE = UOE-CANDIDATE-3

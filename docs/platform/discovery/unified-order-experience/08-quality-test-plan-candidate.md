@@ -5,10 +5,12 @@
 ```text
 CANDIDATE_ID = QT-UOE-CANDIDATE-3
 SUPERSEDES = QT-UOE-CANDIDATE-2
-STATUS = PROPOSED_FOR_INDEPENDENT_REVIEW
+STATUS = FINALIZED
 AUTHORITY = NON_AUTHORITATIVE
 TESTING_POLICY = TEST-1
-FORMAL_QUALITY_PLAN = NOT_PERFORMED
+FORMAL_QUALITY_PLAN = FINALIZED
+FOUNDER_VERDICT = GRANT_WITH_EXCLUSIONS
+FOUNDER_PLANNING_GATE_RECORD = 23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md
 VARIANT = PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
 PACKAGE = UOE-CANDIDATE-3
 GATE_PRECISION_REVISION = YES
@@ -18,19 +20,21 @@ NEGATIVE_SECURITY_REQUIREMENTS = 21
 ARCHITECTURE_CONTRACT = ARCH-UOE-LOCK-PROPOSAL-1
 OWNER_DECISION_PACKAGE = docs/platform/discovery/unified-order-experience/14-design-qt-mi-owner-decision-package.md
 FOUNDER_DECISION_RECORD = docs/platform/discovery/unified-order-experience/15-founder-decision-record-and-gate-readiness-package.md
-QT_01_TO_04_WORKING_DISPOSITION = RECORDED (W2) — finalization NOT_GRANTED
+QT_01_TO_04_WORKING_DISPOSITION = RECORDED (W2) — plan FINALIZED; tests not executed
 EVIDENCE_STATUS_VOCABULARY = PLANNED | EXECUTED | BLOCKED_DR06 | PRESERVE_RED
 ```
 
 ## Proof strategy
 
 Align with TEST-1: evidence over claims; preserve initial failures; no silent-retry passes;
-architecture/invariants before UI cosmetics. All proofs below are **PLANNED** unless a future
-authorized implementation records executed evidence. This documentation task executes **no**
+architecture/invariants before UI cosmetics. Founder finalization of this plan is recorded in
+[`23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md`](./23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md)
+as `GRANT_WITH_EXCLUSIONS`. All proofs below remain **PLANNED**. This record executes **no**
 staging, payment/provider, database-mutation, or production tests.
 
 ```text
-FORMAL_QUALITY_PLAN = NOT_PERFORMED
+FORMAL_QUALITY_PLAN = FINALIZED
+QUALITY_PLAN_FINALIZATION = FINALIZED
 TESTS_EXECUTED_UNDER_THIS_PACKAGE = NONE
 SYNTHETIC_COMPARATOR_ONLY ≠ PAYMENT_PREPARE_PROOF = YES
 ```
@@ -219,9 +223,14 @@ Authority: `docs/platform/capabilities/UOE-unified-order-experience.md` §4.4. E
 - AS-34 / AS-41: preserve reproducing RED against current Checkout composition before remediation (TEST-1), then green on authorized corrective
 
 ```text
-FORMAL_QUALITY_PLAN = NOT_PERFORMED
-QUALITY_PLAN_FINALIZATION = NOT_GRANTED
-INDEPENDENT_REVIEW_VERDICT = PENDING_EXTERNAL_REVIEWERS
+FORMAL_QUALITY_PLAN = FINALIZED
+QUALITY_PLAN_FINALIZATION = FINALIZED
+FOUNDER_VERDICT = GRANT_WITH_EXCLUSIONS
+FOUNDER_PLANNING_GATE_RECORD = 23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md
+INDEPENDENT_REVIEW_VERDICT = NOT_PERFORMED
 AGENT_MAY_NOT_SELF_GRANT_QUALITY_PLAN_PASS = YES
+AGENT_DID_NOT_SELF_GRANT = YES
 TESTS_EXECUTED_UNDER_THIS_PACKAGE = NONE
+AS-34 = RED
+AS-41 = RED
 ```

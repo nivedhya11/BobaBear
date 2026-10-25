@@ -5,10 +5,12 @@
 ```text
 CANDIDATE_ID = MI-UOE-CANDIDATE-3
 SUPERSEDES = MI-UOE-CANDIDATE-2
-STATUS = PROPOSED_FOR_INDEPENDENT_REVIEW
+STATUS = FINALIZED
 AUTHORITY = NON_AUTHORITATIVE
 EXPERIENCE_CRITICALITY = X3
-FORMAL_MEASUREMENT_PLAN = NOT_PERFORMED
+FORMAL_MEASUREMENT_PLAN = FINALIZED
+FOUNDER_VERDICT = GRANT_WITH_EXCLUSIONS
+FOUNDER_PLANNING_GATE_RECORD = 23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md
 PRE_GTM_AUDIT = NOT_PERFORMED
 VARIANT = PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
 PACKAGE = UOE-CANDIDATE-3
@@ -23,8 +25,8 @@ OWNER_DECISION_PACKAGE = docs/platform/discovery/unified-order-experience/14-des
 PROPOSED_PRODUCT_ANALYTICS_OWNER = FOUNDER_UNTIL_DELEGATED
 PROPOSED_COMMERCE_ANALYTICS_OWNER = FOUNDER_UNTIL_DELEGATED
 FOUNDER_DECISION_RECORD = docs/platform/discovery/unified-order-experience/15-founder-decision-record-and-gate-readiness-package.md
-OWNERSHIP_ROLES_AND_CHECKOUT_START_DENOMINATOR = RATIFIED_AS_WORKING_BASELINE (W2) — finalization NOT_GRANTED
-VENDOR_TRANSPORT_RETENTION_BASELINE = OWNER_DECISIONS_PENDING
+OWNERSHIP_ROLES_AND_CHECKOUT_START_DENOMINATOR = RATIFIED — plan FINALIZED
+VENDOR_TRANSPORT_RETENTION_BASELINE = UNKNOWN / NOT_SELECTED
 ```
 
 ## Business intent to observe
@@ -34,10 +36,13 @@ When visible and truthful earlier — including server-true Takeaway place optio
 Schedule-capable) and mode-sensitive cart quotes — without weakening payment or promise integrity.
 
 ```text
-FORMAL_MEASUREMENT_PLAN = NOT_PERFORMED
+FORMAL_MEASUREMENT_PLAN = FINALIZED
+FOUNDER_VERDICT = GRANT_WITH_EXCLUSIONS
 BASELINE = NOT_PERFORMED
-ANALYTICS_OWNER_APPROVAL = DECISION_REQUIRED where not already authorized
-CONVERSION_IMPROVEMENT_CLAIM = FORBIDDEN until measured under finalized plan
+ANALYTICS_COLLECTION_OR_STORAGE = NOT_AUTHORIZED
+TELEMETRY_VENDOR = UNKNOWN
+RETENTION_DURATIONS = UNKNOWN
+CONVERSION_IMPROVEMENT_CLAIM = FORBIDDEN until measured
 ```
 
 ---
@@ -182,8 +187,8 @@ V1_NEW_CART_EVALUATED_SCHEDULED_FROM_BROWSE_INTENT = NO
 | Exact telemetry vendor | DECISION_REQUIRED |
 | Final event schema + versioning | DECISION_REQUIRED |
 | Retention / privacy policy sign-off | DECISION_REQUIRED |
-| Analytics-owner approval of denominators | DECISION_REQUIRED |
+| Primary checkout-start denominator | CLOSED / ratified (`16-…` §3; `15-…` MI-02) |
 | Causal conversion claim | Forbidden until measured |
 
-**Formal Measurement Plan:** `NOT_PERFORMED`.  
-**Agent disposition:** `RECOMMENDED_READY_FOR_EVALUATION` as a reviewable X3 candidate only (not formal PASS).
+**Formal Measurement Plan:** `FINALIZED` under `GRANT_WITH_EXCLUSIONS` in `23-…`.  
+**Agent disposition:** this record does not perform an independent Measurement review, select a vendor, or authorize collection or storage.
