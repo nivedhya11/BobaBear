@@ -5,10 +5,12 @@
 ```text
 CANDIDATE_ID = DR-UOE-CANDIDATE-3
 SUPERSEDES = DR-UOE-CANDIDATE-2
-STATUS = DESIGN_READINESS_CANDIDATE_ONLY
+STATUS = DESIGN_READINESS_PASS
 AUTHORITY = NON_AUTHORITATIVE_DISCOVERY_DRAFT
-FORMAL_DESIGN_READINESS = NOT_PERFORMED
-PREREQUISITES = Product Gate PASS + Experience Gate PASS + Architecture Fit PASS + Architecture Lock APPROVED (all recorded); Design Readiness PASS NOT_GRANTED
+FORMAL_DESIGN_READINESS = PASS
+FOUNDER_VERDICT = GRANT_WITH_EXCLUSIONS
+FOUNDER_PLANNING_GATE_RECORD = 23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md
+PREREQUISITES = Product Gate PASS + Experience Gate PASS + Architecture Fit PASS + Architecture Lock APPROVED (all recorded); Design Readiness PASS recorded 2026-10-25
 VARIANT = PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1
 PACKAGE = UOE-CANDIDATE-3
 GATE_PRECISION_REVISION = YES
@@ -24,13 +26,18 @@ PRIMARY_MICROCOPY_WORKING_BASELINE = FOUNDER_APPROVED (W2, 2026-10-24) — not D
 
 ## Readiness claim boundary
 
-This document specifies implementation-ready **interaction and presentation intent** for
-Founder Design Readiness evaluation. It is **not** a passed Design Readiness gate.
+This document is the interaction and presentation spec covered by Founder Design Readiness
+PASS. The grant is `GRANT_WITH_EXCLUSIONS` in
+[`23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md`](./23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md).
+It is not implementation authorization, and it does not mark tests executed.
 
 ```text
-DESIGN_READINESS_PASS = NOT_GRANTED
+DESIGN_READINESS_PASS = PASS
+FOUNDER_VERDICT = GRANT_WITH_EXCLUSIONS
 APPLICATION_IMPLEMENTATION = NO
 UOE_DR_06_REMEDIATION = NOT_AUTHORIZED
+EXECUTED_TESTS = NONE
+CHECKOUT_IMPLEMENTS_LOCKED_UOE_ARCHITECTURE = NO
 ```
 
 Locked domain contracts (A–D), CART digest/reuse, CHECKOUT fingerprint-only reuse, schedule
@@ -305,8 +312,11 @@ still specified in §1.3).
 7. Explicit tests for AS-01–46 per Quality plan tranche mapping
 
 ```text
-FORMAL_DESIGN_READINESS = NOT_PERFORMED
-DESIGN_READINESS_PASS = NOT_GRANTED
-INDEPENDENT_REVIEW_VERDICT = PENDING_EXTERNAL_REVIEWERS
+FORMAL_DESIGN_READINESS = PASS
+DESIGN_READINESS_PASS = PASS
+FOUNDER_VERDICT = GRANT_WITH_EXCLUSIONS
+FOUNDER_PLANNING_GATE_RECORD = 23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md
+INDEPENDENT_REVIEW_VERDICT = NOT_PERFORMED
 AGENT_MAY_NOT_SELF_GRANT_DESIGN_READINESS_PASS = YES
+AGENT_DID_NOT_SELF_GRANT = YES
 ```

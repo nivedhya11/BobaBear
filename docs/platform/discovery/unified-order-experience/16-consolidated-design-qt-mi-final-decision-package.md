@@ -5,9 +5,12 @@
   APPLICATION_CODE_MUTATION: NO
   CANONICAL_LIFECYCLE_MUTATION: NO
   IMPLEMENTATION_AUTHORIZED: NO
-  DESIGN_READINESS_PASS: NOT_GRANTED
-  QUALITY_PLAN_FINALIZATION: NOT_GRANTED
-  MEASUREMENT_PLAN_FINALIZATION: NOT_GRANTED
+  DESIGN_READINESS_PASS: PASS
+  QUALITY_PLAN_FINALIZATION: FINALIZED
+  MEASUREMENT_PLAN_FINALIZATION: FINALIZED
+  FOUNDER_VERDICT: GRANT_WITH_EXCLUSIONS
+  FOUNDER_RECORD: 23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md
+  OPERATIVE_GRANT_TEXT: §1.1 UNCHANGED
   UOE_DR_06_REMEDIATION: NOT_AUTHORIZED
   WHATSAPP_META_ON_WIRE: NOT_APPROVED
   TESTS_EXECUTED: NONE
@@ -25,10 +28,15 @@ STARTED_FROM_HEAD = b10ec9b4cf4b8533b56d9d7f2c6e635f8e545bfb
 AUTHORITY = NON_AUTHORITATIVE_DISCOVERY_DRAFT
 PRESERVE = PD-UOE-CANDIDATE-3 PASS | XD-UOE-CANDIDATE-3 PASS | ARCHITECTURE FIT PASS | ARCH-UOE-LOCK-PROPOSAL-1 LOCKED
 REOPEN_PRODUCT_EXPERIENCE_ARCHITECTURE_GATES = FORBIDDEN
-DESIGN_READINESS_PASS = NOT_GRANTED
-QUALITY_PLAN_FINALIZATION = NOT_GRANTED
-MEASUREMENT_PLAN_FINALIZATION = NOT_GRANTED
-CONSOLIDATED_GATE_RESULT = PREPARED_FOR_FOUNDER
+DESIGN_READINESS_PASS = PASS
+QUALITY_PLAN_FINALIZATION = FINALIZED
+MEASUREMENT_PLAN_FINALIZATION = FINALIZED
+CONSOLIDATED_GATE_RESULT = GRANT_WITH_EXCLUSIONS
+FOUNDER_RECORD = 23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md
+FOUNDER_ACT = proceed
+FOUNDER_ACT_DATE = 2026-10-25
+OPERATIVE_TEXT = §1.1
+OPERATIVE_TEXT_UNCHANGED = YES
 AGENT_ALIGNMENT_GATE = PASS_FOR_DOCS_ONLY
 AGENT_ALIGNMENT_IS_DESIGN_QT_MI_PASS = NO
 IMPLEMENTATION = NONE
@@ -41,8 +49,12 @@ INDEPENDENT_REVIEW = NOT_PERFORMED
 
 This is the single Founder decision for Design Readiness, TEST-1 Quality plan finalization, and
 Measurement plan finalization. It records what source evidence already closed, what remains
-unknown, and which proofs are still plans. It does not grant the gates, authorize UOE
-implementation, authorize the UOE-DR-06 Checkout corrective, allocate an IMP, or execute tests.
+unknown, and which proofs are still plans. Founder "proceed" on 2026-10-25 is recorded in
+[`23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md`](./23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md)
+as `GRANT_WITH_EXCLUSIONS`. §1.1 is the operative grant text and is unchanged. The grant does not
+authorize UOE implementation, authorize the UOE-DR-06 Checkout corrective, allocate an IMP, execute
+tests, select a telemetry vendor, select a retention duration, approve a WhatsApp body, or
+authorize analytics collection or storage.
 
 Source ledgers stay in force:
 
@@ -63,7 +75,8 @@ UOE-DR-06 stays a separate package:
 (`NOT_AUTHORIZED`). Source classification against the #424 head is
 [`21-design-qt-mi-evidence-delta.md`](./21-design-qt-mi-evidence-delta.md). The short decision
 surface is [`22-founder-gate-review-packet.md`](./22-founder-gate-review-packet.md). Neither
-document changes §1.1 or grants this gate.
+document changes §1.1. The Founder grant is recorded in
+[`23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md`](./23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md).
 
 ---
 
@@ -72,8 +85,12 @@ document changes §1.1 or grants this gate.
 ```text
 CONSOLIDATED_GATE_DECISION
 decision_owner: HUMAN_FOUNDER
-status: NOT_GRANTED
+status: GRANT_WITH_EXCLUSIONS
+recorded_in: 23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md
+founder_act: proceed
+founder_act_date: 2026-10-25
 agent_may_not_select: YES
+agent_did_not_select: YES
 
 question:
   Grant Design Readiness (DR-UOE-CANDIDATE-3), Quality plan finalization
@@ -110,7 +127,7 @@ A grant of §1.1 is still short of implementation. PD-2 implementation authoriza
 requires an allocated IMP. UOE-DR-01 remains `FUTURE_IMP_ID = NOT_ALLOCATED` /
 `SEQUENCING_DEFERRED`. `IMPLEMENTATION_AUTHORIZED` stays `NO` either way.
 
-### 1.1 Grant text (effective only if the Founder grants it)
+### 1.1 Grant text (operative; unchanged by the recorded grant)
 
 ```text
 IF_GRANTED_MEANS
@@ -153,7 +170,7 @@ a retention duration was chosen
 | Experience | PASS `XD-UOE-CANDIDATE-3` | Same comment | Preserved |
 | Architecture Fit | PASS `PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1` | [PR #424 comment 6371582324](https://github.com/nivedhya11/BobaBear/pull/424#issuecomment-6371582324); contract head `9a9e3f71789a4cce5141eb88b3ab606f72b2c54e` | Preserved |
 | Architecture Lock | APPROVED `ARCH-UOE-LOCK-PROPOSAL-1` | Same comment; binding file under `docs/platform/capabilities/` | Preserved. Per-process rate-limit residual `ACCEPTED_FOR_V1_PILOT` |
-| Design / Quality / Measurement | NOT_GRANTED | This document | Prepared for the decision in §1 |
+| Design / Quality / Measurement | `GRANT_WITH_EXCLUSIONS` | §1.1 operative text; record [`23-…`](./23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md) | Recorded 2026-10-25. Exclusions in §1.1 remain |
 
 Experience criticality `X3`. Change risk `CR2`, and `CR3` at checkout and payment boundaries.
 Golden journeys in the candidate remain J1–J7 (`01-…`). Acceptance scenarios remain AS-01–AS-46
@@ -398,9 +415,10 @@ not a step inside that sequence.
 ## 7. Explicit walls
 
 ```text
-DESIGN_READINESS_PASS = NOT_GRANTED
-QUALITY_PLAN_FINALIZATION = NOT_GRANTED
-MEASUREMENT_PLAN_FINALIZATION = NOT_GRANTED
+DESIGN_READINESS_PASS = PASS
+QUALITY_PLAN_FINALIZATION = FINALIZED
+MEASUREMENT_PLAN_FINALIZATION = FINALIZED
+FOUNDER_VERDICT = GRANT_WITH_EXCLUSIONS
 IMPLEMENTATION_AUTHORIZED = NO
 UOE_DR06_CHECKOUT_REMEDIATION = NOT_AUTHORIZED
 FORMAL_IMP_IDENTITY = NOT_ALLOCATED
@@ -408,6 +426,10 @@ ROADMAP_STATE_DECISION_REGISTER = UNCHANGED
 VENDOR = UNKNOWN
 RETENTION_DURATION = UNKNOWN
 WHATSAPP_BODY = UNKNOWN
+ANALYTICS_COLLECTION_OR_STORAGE = NOT_AUTHORIZED
+BASELINE = NOT_PERFORMED
+CONVERSION_UPLIFT = NOT_CLAIMED
+CHECKOUT_IMPLEMENTS_LOCKED_UOE_ARCHITECTURE = NO
 TESTS_EXECUTED = NONE
 INDEPENDENT_REVIEW = NOT_PERFORMED
 PR_MERGE = NO

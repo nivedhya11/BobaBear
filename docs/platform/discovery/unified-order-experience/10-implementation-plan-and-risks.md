@@ -16,9 +16,11 @@ ARCHITECTURE_FIT_PASS = PASS
 ARCHITECTURE_LOCK = APPROVED
 ARCHITECTURE_CONTRACT = ARCH-UOE-LOCK-PROPOSAL-1
 BINDING_CAPABILITY_ARCHITECTURE = docs/platform/capabilities/UOE-unified-order-experience.md
-DESIGN_READINESS_PASS = NOT_GRANTED
-QUALITY_PLAN_FINALIZATION = NOT_GRANTED
-MEASUREMENT_PLAN_FINALIZATION = NOT_GRANTED
+DESIGN_READINESS_PASS = PASS
+QUALITY_PLAN_FINALIZATION = FINALIZED
+MEASUREMENT_PLAN_FINALIZATION = FINALIZED
+FOUNDER_VERDICT = GRANT_WITH_EXCLUSIONS
+FOUNDER_PLANNING_GATE_RECORD = 23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md
 UOE_DR_06 = ACCEPTED_CAPABILITY_CONFORMANCE_DEFECT
 UOE_DR_06_REMEDIATION = NOT_AUTHORIZED
 PREFERRED_SHAPE = ONE_FUTURE_IMP_WITH_THREE_TRANCHES
@@ -119,9 +121,9 @@ NO implementation tranche may start without:
   Product Definition Gate PASS          ← recorded PASS (2026-10-23)
   Experience Gate PASS                  ← recorded PASS (2026-10-23)
   Architecture Fit PASS + Architecture Lock  ← recorded PASS / APPROVED (2026-10-23)
-  Design Readiness PASS                 ← NOT_GRANTED (candidate in 07-…)
-  Quality / Test Plan finalized         ← NOT_PERFORMED (candidate in 08-…)
-  Measurement Plan finalized (X3)       ← NOT_PERFORMED (candidate in 09-…)
+  Design Readiness PASS                 ← RECORDED PASS (GRANT_WITH_EXCLUSIONS; 23-…)
+  Quality / Test Plan finalized         ← RECORDED FINALIZED (tests not executed)
+  Measurement Plan finalized (X3)       ← RECORDED FINALIZED (vendor and retention not selected)
   Explicit future IMP identity + implementation authorization  ← UOE-DR-01 still NOT_ALLOCATED / SEQUENCING_DEFERRED
 
 Checkout Contract C code remediation additionally requires:

@@ -15,6 +15,12 @@
 
 # Founder decision record and gate-readiness package — Design / Quality / Measurement (W2)
 
+Current planning-gate status is
+[`23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md`](./23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md)
+(`FOUNDER-B5-UOE-DR-QT-MI`, `GRANT_WITH_EXCLUSIONS`, 2026-10-25). This W2 ledger remains the
+working-baseline record. Its `NOT_GRANTED` lines are that earlier status. It does not itself
+grant the gates.
+
 ```text
 PACKAGE_ID = UOE-FOUNDER-DECISION-RECORD-AND-GATE-READINESS-W2
 PACKAGE = UOE-CANDIDATE-3

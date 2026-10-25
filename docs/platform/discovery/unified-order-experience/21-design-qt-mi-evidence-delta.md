@@ -5,9 +5,12 @@
   THIS_DOCUMENT_IS_AN_EVIDENCE_DELTA: YES
   NOT_A_COMPETING_ARCHITECTURE: YES
   NOT_A_GATE_PASS: YES
-  DESIGN_READINESS_PASS: NOT_GRANTED
-  QUALITY_PLAN_FINALIZATION: NOT_GRANTED
-  MEASUREMENT_PLAN_FINALIZATION: NOT_GRANTED
+  DESIGN_READINESS_PASS: PASS
+  QUALITY_PLAN_FINALIZATION: FINALIZED
+  MEASUREMENT_PLAN_FINALIZATION: FINALIZED
+  FOUNDER_VERDICT: GRANT_WITH_EXCLUSIONS
+  FOUNDER_RECORD: 23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md
+  THIS_DELTA_DOES_NOT_GRANT: YES
   APPLICATION_CODE_MUTATION: NO
   TESTS_EXECUTED_UNDER_THIS_PACKAGE: NONE
   STACKED_ON: PR 424 docs/uoe-pd2-candidate @ 3b207b3bb69f305353770315af7ad814a7e766d0
@@ -15,6 +18,11 @@
 -->
 
 # UOE Design / Quality / Measurement evidence delta
+
+Current planning-gate status is recorded in
+[`23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md`](./23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md)
+(`GRANT_WITH_EXCLUSIONS`, 2026-10-25). This delta remains the source-versus-plan classification.
+It does not grant the gates, and it does not execute tests.
 
 ```text
 ID = UOE-DESIGN-QT-MI-EVIDENCE-DELTA-1
@@ -25,9 +33,11 @@ SOURCE_BRANCH = docs/uoe-pd2-candidate
 INSPECTED_TREE = that HEAD, read-only, before this delta
 AUTHORITY = NON_AUTHORITATIVE_DISCOVERY_DRAFT
 PRESERVE = PD-UOE-CANDIDATE-3 PASS | XD-UOE-CANDIDATE-3 PASS | ARCHITECTURE FIT PASS | ARCH-UOE-LOCK-PROPOSAL-1 LOCKED
-DESIGN_READINESS_PASS = NOT_GRANTED
-QUALITY_PLAN_FINALIZATION = NOT_GRANTED
-MEASUREMENT_PLAN_FINALIZATION = NOT_GRANTED
+DESIGN_READINESS_PASS = PASS
+QUALITY_PLAN_FINALIZATION = FINALIZED
+MEASUREMENT_PLAN_FINALIZATION = FINALIZED
+FOUNDER_VERDICT = GRANT_WITH_EXCLUSIONS
+FOUNDER_PLANNING_GATE_RECORD = 23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md
 TESTS_EXECUTED_UNDER_THIS_PACKAGE = NONE
 UOE_DR06_REMEDIATION = NOT_AUTHORIZED
 WHATSAPP_META_BODY = UNKNOWN
@@ -36,16 +46,18 @@ VENDOR = UNKNOWN
 RETENTION_DURATION = UNKNOWN
 BASELINE = NOT_PERFORMED
 FORMAL_IMP_IDENTITY = NOT_ALLOCATED
-GATE_READINESS = READY_FOR_FOUNDER_DECISION
+GATE_READINESS = RECORDED_GRANT_WITH_EXCLUSIONS
 ```
 
 This delta classifies what the existing UOE documents already specify against source that
 exists at the #424 head. It does not replace `07`–`20`, does not amend capability
-architecture §§2–5, and does not grant Design Readiness, Quality finalization, or
-Measurement finalization. The Founder decision surface is
-[`22-founder-gate-review-packet.md`](./22-founder-gate-review-packet.md). The prepared
-grant text remains [`16-consolidated-design-qt-mi-final-decision-package.md`](./16-consolidated-design-qt-mi-final-decision-package.md)
-§1.1.
+architecture §§2–5, and does not itself grant Design Readiness, Quality finalization, or
+Measurement finalization. Those gates are recorded in
+[`23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md`](./23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md).
+The operative grant text remains
+[`16-consolidated-design-qt-mi-final-decision-package.md`](./16-consolidated-design-qt-mi-final-decision-package.md)
+§1.1. The pre-decision surface remains
+[`22-founder-gate-review-packet.md`](./22-founder-gate-review-packet.md).
 
 Source inspection is not an executed test run. `SOURCE_PRESENT` means the file or test
 exists and was read. `NOT_FOUND` means a targeted search of this tree did not find it.
@@ -62,7 +74,7 @@ exists and was read. `NOT_FOUND` means a targeted search of this tree did not fi
 | Architecture Fit | PASS `PRECHECKOUT_ELIGIBILITY_WEB_FIRST_V1` | [PR #424 comment 6371582324](https://github.com/nivedhya11/BobaBear/pull/424#issuecomment-6371582324); contract head `9a9e3f71789a4cce5141eb88b3ab606f72b2c54e` | Preserved |
 | Architecture Lock | APPROVED `ARCH-UOE-LOCK-PROPOSAL-1` | Same comment. Binding file `docs/platform/capabilities/UOE-unified-order-experience.md`. Per-process rate-limit residual `ACCEPTED_FOR_V1_PILOT` | Preserved. §§2–5 not edited |
 | W2 working baseline | Recorded, not a gate PASS | Issue #432; `15-…` | Preserved. MC-01–MC-33 working baseline. MC-34 on-wire `NOT_APPROVED` |
-| Design / Quality / Measurement | NOT_GRANTED | `16-…` §1 | Still NOT_GRANTED |
+| Design / Quality / Measurement | `GRANT_WITH_EXCLUSIONS` | `16-…` §1.1; record `23-…` | Recorded 2026-10-25. This delta did not grant it |
 | Lifecycle | Unchanged | ROADMAP `GTM-R190`, STATE `STATE-R189` on this tree | Not edited. `acceptedThrough` IMP-036I. Current slice IMP-036J. Next IMP-036K. IMP-037 and IMP-038 remain paused |
 
 #424 is open, unmerged, and `CONFLICTING` with `main`. This delta is a stacked candidate on
@@ -294,10 +306,12 @@ claims in §§2–5. It did not grant a gate. Corrections applied before publica
 - `08-…` Contract C rollup limits the UOE-DR-06 gate to the Checkout-coupled subset.
 
 ```text
-DESIGN_READINESS_PASS = NOT_GRANTED
-QUALITY_PLAN_FINALIZATION = NOT_GRANTED
-MEASUREMENT_PLAN_FINALIZATION = NOT_GRANTED
+DESIGN_READINESS_PASS = PASS
+QUALITY_PLAN_FINALIZATION = FINALIZED
+MEASUREMENT_PLAN_FINALIZATION = FINALIZED
+FOUNDER_VERDICT = GRANT_WITH_EXCLUSIONS
+FOUNDER_PLANNING_GATE_RECORD = 23-founder-b5-uoe-dr-qt-mi-planning-gate-record.md
 IMPLEMENTATION_AUTHORIZED = NO
 TESTS_EXECUTED_UNDER_THIS_PACKAGE = NONE
-GATE_READINESS = READY_FOR_FOUNDER_DECISION
+THIS_DELTA_DOES_NOT_GRANT = YES
 ```
