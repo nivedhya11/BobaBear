@@ -31,23 +31,23 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2349,
-    "executableTestFiles": 539,
-    "sourceTestFiles": 160,
-    "testsTreeExecutableFiles": 291,
+    "trackedPathsConsidered": 2361,
+    "executableTestFiles": 544,
+    "sourceTestFiles": 163,
+    "testsTreeExecutableFiles": 293,
     "scriptTestFiles": 88,
-    "playwrightSpecs": 12,
+    "playwrightSpecs": 13,
     "vitestConfigs": 2,
-    "playwrightConfigs": 7,
-    "testSupportScripts": 51,
+    "playwrightConfigs": 8,
+    "testSupportScripts": 54,
     "packageTestCommands": 94,
     "packageAuditCommands": 27,
-    "packageE2eCommands": 9,
+    "packageE2eCommands": 10,
     "packageCheckCommands": 17,
     "packageCoverageCommands": 1,
     "packageInventoryCommands": 2,
     "ciWorkflowFiles": 4,
-    "ciValidationSteps": 133,
+    "ciValidationSteps": 137,
     "protectedEvidenceTrackedFiles": 3,
     "archiveTrackedFiles": 92
   },
@@ -74,6 +74,7 @@
     "src/components/ordering/CheckoutClient.destination.test.tsx",
     "src/components/ordering/CheckoutFulfilmentChoice.test.tsx",
     "src/components/ordering/CheckoutPickupOutletStep.test.tsx",
+    "src/components/ordering/CheckoutReviewSections.test.tsx",
     "src/components/ordering/CheckoutTimingChoice.test.tsx",
     "src/components/ordering/CustomerOrderFulfilmentPanel.test.tsx",
     "src/components/ordering/MenuItemCustomizationDialog.test.tsx",
@@ -89,6 +90,7 @@
     "src/components/ordering/availability-377-recovery.test.tsx",
     "src/components/ordering/cart-changed-recovery-presentation.test.ts",
     "src/components/ordering/cart-presentation.test.ts",
+    "src/components/ordering/checkout-line-presentation.test.ts",
     "src/components/ordering/checkout-snapshot-presentation.test.ts",
     "src/components/ordering/client-action.test.ts",
     "src/components/ordering/committed-presentation-observation.test.ts",
@@ -174,6 +176,7 @@
     "src/server/notifications/provider/meta-whatsapp/registry.wiring.test.ts",
     "src/server/notifications/resend-eligibility.test.ts",
     "src/server/operations/config.test.ts",
+    "src/server/order/customer-order-line-discount.test.ts",
     "src/server/persistence/application.test.ts",
     "src/server/persistence/errors.test.ts",
     "src/server/persistence/handle.test.ts",
@@ -309,6 +312,7 @@
     "tests/customer-addresses/domain.test.ts",
     "tests/customer-auth/http.integration.test.ts",
     "tests/customer-commerce/financial-document.http.integration.test.ts",
+    "tests/customer-commerce/gtm-commerce-regression.http.integration.test.ts",
     "tests/customer-commerce/http.integration.test.ts",
     "tests/customer-commerce/razorpay.http.integration.test.ts",
     "tests/customer-commerce/scheduled-http.tranche3.integration.test.ts",
@@ -385,6 +389,7 @@
     "tests/e2e/customer-ordering.spec.ts",
     "tests/e2e/external-links.spec.ts",
     "tests/e2e/food-direct-ux-foundation.spec.ts",
+    "tests/e2e/gtm-uat-browser-journeys.spec.ts",
     "tests/e2e/home-page.spec.ts",
     "tests/e2e/imp-036b-uat-precert.spec.ts",
     "tests/e2e/location-selector-layout.spec.ts",
@@ -602,6 +607,7 @@
     "tests/e2e/customer-ordering.spec.ts",
     "tests/e2e/external-links.spec.ts",
     "tests/e2e/food-direct-ux-foundation.spec.ts",
+    "tests/e2e/gtm-uat-browser-journeys.spec.ts",
     "tests/e2e/home-page.spec.ts",
     "tests/e2e/imp-036b-uat-precert.spec.ts",
     "tests/e2e/location-selector-layout.spec.ts",
@@ -619,6 +625,7 @@
     "playwright.config.ts",
     "playwright.customer-auth.config.ts",
     "playwright.customer-ordering.config.ts",
+    "playwright.gtm-uat-browser.config.ts",
     "playwright.location-selector.config.ts",
     "playwright.operations-lifecycle.config.ts",
     "playwright.workforce-auth.config.ts"
@@ -628,9 +635,12 @@
     "scripts/e2e/build-operations-lifecycle-seed.mjs",
     "scripts/e2e/customer-auth-server.ts",
     "scripts/e2e/customer-ordering-server.ts",
+    "scripts/e2e/gtm-uat-browser-control.ts",
+    "scripts/e2e/gtm-uat-browser-fixtures.ts",
     "scripts/e2e/run-commercial-workspace-e2e.mjs",
     "scripts/e2e/run-customer-auth-e2e.mjs",
     "scripts/e2e/run-customer-ordering-e2e.mjs",
+    "scripts/e2e/run-gtm-uat-browser-e2e.mjs",
     "scripts/e2e/run-operations-lifecycle-e2e.mjs",
     "scripts/e2e/run-workforce-auth-e2e.mjs",
     "scripts/e2e/seed-commercial-workspace.ts",
@@ -808,6 +818,7 @@
       "test:e2e:customer-auth",
       "test:e2e:customer-ordering",
       "test:e2e:docker",
+      "test:e2e:gtm-uat-browser",
       "test:e2e:headed",
       "test:e2e:location-selector-layout",
       "test:e2e:operations-lifecycle",
@@ -907,7 +918,7 @@
     "test:customer-address-security": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-address-security",
     "test:customer-addresses": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-addresses",
     "test:customer-auth:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-auth/http.integration.test.ts",
-    "test:customer-commerce:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-commerce/http.integration.test.ts tests/customer-commerce/scheduled-http.tranche3.integration.test.ts",
+    "test:customer-commerce:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-commerce/http.integration.test.ts tests/customer-commerce/scheduled-http.tranche3.integration.test.ts tests/customer-commerce/gtm-commerce-regression.http.integration.test.ts",
     "test:customer-profile-auth-integration": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-profile-auth-integration",
     "test:customer-profile-security": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-profile-security",
     "test:customer-profiles": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-profiles",
@@ -937,6 +948,7 @@
     "test:e2e:customer-auth": "npm run build && npm run customer-auth:build && node scripts/e2e/run-customer-auth-e2e.mjs",
     "test:e2e:customer-ordering": "NEXT_PUBLIC_BOBA_BEAR_GOOGLE_MAPS_BROWSER_KEY=e2e-maps-browser-key-fixture npm run build && npm run customer-auth:build && npm run customer-commerce:build && node scripts/e2e/run-customer-ordering-e2e.mjs",
     "test:e2e:docker": "PLAYWRIGHT_TARGET=docker playwright test",
+    "test:e2e:gtm-uat-browser": "NEXT_PUBLIC_BOBA_BEAR_GOOGLE_MAPS_BROWSER_KEY=e2e-maps-browser-key-fixture npm run build && npm run customer-auth:build && npm run customer-commerce:build && node scripts/e2e/run-gtm-uat-browser-e2e.mjs",
     "test:e2e:headed": "npm run build && playwright test --headed",
     "test:e2e:location-selector-layout": "NEXT_PUBLIC_BOBA_BEAR_GOOGLE_MAPS_BROWSER_KEY=e2e-maps-browser-key-fixture npm run build && npm run customer-auth:build && npm run customer-commerce:build && playwright test --config=playwright.location-selector.config.ts",
     "test:e2e:operations-lifecycle": "node scripts/e2e/run-operations-lifecycle-e2e.mjs",
@@ -1153,6 +1165,22 @@
         {
           "name": "IMP-036J Tranche 8 proof",
           "run": "npm run test:imp036j:tranche8"
+        },
+        {
+          "name": "Install dependencies",
+          "run": "npm ci"
+        },
+        {
+          "name": "Ensure rootless Podman socket",
+          "run": "socket=\"/run/user/$(id -u)/podman/podman.sock\"\ncommand -v podman\nif [ ! -S \"$socket\" ]; then\nsystemctl --user start podman.socket\nfi\ntest -S \"$socket\"\npodman --version"
+        },
+        {
+          "name": "Install Playwright Chromium",
+          "run": "npx playwright install --with-deps chromium"
+        },
+        {
+          "name": "GTM UAT browser Golden Journeys",
+          "run": "npm run test:e2e:gtm-uat-browser"
         },
         {
           "name": "Install dependencies",
@@ -3519,6 +3547,24 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "src/components/ordering/CheckoutReviewSections.test.tsx",
+      "runner": "vitest",
+      "domain": "components/ordering",
+      "testType": "component-or-tsx",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "2-component"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "src/components/ordering/CheckoutTimingChoice.test.tsx",
       "runner": "vitest",
       "domain": "components/ordering",
@@ -3775,6 +3821,24 @@
     },
     {
       "path": "src/components/ordering/cart-presentation.test.ts",
+      "runner": "vitest",
+      "domain": "components/ordering",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/components/ordering/checkout-line-presentation.test.ts",
       "runner": "vitest",
       "domain": "components/ordering",
       "testType": "unit-or-domain",
@@ -5352,6 +5416,25 @@
       "path": "src/server/operations/config.test.ts",
       "runner": "vitest",
       "domain": "server/operations",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/server/order/customer-order-line-discount.test.ts",
+      "runner": "vitest",
+      "domain": "server/order",
       "testType": "unit-or-domain",
       "dbRequired": "NO",
       "browserRequired": "NO",
@@ -7836,6 +7919,25 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "tests/customer-commerce/gtm-commerce-regression.http.integration.test.ts",
+      "runner": "vitest",
+      "domain": "customer-commerce",
+      "testType": "integration",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:customer-commerce:http"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "4-integration",
+        "5-database-integration",
+        "6-http-api-contract"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "tests/customer-commerce/http.integration.test.ts",
       "runner": "vitest",
       "domain": "customer-commerce",
@@ -9133,6 +9235,24 @@
         "test:e2e"
       ],
       "ciInclusion": "NO",
+      "test1Layers": [
+        "11-e2e-browser-ui"
+      ],
+      "classificationConfidence": "LOW"
+    },
+    {
+      "path": "tests/e2e/gtm-uat-browser-journeys.spec.ts",
+      "runner": "playwright",
+      "domain": "e2e",
+      "testType": "e2e-spec",
+      "dbRequired": "UNKNOWN",
+      "browserRequired": "YES",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:e2e",
+        "test:e2e:gtm-uat-browser"
+      ],
+      "ciInclusion": "YES",
       "test1Layers": [
         "11-e2e-browser-ui"
       ],

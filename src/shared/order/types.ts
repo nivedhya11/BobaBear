@@ -90,6 +90,12 @@ export type OrderLineProjection = Readonly<{
   quantity: number;
   lineTotalMinor: string;
   lineOrigin?: "cart" | "complimentary_offer";
+  /**
+   * Customer order detail only. True when the sealed snapshot line already
+   * has a positive merchandise allocation. Not a money amount. Omitted on
+   * workforce lines.
+   */
+  merchandiseDiscountApplies?: boolean;
   modifiers: readonly Readonly<{
     groupName: string;
     optionName: string;

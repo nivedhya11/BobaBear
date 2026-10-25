@@ -372,6 +372,8 @@ export type CommerceOrderLine = Readonly<{
   quantity: number;
   lineTotalMinor: string;
   lineOrigin?: "cart" | "complimentary_offer";
+  /** Sealed merchandise-allocation flag. Not a price. Absent means unlabeled. */
+  merchandiseDiscountApplies?: boolean;
   modifiers: readonly Readonly<{
     groupName: string;
     optionName: string;

@@ -7,6 +7,11 @@ import type { CheckoutSnapshotLineRow } from "@/components/ordering/checkout-lin
 export function CheckoutSnapshotLineList(props: {
   lines: readonly CheckoutSnapshotLineRow[];
   title?: string;
+  /**
+   * Checkout Review only. Payment and recovery reuse this list and keep the
+   * unlabeled net.
+   */
+  showAfterDiscountLabel?: boolean;
 }) {
   if (props.lines.length === 0) return null;
   return (
@@ -24,9 +29,9 @@ export function CheckoutSnapshotLineList(props: {
         {props.lines.map((line, index) => (
           <li
             key={`${line.productName}-${index}`}
-            className="flex justify-between gap-3 font-body text-[14px]"
+            className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1 font-body text-[14px]"
           >
-            <span className="text-[var(--text-primary)]">
+            <span className="min-w-0 flex-1 break-words text-[var(--text-primary)]">
               {line.quantity} × {line.productName}
               {line.variantName ? ` (${line.variantName})` : ""}
               {line.lineOrigin === "complimentary_offer" ? (
@@ -35,8 +40,13 @@ export function CheckoutSnapshotLineList(props: {
                 </span>
               ) : null}
             </span>
-            <span className="shrink-0 font-semibold tabular-nums text-[var(--text-primary)]">
-              {formatPaise(line.lineTotalPaise)}
+            <span className="shrink-0 text-right text-[var(--text-primary)]">
+              {props.showAfterDiscountLabel && line.merchandiseDiscountApplies ? (
+                <span className="mb-0.5 block max-w-[7.5rem] text-[12px] font-normal leading-tight text-[var(--text-secondary)]">
+                  {IMP036J_COPY.AFTER_DISCOUNT}
+                </span>
+              ) : null}
+              <span className="font-semibold tabular-nums">{formatPaise(line.lineTotalPaise)}</span>
             </span>
           </li>
         ))}

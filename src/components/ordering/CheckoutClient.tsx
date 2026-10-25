@@ -1364,6 +1364,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
             </section>
             <CheckoutSnapshotLineList
               title="Your items"
+              showAfterDiscountLabel
               lines={narrowCheckoutSnapshotLines(snapshot.lines)}
             />
             <div ref={reviewSummaryRef}>
