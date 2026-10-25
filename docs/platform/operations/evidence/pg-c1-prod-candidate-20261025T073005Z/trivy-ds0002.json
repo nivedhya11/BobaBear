@@ -1,0 +1,264 @@
+{
+  "source_sha": "eae90976c9f1bb5d74c8d3a75cae67f6af463d3e",
+  "image_id": "cecb548ff5f75560c4732bfd417b009722092f15c96d12822c9bcafd7264846c",
+  "trivy_exit": 0,
+  "ignorefile": "empty",
+  "repo_trivyignore_passed": false,
+  "vex_passed": false,
+  "scanners": [
+    "vuln",
+    "misconfig",
+    "secret"
+  ],
+  "image_config_scanners": [
+    "misconfig"
+  ],
+  "ds0002_present": false,
+  "ds0002_hits": [],
+  "high_critical_vulns": [
+    {
+      "id": "CVE-2026-76642",
+      "severity": "HIGH",
+      "pkg": "bsdutils",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-78408",
+      "severity": "HIGH",
+      "pkg": "bsdutils",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-78409",
+      "severity": "HIGH",
+      "pkg": "bsdutils",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-78410",
+      "severity": "HIGH",
+      "pkg": "bsdutils",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-12064",
+      "severity": "HIGH",
+      "pkg": "curl",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-8458",
+      "severity": "HIGH",
+      "pkg": "curl",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-24882",
+      "severity": "HIGH",
+      "pkg": "dirmngr",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-24882",
+      "severity": "HIGH",
+      "pkg": "gnupg",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-24882",
+      "severity": "HIGH",
+      "pkg": "gnupg-l10n",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-24882",
+      "severity": "HIGH",
+      "pkg": "gpg",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-24882",
+      "severity": "HIGH",
+      "pkg": "gpg-agent",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-24882",
+      "severity": "HIGH",
+      "pkg": "gpgconf",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-24882",
+      "severity": "HIGH",
+      "pkg": "gpgsm",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-54369",
+      "severity": "HIGH",
+      "pkg": "libacl1",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-76642",
+      "severity": "HIGH",
+      "pkg": "libblkid1",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-78408",
+      "severity": "HIGH",
+      "pkg": "libblkid1",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-78409",
+      "severity": "HIGH",
+      "pkg": "libblkid1",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-78410",
+      "severity": "HIGH",
+      "pkg": "libblkid1",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-12064",
+      "severity": "HIGH",
+      "pkg": "libcurl4t64",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-8458",
+      "severity": "HIGH",
+      "pkg": "libcurl4t64",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-76642",
+      "severity": "HIGH",
+      "pkg": "liblastlog2-2",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-78408",
+      "severity": "HIGH",
+      "pkg": "liblastlog2-2",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-78409",
+      "severity": "HIGH",
+      "pkg": "liblastlog2-2",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-78410",
+      "severity": "HIGH",
+      "pkg": "liblastlog2-2",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-76642",
+      "severity": "HIGH",
+      "pkg": "libmount1",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-78408",
+      "severity": "HIGH",
+      "pkg": "libmount1",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-78409",
+      "severity": "HIGH",
+      "pkg": "libmount1",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-78410",
+      "severity": "HIGH",
+      "pkg": "libmount1",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2025-69720",
+      "severity": "HIGH",
+      "pkg": "libncursesw6",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-9538",
+      "severity": "HIGH",
+      "pkg": "libperl5.40",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-15308",
+      "severity": "HIGH",
+      "pkg": "libpython3.13-minimal",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-19445",
+      "severity": "HIGH",
+      "pkg": "libpython3.13-minimal",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-19553",
+      "severity": "HIGH",
+      "pkg": "libpython3.13-minimal",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-7210",
+      "severity": "HIGH",
+      "pkg": "libpython3.13-minimal",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-82049",
+      "severity": "HIGH",
+      "pkg": "libpython3.13-minimal",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-15308",
+      "severity": "HIGH",
+      "pkg": "libpython3.13-stdlib",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-19445",
+      "severity": "HIGH",
+      "pkg": "libpython3.13-stdlib",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-19553",
+      "severity": "HIGH",
+      "pkg": "libpython3.13-stdlib",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-7210",
+      "severity": "HIGH",
+      "pkg": "libpython3.13-stdlib",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    },
+    {
+      "id": "CVE-2026-82049",
+      "severity": "HIGH",
+      "pkg": "libpython3.13-stdlib",
+      "target": "/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261025T073005Z/image.tar (debian 13.7)"
+    }
+  ],
+  "misconfig_ids": [
+    "DS026"
+  ],
+  "high_critical_vuln_count": 86
+}

@@ -1,0 +1,161 @@
+=== production-candidate proof RUN_ID=c1-proof-b-27be227a1753-171004 SOURCE_SHA=27be227a1753d5a3897b186c2a2f9bb7650c317d ===
+RUN_ID=c1-proof-b-27be227a1753-171004
+SOURCE_SHA=27be227a1753d5a3897b186c2a2f9bb7650c317d
+SOURCE_BRANCH=fix/postgres-c1-nonroot-runtime-20261024
+PROOF_HEAD=a6155378b799e06a95b28c593ac1a340d7ca9245
+ENGINE=podman
+DOCKER_ENGINE=UNVERIFIED
+podman version 4.9.3
+PODMAN_VERSION=4.9.3
+Version: 0.52.2
+Check Bundle:
+TRIVY_BIN=/snap/bin/trivy
+TRIVY_VERSION=0.52.2
+1000
+1000
+subuid: ajoshi:100000:65536
+subgid: ajoshi:100000:65536
+HOST_UID=1000
+SUBUID_START=100000
+EXPECTED_HOST_UID_FOR_CONTAINER_999=100998
+host_uid=1000
+subuid_start=100000
+expected_host_uid_for_container_999=100998
+docker_engine	UNVERIFIED	docker CLI absent; DOCKER_ENGINE=UNVERIFIED; Podman is additional evidence only
+DOCKER_CLI=ABSENT_OR_UNUSED
+=== archive 27be227a1753d5a3897b186c2a2f9bb7650c317d ===
+DOCKERFILE_SHA256=4cf227e7f50139eb6cf812e47a3e0d42ac2451642103d7cc54f940263ca6c537
+ENTRYPOINT_SHA256=9151655a078cc62bdedd7e757f82eada44c2162afc50c482b2af96a834345d6d
+56:USER root
+148:USER postgres
+=== build production Dockerfile ===
+[1/2] STEP 1/5: FROM docker.io/library/golang:1.26.10-bookworm@sha256:fe3da92a5cb2881e4aa75e625cb0b7c50571632fb4cf340cbe53e6ccdcffdd51 AS gosu-builder
+[1/2] STEP 2/5: ARG GOSU_VERSION
+--> Using cache de23844f959c5d49ee2c10c87f52edd951e9ddcc6314dd67250fc80f5f8c0490
+--> de23844f959c
+[1/2] STEP 3/5: ARG GOSU_GIT_SHA
+--> Using cache 63e6fbae1ebe79c9e9163e45de9522d6f5b831a6aee04073618e079acfe8d863
+--> 63e6fbae1ebe
+[1/2] STEP 4/5: WORKDIR /src
+--> Using cache db79d61d95e307bdb5180443fd2664cc18f1a2451ee0a65895cd2ed4f5345b9d
+--> db79d61d95e3
+[1/2] STEP 5/5: RUN apt-get update   && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git ca-certificates   && rm -rf /var/lib/apt/lists/*   && git clone --filter=blob:none https://github.com/tianon/gosu.git .   && git fetch --depth 1 origin "${GOSU_GIT_SHA}"   && git checkout --detach "${GOSU_GIT_SHA}"   && test "$(git rev-parse HEAD)" = "${GOSU_GIT_SHA}"   && CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.Version=${GOSU_VERSION}" -o /gosu .
+--> Using cache 78ce3efc5115663b8b89893f18f5e3220adb11f2260967f04390cab74bea5ada
+--> 78ce3efc5115
+[2/2] STEP 1/18: FROM docker.io/library/postgres:18.4-trixie
+[2/2] STEP 2/18: ARG PGBACKREST_VERSION=2.56.0
+--> Using cache 2e34db91772b6838d3cd8f7818857d1ccff2992608bea26129d9859825c50d8e
+--> 2e34db91772b
+[2/2] STEP 3/18: ARG GOSU_VERSION=1.19
+--> Using cache 4c0608332d5a67178785911620e2891ca97bb77a162df173e5c9ca9363b63ece
+--> 4c0608332d5a
+[2/2] STEP 4/18: LABEL org.opencontainers.image.title="boba-bear-postgres"       org.opencontainers.image.description="PostgreSQL 18 with pinned pgBackRest >= 2.55 for IMP-037"       boba.pgbackrest.version="${PGBACKREST_VERSION}"       boba.pgbackrest.min_version="2.55.0"       boba.gosu.version="${GOSU_VERSION}"       boba.postgres.runtime-user="postgres"
+--> Using cache cacf38ef2512d2978c5ab0b27298437528640c4b024226a212fd5f838a8dc079
+--> cacf38ef2512
+[2/2] STEP 5/18: USER root
+--> Using cache 30543bcbc4328549f8631aeb3a6e4a42c0e4eb45bc193d41336814e9e9a028b3
+--> 30543bcbc432
+[2/2] STEP 6/18: COPY --from=gosu-builder /gosu /usr/local/bin/gosu
+--> Using cache b69793241cee94751fd191490d2c14d248fbbba07d7aec3b6de513c5f0ce6a51
+--> b69793241cee
+[2/2] STEP 7/18: RUN chmod 0755 /usr/local/bin/gosu   && gosu nobody true   && gosu version 2>&1 | grep -F "gosu version: ${GOSU_VERSION}"   && gosu version 2>&1 | grep -F "go1.26.10"
+--> Using cache adc7f8e867851af3152535b332775ed1034da857035f290ab3da4d434389644f
+--> adc7f8e86785
+[2/2] STEP 8/18: RUN apt-get update   && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y --no-install-recommends   && rm -rf /var/lib/apt/lists/*
+--> Using cache d2ebad5964612ad4afeb7cebf70cc0b1c86c3ba4705a55c93634f5f97128f139
+--> d2ebad596461
+[2/2] STEP 9/18: RUN set -eux;     apt-get update;     apt-get install -y --no-install-recommends       build-essential       libssl-dev       libxml2-dev       liblz4-dev       libzstd-dev       libbz2-dev       libyaml-dev       libssh2-1-dev       libpq-dev       pkg-config       meson       ninja-build       curl       ca-certificates       python3;     curl -fsSL --retry 3       "https://github.com/pgbackrest/pgbackrest/archive/refs/tags/release/${PGBACKREST_VERSION}.tar.gz"       -o /tmp/pgbackrest.tar.gz;     test -s /tmp/pgbackrest.tar.gz;     mkdir -p /tmp/pgbackrest-src;     tar -xzf /tmp/pgbackrest.tar.gz -C /tmp/pgbackrest-src --strip-components=1;     meson setup /tmp/pgbackrest-build /tmp/pgbackrest-src;     ninja -C /tmp/pgbackrest-build;     ninja -C /tmp/pgbackrest-build install;     pgbackrest version;     installed="$(pgbackrest version | head -n1 | sed -n 's/.* \([0-9][0-9.]*\).*/\1/p')";     python3 -c "import sys; v=tuple(int(x) for x in sys.argv[1].split('.')); assert v >= (2,55,0), f'pgBackRest {sys.argv[1]} below locked floor 2.55.0'; print(f'pgBackRest pin OK: {sys.argv[1]}')" "$installed";     apt-get purge -y --auto-remove       build-essential meson ninja-build pkg-config       libssl-dev libxml2-dev liblz4-dev libzstd-dev libbz2-dev libyaml-dev libssh2-1-dev libpq-dev;     apt-get install -y --no-install-recommends       libssl3       libxml2       liblz4-1       libzstd1       libbz2-1.0       libyaml-0-2       libssh2-1       age;     rm -rf /tmp/pgbackrest.tar.gz /tmp/pgbackrest-src /tmp/pgbackrest-build /var/lib/apt/lists/*
+--> Using cache 87444d1ac7ab7a0c69cd8fe5bf0b654951d000129e8abf4b82df465504ebfb23
+--> 87444d1ac7ab
+[2/2] STEP 10/18: RUN mkdir -p       /etc/pgbackrest       /etc/postgresql       /var/lib/pgbackrest       /var/lib/postgresql       /var/log/pgbackrest       /var/spool/pgbackrest       /var/run/postgresql     && chown -R postgres:postgres       /etc/pgbackrest       /etc/postgresql       /var/lib/pgbackrest       /var/lib/postgresql       /var/log/pgbackrest       /var/spool/pgbackrest       /var/run/postgresql     && chmod 750 /etc/pgbackrest /var/lib/pgbackrest /var/log/pgbackrest /var/spool/pgbackrest     && chmod 755 /etc/postgresql     && chmod 3775 /var/run/postgresql
+--> Using cache cfdd9805fab75b4b3f64053494abcdb9e38d23a670d587f8ad5f5ed841e659f2
+--> cfdd9805fab7
+[2/2] STEP 11/18: COPY docker/postgres/pgbackrest/pgbackrest.conf.template /etc/pgbackrest/pgbackrest.conf.template
+--> Using cache ce395f3e829f956aaa6a0ce94ac131569a463a920031e50dc30d11204467d349
+--> ce395f3e829f
+[2/2] STEP 12/18: COPY docker/postgres/pgbackrest/render-conf.sh /usr/local/bin/boba-render-pgbackrest-conf
+--> Using cache 7675b1e266bd66b3e4bcad761085767a89c09ffce7895ea31eb7e37c2350de54
+--> 7675b1e266bd
+[2/2] STEP 13/18: COPY docker/postgres/pgbackrest/entrypoint-wrapper.sh /usr/local/bin/boba-postgres-entrypoint
+--> Using cache 175a72c04f195d7d2260387389a94760da6ada42072f2495e5f419315494f193
+--> 175a72c04f19
+[2/2] STEP 14/18: RUN chmod 755 /usr/local/bin/boba-render-pgbackrest-conf /usr/local/bin/boba-postgres-entrypoint     && chown postgres:postgres /etc/pgbackrest /etc/postgresql /var/run/postgresql
+--> Using cache 5cf22d8cb90df469d596052d60e2fe859382ffa3445867dff40e84882a43b8cd
+--> 5cf22d8cb90d
+[2/2] STEP 15/18: USER postgres
+--> Using cache 0c4a094ab79566a47411aae58373ee4edff77ad6a6be50ffd27ae47f529ac316
+--> 0c4a094ab795
+[2/2] STEP 16/18: ENTRYPOINT ["boba-postgres-entrypoint"]
+--> Using cache e6428c9dc12c75a58485901eda17216c0a95bef93cd973b513fd2c7bdb047db0
+--> e6428c9dc12c
+[2/2] STEP 17/18: CMD ["postgres"]
+--> Using cache 6981431e63eadf4b2fa37c912e8ecfbed239e380f7d4b74765f1f1bf7692bb8e
+--> 6981431e63ea
+[2/2] STEP 18/18: LABEL "boba.c1.proof"="c1-proof-b-27be227a1753" "boba.c1.source-sha"="27be227a1753d5a3897b186c2a2f9bb7650c317d"
+[2/2] COMMIT localhost/boba-bear-postgres:c1-proof-b-27be227a1753
+--> 7aa79098f94e
+Successfully tagged localhost/boba-bear-postgres:c1-proof-b-27be227a1753
+7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+IMAGE_REF=localhost/boba-bear-postgres:c1-proof-b-27be227a1753
+IMAGE_ID=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+CONFIG_USER=postgres
+image_ref=localhost/boba-bear-postgres:c1-proof-b-27be227a1753
+image_id=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+config_user=postgres
+source_sha=27be227a1753d5a3897b186c2a2f9bb7650c317d
+Id=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5 User=postgres Entrypoint=[boba-postgres-entrypoint] Cmd=[postgres]
+uid=999(postgres) gid=999(postgres) groups=999(postgres),101(ssl-cert)
+RUNTIME_UID=999
+RUNTIME_USER=postgres
+final_image_uid	PASS	Config.User=postgres; runtime id=999(postgres); image_id=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+PGDATA_PATH=/var/lib/postgresql/18/docker
+PGDATA_PATH=/var/lib/postgresql/18/docker
+=== row 2: fresh start and restart on a new volume ===
+volume_name=c1-proof-b-27be227a1753-171004-pgdata mountpoint=/home/ajoshi/.local/share/containers/storage/volumes/c1-proof-b-27be227a1753-171004-pgdata/_data created=2026-10-24 17:10:49.365219075 +0000 UTC
+volume_name=c1-proof-b-27be227a1753-171004-pgbackrest mountpoint=/home/ajoshi/.local/share/containers/storage/volumes/c1-proof-b-27be227a1753-171004-pgbackrest/_data created=2026-10-24 17:10:53.485714488 +0000 UTC
+container_name=c1-proof-b-27be227a1753-171004-pg id=d89222ea10ad2a8fdec2780ba2487a0773af37a7a1a3f07e7665a6fdc2325d5d image=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+mount_owner_inside=999:999 1777
+host_owner_volume=100998:100998
+container_uid=999
+container_name=c1-proof-b-27be227a1753-171004-pg id=78054db6cfb2039249537b8cab1ea0c8dfc183036f3e3c214b66a787410bfb3f image=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+fresh_start_restart	PASS	new volume c1-proof-b-27be227a1753-171004-pgdata owned inside by 999 and on host by 100998; fresh start and restart ready; no :U
+=== row 3: incorrectly owned bind must fail closed ===
+container_name=c1-proof-b-27be227a1753-171004-bad-owner id=dd4990e282b6bd62c71cdd6bd374e5ab6957d71f21394312482d178e50a3268d image=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+volume_ownership_fail_closed	PASS	correctly owned new volume succeeded; incorrect host-owned bind exit=1; both sentinels and tree snapshot unchanged
+=== row 4: forced root rejection ===
+root_start_rc=0
+container_name=c1-proof-b-27be227a1753-171004-root id=7834ffa4191e96e41b145f57b5ede5a12ba392ae974d89696948bd2932c6e3f4 image=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+forced_root_rejection	PASS	--user 0 exit=1; log refuses root
+=== row 10: unsuppressed Trivy ===
+Copying blob sha256:6f94328331290cbd81edab450664d42da7b64c191416c9346cd5d28c84f76035
+Copying blob sha256:fff5f6ec2c1f54e658f647137034e787217ef87423067bb1f1d40ceb796176e3
+Copying blob sha256:5d564305ddc93bdc4ad1ddd267af634c662e332cba4b0352d5aff11b1261e6fa
+Copying blob sha256:f0751144d8b5fa53dac1835a5a437f6da04da4776a2e86c19f437b6c89807aad
+Copying blob sha256:4097e154e51946d5485a291f0fb840a00d3f936b641366a0d7cb280850ea4b51
+Copying blob sha256:41d676c0a0a7f4f3c729cfdd858b9d20c83c1da751e4b51d2ba96486a999d393
+Copying blob sha256:b77d4252ea3eb18bdb59c21965168fda9e7c0ed21ccd1d413837c13d960340f1
+Copying blob sha256:5bdd861a04aff5becbf663c6422d66b18fcf20c247aef63d9765f1897dc0a361
+Copying blob sha256:00be126d2054699cd80b7dd85ac3c4b7f267a7d10fe258b9e0f203e6b1b9812e
+Copying blob sha256:111c2456384aeadd44b469c665accfdb6696eb80e4c89801814324d3f33c9b83
+Copying blob sha256:51570c20ff313742846a7344073fb6d151cc948753cf17cbec9733f9e5ef33f8
+Copying blob sha256:dcdf666a16a2af6652ee6568723e6d6e87ce2eb981be1a59cae99eb98d390b31
+Copying blob sha256:28dc842318aa7edda87414ef9452a47f09e983366146b45ad0518f0c1bf21152
+Copying blob sha256:1ae81e27117b95e8f5fe6f95dc7452389a9a06c96bcd6913d086160e37509ce7
+Copying blob sha256:bd551146aafc51a3a70373b4b10b26ef89577c7c4d1e3e7b72d565aa7e1d3101
+Copying blob sha256:a44b2bd80e246bf2db3b2c0d86d9b1f4b9f2bc1953a93053411f303c47c59f81
+Copying blob sha256:42bb2b0578b81bad0b5e6c455893349eb6c17ddf1fc9a49f20f05c547bf7de6e
+Copying blob sha256:01b398d77c188902193b0185b9373846f2904c4640281a9e67a0702895238c20
+Copying blob sha256:c004b56bf5f972f0e5aedc78c45961e9de0a766543e443009df8a8e126f6591f
+Copying blob sha256:e952863b826d1eae9da357aacf17b2e60ce3696ff3985c4b75b5d1beca8ab8ee
+Copying blob sha256:831a2d89160feba8f91d2967b9e3ba018e84b17bcf951069bc8dcbb75b76ab89
+Copying blob sha256:8a1af238d0c0f9f04c0bc873864f7c9f77ce8cf2612ebdd7ae0928e3a7ac1b00
+Copying config sha256:7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+Writing manifest to image destination
+cleanup_exit=0
+leftover_containers<<EOF
+
+EOF
+leftover_volumes<<EOF
+
+EOF
+cleanup	PASS	no leftover containers or volumes for c1-proof-b-27be227a1753; cleanup_exit=0

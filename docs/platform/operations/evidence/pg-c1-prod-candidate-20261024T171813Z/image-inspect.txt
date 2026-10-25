@@ -1,0 +1,6 @@
+image_ref=localhost/boba-bear-postgres:c1-proof-b-27be227a1753
+image_id=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+config_user=postgres
+source_sha=27be227a1753d5a3897b186c2a2f9bb7650c317d
+Id=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5 User=postgres Entrypoint=[boba-postgres-entrypoint] Cmd=[postgres]
+uid=999(postgres) gid=999(postgres) groups=999(postgres),101(ssl-cert)

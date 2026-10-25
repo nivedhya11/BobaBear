@@ -1,0 +1,5 @@
+This run is not the published matrix.
+
+Rows final_image_uid, fresh_start_restart, volume_ownership_fail_closed, and forced_root_rejection passed against source SHA 27be227a1753d5a3897b186c2a2f9bb7650c317d and image 7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5.
+
+The harness then aborted. Snap Trivy 0.52.2 cannot read /tmp, so the image tar saved there was invisible and the scan failed. The result parser exited 2, and the script's cleanup trap removed the disposable containers and volumes before backup, WAL, restore, and S3 rows ran. That abort is a harness defect. The image was not changed. The complete rerun is a later pg-c1-prod-candidate directory.

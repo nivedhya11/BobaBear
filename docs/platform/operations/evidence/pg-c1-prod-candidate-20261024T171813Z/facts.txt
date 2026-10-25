@@ -1,0 +1,45 @@
+RUN_ID=c1-proof-b-27be227a1753-171813
+SOURCE_SHA=27be227a1753d5a3897b186c2a2f9bb7650c317d
+SOURCE_BRANCH=fix/postgres-c1-nonroot-runtime-20261024
+PROOF_HEAD=a6155378b799e06a95b28c593ac1a340d7ca9245
+ENGINE=podman
+DOCKER_ENGINE=UNVERIFIED
+PODMAN_VERSION=4.9.3
+TRIVY_BIN=/snap/bin/trivy
+TRIVY_VERSION=0.52.2
+HOST_UID=1000
+SUBUID_START=100000
+EXPECTED_HOST_UID_FOR_CONTAINER_999=100998
+DOCKER_CLI=ABSENT_OR_UNUSED
+DOCKERFILE_SHA256=4cf227e7f50139eb6cf812e47a3e0d42ac2451642103d7cc54f940263ca6c537
+ENTRYPOINT_SHA256=9151655a078cc62bdedd7e757f82eada44c2162afc50c482b2af96a834345d6d
+IMAGE_REF=localhost/boba-bear-postgres:c1-proof-b-27be227a1753
+IMAGE_ID=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+CONFIG_USER=postgres
+RUNTIME_UID=999
+RUNTIME_USER=postgres
+PGDATA_PATH=/var/lib/postgresql/18/docker
+volume_name=c1-proof-b-27be227a1753-171813-pgdata mountpoint=/home/ajoshi/.local/share/containers/storage/volumes/c1-proof-b-27be227a1753-171813-pgdata/_data created=2026-10-24 17:18:38.182092779 +0000 UTC
+volume_name=c1-proof-b-27be227a1753-171813-pgbackrest mountpoint=/home/ajoshi/.local/share/containers/storage/volumes/c1-proof-b-27be227a1753-171813-pgbackrest/_data created=2026-10-24 17:18:40.462637558 +0000 UTC
+container_name=c1-proof-b-27be227a1753-171813-pg id=19fb20ce516358bd6ab334d421db282c5b5cc57b941e045e8361e41fce269777 image=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+container_name=c1-proof-b-27be227a1753-171813-pg id=af1d2352f8f75f4846f8345d48024aacbc029c2d44b402181c573fdc5cf606fe image=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+container_name=c1-proof-b-27be227a1753-171813-bad-owner id=f1fd857bd9a4a8e736639853ce6308c1d623b8399edb92d13c07e5f0d767b2ff image=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+container_name=c1-proof-b-27be227a1753-171813-root id=49ddc4d755875394b3edc45fde35506907b84d2f192904ce5116459f20f4c64f image=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+DS0002=absent
+TRIVY_HIGH_CRITICAL_COUNT=86
+container_name=c1-proof-b-27be227a1753-171813-pg id=d481f3b7faa2dd274208a0cf9aa732db7eff4498fbacafa6ab458c866cee8c00 image=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+volume_name=c1-proof-b-27be227a1753-171813-restore-pgdata mountpoint=/home/ajoshi/.local/share/containers/storage/volumes/c1-proof-b-27be227a1753-171813-restore-pgdata/_data created=2026-10-24 17:26:15.108099534 +0000 UTC
+container_name=c1-proof-b-27be227a1753-171813-restore id=2a8bec4c2cef64eeb27756d7fdd076a6a96381a7c568dd4e66a0471b0965c727 image=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+volume_name=c1-proof-b-27be227a1753-171813-restore-neg-pgdata mountpoint=/home/ajoshi/.local/share/containers/storage/volumes/c1-proof-b-27be227a1753-171813-restore-neg-pgdata/_data created=2026-10-24 17:39:30.833325991 +0000 UTC
+container_name=c1-proof-b-27be227a1753-171813-restore-neg id=cf6aecfe1d94be3bbb58d2b7dbcce816c1ef52ff40bfc801adce31e6e418e575 image=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+volume_name=c1-proof-b-27be227a1753-171813-s3fail-pgdata mountpoint=/home/ajoshi/.local/share/containers/storage/volumes/c1-proof-b-27be227a1753-171813-s3fail-pgdata/_data created=2026-10-24 17:45:07.937676822 +0000 UTC
+container_name=c1-proof-b-27be227a1753-171813-s3-fail id=362f6138a8d158521e58a6844e6efe98ac772507d250801bb4495061481bf8c1 image=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+container_name=c1-proof-b-27be227a1753-171813-archoff-s3 id=6fc76872484d9657abc8b0c4495e638ada4d210ecdd5cf5311c3b7514dcc6b6c image=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+cleanup_exit=1
+leftover_containers<<EOF
+f1fd857bd9a4 c1-proof-b-27be227a1753-171813-bad-owner
+49ddc4d75587 c1-proof-b-27be227a1753-171813-root
+EOF
+leftover_volumes<<EOF
+
+EOF

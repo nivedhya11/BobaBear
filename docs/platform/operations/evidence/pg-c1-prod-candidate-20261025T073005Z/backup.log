@@ -1,0 +1,12 @@
+stanza: boba
+    status: ok
+    cipher: aes-256-cbc
+
+    db (current)
+        wal archive min/max (18): 000000010000000000000001/000000010000000000000003
+
+        full backup: 20261025-073351F
+            timestamp start/stop: 2026-10-25 07:33:51+00 / 2026-10-25 07:34:11+00
+            wal start/stop: 000000010000000000000003 / 000000010000000000000003
+            database size: 22.7MB, database backup size: 22.7MB
+            repo1: backup set size: 2.7MB, backup size: 2.7MB

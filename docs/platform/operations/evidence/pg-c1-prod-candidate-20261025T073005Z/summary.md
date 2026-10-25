@@ -1,0 +1,26 @@
+# PG-C1 production-candidate proof
+
+- RUN_ID: `c1-proof-b-eae90976c9f1-073005`
+- SOURCE_SHA: `eae90976c9f1bb5d74c8d3a75cae67f6af463d3e`
+- IMAGE_ID: `cecb548ff5f75560c4732bfd417b009722092f15c96d12822c9bcafd7264846c`
+- ENGINE: podman 4.9.3
+- DOCKER_ENGINE: UNVERIFIED
+- S3_LIVE_SPACES: UNVERIFIED
+- CONFIG_USER: `postgres`
+- RUNTIME_UID: `999 (postgres)`
+
+| Case | Result | Note |
+|---|---|---|
+| docker_engine | UNVERIFIED | docker CLI absent; DOCKER_ENGINE=UNVERIFIED; Podman is additional evidence only |
+| final_image_uid | PASS | Config.User=postgres; runtime id=999(postgres); image_id=cecb548ff5f75560c4732bfd417b009722092f15c96d12822c9bcafd7264846c |
+| fresh_start_restart | PASS | new volume c1-proof-b-eae90976c9f1-073005-pgdata owned inside by 999 and on host by 100998; fresh start and restart ready; no :U |
+| volume_ownership_fail_closed | PASS | correctly owned new volume succeeded; incorrect host-owned bind exit=1; both sentinels and tree snapshot unchanged |
+| forced_root_rejection | PASS | --user 0 exit=1; log refuses root |
+| trivy_unsuppressed | PASS | DS-0002 absent; empty ignorefile; VEX not passed; bound to eae90976c9f1bb5d74c8d3a75cae67f6af463d3e cecb548ff5f75560c4732bfd417b009722092f15c96d12822c9bcafd7264846c; high_critical_count=86; not the six-image CI gate |
+| pgbackrest_full_backup | PASS | stanza-create + check + backup --type=full + info + verify |
+| post_backup_wal_segment | PASS | pg_current_wal_lsn=0/4007188 pg_walfile_name=000000010000000000000004 after pg_switch_wal=0/40071A0; exact file /var/lib/pgbackrest/repo-gen-1/archive/boba/18-1/0000000100000000/000000010000000000000004-5f303c73e31216a58814913e60b2cc7716ac1b8b.zst |
+| isolated_restore_marker | PASS | restored database contains post-backup-marker-c1-proof-b-eae90976c9f1-073005; replay_lsn=0/5000000 >= marker_lsn=0/4007188 |
+| interrupted_archive_failure | PASS | verifier failed for 000000010000000000000005; failed_count=6; last_failed_wal=000000010000000000000005; second restore lacks neg-unarchived-marker-c1-proof-b-eae90976c9f1-073005; bare archived_count=5 would have been a false PASS |
+| s3_synthetic_render | PASS | network=none render repo1-type=s3; secret not written; missing-creds rc=1; same-bucket rc=1; archive=1 incomplete S3 exit=1 and PGDATA absent; archive=0 with incomplete S3 became_ready=yes (fail-closed only when archive is enabled) |
+| s3_live_spaces | UNVERIFIED | S3_LIVE_SPACES=UNVERIFIED; no credentials and no bucket changes; synthetic network-free render only |
+| cleanup | PASS | no leftover run-owned containers, volumes, or image; cleanup_exit=0 |

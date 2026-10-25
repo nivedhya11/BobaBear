@@ -1,0 +1,4 @@
+56:USER root
+148:USER postgres
+dockerfile_sha256=4cf227e7f50139eb6cf812e47a3e0d42ac2451642103d7cc54f940263ca6c537
+entrypoint_sha256=9151655a078cc62bdedd7e757f82eada44c2162afc50c482b2af96a834345d6d

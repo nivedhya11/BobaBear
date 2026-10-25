@@ -1,0 +1,11 @@
+2026-10-25T07:33:36Z	INFO	Container image config scanners	scanners=[misconfig]
+2026-10-25T07:33:36Z	INFO	Vulnerability scanning is enabled
+2026-10-25T07:33:36Z	INFO	Misconfiguration scanning is enabled
+2026-10-25T07:33:38Z	INFO	Secret scanning is enabled
+2026-10-25T07:33:38Z	INFO	If your scanning is slow, please try '--scanners vuln' to disable secret scanning
+2026-10-25T07:33:38Z	INFO	Please see also https://aquasecurity.github.io/trivy/v0.52/docs/scanner/secret/#recommendation for faster secret detection
+2026-10-25T07:33:39Z	INFO	Detected OS	family="debian" version="13.7"
+2026-10-25T07:33:39Z	INFO	[debian] Detecting vulnerabilities...	os_version="13" pkg_num=165
+2026-10-25T07:33:39Z	INFO	Number of language-specific files	num=1
+2026-10-25T07:33:39Z	INFO	[gobinary] Detecting vulnerabilities...
+2026-10-25T07:33:39Z	INFO	Detected config files	num=1

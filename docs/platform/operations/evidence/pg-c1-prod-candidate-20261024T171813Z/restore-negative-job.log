@@ -1,0 +1,8 @@
+2026-10-24 17:39:43.615 P00   INFO: restore command begin 2.56.0: --config=/var/lib/postgresql/boba-pgbackrest-restore.conf --exec-id=7-30e215b4 --log-level-console=info --pg1-path=/var/lib/postgresql/18/docker --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest/repo-gen-1 --repo1-type=posix --stanza=boba
+2026-10-24 17:39:43.622 P00   INFO: repo1: restore backup set 20261024-172232F, recovery will start at 2026-10-24 17:22:32
+2026-10-24 17:43:53.334 P00   INFO: write updated /var/lib/postgresql/18/docker/postgresql.auto.conf
+2026-10-24 17:43:54.061 P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)
+2026-10-24 17:43:54.072 P00   INFO: restore size = 22.7MB, file total = 972
+2026-10-24 17:43:54.073 P00   INFO: restore command end: completed successfully (250460ms)
+--- postgresql.auto.conf ---
+restore_command = 'pgbackrest --config=/var/lib/postgresql/boba-pgbackrest-restore.conf --pg1-path=/var/lib/postgresql/18/docker --stanza=boba archive-get %f "%p"'

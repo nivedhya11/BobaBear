@@ -1,0 +1,6 @@
+docker_engine	UNVERIFIED	docker CLI absent; DOCKER_ENGINE=UNVERIFIED; Podman is additional evidence only
+final_image_uid	PASS	Config.User=postgres; runtime id=999(postgres); image_id=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+fresh_start_restart	PASS	new volume c1-proof-b-27be227a1753-171004-pgdata owned inside by 999 and on host by 100998; fresh start and restart ready; no :U
+volume_ownership_fail_closed	PASS	correctly owned new volume succeeded; incorrect host-owned bind exit=1; both sentinels and tree snapshot unchanged
+forced_root_rejection	PASS	--user 0 exit=1; log refuses root
+cleanup	PASS	no leftover containers or volumes for c1-proof-b-27be227a1753; cleanup_exit=0

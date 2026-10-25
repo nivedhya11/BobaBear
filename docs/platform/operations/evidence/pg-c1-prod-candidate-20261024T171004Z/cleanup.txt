@@ -1,0 +1,7 @@
+cleanup_exit=0
+leftover_containers<<EOF
+
+EOF
+leftover_volumes<<EOF
+
+EOF
