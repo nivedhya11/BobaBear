@@ -275,6 +275,38 @@ function isReservedRootName(name) {
   );
 }
 
+/** Root files already tracked before this placement rule. New siblings are not grandfathered. */
+const GRANDFATHERED_ROOT_FILES = new Set(["imp023-fingerprint.json", "menu.json"]);
+
+const ROOT_FRAMEWORK_FILES = new Set(["robots.txt", "sitemap.xml", "next-env.d.ts", "components.json"]);
+
+/**
+ * Root is for tool and framework configuration that has to live there.
+ * Application source, tests, utilities, and documentation do not.
+ * @param {string} name
+ */
+function isPermittedRootFile(name) {
+  if (isReservedRootName(name)) return true;
+  if (GRANDFATHERED_ROOT_FILES.has(name)) return true;
+  if (ROOT_FRAMEWORK_FILES.has(name)) return true;
+  if (name.startsWith(".")) {
+    if (name.startsWith(".env")) return name.endsWith(".example") || name === ".env.test" || name === ".env.sample";
+    return /^\.[a-z0-9][a-z0-9._-]*$/.test(name);
+  }
+  if (/^(package\.json|package-lock\.json|pnpm-lock\.yaml|yarn\.lock|npm-shrinkwrap\.json)$/.test(name)) return true;
+  if (/^tsconfig(\.[a-z0-9][a-z0-9-]*)*\.json$/.test(name)) return true;
+  if (name === "jsconfig.json") return true;
+  if (
+    /^(next|postcss|eslint|prettier|drizzle|tailwind|vitest|playwright)(\.[a-z0-9][a-z0-9-]*)*\.config\.(mjs|cjs|js|ts|mts|cts)$/.test(
+      name,
+    )
+  ) {
+    return true;
+  }
+  if (/^(compose|docker-compose)(\.[a-z0-9][a-z0-9-]*)*\.(yaml|yml)$/.test(name)) return true;
+  return false;
+}
+
 /**
  * @param {string} name
  */
@@ -359,6 +391,23 @@ function idKind(segment) {
 }
 
 /**
+ * Task-batch numbers used as filename tokens. The domain word "batch" and
+ * encoding tokens such as b64 are not batch identities.
+ * @param {string} segment
+ */
+function batchToken(segment) {
+  const tokens = segment.split(/[-_.]/).filter(Boolean);
+  for (let index = 0; index < tokens.length; index += 1) {
+    const token = tokens[index] ?? "";
+    if (/^b\d{1,2}$/i.test(token) && !/^(b16|b32|b64)$/i.test(token)) return token.toLowerCase();
+    if (/^batch\d{1,2}$/i.test(token)) return token.toLowerCase();
+    const next = tokens[index + 1] ?? "";
+    if (/^batch$/i.test(token) && /^\d{1,2}$/.test(next)) return `batch${next}`;
+  }
+  return null;
+}
+
+/**
  * @param {string} kind
  */
 function idRemediation(kind) {
@@ -400,6 +449,18 @@ function tokenViolations(filePath, change, existingDirectories) {
           ),
         );
       }
+      const batch = batchToken(segment);
+      if (batch) {
+        violations.push(
+          finding(
+            CODES.NAMING,
+            filePath,
+            "no-task-batch-filename",
+            `Use a functional name. The task-batch id "${batch}" belongs in trace metadata, not the filename.`,
+            change,
+          ),
+        );
+      }
       continue;
     }
     if (filePath.startsWith("docs/platform/product/") && /^IMP-\d{3}[A-Z]?$/.test(segment)) continue;
@@ -418,6 +479,18 @@ function tokenViolations(filePath, change, existingDirectories) {
     const kind = idKind(segment);
     if (kind && !skip.has(kind)) {
       violations.push(finding(CODES.NAMING, filePath, "no-governance-id-filename", idRemediation(kind), change));
+    }
+    const batch = batchToken(segment);
+    if (batch) {
+      violations.push(
+        finding(
+          CODES.NAMING,
+          filePath,
+          "no-task-batch-filename",
+          `Use a functional name. The task-batch id "${batch}" belongs in trace metadata, not the filename.`,
+          change,
+        ),
+      );
     }
   }
   return violations;
@@ -517,6 +590,17 @@ export function introductionViolations(rawPath, options = {}) {
     violations.push(...tokenViolations(filePath, change, existingDirectories));
     const shape = shapeViolation(filePath, change);
     if (shape) violations.push(shape);
+    if (!isPermittedRootFile(name)) {
+      violations.push(
+        finding(
+          CODES.PLACEMENT,
+          filePath,
+          "root-file-placement",
+          "Repository root is reserved for project and tool configuration. Place application source, tests, utilities, and documentation in the existing architectural directory for that work.",
+          change,
+        ),
+      );
+    }
     return dedupe(violations);
   }
 
@@ -781,15 +865,18 @@ function mutationViolations(change) {
     );
   }
   if (target.startsWith("docs/platform/history/")) {
-    violations.push(
-      finding(
-        CODES.PROTECTED,
-        target,
-        "immutable-history",
-        "Do not edit, rename, or delete an immutable historical snapshot. Add a new snapshot only when governance reconciliation requires one.",
-        change.kind,
-      ),
-    );
+    const supportingIndexEdit = target === "docs/platform/history/README.md" && change.kind === "modified";
+    if (!supportingIndexEdit) {
+      violations.push(
+        finding(
+          CODES.PROTECTED,
+          target,
+          "immutable-history",
+          "Do not edit, rename, or delete an immutable historical snapshot. docs/platform/history/README.md is the supporting index and may be updated in place. Add a new snapshot only when governance reconciliation requires one.",
+          change.kind,
+        ),
+      );
+    }
   }
   if (
     target.startsWith("test-results-customer-ordering/") &&
@@ -891,14 +978,17 @@ function parseStatusZ(text) {
     if (record.length < 4) continue;
     const xy = record.slice(0, 2);
     const filePath = norm(record.slice(3));
+    // Porcelain v1 -z renames are "to from": this record is the destination,
+    // and the next NUL-terminated record is the source. git diff --name-status -z
+    // is the opposite order and is parsed by parseNameStatusZ.
     if (xy.includes("R") || xy.includes("C")) {
-      const nextPath = records[index + 1];
+      const sourcePath = records[index + 1];
       index += 1;
-      if (!nextPath) break;
+      if (!sourcePath) break;
       changes.push({
         kind: xy.includes("R") ? "renamed" : "copied",
-        previousPath: filePath,
-        path: norm(nextPath),
+        path: filePath,
+        previousPath: norm(sourcePath),
       });
       continue;
     }

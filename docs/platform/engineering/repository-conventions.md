@@ -52,6 +52,11 @@ Test titles must state the expected behavior, for example
 Do not introduce a filename or exported identifier whose primary name is an IMP id, sprint or
 tranche number, temporary agent name, issue number, task-batch id, calendar date, or a vague
 qualifier (`temp`, `tmp`, `misc`, `new`, `old`, `final`, `latest`, `fix2`, `wip`).
+A task-batch id is a batch number used as a filename token, including a prefix or infix such as
+`b5`, `batch7`, or `batch-7` (`b5-commerce-composite-qa.spec.ts`, `run-b5-commerce-qa-e2e.mjs`,
+`batch7-checkout-test.ts`). The domain word `batch` without a number, and terms such as `backup`,
+`b2b`, or `b64`, are not task-batch ids. Canonical IMP, ADR, and migration identities stay limited
+to the exceptions below.
 Domain words such as `backup` and wording modules such as `serviceability-copy` are not vague
 qualifiers. A filename that is only a duplicate marker is still a review item.
 
@@ -105,6 +110,14 @@ Documented layering matches the repository. It is not a new architecture.
 
 Other existing roots (`public`, `data`, `docker`, `.github`, `artifacts`, `figma-sync`) stay
 available for their current roles. Do not add a new top-level directory.
+
+The repository root is for project and tool configuration that the tool requires there
+(`package.json`, `next.config.ts`, `tsconfig*.json`, `eslint.config.mjs`, `drizzle.config.ts`,
+`playwright*.config.ts`, `vitest*.config.*`, `compose*.yaml`, and the existing dotfiles). Do not
+add application source, tests, utilities, or documentation at the root. `pricing-helper.ts` is a
+placement violation; that helper belongs next to the pricing feature. Root files that already
+exist stay grandfathered. A new recognized configuration file may still be added at the root when
+its tool requires that location.
 
 Place a new file next to the module or feature it serves. Do not move accepted source, and do not
 add an abstraction, only to make the tree look symmetrical.
@@ -168,8 +181,10 @@ belongs to that `audit:*` namespace.
 
 Keep current authority in its canonical location. Move superseded, non-authoritative reference
 material to a clearly marked historical location only when that move helps readers. Do not
-duplicate a second current document. Do not rewrite immutable snapshots under
-`docs/platform/history/`.
+duplicate a second current document. Do not rewrite immutable snapshot bytes under
+`docs/platform/history/`. `docs/platform/history/README.md` is the supporting index for those
+snapshots, not a snapshot. Updating that index in place is allowed. Deleting or renaming the
+index is not an index update, and snapshot files stay immutable.
 
 ### Evidence, migrations, and secrets
 

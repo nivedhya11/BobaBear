@@ -53,6 +53,22 @@ test("vague and IMP filenames are rejected outside governance exceptions", () =>
   assert.ok(rules("tests/checkout/scheduled-surfaces.tranche3.test.ts").includes("no-governance-id-filename"));
 });
 
+test("task-batch filename tokens are rejected and domain words are not", () => {
+  assert.ok(rules("tests/e2e/b5-commerce-composite-qa.spec.ts").includes("no-task-batch-filename"));
+  assert.ok(rules("scripts/run-b5-commerce-qa-e2e.mjs").includes("no-task-batch-filename"));
+  assert.ok(rules("src/server/checkout/batch7-checkout-test.ts").includes("no-task-batch-filename"));
+  assert.ok(rules("src/server/checkout/batch-7-checkout.ts").includes("no-task-batch-filename"));
+  assert.ok(rules("docs/platform/governance/b5-review.md").includes("no-task-batch-filename"));
+  assert.deepEqual(rules("src/server/checkout/order-batch.ts"), []);
+  assert.deepEqual(rules("scripts/database/logical-backup-role.sh"), []);
+  assert.deepEqual(rules("src/components/ordering/serviceability-copy.ts"), []);
+  assert.deepEqual(rules("src/lib/pricing/b2b-contract.ts"), []);
+  assert.deepEqual(rules("src/lib/encoding/b64-digest.ts"), []);
+  assert.deepEqual(rules("docs/platform/product/IMP-036K/implementation-plan.md"), []);
+  assert.deepEqual(rules("docs/platform/decisions/ADR-021-repository-hygiene.md"), []);
+  assert.deepEqual(rules("drizzle/0050_coupon_snapshot.sql"), []);
+});
+
 test("unit, integration, script, and browser test names", () => {
   assert.deepEqual(rules("tests/checkout/hides-curated-product.test.ts"), []);
   assert.deepEqual(rules("tests/checkout/coupon-recovery.integration.test.ts"), []);
@@ -180,6 +196,71 @@ test("files in the wrong layer are placement violations", () => {
   assert.ok(rules("tests/checkout/customer-ordering.spec.ts").includes("e2e-spec-location"));
   assert.ok(rules("src/app/(customer)/order/checkout-helper.ts").includes("src-app-route-file"));
   assert.ok(codes("brand-new-root/notes.md").includes("REPO_HYGIENE_PLACEMENT_VIOLATION"));
+});
+
+test("new root files must be project configuration, and existing root files stay allowed", () => {
+  assert.ok(rules("pricing-helper.ts").includes("root-file-placement"));
+  assert.ok(rules("checkout-notes.md").includes("root-file-placement"));
+  assert.ok(rules("helper.test.ts").includes("root-file-placement"));
+  assert.equal(rules("pricing-helper.ts").includes("filename-shape"), false);
+  for (const filePath of [
+    "eslint.config.mjs",
+    "next.config.ts",
+    "drizzle.config.ts",
+    "playwright.customer-auth.config.ts",
+    "vitest.database.config.mts",
+    "tsconfig.customer-commerce.json",
+    "compose.recovery.yaml",
+    "package.json",
+    ".env.example",
+    ".env.docker.example",
+    ".gitignore",
+    "robots.txt",
+    "sitemap.xml",
+    "next-env.d.ts",
+    "components.json",
+    "menu.json",
+    "imp023-fingerprint.json",
+    "README.md",
+    "AGENTS.md",
+  ]) {
+    assert.equal(rules(filePath).includes("root-file-placement"), false, filePath);
+  }
+  const listed = spawnSync("git", ["-C", repoRoot, "ls-files", "-z"], { encoding: "utf8" });
+  assert.equal(listed.status, 0, listed.stderr);
+  const rootFiles = listed.stdout.split("\0").filter((filePath) => filePath && !filePath.includes("/"));
+  assert.ok(rootFiles.length > 10);
+  for (const filePath of rootFiles) {
+    assert.equal(rules(filePath).includes("root-file-placement"), false, filePath);
+  }
+});
+
+test("the history index may change and snapshot bytes stay immutable", () => {
+  assert.deepEqual(evaluateChange({ kind: "modified", path: "docs/platform/history/README.md" }), []);
+  const snapshot = evaluateChange({ kind: "modified", path: "docs/platform/history/STATE-r190.md" });
+  assert.equal(snapshot[0]?.rule, "immutable-history");
+  assert.equal(evaluateChange({ kind: "deleted", path: "docs/platform/history/README.md" })[0]?.rule, "immutable-history");
+  assert.equal(
+    evaluateChange({
+      kind: "renamed",
+      path: "docs/platform/history/INDEX.md",
+      previousPath: "docs/platform/history/README.md",
+    }).some((item) => item.rule === "immutable-history"),
+    true,
+  );
+  const copied = evaluateChange({
+    kind: "copied",
+    path: "docs/platform/history/STATE-r191.md",
+    previousPath: "docs/platform/history/STATE-r190.md",
+  });
+  assert.equal(
+    copied.some((item) => item.path === "docs/platform/history/STATE-r190.md" && item.rule === "immutable-history"),
+    true,
+  );
+  assert.equal(
+    copied.some((item) => item.change === "modified" || item.change === "deleted"),
+    false,
+  );
 });
 
 test("unexpected generated output and a second agent-rules tree are protected", () => {
@@ -378,6 +459,115 @@ test("a new generated file fails against a real git comparison", () => {
     const result = runChecker(repo, ["--base", base, "--no-worktree"]);
     assert.equal(result.status, 1);
     assert.match(result.stdout, /REPO_HYGIENE_PROTECTED_PATH change=added path=coverage\/index\.html rule=generated-output/);
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+/**
+ * @param {string} repo
+ */
+function statusZ(repo) {
+  const result = spawnSync("git", ["-C", repo, "status", "--porcelain=v1", "-z", "-uall"], { encoding: "utf8" });
+  assert.equal(result.status, 0, result.stderr);
+  return result.stdout;
+}
+
+test("a staged rename to a temporary filename fails against git status", () => {
+  const repo = initRepo();
+  try {
+    writeRepoFile(repo, "scripts/pricing/format-total.mjs", "export const amount = 1;\n");
+    const base = commitAll(repo, "init");
+    const head = git(repo, ["rev-parse", "HEAD"]);
+    git(repo, ["mv", "scripts/pricing/format-total.mjs", "scripts/pricing/temp-total.mjs"]);
+    const before = statusZ(repo);
+    const bad = runChecker(repo, ["--base", base, "--head", base]);
+    assert.equal(bad.status, 1, bad.stdout);
+    assert.match(bad.stdout, /REPO_HYGIENE_NAMING_VIOLATION change=renamed path=scripts\/pricing\/temp-total\.mjs rule=no-vague-qualifier/);
+    assert.doesNotMatch(bad.stdout, /change=renamed path=scripts\/pricing\/format-total\.mjs/);
+    assert.equal(statusZ(repo), before);
+    assert.equal(git(repo, ["rev-parse", "HEAD"]), head);
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+test("a staged rename from a legacy filename to a functional filename passes", () => {
+  const repo = initRepo();
+  try {
+    writeRepoFile(repo, "scripts/pricing/temp-total.mjs", "export const amount = 1;\n");
+    const base = commitAll(repo, "legacy");
+    git(repo, ["mv", "scripts/pricing/temp-total.mjs", "scripts/pricing/format-order-total.mjs"]);
+    const good = runChecker(repo, ["--base", base, "--head", base]);
+    assert.equal(good.status, 0, good.stdout);
+    assert.match(good.stdout, /REPO_HYGIENE_PASS/);
+    assert.equal(
+      good.stdout.split("\n").some((line) => line.startsWith("REPO_HYGIENE_NAMING_VIOLATION")),
+      false,
+    );
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+test("a staged rename of an immutable migration or historical snapshot fails", () => {
+  const repo = initRepo();
+  try {
+    writeRepoFile(repo, "drizzle/0001_init.sql", "-- migration\n");
+    writeRepoFile(repo, "docs/platform/history/STATE-r190.md", "snapshot bytes\n");
+    writeRepoFile(repo, "docs/platform/history/README.md", "# index\n");
+    const base = commitAll(repo, "init");
+    git(repo, ["mv", "drizzle/0001_init.sql", "drizzle/0002_coupon_snapshot.sql"]);
+    const migration = runChecker(repo, ["--base", base, "--head", base]);
+    assert.equal(migration.status, 1, migration.stdout);
+    assert.match(
+      migration.stdout,
+      /REPO_HYGIENE_PROTECTED_PATH change=renamed path=drizzle\/0001_init\.sql rule=immutable-migration/,
+    );
+    git(repo, ["reset", "--hard"]);
+    git(repo, ["mv", "docs/platform/history/STATE-r190.md", "docs/platform/history/STATE-r191.md"]);
+    const snapshot = runChecker(repo, ["--base", base, "--head", base]);
+    assert.equal(snapshot.status, 1, snapshot.stdout);
+    assert.match(
+      snapshot.stdout,
+      /REPO_HYGIENE_PROTECTED_PATH change=renamed path=docs\/platform\/history\/STATE-r190\.md rule=immutable-history/,
+    );
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+test("a staged history index edit passes and an unchanged snapshot copy does not mark the source", () => {
+  const repo = initRepo();
+  try {
+    writeRepoFile(repo, "docs/platform/history/STATE-r190.md", "snapshot bytes\n");
+    writeRepoFile(repo, "docs/platform/history/README.md", "# index\n");
+    const base = commitAll(repo, "init");
+    writeRepoFile(repo, "docs/platform/history/README.md", "# index\n\nUpdated when a snapshot is added.\n");
+    git(repo, ["add", "docs/platform/history/README.md"]);
+    const index = runChecker(repo, ["--base", base, "--head", base]);
+    assert.equal(index.status, 0, index.stdout);
+    assert.match(index.stdout, /REPO_HYGIENE_PASS/);
+    assert.doesNotMatch(index.stdout, /immutable-history/);
+    git(repo, ["reset", "--hard"]);
+    writeRepoFile(repo, "docs/platform/history/STATE-r191.md", "snapshot bytes\n");
+    git(repo, ["add", "docs/platform/history/STATE-r191.md"]);
+    const copied = runChecker(repo, ["--base", base, "--head", base]);
+    assert.equal(copied.status, 0, copied.stdout);
+    assert.doesNotMatch(copied.stdout, /change=modified path=docs\/platform\/history\/STATE-r190\.md/);
+    assert.doesNotMatch(copied.stdout, /change=deleted path=docs\/platform\/history\/STATE-r190\.md/);
+    git(repo, ["reset", "--hard"]);
+    git(repo, ["config", "diff.renames", "copies"]);
+    writeRepoFile(repo, "docs/platform/history/STATE-r190.md", "snapshot bytes\nchanged\n");
+    writeRepoFile(repo, "docs/platform/history/STATE-r191.md", "snapshot bytes\nextra\n");
+    git(repo, ["add", "docs/platform/history/STATE-r190.md", "docs/platform/history/STATE-r191.md"]);
+    const similar = runChecker(repo, ["--base", base, "--head", base]);
+    assert.equal(similar.status, 1, similar.stdout);
+    assert.match(
+      similar.stdout,
+      /REPO_HYGIENE_PROTECTED_PATH change=modified path=docs\/platform\/history\/STATE-r190\.md rule=immutable-history/,
+    );
+    assert.doesNotMatch(similar.stdout, /path=docs\/platform\/history\/STATE-r191\.md rule=immutable-history/);
   } finally {
     rmSync(repo, { recursive: true, force: true });
   }
