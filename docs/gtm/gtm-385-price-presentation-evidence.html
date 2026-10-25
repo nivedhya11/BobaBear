@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>IMP-036J #385 price presentation evidence</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { margin: 0; background: #efeae3; color: #1c1915; font-family: Georgia, serif; }
+    main { box-sizing: border-box; width: min(1100px, 100%); margin: 0 auto; padding: 16px; }
+    h1 { font-size: 28px; line-height: 1.15; margin: 0 0 8px; }
+    h2 { font-size: 22px; margin: 28px 0 8px; }
+    .banner, .note { font-family: system-ui, sans-serif; font-size: 14px; line-height: 1.45; }
+    .banner { background: #fff8e8; border: 1px solid #8a6a22; border-radius: 8px; padding: 12px; }
+    .split { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+    .option { box-sizing: border-box; flex: 1 1 280px; border: 1px solid #243042; border-radius: 12px; padding: 16px; background: #f7f4ef; }
+    .option h3 { margin: 0 0 4px; font-size: 18px; }
+    .meta, .note { color: #4a433c; }
+    .row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; margin: 8px 0; }
+    .price { display: flex; flex-direction: column; align-items: flex-end; min-width: 0; }
+    .amount { font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+    dl { margin: 12px 0 0; border-top: 1px solid #243042; padding-top: 8px; }
+    ul { margin: 12px 0 0; padding: 8px 0 0; list-style: none; }
+    ul[aria-label="Price summary"] { border-top: 1px solid #243042; }
+    @media (max-width: 700px) {
+      h1 { font-size: 24px; }
+      .option { flex-basis: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="banner">Design evidence only. Production money presentation is unchanged. Merge is not authorized. No Founder choice is recorded.</p>
+    <h1>Item price and subtotal</h1>
+    <p class="note">Observed delivery coupon review. One merchandise line. Tax was not on the screenshot.</p>
+
+    <h2>Observed coupon review</h2>
+    <div class="split">
+      <section class="option" aria-label="Option A, gross item price and a separate saving">
+        <h3>Option A</h3>
+        <p class="meta">Checkout review · Delivery</p>
+        <ul aria-label="Your items">
+          <li class="row">
+            <span>2 × Purple Rain Taro Boba</span>
+            <span class="price"><span class="amount">₹518.00</span></span>
+          </li>
+        </ul>
+        <ul aria-label="Price summary">
+          <li class="row"><span>Subtotal</span><span class="amount">₹518.00</span></li>
+          <li class="row"><span>Order saving</span><span class="amount">₹51.80</span></li>
+          <li class="row"><span>Packaging</span><span class="amount">₹20.00</span></li>
+          <li class="row"><span>Total payable</span><span class="amount">₹486.20</span></li>
+        </ul>
+        <p class="note">Item gross is the observed merchandise Subtotal, because the review reported one merchandise line.</p>
+      </section>
+      <section class="option" aria-label="Option B, net item price labelled After discount">
+        <h3>Option B</h3>
+        <p class="meta">Checkout review · Delivery</p>
+        <ul aria-label="Your items">
+          <li class="row">
+            <span>2 × Purple Rain Taro Boba</span>
+            <span class="price"><span class="note">After discount</span><span class="amount">₹466.20</span></span>
+          </li>
+        </ul>
+        <ul aria-label="Price summary">
+          <li class="row"><span>Subtotal</span><span class="amount">₹518.00</span></li>
+          <li class="row"><span>Order saving</span><span class="amount">₹51.80</span></li>
+          <li class="row"><span>Packaging</span><span class="amount">₹20.00</span></li>
+          <li class="row"><span>Total payable</span><span class="amount">₹486.20</span></li>
+        </ul>
+      </section>
+    </div>
+
+    <h2>Observed review with no saving</h2>
+    <div class="split">
+      <section class="option" aria-label="Option A with no saving">
+        <h3>Option A</h3>
+        <ul aria-label="Your items">
+          <li class="row"><span>2 × Purple Rain Taro Boba</span><span class="amount">₹518.00</span></li>
+        </ul>
+        <ul aria-label="Price summary">
+          <li class="row"><span>Subtotal</span><span class="amount">₹518.00</span></li>
+          <li class="row"><span>Packaging</span><span class="amount">₹20.00</span></li>
+          <li class="row"><span>Total payable</span><span class="amount">₹538.00</span></li>
+        </ul>
+      </section>
+      <section class="option" aria-label="Option B with no saving">
+        <h3>Option B</h3>
+        <ul aria-label="Your items">
+          <li class="row"><span>2 × Purple Rain Taro Boba</span><span class="amount">₹518.00</span></li>
+        </ul>
+        <ul aria-label="Price summary">
+          <li class="row"><span>Subtotal</span><span class="amount">₹518.00</span></li>
+          <li class="row"><span>Packaging</span><span class="amount">₹20.00</span></li>
+          <li class="row"><span>Total payable</span><span class="amount">₹538.00</span></li>
+        </ul>
+        <p class="note">No “After discount” label. The item already matches Subtotal.</p>
+      </section>
+    </div>
+
+    <h2>Not observed</h2>
+    <section class="option" aria-label="Scenarios without prices">
+      <p>Pickup: no pickup prices were observed. Delivery and Delivery saving rows are omitted. No rupee figure.</p>
+      <p>Complimentary: “Included with your offer” and a sealed ₹0 line when a gift is selected. Option A does not invent a list price.</p>
+      <p>Stacked merchandise plus delivery saving: no prices were observed. A delivery saving stays on its own row and does not label the item “After discount”.</p>
+    </section>
+  </main>
+</body>
+</html>

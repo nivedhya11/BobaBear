@@ -31,10 +31,10 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2349,
-    "executableTestFiles": 539,
+    "trackedPathsConsidered": 2355,
+    "executableTestFiles": 540,
     "sourceTestFiles": 160,
-    "testsTreeExecutableFiles": 291,
+    "testsTreeExecutableFiles": 292,
     "scriptTestFiles": 88,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
@@ -398,6 +398,7 @@
     "tests/gtm-closure/checkout-revalidation.test.ts",
     "tests/gtm-closure/coupon-journeys.test.ts",
     "tests/gtm-closure/first-returning-and-fulfilment.test.ts",
+    "tests/gtm-closure/gtm-385-price-presentation-evidence.test.tsx",
     "tests/gtm-closure/my-orders-historical-savings.test.ts",
     "tests/gtm-closure/operator-issue-activate-retire.test.tsx",
     "tests/gtm-closure/payment-start-recovery.test.ts",
@@ -9366,6 +9367,24 @@
       "ciInclusion": "YES",
       "test1Layers": [
         "1-unit"
+      ],
+      "classificationConfidence": "LOW"
+    },
+    {
+      "path": "tests/gtm-closure/gtm-385-price-presentation-evidence.test.tsx",
+      "runner": "vitest",
+      "domain": "gtm-closure",
+      "testType": "component-or-tsx",
+      "dbRequired": "UNKNOWN",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "2-component"
       ],
       "classificationConfidence": "LOW"
     },
