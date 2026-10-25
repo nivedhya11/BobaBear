@@ -122,6 +122,11 @@ it does not.
 | `npm run test:menu-parity` | 2 passed | Static menu matches the manifest |
 | `npm run test:ordering-catalog` | 3 passed | Generator output matches the checked-in catalog |
 
+`npm run testing:inventory` was regenerated after the notes were added. The only snapshot change is
+`trackedPathsConsidered` from 2349 to 2355, which is the six files in this directory. Executable
+test counts did not change. Another open pull request that adds or removes tracked files will
+conflict on that same count in `docs/platform/testing/test-inventory.json`.
+
 Not run: `menu:import-existing`, `assortment:bootstrap-existing-menu`,
 `pricing:bootstrap-existing-menu`, `ordering-catalog:generate`, `db:migrate`, and the PostgreSQL
 verify commands.
