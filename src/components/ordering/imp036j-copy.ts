@@ -30,6 +30,8 @@ export const IMP036J_COPY = Object.freeze({
   DROPPED: "This offer no longer applies.",
   DELIVERY_SAVING_ROW: "Delivery saving",
   ORDER_SAVING_ROW: "Order saving",
+  /** Visible label on a sealed net line that already has a merchandise allocation. */
+  AFTER_DISCOUNT: "After discount",
   TOTAL_SAVED_ROW: "Total saved",
   ESTIMATED_SUBTOTAL: "Estimated subtotal",
   CART_NOT_FINAL: "Delivery and the full total are confirmed at checkout.",

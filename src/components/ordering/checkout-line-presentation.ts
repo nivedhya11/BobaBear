@@ -8,7 +8,29 @@ export type CheckoutSnapshotLineRow = Readonly<{
   quantity: number;
   lineTotalPaise: string;
   lineOrigin?: "cart" | "complimentary_offer";
+  /**
+   * Sealed checkout line already carries `linePromotionDiscountPaise`: the
+   * merchandise-component allocation (base, modifier, bundle). Delivery-charge
+   * allocations are not in that field. Positive means a merchandise discount
+   * was attributed to this line. The amount is not shown and is not subtracted
+   * from `lineTotalPaise` — those figures do not share tax semantics.
+   */
+  merchandiseDiscountApplies: boolean;
 }>;
+
+const POSITIVE_INTEGER_PAISE = /^[1-9][0-9]*$/;
+
+/**
+ * Fail closed. A missing, zero, or non-wire value does not mean "discounted".
+ * Complimentary lines are already presented as included.
+ */
+export function sealedMerchandiseDiscountApplies(raw: Record<string, unknown>): boolean {
+  if (raw.lineOrigin === "complimentary_offer") return false;
+  return (
+    typeof raw.linePromotionDiscountPaise === "string" &&
+    POSITIVE_INTEGER_PAISE.test(raw.linePromotionDiscountPaise)
+  );
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -38,6 +60,7 @@ export function narrowCheckoutSnapshotLines(
         lineTotalPaise,
         lineOrigin:
           raw.lineOrigin === "complimentary_offer" ? "complimentary_offer" : "cart",
+        merchandiseDiscountApplies: sealedMerchandiseDiscountApplies(raw),
       }),
     );
   }
