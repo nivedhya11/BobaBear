@@ -45,7 +45,7 @@ Rajma, and Gangnam Paneer Supreme are not.
 | “Nine iced-tea display names, plus Lime Black Tea Boba” | Lime Black Tea Boba is the ninth item in Iced Teas, not an extra item | Nine items. Eight names contain “Iced Tea”. The ninth is Lime Black Tea Boba |
 | “Descriptions use iced tea” and “Mapped by current iced-tea filenames” | Lime Black Tea Boba’s description is “Zesty lime black tea with chewy boba and a crisp citrus edge.” Its file is `Lime_Black_Tea_Boba.jpeg` | The eight iced-tea items and this ninth item are stated separately |
 | “Import copies the path onto the manifest.” | `buildExistingMenuV1Manifest` writes `image_path` from `card.imagePath`. Apply does not rebuild the manifest. The importer copies the manifest field onto menu rows | The lineage row now names those two steps in that order |
-| “Repository `nivedhya11/BobaBear`.” | `git remote` is `nivedhya11/bobabear-platform` | The launch note uses the remote name |
+| “Repository `nivedhya11/BobaBear`.” | `git remote` is `nivedhya11/bobabear-platform`. Push reports that GitHub has moved that repository to `nivedhya11/BobaBear` | The launch note states both the local remote and the GitHub move |
 | “A black-tea base can look amber.” | `menu.json` does not say the watermelon drink is a black tea. That sentence invented a base | The photo is described as amber-brown. The copy is quoted. No base is inferred |
 
 No other review blocker remained.

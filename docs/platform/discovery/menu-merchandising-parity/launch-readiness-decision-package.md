@@ -34,7 +34,8 @@ A documentation check, including a later CI pass on this note, is not permission
 
 ## A. Source checkpoint
 
-Repository remote `nivedhya11/bobabear-platform`. Isolated worktree
+Local `origin` is `git@github.com:nivedhya11/bobabear-platform.git`. GitHub reports that repository
+moved to `nivedhya11/BobaBear`. Isolated worktree
 `/home/ajoshi/repos/boba-bear-menu-merchandising`. Branch
 `docs/customer-menu-merchandising-launch-readiness`. Base `origin/main`
 `a6155378b799e06a95b28c593ac1a340d7ca9245`.
@@ -146,8 +147,11 @@ owns these menu-content rows.
 
 ## K. Publication
 
-Not published in this file. The session-close report records the pull request, commit, and CI after
-publication. This note must not be updated to claim a merge or a deployment.
+Pull request: https://github.com/nivedhya11/BobaBear/pull/476
+
+Head commit is recorded by `git rev-parse HEAD` on
+`docs/customer-menu-merchandising-launch-readiness`. CI and CodeQL are not claimed in this note
+until they finish. This note does not merge to `main` and does not deploy.
 
 ## L. Independent review
 
