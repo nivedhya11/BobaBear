@@ -1,0 +1,6 @@
+host_uid=1000
+subuid_start=100000
+expected_host_uid_for_container_999=100998
+mount_owner_inside=999:999 1777
+host_owner_volume=100998:100998
+container_uid=999

@@ -99,3 +99,11 @@ Direct scan of this image only: vuln, misconfig, and secret, plus image-config m
 Run id `c1-proof-b-27be227a1753-171813`. Automatic cleanup_exit=1. The script left exited containers `bad-owner` (`f1fd857bd9a4…`) and `root` (`49ddc4d75587…`). That result is FAIL. A later manual `podman rm -f` of those IDs exited 0 and is not an automatic PASS. After that manual removal, a list of containers and volumes named `c1-proof-b-27be227a1753` was empty. `podman rmi` of `localhost/boba-bear-postgres:c1-proof-b-27be227a1753` exited 0. The image id above is the id that was tested, recorded before removal.
 
 No staging project, live database, or Spaces bucket was changed.
+
+## Rerun after cleanup repair
+
+Source sha `eae90976c9f1bb5d74c8d3a75cae67f6af463d3e`. Evidence directory `pg-c1-prod-candidate-20261025T073005Z`. Run id `c1-proof-b-eae90976c9f1-073005`. Image id `cecb548ff5f75560c4732bfd417b009722092f15c96d12822c9bcafd7264846c`. `PROOF_RESULT=PASS_WITH_UNVERIFIED`. Automatic `cleanup_exit=0` on the first attempt, with empty leftover lists. No manual container removal.
+
+The restored database contains `post-backup-marker-c1-proof-b-eae90976c9f1-073005`. The archived segment is `000000010000000000000004-5f303c73e31216a58814913e60b2cc7716ac1b8b.zst`. Replay LSN `0/5000000` is at or after marker LSN `0/4007188`.
+
+`DOCKER_ENGINE=UNVERIFIED`. Podman 4.9.3 is not a Docker pass. The proof script's snap Trivy 0.52.2 row still records 86 HIGH/CRITICAL package findings and is not the release scan.
