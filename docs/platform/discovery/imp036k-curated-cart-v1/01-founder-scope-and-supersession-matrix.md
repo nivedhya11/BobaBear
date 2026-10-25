@@ -38,6 +38,20 @@ The Founder selected a simpler V1 and agreed to prepare the formal Product and E
 5. Direct add only when the existing menu would already direct-add. Otherwise existing customization opens. No preselected paid modifier and no silent variant switch.
 6. Shelf failure does not block Cart, coupons, Checkout, or Payment.
 7. Measurement stays observational. No telemetry, holdout, or experiment is authorized by this batch.
+8. An active Pickup Checkout suppresses the Curated Cart add-on shelf. The shelf does not reuse the previous Delivery outlet’s product availability or price. This is Founder product direction dated 2026-10-26, recorded in this candidate only as `BR-036K-CC-025`. It does not grant a gate, perform Architecture Fit, or authorize implementation.
+
+| Situation | V1 behavior |
+|---|---|
+| Non-empty Cart with a valid delivery-serviceable outlet and no active Pickup Checkout | An eligible curated shelf may appear |
+| Active Checkout mode is Pickup | No shelf |
+| Active Checkout mode is Delivery with valid serviceability | The shelf may appear from that delivery outlet |
+| No authoritative outlet | No shelf |
+| An active Checkout exists but its effective mode cannot be verified | Fail safely. Do not promise an eligible shelf |
+| No Checkout exists yet, and the Cart has verified delivery serviceability | Do not treat the missing Checkout mode as Pickup |
+| Checkout changes back to Delivery | Re-evaluate the shelf against the current authoritative context |
+| Any recommendation failure | Cart, coupons, Checkout, and Payment stay usable |
+
+This direction does not add a Cart-based Pickup outlet selector, a Pickup pricing or availability authority, or a derivation of Pickup eligibility from stale delivery coordinates. Historical Product Definition, Experience Definition, Architecture Fit, and Design Readiness PASS results stay historical. This revised V1 still requires its own formal gates. Those gates remain `NOT_GRANTED` / `NOT_PERFORMED`.
 
 Candidate identities:
 
