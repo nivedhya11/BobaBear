@@ -53,4 +53,12 @@ A follow-up read of section 18 confirmed the repaired sentence and found no rema
 
 ## 3. What the review did not do
 
-It did not pass FD-036K-CC-1, the Product Definition Gate, or the Experience Gate. It did not execute tests. It did not close PR #465.
+It did not pass FD-036K-CC-1, the Product Definition Gate, or the Experience Gate. It did not execute tests. It did not close PR #465. It did not decide the later Pickup-suppression direction.
+
+## 4. Founder direction recorded after that review
+
+On 2026-10-26 the Founder directed that an active Pickup Checkout suppress the Curated Cart add-on shelf. The candidates now record that direction as `BR-036K-CC-025`. `PICKUP_DELIVERY_COVERAGE = DECISION_REQUIRED` is withdrawn for that mixed case.
+
+The review in sections 1–3 stays historical. At that time the candidate left the mixed case unresolved, and the review did not grant a gate. This note does not convert `READY_FOR_FOUNDER_PRODUCT_EXPERIENCE_GATE_REVIEW` into a Product Gate PASS or an Experience Gate PASS.
+
+Architecture Fit remains `NOT_PERFORMED`. Implementation remains unauthorized. `CURATED_SHELF_CHECKOUT_MODE_READ` is the design requirement for a trusted Cart read of active Checkout effective mode. Source on `a6155378b799e06a95b28c593ac1a340d7ca9245` does not implement the suppression. No D-number is allocated.

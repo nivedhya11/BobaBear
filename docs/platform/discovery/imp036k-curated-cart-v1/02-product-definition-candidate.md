@@ -37,7 +37,7 @@ Process anchors, verified in this worktree: [`PRODUCT-DELIVERY.md`](../../PRODUC
 |---|---|
 | Capability / title | IMP-036K — Revenue Recommendations, narrowed V1: one merchant-curated shelf on Cart / Your Order. ROADMAP identity stays IMP-036K. This candidate does not rename the IMP. |
 | Product Definition version / document status | `PD-IMP-036K-V1-CURATED-CART-CANDIDATE-1`. `STATUS = CANDIDATE`. `AUTHORITY = NONE`. |
-| Product owner / approval evidence | Founder V1 contract recorded in batch BOBA-B6-IMP036K-CURATED-CART-V1-20261025. No gate approval. Historical approval of `PD-IMP-036K-DRAFT-1` stays historical. |
+| Product owner / approval evidence | Founder V1 contract recorded in batch BOBA-B6-IMP036K-CURATED-CART-V1-20261025. Founder product direction on 2026-10-26 records active Pickup Checkout shelf suppression in `BR-036K-CC-025`. That direction is not a gate PASS. Historical approval of `PD-IMP-036K-DRAFT-1` stays historical. |
 | Process / verification policy | PD-2 / EXP-1 / LANG-1 / TEST-1 |
 | Experience Criticality | `X3`. The shelf sits on the purchase journey and can affect conversion, basket, and trust. |
 | Change Risk | **Proposed `CR2`.** See the paragraph under this table. Coordinator reconciles. Change Risk is not an agent `R` level. |
@@ -127,7 +127,7 @@ behaviour.
 
 | Journey ID | Entry / context | Ordered activities | Success / downstream outcome | Alternate / recovery paths |
 |---|---|---|---|---|
-| `JOURNEY-036K-CC-CART` | `PERSONA-CUSTOMER` has a Cart with at least one line. Shelf is enabled. | See up to four curated, eligible, Cart-absent parent products before Checkout and Payment. Act on plus, or ignore. | Explicit add updates the Cart from the authoritative mutation. That parent disappears from the shelf. Checkout and Payment stay on the existing path. | Empty shelf, failed add, cancelled customization, shelf failure: Cart, coupons, Checkout, and Payment remain usable. `AC-036K-CC-002`, `AC-036K-CC-010`, `AC-036K-CC-021`. |
+| `JOURNEY-036K-CC-CART` | `PERSONA-CUSTOMER` has a Cart with at least one line. Shelf is enabled. | See up to four curated, eligible, Cart-absent parent products before Checkout and Payment when delivery serviceability is valid and Checkout is not an active Pickup. Act on plus, or ignore. | Explicit add updates the Cart from the authoritative mutation. That parent disappears from the shelf. Checkout and Payment stay on the existing path. | Empty shelf, active Pickup Checkout, unverifiable Checkout mode, failed add, cancelled customization, shelf failure: no eligible shelf is promised, and Cart, coupons, Checkout, and Payment remain usable. No Checkout yet is not Pickup. A return to Delivery re-evaluates the shelf. `AC-036K-CC-002`, `AC-036K-CC-010`, `AC-036K-CC-011`, `AC-036K-CC-021`, `BR-036K-CC-025`. |
 | `JOURNEY-036K-CC-CURATION` | `PERSONA-WORKFORCE-OPERATOR` inside existing brand authorization. | Select existing effective-menu parent products. Enable or disable each. Set relative priority. Enable or disable the shelf. | Later Cart reads use that configuration. Products, prices, and availability stay with their current authorities. | Unauthorized or cross-brand action is denied. Disabling a candidate or the shelf does not remove Cart lines. `AC-036K-CC-022` through `AC-036K-CC-024`. |
 
 ## 7. Story map
@@ -149,7 +149,7 @@ candidate. Horizontal tasks (storage, events, flags) are not substitute stories.
 
 | Slice | Mandatory story IDs | Mandatory AC IDs | Required Golden Journeys | Observable acceptance boundary |
 |---|---|---|---|---|
-| `V1_ACCEPTANCE_SLICE` | `US-036K-CC-001` through `US-036K-CC-007` | `AC-036K-CC-001` through `AC-036K-CC-026` | `GJ-FIRST-ORDER`, `GJ-AVAILABILITY`, and `GJ-PRODUCT-MENU-LAUNCH` keep working with the shelf present, empty, or failed. `GJ-PAYMENT-RECOVERY` stays reachable when the shelf fails. | A customer with a non-empty Cart can see at most four curated, eligible, Cart-absent products before Checkout, add one explicitly through existing Cart authority, and ignore the shelf and still order. An authorized brand operator can maintain the parent-product list, priority, and shelf switch inside existing workforce authorization and brand scope. |
+| `V1_ACCEPTANCE_SLICE` | `US-036K-CC-001` through `US-036K-CC-007` | `AC-036K-CC-001` through `AC-036K-CC-026` | `GJ-FIRST-ORDER`, `GJ-AVAILABILITY`, and `GJ-PRODUCT-MENU-LAUNCH` keep working with the shelf present, empty, or failed. `GJ-PAYMENT-RECOVERY` stays reachable when the shelf fails. | A customer with a non-empty Cart, a serviceable delivery outlet, and no active Pickup Checkout can see at most four curated, eligible, Cart-absent products before Checkout, add one explicitly through existing Cart authority, and ignore the shelf and still order. An active Pickup Checkout shows no shelf. No Checkout yet is not treated as Pickup. An authorized brand operator can maintain the parent-product list, priority, and shelf switch inside existing workforce authorization and brand scope. |
 | `FOLLOW_UP` | None in this candidate | — | — | No hidden follow-up is required for V1 acceptance. |
 | `DEFERRED` | None as story IDs | — | — | Section 23. Deferral is not a schedule. |
 
@@ -168,9 +168,12 @@ so that I can notice an optional extra without a new order step.
 Journey / activity: JOURNEY-036K-CC-CART / see the shelf on Cart / Your Order only.
 Preconditions: Cart has at least one line, or the Cart is empty (empty is an explicit outcome).
   Shelf configuration and effective menu are readable. Customer may be guest or authenticated.
+  A visible shelf also needs a serviceable delivery outlet and no active Pickup Checkout.
+  No Checkout yet is not Pickup. An unverifiable active Checkout mode shows no shelf.
 Acceptance scenarios: AC-036K-CC-001 through AC-036K-CC-004
-Business rules: BR-036K-CC-001, BR-036K-CC-002, BR-036K-CC-003, BR-036K-CC-010
-UX states: Shelf ready, empty, and absent. Wording belongs in the Experience Definition.
+Business rules: BR-036K-CC-001, BR-036K-CC-002, BR-036K-CC-003, BR-036K-CC-010, BR-036K-CC-025
+UX states: Shelf ready, empty, hidden for active Pickup, hidden when Checkout mode cannot
+  be verified, and absent. Wording belongs in the Experience Definition.
 Permission / resource context: Customer read of own Cart and the effective menu. No workforce authority.
 Error / recovery: US-036K-CC-005.
 Dependencies: Existing menu projection and Cart read. Curation from US-036K-CC-006.
@@ -193,8 +196,9 @@ so that the shelf offers something I have not already chosen.
 Journey / activity: JOURNEY-036K-CC-CART / parent-product exclusion.
 Preconditions: A parent product is curated. Zero or more of its variants are Cart lines.
 Acceptance scenarios: AC-036K-CC-005 through AC-036K-CC-014
-Business rules: BR-036K-CC-006 through BR-036K-CC-009, BR-036K-CC-019
-UX states: Card present, card removed after success, card retained after failure or cancel.
+Business rules: BR-036K-CC-006 through BR-036K-CC-009, BR-036K-CC-019, BR-036K-CC-025
+UX states: Card present, card removed after success, card retained after failure or cancel,
+  and no shelf while Checkout mode is Pickup or cannot be verified.
 Permission / resource context: Exclusion uses the authoritative Cart for this customer and brand.
 Error / recovery: Failed mutation and cancelled customization keep the card eligible.
 Dependencies: Catalog variant → product id. Existing claim and reconcile.
@@ -267,9 +271,10 @@ so that an optional suggestion cannot trap the order.
 Journey / activity: JOURNEY-036K-CC-CART / failure and stale action.
 Preconditions: Customer can already operate the Cart without a shelf.
 Acceptance scenarios: AC-036K-CC-020, AC-036K-CC-021
-Business rules: BR-036K-CC-005, BR-036K-CC-013, BR-036K-CC-014
+Business rules: BR-036K-CC-005, BR-036K-CC-013, BR-036K-CC-014, BR-036K-CC-025
 UX states: Shelf hidden or failed; Cart actions remain; stale add explains failure without a false
-  success. Copy is Experience Definition scope.
+  success. An unverifiable Checkout mode hides the shelf and does not block Cart, coupons,
+  Checkout, or Payment. Copy is Experience Definition scope.
 Permission / resource context: Existing Cart, coupon, Checkout, and Payment authority.
 Error / recovery: Retry of Cart actions uses existing Cart behaviour. Shelf retry must not create
   a second commercial result.
@@ -327,7 +332,7 @@ Dependencies: Agent D measurement specification. Architecture review if purchase
   needs material schema.
 Explicit non-goals: Seven-event assistance engine, holdout activation, revenue-from-impression,
   causal uplift from attach rate, contribution margin from selling price, counting a menu add as
-  a shelf add.
+  a shelf add, counting a server shelf response as a rendered exposure or as an impression.
 Data implications: Entitlement only. No collection schema is approved here.
 Security implications: No private eligibility, payment, or security facts in analytics unless a
   later authorized plan requires them. This candidate does not require them.
@@ -345,7 +350,7 @@ Experience Definition own presentation.
 
 | AC ID | Story | Given | When | Then | And |
 |---|---|---|---|---|---|
-| `AC-036K-CC-001` | `US-036K-CC-001` | Non-empty Cart, shelf enabled, at least one eligible Cart-absent curated parent | The customer opens Cart / Your Order | A shelf is shown on that page before Checkout and Payment | It is not an extra Checkout step |
+| `AC-036K-CC-001` | `US-036K-CC-001` | Non-empty Cart, shelf enabled, at least one eligible Cart-absent curated parent, a serviceable delivery outlet, and no active Pickup Checkout. No Checkout yet is this case. An active Delivery Checkout with valid serviceability is this case | The customer opens Cart / Your Order | A shelf is shown on that page before Checkout and Payment, from that delivery outlet | It is not an extra Checkout step. It is not a Pickup availability or Pickup price |
 | `AC-036K-CC-002` | `US-036K-CC-001` | Cart has no lines | The customer opens Cart / Your Order | No shelf is shown | Cart empty state stays the existing Cart empty state |
 | `AC-036K-CC-003` | `US-036K-CC-001` | Any eligible curated product | The customer uses Product Detail, Product Customization, Menu Discovery, Checkout Review, Payment, Confirmation, or My Orders | Those surfaces do not gain a V1 recommendation module | Existing customization still opens when a product requires options, including from the shelf plus control |
 | `AC-036K-CC-004` | `US-036K-CC-001` | A curated parent is on the effective menu, then leaves it or becomes ineligible | The next shelf evaluation runs | The card disappears | The same parent remains subject to the normal main menu rules; the shelf is a filtered presentation, not a second menu |
@@ -355,7 +360,7 @@ Experience Definition own presentation.
 | `AC-036K-CC-008` | `US-036K-CC-002` | Any variant of the parent is in the Cart | Quantity increases, or quantity decreases while at least one unit remains | The parent stays hidden | Hiding does not depend on which variant or which quantity above zero |
 | `AC-036K-CC-009` | `US-036K-CC-002` | The parent was hidden because a variant was in the Cart | Every unit of every variant of that parent is removed | The parent is eligible to reappear | Eligibility still requires curation, effective menu, and availability |
 | `AC-036K-CC-010` | `US-036K-CC-002` | Card is visible | Shelf add fails, or customization is cancelled before a successful add | The parent stays eligible and the card is not removed as a success | No false success is shown |
-| `AC-036K-CC-011` | `US-036K-CC-002` | Parent was a candidate | It is unavailable, or it is no longer curated, or the shelf is disabled | It is excluded from the shelf | Existing Cart lines of that product are not deleted by that exclusion |
+| `AC-036K-CC-011` | `US-036K-CC-002` | Parent was a candidate | It is unavailable, or it is no longer curated, or the shelf is disabled, or there is no authoritative outlet, or the active Checkout mode is Pickup, or an active Checkout exists but its effective mode cannot be verified | It is excluded from the shelf. Stored delivery coordinates do not keep a Pickup shelf. Switching Checkout back to Delivery re-evaluates against the current delivery context | Existing Cart lines of that product are not deleted by that exclusion. Missing outlet context, Pickup suppression, and an unverifiable mode do not block Cart or Checkout. Absence of a Checkout is not this exclusion |
 | `AC-036K-CC-012` | `US-036K-CC-002` | Two or more Cart lines share one parent product id (different variants, or the same variant with different configurations that Cart keeps as separate lines) | The shelf is evaluated | The parent is hidden once | Exclusion does not require every variant to be present, and it does not treat each line as a separate product |
 | `AC-036K-CC-013` | `US-036K-CC-002` | Guest Cart is claimed onto the same cart id, or guest and customer Carts are reconciled under existing Cart authority, or the Cart is reloaded | The next shelf evaluation runs | Membership is recomputed from the authoritative Cart after that operation | Claim itself does not rewrite lines; reconcile keeps the customer Cart and coalesces lines under existing Cart authority. This candidate does not add a merge rule |
 | `AC-036K-CC-014` | `US-036K-CC-002` | A parent enters or leaves the Cart | Curation is read again | The curated source list is unchanged | Cart membership and the curated list are different facts |
@@ -369,7 +374,7 @@ Experience Definition own presentation.
 | `AC-036K-CC-022` | `US-036K-CC-006` | Actor has existing workforce authorization for the brand | They select effective-menu parent products, set relative display priority, and enable or disable a candidate or the whole shelf | Later shelf evaluations follow that configuration | About 8–12 curated products is guidance, not a stored maximum |
 | `AC-036K-CC-023` | `US-036K-CC-006` | Actor lacks authorization, or the brand is outside their scope | They attempt a curation write | The write is denied | No other brand’s shelf changes |
 | `AC-036K-CC-024` | `US-036K-CC-006` | A product is curated or the shelf is on | The operator disables the candidate or the shelf, or the product leaves the effective menu | The shelf stops offering it | Cart lines already added remain until ordinary Cart removal. Curation does not become a menu, catalog, price book, SKU list, availability list, campaign, coupon, promotion, or discount |
-| `AC-036K-CC-025` | `US-036K-CC-007` | A shelf session occurs | Measurement is interpreted | Eligible exposures, explicit shelf interactions, and successful Cart additions **initiated through the shelf** are distinct | A main-menu add is not a shelf add. An impression is not revenue. Attach rate is not causal uplift. Selling price is not contribution margin |
+| `AC-036K-CC-025` | `US-036K-CC-007` | A shelf session occurs | Measurement is interpreted | An eligible shelf response, a shelf actually rendered to the customer, an explicit shelf action, and an authoritative successful Cart add initiated through the shelf are distinct. The response is not an exposure. An active Pickup Checkout, and an active Checkout whose mode cannot be verified, are not an eligible response and not a rendered shelf | A main-menu add is not a shelf add. A server response is not an impression. Attach rate uses the rendered shelf as its denominator and is not causal uplift. Selling price is not contribution margin. A previous Delivery outlet is not counted as a Pickup shelf |
 | `AC-036K-CC-026` | `US-036K-CC-007` | A shelf-added item later appears on a purchased Order | Someone asks whether it counts as a shelf purchase | It counts only when actual provenance can be validated | This candidate authorizes no telemetry collection and no experiment or holdout. If durable purchased-unit provenance needs material schema, that is an architecture dependency (section 21), not the historical seven-event engine |
 
 | Story / AC ID | Required behaviour / risk | Applicable test layers | Planned proof | Actual evidence / candidate / result |
@@ -405,11 +410,27 @@ Experience Definition own presentation.
 | `BR-036K-CC-017` | Curating about 8–12 products is merchandising guidance so replacements exist. It is not a hard-coded limit. | Founder V1 contract | `AC-036K-CC-018`, `AC-036K-CC-022` |
 | `BR-036K-CC-018` | At most four cards are visible. This is the proposed V1 acceptance rule, pending this candidate’s Product Definition Gate. It is not yet granted. | Founder direction, recorded here so the gate can accept or stop it | `AC-036K-CC-018` |
 | `BR-036K-CC-019` | After reload, guest claim, or guest/customer reconcile, exclusion is recomputed from the authoritative resulting Cart. No separate pre-cart ordering-session identity is required. | Verified claim/reconcile behaviour, section 15 | `AC-036K-CC-013` |
-| `BR-036K-CC-020` | Product measurement entitlement is: eligible exposures; explicit shelf interactions; successful Cart additions initiated through the shelf; shelf-added items that survive into purchased Orders only with validated provenance; cart-to-checkout and checkout-completion guardrails. A menu add is not a shelf add. An impression is not revenue. Attach rate is not causal uplift. Selling price is not contribution margin. | Founder V1 contract; PD-2 measurement section. Agent D specifies the plan | `AC-036K-CC-025`, `AC-036K-CC-026` |
+| `BR-036K-CC-020` | Product measurement entitlement keeps four observations distinct: an eligible shelf response, a shelf actually rendered to the customer, an explicit shelf action, and a successful Cart addition initiated through the shelf. The response is a diagnostic and is not an exposure. An active Pickup Checkout, and an active Checkout whose effective mode cannot be verified, are neither an eligible response nor a rendered shelf. Purchased-order survival still requires validated provenance. Cart-to-checkout and checkout-completion guardrails remain. A menu add is not a shelf add. A server response is not an impression and is not revenue. Attach rate uses the rendered shelf as its denominator and is not causal uplift. Selling price is not contribution margin. | Founder V1 contract; PD-2 measurement section. The measurement candidate names the response `M-CC-RSP` and the render `M-CC-01` | `AC-036K-CC-025`, `AC-036K-CC-026` |
 | `BR-036K-CC-021` | This candidate does not authorize telemetry collection or experiment/holdout activation. Material schema for purchased-unit provenance is an architecture dependency, not a reason to import the previous assistance-correlation engine. | Founder V1 contract | `AC-036K-CC-026` |
 | `BR-036K-CC-022` | V1 uses no user-behavior ranking, AI/ML, weight engine, per-user configuration, dismissal memory, category-gap inference, or source-to-target relationship types. | Founder V1 contract; section 23 and section 24 | `US-036K-CC-002`, `US-036K-CC-004` |
 | `BR-036K-CC-023` | After a successful shelf add, preserve focus and scroll and provide accessible feedback. Do not jump the list or steal focus. | Founder V1 contract. Mechanism is Experience Definition scope | `AC-036K-CC-019` |
 | `BR-036K-CC-024` | Bundle contents are not walked to invent extra parents. The parent is the catalog product that owns the variant on the Cart line. A component is excluded only when it is itself a Cart line. | Derived from the verified line model. Avoids an unspecified bundle explosion | `AC-036K-CC-012` |
+| `BR-036K-CC-025` | Shelf eligibility uses the existing delivery ordering context, and an active Pickup Checkout suppresses the shelf. A non-empty Cart with a valid delivery-serviceable outlet and no active Pickup Checkout may show an eligible curated shelf. No Checkout yet is not Pickup. Active Checkout mode Pickup shows no shelf, and stored delivery coordinates are not reused as that Pickup shelf’s availability or price. Active Checkout mode Delivery with valid serviceability may show the shelf from that delivery outlet. No authoritative outlet shows no shelf. An active Checkout whose effective mode cannot be verified fails safe and does not promise an eligible shelf. When Checkout changes back to Delivery, the shelf is re-evaluated against the current authoritative context. Any recommendation failure leaves Cart, coupons, Checkout, and Payment usable. Cart cannot establish a Pickup outlet. There is no Cart-based Pickup outlet selector, no Pickup pricing or availability authority, and no derivation of Pickup eligibility from stale delivery coordinates. `pickupOutletId` is not Cart shelf authority. Checkout behaviour stays unchanged. `UOE-DR-06` stays unauthorized. A brand-only menu price is not a shelf availability or price promise. Founder product direction 2026-10-26, recorded in this candidate only. `PICKUP_DELIVERY_COVERAGE` is no longer `DECISION_REQUIRED` for this mixed case. Implementation is held. Architecture Fit remains `NOT_PERFORMED`. The trusted Cart read of active Checkout effective mode is the Architecture Fit design requirement `CURATED_SHELF_CHECKOUT_MODE_READ`. Source on `a6155378b799e06a95b28c593ac1a340d7ca9245` does not implement the suppression. | Founder product direction 2026-10-26. Current source is evidence that the runtime does not yet do this. Not a new outlet authority and not a granted gate | `AC-036K-CC-001`, `AC-036K-CC-011`, `AC-036K-CC-021` |
+
+### Checkout-mode shelf context (`BR-036K-CC-025`)
+
+Founder product direction 2026-10-26. This table is the same rule. It is not a second rule. Gates remain `NOT_GRANTED`. Architecture Fit and implementation remain held.
+
+| Situation | V1 behavior |
+|---|---|
+| Non-empty Cart with a valid delivery-serviceable outlet and no active Pickup Checkout | An eligible curated shelf may appear |
+| Active Checkout mode is Pickup | No shelf |
+| Active Checkout mode is Delivery with valid serviceability | The shelf may appear from that delivery outlet |
+| No authoritative outlet | No shelf |
+| An active Checkout exists but its effective mode cannot be verified | Fail safely. Do not promise an eligible shelf |
+| No Checkout exists yet, and the Cart has verified delivery serviceability | Do not treat the missing Checkout mode as Pickup |
+| Checkout changes back to Delivery | Re-evaluate the shelf against the current authoritative context |
+| Any recommendation failure | Cart, coupons, Checkout, and Payment stay usable |
 
 ### Exclusion matrix (parent product × active Cart)
 
@@ -424,7 +445,7 @@ Experience Definition own presentation.
 | Add fails or customization cancelled | Stay eligible |
 | Unavailable | Exclude |
 | No longer curated, or shelf disabled | Exclude |
-| Cart reload, claim, or reconcile | Recompute from authoritative Cart membership |
+| Cart reload, claim, or reconcile | Recompute from authoritative Cart membership and from the current Checkout mode |
 
 ## 12. Journey Completeness Matrix
 
@@ -432,7 +453,7 @@ Experience Definition own presentation.
 |---|---|---|
 | ENTRY | Open Cart / Your Order, including a direct visit to that page. `AC-036K-CC-001` | Open the existing workforce commercial surface once Architecture Fit names it. `AC-036K-CC-022` |
 | DISCOVERY | Shelf is on the Cart, before Checkout. No other V1 placement. `AC-036K-CC-003` | Operator finds curation with the brand’s existing commercial tools. Exact navigation is Experience Definition scope. |
-| CONTEXT | Brand, guest or customer Cart, effective menu, outlet/timing/fulfilment as already evaluated by commerce. `AC-036K-CC-013` | Brand scope from server-derived workforce authorization. `AC-036K-CC-023` |
+| CONTEXT | Brand, guest or customer Cart, effective menu, and `BR-036K-CC-025`. A serviceable delivery outlet with no active Pickup Checkout may show the shelf. No Checkout yet is not Pickup. Active Pickup shows no shelf, including when delivery coordinates remain. Active Delivery with valid serviceability may show the shelf from that delivery outlet. No authoritative outlet shows no shelf. An unverifiable active Checkout mode fails safe. A return to Delivery re-evaluates. Guest and customer Carts use the same rule. Signed-in, returning, saved-address, and scheduled journeys do not create a Pickup outlet or a Cart outlet selector. `AC-036K-CC-001`, `AC-036K-CC-011`, `AC-036K-CC-013`, `BR-036K-CC-025` | Brand scope from server-derived workforce authorization. `AC-036K-CC-023` |
 | EMPTY / FIRST USE | Empty Cart: no shelf. Enabled shelf with zero eligible cards: no filler. `AC-036K-CC-002`, `AC-036K-CC-018` | No curation yet: shelf offers nothing. Ordering is unchanged. |
 | HAPPY PATH | See, explicit add, card leaves, next candidate may fill. `AC-036K-CC-001`, `AC-036K-CC-007`, `AC-036K-CC-019` | Save selection, priority, and enables. `AC-036K-CC-022` |
 | ALTERNATE VALID PATHS | Ignore the shelf. Add the same parent from the main menu. Open customization when required. `AC-036K-CC-006`, `AC-036K-CC-016`, `AC-036K-CC-021` | Disable one candidate or the whole shelf. `AC-036K-CC-024` |
@@ -440,12 +461,12 @@ Experience Definition own presentation.
 | AUTHORIZATION | Customer acts only on their Cart. `AC-036K-CC-017` | Unauthorized and cross-brand writes denied. `AC-036K-CC-023` |
 | NOT FOUND / STALE REFERENCE | Left the menu, unavailable, or no longer curated: card gone. Stale add revalidated. `AC-036K-CC-004`, `AC-036K-CC-020` | Disabled or unknown candidate does not affect Cart lines. `AC-036K-CC-024` |
 | SERVER / NETWORK ERROR | Shelf failure leaves Cart actions. Failed add is not success. `AC-036K-CC-010`, `AC-036K-CC-021` | Denied or failed save does not claim the shelf changed. |
-| RECOVERY | Customer continues Cart, coupon, Checkout, Payment. `AC-036K-CC-021` | Operator retries with existing authorization. No new retry policy. |
+| RECOVERY | Customer continues Cart, coupon, Checkout, Payment. Return from an active Pickup Checkout keeps the shelf hidden. After Checkout changes back to Delivery, the next evaluation uses the current delivery context. `AC-036K-CC-011`, `AC-036K-CC-021` | Operator retries with existing authorization. No new retry policy. |
 | CONCURRENCY | Overlapping add and shelf render: the authoritative Cart result wins. Claim/reconcile recomputes. `AC-036K-CC-013`, `AC-036K-CC-017` | Overlapping operator saves follow existing commercial-configuration concurrency once Fit names it. This candidate invents no new lock protocol. |
 | DESTRUCTIVE ACTION | Removing the last unit can let the parent return. That removal is ordinary Cart removal. `AC-036K-CC-009` | Disabling curation is not Cart deletion. `AC-036K-CC-024` |
 | SUCCESS FEEDBACK | Successful add matches the authoritative Cart result, without stealing focus. `AC-036K-CC-019` | Operator sees the saved configuration. Copy is Experience Definition scope. |
 | DOWNSTREAM EFFECT | Checkout, Payment, coupons, and the main menu keep their current behaviour. `AC-036K-CC-021` | Customer shelf changes on a later evaluation. |
-| REVISIT / RELOAD | Recompute from Cart membership and current curation. `AC-036K-CC-013` | Saved curation remains until an authorized change. |
+| REVISIT / RELOAD | Recompute from Cart membership, current curation, and current Checkout mode. `AC-036K-CC-013`, `BR-036K-CC-025` | Saved curation remains until an authorized change. |
 | RESPONSIVE / MOBILE | Same rules on the viewports the Cart already supports. Layout is Experience Definition scope. | Same for the operator surface. |
 | ACCESSIBILITY | Focus, scroll, and accessible result feedback. `BR-036K-CC-023` | Existing workforce accessibility expectations. No new exception. |
 
@@ -455,10 +476,12 @@ Presentation detail belongs in the Experience Definition. These rows are observa
 
 | Surface / state | Entry condition | Visible feedback / available actions | Focus / keyboard behaviour | Next / recovery state | AC ID or N/A reason |
 |---|---|---|---|---|---|
-| Cart shelf / ready | Non-empty Cart, eligible cards | 1–4 cards, plus on each, Checkout still available | Plus is an explicit control. Focus stays with the customer | Add, ignore, or Checkout | `AC-036K-CC-001` |
+| Cart shelf / ready | Non-empty Cart, serviceable delivery outlet, no active Pickup Checkout, eligible cards. No Checkout yet can be this state. An active Delivery Checkout with valid serviceability can be this state | 1–4 cards, plus on each, Checkout still available | Plus is an explicit control. Focus stays with the customer | Add, ignore, or Checkout | `AC-036K-CC-001`, `BR-036K-CC-025` |
 | Cart shelf / empty Cart | No lines | No shelf | Existing Cart empty behaviour | Add from the menu | `AC-036K-CC-002` |
-| Cart shelf / no eligible card | Shelf on, nothing eligible | No filler cards | Cart controls unchanged | Remains absent until eligibility exists | `AC-036K-CC-018` |
-| Cart shelf / loading | Cart page waiting on shelf data | Cart lines remain usable. Shelf must not block Checkout on its own failure | Existing Cart focus | Ready, empty, or failed | `AC-036K-CC-021` |
+| Cart shelf / no eligible card | Shelf on, nothing eligible, including no authoritative outlet | No filler cards | Cart controls unchanged | Remains absent until eligibility exists | `AC-036K-CC-011`, `AC-036K-CC-018` |
+| Cart shelf / active Pickup | Active Checkout mode is Pickup, including when delivery coordinates remain stored | No shelf region and no heading. Cart, coupons, and Checkout stay available | Existing Cart focus | Remains hidden until Checkout is no longer Pickup and the shelf is re-evaluated | `AC-036K-CC-011`, `BR-036K-CC-025` |
+| Cart shelf / mode unavailable | An active Checkout exists but its effective mode cannot be verified | No eligible shelf. Cart, coupons, Checkout, and Payment stay available | Existing Cart focus | Continue the order. Do not show the stored delivery shelf | `AC-036K-CC-011`, `AC-036K-CC-021` |
+| Cart shelf / loading | Cart page waiting on shelf data, or Checkout mode still unresolved | Cart lines remain usable. The shelf does not appear as an eligible shelf and must not block Checkout | Existing Cart focus | Ready, hidden, empty, or failed once the mode and eligibility are known | `AC-036K-CC-021`, `BR-036K-CC-025` |
 | Cart shelf / add success | Authoritative add succeeded | Card leaves; Cart shows the new line; next card may appear | Do not steal focus or jump the list | Updated shelf | `AC-036K-CC-019` |
 | Cart shelf / customization | The projected row has any modifier group | Existing customization | Existing customization focus | Success hides the parent; cancel keeps the card | `AC-036K-CC-016`, `AC-036K-CC-010` |
 | Cart shelf / validation failure | Structural Cart rejection, or the parent is no longer eligible | No false success. An still-eligible parent keeps its card. An ineligible parent is excluded | Focus remains available to the Cart | Customer may retry or continue | `AC-036K-CC-020` |
@@ -559,7 +582,8 @@ the Quality Plan and Experience Definition. An automated scan alone is not accep
 ## 19. Observability/supportability if applicable
 
 A support explanation needs to distinguish “the shelf was off, empty, or failed” from “the Cart
-mutation failed” and from “Checkout or Payment failed.” Existing Cart and Payment diagnostics
+mutation failed” and from “Checkout or Payment failed.” It also needs to distinguish a server
+shelf response from a shelf the customer actually saw. Existing Cart and Payment diagnostics
 remain the authorities for those failures. This candidate does not add a telemetry pipeline.
 Agent D’s measurement plan, when authorized, is the place for event names, privacy, and retention.
 Until then, supportability is: the customer can still order, and the operator can turn the shelf
@@ -587,6 +611,7 @@ Registry status is not a test verdict.
 | Architecture Fit for the narrowed shelf | Historical IMP-036K lock is the previous scope | Before implementation; maps curation storage and permission | Blocks implementation. May require a separate permission authorization |
 | Existing menu, catalog, price, availability, fulfilment | IMP-036F and later accepted authorities | `US-036K-CC-001`, `US-036K-CC-003`, `US-036K-CC-006` | None if reused unchanged |
 | Existing Cart add, claim, reconcile | Verified in this worktree, section 15 | `US-036K-CC-002`, `US-036K-CC-003` | None if exclusion only reads the result |
+| Trusted Cart read of active Checkout effective mode | `CURATED_SHELF_CHECKOUT_MODE_READ`. Not present on `a6155378b799e06a95b28c593ac1a340d7ca9245`. Current `getActiveCheckout` collapses failure, absence, and a stale still-active Checkout, and the menu read does not use fulfilment mode | `BR-036K-CC-025` before implementation. Architecture Fit must design the read. This candidate does not authorize it | Blocks implementation of Pickup suppression. Does not reopen the Founder product decision |
 | Purchased-unit provenance | Not verified as already durable for a shelf source | `US-036K-CC-007` only if assisted-purchase counts are required | Architecture dependency if material schema is needed. Not a Founder product question in this candidate |
 | Measurement plan | Agent D. Not authorized here | X3 implementation authorization under PD-2 | Blocks implementation authorization, not this draft |
 | Quality / Test Plan, Design Readiness | Not performed for this candidate. Historical PASS does not transfer | Implementation authorization | Blocks implementation |
@@ -599,7 +624,7 @@ Registry status is not a test verdict.
 |---|---|---|
 | Menu, Cart, customization when required, coupons, Checkout, Payment | Existing verified commerce. This candidate commits that they survive the shelf | `AC-036K-CC-021`; current Golden Journeys |
 | Guest Cart claim and guest/customer reconcile | Existing verified Cart authority | Section 15; `AC-036K-CC-013` |
-| Cart shelf of curated, eligible, Cart-absent parents, max four visible | V1 acceptance commitment of this **candidate**. Not accepted until gates pass | `US-036K-CC-001`–`004` |
+| Cart shelf of curated, eligible, Cart-absent parents, max four visible, and only when `BR-036K-CC-025` allows it | V1 acceptance commitment of this **candidate**. Not accepted until gates pass. Active Pickup Checkout suppression is part of that commitment and is not implemented | `US-036K-CC-001`–`004`, `BR-036K-CC-025` |
 | Operator curation of parent products, priority, enable/disable | V1 acceptance commitment of this candidate. Not accepted until gates pass | `US-036K-CC-006` |
 | Measurement meanings in `AC-036K-CC-025` | Entitlement only. Collection is not supported now | `US-036K-CC-007` |
 
@@ -629,6 +654,7 @@ Registry status is not a test verdict.
 | A second menu, catalog, price book, SKU, availability list, campaign, coupon, promotion, or discount | Founder V1 contract | `AC-036K-CC-024` |
 | Per-user configuration, behaviour ranking, weight engine | Founder V1 contract | `BR-036K-CC-022` |
 | Compulsory upsell step | Founder V1 contract | `AC-036K-CC-021` |
+| A Cart-based Pickup outlet selector, Pickup pricing or availability authority, or derivation of Pickup eligibility from stale delivery coordinates | Founder product direction 2026-10-26. Pickup outlet selection stays on Checkout. An active Pickup Checkout suppresses the shelf instead of borrowing the previous Delivery outlet. `pickupOutletId` is not Cart shelf authority | No shelf from a guessed Pickup outlet. `BR-036K-CC-025`, `AC-036K-CC-011` |
 
 ### Disposition of historical scope
 
@@ -654,12 +680,15 @@ Registry status is not a test verdict.
 
 | `UNRESOLVED_DECISION_REQUIRED` item | Material user/business impact | Decision owner / evidence needed | Affected stories / gate |
 |---|---|---|---|
-| NONE | The four-card visible ceiling is recorded as the proposed acceptance rule (`BR-036K-CC-018`), pending this candidate’s gate. The 8–12 pool is guidance. No second Founder decision is opened. | Product Definition Gate, when a human runs it | Gate `NOT_PERFORMED` |
+| Four-card ceiling | The four-card visible ceiling is recorded as the proposed acceptance rule (`BR-036K-CC-018`), pending this candidate’s gate. The 8–12 pool is guidance. No second Founder decision is opened for that ceiling. | Product Definition Gate, when a human runs it | Gate `NOT_PERFORMED` |
+
+The mixed Pickup-checkout case is no longer in this table. Founder product direction on 2026-10-26 decided it: an active Pickup Checkout suppresses the shelf (`BR-036K-CC-025`). `PICKUP_DELIVERY_COVERAGE = DECISION_REQUIRED` is withdrawn for that case. The remaining work is the Architecture Fit design requirement `CURATED_SHELF_CHECKOUT_MODE_READ`. That requirement is not a product decision and is not implementation authorization. Architecture Fit stays `NOT_PERFORMED`.
 
 | Assumption class | Item | Evidence | Risk | Validation |
 |---|---|---|---|---|
 | `FACT` | Cart line variant id; parent via `catalog_variants.product_id`; claim vs reconcile | Section 15, this worktree | Low if those schemas remain | Architecture Fit re-reads them |
 | `FACT` | Lifecycle versions in section 1 | ROADMAP GTM-R190, STATE STATE-R189, DR-25 | Candidate must not be treated as authority | Gates |
+| `FACT` | On `a6155378b799e06a95b28c593ac1a340d7ca9245`, Cart menu outlet comes from delivery serviceability only, and `getActiveCheckout` is not a trusted shelf-mode read. Pickup suppression is not implemented | Architecture-fit candidate | The Fit must design `CURATED_SHELF_CHECKOUT_MODE_READ` before implementation | Architecture Fit, still `NOT_PERFORMED` |
 | `SUPPORTED_EVIDENCE` | CR2 proposal | Section 1 paragraph | Coordinator may record a different CR below CR3 | Coordinator reconciliation |
 | `PRODUCT_DECISION` | Four-card ceiling | Founder direction, written as a proposed rule | Gate may stop the candidate | Product Definition Gate |
 | `HYPOTHESIS` | None that V1 behaviour depends on | — | — | — |

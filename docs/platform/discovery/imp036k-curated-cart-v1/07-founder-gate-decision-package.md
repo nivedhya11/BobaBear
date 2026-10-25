@@ -31,12 +31,13 @@ One decision is in front of the Founder. It is whether these candidates are read
 - Any in-cart variant hides that parent. Full removal can bring it back. The curated list is not edited by the Cart.
 - Plus direct-adds only when the live menu row would direct-add. Otherwise existing customization opens, with no preselected paid modifier.
 - A stale card is re-read. It is not a price token and not a shelf-only Cart reject. `addCartLine` still does not check assortment or availability.
+- An active Pickup Checkout suppresses the shelf, including when delivery coordinates remain stored. No Checkout yet is not Pickup. An active Delivery Checkout with valid serviceability may show the shelf from that delivery outlet. An unverifiable active Checkout mode shows no eligible shelf. Returning to Delivery re-evaluates the shelf. This is Founder product direction dated 2026-10-26, recorded in this candidate as `BR-036K-CC-025`. It does not add a Cart Pickup outlet selector or a Pickup price.
 - `menu.manage` on the server-loaded brand is the proposed permission mapping. It is not granted by this package.
 - Purchased-unit attribution is deferred. B3S-M1 and PR #465 are not V1 prerequisites. PR #465 stays open.
 
 ### What the gate would not be accepting
 
-Implementation, schema, telemetry, a holdout, a new role, a merge to `main`, Founder UAT, or formal IMP acceptance.
+Implementation, schema, telemetry, a holdout, a new role, a merge to `main`, Founder UAT, formal IMP acceptance, Architecture Fit, or the trusted Checkout-mode read. `CURATED_SHELF_CHECKOUT_MODE_READ` stays a design requirement. `ARCHITECTURE_FIT = NOT_PERFORMED`. `IMPLEMENTATION_AUTHORIZED = NO`. `PICKUP_SUPPRESSION_IMPLEMENTED = NO` on `a6155378b799e06a95b28c593ac1a340d7ca9245`.
 
 ## Optional register note — not required for FD-036K-CC-1
 
@@ -56,8 +57,15 @@ This file does not adopt that wording.
 
 ```text
 UNRESOLVED_PRODUCT_DECISIONS = NONE
+PICKUP_DELIVERY_COVERAGE = SUPPRESS_SHELF_WHEN_ACTIVE_CHECKOUT_MODE_IS_PICKUP
+FOUNDER_PICKUP_SUPPRESSION_DIRECTION = 2026-10-26
+FOUNDER_DIRECTION_SCOPE = THIS_CANDIDATE_ONLY
+ARCHITECTURE_FIT = NOT_PERFORMED
+IMPLEMENTATION_AUTHORIZED = NO
 ```
 
 The four-card ceiling is inside the product candidate as a proposed acceptance rule (`BR-036K-CC-018`). The gate can stop the candidate if that ceiling is wrong. It is not a second decision beside FD-036K-CC-1.
 
-Provenance of a purchased unit, the exact curation table, and the server-owned way to recognize a shelf add are Architecture Fit dependencies. They are named in `04-architecture-fit-impact.md` and `06-measurement-plan-candidate.md`. They do not change the customer-visible contract above.
+The mixed Pickup case is no longer unresolved. On 2026-10-26 the Founder directed that an active Pickup Checkout suppress the Curated Cart shelf rather than reuse the previous Delivery outlet's availability or price. That direction is product direction in this candidate (`BR-036K-CC-025`). It is not a decision-register entry, not a D-number, and not a gate PASS. Historical broad-scope PASS results stay historical. This revised V1 still needs its own Product Definition Gate and Experience Gate. Both remain `NOT_GRANTED` / `NOT_PERFORMED`.
+
+Provenance of a purchased unit, the exact curation table, the server-owned way to recognize a shelf add, and `CURATED_SHELF_CHECKOUT_MODE_READ` are Architecture Fit dependencies. They are named in `04-architecture-fit-impact.md` and `06-measurement-plan-candidate.md`. They do not change the customer-visible contract above, and they do not authorize implementation.
