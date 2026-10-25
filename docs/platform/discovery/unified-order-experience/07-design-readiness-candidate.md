@@ -177,7 +177,12 @@ These specify UI behaviour only. Locked contracts remain authoritative.
 
 ## 5. Content QA — microcopy candidates
 
-All rows are **candidates**. Unapproved variants remain `CONTENT_QA_PENDING`. Do **not** invent
+W2 recorded the primary in-app rows MC-01–MC-33 as a **working baseline** (`15-…` §1). That
+record is not Design Readiness PASS and not a string freeze. `CONTENT_QA_PENDING` on a
+baseline row means polish and freeze remain open. MC-34 on-wire WhatsApp stays
+`NOT_APPROVED`. Post-purchase D-357 labels in `order-status.ts` (“Order received / accepted /
+fulfilled / cancelled”) are outside this table and outside UX-A. All rows below remain
+candidates relative to a gate PASS. Do **not** invent
 approved Meta WhatsApp templates; WhatsApp Meta ownership stays per capability architecture §5.
 Aligned strings from Experience Definition (`03-…`) are carried forward as candidates, not sign-off.
 

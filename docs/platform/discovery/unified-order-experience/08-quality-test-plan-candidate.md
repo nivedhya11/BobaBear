@@ -65,6 +65,9 @@ security/negative-test authority is the **binding capability architecture**
 
 Status for every row: **PLANNED** (none executed under this package). Canonical scenario titles from
 `04-story-map-acceptance-scenarios.md`. Owner = future authorized implementation tranche unless noted.
+Source-versus-plan classification, including adjacent tests that already exist and Checkout
+rows that stay `BLOCKED_DR06`, is [`21-design-qt-mi-evidence-delta.md`](./21-design-qt-mi-evidence-delta.md)
+§4. That classification does not mark any row `EXECUTED`.
 
 | Scenario (canonical `04-…` title) | Contract | Risk | Verification layer(s) | Planned evidence | Negative case | Owner / dependency |
 |---|---|---|---|---|---|---|
@@ -122,7 +125,7 @@ Status for every row: **PLANNED** (none executed under this package). Canonical 
 |---|---|---|
 | A Pre-checkout eligibility | AS-02, AS-05–06, AS-08, AS-24, AS-27, AS-30, AS-33, AS-38 | Domain, HTTP, Auth, Concurrency |
 | B Mode-sensitive Cart evaluate | AS-02–04, AS-14–18, AS-20, AS-25, AS-29, AS-31–32, AS-39–40, AS-42–46 | Domain, HTTP, DB (when auth), Recovery |
-| C Scheduled Takeaway Checkout | AS-08–11, AS-23, AS-26, AS-33–38, AS-41, SEC-BOLA-CHECKOUT | Domain, Integration, Auth, E2E — **Checkout code remediation gated by UOE-DR-06 authorization** |
+| C Scheduled Takeaway Checkout | AS-08–11, AS-23, AS-26, AS-33–38, AS-41, SEC-BOLA-CHECKOUT | Domain, Integration, Auth, E2E. **UOE-DR-06 gates only** the Checkout-coupled subset in the disposition below (AS-08 Checkout list, AS-09 Checkout path, AS-33 Checkout path, AS-34–AS-37, AS-41, SEC-BOLA-CHECKOUT). Menu/pre-checkout AS-08, plus AS-10, AS-11, AS-23, AS-26, and AS-38, keep the owners in `21-…` §4 |
 | D Presentation / channels | AS-01, AS-04, AS-10, AS-12–13, AS-19, AS-21–22, AS-28, AS-44 | Component, A11y, Content QA |
 
 ### UOE-DR-06 evidence disposition (Founder-owned)

@@ -83,6 +83,8 @@ Allowed only after the start condition. This plan creates none of them.
 `src/server/**`, checkout HTTP routes, `src/server/cart/evaluate.ts`, payment and snapshot
 modules, `drizzle/**`, `docs/platform/STATE.md`, `docs/platform/ROADMAP.md`,
 `docs/platform/decision-register.md`, capability architecture, dependency manifests.
+`src/components/ordering/order-status.ts` stays forbidden: D-357 post-purchase labels are
+shared by customer and workforce and are not the Delivery / Takeaway mode-word change.
 
 ## Scenarios
 

@@ -66,6 +66,9 @@ DESIGN_READINESS_PASS = NOT_GRANTED
 UOE_QT_MI_FINALIZATION = NOT_GRANTED
 CONSOLIDATED_GATE_PACKAGE = 16-consolidated-design-qt-mi-final-decision-package.md
 CONSOLIDATED_GATE_DECISION = PREPARED_FOR_FOUNDER
+EVIDENCE_DELTA = 21-design-qt-mi-evidence-delta.md
+FOUNDER_GATE_REVIEW_PACKET = 22-founder-gate-review-packet.md
+EVIDENCE_DELTA_IS_NOT_A_GATE_PASS = YES
 TRANCHE_CONTRACTS = UX-A 17 | UX-B 18 | UX-C 19 (PLANS ONLY)
 UOE_DR06_WORK_PACKAGE = 20-uoe-dr-06-test-first-work-package.md
 UOE_DR06_CHECKOUT_REMEDIATION = NOT_AUTHORIZED
@@ -106,7 +109,12 @@ Owner-decision packaging for Founder ratification is in
 Founder decision that joins Design Readiness, Quality plan finalization, and Measurement plan
 finalization — with vendor, retention, and WhatsApp body left unknown — is
 [`16-consolidated-design-qt-mi-final-decision-package.md`](./16-consolidated-design-qt-mi-final-decision-package.md).
-That decision is **prepared, not granted**. UX-A / UX-B / UX-C tranche contracts
+That decision is **prepared, not granted**. Source-versus-plan classification for AS-01–AS-46
+and the 21 negatives is the evidence delta
+[`21-design-qt-mi-evidence-delta.md`](./21-design-qt-mi-evidence-delta.md). The concise
+decision surface is
+[`22-founder-gate-review-packet.md`](./22-founder-gate-review-packet.md). Neither grants a
+gate. UX-A / UX-B / UX-C tranche contracts
 (`17-…`, `18-…`, `19-…`) are plans. UOE-DR-06 stays
 [`20-uoe-dr-06-test-first-work-package.md`](./20-uoe-dr-06-test-first-work-package.md)
 and **NOT_AUTHORIZED**. The Founder's
@@ -185,6 +193,8 @@ does **not**:
 | [`18-ux-b-tranche-contract.md`](./18-ux-b-tranche-contract.md) | UX-B plan and test matrix (Contracts A/B). Checkout composition excluded |
 | [`19-ux-c-tranche-contract.md`](./19-ux-c-tranche-contract.md) | UX-C plan and test matrix. Tab-scoped bar. No analytics vendor |
 | [`20-uoe-dr-06-test-first-work-package.md`](./20-uoe-dr-06-test-first-work-package.md) | UOE-DR-06 test-first corrective plan. **NOT_AUTHORIZED**. AS-34 and AS-41 stay RED |
+| [`21-design-qt-mi-evidence-delta.md`](./21-design-qt-mi-evidence-delta.md) | Source-versus-plan delta for Design, Quality, and Measurement. Not a gate PASS |
+| [`22-founder-gate-review-packet.md`](./22-founder-gate-review-packet.md) | Concise Founder decision surface. Grant text remains `16-…` §1.1. Not granted |
 | [`../../capabilities/UOE-unified-order-experience.md`](../../capabilities/UOE-unified-order-experience.md) | **CURRENT** locked capability architecture |
 
 ## Provisional candidate identifiers
