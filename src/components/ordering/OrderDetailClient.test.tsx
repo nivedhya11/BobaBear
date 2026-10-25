@@ -101,6 +101,88 @@ describe("OrderDetailClient", () => {
     );
   });
 
+  it("labels only a purchased line the server already marked as merchandise-discounted", async () => {
+    getCustomerOrder.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        order: {
+          ...baseOrder,
+          moneySummary: {
+            prePromotionSubtotalMinor: "51800",
+            promotionDiscountMinor: "5180",
+            charges: [{ chargeCode: "packaging", name: "Packaging", amountMinor: "2000" }],
+            taxMinor: "0",
+            grandTotalMinor: "48620",
+            currency: "INR",
+          },
+          lines: [
+            {
+              productName: "Purple Rain Taro Boba",
+              variantName: "Regular",
+              quantity: 2,
+              lineTotalMinor: "46620",
+              merchandiseDiscountApplies: true,
+              modifiers: [],
+            },
+            {
+              productName: "Classic Milk Tea",
+              variantName: "Regular",
+              quantity: 1,
+              lineTotalMinor: "19900",
+              merchandiseDiscountApplies: false,
+              modifiers: [],
+            },
+            {
+              productName: "Honey Boba",
+              variantName: "",
+              quantity: 1,
+              lineTotalMinor: "0",
+              lineOrigin: "complimentary_offer",
+              merchandiseDiscountApplies: false,
+              modifiers: [],
+            },
+          ],
+        },
+      },
+    });
+    render(<OrderDetailClient />);
+    await waitFor(() => expect(screen.getByTestId("order-detail")).toBeInTheDocument());
+    expect(screen.getByText("After discount")).toBeVisible();
+    expect(screen.getByText("After discount")).not.toHaveAttribute("aria-hidden");
+    expect(screen.getAllByText("After discount")).toHaveLength(1);
+    expect(screen.getByText("₹466.20")).toBeVisible();
+    expect(screen.getByText("₹199.00")).toBeVisible();
+    expect(screen.getByText("Included with your offer")).toBeVisible();
+    expect(screen.getByText("You saved ₹51.80 on this order.")).toBeVisible();
+    expect(screen.getByText("Total payable")).toBeVisible();
+    expect(screen.getByText("₹486.20")).toBeVisible();
+  });
+
+  it("does not invent After discount when the purchased line has no attribution flag", async () => {
+    getCustomerOrder.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        order: {
+          ...baseOrder,
+          moneySummary: {
+            prePromotionSubtotalMinor: "19900",
+            promotionDiscountMinor: "4000",
+            charges: [],
+            taxMinor: "0",
+            grandTotalMinor: "15900",
+            currency: "INR",
+          },
+        },
+      },
+    });
+    render(<OrderDetailClient />);
+    await waitFor(() => expect(screen.getByTestId("order-detail")).toBeInTheDocument());
+    expect(screen.queryByText("After discount")).not.toBeInTheDocument();
+    expect(screen.getByText("You saved ₹40.00 on this order.")).toBeVisible();
+  });
+
   it("renders detail errors", async () => {
     getCustomerOrder.mockResolvedValue({
       ok: false,

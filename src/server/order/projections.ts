@@ -120,6 +120,29 @@ function linesFromSnapshot(
   );
 }
 
+/**
+ * Presentation flag for the customer order line. Reads the sealed
+ * merchandise allocation already stored on the snapshot line. Does not
+ * expose that paise amount and does not subtract it from the net.
+ */
+function customerLinesFromSnapshot(
+  snapshot: CheckoutSnapshot,
+): readonly OrderLineProjection[] {
+  return Object.freeze(
+    linesFromSnapshot(snapshot).map((projected, index) => {
+      const line = snapshot.lines[index];
+      const merchandiseDiscountApplies =
+        line != null &&
+        line.lineOrigin !== "complimentary_offer" &&
+        line.linePromotionDiscountPaise > BigInt(0);
+      return Object.freeze({
+        ...projected,
+        merchandiseDiscountApplies,
+      });
+    }),
+  );
+}
+
 export function toCustomerOrderSummary(
   order: Order,
   outlet: OrderOutletSummary,
@@ -164,7 +187,7 @@ export function toCustomerOrderDetail(
     cancellationReasonCode: order.cancellationReasonCode,
     destination: destinationFromSnapshot(snapshot),
     pickupLocation: pickupLocationFromSnapshot(snapshot),
-    lines: linesFromSnapshot(snapshot),
+    lines: customerLinesFromSnapshot(snapshot),
     moneySummary: moneySummaryFromSnapshot(snapshot),
     delivery,
   });

@@ -11,6 +11,7 @@ import { buildOrderTimeline, OrderTimelinePanel } from "@/components/ordering/Or
 import { OrderSupportAction } from "@/components/ordering/OrderSupportAction";
 import { commerceErrorCopy } from "@/components/ordering/error-copy";
 import { formatPaise } from "@/components/ordering/format-money";
+import { IMP036J_COPY } from "@/components/ordering/imp036j-copy";
 import { orderStatusLabel } from "@/components/ordering/order-status";
 import { fetchCustomerSession } from "@/lib/customer-auth/client";
 import { loginUrlWithReturn } from "@/lib/customer-auth/return-to";
@@ -100,14 +101,27 @@ export function OrderDetailClient() {
 
             <ul className="flex flex-col gap-3">
               {order.lines.map((line, index) => (
-                <li key={`${line.productName}-${index}`} className="font-body text-[14px]">
-                  {line.quantity} × {line.productName}
-                  {line.variantName ? ` (${line.variantName})` : ""} — {formatPaise(line.lineTotalMinor)}
-                  {line.lineOrigin === "complimentary_offer" ? (
-                    <span className="mt-1 block text-[12px] text-[var(--text-secondary)]">
-                      Included with your offer
-                    </span>
-                  ) : null}
+                <li
+                  key={`${line.productName}-${index}`}
+                  className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1 font-body text-[14px]"
+                >
+                  <span className="min-w-0 flex-1 break-words">
+                    {line.quantity} × {line.productName}
+                    {line.variantName ? ` (${line.variantName})` : ""}
+                    {line.lineOrigin === "complimentary_offer" ? (
+                      <span className="mt-1 block text-[12px] text-[var(--text-secondary)]">
+                        Included with your offer
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="shrink-0 text-right">
+                    {line.merchandiseDiscountApplies === true ? (
+                      <span className="mb-0.5 block max-w-[7.5rem] text-[12px] font-normal leading-tight text-[var(--text-secondary)]">
+                        {IMP036J_COPY.AFTER_DISCOUNT}
+                      </span>
+                    ) : null}
+                    <span className="font-semibold tabular-nums">{formatPaise(line.lineTotalMinor)}</span>
+                  </span>
                 </li>
               ))}
             </ul>
