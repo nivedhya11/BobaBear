@@ -6,8 +6,9 @@
 # The old proof Dockerfile is not the candidate. Docker Engine is not used.
 #
 # Run-owned cleanup removes only this run's exact container names, container
-# IDs, volumes, and image tag. RUN_ID is that identity. No staging project,
-# no live Spaces calls.
+# IDs, volumes, and image tag. RUN_ID is that identity. The registry of those
+# identities is removed only after cleanup verifies they are gone, so an EXIT
+# retry can still reload them. No staging project, no live Spaces calls.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -113,41 +114,64 @@ C1_VOLUME_NAME_FILE="${C1_REGISTRY_DIR}/volumes"
 : > "${C1_CONTAINER_NAME_FILE}"
 : > "${C1_CONTAINER_ID_FILE}"
 : > "${C1_VOLUME_NAME_FILE}"
+printf '%s\n' "${C1_IMAGE_REF}" > "${C1_REGISTRY_DIR}/image"
 
-c1_proof_append_unique_file() {
-  local file="$1"
-  local -n dest="$2"
-  local line existing seen
-  [ -f "${file}" ] || return 0
-  while IFS= read -r line || [ -n "${line}" ]; do
-    [ -n "${line}" ] || continue
-    seen=0
-    if [ "${#dest[@]}" -gt 0 ]; then
-      for existing in "${dest[@]}"; do
-        if [ "${existing}" = "${line}" ]; then
-          seen=1
-          break
-        fi
-      done
-    fi
-    if [ "${seen}" -eq 0 ]; then
-      dest+=("${line}")
-    fi
-  done < "${file}"
-}
-
-c1_proof_load_registration() {
-  C1_CONTAINER_NAMES=()
-  C1_CONTAINER_IDS=()
-  C1_VOLUME_NAMES=()
-  c1_proof_append_unique_file "${C1_CONTAINER_NAME_FILE}" C1_CONTAINER_NAMES
-  c1_proof_append_unique_file "${C1_CONTAINER_ID_FILE}" C1_CONTAINER_IDS
-  c1_proof_append_unique_file "${C1_VOLUME_NAME_FILE}" C1_VOLUME_NAMES
-}
-
+# Temps for this run can go as soon as the proof no longer reads them.
+# The registry cannot: the EXIT trap reloads it when cleanup is not yet
+# verified. c1_proof_release_registry deletes it only when C1_CLEANED=1.
 c1_proof_cleanup_hook() {
-  rm -rf "${HOST_BAD}" "${TMP}" "${TRIVY_WD}" "${C1_REGISTRY_DIR}" >/dev/null 2>&1 || true
+  rm -rf "${HOST_BAD}" "${TMP}" "${TRIVY_WD}" >/dev/null 2>&1 || true
   rm -f "${EVIDENCE_DIR}/image.tar" >/dev/null 2>&1 || true
+  c1_proof_release_registry || true
+  return 0
+}
+
+c1_proof_write_summary() {
+  {
+    echo "# PG-C1 production-candidate proof"
+    echo
+    echo "- RUN_ID: \`${RUN_ID}\`"
+    echo "- SOURCE_SHA: \`${SOURCE_SHA}\`"
+    echo "- IMAGE_ID: \`${IMAGE_ID}\`"
+    echo "- ENGINE: podman $(podman --version | awk '{print $NF}')"
+    echo "- DOCKER_ENGINE: UNVERIFIED"
+    echo "- S3_LIVE_SPACES: UNVERIFIED"
+    echo "- CONFIG_USER: \`${CONFIG_USER}\`"
+    echo "- RUNTIME_UID: \`${RUNTIME_UID} (${RUNTIME_USER})\`"
+    echo
+    echo "| Case | Result | Note |"
+    echo "|---|---|---|"
+    while IFS=$'\t' read -r c r n; do
+      echo "| ${c} | ${r} | ${n} |"
+    done < "${MATRIX_FILE}"
+  } > "${SUMMARY_FILE}"
+}
+
+# Runs from the EXIT trap after any retry. The cleanup matrix row and the
+# facts copy are taken from the evidence file that retry left behind.
+c1_proof_finalize_cleanup_evidence() {
+  if [ -z "${C1_CLEANUP_EVIDENCE:-}" ] || [ ! -f "${C1_CLEANUP_EVIDENCE}" ]; then
+    return 0
+  fi
+  if [ -n "${FACTS_FILE:-}" ]; then
+    cat "${C1_CLEANUP_EVIDENCE}" >> "${FACTS_FILE}" || true
+  fi
+  if [ -n "${MATRIX_FILE:-}" ]; then
+    c1_proof_upsert_cleanup_matrix "${MATRIX_FILE}" "${C1_CLEANUP_EVIDENCE}" || true
+  fi
+  if [ "${C1_PROOF_REACHED_END:-0}" != "1" ]; then
+    return 0
+  fi
+  echo "=== matrix ==="
+  if [ -n "${MATRIX_FILE:-}" ] && [ -f "${MATRIX_FILE}" ]; then
+    cat "${MATRIX_FILE}"
+  fi
+  echo "EVIDENCE_DIR=${EVIDENCE_DIR:-}"
+  c1_proof_write_summary || true
+  set +e
+  c1_proof_classify_result "${MATRIX_FILE}" "${C1_CLEANUP_EVIDENCE}"
+  C1_PROOF_FINAL_STATUS=$?
+  set -e
   return 0
 }
 
@@ -971,10 +995,6 @@ fi
 record "s3_live_spaces" "UNVERIFIED" "S3_LIVE_SPACES=UNVERIFIED; no credentials and no bucket changes; synthetic network-free render only"
 
 c1_proof_cleanup_registered || true
-cat "${EVIDENCE_DIR}/cleanup.txt" >> "${FACTS_FILE}" || true
-cleanup_result="$(c1_proof_cleanup_matrix_result "${EVIDENCE_DIR}/cleanup.txt")"
-cleanup_note="$(c1_proof_cleanup_matrix_note "${EVIDENCE_DIR}/cleanup.txt")"
-record "cleanup" "${cleanup_result}" "${cleanup_note}"
 c1_proof_cleanup_hook || true
 
 python3 - <<'PY'
@@ -997,31 +1017,7 @@ for path in root.rglob("*"):
         print(f"redacted {path.name}")
 PY
 
-{
-  echo "# PG-C1 production-candidate proof"
-  echo
-  echo "- RUN_ID: \`${RUN_ID}\`"
-  echo "- SOURCE_SHA: \`${SOURCE_SHA}\`"
-  echo "- IMAGE_ID: \`${IMAGE_ID}\`"
-  echo "- ENGINE: podman $(podman --version | awk '{print $NF}')"
-  echo "- DOCKER_ENGINE: UNVERIFIED"
-  echo "- S3_LIVE_SPACES: UNVERIFIED"
-  echo "- CONFIG_USER: \`${CONFIG_USER}\`"
-  echo "- RUNTIME_UID: \`${RUNTIME_UID} (${RUNTIME_USER})\`"
-  echo
-  echo "| Case | Result | Note |"
-  echo "|---|---|---|"
-  while IFS=$'\t' read -r c r n; do
-    echo "| ${c} | ${r} | ${n} |"
-  done < "${MATRIX_FILE}"
-} > "${SUMMARY_FILE}"
-
-echo "=== matrix ==="
-cat "${MATRIX_FILE}"
-echo "EVIDENCE_DIR=${EVIDENCE_DIR}"
-
-set +e
-c1_proof_classify_result "${MATRIX_FILE}" "${EVIDENCE_DIR}/cleanup.txt"
-classify_rc=$?
-set -e
-exit "${classify_rc}"
+# The EXIT trap retries while the registry still exists, then records the
+# cleanup row from the final evidence file and classifies that result.
+C1_PROOF_REACHED_END=1
+exit 0

@@ -8,6 +8,11 @@
 # stays retryable from the EXIT trap. The trap preserves the incoming status
 # and forces status 1 when a retry still leaves run-owned resources.
 #
+# The registry that holds those identities stays until verification succeeds.
+# c1_proof_release_registry removes it only when C1_CLEANED=1. A later attempt
+# with no identities left must not replace a failed evidence file with a
+# success. The matrix cleanup row follows that final evidence file.
+#
 # Env:
 #   C1_PROOF_CLEANUP_ATTEMPTS       default 5
 #   C1_PROOF_CLEANUP_SLEEP_SECONDS  default 1
@@ -121,7 +126,105 @@ c1_proof_exit_trap() {
   if declare -F c1_proof_cleanup_hook >/dev/null 2>&1; then
     c1_proof_cleanup_hook || true
   fi
+  if declare -F c1_proof_finalize_cleanup_evidence >/dev/null 2>&1; then
+    C1_PROOF_FINAL_STATUS=0
+    c1_proof_finalize_cleanup_evidence || true
+    if [ "${status}" -eq 0 ] && [[ "${C1_PROOF_FINAL_STATUS:-0}" =~ ^[1-9][0-9]*$ ]]; then
+      status="${C1_PROOF_FINAL_STATUS}"
+    fi
+  fi
   exit "${status}"
+}
+
+c1_proof_append_unique_file() {
+  local file="$1"
+  local -n dest="$2"
+  local line existing seen
+  [ -f "${file}" ] || return 0
+  while IFS= read -r line || [ -n "${line}" ]; do
+    [ -n "${line}" ] || continue
+    seen=0
+    if [ "${#dest[@]}" -gt 0 ]; then
+      for existing in "${dest[@]}"; do
+        if [ "${existing}" = "${line}" ]; then
+          seen=1
+          break
+        fi
+      done
+    fi
+    if [ "${seen}" -eq 0 ]; then
+      dest+=("${line}")
+    fi
+  done < "${file}"
+}
+
+# Reload this run's identities when the registry directory is still present.
+# A missing registry leaves any in-memory identities alone so callers that
+# never persisted a registry keep the lists they already hold.
+c1_proof_load_registration() {
+  local name_file id_file volume_file image_file
+  if [ -z "${C1_REGISTRY_DIR:-}" ] || [ ! -d "${C1_REGISTRY_DIR}" ]; then
+    return 0
+  fi
+  name_file="${C1_CONTAINER_NAME_FILE:-${C1_REGISTRY_DIR}/names}"
+  id_file="${C1_CONTAINER_ID_FILE:-${C1_REGISTRY_DIR}/ids}"
+  volume_file="${C1_VOLUME_NAME_FILE:-${C1_REGISTRY_DIR}/volumes}"
+  image_file="${C1_REGISTRY_DIR}/image"
+  C1_CONTAINER_NAMES=()
+  C1_CONTAINER_IDS=()
+  C1_VOLUME_NAMES=()
+  c1_proof_append_unique_file "${name_file}" C1_CONTAINER_NAMES
+  c1_proof_append_unique_file "${id_file}" C1_CONTAINER_IDS
+  c1_proof_append_unique_file "${volume_file}" C1_VOLUME_NAMES
+  if [ -f "${image_file}" ]; then
+    IFS= read -r C1_IMAGE_REF < "${image_file}" || true
+  fi
+}
+
+# The EXIT trap may still need the registry. Remove it only after verification
+# has set C1_CLEANED=1, and only when the path is this run's disposable prefix.
+c1_proof_release_registry() {
+  local dir="${C1_REGISTRY_DIR:-}"
+  if [ "${C1_CLEANED:-0}" != "1" ]; then
+    return 0
+  fi
+  if [ -z "${dir}" ] || [ ! -d "${dir}" ]; then
+    return 0
+  fi
+  case "${dir}" in
+    /tmp/boba-c1-proof-registry-c1-proof-b-*) ;;
+    *)
+      printf 'refusing to remove registry outside the disposable proof prefix: %s\n' "${dir}" >&2
+      return 1
+      ;;
+  esac
+  rm -rf "${dir}" >/dev/null 2>&1 || true
+}
+
+# One cleanup row. A PASS replaces an earlier FAIL only when the evidence file
+# is the verified final result. A result that does not verify leaves the FAIL.
+c1_proof_upsert_cleanup_matrix() {
+  local matrix="$1" evidence="$2" result="" note="" existing="" tmp=""
+  [ -n "${matrix}" ] || return 0
+  [ -f "${evidence}" ] || return 0
+  result="$(c1_proof_cleanup_matrix_result "${evidence}")"
+  note="$(c1_proof_cleanup_matrix_note "${evidence}")"
+  note="${note//$'\t'/ }"
+  note="${note//$'\n'/ }"
+  if [ -f "${matrix}" ] && awk -F'\t' '$1=="cleanup" { found=1 } END { exit found ? 0 : 1 }' "${matrix}"; then
+    existing="$(awk -F'\t' '$1=="cleanup" { print $2; exit }' "${matrix}")"
+    if [ "${existing}" = "FAIL" ] && [ "${result}" = "PASS" ] && c1_proof_cleanup_file_failed "${evidence}"; then
+      return 0
+    fi
+    tmp="${matrix}.tmp.$$"
+    awk -F'\t' '$1 != "cleanup" { print }' "${matrix}" > "${tmp}" || return 1
+    printf '%s\t%s\t%s\n' "cleanup" "${result}" "${note}" >> "${tmp}" || return 1
+    mv "${tmp}" "${matrix}" || return 1
+    printf '%s\t%s\t%s\n' "cleanup" "${result}" "${note}"
+    return 0
+  fi
+  mkdir -p "$(dirname "${matrix}")" 2>/dev/null || true
+  printf '%s\t%s\t%s\n' "cleanup" "${result}" "${note}" >> "${matrix}"
 }
 
 c1_proof_cleanup_registered() {
@@ -267,8 +370,13 @@ c1_proof_cleanup() {
     fi
 
     if [ -n "${image}" ]; then
-      if podman image exists -- "${image}" >/dev/null 2>&1; then
+      podman image exists -- "${image}" >/dev/null 2>&1
+      rc=$?
+      if [ "${rc}" -eq 0 ]; then
         left_images+=("${image}")
+      elif [ "${rc}" -ne 1 ]; then
+        verify_failed=1
+        left_images+=("VERIFY_FAILED")
       fi
     fi
 
@@ -303,6 +411,23 @@ c1_proof_cleanup() {
   fi
   if [ "${#left_images[@]}" -gt 0 ]; then
     images_text="$(printf '%s\n' "${left_images[@]}")"
+  fi
+
+  # An empty identity list did not verify the run that already failed. Keep
+  # that evidence instead of replacing it with a successful-looking result.
+  if [ "${cleanup_exit}" -eq 0 ] \
+    && [ "${#names[@]}" -eq 0 ] \
+    && [ "${#ids[@]}" -eq 0 ] \
+    && [ "${#volumes[@]}" -eq 0 ] \
+    && [ -z "${image}" ] \
+    && [ -f "${evidence_file}" ] \
+    && c1_proof_cleanup_file_failed "${evidence_file}"; then
+    C1_CLEANUP_EXIT=1
+    C1_CLEANED=0
+    if [ "${errexit}" -eq 1 ]; then
+      set -e
+    fi
+    return 1
   fi
 
   mkdir -p "$(dirname "${evidence_file}")" 2>/dev/null
