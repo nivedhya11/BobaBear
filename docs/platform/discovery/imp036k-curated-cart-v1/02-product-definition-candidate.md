@@ -327,7 +327,7 @@ Dependencies: Agent D measurement specification. Architecture review if purchase
   needs material schema.
 Explicit non-goals: Seven-event assistance engine, holdout activation, revenue-from-impression,
   causal uplift from attach rate, contribution margin from selling price, counting a menu add as
-  a shelf add.
+  a shelf add, counting a server shelf response as a rendered exposure or as an impression.
 Data implications: Entitlement only. No collection schema is approved here.
 Security implications: No private eligibility, payment, or security facts in analytics unless a
   later authorized plan requires them. This candidate does not require them.
@@ -355,7 +355,7 @@ Experience Definition own presentation.
 | `AC-036K-CC-008` | `US-036K-CC-002` | Any variant of the parent is in the Cart | Quantity increases, or quantity decreases while at least one unit remains | The parent stays hidden | Hiding does not depend on which variant or which quantity above zero |
 | `AC-036K-CC-009` | `US-036K-CC-002` | The parent was hidden because a variant was in the Cart | Every unit of every variant of that parent is removed | The parent is eligible to reappear | Eligibility still requires curation, effective menu, and availability |
 | `AC-036K-CC-010` | `US-036K-CC-002` | Card is visible | Shelf add fails, or customization is cancelled before a successful add | The parent stays eligible and the card is not removed as a success | No false success is shown |
-| `AC-036K-CC-011` | `US-036K-CC-002` | Parent was a candidate | It is unavailable, or it is no longer curated, or the shelf is disabled | It is excluded from the shelf | Existing Cart lines of that product are not deleted by that exclusion |
+| `AC-036K-CC-011` | `US-036K-CC-002` | Parent was a candidate | It is unavailable, or it is no longer curated, or the shelf is disabled, or the Cart menu read has no authoritative outlet | It is excluded from the shelf | Existing Cart lines of that product are not deleted by that exclusion. Missing outlet context does not block Cart or Checkout |
 | `AC-036K-CC-012` | `US-036K-CC-002` | Two or more Cart lines share one parent product id (different variants, or the same variant with different configurations that Cart keeps as separate lines) | The shelf is evaluated | The parent is hidden once | Exclusion does not require every variant to be present, and it does not treat each line as a separate product |
 | `AC-036K-CC-013` | `US-036K-CC-002` | Guest Cart is claimed onto the same cart id, or guest and customer Carts are reconciled under existing Cart authority, or the Cart is reloaded | The next shelf evaluation runs | Membership is recomputed from the authoritative Cart after that operation | Claim itself does not rewrite lines; reconcile keeps the customer Cart and coalesces lines under existing Cart authority. This candidate does not add a merge rule |
 | `AC-036K-CC-014` | `US-036K-CC-002` | A parent enters or leaves the Cart | Curation is read again | The curated source list is unchanged | Cart membership and the curated list are different facts |
@@ -369,7 +369,7 @@ Experience Definition own presentation.
 | `AC-036K-CC-022` | `US-036K-CC-006` | Actor has existing workforce authorization for the brand | They select effective-menu parent products, set relative display priority, and enable or disable a candidate or the whole shelf | Later shelf evaluations follow that configuration | About 8–12 curated products is guidance, not a stored maximum |
 | `AC-036K-CC-023` | `US-036K-CC-006` | Actor lacks authorization, or the brand is outside their scope | They attempt a curation write | The write is denied | No other brand’s shelf changes |
 | `AC-036K-CC-024` | `US-036K-CC-006` | A product is curated or the shelf is on | The operator disables the candidate or the shelf, or the product leaves the effective menu | The shelf stops offering it | Cart lines already added remain until ordinary Cart removal. Curation does not become a menu, catalog, price book, SKU list, availability list, campaign, coupon, promotion, or discount |
-| `AC-036K-CC-025` | `US-036K-CC-007` | A shelf session occurs | Measurement is interpreted | Eligible exposures, explicit shelf interactions, and successful Cart additions **initiated through the shelf** are distinct | A main-menu add is not a shelf add. An impression is not revenue. Attach rate is not causal uplift. Selling price is not contribution margin |
+| `AC-036K-CC-025` | `US-036K-CC-007` | A shelf session occurs | Measurement is interpreted | An eligible shelf response, a shelf actually rendered to the customer, an explicit shelf action, and an authoritative successful Cart add initiated through the shelf are distinct. The response is not an exposure | A main-menu add is not a shelf add. A server response is not an impression. Attach rate uses the rendered shelf as its denominator and is not causal uplift. Selling price is not contribution margin |
 | `AC-036K-CC-026` | `US-036K-CC-007` | A shelf-added item later appears on a purchased Order | Someone asks whether it counts as a shelf purchase | It counts only when actual provenance can be validated | This candidate authorizes no telemetry collection and no experiment or holdout. If durable purchased-unit provenance needs material schema, that is an architecture dependency (section 21), not the historical seven-event engine |
 
 | Story / AC ID | Required behaviour / risk | Applicable test layers | Planned proof | Actual evidence / candidate / result |
@@ -405,11 +405,12 @@ Experience Definition own presentation.
 | `BR-036K-CC-017` | Curating about 8–12 products is merchandising guidance so replacements exist. It is not a hard-coded limit. | Founder V1 contract | `AC-036K-CC-018`, `AC-036K-CC-022` |
 | `BR-036K-CC-018` | At most four cards are visible. This is the proposed V1 acceptance rule, pending this candidate’s Product Definition Gate. It is not yet granted. | Founder direction, recorded here so the gate can accept or stop it | `AC-036K-CC-018` |
 | `BR-036K-CC-019` | After reload, guest claim, or guest/customer reconcile, exclusion is recomputed from the authoritative resulting Cart. No separate pre-cart ordering-session identity is required. | Verified claim/reconcile behaviour, section 15 | `AC-036K-CC-013` |
-| `BR-036K-CC-020` | Product measurement entitlement is: eligible exposures; explicit shelf interactions; successful Cart additions initiated through the shelf; shelf-added items that survive into purchased Orders only with validated provenance; cart-to-checkout and checkout-completion guardrails. A menu add is not a shelf add. An impression is not revenue. Attach rate is not causal uplift. Selling price is not contribution margin. | Founder V1 contract; PD-2 measurement section. Agent D specifies the plan | `AC-036K-CC-025`, `AC-036K-CC-026` |
+| `BR-036K-CC-020` | Product measurement entitlement keeps four observations distinct: an eligible shelf response, a shelf actually rendered to the customer, an explicit shelf action, and a successful Cart addition initiated through the shelf. The response is a diagnostic and is not an exposure. Purchased-order survival still requires validated provenance. Cart-to-checkout and checkout-completion guardrails remain. A menu add is not a shelf add. A server response is not an impression and is not revenue. Attach rate uses the rendered shelf as its denominator and is not causal uplift. Selling price is not contribution margin. | Founder V1 contract; PD-2 measurement section. The measurement candidate names the response `M-CC-RSP` and the render `M-CC-01` | `AC-036K-CC-025`, `AC-036K-CC-026` |
 | `BR-036K-CC-021` | This candidate does not authorize telemetry collection or experiment/holdout activation. Material schema for purchased-unit provenance is an architecture dependency, not a reason to import the previous assistance-correlation engine. | Founder V1 contract | `AC-036K-CC-026` |
 | `BR-036K-CC-022` | V1 uses no user-behavior ranking, AI/ML, weight engine, per-user configuration, dismissal memory, category-gap inference, or source-to-target relationship types. | Founder V1 contract; section 23 and section 24 | `US-036K-CC-002`, `US-036K-CC-004` |
 | `BR-036K-CC-023` | After a successful shelf add, preserve focus and scroll and provide accessible feedback. Do not jump the list or steal focus. | Founder V1 contract. Mechanism is Experience Definition scope | `AC-036K-CC-019` |
 | `BR-036K-CC-024` | Bundle contents are not walked to invent extra parents. The parent is the catalog product that owns the variant on the Cart line. A component is excluded only when it is itself a Cart line. | Derived from the verified line model. Avoids an unspecified bundle explosion | `AC-036K-CC-012` |
+| `BR-036K-CC-025` | V1 shows shelf cards only when the Cart menu read already has a server-selected delivery outlet. Pickup carts do not receive a shelf in V1, including a Cart whose Checkout already stores a pickup outlet, because Cart does not establish that outlet and this candidate does not read Checkout pickup authority into the menu. No random outlet, inferred Pickup destination, assumed availability, or unverified price is used. Missing context shows no shelf and does not block Cart or Checkout. A brand-only menu price is not a shelf availability or price promise. | Source on `a6155378b799e06a95b28c593ac1a340d7ca9245`, recorded in the architecture-fit candidate. This is a coverage limitation, not a new outlet authority | `AC-036K-CC-011`, `AC-036K-CC-021` |
 
 ### Exclusion matrix (parent product × active Cart)
 
@@ -432,7 +433,7 @@ Experience Definition own presentation.
 |---|---|---|
 | ENTRY | Open Cart / Your Order, including a direct visit to that page. `AC-036K-CC-001` | Open the existing workforce commercial surface once Architecture Fit names it. `AC-036K-CC-022` |
 | DISCOVERY | Shelf is on the Cart, before Checkout. No other V1 placement. `AC-036K-CC-003` | Operator finds curation with the brand’s existing commercial tools. Exact navigation is Experience Definition scope. |
-| CONTEXT | Brand, guest or customer Cart, effective menu, outlet/timing/fulfilment as already evaluated by commerce. `AC-036K-CC-013` | Brand scope from server-derived workforce authorization. `AC-036K-CC-023` |
+| CONTEXT | Brand, guest or customer Cart, effective menu, and an authoritative outlet only when the Cart menu read already has one. V1 that outlet is the delivery-serviceable outlet. Pickup without that outlet shows no shelf. Signed-in, returning, saved-address, and scheduled journeys do not create a different Cart outlet. `AC-036K-CC-011`, `AC-036K-CC-013`, `BR-036K-CC-025` | Brand scope from server-derived workforce authorization. `AC-036K-CC-023` |
 | EMPTY / FIRST USE | Empty Cart: no shelf. Enabled shelf with zero eligible cards: no filler. `AC-036K-CC-002`, `AC-036K-CC-018` | No curation yet: shelf offers nothing. Ordering is unchanged. |
 | HAPPY PATH | See, explicit add, card leaves, next candidate may fill. `AC-036K-CC-001`, `AC-036K-CC-007`, `AC-036K-CC-019` | Save selection, priority, and enables. `AC-036K-CC-022` |
 | ALTERNATE VALID PATHS | Ignore the shelf. Add the same parent from the main menu. Open customization when required. `AC-036K-CC-006`, `AC-036K-CC-016`, `AC-036K-CC-021` | Disable one candidate or the whole shelf. `AC-036K-CC-024` |
@@ -559,7 +560,8 @@ the Quality Plan and Experience Definition. An automated scan alone is not accep
 ## 19. Observability/supportability if applicable
 
 A support explanation needs to distinguish “the shelf was off, empty, or failed” from “the Cart
-mutation failed” and from “Checkout or Payment failed.” Existing Cart and Payment diagnostics
+mutation failed” and from “Checkout or Payment failed.” It also needs to distinguish a server
+shelf response from a shelf the customer actually saw. Existing Cart and Payment diagnostics
 remain the authorities for those failures. This candidate does not add a telemetry pipeline.
 Agent D’s measurement plan, when authorized, is the place for event names, privacy, and retention.
 Until then, supportability is: the customer can still order, and the operator can turn the shelf
@@ -629,6 +631,7 @@ Registry status is not a test verdict.
 | A second menu, catalog, price book, SKU, availability list, campaign, coupon, promotion, or discount | Founder V1 contract | `AC-036K-CC-024` |
 | Per-user configuration, behaviour ranking, weight engine | Founder V1 contract | `BR-036K-CC-022` |
 | Compulsory upsell step | Founder V1 contract | `AC-036K-CC-021` |
+| A Cart outlet selector, or a shelf on Pickup before Cart already has an authoritative outlet | Current Cart menu authority selects an outlet only from delivery serviceability. Pickup outlet selection stays on Checkout. V1 does not add a selector and does not block ordering while context is missing | No shelf until that delivery outlet already exists. `BR-036K-CC-025`, `AC-036K-CC-011` |
 
 ### Disposition of historical scope
 
