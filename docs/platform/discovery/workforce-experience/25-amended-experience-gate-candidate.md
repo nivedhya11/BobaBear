@@ -2,7 +2,7 @@
   AUTHORITY: NON_AUTHORITATIVE_DISCOVERY_DRAFT
   PACKAGE: WXE-CANDIDATE-1
   CANDIDATE: WXE-AMENDED-EXPERIENCE-GATE-CANDIDATE-1
-  EXPERIENCE_GATE: NOT_DECIDED
+  EXPERIENCE_GATE: PASS_RECORDED_AMENDED_ONLY
   ARCHITECTURE_FIT: NOT_GRANTED
   ARCHITECTURE_LOCK: NOT_GRANTED
   APPLICATION_CODE_MUTATION: NO
@@ -24,8 +24,12 @@ UPD-02 = A
 UPD-03 = B
 UPD-06 = YES
 UPD-09 = UOE UX-A owns the shared label map
-AMENDED_EXPERIENCE_GATE = NOT_DECIDED
-EXPERIENCE_GATE_EXECUTION = PREPARED_NOT_PERFORMED
+AMENDED_EXPERIENCE_GATE = PASS
+EXPERIENCE_GATE_EXECUTION = PERFORMED
+DECISION_ID = FOUNDER-B5-WXE-XD
+AMENDED_EXPERIENCE_GATE_RECORD = 26-amended-experience-gate-founder-record.md
+EVALUATED_PR = 461
+EVALUATED_HEAD = 9f8fb0efe466eb9c70984a3572daf80077463eca
 ARCHITECTURE_FIT = NOT_GRANTED
 ARCHITECTURE_LOCK = NOT_GRANTED
 IMPLEMENTATION_AUTHORIZED = NO
@@ -36,18 +40,21 @@ MERGES_458 = NO
 MERGES_TO_MAIN = NO
 ```
 
-This candidate asks for a fresh Experience Gate on the post-PASS Option R amendment.
+This candidate asked for a fresh Experience Gate on the post-PASS Option R amendment.
 PD-2 requires an Experience Gate PASS before an X2/X3 Architecture Fit may finally PASS
 (`X2_X3_ARCHITECTURE_FIT_REQUIRES_EXPERIENCE_GATE_PASS = YES`). Doc 16 records
 `POST_PASS_AMENDMENT_NOT_COVERED_BY_HISTORICAL_PASS = YES`. Doc 24 Question A option B is
-the process this candidate prepares. The historical PASS in doc 03 §13 and doc 15 §H2 stays
-historical. This file does not re-date it, does not mark a new PASS, and does not grant
-Architecture Fit or Architecture Lock.
+the process this candidate prepared. The historical PASS in doc 03 §13 and doc 15 §H2 stays
+historical. This file does not re-date that PASS and does not claim it covers Option R.
+The amended Experience Gate PASS is recorded in §9 and in
+[`26-amended-experience-gate-founder-record.md`](./26-amended-experience-gate-founder-record.md).
+That PASS does not grant Architecture Fit or Architecture Lock.
 
 ## 1. Binding scope proposed
 
-Status of every row: **PROPOSED**. Founder approval is required. Nothing in this section is a
-Gate PASS.
+Status of every row: **APPROVED** as the amended Experience Gate scope by the Founder decision
+in §9. The row text is the evaluated candidate text. This section does not grant Architecture
+Fit, Architecture Lock, or Implementation Authorization.
 
 | In the proposed amended scope | Binding proposal |
 |---|---|
@@ -63,7 +70,7 @@ Gate PASS.
 | Synthetic proof | Actors S1–S9 and WXE-PF-01..12 in annex 23 §8 are the future experience oracle. They are fixtures, not catalog roles. |
 | Shared labels | Delivery / Takeaway, Now / Schedule, and the three collection verbs stay owned by UOE UX-A. |
 
-Proposed exclusions, still binding if this gate later passes:
+Exclusions, binding with this recorded PASS:
 
 - UPD-08 Delivery Gaps 1–3 stay separately governed. This gate does not accept that risk.
 - PR #427 stays a separate UI corrective. It is not server remediation of those gaps.
@@ -306,30 +313,33 @@ that gate (annex 23 §11).
 
 ```text
 EXPERIENCE_GATE
-Experience Intent defined: PROPOSED_YES (doc 03 §1; unchanged)
-User goal understood: PROPOSED_YES (doc 03 §2, including “Why can’t I open Commercial?”)
-Entry / discoverability defined: PROPOSED_YES (§1–§2; UPD-02 A, UPD-03 B, OPTION_R, UPD-06)
-End-to-end journey defined: PROPOSED_YES (GJ-W8 success is the union-predicate principal)
-Information architecture defined: PROPOSED_YES (seven presentation groups; no new authority)
-Information hierarchy defined: PROPOSED_YES (one H1; Scheduling is a Store Management item)
-Primary interaction defined: PROPOSED_YES (hide, recover, land on first usable surface)
-Mental model / cognitive load considered: PROPOSED_YES (cross-grant coarseness is disclosed)
-Friction reviewed: PROPOSED_YES (unusable Commercial hidden; Store path kept)
-Trust-sensitive moments considered: PROPOSED_YES (proof, cancel, and refund stay outside this grant)
-Content strategy defined: PROPOSED_YES (UPD-09; no second label map)
-Error / recovery defined: PROPOSED_YES (AS-27, AS-13, AS-25)
-Mobile / responsive defined: PROPOSED_YES (desktop-first; narrow recovery remains operable)
-Accessibility considered: PROPOSED_YES (§3.8)
-Service / operational promise aligned where applicable: PROPOSED_YES (doc 03 §8; UPD-08 unresolved)
-Performance experience considered: PROPOSED_YES (doc 03 §11; no new client authority round-trip)
-Measurement intent defined: PROPOSED_YES (doc 13 remains a draft; not finalized here)
+Experience Intent defined: YES (doc 03 §1; unchanged)
+User goal understood: YES (doc 03 §2, including “Why can’t I open Commercial?”)
+Entry / discoverability defined: YES (§1–§2; UPD-02 A, UPD-03 B, OPTION_R, UPD-06)
+End-to-end journey defined: YES (GJ-W8 success is the union-predicate principal)
+Information architecture defined: YES (seven presentation groups; no new authority)
+Information hierarchy defined: YES (one H1; Scheduling is a Store Management item)
+Primary interaction defined: YES (hide, recover, land on first usable surface)
+Mental model / cognitive load considered: YES (cross-grant coarseness is disclosed)
+Friction reviewed: YES (unusable Commercial hidden; Store path kept)
+Trust-sensitive moments considered: YES (proof, cancel, and refund stay outside this grant)
+Content strategy defined: YES (UPD-09; no second label map)
+Error / recovery defined: YES (AS-27, AS-13, AS-25)
+Mobile / responsive defined: YES (desktop-first; narrow recovery remains operable)
+Accessibility considered: YES (§3.8)
+Service / operational promise aligned where applicable: YES (doc 03 §8; UPD-08 unresolved)
+Performance experience considered: YES (doc 03 §11; no new client authority round-trip)
+Measurement intent defined: YES (doc 13 remains a draft; not finalized here)
 Research / evidence level disclosed: YES (source reading of a6155378 plus Founder heuristic record)
-Unresolved experience decisions: NONE proposed inside §1
+Unresolved experience decisions: NONE inside the approved §1 scope
 Deferred, not erased: UPD-01 IMP identity; UPD-07 deep links; UPD-08 Gaps 1–3; UPD-05 merge/deploy;
   per-scope session projection; Architecture Fit; Design Readiness; Quality; Measurement;
   Implementation Authorization
-EXPERIENCE_GATE_EXECUTION: PREPARED_NOT_PERFORMED
-Result: NOT_DECIDED
+EXPERIENCE_GATE_EXECUTION: PERFORMED
+Result: PASS (amended Experience Gate only; historical doc 15 §H2 unchanged and does not cover Option R)
+Founder Authority: Explicit "proceed" on 2026-10-25
+Evaluated head: 9f8fb0efe466eb9c70984a3572daf80077463eca (PR #461)
+DECISION_ID: FOUNDER-B5-WXE-XD
 ```
 
 ## 6. UPD-08 exclusions
@@ -343,10 +353,11 @@ These remain true on `a6155378b799e06a95b28c593ac1a340d7ca9245`:
 | 3. URL `orderId` versus body `deliveryId` | `arrange` copies `orderId` from the route. Other workforce delivery commands forward the JSON body (`src/server/operations/http/delivery-routes.ts` lines 138–165) | `441294e80403df2933a902ddbb422ae918b219d9` |
 
 PR #427 (`WXE-P0-CORRECTIVE-1`, open, unmerged) may change delivery UI hygiene. It is not
-read as closing these three server gaps. This gate does not accept the risk. Architecture
-Lock for the affected X3 delivery-proof and cancellation journeys continues to require a
-separate security disposition. Presentation Fit for the non-delivery surfaces in §1 may be
-considered only after this Experience Gate is PASS. Lock of those X3 journeys may not.
+read as closing these three server gaps. This gate does not accept the risk. The recorded
+PASS does not accept it either. Architecture Lock for the affected X3 delivery-proof and
+cancellation journeys continues to require a separate security disposition. Presentation Fit
+for the non-delivery surfaces in §1 may be considered only after this Experience Gate is PASS.
+That precondition is now met. Fit itself is not granted. Lock of those X3 journeys may not.
 
 ## 7. Residual risks
 
@@ -380,6 +391,9 @@ Return: PASS recommendation or STOP, with the evaluated head SHA.
 The reviewer does not record the Founder verdict.
 ```
 
+The request above is the pre-decision ask. The Founder verdict is now PASS in §9. Item 6
+described the candidate before that decision. Fit and Lock remain `NOT_GRANTED`.
+
 ### Preparer notes
 
 ```text
@@ -396,11 +410,14 @@ THIS_NOTE_DOES_NOT_RECOMMEND_FOUNDER_PASS = YES
 
 ## 9. Founder decision
 
-The Founder is asked to approve or stop the proposed scope in §1. Leave the verdict blank
-until that decision. An agent must not fill it.
+The Founder approved the §1 scope and the corresponding documented scenarios in §2. The
+separate record is
+[`26-amended-experience-gate-founder-record.md`](./26-amended-experience-gate-founder-record.md).
+Doc 15 §H2 stays the historical Experience Gate PASS and does not cover Option R.
 
 ```text
 FOUNDER_AMENDED_EXPERIENCE_GATE
+DECISION_ID = FOUNDER-B5-WXE-XD
 Candidate: WXE-AMENDED-EXPERIENCE-GATE-CANDIDATE-1
 Document: docs/platform/discovery/workforce-experience/25-amended-experience-gate-candidate.md
 Question: PASS this amended Experience Gate for the §1 scope, or STOP?
@@ -415,16 +432,25 @@ acceptance. PASS does not mean a server authorization bypass was found or fixed.
 
 STOP means the amended experience is not accepted. Architecture Fit stays blocked.
 
-Verdict: NOT_DECIDED
-Founder:
-Date:
-Evaluated head:
+Verdict: PASS
+Founder: explicit "proceed" to record this PASS
+Date: 2026-10-25
+Evaluated head: 9f8fb0efe466eb9c70984a3572daf80077463eca
+Evaluated PR: #461
+Scope: §1 and the corresponding documented scenarios in §2
+ARCHITECTURE_FIT = NOT_GRANTED
+ARCHITECTURE_LOCK = NOT_GRANTED
+IMPLEMENTATION_AUTHORIZED = NO
+F-1_THROUGH_F-7 = SEPARATE_NEXT_FIT_DECISION_NOT_GRANTED
+UPD-08_GAPS_1_TO_3 = UNRESOLVED_NOT_ACCEPTED_RISK
 ```
 
 ## 10. Consequences for the later F-1–F-7 Fit decision
 
 Doc 24 remains the Fit packet. This file does not answer doc 24 Question A and does not
-accept Question B. Fit stays blocked while this gate is `NOT_DECIDED`.
+accept Question B. The amended Experience Gate is PASS. Architecture Fit remains a separate
+decision and is `NOT_GRANTED`. F-1 through F-7 are not granted by this PASS. The "If the
+Founder later records PASS" column below is the recorded consequence of §9.
 
 | Later Fit item | While this gate is NOT_DECIDED | If the Founder later records PASS | If the Founder records STOP |
 |---|---|---|---|
