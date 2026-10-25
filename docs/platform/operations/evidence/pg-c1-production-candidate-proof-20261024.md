@@ -80,7 +80,7 @@ Engine `podman 4.9.3`. This is additional evidence. It is not a Docker pass.
 | post_backup_wal_segment | podman | PASS | LSN `0/5006B50` file `000000010000000000000005-2968a326826d0dceec40080157ad731a78351567.zst` |
 | isolated_restore_marker | podman | PASS | restored row is the post-backup marker; replay LSN `0/7000000` >= `0/5006B50` |
 | interrupted_archive_failure | podman | PASS | verifier failed for `...0007`; `failed_count=24`; `last_failed_wal=...0007`; second restore lacks the second marker; `archived_count=7` would have been a false PASS |
-| cleanup | podman | PASS | script exit 1 left two exited containers; follow-up `podman rm -f` exit 0; final lists empty; image tag removed exit 0 |
+| cleanup | podman | FAIL | automatic cleanup_exit=1 left bad-owner and root; later manual `podman rm -f` exit 0 is not an automatic PASS |
 | trivy_unsuppressed | podman image / snap trivy 0.52.2 | PASS | DS-0002 absent; empty ignore file; VEX not passed; 86 HIGH/CRITICAL package findings recorded and not waived |
 | s3_synthetic_render | podman, `--network=none` | PASS | `repo1-type=s3`; secret not written; missing credentials and same-bucket render fail; archive=1 incomplete S3 exits 1 and does not create PGDATA |
 | docker_engine | — | UNVERIFIED | `DOCKER_ENGINE=UNVERIFIED`. Docker CLI is absent. |
@@ -88,7 +88,7 @@ Engine `podman 4.9.3`. This is additional evidence. It is not a Docker pass.
 
 Archive disabled with incomplete S3 became ready. The entrypoint fail-closes incomplete Spaces config when archive is enabled. It does not consult that config when archive is disabled. That is the contract exercised here.
 
-Podman totals for the published run: 11 PASS, 2 UNVERIFIED, 0 FAIL.
+Podman totals for the published run: 10 PASS, 2 UNVERIFIED, 1 FAIL. The FAIL is automatic cleanup. Functional rows stay PASS. The later manual removal is not part of that PASS count.
 
 ## Trivy
 
@@ -96,6 +96,6 @@ Direct scan of this image only: vuln, misconfig, and secret, plus image-config m
 
 ## Cleanup
 
-Run id `c1-proof-b-27be227a1753-171813`. The script's own cleanup left exited containers `bad-owner` (`f1fd857bd9a4…`) and `root` (`49ddc4d75587…`). Follow-up `podman rm -f` of those IDs exited 0. A later list of containers and volumes named `c1-proof-b-27be227a1753` was empty. `podman rmi` of `localhost/boba-bear-postgres:c1-proof-b-27be227a1753` exited 0. The image id above is the id that was tested, recorded before removal.
+Run id `c1-proof-b-27be227a1753-171813`. Automatic cleanup_exit=1. The script left exited containers `bad-owner` (`f1fd857bd9a4…`) and `root` (`49ddc4d75587…`). That result is FAIL. A later manual `podman rm -f` of those IDs exited 0 and is not an automatic PASS. After that manual removal, a list of containers and volumes named `c1-proof-b-27be227a1753` was empty. `podman rmi` of `localhost/boba-bear-postgres:c1-proof-b-27be227a1753` exited 0. The image id above is the id that was tested, recorded before removal.
 
 No staging project, live database, or Spaces bucket was changed.

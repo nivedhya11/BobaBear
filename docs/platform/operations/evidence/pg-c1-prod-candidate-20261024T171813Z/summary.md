@@ -23,4 +23,4 @@
 | interrupted_archive_failure | PASS | verifier failed for 000000010000000000000007; failed_count=24; last_failed_wal=000000010000000000000007; second restore lacks neg-unarchived-marker-c1-proof-b-27be227a1753-171813; bare archived_count=7 would have been a false PASS |
 | s3_synthetic_render | PASS | network=none render repo1-type=s3; secret not written; missing-creds rc=1; same-bucket rc=1; archive=1 incomplete S3 exit=1 and PGDATA absent; archive=0 with incomplete S3 became_ready=yes (fail-closed only when archive is enabled) |
 | s3_live_spaces | UNVERIFIED | S3_LIVE_SPACES=UNVERIFIED; no credentials and no bucket changes; synthetic network-free render only |
-| cleanup | PASS | script cleanup_exit=1 left two exited containers (bad-owner, root); follow-up podman rm -f of those IDs exited 0; final container and volume lists for c1-proof-b-27be227a1753 are empty |
+| cleanup | FAIL | automatic cleanup_exit=1 left bad-owner and root; a later manual podman rm -f exited 0 and is not an automatic PASS |
