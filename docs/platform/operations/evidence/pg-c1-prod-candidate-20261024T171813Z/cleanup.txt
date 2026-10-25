@@ -1,0 +1,15 @@
+script_cleanup_exit=1
+script_leftover_containers<<EOF
+f1fd857bd9a4 c1-proof-b-27be227a1753-171813-bad-owner
+49ddc4d75587 c1-proof-b-27be227a1753-171813-root
+EOF
+script_leftover_volumes<<EOF
+EOF
+followup_rm_exit=0
+followup_removed=f1fd857bd9a4a8e736639853ce6308c1d623b8399edb92d13c07e5f0d767b2ff c1-proof-b-27be227a1753-171813-bad-owner
+followup_removed=49ddc4d755875394b3edc45fde35506907b84d2f192904ce5116459f20f4c64f c1-proof-b-27be227a1753-171813-root
+final_containers=
+final_volumes=
+image_rmi_exit=0
+image_removed=localhost/boba-bear-postgres:c1-proof-b-27be227a1753
+image_id=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5

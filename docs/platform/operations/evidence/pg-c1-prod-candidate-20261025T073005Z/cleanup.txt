@@ -1,0 +1,12 @@
+run_id=c1-proof-b-eae90976c9f1-073005
+cleanup_exit=0
+cleanup_attempts=1
+image_ref=localhost/boba-bear-postgres:c1-proof-b-eae90976c9f1-073005
+image_id=cecb548ff5f75560c4732bfd417b009722092f15c96d12822c9bcafd7264846c
+image_removed=YES
+leftover_containers<<EOF
+EOF
+leftover_volumes<<EOF
+EOF
+leftover_images<<EOF
+EOF

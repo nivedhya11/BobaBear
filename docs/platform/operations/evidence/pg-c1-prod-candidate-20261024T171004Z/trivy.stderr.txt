@@ -1,0 +1,13 @@
+2026-10-24T17:14:10Z	INFO	Need to update DB
+2026-10-24T17:14:10Z	INFO	Downloading DB...	repository="ghcr.io/aquasecurity/trivy-db:2"
+2026-10-24T17:15:07Z	INFO	Container image config scanners	scanners=[misconfig]
+2026-10-24T17:15:07Z	INFO	Vulnerability scanning is enabled
+2026-10-24T17:15:07Z	INFO	Misconfiguration scanning is enabled
+2026-10-24T17:15:07Z	INFO	Secret scanning is enabled
+2026-10-24T17:15:07Z	INFO	If your scanning is slow, please try '--scanners vuln' to disable secret scanning
+2026-10-24T17:15:07Z	INFO	Please see also https://aquasecurity.github.io/trivy/v0.52/docs/scanner/secret/#recommendation for faster secret detection
+2026-10-24T17:15:07Z	FATAL	Fatal error	image scan error: scan error: unable to initialize a scanner: unable to initialize the archive scanner: 2 errors occurred:
+	* unable to open /tmp/boba-c1-proof-27be227a1753d5a3897b186c2a2f9bb7650c317d-trivy/image.tar as a Docker image: unable to open the file: open /tmp/boba-c1-proof-27be227a1753d5a3897b186c2a2f9bb7650c317d-trivy/image.tar: no such file or directory
+	* unable to open /tmp/boba-c1-proof-27be227a1753d5a3897b186c2a2f9bb7650c317d-trivy/image.tar as an OCI Image: stat /tmp/boba-c1-proof-27be227a1753d5a3897b186c2a2f9bb7650c317d-trivy/image.tar/index.json: no such file or directory
+
+

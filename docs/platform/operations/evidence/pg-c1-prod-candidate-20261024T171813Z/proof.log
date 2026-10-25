@@ -1,0 +1,148 @@
+=== production-candidate proof RUN_ID=c1-proof-b-27be227a1753-171813 SOURCE_SHA=27be227a1753d5a3897b186c2a2f9bb7650c317d ===
+RUN_ID=c1-proof-b-27be227a1753-171813
+SOURCE_SHA=27be227a1753d5a3897b186c2a2f9bb7650c317d
+SOURCE_BRANCH=fix/postgres-c1-nonroot-runtime-20261024
+PROOF_HEAD=a6155378b799e06a95b28c593ac1a340d7ca9245
+ENGINE=podman
+DOCKER_ENGINE=UNVERIFIED
+podman version 4.9.3
+PODMAN_VERSION=4.9.3
+Version: 0.52.2
+Vulnerability DB:
+TRIVY_BIN=/snap/bin/trivy
+TRIVY_VERSION=0.52.2
+1000
+1000
+subuid: ajoshi:100000:65536
+subgid: ajoshi:100000:65536
+HOST_UID=1000
+SUBUID_START=100000
+EXPECTED_HOST_UID_FOR_CONTAINER_999=100998
+host_uid=1000
+subuid_start=100000
+expected_host_uid_for_container_999=100998
+docker_engine	UNVERIFIED	docker CLI absent; DOCKER_ENGINE=UNVERIFIED; Podman is additional evidence only
+DOCKER_CLI=ABSENT_OR_UNUSED
+=== archive 27be227a1753d5a3897b186c2a2f9bb7650c317d ===
+DOCKERFILE_SHA256=4cf227e7f50139eb6cf812e47a3e0d42ac2451642103d7cc54f940263ca6c537
+ENTRYPOINT_SHA256=9151655a078cc62bdedd7e757f82eada44c2162afc50c482b2af96a834345d6d
+56:USER root
+148:USER postgres
+=== build production Dockerfile ===
+SKIP_BUILD=1 reusing localhost/boba-bear-postgres:c1-proof-b-27be227a1753
+IMAGE_REF=localhost/boba-bear-postgres:c1-proof-b-27be227a1753
+IMAGE_ID=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+CONFIG_USER=postgres
+image_ref=localhost/boba-bear-postgres:c1-proof-b-27be227a1753
+image_id=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+config_user=postgres
+source_sha=27be227a1753d5a3897b186c2a2f9bb7650c317d
+Id=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5 User=postgres Entrypoint=[boba-postgres-entrypoint] Cmd=[postgres]
+uid=999(postgres) gid=999(postgres) groups=999(postgres),101(ssl-cert)
+RUNTIME_UID=999
+RUNTIME_USER=postgres
+final_image_uid	PASS	Config.User=postgres; runtime id=999(postgres); image_id=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+PGDATA_PATH=/var/lib/postgresql/18/docker
+PGDATA_PATH=/var/lib/postgresql/18/docker
+=== row 2: fresh start and restart on a new volume ===
+volume_name=c1-proof-b-27be227a1753-171813-pgdata mountpoint=/home/ajoshi/.local/share/containers/storage/volumes/c1-proof-b-27be227a1753-171813-pgdata/_data created=2026-10-24 17:18:38.182092779 +0000 UTC
+volume_name=c1-proof-b-27be227a1753-171813-pgbackrest mountpoint=/home/ajoshi/.local/share/containers/storage/volumes/c1-proof-b-27be227a1753-171813-pgbackrest/_data created=2026-10-24 17:18:40.462637558 +0000 UTC
+container_name=c1-proof-b-27be227a1753-171813-pg id=19fb20ce516358bd6ab334d421db282c5b5cc57b941e045e8361e41fce269777 image=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+mount_owner_inside=999:999 1777
+host_owner_volume=100998:100998
+container_uid=999
+container_name=c1-proof-b-27be227a1753-171813-pg id=af1d2352f8f75f4846f8345d48024aacbc029c2d44b402181c573fdc5cf606fe image=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+fresh_start_restart	PASS	new volume c1-proof-b-27be227a1753-171813-pgdata owned inside by 999 and on host by 100998; fresh start and restart ready; no :U
+=== row 3: incorrectly owned bind must fail closed ===
+container_name=c1-proof-b-27be227a1753-171813-bad-owner id=f1fd857bd9a4a8e736639853ce6308c1d623b8399edb92d13c07e5f0d767b2ff image=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+volume_ownership_fail_closed	PASS	correctly owned new volume succeeded; incorrect host-owned bind exit=1; both sentinels and tree snapshot unchanged
+=== row 4: forced root rejection ===
+root_start_rc=0
+container_name=c1-proof-b-27be227a1753-171813-root id=49ddc4d755875394b3edc45fde35506907b84d2f192904ce5116459f20f4c64f image=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+forced_root_rejection	PASS	--user 0 exit=1; log refuses root
+=== row 10: unsuppressed Trivy ===
+Copying blob sha256:6f94328331290cbd81edab450664d42da7b64c191416c9346cd5d28c84f76035
+Copying blob sha256:fff5f6ec2c1f54e658f647137034e787217ef87423067bb1f1d40ceb796176e3
+Copying blob sha256:5d564305ddc93bdc4ad1ddd267af634c662e332cba4b0352d5aff11b1261e6fa
+Copying blob sha256:f0751144d8b5fa53dac1835a5a437f6da04da4776a2e86c19f437b6c89807aad
+Copying blob sha256:4097e154e51946d5485a291f0fb840a00d3f936b641366a0d7cb280850ea4b51
+Copying blob sha256:41d676c0a0a7f4f3c729cfdd858b9d20c83c1da751e4b51d2ba96486a999d393
+Copying blob sha256:b77d4252ea3eb18bdb59c21965168fda9e7c0ed21ccd1d413837c13d960340f1
+Copying blob sha256:5bdd861a04aff5becbf663c6422d66b18fcf20c247aef63d9765f1897dc0a361
+Copying blob sha256:00be126d2054699cd80b7dd85ac3c4b7f267a7d10fe258b9e0f203e6b1b9812e
+Copying blob sha256:111c2456384aeadd44b469c665accfdb6696eb80e4c89801814324d3f33c9b83
+Copying blob sha256:51570c20ff313742846a7344073fb6d151cc948753cf17cbec9733f9e5ef33f8
+Copying blob sha256:dcdf666a16a2af6652ee6568723e6d6e87ce2eb981be1a59cae99eb98d390b31
+Copying blob sha256:28dc842318aa7edda87414ef9452a47f09e983366146b45ad0518f0c1bf21152
+Copying blob sha256:1ae81e27117b95e8f5fe6f95dc7452389a9a06c96bcd6913d086160e37509ce7
+Copying blob sha256:bd551146aafc51a3a70373b4b10b26ef89577c7c4d1e3e7b72d565aa7e1d3101
+Copying blob sha256:a44b2bd80e246bf2db3b2c0d86d9b1f4b9f2bc1953a93053411f303c47c59f81
+Copying blob sha256:42bb2b0578b81bad0b5e6c455893349eb6c17ddf1fc9a49f20f05c547bf7de6e
+Copying blob sha256:01b398d77c188902193b0185b9373846f2904c4640281a9e67a0702895238c20
+Copying blob sha256:c004b56bf5f972f0e5aedc78c45961e9de0a766543e443009df8a8e126f6591f
+Copying blob sha256:e952863b826d1eae9da357aacf17b2e60ce3696ff3985c4b75b5d1beca8ab8ee
+Copying blob sha256:831a2d89160feba8f91d2967b9e3ba018e84b17bcf951069bc8dcbb75b76ab89
+Copying blob sha256:8a1af238d0c0f9f04c0bc873864f7c9f77ce8cf2612ebdd7ae0928e3a7ac1b00
+Copying config sha256:7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+Writing manifest to image destination
+ds0002_present=False high_critical_vuln_count=86
+DS0002=absent
+TRIVY_HIGH_CRITICAL_COUNT=86
+trivy_unsuppressed	PASS	DS-0002 absent; empty ignorefile; VEX not passed; bound to 27be227a1753d5a3897b186c2a2f9bb7650c317d 7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5; high_critical_count=86; not the six-image CI gate
+=== rows 5-8: backup, specific WAL, restore, interrupted archive ===
+container_name=c1-proof-b-27be227a1753-171813-pg id=d481f3b7faa2dd274208a0cf9aa732db7eff4498fbacafa6ab458c866cee8c00 image=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+pgbackrest_full_backup	PASS	stanza-create + check + backup --type=full + info + verify
+marker_lsn=0/5006B50 marker_seg=000000010000000000000005 switch_lsn=0/5006B68
+archiver 6 000000010000000000000005 0 -
+segment_hit=/var/lib/pgbackrest/repo-gen-1/archive/boba/18-1/0000000100000000/000000010000000000000005-2968a326826d0dceec40080157ad731a78351567.zst
+post_backup_wal_segment	PASS	pg_current_wal_lsn=0/5006B50 pg_walfile_name=000000010000000000000005 after pg_switch_wal=0/5006B68; exact file /var/lib/pgbackrest/repo-gen-1/archive/boba/18-1/0000000100000000/000000010000000000000005-2968a326826d0dceec40080157ad731a78351567.zst
+=== isolated restore ===
+volume_name=c1-proof-b-27be227a1753-171813-restore-pgdata mountpoint=/home/ajoshi/.local/share/containers/storage/volumes/c1-proof-b-27be227a1753-171813-restore-pgdata/_data created=2026-10-24 17:26:15.108099534 +0000 UTC
+uid=999(postgres) gid=999(postgres) groups=999(postgres),101(ssl-cert)
+owner=999 mode=1777 path=/var/lib/postgresql
+container_name=c1-proof-b-27be227a1753-171813-restore id=2a8bec4c2cef64eeb27756d7fdd076a6a96381a7c568dd4e66a0471b0965c727 image=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+replay_lsn=0/7000000 replay_ge_marker=t row2=post-backup-marker-c1-proof-b-27be227a1753-171813
+isolated_restore_marker	PASS	restored database contains post-backup-marker-c1-proof-b-27be227a1753-171813; replay_lsn=0/7000000 >= marker_lsn=0/5006B50
+=== interrupted archive ===
+d--------- 999 /var/lib/pgbackrest/repo-gen-1/archive/boba
+chmod_rc=0
+neg_lsn=0/70042D0 neg_seg=000000010000000000000007 neg_switch=0/7004320
+archiver_after=7 000000010000000000000006 24 000000010000000000000007 verify_rc=1
+NEG_SEGMENT_ABSENT
+volume_name=c1-proof-b-27be227a1753-171813-restore-neg-pgdata mountpoint=/home/ajoshi/.local/share/containers/storage/volumes/c1-proof-b-27be227a1753-171813-restore-neg-pgdata/_data created=2026-10-24 17:39:30.833325991 +0000 UTC
+uid=999(postgres) gid=999(postgres) groups=999(postgres),101(ssl-cert)
+owner=999 mode=1777 path=/var/lib/postgresql
+container_name=c1-proof-b-27be227a1753-171813-restore-neg id=cf6aecfe1d94be3bbb58d2b7dbcce816c1ef52ff40bfc801adce31e6e418e575 image=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+interrupted_archive_failure	PASS	verifier failed for 000000010000000000000007; failed_count=24; last_failed_wal=000000010000000000000007; second restore lacks neg-unarchived-marker-c1-proof-b-27be227a1753-171813; bare archived_count=7 would have been a false PASS
+=== row 11: synthetic S3 render, network none ===
+volume_name=c1-proof-b-27be227a1753-171813-s3fail-pgdata mountpoint=/home/ajoshi/.local/share/containers/storage/volumes/c1-proof-b-27be227a1753-171813-s3fail-pgdata/_data created=2026-10-24 17:45:07.937676822 +0000 UTC
+container_name=c1-proof-b-27be227a1753-171813-s3-fail id=362f6138a8d158521e58a6844e6efe98ac772507d250801bb4495061481bf8c1 image=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+absent
+container_name=c1-proof-b-27be227a1753-171813-archoff-s3 id=6fc76872484d9657abc8b0c4495e638ada4d210ecdd5cf5311c3b7514dcc6b6c image=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+s3_synthetic_render	PASS	network=none render repo1-type=s3; secret not written; missing-creds rc=1; same-bucket rc=1; archive=1 incomplete S3 exit=1 and PGDATA absent; archive=0 with incomplete S3 became_ready=yes (fail-closed only when archive is enabled)
+s3_live_spaces	UNVERIFIED	S3_LIVE_SPACES=UNVERIFIED; no credentials and no bucket changes; synthetic network-free render only
+cleanup_exit=1
+leftover_containers<<EOF
+f1fd857bd9a4 c1-proof-b-27be227a1753-171813-bad-owner
+49ddc4d75587 c1-proof-b-27be227a1753-171813-root
+EOF
+leftover_volumes<<EOF
+
+EOF
+cleanup	FAIL	cleanup_exit=1; leftovers recorded in cleanup.txt
+=== matrix ===
+docker_engine	UNVERIFIED	docker CLI absent; DOCKER_ENGINE=UNVERIFIED; Podman is additional evidence only
+final_image_uid	PASS	Config.User=postgres; runtime id=999(postgres); image_id=7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5
+fresh_start_restart	PASS	new volume c1-proof-b-27be227a1753-171813-pgdata owned inside by 999 and on host by 100998; fresh start and restart ready; no :U
+volume_ownership_fail_closed	PASS	correctly owned new volume succeeded; incorrect host-owned bind exit=1; both sentinels and tree snapshot unchanged
+forced_root_rejection	PASS	--user 0 exit=1; log refuses root
+trivy_unsuppressed	PASS	DS-0002 absent; empty ignorefile; VEX not passed; bound to 27be227a1753d5a3897b186c2a2f9bb7650c317d 7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5; high_critical_count=86; not the six-image CI gate
+pgbackrest_full_backup	PASS	stanza-create + check + backup --type=full + info + verify
+post_backup_wal_segment	PASS	pg_current_wal_lsn=0/5006B50 pg_walfile_name=000000010000000000000005 after pg_switch_wal=0/5006B68; exact file /var/lib/pgbackrest/repo-gen-1/archive/boba/18-1/0000000100000000/000000010000000000000005-2968a326826d0dceec40080157ad731a78351567.zst
+isolated_restore_marker	PASS	restored database contains post-backup-marker-c1-proof-b-27be227a1753-171813; replay_lsn=0/7000000 >= marker_lsn=0/5006B50
+interrupted_archive_failure	PASS	verifier failed for 000000010000000000000007; failed_count=24; last_failed_wal=000000010000000000000007; second restore lacks neg-unarchived-marker-c1-proof-b-27be227a1753-171813; bare archived_count=7 would have been a false PASS
+s3_synthetic_render	PASS	network=none render repo1-type=s3; secret not written; missing-creds rc=1; same-bucket rc=1; archive=1 incomplete S3 exit=1 and PGDATA absent; archive=0 with incomplete S3 became_ready=yes (fail-closed only when archive is enabled)
+s3_live_spaces	UNVERIFIED	S3_LIVE_SPACES=UNVERIFIED; no credentials and no bucket changes; synthetic network-free render only
+cleanup	FAIL	cleanup_exit=1; leftovers recorded in cleanup.txt
+EVIDENCE_DIR=/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261024T171813Z
+PROOF_RESULT=FAIL

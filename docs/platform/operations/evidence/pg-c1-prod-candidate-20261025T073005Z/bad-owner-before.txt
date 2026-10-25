@@ -1,0 +1,5 @@
+ 4096
+.mount-sentinel 10
+18 4096
+18/docker 4096
+18/docker/.pgdata-sentinel 10

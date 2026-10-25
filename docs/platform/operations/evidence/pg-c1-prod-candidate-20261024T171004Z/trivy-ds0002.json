@@ -1,0 +1,21 @@
+{
+  "source_sha": "27be227a1753d5a3897b186c2a2f9bb7650c317d",
+  "image_id": "7aa79098f94e2f20bd4e1735dac0363397fc17355d0e340572565fa7ef6740d5",
+  "trivy_exit": 1,
+  "ignorefile": "empty",
+  "repo_trivyignore_passed": false,
+  "vex_passed": false,
+  "scanners": [
+    "vuln",
+    "misconfig",
+    "secret"
+  ],
+  "image_config_scanners": [
+    "misconfig"
+  ],
+  "ds0002_present": null,
+  "ds0002_hits": [],
+  "high_critical_vulns": [],
+  "misconfig_ids": [],
+  "parse_error": "[Errno 2] No such file or directory: '/home/ajoshi/repos/boba-bear-c1-pg-proof/docs/platform/operations/evidence/pg-c1-prod-candidate-20261024T171004Z/trivy-report.json'"
+}

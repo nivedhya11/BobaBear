@@ -1,0 +1,4 @@
+marker_lsn=0/4007188 marker_seg=000000010000000000000004 switch_lsn=0/40071A0
+archiver 5 000000010000000000000004 0 -
+segment_hit=/var/lib/pgbackrest/repo-gen-1/archive/boba/18-1/0000000100000000/000000010000000000000004-5f303c73e31216a58814913e60b2cc7716ac1b8b.zst
+replay_lsn=0/5000000 replay_ge_marker=t row2=post-backup-marker-c1-proof-b-eae90976c9f1-073005

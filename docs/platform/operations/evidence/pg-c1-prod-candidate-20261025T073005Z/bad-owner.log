@@ -1,0 +1,1 @@
+BOBA postgres: PGDATA /var/lib/postgresql/18/docker is not writable by uid 999 (found /var/lib/postgresql/18/docker owned by uid 0); refusing to repair ownership
