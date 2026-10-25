@@ -47,7 +47,7 @@
     "packageCoverageCommands": 1,
     "packageInventoryCommands": 2,
     "ciWorkflowFiles": 4,
-    "ciValidationSteps": 133,
+    "ciValidationSteps": 137,
     "protectedEvidenceTrackedFiles": 3,
     "archiveTrackedFiles": 92
   },
@@ -1161,6 +1161,22 @@
         {
           "name": "IMP-036J Tranche 8 proof",
           "run": "npm run test:imp036j:tranche8"
+        },
+        {
+          "name": "Install dependencies",
+          "run": "npm ci"
+        },
+        {
+          "name": "Ensure rootless Podman socket",
+          "run": "socket=\"/run/user/$(id -u)/podman/podman.sock\"\ncommand -v podman\nif [ ! -S \"$socket\" ]; then\nsystemctl --user start podman.socket\nfi\ntest -S \"$socket\"\npodman --version"
+        },
+        {
+          "name": "Install Playwright Chromium",
+          "run": "npx playwright install --with-deps chromium"
+        },
+        {
+          "name": "GTM UAT browser Golden Journeys",
+          "run": "npm run test:e2e:gtm-uat-browser"
         },
         {
           "name": "Install dependencies",
@@ -9158,7 +9174,7 @@
         "test:e2e",
         "test:e2e:gtm-uat-browser"
       ],
-      "ciInclusion": "NO",
+      "ciInclusion": "YES",
       "test1Layers": [
         "11-e2e-browser-ui"
       ],
