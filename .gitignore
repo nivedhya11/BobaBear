@@ -21,6 +21,7 @@
 /test-results-operations-lifecycle
 /test-results-commercial-workspace
 /test-results-gtm-uat-browser
+/test-results-b5-commerce-qa
 /blob-report
 /artifacts/playwright-report-customer-auth/
 /artifacts/test-results-customer-auth/

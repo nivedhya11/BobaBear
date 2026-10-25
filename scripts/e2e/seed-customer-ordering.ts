@@ -38,6 +38,7 @@ import {
   setPromotionBenefit,
   setPromotionTargets,
 } from "../../src/server/promotions";
+import { seedB5CommerceQaFixtures } from "./b5-commerce-qa-fixtures";
 import { seedGtmUatBrowserFixtures } from "./gtm-uat-browser-fixtures";
 import {
   setOutletServiceabilityDistancePolicy,
@@ -238,6 +239,13 @@ export async function seedCustomerOrderingCommerce(workerConfig: WorkerConfig): 
       deliveryPaise: BigInt(4_000),
     });
 
+    // B5 composite QA needs an unlabeled baseline. The automatic first-order
+    // offer would put "After discount" on every merchandise line and hide
+    // coupon-removal, delivery-only, and per-line cases. Other harnesses
+    // keep that offer.
+    if (process.env.E2E_B5_COMMERCE_QA === "1") {
+      await seedB5CommerceQaFixtures(persistence, actor, imported.brandId);
+    } else {
     // IMP-036J T8 — first-order automatic Offer for GJ-FIRST-ORDER / GJ-RETURNING-ORDER.
     await persistence.transaction(async (tx) => {
       const created = await createPromotionDraft(tx, {
@@ -315,6 +323,7 @@ export async function seedCustomerOrderingCommerce(workerConfig: WorkerConfig): 
         expectedPromotionRevision: revision,
       });
     });
+    }
 
     // IMP-036H — enable ASAP Pickup for the E2E outlet (AC-002 golden journey).
     await persistence.transaction(async (tx) => {
