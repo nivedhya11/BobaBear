@@ -31,9 +31,9 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2349,
-    "executableTestFiles": 539,
-    "sourceTestFiles": 160,
+    "trackedPathsConsidered": 2352,
+    "executableTestFiles": 542,
+    "sourceTestFiles": 163,
     "testsTreeExecutableFiles": 291,
     "scriptTestFiles": 88,
     "playwrightSpecs": 12,
@@ -74,6 +74,7 @@
     "src/components/ordering/CheckoutClient.destination.test.tsx",
     "src/components/ordering/CheckoutFulfilmentChoice.test.tsx",
     "src/components/ordering/CheckoutPickupOutletStep.test.tsx",
+    "src/components/ordering/CheckoutReviewSections.test.tsx",
     "src/components/ordering/CheckoutTimingChoice.test.tsx",
     "src/components/ordering/CustomerOrderFulfilmentPanel.test.tsx",
     "src/components/ordering/MenuItemCustomizationDialog.test.tsx",
@@ -89,6 +90,7 @@
     "src/components/ordering/availability-377-recovery.test.tsx",
     "src/components/ordering/cart-changed-recovery-presentation.test.ts",
     "src/components/ordering/cart-presentation.test.ts",
+    "src/components/ordering/checkout-line-presentation.test.ts",
     "src/components/ordering/checkout-snapshot-presentation.test.ts",
     "src/components/ordering/client-action.test.ts",
     "src/components/ordering/committed-presentation-observation.test.ts",
@@ -174,6 +176,7 @@
     "src/server/notifications/provider/meta-whatsapp/registry.wiring.test.ts",
     "src/server/notifications/resend-eligibility.test.ts",
     "src/server/operations/config.test.ts",
+    "src/server/order/customer-order-line-discount.test.ts",
     "src/server/persistence/application.test.ts",
     "src/server/persistence/errors.test.ts",
     "src/server/persistence/handle.test.ts",
@@ -3519,6 +3522,24 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "src/components/ordering/CheckoutReviewSections.test.tsx",
+      "runner": "vitest",
+      "domain": "components/ordering",
+      "testType": "component-or-tsx",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "2-component"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "src/components/ordering/CheckoutTimingChoice.test.tsx",
       "runner": "vitest",
       "domain": "components/ordering",
@@ -3775,6 +3796,24 @@
     },
     {
       "path": "src/components/ordering/cart-presentation.test.ts",
+      "runner": "vitest",
+      "domain": "components/ordering",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/components/ordering/checkout-line-presentation.test.ts",
       "runner": "vitest",
       "domain": "components/ordering",
       "testType": "unit-or-domain",
@@ -5352,6 +5391,25 @@
       "path": "src/server/operations/config.test.ts",
       "runner": "vitest",
       "domain": "server/operations",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/server/order/customer-order-line-discount.test.ts",
+      "runner": "vitest",
+      "domain": "server/order",
       "testType": "unit-or-domain",
       "dbRequired": "NO",
       "browserRequired": "NO",
