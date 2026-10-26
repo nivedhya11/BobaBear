@@ -10,6 +10,7 @@
  * base are a non-failing baseline. Missing comparison provenance fails closed.
  */
 import { spawnSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -17,8 +18,21 @@ export const CODES = Object.freeze({
   NAMING: "REPO_HYGIENE_NAMING_VIOLATION",
   PLACEMENT: "REPO_HYGIENE_PLACEMENT_VIOLATION",
   PROTECTED: "REPO_HYGIENE_PROTECTED_PATH",
+  WORKFLOW: "REPO_HYGIENE_WORKFLOW_LABEL",
   BASELINE: "REPO_HYGIENE_BASELINE_UNAVAILABLE",
 });
+
+/** Job display names required by the active Protect main ruleset. This checker does not own that ruleset. */
+export const PROTECTED_GITHUB_CHECK_NAMES = Object.freeze([
+  "Quality",
+  "Scripts",
+  "Unit / component",
+  "Commerce core",
+  "Security SDLC",
+  "Analyze (javascript-typescript)",
+]);
+
+const PROTECTED_WORKFLOW_FILES = new Set([".github/workflows/ci.yml", ".github/workflows/codeql.yml"]);
 
 const ALLOWED_ROOTS = new Set([
   ".claude",
@@ -1046,6 +1060,193 @@ export function parseArgs(argv) {
 }
 
 /**
+ * @param {string} value
+ */
+function unquoteYamlScalar(value) {
+  const trimmed = value.trim();
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"') && trimmed.length >= 2) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'") && trimmed.length >= 2)
+  ) {
+    return trimmed.slice(1, -1).trim();
+  }
+  return trimmed;
+}
+
+/**
+ * Repository workflow layout only: column-0 workflow name, four-space job name,
+ * step list item `- name` at any indentation. Comments and other keys are ignored.
+ * @param {string} text
+ */
+export function extractWorkflowDisplayNames(text) {
+  /** @type {string[]} */
+  const workflow = [];
+  /** @type {string[]} */
+  const jobs = [];
+  /** @type {string[]} */
+  const steps = [];
+  for (const rawLine of text.split("\n")) {
+    const line = rawLine.replace(/\r$/, "");
+    if (/^\s*#/.test(line)) continue;
+    const commentAt = line.indexOf(" #");
+    const visible = commentAt === -1 ? line : line.slice(0, commentAt);
+    let match = /^name:\s+(.+)$/.exec(visible);
+    if (match?.[1]) {
+      workflow.push(unquoteYamlScalar(match[1]));
+      continue;
+    }
+    match = /^ {4}name:\s+(.+)$/.exec(visible);
+    if (match?.[1]) {
+      jobs.push(unquoteYamlScalar(match[1]));
+      continue;
+    }
+    match = /^ +- name:\s+(.+)$/.exec(visible);
+    if (match?.[1]) steps.push(unquoteYamlScalar(match[1]));
+  }
+  return { workflow, jobs, steps };
+}
+
+/**
+ * @param {string} label
+ * @returns {{ kind: string, token: string } | null}
+ */
+export function workflowStageIdentifier(label) {
+  const text = label.trim();
+  const patterns = [
+    ["imp", /\bIMP-\d{3}[A-Z]?\b/],
+    ["gtm", /\bGTM-\d+\b/],
+    ["session", /\bSession\s+\d+[A-Z]?\d*\b/i],
+    ["tranche", /\bTranche\s+\d+\b/i],
+    ["issue", /(^|\s)#\d+\b/],
+  ];
+  for (const [kind, expression] of patterns) {
+    const match = expression.exec(text);
+    if (match) return { kind, token: match[0].trim() };
+  }
+  const normalized = text.replace(/[·/]/g, " ").replace(/[^A-Za-z0-9]+/g, "-");
+  const batch = batchToken(normalized);
+  if (batch) return { kind: "batch", token: batch };
+  return null;
+}
+
+/**
+ * @param {Iterable<string>} jobNames
+ */
+export function missingProtectedCheckNames(jobNames) {
+  const present = new Set(jobNames);
+  return PROTECTED_GITHUB_CHECK_NAMES.filter((name) => !present.has(name));
+}
+
+/**
+ * @param {string} filePath
+ */
+function isWorkflowYaml(filePath) {
+  return filePath.startsWith(".github/workflows/") && /\.ya?ml$/.test(filePath);
+}
+
+/**
+ * @param {string | null | undefined} beforeText
+ * @param {string | null | undefined} afterText
+ */
+export function addedWorkflowDisplayNames(beforeText, afterText) {
+  const before = extractWorkflowDisplayNames(beforeText ?? "");
+  const after = extractWorkflowDisplayNames(afterText ?? "");
+  const counts = new Map();
+  for (const label of [...before.workflow, ...before.jobs, ...before.steps]) {
+    counts.set(label, (counts.get(label) ?? 0) + 1);
+  }
+  /** @type {string[]} */
+  const added = [];
+  for (const label of [...after.workflow, ...after.jobs, ...after.steps]) {
+    const remaining = counts.get(label) ?? 0;
+    if (remaining > 0) counts.set(label, remaining - 1);
+    else added.push(label);
+  }
+  return added;
+}
+
+/**
+ * @param {string} repo
+ * @param {string} rev
+ * @param {string} filePath
+ */
+function readAtRev(repo, rev, filePath) {
+  const shown = git(repo, ["show", `${rev}:${filePath}`]);
+  if (shown.status !== 0) return null;
+  return shown.stdout;
+}
+
+/**
+ * @param {string} repo
+ * @param {string} head
+ * @param {string} filePath
+ * @param {boolean} includeWorktree
+ */
+function readWorkflowAfter(repo, head, filePath, includeWorktree) {
+  if (includeWorktree) {
+    const absolute = path.join(repo, filePath);
+    if (!existsSync(absolute)) return null;
+    return readFileSync(absolute, "utf8");
+  }
+  return readAtRev(repo, head, filePath);
+}
+
+/**
+ * @param {{ repo: string, base: string, head: string, includeWorktree: boolean, tracked: string[], changes: Array<{ kind: string, path: string, previousPath?: string }> }} input
+ */
+function workflowLabelViolations(input) {
+  /** @type {Array<{ code: string, path: string, rule: string, remediation: string, change: string }>} */
+  const violations = [];
+  const workflowPaths = new Set(input.tracked.filter(isWorkflowYaml));
+  for (const change of input.changes) {
+    if (isWorkflowYaml(change.path)) workflowPaths.add(change.path);
+  }
+
+  const jobNames = [];
+  let sawProtectedSurface = false;
+  for (const filePath of workflowPaths) {
+    if (PROTECTED_WORKFLOW_FILES.has(filePath)) sawProtectedSurface = true;
+    const after = readWorkflowAfter(input.repo, input.head, filePath, input.includeWorktree);
+    if (after == null) continue;
+    jobNames.push(...extractWorkflowDisplayNames(after).jobs);
+  }
+  if (sawProtectedSurface) {
+    for (const missing of missingProtectedCheckNames(jobNames)) {
+      violations.push(
+        finding(
+          CODES.WORKFLOW,
+          ".github/workflows",
+          "protected-github-check-name",
+          `Restore the required GitHub check name "${missing}". Do not rename Quality, Scripts, Unit / component, Commerce core, Security SDLC, or Analyze (javascript-typescript).`,
+          "modified",
+        ),
+      );
+    }
+  }
+
+  for (const change of input.changes) {
+    if (!isWorkflowYaml(change.path) || change.kind === "deleted") continue;
+    const beforePath = change.previousPath ?? change.path;
+    const before = change.kind === "added" ? "" : readAtRev(input.repo, input.base, beforePath);
+    const after = readWorkflowAfter(input.repo, input.head, change.path, input.includeWorktree);
+    for (const label of addedWorkflowDisplayNames(before, after)) {
+      const stage = workflowStageIdentifier(label);
+      if (!stage) continue;
+      violations.push(
+        finding(
+          CODES.WORKFLOW,
+          change.path,
+          "no-workflow-stage-label",
+          `Use a behavior name for the workflow, job, or step. Keep "${stage.token}" in a comment, compatibility command, or trace metadata.`,
+          change.kind,
+        ),
+      );
+    }
+  }
+  return violations;
+}
+
+/**
  * @param {{ repo?: string, base?: string, head?: string, includeWorktree?: boolean }} options
  */
 export function runRepositoryHygiene(options) {
@@ -1242,6 +1443,17 @@ export function runRepositoryHygiene(options) {
     }
   }
   baseline.sort((left, right) => (left.path < right.path ? -1 : left.path > right.path ? 1 : left.rule < right.rule ? -1 : 1));
+
+  strict.push(
+    ...workflowLabelViolations({
+      repo,
+      base,
+      head,
+      includeWorktree: options.includeWorktree !== false,
+      tracked,
+      changes,
+    }),
+  );
 
   const lines = [`REPO_HYGIENE_COMPARISON base=${base} head=${head}`];
   for (const item of strict) lines.push(formatFinding(item));

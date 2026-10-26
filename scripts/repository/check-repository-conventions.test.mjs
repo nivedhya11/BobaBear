@@ -7,9 +7,13 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
 import {
+  addedWorkflowDisplayNames,
   evaluateChange,
+  extractWorkflowDisplayNames,
   introductionViolations,
+  missingProtectedCheckNames,
   runRepositoryHygiene,
+  workflowStageIdentifier,
 } from "./check-repository-conventions.mjs";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
@@ -607,6 +611,162 @@ test("a staged history index edit passes and an unchanged snapshot copy does not
       /REPO_HYGIENE_PROTECTED_PATH change=modified path=docs\/platform\/history\/STATE-r190\.md rule=immutable-history/,
     );
     assert.doesNotMatch(similar.stdout, /path=docs\/platform\/history\/STATE-r191\.md rule=immutable-history/);
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+test("workflow display names reject stage identifiers and accept business names", () => {
+  assert.equal(workflowStageIdentifier("Scheduled Orders · Cancellation and Reminders"), null);
+  assert.equal(workflowStageIdentifier("Checkout · Snapshot Revalidation"), null);
+  assert.equal(workflowStageIdentifier("Promotions · Operator Authoring"), null);
+  assert.equal(workflowStageIdentifier("Customer Ordering · Browser Regression"), null);
+  assert.equal(workflowStageIdentifier("Security · Dependency Vulnerability Scan"), null);
+  assert.equal(workflowStageIdentifier("PostgreSQL 18 persistence"), null);
+  assert.equal(workflowStageIdentifier("HTTP 404 contract"), null);
+  assert.equal(workflowStageIdentifier("b2b pricing review"), null);
+  assert.equal(workflowStageIdentifier("Quality"), null);
+  assert.equal(workflowStageIdentifier("Analyze (javascript-typescript)"), null);
+  assert.equal(workflowStageIdentifier("IMP-036J Tranche 5 proof")?.kind, "imp");
+  assert.equal(workflowStageIdentifier("GTM-391 payment-start Snapshot comparison regression")?.kind, "gtm");
+  assert.equal(workflowStageIdentifier("Session 3B2 verification")?.kind, "session");
+  assert.equal(workflowStageIdentifier("b5 commerce composite")?.kind, "batch");
+  assert.equal(workflowStageIdentifier("batch-7 checkout")?.kind, "batch");
+  assert.equal(workflowStageIdentifier("Line presentation #385")?.token, "#385");
+
+  const parsed = extractWorkflowDisplayNames(`
+# Session 3B2 IMP-036J Tranche 5 stays in this comment
+name: CI
+jobs:
+  commerce-core:
+    name: Commerce core
+    steps:
+      - name: Scheduled Orders · Cancellation and Reminders
+        run: npm run test:imp036i:tranche4
+      - name: Upload evidence
+        with:
+          name: nightly-e2e-customer-ordering
+`);
+  assert.deepEqual(parsed.workflow, ["CI"]);
+  assert.deepEqual(parsed.jobs, ["Commerce core"]);
+  assert.deepEqual(parsed.steps, [
+    "Scheduled Orders · Cancellation and Reminders",
+    "Upload evidence",
+  ]);
+  assert.deepEqual(
+    addedWorkflowDisplayNames(
+      "name: CI\njobs:\n  commerce-core:\n    name: Commerce core\n    steps:\n      - name: IMP-036J Tranche 5 proof\n",
+      "name: CI\njobs:\n  commerce-core:\n    name: Commerce core\n    steps:\n      - name: Promotions · Customer Presentation\n",
+    ),
+    ["Promotions · Customer Presentation"],
+  );
+});
+
+test("the in-scope workflows keep behavior labels and the six protected checks", () => {
+  const jobs = [];
+  for (const fileName of ["ci.yml", "codeql.yml", "nightly-verification.yml", "deploy.yml"]) {
+    const text = readFileSync(path.join(repoRoot, ".github/workflows", fileName), "utf8");
+    const parsed = extractWorkflowDisplayNames(text);
+    for (const label of [...parsed.workflow, ...parsed.jobs, ...parsed.steps]) {
+      assert.equal(workflowStageIdentifier(label), null, `${fileName}: ${label}`);
+    }
+    jobs.push(...parsed.jobs);
+  }
+  assert.deepEqual(missingProtectedCheckNames(jobs), []);
+});
+
+const protectedWorkflows = {
+  ".github/workflows/ci.yml": `name: CI
+jobs:
+  quality:
+    name: Quality
+  scripts:
+    name: Scripts
+  unit:
+    name: Unit / component
+  commerce-core:
+    name: Commerce core
+  security-sdlc:
+    name: Security SDLC
+`,
+  ".github/workflows/codeql.yml": `name: CodeQL
+jobs:
+  analyze:
+    name: Analyze (javascript-typescript)
+`,
+};
+
+test("a new stage label fails and a behavior label passes", () => {
+  const repo = initRepo();
+  try {
+    writeRepoFile(repo, "README.md", "# fixture\n");
+    for (const [filePath, contents] of Object.entries(protectedWorkflows)) {
+      writeRepoFile(repo, filePath, contents);
+    }
+    const base = commitAll(repo, "init");
+    writeRepoFile(
+      repo,
+      ".github/workflows/example-verification.yml",
+      `name: Example verification
+jobs:
+  example:
+    name: Example
+    steps:
+      - name: IMP-036J Tranche 5 proof
+        run: npm run test:imp036j:tranche5
+      # Session 3B2 stays in a comment
+`,
+    );
+    commitAll(repo, "bad label");
+    const bad = runChecker(repo, ["--base", base, "--no-worktree"]);
+    assert.equal(bad.status, 1, bad.stdout);
+    assert.match(bad.stdout, /REPO_HYGIENE_WORKFLOW_LABEL/);
+    assert.match(bad.stdout, /no-workflow-stage-label/);
+    assert.match(bad.stdout, /example-verification\.yml/);
+
+    writeRepoFile(
+      repo,
+      ".github/workflows/example-verification.yml",
+      `name: Example verification
+jobs:
+  example:
+    name: Example
+    steps:
+      - name: Scheduled Orders · Cancellation and Reminders
+        run: npm run test:imp036i:tranche4
+      - name: PostgreSQL 18 persistence
+        run: npm run test:database
+`,
+    );
+    commitAll(repo, "good label");
+    const good = runChecker(repo, ["--base", base, "--no-worktree"]);
+    assert.equal(good.status, 0, good.stdout);
+    assert.match(good.stdout, /REPO_HYGIENE_PASS/);
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+test("renaming a protected GitHub check fails", () => {
+  const repo = initRepo();
+  try {
+    writeRepoFile(repo, "README.md", "# fixture\n");
+    for (const [filePath, contents] of Object.entries(protectedWorkflows)) {
+      writeRepoFile(repo, filePath, contents);
+    }
+    const base = commitAll(repo, "init");
+    const kept = runChecker(repo, ["--base", base, "--no-worktree"]);
+    assert.equal(kept.status, 0, kept.stdout);
+    writeRepoFile(
+      repo,
+      ".github/workflows/ci.yml",
+      protectedWorkflows[".github/workflows/ci.yml"].replace("name: Quality", "name: Build quality"),
+    );
+    commitAll(repo, "rename quality");
+    const renamed = runChecker(repo, ["--base", base, "--no-worktree"]);
+    assert.equal(renamed.status, 1, renamed.stdout);
+    assert.match(renamed.stdout, /protected-github-check-name/);
+    assert.match(renamed.stdout, /Quality/);
   } finally {
     rmSync(repo, { recursive: true, force: true });
   }

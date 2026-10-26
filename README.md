@@ -1,33 +1,89 @@
-# Boba Bear — Landing Page
+# BOBA Bear Platform
 
-Marketing landing page for **Boba Bear**, Dehradun's boba-tea bar and Korean street-food kitchen
-(*S-Tier Sips · K-Street Drip*). A single long-scroll page: hero video, signature-drop countdown,
-full menu (drinks / K-street plates / sweets), merch teaser, artists collab teaser, and an
-"access the drop" ordering section (Zomato / Swiggy / WhatsApp).
+BOBA Bear is an owned direct-ordering platform in this repository: a static customer website,
+Node transport services for customer and workforce APIs, and PostgreSQL for platform business
+state. The public site still includes the marketing landing page for Dehradun's boba-tea bar and
+Korean street-food kitchen (*S-Tier Sips · K-Street Drip*). Customer ordering, workforce
+Operations, and Administration are additional surfaces in the same codebase.
 
-## Platform documentation
+Source being present is not a claim that a capability is deployed, production-ready, or accepted.
+Current execution and acceptance are in [`docs/platform/ROADMAP.md`](docs/platform/ROADMAP.md) and
+[`docs/platform/STATE.md`](docs/platform/STATE.md).
 
-This repository currently ships the marketing site described below. BOBA Bear's broader
-direct-ordering platform documentation lives under [`docs/platform/`](docs/platform/README.md).
-Start with the CURRENT authority stack there: `VISION.md`, `ARCHITECTURE.md`,
-`decision-register.md`, `ROADMAP.md`, and `STATE.md` (plus root `AGENTS.md` for agent rules).
-Anyone planning platform-level work should read that stack before writing a specification or code;
-it takes precedence over older planning documents, wireframes, and design-system drafts elsewhere
-in this repository.
+## What the repository contains
+
+### Customer surfaces
+
+- Marketing landing page and static customer shell in `src/app/(customer)`, exported as static files.
+- Customer ordering for menu, cart, checkout, payment, and order history under `src/app/(customer)/order`.
+- Customer account and login pages under `src/app/(customer)/account` and `src/app/(customer)/login`.
+
+### Workforce surfaces
+
+- Operations workspace under `src/app/workforce/(portal)/operations` for store, orders, delivery, and related store operations.
+- Administration workspace under `src/app/workforce/(administration)/admin` for access, commercial management, memberships, audit, and system pages.
+
+These routes are static frontend pages. They call the Node services below. They are not Next.js Route Handlers.
+
+### Transport and persistence
+
+The public web is a static Next.js export in front of separate Node processes. The durable shape is in [`docs/platform/ARCHITECTURE.md`](docs/platform/ARCHITECTURE.md):
+
+- `customer-auth`, `workforce-auth`, and `customer-commerce` are Node `node:http` services.
+- Operations and Administration APIs share the `operations` process.
+- PostgreSQL holds platform business state. Schema changes are Drizzle SQL migrations in `drizzle/`.
+
+### Source layout
+
+| Location | Role |
+|---|---|
+| `src/app` | Static routes and colocated route UI |
+| `src/components` | React UI |
+| `src/server/<domain>` | Server-owned domain operations, including cart, checkout, catalog, pricing, promotions, order, payment, and assortment |
+| `src/shared` | Contracts shared by client and server |
+| `src/lib` | Client and domain adapters |
+| `src/platform` | Configuration, database, and other platform boundaries |
+| `tests` | Cross-layer and integration proof |
+| `tests/e2e` | Playwright browser journeys |
+| `scripts` | Operational and verification scripts |
+| `drizzle` | Migration history |
+
+### Marketing content and the sellable menu
+
+`src/data/menu.json`, `src/lib/menuImages.ts`, and `public/assets/menu/` are marketing and static-seed content. They feed landing-page presentation and the menu-import inventory used by bootstrap tooling.
+
+Sellable Menu, Catalog, Assortment, and Pricing are operations-managed domain state. Customer ordering reads the published Menu projection. Editing `menu.json` does not by itself change the catalog, assortment, price books, or published menu. Commercial changes belong in Administration commercial workflows and the domain modules under `src/server`.
+
+### Tests
+
+`npm test` runs the fast Vitest unit and component suite. PostgreSQL integration tests use Testcontainers through `npm run test:database` and the narrower `test:*` scripts. Playwright configs cover customer ordering, customer auth, workforce auth, operations lifecycle, the commercial workspace, and location serviceability. Workflow files under `.github/workflows/` name the CI and nightly commands. A test existing in the tree is not acceptance evidence.
+
+### Engineering standards
+
+| Standard | Document | What it owns |
+|---|---|---|
+| Agent contract | [`AGENTS.md`](AGENTS.md) | How agents execute in this repository |
+| RHS-1 | [`docs/platform/engineering/repository-conventions.md`](docs/platform/engineering/repository-conventions.md) | Supporting naming, placement, and retirement rules |
+| BEDS-1 | [`docs/platform/engineering/change-workflow.md`](docs/platform/engineering/change-workflow.md) | Supporting change workflow |
+| TEST-1 | [`docs/platform/TESTING.md`](docs/platform/TESTING.md) | How behaviour is proven |
+| Platform index | [`docs/platform/README.md`](docs/platform/README.md) | Where the current authorities live |
+
+RHS-1 and BEDS-1 do not accept a slice and do not replace ROADMAP, STATE, or architecture.
 
 ## Tech stack
 
 | | |
 |---|---|
-| Framework | Next.js 16 (App Router, Turbopack) |
+| Framework | Next.js 16 (App Router, static export) plus separate Node transport services |
 | Language | TypeScript 5, React 19 |
+| Data | PostgreSQL and Drizzle SQL migrations |
 | Styling | Tailwind CSS v4 |
 | Animation | Framer Motion 12 |
 | Icons | lucide-react |
 
 ## Prerequisites
 
-- **Node.js 20+** and npm.
+- **Node.js 22** (CI uses 22.23.1) and npm.
 
 ## Getting started
 
@@ -45,8 +101,9 @@ npm run build    # static export → out/
 npm run lint     # ESLint
 ```
 
-> `output: "export"` is always enabled; the site is a fully static export. `npm run start` is not
-> used — serve `out/` with any static host or `npx serve out` locally.
+> `output: "export"` stays enabled for the public Next.js site. Serve `out/` with a static host or
+> `npx serve out` locally. The Node transport services have their own `customer-auth:start`,
+> `workforce-auth:start`, `customer-commerce:start`, and `operations:start` scripts.
 
 ## Testing & quality gates
 
@@ -188,11 +245,10 @@ Copy `.env.example` → `.env.local` and fill in if you need to override either 
 
 ### BOBA Bear platform configuration (`src/platform/config/`)
 
-Separately, the BOBA Bear direct-order **platform** foundation (see `docs/platform/`) has its own
-centralized, typed, environment-aware configuration boundary, introduced in implementation slice
-IMP-003 and documented in ADR-015. It does not change anything about the marketing page above; it
-exists so later platform slices (accounts, ordering, payments, outlets) have one validated place to
-read configuration from instead of scattering `process.env` reads through the codebase.
+The direct-order platform has a centralized, typed, environment-aware configuration boundary in
+`src/platform/config/`, introduced in IMP-003 and documented in ADR-015. Customer ordering and the
+Node services read configuration from that boundary instead of scattering `process.env` reads
+through the codebase.
 
 Copy `.env.example` → `.env.local` (created automatically the first time this is set up, if it
 doesn't already exist) and adjust as needed — see the comments in `.env.example` for the full
@@ -243,17 +299,16 @@ build has no live Node.js server process for the hook to attach to. This means t
 Pages deploy workflow (which only runs `npm run build`) is unaffected by the new mandatory
 `BOBA_BEAR_ENV` requirement.
 
-**Health endpoints** (`/health/live`, `/health/ready`) are intentionally **not** implemented yet —
-the site is a static export with no request-serving Node.js process. The startup module exposes a
-safe status projection (`getStartupStatus()`) for a later server-capable slice to use.
+The static Next.js export does not serve `/health/live` or `/health/ready`. Those routes exist on
+the Node transport services (`customer-auth`, `workforce-auth`, `customer-commerce`, and
+`operations`). The startup module still exposes `getStartupStatus()` for the web process.
 
 ### Local PostgreSQL / Drizzle foundation (`src/platform/database/`)
 
-IMP-004 adds a local-only PostgreSQL 18.4 database, run through Docker Compose, plus a Drizzle ORM
-foundation for later platform slices to build business tables on. Like the configuration boundary
-above, this **does not change the marketing site's behavior at all** — nothing in the site's build,
-static export, or page rendering opens a database connection. The database is infrastructure-only in
-this slice: no business-domain table exists yet.
+Local PostgreSQL 18.4 runs through Docker Compose, with Drizzle SQL migrations in `drizzle/`.
+The static site build and page render do not open a database connection. Platform business tables
+live in PostgreSQL and are used by the Node services. The commands below are the local database
+setup; they are not a statement that the schema is still empty.
 
 **Prerequisites:** Docker Desktop (with Compose v2) running, and this repository checked out on a
 native Linux/WSL filesystem (not a Windows-mounted `/mnt/c/...` path — Docker bind-mount performance
@@ -312,8 +367,8 @@ must never be committed (`.env.docker.example` is the committed, placeholder-onl
 
 ### Database integration tests & migration validation (`tests/database/`)
 
-IMP-005 adds a real-PostgreSQL integration-test harness and migration-integrity tooling on top of
-the IMP-004 foundation above. It changes nothing about the marketing site's behavior.
+The PostgreSQL integration-test harness and migration-integrity tooling sit on that local database
+foundation. They do not change the static marketing page.
 
 **Unit tests vs. database integration tests** — two entirely separate suites:
 
@@ -359,8 +414,8 @@ warning) if Docker isn't running — database assurance is never silently bypass
 never reads `BOBA_BEAR_DATABASE_URL`/`.env.docker.local`, never binds its container to port 5433,
 and never modifies the local Compose database's data.
 
-**No business tables yet:** like IMP-004, this slice adds test infrastructure only — no
-business-domain table exists.
+Business tables are committed as Drizzle migrations. This harness proves migration and schema
+integrity; it does not mean the database is empty.
 
 | Command | What it does |
 |---|---|
@@ -372,9 +427,8 @@ business-domain table exists.
 
 ### Shared persistence primitives (`src/server/persistence/`)
 
-IMP-006 adds a reusable, typed, server-only persistence boundary that future repository modules
-build on top of `src/platform/database` (IMP-004/005) — infrastructure only, no business-domain
-table, no new migration.
+`src/server/persistence/` is the reusable, typed, server-only persistence boundary on top of
+`src/platform/database`. Domain modules use it. It is not a second database.
 
 - **Two factories, nothing else:** `getApplicationPersistence(webOrWorkerConfig)` and
   `getMigrationPersistence(migrationConfig)`. No generic `getPersistence(role, config)`, no raw
@@ -404,11 +458,10 @@ table, no new migration.
 
 ### Better Auth persistence and sessions (`src/server/auth/`)
 
-IMP-008 adds a server-only, database-backed [Better Auth](https://www.better-auth.com/) 1.6.25
-foundation with two fully isolated authentication realms — **customer** and **workforce** — built on
-top of the IMP-006 persistence boundary. Infrastructure only: no login UI, no HTTP route, no
-credentials flow yet. See AGENTS.md's "Better Auth persistence and sessions (IMP-008)" section for the
-full rationale; summary below.
+Server-only, database-backed [Better Auth](https://www.better-auth.com/) keeps two isolated
+authentication realms — **customer** and **workforce** — on the persistence boundary. Customer and
+workforce login pages and HTTP services now exist in this repository. Acceptance of those
+capabilities is still read from ROADMAP and STATE. Summary of the persistence foundation:
 
 - **Pinned exact versions:** `better-auth@1.6.25`, `@better-auth/drizzle-adapter@1.6.25`, `auth@1.6.25`
   (CLI, dev-only) — never a range, never `@latest`.
@@ -488,13 +541,13 @@ npm run docker:customer-auth:smoke     # exercise /api/customer-auth/* through t
 
 ## Editing content (the common changes)
 
-Most day-to-day edits live in just a few places:
+Marketing and static-seed edits live in the places below. Sellable Menu, Catalog, Assortment, and Pricing are not edited here.
 
 | What you want to change | Where |
 |---|---|
-| **Menu items, prices, descriptions, tags** | [`src/data/menu.json`](src/data/menu.json) |
-| **Promo tags on a menu card** (`new`, `limited`, `signature`, `bestseller`) | the `"tags"` array on each item in `src/data/menu.json`, e.g. `"tags": ["new", "limited"]` |
-| **Menu item photos** | drop the image in `public/assets/menu/` using the exact filename from [`src/lib/menuImages.ts`](src/lib/menuImages.ts) — no code change needed |
+| **Marketing menu seed** (names, seed descriptions, seed tags) | [`src/data/menu.json`](src/data/menu.json). This does not update operations-managed Catalog, Assortment, Pricing, or the published Menu. |
+| **Marketing promo tags** (`new`, `limited`, `signature`, `bestseller`) | the `"tags"` array on each seed item in `src/data/menu.json` |
+| **Marketing menu photos** | drop the image in `public/assets/menu/` using the exact filename from [`src/lib/menuImages.ts`](src/lib/menuImages.ts) |
 | **Drop date / countdown** | `DROP_DATE` in [`src/components/SignatureDrops.tsx`](src/components/SignatureDrops.tsx) (the countdown auto-flips to a "Drop Now Live" state once it passes) |
 | **Hero featured video** | replace `public/assets/video/hero-featured.mp4` |
 | **Business info, SEO copy, contact, socials** | [`src/lib/site.ts`](src/lib/site.ts) (single source of truth for metadata + structured data) |
@@ -503,7 +556,7 @@ Most day-to-day edits live in just a few places:
 
 ### Menu tags
 
-Every item in `src/data/menu.json` has a `tags` field. Leave it `[]` for no tag, or list one or more:
+Marketing seed items in `src/data/menu.json` have a `tags` field. Leave it `[]` for no tag, or list one or more:
 
 ```json
 {
@@ -519,45 +572,35 @@ so a custom label won't break the layout.
 
 ## Project structure
 
+The customer landing page is `src/app/(customer)/page.tsx`. Workforce Operations and Administration
+routes live under `src/app/workforce/`. Domain behavior lives under `src/server/`, not in the
+marketing seed files. The sketch below is only the original marketing shell:
+
 ```
 src/
-  app/               App Router
-    layout.tsx       <head>, metadata, JSON-LD, fonts
-    page.tsx         the single landing page (composes the sections below)
-    globals.css      Tailwind theme + design tokens (colors, type, spacing)
-    privacy/         privacy policy page
-    dev/             dev-only icon gallery (noindexed via robots.ts)
-    robots.ts, sitemap.ts, opengraph-image.tsx
-  components/        section components (Hero, SignatureDrops, TheBar, ThePlates,
-                     TheSweet, MerchDrop, Artists, AccessCTA, Footer, Nav, …)
-                     component tests are colocated as *.test.tsx
-    ui/              shared primitives (Button, Tag, Toggle, …)
-    motion/          reveal / stagger animation helpers
-    icons/           SVG icon components
-  data/menu.json     all menu content + per-item tags
-  lib/               site.ts (SEO/business constants), menuImages.ts, utils.ts
-                     unit tests are colocated as *.test.ts
-  types/menu.ts      menu data types (incl. the MenuCardTag union)
-public/assets/
-  menu/              product photos (one per menu item)
-  logos/             brand logos and favicon
-  drops/             signature-drop artwork
-  merch/             merch product shots (tee, bottle, cup, tote)
-  artists/           artists-section hero image
-  video/             hero video (hero-featured.mp4)
-scripts/             tooling (audit-menu-images.mjs, audit-assets.mjs,
-                     serve-static-export.mjs — used by the E2E suite)
-tests/
-  setup/             Vitest setup (jsdom API stubs, RTL cleanup)
-  e2e/               Playwright Test specs
-docs/                project documentation (missing-menu-images.md)
+  app/layout.tsx             root document shell
+  app/globals.css            Tailwind theme and design tokens
+  app/(customer)/page.tsx    marketing landing page
+  app/(customer)/order/      customer ordering routes
+  app/workforce/             Operations and Administration routes
+  components/                React UI, including ordering and administration
+  data/menu.json             marketing seed content and tags, not the sellable catalog
+  lib/                       site constants, menu image map, and client adapters
+  server/                    domain operations and Node HTTP services
+  platform/                  configuration, database, and platform boundaries
+  shared/                    shared contracts
+public/assets/               marketing images and video
+drizzle/                     SQL migrations
+scripts/                     operational and verification scripts
+tests/e2e/                   Playwright specs
+docs/platform/               current platform authorities and supporting standards
 ```
 
-Page section order is defined in [`src/app/page.tsx`](src/app/page.tsx).
+Page section order is defined in [`src/app/(customer)/page.tsx`](src/app/(customer)/page.tsx).
 
 ## Menu images
 
-Product photos live in `public/assets/menu/`. The mapping from menu item name to filename is in
+Marketing photos live in `public/assets/menu/`. The mapping from seed item name to filename is in
 [`src/lib/menuImages.ts`](src/lib/menuImages.ts). Any item without a matching file renders as a coloured
 **Aurora fallback card** — this is intentional and handled in [`src/components/MenuCard.tsx`](src/components/MenuCard.tsx).
 
@@ -602,7 +645,7 @@ The footer "Join" form routes based on what the user enters:
 - **Email address** → opens the user's mail client with a pre-filled message to `bobabear.unbothered@gmail.com`.
 - **Mobile number or anything else** → opens WhatsApp with a pre-filled order message.
 
-No server API is used — the site is a fully static export.
+The marketing footer signup still uses a static mailto or WhatsApp handoff. Customer ordering uses the Node transport services.
 
 Free alternatives for real inbox submissions (implement if needed):
 - **[Formspree](https://formspree.io)** (free tier: 50 submissions/month) — simplest drop-in, works on GitHub Pages.
