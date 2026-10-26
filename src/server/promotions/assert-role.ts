@@ -35,6 +35,37 @@ export function assertUuid(value: unknown, field: string): string {
   return value;
 }
 
+/**
+ * Stored promotion code rule from `promotions_code_format_check`:
+ * `^[a-z0-9][a-z0-9_-]*$`, length 1–64. The check does not trim or case-fold,
+ * so this rejects rather than rewriting the caller value.
+ */
+const PROMOTION_CODE_PATTERN = /^[a-z0-9][a-z0-9_-]*$/;
+
+export function assertPromotionCode(code: string): string {
+  if (
+    typeof code !== "string" ||
+    code.length < 1 ||
+    code.length > 64 ||
+    !PROMOTION_CODE_PATTERN.test(code)
+  ) {
+    throw new PromotionValidationError(
+      "code must match ^[a-z0-9][a-z0-9_-]*$ and be 1-64 characters.",
+    );
+  }
+  return code;
+}
+
+/** Hyphenated UUID shape for promotion scope columns. Existence is not decided here. */
+const UUID_SHAPE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function assertUuidShape(value: string, field: string): string {
+  if (typeof value !== "string" || !UUID_SHAPE.test(value)) {
+    throw new PromotionValidationError(`${field} must be a UUID.`);
+  }
+  return value;
+}
+
 export function driverCode(error: unknown): unknown {
   if (typeof error !== "object" || error === null) return undefined;
   const code = (error as { code?: unknown }).code;
