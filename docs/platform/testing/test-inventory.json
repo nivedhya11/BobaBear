@@ -47,7 +47,7 @@
     "packageCoverageCommands": 1,
     "packageInventoryCommands": 2,
     "ciWorkflowFiles": 4,
-    "ciValidationSteps": 133,
+    "ciValidationSteps": 134,
     "protectedEvidenceTrackedFiles": 3,
     "archiveTrackedFiles": 92
   },
@@ -1126,6 +1126,10 @@
         {
           "name": "GTM-391 payment-start Snapshot comparison regression",
           "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/payment/gtm-391-payment-review-loop.domain.test.ts"
+        },
+        {
+          "name": "Payment binding fulfilment timing",
+          "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/payment/payment-binding-fulfilment-timing.domain.test.ts"
         },
         {
           "name": "IMP-036J GTM coupon authority and #385 line-presentation evidence",
