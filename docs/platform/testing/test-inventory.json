@@ -31,10 +31,10 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2349,
-    "executableTestFiles": 539,
+    "trackedPathsConsidered": 2350,
+    "executableTestFiles": 540,
     "sourceTestFiles": 160,
-    "testsTreeExecutableFiles": 291,
+    "testsTreeExecutableFiles": 292,
     "scriptTestFiles": 88,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
@@ -460,6 +460,7 @@
     "tests/payment-reconciliation/payment.reconciliation.test.ts",
     "tests/payment-security/payment.security.test.ts",
     "tests/payment/gtm-391-payment-review-loop.domain.test.ts",
+    "tests/payment/payment-binding-fulfilment-timing.domain.test.ts",
     "tests/payment/payment.domain.test.ts",
     "tests/payment/payment.pickup.domain.test.ts",
     "tests/payment/payment.scheduled-bind-race.domain.test.ts",
@@ -10456,6 +10457,24 @@
     },
     {
       "path": "tests/payment/gtm-391-payment-review-loop.domain.test.ts",
+      "runner": "vitest",
+      "domain": "payment",
+      "testType": "unit-or-domain",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:payment"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/payment/payment-binding-fulfilment-timing.domain.test.ts",
       "runner": "vitest",
       "domain": "payment",
       "testType": "unit-or-domain",
