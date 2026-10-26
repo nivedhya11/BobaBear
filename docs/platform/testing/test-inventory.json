@@ -31,10 +31,10 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2354,
-    "executableTestFiles": 542,
+    "trackedPathsConsidered": 2355,
+    "executableTestFiles": 543,
     "sourceTestFiles": 160,
-    "testsTreeExecutableFiles": 291,
+    "testsTreeExecutableFiles": 292,
     "scriptTestFiles": 91,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
@@ -47,7 +47,7 @@
     "packageCoverageCommands": 1,
     "packageInventoryCommands": 2,
     "ciWorkflowFiles": 4,
-    "ciValidationSteps": 133,
+    "ciValidationSteps": 134,
     "protectedEvidenceTrackedFiles": 3,
     "archiveTrackedFiles": 92
   },
@@ -460,6 +460,7 @@
     "tests/payment-reconciliation/payment.reconciliation.test.ts",
     "tests/payment-security/payment.security.test.ts",
     "tests/payment/gtm-391-payment-review-loop.domain.test.ts",
+    "tests/payment/payment-binding-fulfilment-timing.domain.test.ts",
     "tests/payment/payment.domain.test.ts",
     "tests/payment/payment.pickup.domain.test.ts",
     "tests/payment/payment.scheduled-bind-race.domain.test.ts",
@@ -1128,6 +1129,10 @@
         {
           "name": "GTM-391 payment-start Snapshot comparison regression",
           "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/payment/gtm-391-payment-review-loop.domain.test.ts"
+        },
+        {
+          "name": "Payment binding fulfilment timing",
+          "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/payment/payment-binding-fulfilment-timing.domain.test.ts"
         },
         {
           "name": "IMP-036J GTM coupon authority and #385 line-presentation evidence",
@@ -10511,6 +10516,24 @@
     },
     {
       "path": "tests/payment/gtm-391-payment-review-loop.domain.test.ts",
+      "runner": "vitest",
+      "domain": "payment",
+      "testType": "unit-or-domain",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:payment"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/payment/payment-binding-fulfilment-timing.domain.test.ts",
       "runner": "vitest",
       "domain": "payment",
       "testType": "unit-or-domain",
