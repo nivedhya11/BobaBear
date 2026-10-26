@@ -3,7 +3,6 @@
 # (`## Container / Trivy exceptions`). scripts/run-trivy.mjs applies each ID only to the
 # justified PRODUCTION_IMAGE_TARGETS id. Global unqualified suppression is rejected.
 # Do NOT renew or extend without explicit Founder / exception authority (R3).
-# VEX-TRIVY-001 — postgres image root bootstrap (DS-0002); expiry must match register.
-# The exp: date mirrors the register for consistency checks. Scan-time ignorefiles are
-# materialized per-image by run-trivy.mjs; register expiry (inclusive) is authoritative.
-DS-0002 exp:2026-10-23
+# No active container exceptions. VEX-TRIVY-001 / DS-0002 was retired after the
+# production PostgreSQL image stopped reporting DS-0002. Do not restore that
+# ignore without a new authorized exception.

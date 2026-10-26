@@ -15,6 +15,7 @@ import {
   TRIVY_SPAWN_MAX_BUFFER,
   PRODUCTION_IMAGE_TARGETS,
   REGISTER_REL,
+  TRIVYIGNORE_REL,
   buildArgsForTarget,
   trivyImageArgs,
   resolveContainerCli,
@@ -476,32 +477,26 @@ test("scanImage surfaces spawnSync ENOBUFS / result.error diagnostically", () =>
   }
 });
 
-test("committed register + .trivyignore are consistent on VEX-TRIVY-001 expiry day", () => {
+test("committed register + .trivyignore have no container exceptions after DS-0002 retirement", () => {
   const policy = loadTrivyExceptionPolicy({
     root: repoRoot,
-    todayIso: "2026-10-23",
+    todayIso: "2026-10-26",
   });
   assert.deepEqual(policy.errors, []);
-  const row = policy.activeByFinding.get("DS-0002");
-  assert.ok(row);
-  assert.equal(row.id, "VEX-TRIVY-001");
-  assert.equal(row.image, "postgres");
-  assert.equal(row.expiry, "2026-10-23");
-  assert.equal(policy.ignoreEntries[0]?.expiry, "2026-10-23");
+  assert.equal(policy.registerRows.length, 0);
+  assert.equal(policy.ignoreEntries.length, 0);
+  assert.equal(policy.activeByFinding.has("DS-0002"), false);
 });
 
-test("committed register + .trivyignore fail closed the day after VEX-TRIVY-001 expiry", () => {
-  const policy = loadTrivyExceptionPolicy({
-    root: repoRoot,
-    todayIso: "2026-10-24",
-  });
-  assert.ok(policy.errors.some((e) => e.startsWith("TRIVY_EXCEPTION_EXPIRED")));
-  assert.ok(policy.errors.some((e) => e.includes("VEX-TRIVY-001")));
+test("retired VEX-TRIVY-001 is absent from the committed register and ignore file", () => {
+  const md = readFileSync(path.join(repoRoot, REGISTER_REL), "utf8");
+  const ignore = readFileSync(path.join(repoRoot, TRIVYIGNORE_REL), "utf8");
+  assert.doesNotMatch(md, /VEX-TRIVY-001/);
+  assert.doesNotMatch(ignore, /^DS-0002(?:\s|$)/m);
 });
 
 test("register file documents Container / Trivy exceptions section at expected path", () => {
   const md = readFileSync(path.join(repoRoot, REGISTER_REL), "utf8");
   assert.match(md, /^## Container \/ Trivy exceptions\s*$/m);
-  assert.match(md, /VEX-TRIVY-001/);
   assert.match(md, /finding_id/);
 });
