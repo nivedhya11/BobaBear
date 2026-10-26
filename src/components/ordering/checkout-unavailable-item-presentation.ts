@@ -38,9 +38,11 @@ export function namedCartLinesForCheckout(input: {
   snapshotLines?: readonly unknown[] | null;
 }): readonly NamedCheckoutCartLine[] {
   const byId = new Map<string, string>();
-  if (input.cart && input.catalog) {
-    const byVariant = new Map(input.catalog.items.map((item) => [item.variantId, item.name]));
-    for (const line of input.cart.lines) {
+  const catalogItems = input.catalog?.items;
+  const cartLines = input.cart?.lines;
+  if (cartLines && catalogItems) {
+    const byVariant = new Map(catalogItems.map((item) => [item.variantId, item.name]));
+    for (const line of cartLines) {
       const name = byVariant.get(line.variantId);
       if (name) byId.set(line.id, name);
     }

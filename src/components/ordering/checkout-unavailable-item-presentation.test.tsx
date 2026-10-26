@@ -57,6 +57,23 @@ describe("presentCheckoutItemAttention", () => {
     ).toBe(UNAVAILABLE);
   });
 
+  it("still names a sealed line when the catalog fixture has no item list", () => {
+    const named = namedCartLinesForCheckout({
+      cart: { lines: [{ id: "line-gangnam", variantId: "var-gangnam" }] },
+      catalog: {} as { items: readonly { variantId: string; name: string }[] },
+      snapshotLines: [{ sourceCartLineId: "line-gangnam", productName: "Sealed Gangnam" }],
+    });
+    expect(named).toEqual([{ cartLineId: "line-gangnam", itemName: "Sealed Gangnam" }]);
+    expect(
+      presentCheckoutFailureCopy(
+        {
+          code: "NETWORK_ERROR",
+        },
+        named,
+      ),
+    ).toBe("Network problem. Check your connection and try again.");
+  });
+
   it("prefers the sealed snapshot name for the same cart line", () => {
     const named = namedCartLinesForCheckout({
       cart: { lines: [{ id: "line-gangnam", variantId: "var-gangnam" }] },
