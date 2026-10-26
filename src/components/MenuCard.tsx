@@ -37,8 +37,11 @@ export interface MenuCardProps {
     name: string;
     description: string;
   };
-  /** Display string from the customer Menu projection. Not a second price source. */
-  priceLabel: string;
+  /**
+   * Omitted when the projection has no authoritative outlet price.
+   * A brand-only homepage must not present a payable price.
+   */
+  priceLabel?: string;
   index: number;
   type?: MenuCardType;
   img?: string;
@@ -133,19 +136,20 @@ export function MenuCard({
           {item.description}
         </p>
 
-        {/* Saffron price pill — secondary fill, on-secondary text for contrast */}
-        <div className="mt-auto pt-3 w-full flex justify-center">
-          <span
-            className={[
-              "font-body font-bold text-[13px]",
-              "text-[var(--text-on-secondary)]",
-              "bg-[var(--interactive-secondary)]",
-              "px-3 py-1 rounded-full",
-            ].join(" ")}
-          >
-            {priceLabel}
-          </span>
-        </div>
+        {priceLabel ? (
+          <div className="mt-auto pt-3 w-full flex justify-center">
+            <span
+              className={[
+                "font-body font-bold text-[13px]",
+                "text-[var(--text-on-secondary)]",
+                "bg-[var(--interactive-secondary)]",
+                "px-3 py-1 rounded-full",
+              ].join(" ")}
+            >
+              {priceLabel}
+            </span>
+          </div>
+        ) : null}
       </article>
     );
   }
@@ -207,17 +211,18 @@ export function MenuCard({
         {item.description}
       </p>
 
-      {/* Bottom row — price */}
-      <div
-        className={[
-          "mt-auto pt-2 md:pt-3 flex justify-end items-center",
-          "border-t border-[var(--border-subtle)]",
-        ].join(" ")}
-      >
-        <span className="font-display text-[16px] md:text-[22px] text-[var(--interactive-secondary)]">
-          {priceLabel}
-        </span>
-      </div>
+      {priceLabel ? (
+        <div
+          className={[
+            "mt-auto pt-2 md:pt-3 flex justify-end items-center",
+            "border-t border-[var(--border-subtle)]",
+          ].join(" ")}
+        >
+          <span className="font-display text-[16px] md:text-[22px] text-[var(--interactive-secondary)]">
+            {priceLabel}
+          </span>
+        </div>
+      ) : null}
     </article>
   );
 }

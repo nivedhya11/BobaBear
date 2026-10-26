@@ -62,15 +62,67 @@ export function publishedMenuHeading(name: string): PublishedMenuHeading {
   };
 }
 
+export type PublishedMenuEditorial = "bar" | "plates" | "sweet";
+
+export const ORDERING_MENU_HREF = "/order/";
+
+const EDITORIAL_TOKENS: Readonly<Record<PublishedMenuEditorial, readonly string[]>> = {
+  sweet: ["sweet", "sweets", "dessert", "desserts"],
+  plates: ["plate", "plates", "food", "kitchen", "kstreet"],
+  bar: ["bar", "drink", "drinks", "boba", "sip", "sips", "beverage", "beverages"],
+};
+
 /**
- * Brand page anchors for the first published chapters. Later chapters use the
- * published section id so footer links keep a landing spot without naming products.
+ * Editorial family comes from the published section name. Position is not a
+ * category: the first root is not drinks, and the third is not dessert.
  */
-export function publishedMenuSectionDomId(index: number, chapterId: string): string {
-  if (index === 0) return "bar";
-  if (index === 1) return "plates";
-  if (index === 2) return "sweet";
-  return `published-menu-${chapterId}`;
+export function publishedMenuEditorial(name: string): PublishedMenuEditorial | null {
+  const normalized = name
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+  if (!normalized) return null;
+  const tokens = new Set(normalized.split(/\s+/));
+  const matches = (family: PublishedMenuEditorial) =>
+    EDITORIAL_TOKENS[family].some((token) => tokens.has(token));
+  if (matches("sweet")) return "sweet";
+  if (matches("plates") || normalized.includes("k street")) return "plates";
+  if (matches("bar")) return "bar";
+  return null;
+}
+
+export type PublishedChapterPresentation = Readonly<{
+  editorial: PublishedMenuEditorial | null;
+  sectionId: string;
+}>;
+
+/**
+ * `#bar`, `#plates`, and `#sweet` are used only for the first published chapter
+ * whose name corresponds to that family. Every other chapter gets its own id.
+ */
+export function publishedChapterPresentations(
+  chapters: readonly Pick<PublishedMenuChapter, "id" | "name">[],
+): readonly PublishedChapterPresentation[] {
+  const used = new Set<PublishedMenuEditorial>();
+  return chapters.map((chapter) => {
+    const editorial = publishedMenuEditorial(chapter.name);
+    if (editorial && !used.has(editorial)) {
+      used.add(editorial);
+      return { editorial, sectionId: editorial };
+    }
+    return { editorial, sectionId: `published-menu-${chapter.id}` };
+  });
+}
+
+export function publishedMenuFooterHref(
+  chapters: readonly Pick<PublishedMenuChapter, "id" | "name">[],
+  editorial: PublishedMenuEditorial,
+): string {
+  const match = publishedChapterPresentations(chapters).find(
+    (presentation) => presentation.editorial === editorial && presentation.sectionId === editorial,
+  );
+  return match ? `/#${editorial}` : ORDERING_MENU_HREF;
 }
 
 export function publishedMenuChapters(

@@ -194,6 +194,7 @@ vi.mock("@/lib/customer-commerce", async () => {
     listCheckoutScheduledWindows: (...args: unknown[]) => listCheckoutScheduledWindows(...args),
     setCheckoutFulfilmentTiming: (...args: unknown[]) => setCheckoutFulfilmentTiming(...args),
     evaluateCheckout: (...args: unknown[]) => evaluateCheckout(...args),
+    getCustomerMenu: (...args: unknown[]) => getCustomerMenu(...args),
     readGuestCartCredential: () => null,
     readPaymentRecovery: () => null,
     claimGuestCart: vi.fn(),
@@ -242,6 +243,7 @@ const listCheckoutPickupOptions = vi.fn<(...args: unknown[]) => unknown>();
 const listCheckoutScheduledWindows = vi.fn<(...args: unknown[]) => unknown>();
 const setCheckoutFulfilmentTiming = vi.fn<(...args: unknown[]) => unknown>();
 const evaluateCheckout = vi.fn<(...args: unknown[]) => unknown>();
+const getCustomerMenu = vi.fn<(...args: unknown[]) => unknown>();
 
 const catalog = {
   brandId: "56ff7724-d511-5ef4-b5d5-d629cbfb2388",
@@ -376,6 +378,40 @@ beforeEach(() => {
   startPayment.mockReset();
   clearCart.mockReset();
   fetchCustomerSession.mockResolvedValue({ ok: true, data: { authenticated: true } });
+  getCustomerMenu.mockResolvedValue({
+    ok: true,
+    status: 200,
+    data: {
+      menu: {
+        brandId: catalog.brandId,
+        menuId: "menu-1",
+        name: "House menu",
+        sections: [],
+        items: [
+          {
+            productId: "p-gangnam",
+            variantId: "var-gangnam",
+            sectionId: "s-1",
+            name: "Gangnam Style Iced Coffee Boba",
+            description: "",
+            imagePath: null,
+            displayPricePaise: 19900,
+            currency: "INR",
+          },
+          {
+            productId: "p-taro",
+            variantId: "var-taro",
+            sectionId: "s-1",
+            name: "Purple Rain Taro Boba",
+            description: "",
+            imagePath: null,
+            displayPricePaise: 25900,
+            currency: "INR",
+          },
+        ],
+      },
+    },
+  });
   getActiveCart.mockResolvedValue({ ok: true, status: 200, data: { cart } });
   getActiveCheckout.mockResolvedValue({ ok: true, status: 200, data: { checkout: null } });
   startCheckout.mockResolvedValue({

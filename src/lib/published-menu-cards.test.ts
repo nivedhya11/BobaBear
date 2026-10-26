@@ -5,7 +5,9 @@ import { describe, expect, it } from "vitest";
 import {
   publishedMenuChapters,
   publishedMenuHeading,
-  publishedMenuSectionDomId,
+  publishedChapterPresentations,
+  publishedMenuEditorial,
+  publishedMenuFooterHref,
 } from "./published-menu-cards";
 import type { CustomerMenuProjection } from "@/shared/customer-menu/types";
 
@@ -123,11 +125,24 @@ describe("published menu heading and anchors", () => {
     });
   });
 
-  it("reserves the first three brand anchors and then uses the published section id", () => {
-    expect(publishedMenuSectionDomId(0, "sec-a")).toBe("bar");
-    expect(publishedMenuSectionDomId(1, "sec-b")).toBe("plates");
-    expect(publishedMenuSectionDomId(2, "sec-c")).toBe("sweet");
-    expect(publishedMenuSectionDomId(3, "sec-d")).toBe("published-menu-sec-d");
+  it("assigns bar, plates, and sweet only when the published name corresponds", () => {
+    const ordered = [
+      { id: "food", name: "Night Plates" },
+      { id: "seasonal", name: "Seasonal" },
+      { id: "dessert", name: "Beary Sweet" },
+      { id: "drinks", name: "Cold Bar" },
+    ];
+    expect(publishedChapterPresentations(ordered)).toEqual([
+      { editorial: "plates", sectionId: "plates" },
+      { editorial: null, sectionId: "published-menu-seasonal" },
+      { editorial: "sweet", sectionId: "sweet" },
+      { editorial: "bar", sectionId: "bar" },
+    ]);
+    expect(publishedMenuEditorial("Food")).toBe("plates");
+    expect(publishedMenuEditorial("Dessert")).toBe("sweet");
+    expect(publishedMenuFooterHref(ordered, "bar")).toBe("/#bar");
+    expect(publishedMenuFooterHref([{ id: "food", name: "Night Plates" }], "bar")).toBe("/order/");
+    expect(publishedMenuFooterHref([{ id: "food", name: "Night Plates" }], "plates")).toBe("/#plates");
   });
 });
 

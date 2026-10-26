@@ -12,7 +12,6 @@ import { PolaroidCard } from "@/components/PolaroidCard";
 import { SectionHead } from "@/components/SectionHead";
 import { Reveal } from "@/components/motion/Reveal";
 import { Toggle } from "@/components/ui/Toggle";
-import { formatPaise } from "@/components/ordering/format-money";
 import {
   publishedMenuHeading,
   type PublishedMenuChapter,
@@ -92,7 +91,6 @@ export function TheSweet(props: {
               <PolaroidCard
                 name={card.name}
                 description={card.description}
-                priceLabel={formatPaise(card.displayPricePaise)}
                 tilt={reduce ? 0 : (STACK_TILTS[index % STACK_TILTS.length] ?? 0)}
                 img={card.imagePath ?? undefined}
                 index={index}
@@ -112,7 +110,6 @@ export function TheSweet(props: {
               <PolaroidCard
                 name={card.name}
                 description={card.description}
-                priceLabel={formatPaise(card.displayPricePaise)}
                 tilt={reduce ? 0 : (ROW_TILTS[index % ROW_TILTS.length] ?? 0)}
                 img={card.imagePath ?? undefined}
                 index={index}

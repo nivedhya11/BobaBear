@@ -13,6 +13,7 @@ import {
   evaluateCheckout,
   getActiveCart,
   getActiveCheckout,
+  getCustomerMenu,
   listCheckoutPickupOptions,
   listCheckoutScheduledWindows,
   listCustomerOrders,
@@ -129,6 +130,7 @@ function snapshotHasDeliveryFee(snapshot: CommerceCheckoutSnapshot): boolean {
 
 export function CheckoutClient(props: { brandId: string }) {
   const brandId = props.brandId;
+  const publishedNamesRef = useRef<readonly { variantId: string; name: string }[]>([]);
   const [screen, setScreen] = useState<Screen>("loading");
   const [pending, setPending] = useState(false);
   const [error, setCheckoutError] = useState<string | null>(null);
@@ -197,7 +199,7 @@ export function CheckoutClient(props: { brandId: string }) {
       failure.problems,
       namedCartLinesForCheckout({
         cart,
-        catalog: props.catalog,
+        catalog: { items: publishedNamesRef.current },
         snapshotLines: snapshot?.lines,
       }),
     );
@@ -558,8 +560,22 @@ export function CheckoutClient(props: { brandId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  async function loadPublishedLineNames(): Promise<void> {
+    try {
+      const menu = await getCustomerMenu({ brandId });
+      if (!menu.ok) return;
+      publishedNamesRef.current = menu.data.menu.items.map((item) => ({
+        variantId: item.variantId,
+        name: item.name,
+      }));
+    } catch {
+      publishedNamesRef.current = [];
+    }
+  }
+
   async function bootstrap(): Promise<void> {
     showTextError(null);
+    await loadPublishedLineNames();
     const guest = readGuestCartCredential();
     const customerCartResult = await getActiveCart(brandId, { guestToken: false });
     if (!customerCartResult.ok && customerCartResult.code !== "CART_NOT_FOUND") {
@@ -811,7 +827,7 @@ export function CheckoutClient(props: { brandId: string }) {
       options.data.merchandiseProblems,
       namedCartLinesForCheckout({
         cart,
-        catalog: props.catalog,
+        catalog: { items: publishedNamesRef.current },
         snapshotLines: currentCheckout.activeSnapshot?.lines ?? snapshot?.lines,
       }),
     );

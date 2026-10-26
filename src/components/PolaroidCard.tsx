@@ -47,8 +47,8 @@ const MEDIA = "w-[128px] md:w-[240px]";
 export interface PolaroidCardProps {
   name: string;
   description: string;
-  /** Display string from the customer Menu projection. Not a second price source. */
-  priceLabel: string;
+  /** Omitted when this brand-only chapter has no authoritative outlet price. */
+  priceLabel?: string;
   /** Tilt angle in degrees — keep small (-6 to +6) */
   tilt?: number;
   img?: string;
@@ -145,16 +145,17 @@ export function PolaroidCard({
         {description}
       </p>
 
-      {/* Saffron price chip — flex child, hugs its own text */}
-      <span
-        className={[
-          "font-heading text-[12px] md:text-[22px] leading-none tracking-[0.1em]",
-          "px-1.5 pt-0.5 pb-0.5 md:px-2 md:pt-1",
-          "bg-[var(--interactive-secondary)] text-[var(--text-on-secondary)]",
-        ].join(" ")}
-      >
-        {priceLabel}
-      </span>
+      {priceLabel ? (
+        <span
+          className={[
+            "font-heading text-[12px] md:text-[22px] leading-none tracking-[0.1em]",
+            "px-1.5 pt-0.5 pb-0.5 md:px-2 md:pt-1",
+            "bg-[var(--interactive-secondary)] text-[var(--text-on-secondary)]",
+          ].join(" ")}
+        >
+          {priceLabel}
+        </span>
+      ) : null}
     </motion.div>
   );
 }

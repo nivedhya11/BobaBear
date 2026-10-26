@@ -6,7 +6,6 @@ import { MenuCard, type MenuCardType } from "@/components/MenuCard";
 import { SectionHead } from "@/components/SectionHead";
 import { Reveal } from "@/components/motion/Reveal";
 import { Toggle } from "@/components/ui/Toggle";
-import { formatPaise } from "@/components/ordering/format-money";
 import {
   publishedMenuHeading,
   type PublishedMenuChapter,
@@ -116,7 +115,6 @@ export function PublishedMenuRail(props: PublishedMenuRailProps) {
                   >
                     <MenuCard
                       item={{ name: card.name, description: card.description }}
-                      priceLabel={formatPaise(card.displayPricePaise)}
                       index={index}
                       type={props.cardType}
                       img={card.imagePath ?? undefined}

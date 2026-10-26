@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 
+import { PublishedMenuRail } from "@/components/PublishedMenuRail";
 import { TheBar } from "@/components/TheBar";
 import { ThePlates } from "@/components/ThePlates";
 import { TheSweet } from "@/components/TheSweet";
 import { getCustomerMenu } from "@/lib/customer-commerce";
 import {
+  publishedChapterPresentations,
   publishedMenuChapters,
-  publishedMenuSectionDomId,
   type PublishedMenuChapter,
 } from "@/lib/published-menu-cards";
 import { DIRECT_ORDERING_BRAND_ID } from "@/shared/customer-menu/constants";
@@ -69,16 +70,26 @@ export function PublishedMenuChapters() {
 
   return (
     <>
-      {chapters.map((chapter, index) => {
+      {publishedChapterPresentations(chapters).map((presentation, index) => {
+        const chapter = chapters[index];
+        if (!chapter) return null;
         const view = {
           chapter,
-          sectionId: publishedMenuSectionDomId(index, chapter.id),
+          sectionId: presentation.sectionId,
           showChapterLabel: index === 0,
         };
-        const visual = index % 3;
-        if (visual === 1) return <ThePlates key={chapter.id} {...view} />;
-        if (visual === 2) return <TheSweet key={chapter.id} {...view} />;
-        return <TheBar key={chapter.id} {...view} />;
+        if (presentation.editorial === "plates") return <ThePlates key={chapter.id} {...view} />;
+        if (presentation.editorial === "sweet") return <TheSweet key={chapter.id} {...view} />;
+        if (presentation.editorial === "bar") return <TheBar key={chapter.id} {...view} />;
+        return (
+          <PublishedMenuRail
+            key={chapter.id}
+            {...view}
+            tone="page"
+            cardType="drink"
+            labelledByPrefix="published"
+          />
+        );
       })}
     </>
   );
