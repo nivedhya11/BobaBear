@@ -13,7 +13,7 @@
     "roadmapVersion": "GTM-R190",
     "stateVersion": "STATE-R189",
     "architectureVersion": "ARCH-R23",
-    "decisionRegisterVersion": "DR-26"
+    "decisionRegisterVersion": "DR-27"
   },
   "slices": {
     "acceptedThrough": "IMP-036I",
