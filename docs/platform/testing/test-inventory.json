@@ -31,11 +31,11 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2369,
-    "executableTestFiles": 548,
+    "trackedPathsConsidered": 2370,
+    "executableTestFiles": 549,
     "sourceTestFiles": 163,
     "testsTreeExecutableFiles": 293,
-    "scriptTestFiles": 92,
+    "scriptTestFiles": 93,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
     "playwrightConfigs": 7,
@@ -538,6 +538,7 @@
     "scripts/docker/customer-auth-smoke.test.mjs",
     "scripts/docker/init-local-env.test.mjs",
     "scripts/docker/inspect-runtime.test.mjs",
+    "scripts/docker/postgres-host-publish.test.mjs",
     "scripts/docker/smoke.test.mjs",
     "scripts/docker/workforce-auth-inspect.test.mjs",
     "scripts/docker/workforce-auth-smoke.test.mjs",
@@ -2027,6 +2028,23 @@
     },
     {
       "path": "scripts/docker/inspect-runtime.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/docker/postgres-host-publish.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
       "testType": "script-unit",
