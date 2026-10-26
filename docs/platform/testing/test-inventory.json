@@ -31,10 +31,10 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2349,
-    "executableTestFiles": 539,
-    "sourceTestFiles": 160,
-    "testsTreeExecutableFiles": 291,
+    "trackedPathsConsidered": 2355,
+    "executableTestFiles": 542,
+    "sourceTestFiles": 162,
+    "testsTreeExecutableFiles": 292,
     "scriptTestFiles": 88,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
@@ -58,6 +58,7 @@
     "src/components/Footer.test.tsx",
     "src/components/FooterNewsletter.test.tsx",
     "src/components/Nav.test.tsx",
+    "src/components/PublishedMenuChapters.test.tsx",
     "src/components/account/AccountShell.test.tsx",
     "src/components/account/AddressForm.validation.test.ts",
     "src/components/operations/OperationsDeliveryPanel.test.tsx",
@@ -121,6 +122,7 @@
     "src/lib/operations/orders.test.ts",
     "src/lib/operations/pending-refund-command.test.ts",
     "src/lib/operations/refund-amount.test.ts",
+    "src/lib/published-menu-cards.test.ts",
     "src/lib/razorpay/checkout-script.test.ts",
     "src/lib/razorpay/csp-origins.test.ts",
     "src/lib/razorpay/standard-checkout.test.ts",
@@ -288,6 +290,7 @@
     "tests/catalog/menu-revision.test.ts",
     "tests/catalog/modifier-create-input.contract.test.ts",
     "tests/catalog/publication-preview-f2.test.ts",
+    "tests/catalog/published-menu-runtime.test.ts",
     "tests/checkout-auth-integration/checkout.auth.test.ts",
     "tests/checkout-concurrency/checkout.concurrency.test.ts",
     "tests/checkout-security/checkout.security.test.ts",
@@ -3231,6 +3234,24 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "src/components/PublishedMenuChapters.test.tsx",
+      "runner": "vitest",
+      "domain": "components/PublishedMenuChapters.test.tsx",
+      "testType": "component-or-tsx",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "2-component"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "src/components/account/AccountShell.test.tsx",
       "runner": "vitest",
       "domain": "components/account",
@@ -4364,6 +4385,24 @@
       "path": "src/lib/operations/refund-amount.test.ts",
       "runner": "vitest",
       "domain": "lib/operations",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/lib/published-menu-cards.test.ts",
+      "runner": "vitest",
+      "domain": "lib/published-menu-cards.test.ts",
       "testType": "unit-or-domain",
       "dbRequired": "NO",
       "browserRequired": "NO",
@@ -7451,6 +7490,23 @@
     },
     {
       "path": "tests/catalog/publication-preview-f2.test.ts",
+      "runner": "vitest",
+      "domain": "catalog",
+      "testType": "unit-or-domain",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:catalog"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/catalog/published-menu-runtime.test.ts",
       "runner": "vitest",
       "domain": "catalog",
       "testType": "unit-or-domain",
