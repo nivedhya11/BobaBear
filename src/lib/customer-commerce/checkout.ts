@@ -140,7 +140,24 @@ type PickupOptionsEnvelope = Readonly<{
   ok: true;
   outlets: readonly CommercePickupOption[];
   selectionPolicy: "UNAVAILABLE" | "AUTO_SELECT" | "CUSTOMER_SELECT";
+  merchandiseProblems?: readonly Readonly<{ cartLineId: string; code: string }>[];
 }>;
+
+function readPickupMerchandiseProblems(
+  value: unknown,
+): readonly Readonly<{ cartLineId: string; code: string }>[] {
+  if (!Array.isArray(value)) return [];
+  const problems: { cartLineId: string; code: string }[] = [];
+  for (const entry of value) {
+    if (typeof entry !== "object" || entry === null) continue;
+    const cartLineId = (entry as { cartLineId?: unknown }).cartLineId;
+    const code = (entry as { code?: unknown }).code;
+    if (typeof cartLineId !== "string" || cartLineId.length === 0) continue;
+    if (typeof code !== "string" || code.length === 0) continue;
+    problems.push({ cartLineId, code });
+  }
+  return problems;
+}
 
 export async function listCheckoutPickupOptions(input: {
   checkoutId: string;
@@ -148,6 +165,7 @@ export async function listCheckoutPickupOptions(input: {
   CommerceHttpResult<{
     outlets: readonly CommercePickupOption[];
     selectionPolicy: "UNAVAILABLE" | "AUTO_SELECT" | "CUSTOMER_SELECT";
+    merchandiseProblems: readonly Readonly<{ cartLineId: string; code: string }>[];
   }>
 > {
   const result = await commerceRequest<PickupOptionsEnvelope>(
@@ -161,6 +179,7 @@ export async function listCheckoutPickupOptions(input: {
     data: {
       outlets: result.data.outlets,
       selectionPolicy: result.data.selectionPolicy,
+      merchandiseProblems: readPickupMerchandiseProblems(result.data.merchandiseProblems),
     },
   };
 }

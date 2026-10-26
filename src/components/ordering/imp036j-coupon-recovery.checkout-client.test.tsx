@@ -7,7 +7,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CheckoutClient } from "./CheckoutClient";
 import { IMP036J_COPY } from "./imp036j-copy";
-import type { OrderingCatalog } from "@/shared/ordering-catalog";
 
 const startCheckout = vi.fn();
 const getActiveCheckout = vi.fn();
@@ -76,7 +75,7 @@ vi.mock("@/lib/customer-commerce", async () => {
   };
 });
 
-const catalog = { brandId: "brand-1" } as unknown as OrderingCatalog;
+const catalog = { brandId: "brand-1" };
 
 const cart = {
   id: "cart-1",
@@ -165,7 +164,7 @@ async function reachReview(user: ReturnType<typeof userEvent.setup>): Promise<vo
     data: { checkout: readyCheckout },
   });
   getActiveCart.mockResolvedValue({ ok: true, data: { cart } });
-  render(<CheckoutClient catalog={catalog} />);
+  render(<CheckoutClient brandId={catalog.brandId} />);
   await waitFor(() => expect(screen.getByTestId("payment-back-to-review")).toBeInTheDocument());
   await user.click(screen.getByTestId("payment-back-to-review"));
   await waitFor(() => expect(screen.getByTestId("checkout-review")).toBeInTheDocument());

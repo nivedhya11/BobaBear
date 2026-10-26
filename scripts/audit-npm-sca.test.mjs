@@ -286,7 +286,7 @@ const BRACES_CHAIN_VULNS = {
   },
 };
 
-test("VEX-NPM-001 remains expired historical record; VEX-NPM-002 is the active GHSA row", () => {
+test("VEX-NPM-001 remains expired; withdrawn GHSA has no active exception", () => {
   const registerPath = path.join(
     path.dirname(fileURLToPath(import.meta.url)),
     "..",
@@ -296,7 +296,8 @@ test("VEX-NPM-001 remains expired historical record; VEX-NPM-002 is the active G
   const { rows, errors } = parseExceptionRegister(markdown);
   assert.deepEqual(errors, []);
   const npmRows = rows.filter((r) => String(r.id).startsWith("VEX-NPM-"));
-  assert.equal(npmRows.length, 2);
+  assert.equal(npmRows.length, 1);
+  assert.equal(npmRows.some((r) => r.id === "VEX-NPM-002"), false);
 
   const vex001 = npmRows.find((r) => r.id === "VEX-NPM-001");
   assert.ok(vex001);
@@ -308,53 +309,21 @@ test("VEX-NPM-001 remains expired historical record; VEX-NPM-002 is the active G
   assert.match(vex001.authority, /5966965948/);
   assert.equal(isActiveExpiry("2026-10-17", vex001.expiry), true);
   assert.equal(isActiveExpiry("2026-10-18", vex001.expiry), false);
-  assert.equal(isActiveExpiry("2026-10-20", vex001.expiry), false);
-
-  const vex002 = npmRows.find((r) => r.id === "VEX-NPM-002");
-  assert.ok(vex002);
-  assert.equal(vex002["package/cve"], "GHSA-vfj7-8cjw-p6xm");
-  assert.equal(vex002.severity, "high");
-  assert.equal(vex002.owner, "platform-security");
-  assert.equal(vex002.retest_date, "2026-10-26");
-  assert.equal(vex002.expiry, "2026-11-02");
-  assert.match(vex002.authority, /6283175994/);
-  assert.match(
-    vex002.authority,
-    /https:\/\/github\.com\/nivedhya11\/BobaBear\/issues\/406#issuecomment-6283175994/,
-  );
-  assert.match(vex002.rationale, /remains ACTIVE/i);
-  assert.match(vex002.rationale, /No compatible patched/i);
-  assert.match(vex002.rationale, /dev\/CI|lint\/CI/i);
-  assert.match(vex002.rationale, /Production runtime exclusion/i);
-  assert.match(vex002.rationale, /Residual development\/CI/i);
-  assert.match(vex002.rationale, /does NOT claim the vulnerability is fixed/i);
-  assert.match(vex002.compensating_controls, /ABSENT braces|absent from/i);
-  assert.match(vex002.compensating_controls, /deeply nested brace PATTERNS/i);
-  assert.match(vex002.compensating_controls, /settings\.next\.rootDir/);
+  assert.equal(isActiveExpiry("2026-10-26", vex001.expiry), false);
 
   assert.equal(
-    rows.some((r) => ["VEX-NPM-003", "VEX-NPM-004", "VEX-NPM-005"].includes(r.id)),
+    rows.some((r) => ["VEX-NPM-002", "VEX-NPM-003", "VEX-NPM-004", "VEX-NPM-005"].includes(r.id)),
     false,
   );
+  assert.match(markdown, /VEX-NPM-002` was removed/);
+  assert.match(markdown, /not renewed/);
 
-  // Boundary dates for VEX-NPM-002 (UTC calendar, inclusive expiry).
-  assert.equal(isActiveExpiry("2026-10-20", vex002.expiry), true);
-  assert.equal(isActiveExpiry("2026-10-26", vex002.expiry), true);
-  assert.equal(isActiveExpiry("2026-11-02", vex002.expiry), true);
-  assert.equal(isActiveExpiry("2026-11-03", vex002.expiry), false);
-
-  // Register has no start-date column: both rows are ACTIVE for any UTC day ≤ their expiry.
-  assert.equal(activeExceptions(npmRows, "2026-10-03").length, 2);
-  assert.equal(activeExceptions(npmRows, "2026-10-18").length, 1);
-  assert.equal(activeExceptions(npmRows, "2026-10-18")[0].id, "VEX-NPM-002");
-  assert.equal(activeExceptions(npmRows, "2026-10-20").length, 1);
-  assert.equal(activeExceptions(npmRows, "2026-10-20")[0].id, "VEX-NPM-002");
-  assert.equal(activeExceptions(npmRows, "2026-10-26").length, 1);
-  assert.equal(activeExceptions(npmRows, "2026-11-02").length, 1);
-  assert.equal(activeExceptions(npmRows, "2026-11-03").length, 0);
+  assert.equal(activeExceptions(npmRows, "2026-10-03").length, 1);
+  assert.equal(activeExceptions(npmRows, "2026-10-18").length, 0);
+  assert.equal(activeExceptions(npmRows, "2026-10-26").length, 0);
 });
 
-test("register VEX-NPM-002 covers the braces chain on 2026-10-20 and fails closed after expiry", () => {
+test("withdrawn braces GHSA has no active cover and a reported high would fail closed", () => {
   const registerPath = path.join(
     path.dirname(fileURLToPath(import.meta.url)),
     "..",
@@ -364,20 +333,9 @@ test("register VEX-NPM-002 covers the braces chain on 2026-10-20 and fails close
   const { rows, errors } = parseExceptionRegister(markdown);
   assert.deepEqual(errors, []);
 
-  const activeNow = activeExceptions(rows, "2026-10-20");
-  assert.equal(activeNow.length, 1);
-  assert.equal(activeNow[0].id, "VEX-NPM-002");
-  assert.deepEqual(filterUncoveredPolicyFindings(BRACES_CHAIN_VULNS, activeNow), []);
-
   const activeRetest = activeExceptions(rows, "2026-10-26");
-  assert.deepEqual(filterUncoveredPolicyFindings(BRACES_CHAIN_VULNS, activeRetest), []);
-
-  const activeExpiryDay = activeExceptions(rows, "2026-11-02");
-  assert.deepEqual(filterUncoveredPolicyFindings(BRACES_CHAIN_VULNS, activeExpiryDay), []);
-
-  const afterExpiry = activeExceptions(rows, "2026-11-03");
-  assert.equal(afterExpiry.length, 0);
-  const uncovered = filterUncoveredPolicyFindings(BRACES_CHAIN_VULNS, afterExpiry);
+  assert.equal(activeRetest.length, 0);
+  const uncovered = filterUncoveredPolicyFindings(BRACES_CHAIN_VULNS, activeRetest);
   assert.equal(uncovered.length, 1);
   assert.ok(uncovered[0].keys.includes("ghsa-vfj7-8cjw-p6xm"));
 });

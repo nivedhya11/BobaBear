@@ -22,6 +22,13 @@ Canonical experience and language authorities live outside this pack:
 not relabelled as those authorities. Historical documents here stay supporting unless a CURRENT
 authority explicitly promotes a specific statement.
 
+## Founder-approved creative writing guide
+
+- [`brand-voice-and-microcopy.md`](./brand-voice-and-microcopy.md) — **BB-VOICE-1.0**,
+  Founder-locked supporting brand/editorial names and tone: The Den, The Fits, and The Scene.
+  Not a replacement for LANG-1, a customer/product-language authority, a new route or navigation,
+  a current product-slice change, or an implementation authorization. The live site copy stays as-is.
+
 ## Current supporting plans
 
 - [`enterprise-experience/`](./enterprise-experience/) — Enterprise Experience Programme and seven

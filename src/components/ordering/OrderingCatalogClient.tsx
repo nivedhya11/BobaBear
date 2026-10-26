@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { CartLineList } from "@/components/ordering/CartLineList";
+import { presentCartLineProblems } from "@/components/ordering/cart-line-problem-presentation";
 import { CartSummary } from "@/components/ordering/CartSummary";
 import { DeliverToOrientation } from "@/components/ordering/DeliverToOrientation";
 import { CommerceLoadingPanel, CommerceRetryPanel } from "@/components/ordering/CommerceStatePanels";
@@ -387,6 +388,8 @@ export function OrderingCatalogClient(props: { brandId: string }) {
       ),
     [cart, menuLookups, brandId],
   );
+
+  const lineProblems = presentCartLineProblems(evaluation, cart?.revision, linePresentations);
 
   const lineCount = cartUnitCount(cart);
   const hasCoordinates = Boolean(deliveryContext.coordinates);
@@ -800,6 +803,7 @@ export function OrderingCatalogClient(props: { brandId: string }) {
                   <div data-testid="desktop-cart-items" className="min-h-0 flex-1 overflow-y-auto px-3 py-2">
                     <CartLineList
                       lines={linePresentations}
+                      lineProblems={lineProblems.byLineId}
                       pending={pendingKey !== null}
                       compact
                       onChangeQuantity={(lineId, quantity) =>

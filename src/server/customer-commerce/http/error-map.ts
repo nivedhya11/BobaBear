@@ -23,6 +23,7 @@ export type CommerceErrorBody = Readonly<{
   requestId: string;
   field?: string;
   resolutionOptions?: readonly string[];
+  problems?: readonly Readonly<{ cartLineId: string; code: string }>[];
 }>;
 
 export type MappedCommerceError = Readonly<{
@@ -104,10 +105,20 @@ function statusForCode(code: string): number {
   return 400;
 }
 
+function checkoutMerchandiseProblems(
+  error: CheckoutError,
+): readonly Readonly<{ cartLineId: string; code: string }>[] | undefined {
+  if (!error.problems || error.problems.length === 0) return undefined;
+  return error.problems.map((problem) =>
+    Object.freeze({ cartLineId: problem.cartLineId, code: problem.code }),
+  );
+}
+
 function extractDomainError(error: unknown): {
   code: string;
   field?: string;
   resolutionOptions?: readonly string[];
+  problems?: readonly Readonly<{ cartLineId: string; code: string }>[];
 } | null {
   if (error instanceof CartError) {
     return {
@@ -117,7 +128,11 @@ function extractDomainError(error: unknown): {
     };
   }
   if (error instanceof CheckoutError) {
-    return { code: error.code, field: error.field };
+    return {
+      code: error.code,
+      field: error.field,
+      problems: checkoutMerchandiseProblems(error),
+    };
   }
   if (error instanceof PaymentError) {
     return { code: error.code, field: error.field };
@@ -169,6 +184,7 @@ export function mapCommerceError(error: unknown, requestId: string): MappedComme
     requestId: string;
     field?: string;
     resolutionOptions?: readonly string[];
+    problems?: readonly Readonly<{ cartLineId: string; code: string }>[];
   } = {
     ok: false,
     code: domain.code,
@@ -178,6 +194,7 @@ export function mapCommerceError(error: unknown, requestId: string): MappedComme
   if (domain.resolutionOptions !== undefined) {
     body.resolutionOptions = domain.resolutionOptions;
   }
+  if (domain.problems !== undefined) body.problems = domain.problems;
 
   return {
     status: statusForCode(domain.code),

@@ -9,6 +9,12 @@ import {
   type WireCommercialExplanation,
 } from "@/components/ordering/commercial-explanation-presentation";
 import { IMP036J_COPY } from "@/components/ordering/imp036j-copy";
+import { CheckoutItemAttentionNotice } from "@/components/ordering/CheckoutItemAttentionNotice";
+import {
+  namedCartLinesForCheckout,
+  presentCheckoutItemAttention,
+  type CheckoutItemAttention,
+} from "@/components/ordering/checkout-unavailable-item-presentation";
 import { commerceErrorCopy } from "@/components/ordering/error-copy";
 import { formatPaise } from "@/components/ordering/format-money";
 import { interpretClientAction, isZeroPayableTotal } from "@/components/ordering/client-action";
@@ -151,6 +157,9 @@ export function PaymentPanel(props: {
   const [screen, setScreen] = useState<PaymentScreen>(resumePaymentId ? "checking" : "idle");
   const [checkingKind, setCheckingKind] = useState<CheckingKind>("generic");
   const [error, setError] = useState<string | null>(null);
+  const [itemAttention, setItemAttention] = useState<readonly CheckoutItemAttention[] | null>(
+    null,
+  );
   const [recoveryKind, setRecoveryKind] = useState<PaymentRecoveryKind | null>(
     resumePaymentId ? "unresolved" : null,
   );
@@ -168,6 +177,23 @@ export function PaymentPanel(props: {
 
   function restorePayFocus(): void {
     queueMicrotask(() => payButtonRef.current?.focus());
+  }
+
+  function applyPaymentFailure(failure: {
+    code: string;
+    problems?: readonly { cartLineId: string; code: string }[];
+  }): void {
+    const attention = presentCheckoutItemAttention(
+      failure.problems,
+      namedCartLinesForCheckout({ snapshotLines: props.snapshot.lines }),
+    );
+    if (attention.length > 0) {
+      setError(null);
+      setItemAttention(attention);
+      return;
+    }
+    setItemAttention(null);
+    setError(commerceErrorCopy(failure.code));
   }
 
   function adoptCheckoutRevision(revision: string): void {
@@ -515,6 +541,7 @@ export function PaymentPanel(props: {
     }
     inflight.current = true;
     setError(null);
+    setItemAttention(null);
     setRecoveryKind(null);
     setScreen("starting");
     const idempotencyKey = readOrCreateStartIdempotencyKey({
@@ -530,7 +557,7 @@ export function PaymentPanel(props: {
     });
     inflight.current = false;
     if (!started.ok) {
-      setError(commerceErrorCopy(started.code));
+      applyPaymentFailure(started);
       if (
         started.code === "CHECKOUT_REPRICED" ||
         started.code === "CHECKOUT_CART_CHANGED"
@@ -556,6 +583,7 @@ export function PaymentPanel(props: {
     if (inflight.current || !paymentId || !attemptId) return;
     inflight.current = true;
     setError(null);
+    setItemAttention(null);
     setRecoveryKind(null);
     setScreen("starting");
     const idempotencyKey = readOrCreateRetryIdempotencyKey({
@@ -572,7 +600,7 @@ export function PaymentPanel(props: {
     });
     inflight.current = false;
     if (!retried.ok) {
-      setError(commerceErrorCopy(retried.code));
+      applyPaymentFailure(retried);
       if (retried.code === "NETWORK_ERROR" || retried.code === "INVALID_RESPONSE") {
         showAuthoritativeFailed();
         return;
@@ -611,6 +639,7 @@ export function PaymentPanel(props: {
     if (inflight.current) return;
     inflight.current = true;
     setError(null);
+    setItemAttention(null);
     setScreen("starting");
     const idempotencyKey = readOrCreateZeroPayableIdempotencyKey({
       checkoutId: props.checkout.id,
@@ -623,7 +652,7 @@ export function PaymentPanel(props: {
     });
     inflight.current = false;
     if (!completed.ok) {
-      setError(commerceErrorCopy(completed.code));
+      applyPaymentFailure(completed);
       if (completed.code === "NETWORK_ERROR" || completed.code === "INVALID_RESPONSE") {
         setScreen("idle");
         return;
@@ -730,7 +759,9 @@ export function PaymentPanel(props: {
         </div>
       ) : null}
 
-      {error ? (
+      {itemAttention && itemAttention.length > 0 ? (
+        <CheckoutItemAttentionNotice items={itemAttention} showReturnLink={false} />
+      ) : error ? (
         <p role="alert" className="font-body text-[14px] text-[var(--text-secondary)]">
           {error}
         </p>
@@ -862,7 +893,7 @@ export function PaymentPanel(props: {
       {!embeddedRecovery ? (
         <Button asChild variant="outline" className="min-h-[44px]">
           <a href="/order/cart/" data-testid="cart-changed-back-to-cart">
-            Back to cart
+            {itemAttention && itemAttention.length > 0 ? "Return to cart" : "Back to cart"}
           </a>
         </Button>
       ) : null}
