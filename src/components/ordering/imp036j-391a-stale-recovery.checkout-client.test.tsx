@@ -4,8 +4,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CheckoutClient } from "./CheckoutClient";
 import { IMP036J_COPY } from "./imp036j-copy";
-import type { OrderingCatalog } from "@/shared/ordering-catalog";
-
 const startCheckout = vi.fn();
 const getActiveCheckout = vi.fn();
 const getActiveCart = vi.fn();
@@ -53,7 +51,7 @@ vi.mock("@/lib/customer-commerce", async () => {
   };
 });
 
-const catalog = { brandId: "brand-1" } as unknown as OrderingCatalog;
+const catalog = { brandId: "brand-1" };
 
 const cart = {
   id: "cart-1",
@@ -211,7 +209,7 @@ describe("IMP-036J #391A truthful checkout recovery UX", () => {
     };
     getActiveCheckout.mockResolvedValue({ ok: true, data: { checkout: readyCheckout } });
     getActiveCart.mockResolvedValue({ ok: true, data: { cart } });
-    render(<CheckoutClient catalog={catalog} />);
+    render(<CheckoutClient brandId={catalog.brandId} />);
     await waitFor(() => expect(screen.getByTestId("payment-start")).toBeInTheDocument());
     return snapshot;
   }
@@ -416,7 +414,7 @@ describe("IMP-036J #391A async recovery race ownership", () => {
     };
     getActiveCheckout.mockResolvedValue({ ok: true, data: { checkout: readyCheckout } });
     getActiveCart.mockResolvedValue({ ok: true, data: { cart } });
-    render(<CheckoutClient catalog={catalog} />);
+    render(<CheckoutClient brandId={catalog.brandId} />);
     await waitFor(() => expect(screen.getByTestId("payment-start")).toBeInTheDocument());
     return snapshot;
   }

@@ -87,7 +87,6 @@ import {
   fulfilmentModeLabel,
   pickupAddressLines,
 } from "@/components/ordering/pickup-location-presentation";
-import type { OrderingCatalog } from "@/shared/ordering-catalog";
 
 type Screen =
   | "loading"
@@ -128,8 +127,8 @@ function snapshotHasDeliveryFee(snapshot: CommerceCheckoutSnapshot): boolean {
   });
 }
 
-export function CheckoutClient(props: { catalog: OrderingCatalog }) {
-  const brandId = props.catalog.brandId;
+export function CheckoutClient(props: { brandId: string }) {
+  const brandId = props.brandId;
   const [screen, setScreen] = useState<Screen>("loading");
   const [pending, setPending] = useState(false);
   const [error, setCheckoutError] = useState<string | null>(null);
@@ -1192,7 +1191,6 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
         {screen === "cart_changed_unresolved" && cart ? (
           <PreviousPaymentRecoveryView
             cart={cart}
-            catalog={props.catalog}
             previousSnapshot={snapshot}
             paymentSlot={
               checkout && snapshot ? (

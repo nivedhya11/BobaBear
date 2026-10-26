@@ -424,7 +424,7 @@ beforeEach(() => {
 describe("delivery checkout item attention", () => {
   it("names the unavailable item and leaves the rest of the cart in place", async () => {
     const user = userEvent.setup();
-    render(<CheckoutClient catalog={catalog} />);
+    render(<CheckoutClient brandId={catalog.brandId} />);
     await waitFor(() => expect(screen.getByTestId("checkout-fulfilment-delivery")).toBeInTheDocument());
     await user.click(screen.getByTestId("checkout-fulfilment-delivery"));
     await user.click(await screen.findByTestId("pick-address-a"));
@@ -453,7 +453,7 @@ describe("pickup checkout item attention", () => {
       },
     });
     const user = userEvent.setup();
-    render(<CheckoutClient catalog={catalog} />);
+    render(<CheckoutClient brandId={catalog.brandId} />);
     await waitFor(() => expect(screen.getByTestId("checkout-fulfilment-pickup")).toBeInTheDocument());
     await user.click(screen.getByTestId("checkout-fulfilment-pickup"));
 

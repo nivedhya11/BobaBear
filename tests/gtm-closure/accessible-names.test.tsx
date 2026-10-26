@@ -13,7 +13,6 @@ import { CouponField } from "../../src/components/ordering/CouponField";
 import { IMP036J_COPY } from "../../src/components/ordering/imp036j-copy";
 import { PreviousPaymentRecoveryView } from "../../src/components/ordering/PreviousPaymentRecoveryView";
 import type { CommerceCart } from "../../src/lib/customer-commerce";
-import type { OrderingCatalog } from "../../src/shared/ordering-catalog";
 
 const CART: CommerceCart = {
   id: "cart-1",
@@ -25,16 +24,6 @@ const CART: CommerceCart = {
   createdAt: "2026-10-16T07:00:00.000Z",
   updatedAt: "2026-10-16T07:00:00.000Z",
   lines: [],
-};
-
-const CATALOG: OrderingCatalog = {
-  brandId: "brand",
-  brandCode: "BOBA",
-  importId: "import-1",
-  importVersion: 1,
-  sourceInventorySha256: "abc",
-  sections: [],
-  items: [],
 };
 
 describe("accessible names on coupon and payment recovery", () => {
@@ -87,7 +76,6 @@ describe("accessible names on coupon and payment recovery", () => {
     render(
       <PreviousPaymentRecoveryView
         cart={CART}
-        catalog={CATALOG}
         previousSnapshot={null}
       />,
     );

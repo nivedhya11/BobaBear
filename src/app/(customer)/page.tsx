@@ -1,9 +1,7 @@
 import { Hero } from "@/components/Hero";
 import { Manifesto } from "@/components/Manifesto";
 import { SignatureDrops } from "@/components/SignatureDrops";
-import { TheBar } from "@/components/TheBar";
-import { ThePlates } from "@/components/ThePlates";
-import { TheSweet } from "@/components/TheSweet";
+import { PublishedMenuChapters } from "@/components/PublishedMenuChapters";
 import { MerchDrop } from "@/components/MerchDrop";
 import { Artists } from "@/components/Artists";
 import { AccessCTA } from "@/components/AccessCTA";
@@ -22,10 +20,8 @@ export default function Home() {
       {/* §01 — Signature Drops (provides its own id="drops" section) */}
       <SignatureDrops />
 
-      {/* §02 — Menu: three chapters, each its own section */}
-      <TheBar />
-      <ThePlates />
-      <TheSweet />
+      {/* §02 — Published menu chapters */}
+      <PublishedMenuChapters />
 
       {/* §04 — Merch (provides its own id="merch" section) */}
       <MerchDrop />
