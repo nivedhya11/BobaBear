@@ -17,7 +17,6 @@
  */
 
 import { useState } from "react";
-import type { MenuItem } from "@/types/menu";
 import { MenuTags, type MenuCardTag } from "@/components/MenuTags";
 
 export type { MenuCardTag };
@@ -34,17 +33,21 @@ const AURORA_BG = [
 export type MenuCardType = "drink" | "plate" | "kstreet";
 
 export interface MenuCardProps {
-  item: MenuItem;
+  item: {
+    name: string;
+    description: string;
+  };
+  /** Display string from the customer Menu projection. Not a second price source. */
+  priceLabel: string;
   index: number;
   type?: MenuCardType;
   img?: string;
   tags?: MenuCardTag[];
 }
 
-const formatPrice = (p: number) => `₹${p}`;
-
 export function MenuCard({
   item,
+  priceLabel,
   index,
   type = "drink",
   img,
@@ -140,7 +143,7 @@ export function MenuCard({
               "px-3 py-1 rounded-full",
             ].join(" ")}
           >
-            {formatPrice(item.price)}
+            {priceLabel}
           </span>
         </div>
       </article>
@@ -212,7 +215,7 @@ export function MenuCard({
         ].join(" ")}
       >
         <span className="font-display text-[16px] md:text-[22px] text-[var(--interactive-secondary)]">
-          {formatPrice(item.price)}
+          {priceLabel}
         </span>
       </div>
     </article>

@@ -1,48 +1,39 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
 import { PreviousPaymentRecoveryView } from "./PreviousPaymentRecoveryView";
 import type { CommerceCart, CommerceCheckoutSnapshot } from "@/lib/customer-commerce";
-import type { OrderingCatalog } from "@/shared/ordering-catalog";
 
-const catalog = {
+const getCustomerMenu = vi.fn<(...args: unknown[]) => unknown>();
+
+vi.mock("@/lib/customer-commerce", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/customer-commerce")>(
+    "@/lib/customer-commerce",
+  );
+  return {
+    ...actual,
+    getCustomerMenu: (...args: unknown[]) => getCustomerMenu(...args),
+  };
+});
+
+const publishedMenu = {
   brandId: "brand-1",
-  brandCode: "BOBA",
-  importId: "imp-1",
-  importVersion: 1,
-  sourceInventorySha256: "abc",
-  sections: [],
+  menuId: "menu-1",
+  name: "Published menu",
+  sections: [{ id: "s-1", parentSectionId: null, name: "Drinks", position: 0 }],
   items: [
     {
-      sourceKey: "hk",
-      productId: "p-1",
-      variantId: "var-hk",
-      sectionId: "s-1",
-      name: "Hong Kong Milk Tea Boba",
-      description: "",
-      imagePath: "",
-      presentationPriceRupees: 199,
-      tags: [],
-      categorySlug: "drinks",
-      subcategoryName: "Tea",
-      position: 1,
-    },
-    {
-      sourceKey: "brown",
       productId: "p-2",
       variantId: "var-brown",
       sectionId: "s-1",
       name: "Brown Sugar Boba",
-      description: "",
-      imagePath: "",
-      presentationPriceRupees: 220,
-      tags: [],
-      categorySlug: "drinks",
-      subcategoryName: "Tea",
-      position: 2,
+      description: null,
+      imagePath: null,
+      displayPricePaise: 22000,
+      currency: "INR" as const,
     },
   ],
-} as OrderingCatalog;
+};
 
 const currentCart: CommerceCart = {
   id: "cart-1",
@@ -103,11 +94,16 @@ const previousSnapshot = {
 } as unknown as CommerceCheckoutSnapshot;
 
 describe("PreviousPaymentRecoveryView", () => {
-  it("labels previous checkout separately from current cart", () => {
+  it("labels previous checkout from the sealed snapshot and the current cart from the published menu", async () => {
+    getCustomerMenu.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: { menu: publishedMenu },
+    });
+
     render(
       <PreviousPaymentRecoveryView
         cart={currentCart}
-        catalog={catalog}
         previousSnapshot={previousSnapshot}
       />,
     );
@@ -120,14 +116,40 @@ describe("PreviousPaymentRecoveryView", () => {
 
     expect(screen.getByTestId("current-cart-summary")).toHaveTextContent("Current cart");
     expect(screen.getByTestId("current-cart-summary")).toHaveTextContent("1 item");
-    expect(screen.getByTestId("current-cart-lines")).toHaveTextContent("1 × Brown Sugar Boba");
+    await waitFor(() => {
+      expect(screen.getByTestId("current-cart-lines")).toHaveTextContent("1 × Brown Sugar Boba");
+    });
     expect(screen.getByTestId("current-cart-summary")).not.toHaveTextContent(
       "Hong Kong Milk Tea Boba",
     );
+    expect(screen.getByTestId("current-cart-lines")).not.toHaveTextContent("₹220");
+    expect(getCustomerMenu).toHaveBeenCalledWith({ brandId: "brand-1" });
 
     expect(screen.getByTestId("previous-checkout-lock-copy")).toBeInTheDocument();
     expect(screen.getByTestId("previous-checkout-address-lock")).toBeInTheDocument();
     expect(screen.getByTestId("cart-changed-back-to-cart")).toHaveAttribute("href", "/order/cart/");
     expect(screen.getByTestId("cart-changed-back-to-cart")).toHaveTextContent("View current cart");
+  });
+
+  it("uses a safe label when the published menu does not include the cart variant", async () => {
+    getCustomerMenu.mockResolvedValue({
+      ok: false,
+      status: 404,
+      code: "MENU_UNAVAILABLE",
+      message: "No active menu",
+    });
+
+    render(
+      <PreviousPaymentRecoveryView
+        cart={currentCart}
+        previousSnapshot={previousSnapshot}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("current-cart-lines")).toHaveTextContent("1 × Item");
+    });
+    expect(screen.getByText(/3 × Hong Kong Milk Tea Boba/)).toBeInTheDocument();
+    expect(screen.getByTestId("current-cart-lines")).not.toHaveTextContent("₹");
   });
 });

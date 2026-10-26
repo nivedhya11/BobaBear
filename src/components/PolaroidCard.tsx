@@ -47,7 +47,8 @@ const MEDIA = "w-[128px] md:w-[240px]";
 export interface PolaroidCardProps {
   name: string;
   description: string;
-  price: number;
+  /** Display string from the customer Menu projection. Not a second price source. */
+  priceLabel: string;
   /** Tilt angle in degrees — keep small (-6 to +6) */
   tilt?: number;
   img?: string;
@@ -57,12 +58,10 @@ export interface PolaroidCardProps {
   tags?: MenuCardTag[];
 }
 
-const formatPrice = (p: number) => `₹${p}`;
-
 export function PolaroidCard({
   name,
   description,
-  price,
+  priceLabel,
   tilt = 0,
   img,
   index = 0,
@@ -154,7 +153,7 @@ export function PolaroidCard({
           "bg-[var(--interactive-secondary)] text-[var(--text-on-secondary)]",
         ].join(" ")}
       >
-        {formatPrice(price)}
+        {priceLabel}
       </span>
     </motion.div>
   );

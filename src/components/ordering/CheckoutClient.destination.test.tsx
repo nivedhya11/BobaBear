@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CheckoutClient } from "@/components/ordering/CheckoutClient";
 import { IMP036J_COPY } from "@/components/ordering/imp036j-copy";
-import type { OrderingCatalog } from "@/shared/ordering-catalog";
 
 const {
   fetchCustomerSession,
@@ -20,6 +19,7 @@ const {
   evaluateCheckout,
   readGuestCartCredential,
   readPaymentRecovery,
+  getCustomerMenu,
 } = vi.hoisted(() => ({
   fetchCustomerSession: vi.fn<(...args: unknown[]) => unknown>(),
   getActiveCart: vi.fn<(...args: unknown[]) => unknown>(),
@@ -34,6 +34,7 @@ const {
   evaluateCheckout: vi.fn<(...args: unknown[]) => unknown>(),
   readGuestCartCredential: vi.fn<(...args: unknown[]) => unknown>(() => null),
   readPaymentRecovery: vi.fn<(...args: unknown[]) => unknown>(() => null),
+  getCustomerMenu: vi.fn<(...args: unknown[]) => unknown>(),
 }));
 
 vi.mock("@/lib/customer-auth/client", async (importOriginal) => {
@@ -133,6 +134,7 @@ vi.mock("@/lib/customer-commerce", async () => {
     evaluateCheckout: (...args: unknown[]) => evaluateCheckout(...args),
     readGuestCartCredential: (...args: unknown[]) => readGuestCartCredential(...args),
     readPaymentRecovery: (...args: unknown[]) => readPaymentRecovery(...args),
+    getCustomerMenu: (...args: unknown[]) => getCustomerMenu(...args),
     claimGuestCart: vi.fn(),
     reconcileGuestCart: vi.fn(),
     clearGuestCartCredential: vi.fn(),
@@ -143,23 +145,26 @@ vi.mock("@/lib/customer-commerce", async () => {
 
 const catalog = {
   brandId: "56ff7724-d511-5ef4-b5d5-d629cbfb2388",
+};
+
+const publishedMenu = {
+  brandId: catalog.brandId,
+  menuId: "menu-1",
+  name: "Published menu",
+  sections: [{ id: "s-1", parentSectionId: null, name: "Drinks", position: 0 }],
   items: [
     {
-      sourceKey: "hk",
       productId: "p-1",
       variantId: "var-1",
       sectionId: "s-1",
       name: "Brown Sugar Boba",
-      description: "",
-      imagePath: "",
-      presentationPriceRupees: 220,
-      tags: [],
-      categorySlug: "drinks",
-      subcategoryName: "Tea",
-      position: 1,
+      description: null,
+      imagePath: null,
+      displayPricePaise: 22000,
+      currency: "INR" as const,
     },
   ],
-} as unknown as OrderingCatalog;
+};
 
 const cart = {
   id: "cart-1",
@@ -253,6 +258,11 @@ function checkoutState(overrides: Record<string, unknown> = {}) {
 }
 
 beforeEach(() => {
+  getCustomerMenu.mockResolvedValue({
+    ok: true,
+    status: 200,
+    data: { menu: publishedMenu },
+  });
   fetchCustomerSession.mockResolvedValue({
     ok: true,
     data: { authenticated: true },
@@ -358,7 +368,7 @@ async function chooseDelivery(user: ReturnType<typeof userEvent.setup>): Promise
 describe("map-first checkout destination", () => {
   it("renders the saved-address-first checkout destination flow after Delivery", async () => {
     const user = userEvent.setup();
-    render(<CheckoutClient catalog={catalog} />);
+    render(<CheckoutClient brandId={catalog.brandId} />);
     await chooseDelivery(user);
     expect(screen.getByText("Choose a delivery address")).toBeInTheDocument();
     expect(screen.queryByLabelText(/PIN code/i)).not.toBeInTheDocument();
@@ -435,7 +445,7 @@ describe("CheckoutClient back-navigation revision reconciliation", () => {
         },
       });
 
-    render(<CheckoutClient catalog={catalog} />);
+    render(<CheckoutClient brandId={catalog.brandId} />);
     await chooseDelivery(user);
     await waitFor(() => expect(screen.getByTestId("pick-address-a")).toBeInTheDocument());
     await user.click(screen.getByTestId("pick-address-a"));
@@ -511,7 +521,7 @@ describe("CheckoutClient back-navigation revision reconciliation", () => {
         },
       });
 
-    render(<CheckoutClient catalog={catalog} />);
+    render(<CheckoutClient brandId={catalog.brandId} />);
     await chooseDelivery(user);
     await waitFor(() => expect(screen.getByTestId("pick-address-a")).toBeInTheDocument());
     await user.click(screen.getByTestId("pick-address-a"));
@@ -578,7 +588,7 @@ describe("CheckoutClient back-navigation revision reconciliation", () => {
         },
       });
 
-    render(<CheckoutClient catalog={catalog} />);
+    render(<CheckoutClient brandId={catalog.brandId} />);
     await chooseDelivery(user);
     await waitFor(() => expect(screen.getByTestId("pick-address-a")).toBeInTheDocument());
     await user.click(screen.getByTestId("pick-address-a"));
@@ -633,7 +643,7 @@ describe("CheckoutClient cart-changed payment recovery", () => {
   });
 
   it("renders dedicated previous-payment recovery instead of plain dead-end", async () => {
-    render(<CheckoutClient catalog={catalog} />);
+    render(<CheckoutClient brandId={catalog.brandId} />);
 
     await waitFor(() => {
       expect(screen.getByTestId("cart-changed-unresolved")).toBeInTheDocument();
@@ -643,7 +653,9 @@ describe("CheckoutClient cart-changed payment recovery", () => {
     expect(screen.getByText("Previous checkout items")).toBeInTheDocument();
     expect(screen.getByText(/3 × Hong Kong Milk Tea Boba/)).toBeInTheDocument();
     expect(screen.getByTestId("current-cart-summary")).toHaveTextContent("1 item");
-    expect(screen.getByTestId("current-cart-lines")).toHaveTextContent("1 × Brown Sugar Boba");
+    await waitFor(() => {
+      expect(screen.getByTestId("current-cart-lines")).toHaveTextContent("1 × Brown Sugar Boba");
+    });
     expect(screen.getByTestId("current-cart-summary")).not.toHaveTextContent(
       "Hong Kong Milk Tea Boba",
     );
@@ -664,7 +676,7 @@ describe("CheckoutClient cart-changed payment recovery", () => {
       checkoutRevision: "4",
     });
 
-    render(<CheckoutClient catalog={catalog} />);
+    render(<CheckoutClient brandId={catalog.brandId} />);
 
     await waitFor(() => {
       expect(screen.getByTestId("cart-changed-unresolved")).toBeInTheDocument();
@@ -698,7 +710,7 @@ describe("CheckoutClient cart-changed payment recovery", () => {
       status: 409,
     });
 
-    render(<CheckoutClient catalog={catalog} />);
+    render(<CheckoutClient brandId={catalog.brandId} />);
     await waitFor(() => expect(screen.getByTestId("payment-panel-mock")).toBeInTheDocument());
     await userEvent.click(screen.getByTestId("simulate-payment-terminal"));
     await waitFor(() => expect(screen.getByTestId("cart-changed-fresh")).toBeInTheDocument());
@@ -733,7 +745,7 @@ describe("CheckoutClient cart-changed payment recovery", () => {
       data: { checkout: pendingCheckout },
     });
 
-    render(<CheckoutClient catalog={catalog} />);
+    render(<CheckoutClient brandId={catalog.brandId} />);
 
     await waitFor(() => {
       expect(screen.getByTestId("payment-panel-mock")).toBeInTheDocument();
@@ -772,7 +784,7 @@ describe("CheckoutClient cart-changed payment recovery", () => {
       data: { checkout: checkoutState({ revision: "1", status: "DRAFT", sourceCartRevision: "7" }) },
     });
 
-    render(<CheckoutClient catalog={catalog} />);
+    render(<CheckoutClient brandId={catalog.brandId} />);
     await waitFor(() => expect(screen.getByTestId("checkout-fulfilment-choice")).toBeInTheDocument());
     expect(screen.getByTestId("checkout-steps")).toBeInTheDocument();
     expect(screen.getByTestId("checkout-steps")).toHaveTextContent("Fulfilment");
@@ -862,7 +874,7 @@ describe("AC-036J-003-02 Review crossed-and-lost after re-evaluation", () => {
         },
       });
 
-    render(<CheckoutClient catalog={catalog} />);
+    render(<CheckoutClient brandId={catalog.brandId} />);
     await chooseDelivery(user);
     await waitFor(() => expect(screen.getByTestId("pick-address-a")).toBeInTheDocument());
     await user.click(screen.getByTestId("pick-address-a"));
