@@ -52,7 +52,7 @@ The existing Checkout login boundary is **Cart → Checkout**, not first Menu vi
 
 **Founder-approved future direction, still held (D4/D5):** IMP-036B §6.1 and IMP-038 envisage a signed-out Dehradun city label and login gating before changes to precise delivery location / Google Maps, Places, reverse-geocode. This does not erase accepted earlier anonymous-location behavior, automatically ask for GPS, or activate IMP-038.
 
-**D6 now approved for decision recording:** Nearest eligible Delivery outlet with routing priority and outlet ID as tie-breakers, per D-387 staged decision text. Current runtime is still routing-priority-first until authorized engineering and deployment.
+**D6 now approved for decision recording:** Nearest eligible Delivery outlet with routing priority and outlet ID as tie-breakers, per D-387 staged decision text. Current runtime is still routing-priority-first until authorized engineering and deployment. Provisional Menu outlet context is not final Checkout merchandise eligibility. D-387 does not decide whether a nearer outlet that cannot fulfil the configured Cart should yield to a farther outlet; that cross-outlet fallback remains an open product choice. Existing merchandise and Checkout recovery applies, with no silent item or outlet substitution.
 
 **D7 remains a candidate:** Signed-in customers may use a one-time delivery destination without mandatory saving; source backend already supports ONE_TIME_ADDRESS but this document does not authorize a UI change or modify saved-address authority.
 
@@ -119,7 +119,7 @@ Representative tests before approving affected customer changes:
 | No precise destination / GPS permission denied | No fabricated Delivery serviceability; appropriate location recovery |
 | Saved address lacks coordinates | Confirm precise destination before orderability |
 | No Delivery/Pickup outlet eligible | Truthful unavailable state; Cart remains usable |
-| Nearest outlet lacks a configured Cart item | Try next eligible under approved D-387 target, otherwise identify failed merchandise and preserve lines |
+| Nearest eligible outlet cannot fulfil a configured Cart line | Existing merchandise and Checkout recovery names the failure and preserves Cart lines. D-387 does not authorize a farther outlet. That cross-outlet fallback remains an open product choice |
 | Changed outlet/Delivery mode/scheduled window | Revalidate and present current order / time / payable |
 | Coupon expires or mode restriction applies | Explain existing evaluator result without fabricated saving |
 | Payment attempt uncertain after browser reload | Provider-state verification and recovery; no duplicate payment action |
@@ -141,6 +141,7 @@ D1_D2_D3_D8 = EXISTING_LOCKED_CONTRACTS
 D4_D5 = FUTURE_AUTH_HARDENING_HELD
 D7 = PRODUCT_UX_CANDIDATE
 RUNTIME_NEAREST_ROUTING = NOT_IMPLEMENTED
+CROSS_OUTLET_CART_FALLBACK = OPEN_PRODUCT_CHOICE_NOT_D387
 PRODUCT_EXPERIENCE_GATES = NOT_GRANTED_BY_THIS_DOCUMENT
 ROADMAP_STATE = UNCHANGED
 IMP036K_IMPLEMENTATION = NOT_AUTHORIZED

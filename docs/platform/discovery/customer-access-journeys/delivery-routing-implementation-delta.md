@@ -35,7 +35,7 @@ All paths must be reverified on the eventual implementation base. This is not an
 2. Gather all candidates with complete configured service origin and max distance; require actual geographic eligibility (server geodesic/Haversine <= configured radius).
 3. Apply operating/fulfilment-mode/timing eligibility using existing authorities. Do not broaden PAUSED, closed or future-scheduled policy through the new ranking algorithm.
 4. Rank candidate outlets by **computed distance ASC**, **routing priority ASC for equal computed distance**, **stable outlet ID ASC** for further ties.
-5. With configured Cart, require existing catalog and outlet assortment/availability eligibility for the **whole** configured basket. Iterate nearest-first among eligible candidates as appropriate. A failing candidate never causes an automatic cart-line deletion/substitution or a false checkout quote.
+5. Do not treat whole-basket assortment as a D-387 ranking gate. After the distance-ranked eligible outlet is selected, apply existing catalog, assortment, availability, and Checkout recovery to that outlet. Do not automatically advance to a farther outlet when merchandise fails. Do not delete, replace, or split Cart lines, and do not emit a false Checkout quote.
 6. If no eligible outlet remains, preserve the Cart and show an evidence-backed recovery; do not guess an alternative city, PIN, outlet, slot or final price.
 7. Recompute when confirmed location, Cart content/configuration, Checkout mode, selected timing/window or relevant outlet eligibility changes. Current server price and Snapshot authority remains final; material pre-payment changes get appropriate Review/reconfirmation.
 8. Once the purchased Checkout Snapshot is sealed, do not recompute selected outlet from current geographic routing. Pickup mode and current Pickup rules are unchanged.
@@ -68,7 +68,7 @@ If a required ranking change materially affects a locked payload or invariant, r
 | Scheduled eligibility differs from ASAP | Do not infer valid future windows solely from current availability |
 | No address, no confirmed coordinates, GPS denied | Do not manufacture Delivery outlet or assert serviceability |
 | No Cart | Outlet is only a provisional Menu projection context; not final basket/order guarantee |
-| Configured Cart: nearest outlet unavailable for one item | Consider next fully eligible under D-387; no silent modification; if none, preserve Cart and show specific recovery |
+| Configured Cart not fulfilled by the distance-selected outlet | Existing merchandise and Checkout recovery; Cart preserved; no silent item substitution; no automatic farther-outlet selection. That fallback is an open product choice, not D-387 |
 | Item becomes unavailable after menu read | Checkout payment-preparation fails/re-evaluates under existing rules |
 | Delivery address changes | New server winner and relevant Cart/Checkout commercial truth are revalidated |
 | Cart item/variant/quantity changes | Re-evaluate full Cart and don't keep stale selected outlet as purchased truth |
@@ -121,5 +121,6 @@ IMPLEMENTATION_AUTHORIZATION = NO
 SERVER_ROUTING_RUNTIME = PRIORITY_FIRST_UNTIL_CODE_DEPLOYED
 LIVE_DATA_MUTATION = NO
 PICKUP_POLICY_CHANGE = NO
+CROSS_OUTLET_CART_FALLBACK = OPEN_PRODUCT_CHOICE_NOT_D387
 PUBLIC_GTM = NOT_GRANTED
 \`\`\`
