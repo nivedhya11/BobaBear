@@ -108,7 +108,7 @@ Use different names for the human label and the stable id.
 
 Human-readable verification steps look like:
 
-- `Scheduled Orders · Cancellation and Reminders`
+- `Scheduled Fulfilment · Cancellation and Reminders`
 - `Checkout · Snapshot Revalidation`
 - `Promotions · Operator Authoring`
 - `Customer Ordering · Browser Regression`

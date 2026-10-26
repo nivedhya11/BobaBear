@@ -161,16 +161,16 @@ jobs:
       - name: Scheduled Fulfilment · Persistence and Delivery Finality
         run: npm run test:imp036i:tranche1
 
-      - name: Scheduled Orders · Windows, Checkout, and Payment Binding
+      - name: Scheduled Fulfilment · Windows, Checkout, and Payment Binding
         run: npm run test:imp036i:tranche2
 
-      - name: Scheduled Orders · Customer and Workforce Surfaces
+      - name: Scheduled Fulfilment · Customer and Workforce Surfaces
         run: npm run test:imp036i:tranche3
 
-      - name: Scheduled Orders · Cancellation and Reminders
+      - name: Scheduled Fulfilment · Cancellation and Reminders
         run: npm run test:imp036i:tranche4
 
-      - name: Scheduled Orders · Payment Hardening and Document Continuity
+      - name: Scheduled Fulfilment · Payment Hardening and Document Continuity
         run: npm run test:imp036i:tranche5
 
       - name: Promotions · Commercial Persistence

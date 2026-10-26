@@ -617,7 +617,7 @@ test("a staged history index edit passes and an unchanged snapshot copy does not
 });
 
 test("workflow display names reject stage identifiers and accept business names", () => {
-  assert.equal(workflowStageIdentifier("Scheduled Orders · Cancellation and Reminders"), null);
+  assert.equal(workflowStageIdentifier("Scheduled Fulfilment · Cancellation and Reminders"), null);
   assert.equal(workflowStageIdentifier("Checkout · Snapshot Revalidation"), null);
   assert.equal(workflowStageIdentifier("Promotions · Operator Authoring"), null);
   assert.equal(workflowStageIdentifier("Customer Ordering · Browser Regression"), null);
@@ -641,7 +641,7 @@ jobs:
   commerce-core:
     name: Commerce core
     steps:
-      - name: Scheduled Orders · Cancellation and Reminders
+      - name: Scheduled Fulfilment · Cancellation and Reminders
         run: npm run test:imp036i:tranche4
       - name: Upload evidence
         with:
@@ -650,7 +650,7 @@ jobs:
   assert.deepEqual(parsed.workflow, ["CI"]);
   assert.deepEqual(parsed.jobs, ["Commerce core"]);
   assert.deepEqual(parsed.steps, [
-    "Scheduled Orders · Cancellation and Reminders",
+    "Scheduled Fulfilment · Cancellation and Reminders",
     "Upload evidence",
   ]);
   assert.deepEqual(
@@ -732,7 +732,7 @@ jobs:
   example:
     name: Example
     steps:
-      - name: Scheduled Orders · Cancellation and Reminders
+      - name: Scheduled Fulfilment · Cancellation and Reminders
         run: npm run test:imp036i:tranche4
       - name: PostgreSQL 18 persistence
         run: npm run test:database

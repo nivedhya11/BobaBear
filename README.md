@@ -52,7 +52,7 @@ The public web is a static Next.js export in front of separate Node processes. T
 
 `src/data/menu.json`, `src/lib/menuImages.ts`, and `public/assets/menu/` are marketing and static-seed content. They feed landing-page presentation and the menu-import inventory used by bootstrap tooling.
 
-Sellable Menu, Catalog, Assortment, and Pricing are operations-managed domain state. Customer ordering reads the published Menu projection. Editing `menu.json` does not by itself change the catalog, assortment, price books, or published menu. Commercial changes belong in Administration commercial workflows and the domain modules under `src/server`.
+Customer ordering reads the published Menu projection. Editing `menu.json` does not by itself change Catalog, Assortment, Pricing, or the published Menu. Catalog, menu presentation, assortment, pricing, and promotions are authored in the Administration commercial workspace. The Operations store assortment page is a read-only outlet view; assortment changes stay at brand level. Domain modules live under `src/server`.
 
 ### Tests
 
@@ -545,7 +545,7 @@ Marketing and static-seed edits live in the places below. Sellable Menu, Catalog
 
 | What you want to change | Where |
 |---|---|
-| **Marketing menu seed** (names, seed descriptions, seed tags) | [`src/data/menu.json`](src/data/menu.json). This does not update operations-managed Catalog, Assortment, Pricing, or the published Menu. |
+| **Marketing menu seed** (names, seed descriptions, seed tags) | [`src/data/menu.json`](src/data/menu.json). This does not update Catalog, Assortment, Pricing, or the published Menu. |
 | **Marketing promo tags** (`new`, `limited`, `signature`, `bestseller`) | the `"tags"` array on each seed item in `src/data/menu.json` |
 | **Marketing menu photos** | drop the image in `public/assets/menu/` using the exact filename from [`src/lib/menuImages.ts`](src/lib/menuImages.ts) |
 | **Drop date / countdown** | `DROP_DATE` in [`src/components/SignatureDrops.tsx`](src/components/SignatureDrops.tsx) (the countdown auto-flips to a "Drop Now Live" state once it passes) |
