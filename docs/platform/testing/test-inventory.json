@@ -31,11 +31,11 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2352,
-    "executableTestFiles": 540,
+    "trackedPathsConsidered": 2357,
+    "executableTestFiles": 543,
     "sourceTestFiles": 160,
     "testsTreeExecutableFiles": 291,
-    "scriptTestFiles": 89,
+    "scriptTestFiles": 92,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
     "playwrightConfigs": 7,
@@ -552,7 +552,9 @@
     "scripts/lib/vitest-result-validation.test.mjs",
     "scripts/nginx-origin-redirect.test.mjs",
     "scripts/origin-trust/verify-contracts.test.mjs",
+    "scripts/postgres/c1-nonroot-runtime.test.mjs",
     "scripts/project-consistency.test.mjs",
+    "scripts/proof/pg-c1-proof-cleanup.test.mjs",
     "scripts/recovery/capacity/observe.test.mjs",
     "scripts/recovery/cli.credentials.test.mjs",
     "scripts/recovery/cli.test.mjs",
@@ -586,6 +588,7 @@
     "scripts/recovery/spaces/local.test.mjs",
     "scripts/recovery/spaces/s3.test.mjs",
     "scripts/recovery/systemd/validate.test.mjs",
+    "scripts/recovery/tools/age-tools.test.mjs",
     "scripts/recovery/validate/business-integrity.test.mjs",
     "scripts/recovery/validate/isolation.test.mjs",
     "scripts/recovery/validate/recovered-app.test.mjs",
@@ -2355,7 +2358,41 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "scripts/postgres/c1-nonroot-runtime.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "scripts/project-consistency.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/proof/pg-c1-proof-cleanup.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
       "testType": "script-unit",
@@ -2957,6 +2994,24 @@
     },
     {
       "path": "scripts/recovery/systemd/validate.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/recovery/tools/age-tools.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
       "testType": "script-unit",
