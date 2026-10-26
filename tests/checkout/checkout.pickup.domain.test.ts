@@ -109,6 +109,7 @@ describe("IMP-036H-B pickup eligibility + commercial core", () => {
       );
       expect(options.outlets).toEqual([]);
       expect(options.selectionPolicy).toBe("UNAVAILABLE");
+      expect(options.merchandiseProblems).toEqual([]);
 
       await seedEnabledPickupProfile(persistence, actors.tree.outletA.id);
       await configureAlwaysAcceptingOutlet(
@@ -684,6 +685,9 @@ describe("IMP-036H-B pickup eligibility + commercial core", () => {
       );
       expect(options.selectionPolicy).toBe("UNAVAILABLE");
       expect(options.outlets).toHaveLength(0);
+      expect(options.merchandiseProblems.map((problem) => problem.code)).toContain(
+        "CHECKOUT_NOT_ASSORTED",
+      );
 
       // If fulfilment is forced to the excluded outlet, evaluate surfaces merchandise code
       // (recoverable — no silent line removal / outlet substitution).
@@ -718,6 +722,9 @@ describe("IMP-036H-B pickup eligibility + commercial core", () => {
       expect(cart).not.toBeNull();
       expect(cart!.lines).toHaveLength(1);
       expect(cart!.lines[0]?.variantId).toBe(catalog.variantId);
+      expect(options.merchandiseProblems.map((problem) => problem.cartLineId)).toContain(
+        cart!.lines[0]!.id,
+      );
     });
   });
 
