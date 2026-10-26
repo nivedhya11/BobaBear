@@ -502,11 +502,11 @@ jobs:
       - name: Administration tests
         run: npm run test:administration
 
-      - name: IMP-036J #381 create-promotion diagnostic
+      - name: Promotion create identifier validation
         run: >-
           node scripts/run-vitest.mjs run
           --config vitest.database.config.mts
-          tests/administration/imp036j-381-create-promotion.diagnostic.integration.test.ts
+          tests/administration/promotion-create-identifier-validation.integration.test.ts
 
       - name: Operations HTTP tests
         run: npm run test:operations:http
