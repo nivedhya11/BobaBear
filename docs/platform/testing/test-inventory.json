@@ -257,8 +257,8 @@
     "tests/administration/commercial-money.test.ts",
     "tests/administration/commercial-types.test.ts",
     "tests/administration/imp036g-proofs.integration.test.ts",
-    "tests/administration/imp036j-381-create-promotion.diagnostic.integration.test.ts",
     "tests/administration/portal-session.integration.test.ts",
+    "tests/administration/promotion-create-identifier-validation.integration.test.ts",
     "tests/administration/promotion-readiness.test.ts",
     "tests/assortment-availability/assortment-consequence-preview.test.ts",
     "tests/assortment-availability/assortment-revision-concurrency.test.ts",
@@ -1322,8 +1322,8 @@
           "run": "npm run test:administration"
         },
         {
-          "name": "IMP-036J #381 create-promotion diagnostic",
-          "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/administration/imp036j-381-create-promotion.diagnostic.integration.test.ts"
+          "name": "Promotion create identifier validation",
+          "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/administration/promotion-create-identifier-validation.integration.test.ts"
         },
         {
           "name": "Operations HTTP tests",
@@ -6984,7 +6984,7 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
-      "path": "tests/administration/imp036j-381-create-promotion.diagnostic.integration.test.ts",
+      "path": "tests/administration/portal-session.integration.test.ts",
       "runner": "vitest",
       "domain": "administration",
       "testType": "integration",
@@ -7002,7 +7002,7 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
-      "path": "tests/administration/portal-session.integration.test.ts",
+      "path": "tests/administration/promotion-create-identifier-validation.integration.test.ts",
       "runner": "vitest",
       "domain": "administration",
       "testType": "integration",
