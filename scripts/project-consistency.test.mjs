@@ -19457,35 +19457,40 @@ describe("D-384 programme baseline / IMP-036K source-era decision allocation", (
     assert.ok(FROZEN_TIP_STRINGS.includes("DR-26"));
   });
 
-  it("accepts live DR-26 / D-384 / D-385 / D-386 / next-D-387 programme baseline progression", () => {
+  it("accepts live DR-27 / D-384–D-387 / next-D-388 programme baseline progression", () => {
     const meta = extractMeta(liveDecision);
     const result = evaluateD384ProgrammeBaselineProgression({ meta, text: liveDecision });
     assert.equal(result.ok, true, result.message);
-    assert.match(liveDecision, /next ID \*\*D-387\*\*/);
+    assert.match(liveDecision, /next ID \*\*D-388\*\*/);
     assert.match(liveDecision, /\|\s*D-384\s*\|/);
     assert.match(liveDecision, /\|\s*D-385\s*\|/);
     assert.match(liveDecision, /\|\s*D-386\s*\|/);
+    const d387 = collectDecisionRegisterIdRows(liveDecision, "D-387");
+    assert.equal(d387.length, 1);
+    assert.match(d387[0], /nearest eligible Delivery/i);
+    assert.match(d387[0], /routing_priority/);
+    assert.match(d387[0], /\| CURRENT \|/);
     assert.deepEqual(evaluateD385Current(liveDecision), { ok: true, status: "CURRENT" });
     assert.deepEqual(evaluateD386Current(liveDecision), { ok: true, status: "CURRENT" });
     assert.deepEqual(evaluateD383Current(liveDecision), { ok: true, status: "CURRENT" });
     assert.deepEqual(evaluateD382AmendedByD383(liveDecision), { ok: true, status: "AMENDED" });
   });
 
-  it("accepts GOV-2 tip and legitimate synthetic DR-27 successor without rewriting tip expectations", () => {
+  it("accepts GOV-2 tip and legitimate synthetic DR-28 successor without rewriting tip expectations", () => {
     const liveMeta = extractMeta(liveDecision);
     assert.deepEqual(evaluateGov2DecisionRegisterTip({ meta: liveMeta, text: liveDecision }).ok, true);
 
-    const d387 =
-      "| D-387 | Synthetic forward successor fixture | Roadmap / Program / Planning | CURRENT | Fixture only | — | — | Wave test |";
+    const d388 =
+      "| D-388 | Synthetic forward successor fixture | Roadmap / Program / Planning | CURRENT | Fixture only | — | — | Wave test |";
     const successorText = liveDecision
-      .replace(/next ID \*\*D-387\*\*/, "next ID **D-388**")
-      .replace(/^\|\s*D-386\s*\|.*$/m, (row) => `${row}\n${d387}`);
-    assert.ok(Math.max(...collectDecisionRegisterTableIds(successorText)) === 387);
+      .replace(/next ID \*\*D-388\*\*/, "next ID **D-389**")
+      .replace(/^\|\s*D-387\s*\|.*$/m, (row) => `${row}\n${d388}`);
+    assert.ok(Math.max(...collectDecisionRegisterTableIds(successorText)) === 388);
     const successor = evaluateGov2DecisionRegisterTip(
-      withMeta("DR-27", "DR-26", successorText),
+      withMeta("DR-28", "DR-27", successorText),
     );
     assert.equal(successor.ok, true, successor.message);
-    assert.match(successor.message, /DR-27/);
+    assert.match(successor.message, /DR-28/);
   });
 
   it("accepts synthetic DR-25 / D-384 / next-D-385 programme baseline shape", () => {
@@ -19626,18 +19631,18 @@ describe("D-384 programme baseline / IMP-036K source-era decision allocation", (
     assert.equal(evaluateD384ProgrammeBaselineProgression({ meta, text: bad386 }).code, "D386_CONTRACT");
   });
 
-  it("rejects DR-26 progression with stale next free ID D-385", () => {
+  it("rejects DR-27 progression with stale next free ID D-385", () => {
     const meta = extractMeta(liveDecision);
-    const text = liveDecision.replace(/next ID \*\*D-387\*\*/, "next ID **D-385**");
+    const text = liveDecision.replace(/next ID \*\*D-388\*\*/, "next ID **D-385**");
     assert.notEqual(text, liveDecision);
     const result = evaluateD384ProgrammeBaselineProgression({ meta, text });
     assert.equal(result.ok, false);
     assert.ok(["D384_NEXT_ID", "D384_NEXT_ID_STALE"].includes(result.code), result.code);
   });
 
-  it("rejects DR-26 progression with stale next free ID D-384", () => {
+  it("rejects DR-27 progression with stale next free ID D-384", () => {
     const meta = extractMeta(liveDecision);
-    const text = liveDecision.replace(/next ID \*\*D-387\*\*/, "next ID **D-384**");
+    const text = liveDecision.replace(/next ID \*\*D-388\*\*/, "next ID **D-384**");
     assert.notEqual(text, liveDecision);
     const result = evaluateD384ProgrammeBaselineProgression({ meta, text });
     assert.equal(result.ok, false);
@@ -19646,7 +19651,7 @@ describe("D-384 programme baseline / IMP-036K source-era decision allocation", (
 
   it("rejects contradictory next-free-ID ahead of highest allocated table id", () => {
     const meta = extractMeta(liveDecision);
-    const text = liveDecision.replace(/next ID \*\*D-387\*\*/, "next ID **D-390**");
+    const text = liveDecision.replace(/next ID \*\*D-388\*\*/, "next ID **D-390**");
     const result = evaluateD384ProgrammeBaselineProgression({ meta, text });
     assert.equal(result.ok, false);
     assert.equal(result.code, "D384_NEXT_ID");
@@ -19654,10 +19659,10 @@ describe("D-384 programme baseline / IMP-036K source-era decision allocation", (
 
   it("rejects malformed or missing next-free-ID declarations", () => {
     const meta = extractMeta(liveDecision);
-    const missing = liveDecision.replace(/next ID \*\*D-387\*\*/, "next free decision identifier unset");
+    const missing = liveDecision.replace(/next ID \*\*D-388\*\*/, "next free decision identifier unset");
     const duplicate = liveDecision.replace(
-      /next ID \*\*D-387\*\*/,
-      "next ID **D-387** and also next ID **D-388**",
+      /next ID \*\*D-388\*\*/,
+      "next ID **D-388** and also next ID **D-389**",
     );
     assert.equal(parseDeclaredNextFreeDecisionId(missing).ok, false);
     assert.equal(evaluateD384ProgrammeBaselineProgression({ meta, text: missing }).code, "D384_NEXT_ID");
@@ -19728,7 +19733,7 @@ describe("D-384 programme baseline / IMP-036K source-era decision allocation", (
     assert.equal(rejected.code, "IMP036K_SOURCE_ERA_D384");
   });
 
-  it("does not treat live DR-26 D-384 as IMP-036K source-era Fit/Design provenance", () => {
+  it("does not treat live DR-27 D-384 as IMP-036K source-era Fit/Design provenance", () => {
     // Live tip has D-384; source-era helper must fail-closed against that tip text.
     const rejected = evaluateImp036kSourceEraDecisionAllocation(liveDecision);
     assert.equal(rejected.ok, false);
