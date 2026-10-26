@@ -47,6 +47,12 @@ canonical method is [`PRODUCT-DELIVERY.md`](docs/platform/PRODUCT-DELIVERY.md). 
 [`EXPERIENCE.md`](docs/platform/EXPERIENCE.md) (EXP-1). Product language is
 [`PRODUCT-LANGUAGE.md`](docs/platform/PRODUCT-LANGUAGE.md) (LANG-1).
 
+For new brand/editorial writing and mockups, the Founder-approved supporting creative guide is
+[`docs/platform/experience/brand-voice-and-microcopy.md`](docs/platform/experience/brand-voice-and-microcopy.md)
+(BB-VOICE-1.0). It locks creative naming and tone only; LANG-1 and approved Product/Experience
+contracts remain authoritative for task labels, customer promises, money, checkout, payment, and
+recovery. Reading this guide never authorizes navigation, route, or live-copy changes.
+
 The authoritative PD-2 phase sequence lives only in `PRODUCT-DELIVERY.md`. These are delivery
 process phases, not new ROADMAP lifecycle states. IMP-036E and earlier retain their existing lifecycle
 (`ANCHOR → GATE → EXECUTE → PROVE → ACCEPT → RECONCILE → ADVANCE`). Historical accepted IMPs are
