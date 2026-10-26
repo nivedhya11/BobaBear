@@ -185,6 +185,12 @@ jobs:
           --config vitest.database.config.mts
           tests/payment/gtm-391-payment-review-loop.domain.test.ts
 
+      - name: Payment binding fulfilment timing
+        run: >-
+          node scripts/run-vitest.mjs run
+          --config vitest.database.config.mts
+          tests/payment/payment-binding-fulfilment-timing.domain.test.ts
+
       - name: IMP-036J GTM coupon authority and #385 line-presentation evidence
         run: >-
           node scripts/run-vitest.mjs run
@@ -502,11 +508,11 @@ jobs:
       - name: Administration tests
         run: npm run test:administration
 
-      - name: IMP-036J #381 create-promotion diagnostic
+      - name: Promotion create identifier validation
         run: >-
           node scripts/run-vitest.mjs run
           --config vitest.database.config.mts
-          tests/administration/imp036j-381-create-promotion.diagnostic.integration.test.ts
+          tests/administration/promotion-create-identifier-validation.integration.test.ts
 
       - name: Operations HTTP tests
         run: npm run test:operations:http

@@ -31,10 +31,10 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2354,
-    "executableTestFiles": 542,
-    "sourceTestFiles": 160,
-    "testsTreeExecutableFiles": 291,
+    "trackedPathsConsidered": 2365,
+    "executableTestFiles": 547,
+    "sourceTestFiles": 163,
+    "testsTreeExecutableFiles": 293,
     "scriptTestFiles": 91,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
@@ -47,7 +47,7 @@
     "packageCoverageCommands": 1,
     "packageInventoryCommands": 2,
     "ciWorkflowFiles": 4,
-    "ciValidationSteps": 133,
+    "ciValidationSteps": 134,
     "protectedEvidenceTrackedFiles": 3,
     "archiveTrackedFiles": 92
   },
@@ -58,6 +58,7 @@
     "src/components/Footer.test.tsx",
     "src/components/FooterNewsletter.test.tsx",
     "src/components/Nav.test.tsx",
+    "src/components/PublishedMenuChapters.test.tsx",
     "src/components/account/AccountShell.test.tsx",
     "src/components/account/AddressForm.validation.test.ts",
     "src/components/operations/OperationsDeliveryPanel.test.tsx",
@@ -90,6 +91,7 @@
     "src/components/ordering/cart-changed-recovery-presentation.test.ts",
     "src/components/ordering/cart-presentation.test.ts",
     "src/components/ordering/checkout-snapshot-presentation.test.ts",
+    "src/components/ordering/checkout-unavailable-item-presentation.test.tsx",
     "src/components/ordering/client-action.test.ts",
     "src/components/ordering/committed-presentation-observation.test.ts",
     "src/components/ordering/financial-document-presentation.test.ts",
@@ -121,6 +123,7 @@
     "src/lib/operations/orders.test.ts",
     "src/lib/operations/pending-refund-command.test.ts",
     "src/lib/operations/refund-amount.test.ts",
+    "src/lib/published-menu-cards.test.ts",
     "src/lib/razorpay/checkout-script.test.ts",
     "src/lib/razorpay/csp-origins.test.ts",
     "src/lib/razorpay/standard-checkout.test.ts",
@@ -257,8 +260,8 @@
     "tests/administration/commercial-money.test.ts",
     "tests/administration/commercial-types.test.ts",
     "tests/administration/imp036g-proofs.integration.test.ts",
-    "tests/administration/imp036j-381-create-promotion.diagnostic.integration.test.ts",
     "tests/administration/portal-session.integration.test.ts",
+    "tests/administration/promotion-create-identifier-validation.integration.test.ts",
     "tests/administration/promotion-readiness.test.ts",
     "tests/assortment-availability/assortment-consequence-preview.test.ts",
     "tests/assortment-availability/assortment-revision-concurrency.test.ts",
@@ -288,6 +291,7 @@
     "tests/catalog/menu-revision.test.ts",
     "tests/catalog/modifier-create-input.contract.test.ts",
     "tests/catalog/publication-preview-f2.test.ts",
+    "tests/catalog/published-menu-runtime.test.ts",
     "tests/checkout-auth-integration/checkout.auth.test.ts",
     "tests/checkout-concurrency/checkout.concurrency.test.ts",
     "tests/checkout-security/checkout.security.test.ts",
@@ -460,6 +464,7 @@
     "tests/payment-reconciliation/payment.reconciliation.test.ts",
     "tests/payment-security/payment.security.test.ts",
     "tests/payment/gtm-391-payment-review-loop.domain.test.ts",
+    "tests/payment/payment-binding-fulfilment-timing.domain.test.ts",
     "tests/payment/payment.domain.test.ts",
     "tests/payment/payment.pickup.domain.test.ts",
     "tests/payment/payment.scheduled-bind-race.domain.test.ts",
@@ -1130,6 +1135,10 @@
           "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/payment/gtm-391-payment-review-loop.domain.test.ts"
         },
         {
+          "name": "Payment binding fulfilment timing",
+          "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/payment/payment-binding-fulfilment-timing.domain.test.ts"
+        },
+        {
           "name": "IMP-036J GTM coupon authority and #385 line-presentation evidence",
           "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/checkout/imp036j-gtm-committed-cart-authority.domain.test.ts\ntests/checkout/imp036j-385-line-presentation-options.fixture.test.ts"
         },
@@ -1322,8 +1331,8 @@
           "run": "npm run test:administration"
         },
         {
-          "name": "IMP-036J #381 create-promotion diagnostic",
-          "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/administration/imp036j-381-create-promotion.diagnostic.integration.test.ts"
+          "name": "Promotion create identifier validation",
+          "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/administration/promotion-create-identifier-validation.integration.test.ts"
         },
         {
           "name": "Operations HTTP tests",
@@ -3286,6 +3295,24 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "src/components/PublishedMenuChapters.test.tsx",
+      "runner": "vitest",
+      "domain": "components/PublishedMenuChapters.test.tsx",
+      "testType": "component-or-tsx",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "2-component"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "src/components/account/AccountShell.test.tsx",
       "runner": "vitest",
       "domain": "components/account",
@@ -3866,6 +3893,24 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "src/components/ordering/checkout-unavailable-item-presentation.test.tsx",
+      "runner": "vitest",
+      "domain": "components/ordering",
+      "testType": "component-or-tsx",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "2-component"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "src/components/ordering/client-action.test.ts",
       "runner": "vitest",
       "domain": "components/ordering",
@@ -4419,6 +4464,24 @@
       "path": "src/lib/operations/refund-amount.test.ts",
       "runner": "vitest",
       "domain": "lib/operations",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/lib/published-menu-cards.test.ts",
+      "runner": "vitest",
+      "domain": "lib/published-menu-cards.test.ts",
       "testType": "unit-or-domain",
       "dbRequired": "NO",
       "browserRequired": "NO",
@@ -6984,7 +7047,7 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
-      "path": "tests/administration/imp036j-381-create-promotion.diagnostic.integration.test.ts",
+      "path": "tests/administration/portal-session.integration.test.ts",
       "runner": "vitest",
       "domain": "administration",
       "testType": "integration",
@@ -7002,7 +7065,7 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
-      "path": "tests/administration/portal-session.integration.test.ts",
+      "path": "tests/administration/promotion-create-identifier-validation.integration.test.ts",
       "runner": "vitest",
       "domain": "administration",
       "testType": "integration",
@@ -7506,6 +7569,23 @@
     },
     {
       "path": "tests/catalog/publication-preview-f2.test.ts",
+      "runner": "vitest",
+      "domain": "catalog",
+      "testType": "unit-or-domain",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:catalog"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/catalog/published-menu-runtime.test.ts",
       "runner": "vitest",
       "domain": "catalog",
       "testType": "unit-or-domain",
@@ -10511,6 +10591,24 @@
     },
     {
       "path": "tests/payment/gtm-391-payment-review-loop.domain.test.ts",
+      "runner": "vitest",
+      "domain": "payment",
+      "testType": "unit-or-domain",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:payment"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/payment/payment-binding-fulfilment-timing.domain.test.ts",
       "runner": "vitest",
       "domain": "payment",
       "testType": "unit-or-domain",

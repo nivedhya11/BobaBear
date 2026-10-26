@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CheckoutClient } from "./CheckoutClient";
 import { IMP036J_COPY } from "./imp036j-copy";
-import type { OrderingCatalog } from "@/shared/ordering-catalog";
 
 const startCheckout = vi.fn();
 const getActiveCheckout = vi.fn();
@@ -51,7 +50,7 @@ vi.mock("@/lib/customer-commerce", async () => {
   };
 });
 
-const catalog = { brandId: "brand-1" } as unknown as OrderingCatalog;
+const catalog = { brandId: "brand-1" };
 
 const cart = {
   id: "cart-1",
@@ -109,7 +108,7 @@ describe("IMP-036J T5 CheckoutClient activation remediation", () => {
     getActiveCheckout.mockResolvedValue({ ok: true, data: { checkout } });
     startCheckout.mockResolvedValue({ ok: true, data: { checkout } });
 
-    render(<CheckoutClient catalog={catalog} />);
+    render(<CheckoutClient brandId={catalog.brandId} />);
 
     await waitFor(() => expect(startCheckout).toHaveBeenCalled());
     expect(startCheckout).toHaveBeenCalledWith({
@@ -122,7 +121,7 @@ describe("IMP-036J T5 CheckoutClient activation remediation", () => {
   it("does not call startCheckout on direct entry when active checkout exists without activation", async () => {
     getActiveCheckout.mockResolvedValue({ ok: true, data: { checkout } });
 
-    render(<CheckoutClient catalog={catalog} />);
+    render(<CheckoutClient brandId={catalog.brandId} />);
 
     await waitFor(() => expect(getActiveCheckout).toHaveBeenCalled());
     expect(startCheckout).not.toHaveBeenCalled();
@@ -234,7 +233,7 @@ describe("IMP-036J T5 CheckoutClient activation remediation", () => {
       },
     });
 
-    render(<CheckoutClient catalog={catalog} />);
+    render(<CheckoutClient brandId={catalog.brandId} />);
     await waitFor(() => expect(screen.getByTestId("payment-start")).toBeInTheDocument());
     await userEvent.click(screen.getByTestId("payment-start"));
     await waitFor(() => expect(startCheckout).toHaveBeenCalledWith({ cartId: "cart-1" }));
