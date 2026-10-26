@@ -34,12 +34,26 @@ Do not mutate unrelated files.
 ## Trunk and branches
 
 Application source has one permanent branch, `main`. Task work uses one short-lived branch taken
-from current `main` when a branch is authorized. Name it for the change, using an existing
-semantic prefix and a short purpose (`docs/…`, `fix/…`, `feat/…`, `test/…`, `security/…`, or
-another prefix already used in this repository). Keep IMP, story, and issue identity in the
-commit, pull request, and trace records. [`repository-conventions.md`](./repository-conventions.md)
-(RHS-1) owns artifact naming. These branch names are documentary. This standard does not add an
-Action that enforces them.
+from current `main` when a branch is authorized.
+
+A new short-lived branch uses this documentary name:
+
+`<type>/<issue-number>-<semantic-description>`
+
+`type` is an existing semantic prefix (`docs`, `fix`, `feat`, `test`, `security`, or another
+prefix already used on a task branch in this repository). The description is short kebab-case.
+Example: `fix/395-checkout-location-provider-readiness`.
+
+When an authorized engineering task has no owning issue, the pull request documents that
+exception and the branch uses a descriptive name without an issue number. Example:
+`docs/beds-1-supporting-workflow`.
+
+Existing branches keep their names. Dependabot names stay as GitHub generates them. These names
+are documentary. This standard does not add an Action that enforces them.
+
+Keep IMP, story, and issue identity in the commit, pull request, and trace records.
+[`repository-conventions.md`](./repository-conventions.md) (RHS-1) owns artifact naming inside the
+tree. It does not own this branch-name convention.
 
 Create that branch in the canonical checkout. Ordinary task work does not add another clone or
 worktree. One implementation agent owns the write path for the task. An editor or language server
@@ -79,11 +93,44 @@ Definition. Decision identity is owned by [`decision-register.md`](../decision-r
 GitHub issue number or pull request number is a tracker id. It does not renumber an IMP, a story,
 or an acceptance scenario.
 
-One cohesive change may link several issues. `Fixes #n` asks GitHub to close that issue when the
-pull request merges, and is used only when this change completes that issue. `Refs #n` records the
-relationship and does not close the issue.
+Name a new item with the existing Project type and the identity that type already uses. These
+examples illustrate the name. They do not rename an existing issue and they do not open a new one.
 
-Optional labels may name an area. They do not add a project workflow or a required label set.
+- Epic — the allocated IMP identity when the work is an IMP. Example:
+  `[EPIC] IMP-036J — Promotions, Coupons & Offers`. Do not invent an IMP id.
+- Story — the canonical `US-...` identity. Example:
+  `[STORY] US-036J-012 — Operable Promotions & Coupons for workforce`.
+- Bug — the component and the observable failure. Example:
+  `[BUG] Checkout — payment returns to Review unexpectedly`.
+- Task — the component and the intended engineering outcome. Example:
+  `[TASK] Workflow — record the documentary branch name`.
+- UAT Finding, Decision, Gate, and Parked Capability keep those Project types and their current
+  authorities. A UAT Finding keeps the existing Founder UAT title, and the Founder owns the
+  verdict. A Decision keeps its binding identity in
+  [`decision-register.md`](../decision-register.md). A Gate keeps passage with the authority that
+  PD-2 or the Founder already names. A Parked Capability keeps the existing parked title, for example
+  `[PARKED] Deals — Founder-approved discovery preserved`. Parking does not activate or accept
+  that capability.
+
+Where a story belongs to an epic, use GitHub's native sub-issue link. Epic `#293` is already the
+parent of the `US-036J-...` stories. A bug or task may use that same native parent when it
+belongs to one story or epic. An item with no parent stays standalone. Do not keep a second list
+for a relationship GitHub already stores.
+
+A substantive implementation pull request names its owning GitHub issue, or records an explicit
+exception when the authorized task has no owning issue. Where the change implements a product
+story, it also names the canonical story id and the acceptance-scenario ids it covers. One
+cohesive change may link several issues. `Fixes #n` asks GitHub to close that issue when the
+pull request merges, and is used only when this change completes that issue. `Refs #n` records
+the relationship and does not close the issue.
+
+Optional area names, from the Founder-approved BEDS-1 proposal, are documentary:
+
+`area:customer`, `area:checkout`, `area:fulfilment`, `area:commercial`, `area:operations`,
+`area:platform`, `area:infrastructure`, `area:security`, `area:governance`
+
+This file does not create those GitHub labels. An area name does not add a Project field and does
+not copy Status, Delivery Stage, Priority, Gate, Capability, Work Item Type, or Founder Action.
 
 ## Product work and engineering work
 
@@ -127,8 +174,11 @@ where they apply. Do not copy those definitions here.
    completion evidence. It does not accept an IMP and it does not record a Founder verdict.
 7. Create authorized small, reconstructible local commit(s). Record SHA, tree, and any required
    working-tree fingerprint. Never rewrite published history.
-8. Push only when separately authorized. Retain the resulting CI run when available. Do not weaken
-   CI or edit unrelated source to obtain a green result.
+8. [`AGENTS.md`](../../../AGENTS.md) governs `DELIVERY_MODE`. An authorized `PUBLISH_PR` task
+   permits that task's scoped commit, push, and pull request without a second publication
+   approval. `LOCAL_ONLY`, and a task whose delivery mode is unset, stop before push. Retain the
+   resulting CI run when a pull request exists. Do not weaken CI or edit unrelated source to
+   obtain a green result.
 9. Independently review the actual diff, architecture compliance, and deterministic evidence.
    Product-story review also covers story completeness and required Golden Journeys. First review
    covers the full relevant slice. Follow-up review uses the previous approved SHA to the new SHA,
@@ -158,6 +208,9 @@ Prefer non-destructive cleanup. Fast-forward `main`. Delete a local branch only 
 `git branch -d` after the proof above. Leave uncertain or unique work in place. Delivery health
 stays on the existing project and on CI. This standard does not add a second health system.
 
-Promotion gates are independent. A local commit does not authorize push or a pull request. A pull
-request does not authorize merge. Merge does not authorize a tag, release, or deployment, and it
-does not replace required Founder UAT.
+Promotion gates stay independent, and [`AGENTS.md`](../../../AGENTS.md) governs which of them a
+task has already authorized. A local commit does not by itself authorize push or a pull request.
+An authorized `PUBLISH_PR` task already includes the scoped commit, push, and pull request. It
+does not authorize merge, a tag, a release, or a deployment. Merge does not replace required
+Founder UAT. A PD-2 phase transition does not grant push, pull request, merge, or deployment
+authority.
