@@ -31,23 +31,23 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2365,
-    "executableTestFiles": 547,
+    "trackedPathsConsidered": 2368,
+    "executableTestFiles": 548,
     "sourceTestFiles": 163,
     "testsTreeExecutableFiles": 293,
-    "scriptTestFiles": 91,
+    "scriptTestFiles": 92,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
     "playwrightConfigs": 7,
     "testSupportScripts": 51,
     "packageTestCommands": 94,
-    "packageAuditCommands": 27,
+    "packageAuditCommands": 28,
     "packageE2eCommands": 9,
     "packageCheckCommands": 17,
     "packageCoverageCommands": 1,
     "packageInventoryCommands": 2,
     "ciWorkflowFiles": 4,
-    "ciValidationSteps": 134,
+    "ciValidationSteps": 135,
     "protectedEvidenceTrackedFiles": 3,
     "archiveTrackedFiles": 92
   },
@@ -597,6 +597,7 @@
     "scripts/recovery/validate/business-integrity.test.mjs",
     "scripts/recovery/validate/isolation.test.mjs",
     "scripts/recovery/validate/recovered-app.test.mjs",
+    "scripts/repository/check-repository-conventions.test.mjs",
     "scripts/run-trivy.test.mjs",
     "scripts/serve-static-export.test.mjs",
     "scripts/testing-inventory.test.mjs",
@@ -805,6 +806,7 @@
       "audit:persistence",
       "audit:pricing-tax",
       "audit:promotions",
+      "audit:repo-hygiene",
       "audit:secrets",
       "audit:security-sdlc",
       "audit:serviceability",
@@ -874,6 +876,7 @@
     "audit:persistence": "node scripts/audit-persistence.mjs",
     "audit:pricing-tax": "node scripts/audit-pricing-tax.mjs",
     "audit:promotions": "node scripts/audit-promotions.mjs",
+    "audit:repo-hygiene": "node scripts/repository/check-repository-conventions.mjs",
     "audit:secrets": "node scripts/run-gitleaks.mjs",
     "audit:security-sdlc": "npm run audit:npm-sca && npm run audit:secrets",
     "audit:serviceability": "node scripts/audit-serviceability.mjs",
@@ -1037,6 +1040,10 @@
         {
           "name": "Testing inventory check",
           "run": "npm run testing:inventory:check"
+        },
+        {
+          "name": "Repository hygiene",
+          "run": "npm run audit:repo-hygiene"
         },
         {
           "name": "Install dependencies",
@@ -3081,6 +3088,23 @@
       "test1Layers": [
         "1-unit",
         "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/repository/check-repository-conventions.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
       ],
       "classificationConfidence": "HEURISTIC"
     },
