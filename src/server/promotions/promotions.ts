@@ -245,10 +245,10 @@ export async function createPromotionDraft(
 ): Promise<{ id: string; revision: bigint }> {
   assertTransactionContext(context, "createPromotionDraft");
   const brandId = assertUuid(input.brandId, "brandId");
+  if (typeof input.territoryId === "string") assertUuidShape(input.territoryId, "territoryId");
+  if (typeof input.organizationId === "string") assertUuidShape(input.organizationId, "organizationId");
+  if (typeof input.outletId === "string") assertUuidShape(input.outletId, "outletId");
   validateScopeShape(input);
-  if (input.territoryId) assertUuidShape(input.territoryId, "territoryId");
-  if (input.organizationId) assertUuidShape(input.organizationId, "organizationId");
-  if (input.outletId) assertUuidShape(input.outletId, "outletId");
   if (input.endsAt && input.endsAt <= input.startsAt) {
     throw new PromotionAdminError("PROMOTION_TIME_WINDOW_INVALID", "endsAt must be after startsAt.");
   }

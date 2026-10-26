@@ -6,8 +6,9 @@
  * PROMOTIONS_REQUEST_INVALID (existing PromotionValidationError envelope):
  * - promotions.code must satisfy promotions_code_format_check:
  *   ^[a-z0-9][a-z0-9_-]*$ and length 1–64. No trim, no case-fold.
- * - territoryId / organizationId / outletId, when present, must be a UUID
- *   because those columns are uuid. A non-UUID is a shape failure.
+ * - territoryId / organizationId / outletId, when the value is a string,
+ *   including "", must be a UUID because those columns are uuid. null and
+ *   undefined stay omitted. A non-UUID is a shape failure.
  *
  * A well-formed territory UUID that is unknown or belongs to another brand
  * is an existence/foreign-key outcome. No accepted contract chooses 400
@@ -138,6 +139,8 @@ function createBody(
     code: string;
     scopeType?: "brand" | "territory";
     territoryId?: string;
+    organizationId?: string;
+    outletId?: string;
   }>,
 ) {
   return {
@@ -147,6 +150,8 @@ function createBody(
     triggerType: "coupon" as const,
     startsAt: STARTS_AT,
     ...(input.territoryId === undefined ? {} : { territoryId: input.territoryId }),
+    ...(input.organizationId === undefined ? {} : { organizationId: input.organizationId }),
+    ...(input.outletId === undefined ? {} : { outletId: input.outletId }),
   };
 }
 
@@ -173,6 +178,8 @@ async function privateDriverEvidence(
     code: string;
     scopeType?: "brand" | "territory";
     territoryId?: string | null;
+    organizationId?: string | null;
+    outletId?: string | null;
   }>,
 ): Promise<PrivateDriverEvidence> {
   try {
@@ -184,8 +191,8 @@ async function privateDriverEvidence(
         displayName: "Diagnostic offer",
         scopeType: input.scopeType ?? "brand",
         territoryId: input.territoryId ?? null,
-        organizationId: null,
-        outletId: null,
+        organizationId: input.organizationId ?? null,
+        outletId: input.outletId ?? null,
         triggerType: "coupon",
         startsAt: new Date(STARTS_AT),
       }),
@@ -360,6 +367,62 @@ describe("IMP-036J #381 create-promotion HTTP validation", () => {
         sqlState: null,
         constraint: null,
       });
+
+      const emptyScopeIds = [
+        {
+          label: "brand territoryId empty",
+          body: createBody({ code: "brand-empty-terr", territoryId: "" }),
+          driver: { code: "brand-empty-terr", territoryId: "" },
+        },
+        {
+          label: "territory organizationId empty",
+          body: createBody({
+            code: "terr-empty-org",
+            scopeType: "territory",
+            territoryId: harness.tree.terrA.id,
+            organizationId: "",
+          }),
+          driver: {
+            code: "terr-empty-org",
+            scopeType: "territory" as const,
+            territoryId: harness.tree.terrA.id,
+            organizationId: "",
+          },
+        },
+        {
+          label: "territory outletId empty",
+          body: createBody({
+            code: "terr-empty-outlet",
+            scopeType: "territory",
+            territoryId: harness.tree.terrA.id,
+            outletId: "",
+          }),
+          driver: {
+            code: "terr-empty-outlet",
+            scopeType: "territory" as const,
+            territoryId: harness.tree.terrA.id,
+            outletId: "",
+          },
+        },
+      ] as const;
+      for (const emptyScope of emptyScopeIds) {
+        const before = await snapshot(harness, brandId);
+        const http = await post(harness.brandAdmin.id, emptyScope.body);
+        expect(http.status, emptyScope.label).toBe(400);
+        expect(http.body, emptyScope.label).toMatchObject({
+          ok: false,
+          code: "PROMOTIONS_REQUEST_INVALID",
+          requestId: REQUEST_ID,
+        });
+        expect(JSON.stringify(http.body), emptyScope.label).not.toMatch(SQL_LEAK);
+        expect(await privateDriverEvidence(harness, emptyScope.driver), emptyScope.label).toEqual({
+          status: 400,
+          code: "PROMOTIONS_REQUEST_INVALID",
+          sqlState: null,
+          constraint: null,
+        });
+        expect(await snapshot(harness, brandId), emptyScope.label).toEqual(before);
+      }
 
       const unknownTerritoryId = randomUUID();
       const unknownTerritory = await post(
