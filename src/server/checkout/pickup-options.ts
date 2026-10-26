@@ -24,6 +24,7 @@ import { findCheckoutRowById } from "./repository";
 export type ListPickupOptionsResult = Readonly<{
   outlets: readonly EligiblePickupOutlet[];
   selectionPolicy: "UNAVAILABLE" | "AUTO_SELECT" | "CUSTOMER_SELECT";
+  merchandiseProblems: readonly Readonly<{ cartLineId: string; code: string }>[];
 }>;
 
 export async function listCheckoutPickupOptions(
@@ -73,11 +74,12 @@ export async function listCheckoutPickupOptions(
       throw new CheckoutError("CHECKOUT_NOT_FOUND", "Checkout not found.");
     }
     const cart = await loadCartAggregate(ctx, cartRow);
-    const outlets = await listEligiblePickupOutletsForCheckout(ctx, {
+    const listing = await listEligiblePickupOutletsForCheckout(ctx, {
       brandId: row.brandId,
       cart,
       now,
     });
+    const outlets = listing.outlets;
 
     const selectionPolicy =
       outlets.length === 0
@@ -86,6 +88,10 @@ export async function listCheckoutPickupOptions(
           ? ("AUTO_SELECT" as const)
           : ("CUSTOMER_SELECT" as const);
 
-    return Object.freeze({ outlets, selectionPolicy });
+    return Object.freeze({
+      outlets,
+      selectionPolicy,
+      merchandiseProblems: listing.merchandiseProblems,
+    });
   });
 }
