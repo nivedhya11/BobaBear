@@ -31,10 +31,10 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2369,
-    "executableTestFiles": 548,
-    "sourceTestFiles": 163,
-    "testsTreeExecutableFiles": 293,
+    "trackedPathsConsidered": 2371,
+    "executableTestFiles": 550,
+    "sourceTestFiles": 164,
+    "testsTreeExecutableFiles": 294,
     "scriptTestFiles": 92,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
@@ -148,6 +148,7 @@
     "src/platform/startup/bootstrap.test.ts",
     "src/server/assortment/outlet-eligibility-session.test.ts",
     "src/server/auth/customer/runtime.test.ts",
+    "src/server/auth/customer/trusted-identity.test.ts",
     "src/server/auth/shared/config.test.ts",
     "src/server/auth/shared/realm-isolation.test.ts",
     "src/server/auth/workforce/operator/reset-token-bridge.test.ts",
@@ -312,6 +313,7 @@
     "tests/customer-address-security/security.test.ts",
     "tests/customer-addresses/domain.test.ts",
     "tests/customer-auth/http.integration.test.ts",
+    "tests/customer-auth/trusted-identity.integration.test.ts",
     "tests/customer-commerce/financial-document.http.integration.test.ts",
     "tests/customer-commerce/http.integration.test.ts",
     "tests/customer-commerce/razorpay.http.integration.test.ts",
@@ -917,7 +919,7 @@
     "test:customer-address-concurrency": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-address-concurrency",
     "test:customer-address-security": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-address-security",
     "test:customer-addresses": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-addresses",
-    "test:customer-auth:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-auth/http.integration.test.ts",
+    "test:customer-auth:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-auth/http.integration.test.ts tests/customer-auth/trusted-identity.integration.test.ts",
     "test:customer-commerce:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-commerce/http.integration.test.ts tests/customer-commerce/scheduled-http.tranche3.integration.test.ts",
     "test:customer-profile-auth-integration": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-profile-auth-integration",
     "test:customer-profile-security": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-profile-security",
@@ -4956,6 +4958,25 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "src/server/auth/customer/trusted-identity.test.ts",
+      "runner": "vitest",
+      "domain": "server/auth",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "src/server/auth/shared/config.test.ts",
       "runner": "vitest",
       "domain": "server/auth",
@@ -7974,6 +7995,24 @@
         "4-integration",
         "5-database-integration",
         "6-http-api-contract"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/customer-auth/trusted-identity.integration.test.ts",
+      "runner": "vitest",
+      "domain": "customer-auth",
+      "testType": "integration",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:customer-auth:http"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "4-integration",
+        "5-database-integration"
       ],
       "classificationConfidence": "HEURISTIC"
     },
