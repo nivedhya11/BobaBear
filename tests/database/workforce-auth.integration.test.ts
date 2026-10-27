@@ -240,6 +240,17 @@ function cookieHeaderFromSetCookie(setCookies: readonly string[]): string {
   return setCookies.map((raw) => raw.split(";", 1)[0]!).join("; ");
 }
 
+function requireTotpEnrollment(response: {
+  method: "otp" | "totp";
+  totpURI?: string;
+  backupCodes?: string[];
+}): { totpURI: string; backupCodes: string[] } {
+  if (response.method !== "totp" || response.totpURI === undefined || response.backupCodes === undefined) {
+    throw new Error("Expected TOTP enrollment");
+  }
+  return { totpURI: response.totpURI, backupCodes: response.backupCodes };
+}
+
 async function dumpRelevantTablesAsText(connectionString: string): Promise<string> {
   return withTestDatabaseClient(connectionString, async (client) => {
     const tables = [
@@ -541,17 +552,18 @@ describe("IMP-010 MFA enrollment, verification, lockout, backup codes", () => {
         headers: new Headers({ cookie: sessionCookie }),
         returnHeaders: true,
       });
-      expect(enroll.response.totpURI).toMatch(/^otpauth:\/\//);
-      expect(enroll.response.backupCodes.length).toBeGreaterThan(0);
-      const plaintextBackupCodes = [...enroll.response.backupCodes];
-      const totpSecret = secretFromTotpUri(enroll.response.totpURI);
+      const enrollment = requireTotpEnrollment(enroll.response);
+      expect(enrollment.totpURI).toMatch(/^otpauth:\/\//);
+      expect(enrollment.backupCodes.length).toBeGreaterThan(0);
+      const plaintextBackupCodes = [...enrollment.backupCodes];
+      const totpSecret = secretFromTotpUri(enrollment.totpURI);
 
       const dumpAfterEnroll = await dumpRelevantTablesAsText(database.connectionString);
       for (const code of plaintextBackupCodes) {
         expect(dumpAfterEnroll).not.toContain(code);
       }
       expect(dumpAfterEnroll).not.toContain(totpSecret);
-      expect(dumpAfterEnroll).not.toContain(enroll.response.totpURI);
+      expect(dumpAfterEnroll).not.toContain(enrollment.totpURI);
       // Rate-limit rows must never contain the raw email (hashed keys only).
       await withTestDatabaseClient(database.connectionString, async (client) => {
         const rateRows = await client.pool.query(`select * from app.workforce_auth_rate_limits`);
@@ -617,8 +629,9 @@ describe("IMP-010 MFA enrollment, verification, lockout, backup codes", () => {
         headers: new Headers({ cookie: reCookie }),
         returnHeaders: true,
       });
-      const reSecret = secretFromTotpUri(reEnroll.response.totpURI);
-      const backupCode = reEnroll.response.backupCodes[0]!;
+      const reEnrollment = requireTotpEnrollment(reEnroll.response);
+      const reSecret = secretFromTotpUri(reEnrollment.totpURI);
+      const backupCode = reEnrollment.backupCodes[0]!;
       await auth.api.verifyTOTP({
         body: { code: await currentTotpCode(reSecret), trustDevice: false },
         headers: new Headers({ cookie: reCookie }),

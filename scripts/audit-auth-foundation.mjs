@@ -9,7 +9,7 @@
  *
  * Checks performed:
  *   1. better-auth / @better-auth/drizzle-adapter / auth are pinned to
- *      exactly 1.6.25 (no ranges, no "latest", no beta/rc).
+ *      exactly 1.7.14 (no ranges, no "latest", no beta/rc).
  *   2. Customer realm modules never import the workforce schema/options/
  *      runtime, and vice versa; no unrestricted `getAuthRuntime(realm, ...)`
  *      factory exists.
@@ -51,7 +51,7 @@ import { fileURLToPath } from "node:url";
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 const SOURCE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]);
-const REQUIRED_VERSION = "1.6.25";
+const REQUIRED_VERSION = "1.7.14";
 
 const AUTH_ROOT = "src/server/auth/";
 const AUTH_TEST_FILE_SUFFIXES = [".test.ts", ".test.tsx", ".test.mjs"];
@@ -613,7 +613,7 @@ if (findings.length > 0) {
   console.log(`${findings.length} problem(s) found.`);
   process.exitCode = 1;
 } else {
-  console.log("  ✓  better-auth / @better-auth/drizzle-adapter / auth are pinned to 1.6.25.");
+  console.log("  ✓  better-auth / @better-auth/drizzle-adapter / auth are pinned to 1.7.14.");
   console.log("  ✓  Auth public entry points carry the server-only marker.");
   console.log("  ✓  No unrestricted generic realm factory.");
   console.log("  ✓  Customer and workforce realms do not import each other's schema.");
