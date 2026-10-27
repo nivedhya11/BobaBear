@@ -1080,7 +1080,7 @@
           "run": "socket=\"/run/user/$(id -u)/podman/podman.sock\"\ncommand -v podman\nif [ ! -S \"$socket\" ]; then\nsystemctl --user start podman.socket\nfi\ntest -S \"$socket\"\npodman --version"
         },
         {
-          "name": "IMP-028C modifier / bootstrap tests",
+          "name": "Catalog · Modifier Bootstrap",
           "run": "npm run test:catalog-imp028c-modifiers"
         },
         {
@@ -1104,75 +1104,75 @@
           "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/database/customer-menu-modifier-projection.integration.test.ts"
         },
         {
-          "name": "IMP-036I Tranche 1 proof",
+          "name": "Scheduled Fulfilment · Persistence and Delivery Finality",
           "run": "npm run test:imp036i:tranche1"
         },
         {
-          "name": "IMP-036I Tranche 2 proof",
+          "name": "Scheduled Fulfilment · Windows, Checkout, and Payment Binding",
           "run": "npm run test:imp036i:tranche2"
         },
         {
-          "name": "IMP-036I Tranche 3 proof",
+          "name": "Scheduled Fulfilment · Customer and Workforce Surfaces",
           "run": "npm run test:imp036i:tranche3"
         },
         {
-          "name": "IMP-036I Tranche 4 proof",
+          "name": "Scheduled Fulfilment · Cancellation and Reminders",
           "run": "npm run test:imp036i:tranche4"
         },
         {
-          "name": "IMP-036I Tranche 5 proof",
+          "name": "Scheduled Fulfilment · Payment Hardening and Document Continuity",
           "run": "npm run test:imp036i:tranche5"
         },
         {
-          "name": "IMP-036J Tranche 1 proof",
+          "name": "Promotions · Commercial Persistence",
           "run": "npm run test:imp036j:tranche1"
         },
         {
-          "name": "IMP-036J Tranche 2 proof",
+          "name": "Promotions · Measurement Persistence",
           "run": "npm run test:imp036j:tranche2"
         },
         {
-          "name": "IMP-036J Tranche 3 proof",
+          "name": "Promotions · Evaluation and Offer Rules",
           "run": "npm run test:imp036j:tranche3"
         },
         {
-          "name": "IMP-036J Tranche 4 proof",
+          "name": "Promotions · Commercial Commands",
           "run": "npm run test:imp036j:tranche4"
         },
         {
-          "name": "GTM-391 payment-start Snapshot comparison regression",
+          "name": "Checkout · Payment-Start Snapshot Comparison",
           "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/payment/gtm-391-payment-review-loop.domain.test.ts"
         },
         {
-          "name": "Payment binding fulfilment timing",
+          "name": "Payment · Fulfilment-Timing Binding",
           "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/payment/payment-binding-fulfilment-timing.domain.test.ts"
         },
         {
-          "name": "IMP-036J GTM coupon authority and #385 line-presentation evidence",
+          "name": "Promotions · Coupon Authority and Line Presentation",
           "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/checkout/imp036j-gtm-committed-cart-authority.domain.test.ts\ntests/checkout/imp036j-385-line-presentation-options.fixture.test.ts"
         },
         {
-          "name": "Install Playwright Chromium for IMP-036J T5 responsive proof",
+          "name": "Promotions · Install Chromium for Presentation Proof",
           "run": "npx playwright install --with-deps chromium"
         },
         {
-          "name": "IMP-036J Tranche 5 proof",
+          "name": "Promotions · Customer Presentation",
           "run": "npm run test:imp036j:tranche5"
         },
         {
-          "name": "IMP-036J Tranche 6 proof",
+          "name": "Promotions · Operator Authoring",
           "run": "npm run test:imp036j:tranche6"
         },
         {
-          "name": "IMP-036J Tranche 7 proof",
+          "name": "Promotions · Measurement Reporting",
           "run": "npm run test:imp036j:tranche7"
         },
         {
-          "name": "Production build for IMP-036J T8 Golden Journeys",
+          "name": "Promotions · Build Apps for Journey Proof",
           "run": "npm run build && npm run customer-auth:build && npm run customer-commerce:build"
         },
         {
-          "name": "IMP-036J Tranche 8 proof",
+          "name": "Promotions · Hardening, Journeys, and Responsive Proof",
           "run": "npm run test:imp036j:tranche8"
         },
         {
