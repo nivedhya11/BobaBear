@@ -1,6 +1,7 @@
 "use client";
 
 import { formatPaise } from "@/components/ordering/format-money";
+import { IMP036J_COPY } from "@/components/ordering/imp036j-copy";
 import type { CommerceCheckoutSnapshot } from "@/lib/customer-commerce";
 import { snapshotPayableRows } from "@/components/ordering/checkout-snapshot-presentation";
 
@@ -79,8 +80,8 @@ function buildRowsFromWire(summary: OrderMoneySummaryWire): ReadonlyArray<
   const discount = BigInt(summary.promotionDiscountMinor || "0");
   if (discount > BigInt(0)) {
     rows.push({
-      key: "discount",
-      label: "Discount",
+      key: "total-saved",
+      label: IMP036J_COPY.TOTAL_SAVED_ROW,
       amountPaise: summary.promotionDiscountMinor,
     });
   }

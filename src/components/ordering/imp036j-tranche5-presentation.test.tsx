@@ -1,8 +1,11 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import { CheckoutSnapshotLineList } from "./CheckoutReviewSections";
 import { CommercialOfferStack } from "./CommercialOfferStack";
 import { CouponField } from "./CouponField";
+import { narrowCheckoutSnapshotLines } from "./checkout-line-presentation";
+import { OrderMoneySummaryPanel } from "./OrderMoneySummaryPanel";
 import { IMP036J_COPY } from "./imp036j-copy";
 import {
   automaticStatusCopy,
@@ -962,6 +965,74 @@ describe("IMP-036J T8 executable presentation evidence", () => {
         },
       })?.text,
     ).toBe(IMP036J_COPY.SIGN_IN);
+  });
+});
+
+describe("Option A sealed item lines and purchased saving vocabulary", () => {
+  it("shows sealed gross on an ordinary row and sealed zero on a complimentary row", () => {
+    const lines = narrowCheckoutSnapshotLines([
+      {
+        productName: "Purple Rain",
+        variantName: "",
+        quantity: 1,
+        lineSubtotalPaise: "51800",
+        lineTotalPaise: "46620",
+        lineOrigin: "cart",
+      },
+      {
+        productName: "Taro Milk Tea",
+        variantName: "",
+        quantity: 1,
+        lineSubtotalPaise: "15000",
+        lineTotalPaise: "0",
+        lineOrigin: "complimentary_offer",
+      },
+    ]);
+    render(<CheckoutSnapshotLineList title="Your items" lines={lines} />);
+    const rows = screen.getAllByRole("listitem");
+    expect(rows[0]).toHaveTextContent("₹518.00");
+    expect(rows[0]).not.toHaveTextContent("₹466.20");
+    expect(rows[1]).toHaveTextContent("₹0.00");
+    expect(rows[1]).toHaveTextContent("Included with your offer");
+    expect(rows[1]).not.toHaveTextContent("₹150.00");
+  });
+
+  it("keeps an ordinary row on the sealed net amount when gross was not supplied", () => {
+    const lines = narrowCheckoutSnapshotLines([
+      {
+        productName: "Hong Kong Milk Tea Boba",
+        variantName: "Regular",
+        quantity: 3,
+        lineTotalPaise: "78700",
+      },
+    ]);
+    expect(lines[0]?.lineSubtotalPaise).toBeNull();
+    render(<CheckoutSnapshotLineList lines={lines} />);
+    expect(screen.getByRole("listitem")).toHaveTextContent("₹787.00");
+  });
+
+  it("labels the purchased combined saving Total saved without inventing a split", () => {
+    render(
+      <OrderMoneySummaryPanel
+        title="Payment summary"
+        moneySummary={{
+          prePromotionSubtotalMinor: "51800",
+          promotionDiscountMinor: "5180",
+          charges: [{ chargeCode: "packaging", name: "Packaging", amountMinor: "2000" }],
+          taxMinor: "0",
+          grandTotalMinor: "48620",
+          currency: "INR",
+        }}
+      />,
+    );
+    const summary = screen.getByTestId("order-money-summary");
+    expect(summary).toHaveTextContent("Total saved");
+    expect(summary).toHaveTextContent("₹51.80");
+    expect(summary).toHaveTextContent("Total payable");
+    expect(summary).toHaveTextContent("₹486.20");
+    expect(summary).not.toHaveTextContent("Discount");
+    expect(summary).not.toHaveTextContent("Order saving");
+    expect(summary).not.toHaveTextContent("Delivery saving");
   });
 });
 
