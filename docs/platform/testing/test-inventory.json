@@ -998,7 +998,7 @@
     "test:serviceability-security": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/serviceability-security",
     "test:staging-baseline": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/staging-baseline",
     "test:watch": "vitest",
-    "test:workforce-auth:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/workforce-auth/http.integration.test.ts",
+    "test:workforce-auth:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/workforce-auth/http.integration.test.ts tests/workforce-auth/trusted-identity.integration.test.ts",
     "testing:inventory": "node scripts/testing-inventory.mjs --write",
     "testing:inventory:check": "node scripts/testing-inventory.mjs --check",
     "typecheck": "tsc --noEmit",
@@ -11302,8 +11302,10 @@
       "dbRequired": "YES",
       "browserRequired": "NO",
       "externalProviderSubstitute": "UNKNOWN",
-      "packageCommands": [],
-      "ciInclusion": "NO",
+      "packageCommands": [
+        "test:workforce-auth:http"
+      ],
+      "ciInclusion": "YES",
       "test1Layers": [
         "4-integration",
         "5-database-integration"
