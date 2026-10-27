@@ -118,13 +118,17 @@ test("isAllowedPersistenceImportPath allows the exact modifier-bootstrap integra
   );
 });
 
-test("isAllowedPersistenceImportPath allows administration/operations/workforce-auth test trees", () => {
+test("isAllowedPersistenceImportPath allows administration/operations/auth test trees", () => {
   assert.equal(
     isAllowedPersistenceImportPath("tests/administration/admin-http.integration.test.ts"),
     true,
   );
   assert.equal(
     isAllowedPersistenceImportPath("tests/operations/store-http.integration.test.ts"),
+    true,
+  );
+  assert.equal(
+    isAllowedPersistenceImportPath("tests/customer-auth/trusted-identity.integration.test.ts"),
     true,
   );
   assert.equal(

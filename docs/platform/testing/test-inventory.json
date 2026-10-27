@@ -31,10 +31,10 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2372,
-    "executableTestFiles": 550,
-    "sourceTestFiles": 163,
-    "testsTreeExecutableFiles": 294,
+    "trackedPathsConsidered": 2374,
+    "executableTestFiles": 552,
+    "sourceTestFiles": 164,
+    "testsTreeExecutableFiles": 295,
     "scriptTestFiles": 93,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
@@ -148,6 +148,7 @@
     "src/platform/startup/bootstrap.test.ts",
     "src/server/assortment/outlet-eligibility-session.test.ts",
     "src/server/auth/customer/runtime.test.ts",
+    "src/server/auth/customer/trusted-identity.test.ts",
     "src/server/auth/shared/config.test.ts",
     "src/server/auth/shared/realm-isolation.test.ts",
     "src/server/auth/workforce/operator/reset-token-bridge.test.ts",
@@ -312,6 +313,7 @@
     "tests/customer-address-security/security.test.ts",
     "tests/customer-addresses/domain.test.ts",
     "tests/customer-auth/http.integration.test.ts",
+    "tests/customer-auth/trusted-identity.integration.test.ts",
     "tests/customer-commerce/financial-document.http.integration.test.ts",
     "tests/customer-commerce/http.integration.test.ts",
     "tests/customer-commerce/razorpay.http.integration.test.ts",
@@ -919,7 +921,7 @@
     "test:customer-address-concurrency": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-address-concurrency",
     "test:customer-address-security": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-address-security",
     "test:customer-addresses": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-addresses",
-    "test:customer-auth:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-auth/http.integration.test.ts",
+    "test:customer-auth:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-auth/http.integration.test.ts tests/customer-auth/trusted-identity.integration.test.ts",
     "test:customer-commerce:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-commerce/http.integration.test.ts tests/customer-commerce/scheduled-http.tranche3.integration.test.ts",
     "test:customer-profile-auth-integration": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-profile-auth-integration",
     "test:customer-profile-security": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-profile-security",
@@ -1000,7 +1002,7 @@
     "test:serviceability-security": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/serviceability-security",
     "test:staging-baseline": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/staging-baseline",
     "test:watch": "vitest",
-    "test:workforce-auth:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/workforce-auth/http.integration.test.ts",
+    "test:workforce-auth:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/workforce-auth/http.integration.test.ts tests/workforce-auth/trusted-identity.integration.test.ts",
     "testing:inventory": "node scripts/testing-inventory.mjs --write",
     "testing:inventory:check": "node scripts/testing-inventory.mjs --check",
     "typecheck": "tsc --noEmit",
@@ -1080,7 +1082,7 @@
           "run": "socket=\"/run/user/$(id -u)/podman/podman.sock\"\ncommand -v podman\nif [ ! -S \"$socket\" ]; then\nsystemctl --user start podman.socket\nfi\ntest -S \"$socket\"\npodman --version"
         },
         {
-          "name": "IMP-028C modifier / bootstrap tests",
+          "name": "Catalog · Modifier Bootstrap",
           "run": "npm run test:catalog-imp028c-modifiers"
         },
         {
@@ -1104,75 +1106,75 @@
           "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/database/customer-menu-modifier-projection.integration.test.ts"
         },
         {
-          "name": "IMP-036I Tranche 1 proof",
+          "name": "Scheduled Fulfilment · Persistence and Delivery Finality",
           "run": "npm run test:imp036i:tranche1"
         },
         {
-          "name": "IMP-036I Tranche 2 proof",
+          "name": "Scheduled Fulfilment · Windows, Checkout, and Payment Binding",
           "run": "npm run test:imp036i:tranche2"
         },
         {
-          "name": "IMP-036I Tranche 3 proof",
+          "name": "Scheduled Fulfilment · Customer and Workforce Surfaces",
           "run": "npm run test:imp036i:tranche3"
         },
         {
-          "name": "IMP-036I Tranche 4 proof",
+          "name": "Scheduled Fulfilment · Cancellation and Reminders",
           "run": "npm run test:imp036i:tranche4"
         },
         {
-          "name": "IMP-036I Tranche 5 proof",
+          "name": "Scheduled Fulfilment · Payment Hardening and Document Continuity",
           "run": "npm run test:imp036i:tranche5"
         },
         {
-          "name": "IMP-036J Tranche 1 proof",
+          "name": "Promotions · Commercial Persistence",
           "run": "npm run test:imp036j:tranche1"
         },
         {
-          "name": "IMP-036J Tranche 2 proof",
+          "name": "Promotions · Measurement Persistence",
           "run": "npm run test:imp036j:tranche2"
         },
         {
-          "name": "IMP-036J Tranche 3 proof",
+          "name": "Promotions · Evaluation and Offer Rules",
           "run": "npm run test:imp036j:tranche3"
         },
         {
-          "name": "IMP-036J Tranche 4 proof",
+          "name": "Promotions · Commercial Commands",
           "run": "npm run test:imp036j:tranche4"
         },
         {
-          "name": "GTM-391 payment-start Snapshot comparison regression",
+          "name": "Checkout · Payment-Start Snapshot Comparison",
           "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/payment/gtm-391-payment-review-loop.domain.test.ts"
         },
         {
-          "name": "Payment binding fulfilment timing",
+          "name": "Payment · Fulfilment-Timing Binding",
           "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/payment/payment-binding-fulfilment-timing.domain.test.ts"
         },
         {
-          "name": "IMP-036J GTM coupon authority and #385 line-presentation evidence",
+          "name": "Promotions · Coupon Authority and Line Presentation",
           "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/checkout/imp036j-gtm-committed-cart-authority.domain.test.ts\ntests/checkout/imp036j-385-line-presentation-options.fixture.test.ts"
         },
         {
-          "name": "Install Playwright Chromium for IMP-036J T5 responsive proof",
+          "name": "Promotions · Install Chromium for Presentation Proof",
           "run": "npx playwright install --with-deps chromium"
         },
         {
-          "name": "IMP-036J Tranche 5 proof",
+          "name": "Promotions · Customer Presentation",
           "run": "npm run test:imp036j:tranche5"
         },
         {
-          "name": "IMP-036J Tranche 6 proof",
+          "name": "Promotions · Operator Authoring",
           "run": "npm run test:imp036j:tranche6"
         },
         {
-          "name": "IMP-036J Tranche 7 proof",
+          "name": "Promotions · Measurement Reporting",
           "run": "npm run test:imp036j:tranche7"
         },
         {
-          "name": "Production build for IMP-036J T8 Golden Journeys",
+          "name": "Promotions · Build Apps for Journey Proof",
           "run": "npm run build && npm run customer-auth:build && npm run customer-commerce:build"
         },
         {
-          "name": "IMP-036J Tranche 8 proof",
+          "name": "Promotions · Hardening, Journeys, and Responsive Proof",
           "run": "npm run test:imp036j:tranche8"
         },
         {
@@ -4976,6 +4978,25 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "src/server/auth/customer/trusted-identity.test.ts",
+      "runner": "vitest",
+      "domain": "server/auth",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "src/server/auth/shared/config.test.ts",
       "runner": "vitest",
       "domain": "server/auth",
@@ -7994,6 +8015,24 @@
         "4-integration",
         "5-database-integration",
         "6-http-api-contract"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/customer-auth/trusted-identity.integration.test.ts",
+      "runner": "vitest",
+      "domain": "customer-auth",
+      "testType": "integration",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:customer-auth:http"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "4-integration",
+        "5-database-integration"
       ],
       "classificationConfidence": "HEURISTIC"
     },
@@ -11341,8 +11380,10 @@
       "dbRequired": "YES",
       "browserRequired": "NO",
       "externalProviderSubstitute": "UNKNOWN",
-      "packageCommands": [],
-      "ciInclusion": "NO",
+      "packageCommands": [
+        "test:workforce-auth:http"
+      ],
+      "ciInclusion": "YES",
       "test1Layers": [
         "4-integration",
         "5-database-integration"

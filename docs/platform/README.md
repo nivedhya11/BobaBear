@@ -54,9 +54,11 @@ IMP-036F. X2/X3 work also uses an
 [Experience Definition](./product/templates/experience-definition-template.md). A pre-GTM
 experience, product-language, and instrumentation audit is required before public GTM cutover /
 IMP-040 acceptance; adopting PD-2 does not perform that audit. TEST-1 remains the verification
-policy. TEST-1's CI restructuring is TARGET until Session 3 implements it; this index makes no
-claim of full current CI enforcement. GitHub branch protection on `main` is not currently
-enforced; PD-2 still requires CI and CodeQL evidence before merge as process authority.
+policy. This index does not claim that current CI fully implements TEST-1. The active GitHub
+ruleset **Protect main** applies to the default branch: it blocks deletion and non-fast-forward
+updates, requires a pull request with resolved review threads, and requires the status checks
+configured on that ruleset. Exact required check names are owned by the ruleset, not by this
+index. PD-2 still requires CI and CodeQL evidence before merge as process authority.
 
 Machine check: `npm run project:consistency`.
 
@@ -149,9 +151,9 @@ through metadata, targeted searches, and relevant ranges, as described in PD-1.
 | [`operations/imp037-recovery-runbook.md`](./operations/imp037-recovery-runbook.md) | SUPPORTING OPERATOR | IMP-037 recovery operator runbook (Layer 1/2 CLI, restore, gate). Repository tooling merged; does not claim live Spaces/provider proof, systemd host install, or RPO/RTO proof. |
 | [`operations/imp037-implementation-evidence.md`](./operations/imp037-implementation-evidence.md) | SUPPORTING OPS EVIDENCE | IMP-037 repository automated-proof notes + merge provenance. Not lifecycle authority. |
 | [`operations/imp037-external-proof-plan.md`](./operations/imp037-external-proof-plan.md) | SUPPORTING OPS PLAN | Future R3 external-proof campaign phases + 50-AC matrix. Planning only; does not authorize live action. |
-| [`engineering/change-workflow.md`](./engineering/change-workflow.md) | SUPPORTING | Bounded task, evidence, review, and promotion workflow; does not alter product acceptance authority |
+| [`engineering/change-workflow.md`](./engineering/change-workflow.md) | SUPPORTING ENGINEERING WORKFLOW | BEDS-1 bounded task, evidence, review, and promotion workflow. Not a product, architecture, lifecycle, or acceptance authority. |
 | [`engineering/repository-conventions.md`](./engineering/repository-conventions.md) | SUPPORTING ENGINEERING STANDARD | RHS-1 naming, placement, retirement, and incremental CI hygiene. Not a product, architecture, lifecycle, or agent-governance authority. |
-| [`testing/`](./testing/README.md) | SUPPORTING ENGINEERING EVIDENCE | Repeatable test inventory, TEST-1 baseline, and CI gap analysis. Policy authority remains [`TESTING.md`](./TESTING.md). Does not activate IMP-036F or change acceptance. |
+| [`testing/`](./testing/README.md) | SUPPORTING ENGINEERING EVIDENCE | Repeatable test inventory and historical CI evidence. Policy authority remains [`TESTING.md`](./TESTING.md). Current activation is read from ROADMAP and STATE. This directory does not accept a slice. |
 | [`experience/enterprise-experience/`](./experience/enterprise-experience/) | SUPPORTING PROGRAMME CONTRACT | Enterprise Experience Programme and IMP-036A–G experience contracts. Per-slice lifecycle authority = ROADMAP / STATE / relevant capability artifact; this index does not independently restate slice status. |
 | [`experience/`](./experience/) | **SUPPORTING PRODUCT / EXPERIENCE MATERIAL** | BOBA Direct UX, brand, detailed [customer journey](./experience/customer-journey.md), gap map, and research. The [Food Direct planning lock](./experience/food-direct-product-architecture-lock.md) is supporting rationale. Canonical experience and language authorities are [`EXPERIENCE.md`](./EXPERIENCE.md) (EXP-1) and [`PRODUCT-LANGUAGE.md`](./PRODUCT-LANGUAGE.md) (LANG-1), outside this pack. Per-slice lifecycle authority = ROADMAP / STATE / relevant capability artifact. Dated support/gap claims are historical observations, not current status. Binding decisions remain in decision-register; prospective product artifacts are indexed in [product/](./product/README.md). Index: [`experience/README.md`](./experience/README.md). |
 
