@@ -31,11 +31,11 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2369,
-    "executableTestFiles": 548,
+    "trackedPathsConsidered": 2372,
+    "executableTestFiles": 550,
     "sourceTestFiles": 163,
-    "testsTreeExecutableFiles": 293,
-    "scriptTestFiles": 92,
+    "testsTreeExecutableFiles": 294,
+    "scriptTestFiles": 93,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
     "playwrightConfigs": 7,
@@ -441,6 +441,7 @@
     "tests/order-concurrency/order.concurrency.test.ts",
     "tests/order-crash/order.crash.test.ts",
     "tests/order-security/order.security.test.ts",
+    "tests/order/order-recovery-cli.integration.test.ts",
     "tests/order/order.delivery-golden-journey.integration.test.ts",
     "tests/order/order.domain.test.ts",
     "tests/order/order.pickup-cancel-refund.test.ts",
@@ -556,6 +557,7 @@
     "scripts/governance-v2/transition-current.test.mjs",
     "scripts/lib/vitest-result-validation.test.mjs",
     "scripts/nginx-origin-redirect.test.mjs",
+    "scripts/order/recovery-cli.test.mjs",
     "scripts/origin-trust/verify-contracts.test.mjs",
     "scripts/postgres/c1-nonroot-runtime.test.mjs",
     "scripts/project-consistency.test.mjs",
@@ -2346,6 +2348,24 @@
       "ciInclusion": "YES",
       "test1Layers": [
         "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/order/recovery-cli.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "9-recovery-idempotency"
       ],
       "classificationConfidence": "HEURISTIC"
     },
@@ -10224,6 +10244,25 @@
       "ciInclusion": "NO",
       "test1Layers": [
         "7-authorization-security"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/order/order-recovery-cli.integration.test.ts",
+      "runner": "vitest",
+      "domain": "order",
+      "testType": "integration",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:order"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "4-integration",
+        "5-database-integration",
+        "9-recovery-idempotency"
       ],
       "classificationConfidence": "HEURISTIC"
     },
