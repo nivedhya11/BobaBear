@@ -6,9 +6,13 @@
 import { describe, expect, it } from "vitest";
 
 import { toCustomerOrderDetail } from "../../src/server/order/projections";
-import type { Order, OrderOutletSummary } from "../../src/shared/order";
+import type { CheckoutSnapshotPromotionEffect } from "../../src/shared/checkout";
+import type { CustomerOrderDetail, Order, OrderOutletSummary } from "../../src/shared/order";
 import { moneySummaryFromSnapshot } from "../../src/shared/order/money-summary";
+import { CHARGE_DEFINITION_DELIVERY_ID } from "../../src/shared/pricing";
 import { sealedSnapshot } from "./support/checkout-snapshot";
+
+const DELIVERY_COMPONENT_ID = `charge:${CHARGE_DEFINITION_DELIVERY_ID}`;
 
 const AT = new Date("2026-10-16T07:05:00.000Z");
 
@@ -51,6 +55,8 @@ describe("My Orders historical savings", () => {
     const second = moneySummaryFromSnapshot(purchased);
 
     expect(first.promotionDiscountMinor).toBe("2000");
+    expect(first.orderSavingMinor).toBe("0");
+    expect(first.deliverySavingMinor).toBe("0");
     expect(first.grandTotalMinor).toBe("8000");
     expect(second).toEqual(first);
     expect(liveOfferName.displayName).toBe("Retired live offer");
@@ -63,6 +69,8 @@ describe("My Orders historical savings", () => {
     expect(delivery.pickupLocation).toBeNull();
     expect(delivery.fulfilmentTiming).toBe("ASAP");
     expect(delivery.moneySummary.promotionDiscountMinor).toBe("2000");
+    expect(delivery.moneySummary.orderSavingMinor).toBe("0");
+    expect(delivery.moneySummary.deliverySavingMinor).toBe("0");
     expect(delivery.delivery).toBeNull();
 
     const takeaway = toCustomerOrderDetail(
@@ -111,6 +119,118 @@ describe("My Orders historical savings", () => {
     const order = placedOrder();
     expect(toCustomerOrderDetail(order, OUTLET, snapshot)).toEqual(
       toCustomerOrderDetail(order, OUTLET, snapshot),
+    );
+  });
+});
+
+function allocation(
+  partial: Partial<CheckoutSnapshotPromotionEffect> &
+    Pick<CheckoutSnapshotPromotionEffect, "id" | "amountPaise" | "componentId">,
+): CheckoutSnapshotPromotionEffect {
+  return {
+    effectKind: "monetary_allocation",
+    promotionId: "promo",
+    couponId: null,
+    promotionCode: "OFFER",
+    displayName: "Sealed offer",
+    triggerType: "coupon",
+    stackingPolicy: "compatible",
+    lineId: null,
+    realizedDiscountPaise: null,
+    rewardVariantId: null,
+    rewardUnitId: null,
+    rewardQuantity: null,
+    rewardBasePaise: null,
+    sortOrder: 1,
+    snapshotLineId: null,
+    promotionRevision: BigInt(3),
+    ...partial,
+  };
+}
+
+function serializedCustomerOrder(detail: CustomerOrderDetail) {
+  const body = JSON.stringify({ ok: true, order: detail }, (_key, value: unknown) =>
+    typeof value === "bigint" ? value.toString(10) : value,
+  );
+  return JSON.parse(body) as {
+    ok: true;
+    order: {
+      moneySummary: {
+        prePromotionSubtotalMinor: string;
+        promotionDiscountMinor: string;
+        orderSavingMinor: string;
+        deliverySavingMinor: string;
+        charges: readonly { chargeCode: string; name: string; amountMinor: string }[];
+        taxMinor: string;
+        grandTotalMinor: string;
+        currency: string;
+      };
+    };
+  };
+}
+
+describe("serialized customer order saving split", () => {
+  it("puts sealed components on the customer order response without changing payable", () => {
+    const purchased = sealedSnapshot({
+      chargesPaise: BigInt(2000),
+      prePromotionSubtotalPaise: BigInt(12_000),
+      promotionDiscountPaise: BigInt(12_000),
+      taxablePaise: BigInt(2000),
+      taxPaise: BigInt(1270),
+      grandTotalPaise: BigInt(3270),
+      charges: [
+        {
+          id: "charge-pack",
+          chargeDefinitionId: "pack",
+          chargeCode: "packaging",
+          calculationMode: "fixed_per_order",
+          amountPaise: BigInt(2000),
+          name: "Packaging",
+          sortOrder: 1,
+        },
+        {
+          id: "charge-del",
+          chargeDefinitionId: CHARGE_DEFINITION_DELIVERY_ID,
+          chargeCode: "delivery",
+          calculationMode: "fixed_per_order",
+          amountPaise: BigInt(0),
+          name: "Delivery",
+          sortOrder: 2,
+        },
+      ],
+      promotionEffects: [
+        allocation({ id: "order", amountPaise: BigInt(8000), componentId: "base:line-1" }),
+        allocation({
+          id: "delivery",
+          amountPaise: BigInt(4000),
+          componentId: DELIVERY_COMPONENT_ID,
+          sortOrder: 2,
+        }),
+      ],
+    });
+    const liveName = { displayName: "Live offer renamed after purchase" };
+    const detail = toCustomerOrderDetail(placedOrder(), OUTLET, purchased);
+    liveName.displayName = "Retired";
+    const response = serializedCustomerOrder(detail);
+    const money = response.order.moneySummary;
+
+    expect(response.ok).toBe(true);
+    expect(money.orderSavingMinor).toBe("8000");
+    expect(money.deliverySavingMinor).toBe("4000");
+    expect(money.promotionDiscountMinor).toBe("12000");
+    expect(BigInt(money.orderSavingMinor) + BigInt(money.deliverySavingMinor)).toBe(
+      BigInt(money.promotionDiscountMinor),
+    );
+    expect(money.taxMinor).toBe("1270");
+    expect(money.grandTotalMinor).toBe(purchased.grandTotalPaise.toString());
+    expect(money.charges).toEqual([
+      { chargeCode: "packaging", name: "Packaging", amountMinor: "2000" },
+      { chargeCode: "delivery", name: "Delivery", amountMinor: "0" },
+    ]);
+    expect(money.currency).toBe("INR");
+    expect(money).not.toHaveProperty("discountMinor");
+    expect(serializedCustomerOrder(toCustomerOrderDetail(placedOrder(), OUTLET, purchased))).toEqual(
+      response,
     );
   });
 });
