@@ -86,4 +86,105 @@ describe("OrderConfirmationClient", () => {
       expect.stringContaining("ORD-0123456789AB"),
     );
   });
+
+  it("shows the purchased saving sentence and the sealed split", async () => {
+    getCustomerOrder.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        order: {
+          orderId: "ord-1",
+          orderNumber: "ORD-0123456789AB",
+          status: "PLACED",
+          revision: "1",
+          createdAt: "2026-08-13T00:20:00.000Z",
+          updatedAt: "2026-08-13T00:20:00.000Z",
+          acceptedAt: null,
+          fulfilledAt: null,
+          cancelledAt: null,
+          cancellationReasonCode: null,
+          money: { grandTotalMinor: "45620", currency: "INR" },
+          paymentSatisfaction: "PAID",
+          outlet: { outletId: "o1", brandId: "b1", code: "e2e", name: "E2E" },
+          destination: null,
+          lines: [
+            {
+              productName: "Classic Milk Tea",
+              variantName: "Regular",
+              quantity: 1,
+              lineTotalMinor: "46620",
+              modifiers: [],
+            },
+          ],
+          moneySummary: {
+            prePromotionSubtotalMinor: "51800",
+            promotionDiscountMinor: "9180",
+            orderSavingMinor: "5180",
+            deliverySavingMinor: "4000",
+            charges: [
+              { chargeCode: "packaging", name: "Packaging", amountMinor: "2000" },
+              { chargeCode: "delivery", name: "Delivery", amountMinor: "0" },
+            ],
+            taxMinor: "1000",
+            grandTotalMinor: "45620",
+            currency: "INR",
+          },
+        },
+      },
+    });
+    render(<OrderConfirmationClient />);
+    await waitFor(() => expect(screen.getByTestId("copy-purchased")).toBeInTheDocument());
+    expect(screen.getByTestId("copy-purchased")).toHaveTextContent(
+      "You saved ₹91.80 on this order.",
+    );
+    const summary = screen.getByTestId("order-money-summary");
+    expect(summary).toHaveTextContent("Order saving");
+    expect(summary).toHaveTextContent("₹51.80");
+    expect(summary).toHaveTextContent("Delivery saving");
+    expect(summary).toHaveTextContent("₹40.00");
+    expect(summary).toHaveTextContent("Total saved");
+    expect(summary).toHaveTextContent("₹91.80");
+    expect(summary).toHaveTextContent("Total payable");
+    expect(summary).toHaveTextContent("₹456.20");
+  });
+
+  it("hides the purchased saving sentence when nothing was saved", async () => {
+    getCustomerOrder.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        order: {
+          orderId: "ord-1",
+          orderNumber: "ORD-0123456789AB",
+          status: "PLACED",
+          revision: "1",
+          createdAt: "2026-08-13T00:20:00.000Z",
+          updatedAt: "2026-08-13T00:20:00.000Z",
+          acceptedAt: null,
+          fulfilledAt: null,
+          cancelledAt: null,
+          cancellationReasonCode: null,
+          money: { grandTotalMinor: "19900", currency: "INR" },
+          paymentSatisfaction: "PAID",
+          outlet: { outletId: "o1", brandId: "b1", code: "e2e", name: "E2E" },
+          destination: null,
+          lines: [],
+          moneySummary: {
+            prePromotionSubtotalMinor: "19900",
+            promotionDiscountMinor: "0",
+            orderSavingMinor: "0",
+            deliverySavingMinor: "0",
+            charges: [],
+            taxMinor: "0",
+            grandTotalMinor: "19900",
+            currency: "INR",
+          },
+        },
+      },
+    });
+    render(<OrderConfirmationClient />);
+    await waitFor(() => expect(screen.getByTestId("order-confirmation")).toBeInTheDocument());
+    expect(screen.queryByTestId("copy-purchased")).not.toBeInTheDocument();
+    expect(screen.getByTestId("order-money-summary")).not.toHaveTextContent("Total saved");
+  });
 });

@@ -1011,10 +1011,133 @@ describe("Option A sealed item lines and purchased saving vocabulary", () => {
     expect(screen.getByRole("listitem")).toHaveTextContent("₹787.00");
   });
 
-  it("labels the purchased combined saving Total saved without inventing a split", () => {
+  it("shows purchased order and delivery saving that sum to Total saved", () => {
     render(
       <OrderMoneySummaryPanel
         title="Payment summary"
+        moneySummary={{
+          prePromotionSubtotalMinor: "51800",
+          promotionDiscountMinor: "9180",
+          orderSavingMinor: "5180",
+          deliverySavingMinor: "4000",
+          charges: [
+            { chargeCode: "packaging", name: "Packaging", amountMinor: "2000" },
+            { chargeCode: "delivery", name: "Delivery", amountMinor: "0" },
+          ],
+          taxMinor: "1000",
+          grandTotalMinor: "45620",
+          currency: "INR",
+        }}
+      />,
+    );
+    const summary = screen.getByTestId("order-money-summary");
+    const labels = [...summary.querySelectorAll("dt")].map((node) => node.textContent);
+    expect(labels).toEqual([
+      "Subtotal",
+      "Order saving",
+      "Packaging",
+      "Delivery",
+      "Delivery saving",
+      "Tax",
+      "Total saved",
+      "Total payable",
+    ]);
+    expect(summary).toHaveTextContent("₹51.80");
+    expect(summary).toHaveTextContent("₹40.00");
+    expect(summary).toHaveTextContent("₹91.80");
+    expect(summary).toHaveTextContent("₹456.20");
+    expect(summary).toHaveTextContent("₹0.00");
+    expect(summary).not.toHaveTextContent("Discount");
+  });
+
+  it("shows only the positive purchased component beside Total saved", () => {
+    const { rerender } = render(
+      <OrderMoneySummaryPanel
+        moneySummary={{
+          prePromotionSubtotalMinor: "51800",
+          promotionDiscountMinor: "5180",
+          orderSavingMinor: "5180",
+          deliverySavingMinor: "0",
+          charges: [],
+          taxMinor: "0",
+          grandTotalMinor: "46620",
+          currency: "INR",
+        }}
+      />,
+    );
+    let summary = screen.getByTestId("order-money-summary");
+    expect(summary).toHaveTextContent("Order saving");
+    expect(summary).toHaveTextContent("Total saved");
+    expect(summary).not.toHaveTextContent("Delivery saving");
+
+    rerender(
+      <OrderMoneySummaryPanel
+        moneySummary={{
+          prePromotionSubtotalMinor: "51800",
+          promotionDiscountMinor: "4000",
+          orderSavingMinor: "0",
+          deliverySavingMinor: "4000",
+          charges: [{ chargeCode: "delivery", name: "Delivery", amountMinor: "0" }],
+          taxMinor: "0",
+          grandTotalMinor: "47800",
+          currency: "INR",
+        }}
+      />,
+    );
+    summary = screen.getByTestId("order-money-summary");
+    expect(summary).toHaveTextContent("Delivery saving");
+    expect(summary).toHaveTextContent("Total saved");
+    expect(summary).not.toHaveTextContent("Order saving");
+  });
+
+  it("omits saving rows and does not invent a split when nothing was saved", () => {
+    render(
+      <OrderMoneySummaryPanel
+        moneySummary={{
+          prePromotionSubtotalMinor: "19900",
+          promotionDiscountMinor: "0",
+          orderSavingMinor: "0",
+          deliverySavingMinor: "0",
+          charges: [{ chargeCode: "delivery", name: "Delivery", amountMinor: "4000" }],
+          taxMinor: "0",
+          grandTotalMinor: "23900",
+          currency: "INR",
+        }}
+      />,
+    );
+    const summary = screen.getByTestId("order-money-summary");
+    expect(summary).not.toHaveTextContent("Order saving");
+    expect(summary).not.toHaveTextContent("Delivery saving");
+    expect(summary).not.toHaveTextContent("Total saved");
+    expect(summary).toHaveTextContent("Delivery");
+    expect(summary).toHaveTextContent("₹239.00");
+  });
+
+  it("shows Total saved without an order or delivery row when the split was not sealed", () => {
+    render(
+      <OrderMoneySummaryPanel
+        moneySummary={{
+          prePromotionSubtotalMinor: "10000",
+          promotionDiscountMinor: "2000",
+          orderSavingMinor: "0",
+          deliverySavingMinor: "0",
+          charges: [],
+          taxMinor: "0",
+          grandTotalMinor: "8000",
+          currency: "INR",
+        }}
+      />,
+    );
+    const summary = screen.getByTestId("order-money-summary");
+    expect(summary).toHaveTextContent("Total saved");
+    expect(summary).toHaveTextContent("₹20.00");
+    expect(summary).not.toHaveTextContent("Order saving");
+    expect(summary).not.toHaveTextContent("Delivery saving");
+  });
+
+  it("does not invent order or delivery rows when the sealed split is absent", () => {
+    render(
+      <OrderMoneySummaryPanel
         moneySummary={{
           prePromotionSubtotalMinor: "51800",
           promotionDiscountMinor: "5180",
@@ -1028,11 +1151,9 @@ describe("Option A sealed item lines and purchased saving vocabulary", () => {
     const summary = screen.getByTestId("order-money-summary");
     expect(summary).toHaveTextContent("Total saved");
     expect(summary).toHaveTextContent("₹51.80");
-    expect(summary).toHaveTextContent("Total payable");
-    expect(summary).toHaveTextContent("₹486.20");
-    expect(summary).not.toHaveTextContent("Discount");
     expect(summary).not.toHaveTextContent("Order saving");
     expect(summary).not.toHaveTextContent("Delivery saving");
+    expect(summary).not.toHaveTextContent("Discount");
   });
 });
 
