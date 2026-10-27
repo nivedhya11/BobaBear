@@ -2,6 +2,8 @@ import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 
+import clientAuthorityBoundary from "./scripts/eslint/client-authority-boundary.mjs";
+
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
@@ -117,78 +119,28 @@ const eslintConfig = defineConfig([
       ],
     },
   },
-  // Browser authority boundary (ARCH-G11 / D-368). The static-export graph
-  // must not take a runtime dependency on server, database, or legacy menu
-  // authority. This is preventive enforcement of the existing boundary, not
-  // a new architecture rule.
+  // Client-bundle authority boundary (ARCH-G11 / D-368).
   //
-  // Flat config replaces `no-restricted-imports` for a file when a later
-  // block sets that rule. The database bans above are therefore repeated
-  // here so client files keep them.
+  // A module is client-executable when its own prologue is "use client", or
+  // when a static value import reaches it from such a module. Server
+  // Components, "use server" modules, and shared modules that only server
+  // code imports are server-executable even under src/app, src/components,
+  // or src/lib. This rule classifies that graph. It does not set
+  // `no-restricted-imports`, so the pg / Drizzle bans above keep their
+  // existing precedence, including on client-executable files.
   //
-  // Patterns are anchored regexes, not `**/server/**`. That gitignore form
-  // also matches the legitimate Next.js module `next/server`. Only alias
-  // `@/server` and relative paths that address `server` or `src/server`
-  // are forbidden. `src/server/**`, `src/platform/**`, `src/instrumentation.ts`,
-  // and the Node service entrypoints are outside these globs, so
-  // server-to-server imports and the framework bootstrap stay allowed.
-  // Tests are not browser runtime and stay out of this block.
+  // `import "server-only"` remains the server modules' own build guard.
+  // Persistence imports from the public app tree remain under
+  // scripts/audit-persistence.mjs. Non-literal dynamic specifiers are not
+  // classified.
   {
-    files: [
-      "src/app/**/*.{ts,tsx,js,jsx}",
-      "src/components/**/*.{ts,tsx,js,jsx}",
-      "src/lib/**/*.{ts,tsx,js,jsx}",
-    ],
-    ignores: ["**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}"],
+    files: ["src/**/*.{ts,tsx,js,jsx,mjs,cjs}"],
+    ignores: ["**/*.test.{ts,tsx,js,jsx}", "**/*.spec.{ts,tsx,js,jsx}"],
+    plugins: {
+      boba: clientAuthorityBoundary,
+    },
     rules: {
-      "no-restricted-imports": [
-        "error",
-        {
-          paths: [
-            {
-              name: "pg",
-              message:
-                "Do not import 'pg' directly. Use src/platform/database instead (see AGENTS.md).",
-            },
-            {
-              name: "drizzle-orm/node-postgres",
-              message:
-                "Do not import 'drizzle-orm/node-postgres' directly. Use src/platform/database instead (see AGENTS.md).",
-            },
-            {
-              name: "drizzle-orm/node-postgres/migrator",
-              message:
-                "Do not import the Drizzle migrator directly. Use src/platform/database instead (see AGENTS.md).",
-            },
-          ],
-          patterns: [
-            {
-              regex:
-                "^(?:@/server(?:/.*)?|(?:\\.{1,2}/)+(?:src/)?server(?:/.*)?)$",
-              caseSensitive: false,
-              allowTypeImports: true,
-              message:
-                "Do not import server authority into a browser-facing module. Commercial truth stays on the server (ARCH-G11).",
-            },
-            {
-              regex:
-                "^(?:@/platform/database(?:/.*)?|(?:\\.{1,2}/)+(?:src/)?platform/database(?:/.*)?)$",
-              caseSensitive: false,
-              allowTypeImports: true,
-              message:
-                "Do not import the database runtime into a browser-facing module. Persistence stays on the server (ARCH-G11).",
-            },
-            {
-              regex:
-                "^(?:@/data/(?:menu|ordering-catalog)\\.json|(?:\\.{1,2}/)+(?:src/)?data/(?:menu|ordering-catalog)\\.json)(?:\\?.*)?$",
-              caseSensitive: false,
-              allowTypeImports: true,
-              message:
-                "Do not import legacy menu artifacts into a browser-facing module. The customer menu is the customer-commerce read projection (D-368).",
-            },
-          ],
-        },
-      ],
+      "boba/no-client-authority-import": "error",
     },
   },
 ]);
