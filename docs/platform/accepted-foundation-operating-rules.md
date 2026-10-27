@@ -395,8 +395,9 @@ route, no credentials flow, no roles/permissions, and no customer/employee profi
   only inside that realm's `drizzleAdapter(...)` closure for the runtime handle's lifetime — never
   exported as a general query interface, never a second call to `pg.Pool`/`createDatabaseClient`.
 - **Disabled by design in this slice:** `emailAndPassword.enabled: false`, `socialProviders: {}`,
-  `plugins: []`, `rateLimit.enabled: false`, `logger.disabled: true`, `telemetry.enabled: false`,
-  `experimental.joins: false`. No email/password, OTP, magic-link, passkey, username, anonymous,
+  `plugins: []`, `rateLimit.enabled: false`, `logger.disabled: true`, `telemetry.enabled: false`.
+  Database joins stay off because Better Auth 1.7 defaults `advanced.database.joins` to false.
+  No email/password, OTP, magic-link, passkey, username, anonymous,
   MFA/2FA, organization, admin, or API-key capability exists. No Better Auth HTTP route handler is
   mounted anywhere (`src/app/api/auth/**` does not exist), no `toNextJsHandler`, and no browser
   `createAuthClient`/`useSession` exists in production source — the two Better Auth instances are
