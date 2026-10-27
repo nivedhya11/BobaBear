@@ -463,7 +463,7 @@ authentication realms — **customer** and **workforce** — on the persistence 
 workforce login pages and HTTP services now exist in this repository. Acceptance of those
 capabilities is still read from ROADMAP and STATE. Summary of the persistence foundation:
 
-- **Pinned exact versions:** `better-auth@1.6.25`, `@better-auth/drizzle-adapter@1.6.25`, `auth@1.6.25`
+- **Pinned exact versions:** `better-auth@1.7.14`, `@better-auth/drizzle-adapter@1.7.14`, `auth@1.7.14`
   (CLI, dev-only) — never a range, never `@latest`.
 - **Two realms, never shared:** separate config, secrets, cookie prefixes (`boba-customer` /
   `boba-workforce`), base paths (`/api/auth/customer` / `/api/auth/workforce`), Drizzle tables, and
@@ -486,7 +486,7 @@ capabilities is still read from ROADMAP and STATE. Summary of the persistence fo
 | Command | What it does |
 |---|---|
 | `npm run audit:auth-foundation` | Docker-free static audit of the two-realm boundary, pinned versions, disabled capabilities, and the new migration's table set. Part of `npm run check`. |
-| `npm run auth:schema:check` | Regenerates both realms' Better Auth 1.6.25 core contract via the local CLI and diffs it against the production schema. No network, no database. Part of `npm run check`. |
+| `npm run auth:schema:check` | Regenerates both realms' Better Auth 1.7.14 core contract via the local CLI and diffs it against the production schema. No network, no database. Part of `npm run check`. |
 | `npm run auth:schema:generate` | Regenerates both realms' contracts into a disposable directory for manual review. Never overwrites the production schema files. |
 | `npm run test:database:auth-foundation` | The auth-foundation slice of the PostgreSQL integration suite (migration, realm-scoped privileges, session lifecycle, cross-realm isolation). **Requires Docker.** Also runs as part of `npm run test:database`. |
 

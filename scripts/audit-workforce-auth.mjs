@@ -12,7 +12,7 @@
  *
  * Checks performed:
  *   1. better-auth / @better-auth/drizzle-adapter / auth stay pinned to
- *      1.6.25; no third-party HTTP framework dependency.
+ *      1.7.14; no third-party HTTP framework dependency.
  *   2. No Better Auth catch-all / Next.js API route; workforce-auth never
  *      gets a published host port; Nginx proxies `/api/workforce-auth/`
  *      only (never `/health/*` or `/api/auth/workforce/*`).
@@ -48,7 +48,7 @@ const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "
 const SOURCE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]);
 const TEST_FILE_SUFFIXES = [".test.ts", ".test.tsx", ".test.mjs", ".integration.test.ts"];
 
-const REQUIRED_BETTER_AUTH_VERSION = "1.6.25";
+const REQUIRED_BETTER_AUTH_VERSION = "1.7.14";
 
 const WORKFORCE_AUTH_SERVICE_DIR = "src/server/workforce-auth/";
 const SHARED_WORKFORCE_AUTH_DIR = "src/shared/workforce-auth/";

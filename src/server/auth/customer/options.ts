@@ -137,9 +137,5 @@ export function buildCustomerBetterAuthOptions(
     telemetry: {
       enabled: false,
     },
-
-    experimental: {
-      joins: false,
-    },
   };
 }

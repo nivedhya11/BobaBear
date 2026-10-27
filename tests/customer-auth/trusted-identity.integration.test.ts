@@ -101,7 +101,7 @@ async function withCustomerResolverHarness<T>(
     );
     openHandles.push(runtime);
     const auth = await runtime.getAuth();
-    const context = (await auth.$context) as { internalAdapter: InternalAdapter };
+    const context = (await auth.$context) as unknown as { internalAdapter: InternalAdapter };
     return callback({
       persistence,
       runtime,
