@@ -993,11 +993,15 @@ IMP-026B.
 
 ```text
 npm run order:recover-missing
-npm run order:recover-missing -- --cursor=<checkoutId>
+npm run order:recover-missing -- --cursor='{"lastCheckoutUpdatedAt":"2026-01-15T10:00:00.000Z","lastCheckoutId":"00000000-0000-4000-8000-000000000001"}'
 ```
 
-Uses application-role `BOBA_BEAR_*` database config. Prints safe counts/identities (checkoutId,
-orderId, orderNumber). Repeated invocation is idempotent. Not scheduled automatically in IMP-026A.
+`--cursor` is the previous batch's `nextCursor` object (`lastCheckoutUpdatedAt` and
+`lastCheckoutId`) as JSON. A checkout id alone is rejected. When a summary includes
+`nextCursor`, pass that same object on the following invocation. Uses application-role
+`BOBA_BEAR_*` database config. Prints safe counts and identities (checkoutId, orderId,
+orderNumber), including retryable-failure checkout ids. Repeated invocation is idempotent.
+Not scheduled automatically in IMP-026A.
 
 ## Razorpay Standard Checkout browser integration (IMP-026B / D-361)
 
