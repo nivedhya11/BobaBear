@@ -104,9 +104,5 @@ export function buildWorkforceBetterAuthOptions(
     telemetry: {
       enabled: false,
     },
-
-    experimental: {
-      joins: false,
-    },
   };
 }

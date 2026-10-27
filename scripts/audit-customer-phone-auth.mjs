@@ -16,7 +16,7 @@
  *   1. libphonenumber-js is pinned to exactly 1.13.10 (no ranges); no
  *      alternate phone-parsing library, SMS/OTP provider SDK, or third-party
  *      HTTP framework dependency exists; better-auth /
- *      @better-auth/drizzle-adapter / auth stay pinned to 1.6.25.
+ *      @better-auth/drizzle-adapter / auth stay pinned to 1.7.14.
  *   2. No Better Auth catch-all handler, `toNextJsHandler`, or
  *      `src/app/api/auth/**` route; the customer-auth service never gets a
  *      published host port in compose.yaml; Nginx never proxies its
@@ -62,7 +62,7 @@ const SOURCE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]
 const TEST_FILE_SUFFIXES = [".test.ts", ".test.tsx", ".test.mjs", ".integration.test.ts"];
 
 const REQUIRED_LIBPHONENUMBER_VERSION = "1.13.10";
-const REQUIRED_BETTER_AUTH_VERSION = "1.6.25";
+const REQUIRED_BETTER_AUTH_VERSION = "1.7.14";
 
 const CUSTOMER_AUTH_SERVICE_DIR = "src/server/customer-auth/";
 const SHARED_CUSTOMER_AUTH_DIR = "src/shared/customer-auth/";
