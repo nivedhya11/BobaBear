@@ -14,8 +14,7 @@ export const COPY_OP_SECOND =
 export const COPY_OP_RACE =
   "This activation did not become the active offer. Check the offer that is active, then try again if you still need a change.";
 export const COPY_OP_CONFLICT = "Someone else changed this. Reload it and try again.";
-export const COPY_OP_LIVE =
-  "Customer-ready now. Currently effective. This is a workflow cue, not a promise that a particular customer qualifies.";
+export const COPY_OP_LIVE = "Customers can receive this offer.";
 export const COPY_OP_DRAFT = "Not live yet. Customers do not receive this.";
 export const COPY_OP_RETIRED = "Retired. New orders will not receive it.";
 export const COPY_RETIRE_TITLE = "Retire this offer?";
@@ -42,8 +41,7 @@ export const COPY_OP_NO_ACTIVE_COUPON_CODES =
   "No active coupon codes. Customers can't use this offer until a coupon code is active.";
 export const COPY_OP_LIVE_WITHOUT_COUPON =
   "Active, but customers can't use it yet: no coupon code is active.";
-export const COPY_OP_LIVE_WITH_COUPON =
-  "Customer-ready now. Currently effective inside both saved windows. This is a workflow cue, not a promise that a particular customer qualifies.";
+export const COPY_OP_LIVE_WITH_COUPON = "Customers can receive this offer.";
 export const COPY_OP_COUPONS_UNREADABLE =
   "Coupon codes couldn't be checked, so customer readiness is unknown.";
 export const COPY_OP_STATE_CURRENT = "Currently effective";
