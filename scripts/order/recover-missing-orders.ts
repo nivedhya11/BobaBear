@@ -7,7 +7,11 @@
  *
  * Usage:
  *   npm run order:recover-missing
- *   npm run order:recover-missing -- --cursor=<checkoutId>
+ *   npm run order:recover-missing -- --cursor='{"lastCheckoutUpdatedAt":"2026-01-15T10:00:00.000Z","lastCheckoutId":"00000000-0000-4000-8000-000000000001"}'
+ *
+ * When the summary includes nextCursor, pass that same object JSON as the
+ * next --cursor value. A checkout id alone is rejected. Retryable failures
+ * are counted and listed; they are not omitted from the summary.
  */
 import process from "node:process";
 import path from "node:path";
@@ -19,82 +23,46 @@ import { loadConfig } from "../../src/platform/config/load-config";
 import { ConfigurationError } from "../../src/platform/config/config-error";
 import { recoverMissingOrdersBatch } from "../../src/server/order";
 import { getApplicationPersistence } from "../../src/server/persistence";
+import {
+  formatOrderRecoveryOperatorSummary,
+  parseOrderRecoveryCliArgs,
+  safeOrderRecoveryCliErrorMessage,
+} from "./recovery-cli.mjs";
 
 const DEFAULT_ORDER_POLICY = Object.freeze({
   orderNumberMaxAttempts: 8,
   recoveryBatchSize: 25,
 });
 
-function parseArgs(argv: readonly string[]): Readonly<{ cursor?: string }> {
-  let cursor: string | undefined;
-  for (let i = 0; i < argv.length; i += 1) {
-    const arg = argv[i]!;
-    if (arg.startsWith("--cursor=")) {
-      cursor = arg.slice("--cursor=".length);
-      continue;
-    }
-    if (arg === "--cursor") {
-      cursor = argv[i + 1];
-      i += 1;
-    }
-  }
-  return cursor ? Object.freeze({ cursor }) : Object.freeze({});
-}
-
-function printSafeError(message: string): void {
-  const safe = /password|secret|postgresql:\/\//i.test(message)
-    ? "order:recover-missing failed."
-    : message;
-  console.error(JSON.stringify({ ok: false, error: safe }));
+function printSafeError(error: unknown): void {
+  console.error(JSON.stringify({ ok: false, error: safeOrderRecoveryCliErrorMessage(error) }));
 }
 
 async function main(): Promise<void> {
+  const args = parseOrderRecoveryCliArgs(process.argv.slice(2));
+
   const scriptDir = path.dirname(fileURLToPath(import.meta.url));
   const projectRoot = path.resolve(scriptDir, "..", "..");
   loadEnvConfig(projectRoot, true);
 
   const workerConfig = loadConfig({ processKind: "worker", source: process.env });
   const persistence = getApplicationPersistence(workerConfig);
-  const args = parseArgs(process.argv.slice(2));
 
   try {
     const batch = await recoverMissingOrdersBatch(persistence, args, {
       policy: DEFAULT_ORDER_POLICY,
     });
-    const created = batch.results.filter((item) => item.disposition === "CREATED");
-    const alreadyExists = batch.results.filter((item) => item.disposition === "ALREADY_EXISTS");
-    const anomaly = batch.results.filter((item) => item.disposition === "ANOMALY");
-    console.log(
-      JSON.stringify({
-        ok: true,
-        operation: "recover_missing_orders_batch",
-        scanned: batch.results.length,
-        created: created.length,
-        alreadyExists: alreadyExists.length,
-        anomaly: anomaly.length,
-        nextCursor: batch.nextCursor,
-        createdOrders: created.map((item) =>
-          Object.freeze({
-            checkoutId: item.checkoutId,
-            orderId: item.orderId,
-            orderNumber: item.orderNumber,
-          }),
-        ),
-        anomalyCheckouts: anomaly.map((item) => item.checkoutId),
-      }),
-    );
+    console.log(JSON.stringify(formatOrderRecoveryOperatorSummary(batch)));
   } finally {
     await persistence.close();
   }
 }
 
 main().catch((error: unknown) => {
-  if (error instanceof ConfigurationError) {
-    printSafeError(error.message);
-  } else if (error instanceof Error) {
-    printSafeError(error.message);
+  if (error instanceof ConfigurationError || error instanceof Error) {
+    printSafeError(error);
   } else {
-    printSafeError("order:recover-missing failed.");
+    printSafeError(new Error("order:recover-missing failed."));
   }
   process.exitCode = 1;
 });
