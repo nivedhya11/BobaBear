@@ -68,10 +68,30 @@ malformed service origin is not ignored when other services agree.
 ## Recovery and database
 
 The live collector keeps `RECOVERY_PROOF_BINDING = DESIGN_DEPENDENCY`. A
-qualifying backup record is not a staging restore checkpoint. Database probes
-that compare migration hashes do not emit `APPLIED_CURRENT` or `LEDGER_CURRENT`.
-Duplicate auth-account checks return a group count only and are not run against
-the persistent staging database by this preparation change.
+qualifying backup record is not a staging restore checkpoint. The checkpoint
+qualifier can accept a complete synthetic chain only in isolated tests, and
+that result has no operational authority.
+
+Locked rules already applied by that qualifier:
+
+- Both IMP-037 layers, linked by backup `RUN_ID` and artifact checksum.
+- Fresh run-owned PostgreSQL 18 recovery target, distinct from `boba-staging`.
+- Image rollback or forward correction. Database restore is not routine rollback.
+- Exact candidate SHA and tree. Unknown migration ledger labels block.
+- Existing Layer 1 / Layer 2 / RPO age limits, rechecked at evaluation time.
+
+These Founder decisions remain, so the live binding cannot pass:
+
+- `STAGING_EVIDENCE_ROOT_UNNAMED` — proposed private root is not selected.
+- `STAGING_DATABASE_VOLUME_IDENTITY_UNBOUND` — volume name is known; the live
+  cluster system identifier has not been observed.
+- `STAGING_FRESHNESS_WINDOW_UNDECIDED` — no extra staging restore-proof window
+  is adopted here.
+- `LEDGER_STATE_MAPPING_UNDECIDED` — hash comparison is not a known-safe label.
+
+Database probes that compare migration hashes do not emit `APPLIED_CURRENT` or
+`LEDGER_CURRENT`. Duplicate auth-account checks return a group count only and
+are not run against the persistent staging database by this preparation change.
 
 ## Secret files
 

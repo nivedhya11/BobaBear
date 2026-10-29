@@ -113,6 +113,34 @@ test("P01: all required fake evidence valid -> PASS", () => {
   assert.equal(decision.outcome, PREFLIGHT_OUTCOME.PASS);
 });
 
+test("stored evaluatedAt is not a freshness authority; evaluationClock is the isolated test seam", () => {
+  const ancient = "2020-01-01T00:00:00.000Z";
+  const passWithAncientEvaluatedAt = evaluateStagingDeployPreflight(
+    validPreflightEvidence({
+      recovery: {
+        evaluatedAt: ancient,
+        evaluationClock: "2026-10-29T10:00:00.000Z",
+      },
+    }),
+  );
+  assert.equal(passWithAncientEvaluatedAt.outcome, PREFLIGHT_OUTCOME.PASS);
+
+  const blockedWhenClockAdvances = evaluateStagingDeployPreflight(
+    validPreflightEvidence({
+      recovery: {
+        evaluatedAt: "2026-10-29T10:00:00.000Z",
+        evaluationClock: "2026-10-29T10:20:00.000Z",
+      },
+    }),
+  );
+  assert.equal(blockedWhenClockAdvances.outcome, PREFLIGHT_OUTCOME.BLOCKED);
+  assert.ok(
+    blockedWhenClockAdvances.findings.some(
+      (finding) => finding.code === PREFLIGHT_REASON.RECOVERY_EVIDENCE_STALE_OR_MISBOUND,
+    ),
+  );
+});
+
 test("P02: backup absent -> BLOCK", () => {
   assertBlocked(
     evaluateStagingDeployPreflight(validPreflightEvidence({ recovery: { checkpointPresent: false } })),
@@ -660,6 +688,14 @@ test("N-environment: http origin, unsafe adapters, live payment, and bypass flag
     evaluateStagingDeployPreflight(validPreflightEvidence({ waive: true })),
     PREFLIGHT_REASON.EVIDENCE_MALFORMED,
   );
+});
+
+test("N-recovery: backup-only records do not pass on true booleans", () => {
+  const evidence = validPreflightEvidence();
+  evidence.recovery.evidenceRecords = evidence.recovery.evidenceRecords.filter((record) =>
+    record.operationType.includes("backup"),
+  );
+  assertBlocked(evaluateStagingDeployPreflight(evidence), PREFLIGHT_REASON.RECOVERY_PROOF_MISSING);
 });
 
 test("N-recovery: omitted records and production-only records do not pass", () => {
