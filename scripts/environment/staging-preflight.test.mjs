@@ -662,6 +662,14 @@ test("N-environment: http origin, unsafe adapters, live payment, and bypass flag
   );
 });
 
+test("N-recovery: backup-only records do not pass on true booleans", () => {
+  const evidence = validPreflightEvidence();
+  evidence.recovery.evidenceRecords = evidence.recovery.evidenceRecords.filter((record) =>
+    record.operationType.includes("backup"),
+  );
+  assertBlocked(evaluateStagingDeployPreflight(evidence), PREFLIGHT_REASON.RECOVERY_PROOF_MISSING);
+});
+
 test("N-recovery: omitted records and production-only records do not pass", () => {
   const missingRecords = validPreflightEvidence();
   delete missingRecords.recovery.evidenceRecords;

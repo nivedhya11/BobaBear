@@ -43,8 +43,12 @@ test("default adapter stays fail-closed and lists the undecided blockers", () =>
   assert.equal(bound.checkpointPresent, false);
   assert.equal(bound.restoreProofPresent, false);
   assert.equal(bound.stagingBound, false);
+  assert.equal(bound.operationalAuthority, undefined);
   assert.deepEqual(bound.evidenceRecords, []);
   assert.deepEqual(bound.bindingBlockers, [...STAGING_RECOVERY_BINDING_BLOCKERS]);
+  assert.equal(bound.bindingBlockers.includes("LEDGER_STATE_MAPPING_UNDECIDED"), true);
+  assert.equal(bound.bindingBlockers.includes("ISOLATED_RESTORE_TARGET_UNBOUND"), false);
+  assert.equal(bound.specifiedContracts.includes("BOTH_IMP037_LAYERS_REQUIRED"), true);
 });
 
 test("backup success is not a binding input", () => {
