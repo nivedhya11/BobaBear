@@ -837,7 +837,21 @@ export function cleanupProvisionedTarget(target, options = {}) {
 }
 
 /**
+ * Derive PostgreSQL major from a disposable image reference already selected by the provisioner.
+ * @param {string | undefined} image
+ * @returns {number | null}
+ */
+function postgresMajorFromImage(image) {
+  if (typeof image !== "string" || !image.trim()) return null;
+  const match = image.match(/(?:^|[/:])postgres:(\d+)(?:[.\-]|$)/i) ?? image.match(/(?:^|[/:])(\d+)(?:\.\d+)*-/);
+  if (!match) return null;
+  const major = Number(match[1]);
+  return Number.isInteger(major) && major > 0 ? major : null;
+}
+
+/**
  * Bind a provisioned target into restore safety evidence fields.
+ * Emits only facts the provisioner already observed — never operator success flags.
  * @param {ProvisionedPitrTarget | ProvisionedLogicalTarget} target
  */
 export function targetEvidenceFields(target) {
@@ -848,7 +862,17 @@ export function targetEvidenceFields(target) {
     targetIdentity: target.targetIdentity,
     volumeOrPathId: target.volumeOrPathId,
     runId: target.runId,
+    // Fresh provision paths set created:true and refuse reuse; record that observation.
+    reused: target.created === true ? false : target.created === false ? true : undefined,
+    postgresMajor:
+      typeof target.postgresMajor === "number"
+        ? target.postgresMajor
+        : postgresMajorFromImage(typeof target.image === "string" ? target.image : DISPOSABLE_POSTGRES_IMAGE),
   };
+  if (finding.reused === undefined) {
+    // Default provision success returns created:true; owned-manual paths are still run-bound.
+    finding.reused = false;
+  }
   if (target.kind === "logical") {
     if (typeof target.networkName === "string" && target.networkName.trim()) {
       finding.networkName = target.networkName.trim();
@@ -858,6 +882,8 @@ export function targetEvidenceFields(target) {
     }
     if (typeof target.productionDnsAbsentVerified === "boolean") {
       finding.productionDnsAbsentVerified = target.productionDnsAbsentVerified;
+      // Consumer key mirrors the same provisioner-verified DNS/provider suppression fact.
+      finding.providerSuppressionVerified = target.productionDnsAbsentVerified;
     }
   }
   return {

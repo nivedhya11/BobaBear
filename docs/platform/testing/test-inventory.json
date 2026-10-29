@@ -31,11 +31,11 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2390,
-    "executableTestFiles": 559,
+    "trackedPathsConsidered": 2394,
+    "executableTestFiles": 561,
     "sourceTestFiles": 164,
     "testsTreeExecutableFiles": 295,
-    "scriptTestFiles": 100,
+    "scriptTestFiles": 102,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
     "playwrightConfigs": 7,
@@ -553,6 +553,8 @@
     "scripts/environment/staging-preflight.test.mjs",
     "scripts/environment/staging-publishing-probe.test.mjs",
     "scripts/environment/staging-recovery-binding.test.mjs",
+    "scripts/environment/staging-recovery-checkpoint.test.mjs",
+    "scripts/environment/staging-recovery-producer-compat.test.mjs",
     "scripts/environment/staging-secret-files.test.mjs",
     "scripts/environment/staging-source-isolation.test.mjs",
     "scripts/environment/staging.test.mjs",
@@ -2242,6 +2244,42 @@
     },
     {
       "path": "scripts/environment/staging-recovery-binding.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/environment/staging-recovery-checkpoint.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/environment/staging-recovery-producer-compat.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
       "testType": "script-unit",

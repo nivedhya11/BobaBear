@@ -27,6 +27,7 @@ import {
 import { createEvidence } from "../evidence.mjs";
 import { requireExplicitSourceClassification } from "../identity.mjs";
 import { generateRunId, parseRunId } from "../run-id.mjs";
+import { stagingSourceIdentityFindings } from "../staging-source-identity.mjs";
 import { persistEvidence } from "../store.mjs";
 import { redactText } from "../redact.mjs";
 import { encryptToAge, fingerprintRecipient, resolveAgeBinary } from "./age.mjs";
@@ -304,6 +305,7 @@ async function executeLogicalBackupChain(options) {
       startedAt,
       endedAt,
       candidate: options.candidate ?? {},
+      migrationSchemaContext: options.migrationSchemaContext ?? null,
       sourceEnvironmentClassification: sourceClass.classification,
       sourceIdentityMarker: options.sourceIdentity ?? null,
       recoveryArtifactReference: artifactKey,
@@ -318,6 +320,7 @@ async function executeLogicalBackupChain(options) {
           encryptedBytes: ciphertext.length,
         },
         { code: "LAYER2_EVIDENCE_PERSISTED_BEFORE_COMPLETE", ok: true },
+        ...stagingSourceIdentityFindings(options),
       ],
       validationResults: [...validationResults],
       timings: {

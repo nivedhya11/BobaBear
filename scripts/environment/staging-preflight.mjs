@@ -13,6 +13,11 @@
  */
 import { ENVIRONMENT_CLASSIFICATION } from "../recovery/constants.mjs";
 import { evaluateQualifyingRecoveryProof, validateEvidence } from "../recovery/evidence.mjs";
+import {
+  evaluateStagingRecoveryChain,
+  STAGING_CHECKPOINT_REASON,
+  syntheticIsolatedCheckpointFixture,
+} from "./staging-recovery-checkpoint.mjs";
 import { POSTGRES_INIT_DISPOSITION } from "./postgres-init-identity.mjs";
 import { syntheticBoundImages, sameBoundImages } from "./staging-image-security-evidence.mjs";
 import { PROTECTED_PRIMARY_REPOSITORY } from "./staging-source-isolation.mjs";
@@ -137,7 +142,7 @@ export function evaluateStagingDeployPreflight(evidence) {
   categories.runtime = evaluateRuntime(e.runtime, findings);
   categories.environment = evaluateEnvironment(e.environment, findings);
   categories.database = evaluateDatabase(e.database, findings);
-  const recovery = evaluateRecovery(e.recovery, findings);
+  const recovery = evaluateRecovery(e.recovery, e.source, findings);
   categories.recovery = recovery.outcome;
   categories.security = evaluateSecurity(e.security, e.source, findings);
   categories.capacity = evaluateCapacity(e.capacity, findings);
@@ -597,7 +602,7 @@ function evaluateDatabase(database, findings) {
   return PREFLIGHT_OUTCOME.PASS;
 }
 
-function evaluateRecovery(recovery, findings) {
+function evaluateRecovery(recovery, source, findings) {
   if (!recovery || typeof recovery !== "object") {
     findings.push({
       code: PREFLIGHT_REASON.RECOVERY_PROOF_MISSING,
@@ -670,6 +675,24 @@ function evaluateRecovery(recovery, findings) {
       });
       return { outcome: PREFLIGHT_OUTCOME.BLOCKED, binding: recovery.binding };
     }
+    // Freshness uses the trusted evaluation clock only. Stored evaluatedAt is
+    // informational and must never freeze proof validity. Isolated tests may
+    // inject recovery.evaluationClock explicitly; operational preflight omits it.
+    const chain = evaluateStagingRecoveryChain({
+      records: recovery.evidenceRecords,
+      observation: recovery.checkpointObservation,
+      now: recovery.evaluationClock,
+      source,
+    });
+    if (chain.outcome !== "PASS" || chain.operationalAuthority !== false) {
+      const reason = chain.reasonCodes[0];
+      findings.push({
+        code: preflightReasonForCheckpoint(reason),
+        category: "recovery",
+        detail: chain.reasonCodes.join(","),
+      });
+      return { outcome: PREFLIGHT_OUTCOME.BLOCKED, binding: recovery.binding };
+    }
     const anyQualifying = stagingRecords.some((record) => evaluateQualifyingRecoveryProof(record).ok);
     if (!anyQualifying) {
       findings.push({
@@ -682,6 +705,28 @@ function evaluateRecovery(recovery, findings) {
   }
 
   return { outcome: PREFLIGHT_OUTCOME.PASS, binding: recovery.binding };
+}
+
+/**
+ * @param {string | undefined} reason
+ */
+function preflightReasonForCheckpoint(reason) {
+  if (
+    reason === STAGING_CHECKPOINT_REASON.NO_EVIDENCE ||
+    reason === STAGING_CHECKPOINT_REASON.BACKUP_ONLY
+  ) {
+    return PREFLIGHT_REASON.RECOVERY_PROOF_MISSING;
+  }
+  if (
+    reason === STAGING_CHECKPOINT_REASON.RESTORE_ONLY ||
+    reason === STAGING_CHECKPOINT_REASON.FAILED_OR_INTERRUPTED_RESTORE
+  ) {
+    return PREFLIGHT_REASON.RECOVERY_RESTORE_PROOF_MISSING;
+  }
+  if (reason === STAGING_CHECKPOINT_REASON.WRONG_ARTIFACT_CHECKSUM) {
+    return PREFLIGHT_REASON.RECOVERY_INTEGRITY_UNVERIFIED;
+  }
+  return PREFLIGHT_REASON.RECOVERY_EVIDENCE_STALE_OR_MISBOUND;
 }
 
 function evaluateSecurity(security, source, findings) {
@@ -783,28 +828,19 @@ function evaluatePostgresInit(postgresInit, findings) {
   return PREFLIGHT_OUTCOME.BLOCKED;
 }
 
-function syntheticQualifyingStagingRecord() {
+function syntheticCheckpointRecovery() {
+  const fixture = syntheticIsolatedCheckpointFixture({
+    now: new Date("2026-10-29T10:00:00.000Z"),
+    candidateSha: "a".repeat(40),
+    candidateTree: "b".repeat(40),
+  });
   return {
-    schemaVersion: "imp037-evidence-v1",
-    runId: "20260101T000000Z-0123456789abcdef",
-    operationType: "layer2-logical-backup",
-    recoveryLayer: "LAYER_2",
-    status: "SUCCEEDED",
-    readiness: "READY",
-    startedAt: "2026-01-01T00:00:00.000Z",
-    endedAt: "2026-01-01T00:01:00.000Z",
-    candidate: {
-      commitSha: "a".repeat(40),
-      repositoryPath: PROTECTED_PRIMARY_REPOSITORY,
-    },
-    sourceEnvironmentClassification: ENVIRONMENT_CLASSIFICATION.STAGING,
-    sourceIdentityMarker: "boba-staging",
-    recoveryArtifactReference: "synthetic-artifact",
-    recoveryPoint: "synthetic-point",
-    checksumIntegrityStatus: "MATCHED",
-    validationResults: [{ code: "REMOTE_STORED_ARTIFACT_VERIFIED" }, { code: "LAYER2_COMPLETE" }],
-    incomplete: false,
-    synthetic: true,
+    evidenceRecords: fixture.records,
+    checkpointObservation: fixture.observation,
+    // Informational collection timestamp — not a freshness authority.
+    evaluatedAt: fixture.now.toISOString(),
+    // Explicit isolated-test clock seam only. Operational probes omit this.
+    evaluationClock: fixture.now.toISOString(),
   };
 }
 
@@ -913,7 +949,7 @@ export function validPreflightEvidence(overrides = {}) {
       freshnessOk: true,
       bindingDesignDependency: false,
       binding: "BOUND",
-      evidenceRecords: [syntheticQualifyingStagingRecord()],
+      ...syntheticCheckpointRecovery(),
       ...(overrides.recovery ?? {}),
     },
     security: {
