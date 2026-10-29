@@ -10,7 +10,7 @@
  * staging restore-proof window, and migration-ledger label meaning stay
  * undecided and cannot be satisfied by this module.
  */
-import { lstatSync, readdirSync, readFileSync, realpathSync } from "node:fs";
+import { existsSync, lstatSync, readdirSync, readFileSync, realpathSync } from "node:fs";
 import path from "node:path";
 
 import {
@@ -24,7 +24,8 @@ import {
 } from "../recovery/constants.mjs";
 import { createEvidence, evaluateQualifyingRecoveryProof, validateEvidence } from "../recovery/evidence.mjs";
 import { evaluateRecoveryPointFreshness } from "../recovery/freshness.mjs";
-import { evaluateTargetIdentitySafety } from "../recovery/identity.mjs";
+import { canonicalizePath, evaluateTargetIdentitySafety } from "../recovery/identity.mjs";
+import { readRunEvidence } from "../recovery/store.mjs";
 import {
   EXPECTED_STAGING_COMPOSE_PROJECT,
   EXPECTED_STAGING_POSTGRES_VOLUME,
@@ -368,6 +369,7 @@ function assessFreshness(record, now, reasons) {
   if (ended - now.getTime() > CHECKPOINT_CLOCK_SKEW_MS) {
     reasons.push(STAGING_CHECKPOINT_REASON.FUTURE_DATED_PROOF);
   }
+  // Layer health/evidence age windows (36h Layer 1 / 24h Layer 2). Distinct from RPO.
   const maxAge = record.recoveryLayer === "LAYER_1" ? LAYER_1_MAX_AGE_MS_DEFAULT : LAYER_2_MAX_AGE_MS_DEFAULT;
   if (now.getTime() - ended > maxAge) {
     reasons.push(STAGING_CHECKPOINT_REASON.STALE_RECOVERY_POINT);
@@ -376,7 +378,21 @@ function assessFreshness(record, now, reasons) {
   if (Number.isFinite(point) && point - now.getTime() > CHECKPOINT_CLOCK_SKEW_MS) {
     reasons.push(STAGING_CHECKPOINT_REASON.FUTURE_DATED_PROOF);
   }
-  if (record.recoveryLayer === "LAYER_1" && record.operationType !== OPERATION_TYPE.RESTORE_PITR) {
+  // Layer 1 backup recoveryPoint is often physical backup-stop age from pgBackRest
+  // info, not continuous WAL tip. Do not apply the 15-minute RPO target to it —
+  // that would require a new full/differential every 15 minutes. RPO is proven by
+  // the measured PITR restore recovery point (drill-selected recoverable instant).
+  if (record.operationType === OPERATION_TYPE.LAYER1_BACKUP) {
+    const codes = new Set(
+      (record.validationResults ?? [])
+        .map((entry) => (entry && typeof entry === "object" ? String(entry.code ?? "") : ""))
+        .filter((code) => code.length > 0),
+    );
+    if (!codes.has("LAYER1_RECOVERY_POINT") || !record.recoveryPoint) {
+      reasons.push(STAGING_CHECKPOINT_REASON.STALE_RECOVERY_POINT);
+    }
+  }
+  if (record.operationType === OPERATION_TYPE.RESTORE_PITR) {
     const freshness = evaluateRecoveryPointFreshness(record.recoveryPoint, RPO_TARGET_MS_DEFAULT, now);
     if (!freshness.ok) reasons.push(STAGING_CHECKPOINT_REASON.STALE_RECOVERY_POINT);
   }
@@ -409,6 +425,29 @@ function assessLink(backup, restore, reasons) {
   ) {
     reasons.push(STAGING_CHECKPOINT_REASON.MISMATCHED_RUN_LINKAGE);
   }
+  if (backup.operationType === OPERATION_TYPE.LAYER1_BACKUP) {
+    // pgBackRest has no single dump SHA. Integrity is PGBACKREST_VERIFY_OK plus
+    // matched repository generation / artifact reference — never an invented hex.
+    const codes = new Set(
+      (backup.validationResults ?? [])
+        .map((entry) => (entry && typeof entry === "object" ? String(entry.code ?? "") : ""))
+        .filter((code) => code.length > 0),
+    );
+    if (!codes.has("PGBACKREST_VERIFY_OK") || backup.checksumIntegrityStatus !== CHECKSUM_INTEGRITY_STATUS.MATCHED) {
+      reasons.push(STAGING_CHECKPOINT_REASON.WRONG_ARTIFACT_CHECKSUM);
+    }
+    const backupChecksum = artifactChecksum(backup);
+    const restoreChecksum = artifactChecksum(restore);
+    if (backupChecksum || restoreChecksum) {
+      if (!backupChecksum || !restoreChecksum || backupChecksum !== restoreChecksum) {
+        reasons.push(STAGING_CHECKPOINT_REASON.WRONG_ARTIFACT_CHECKSUM);
+      }
+      if (restore.checksumIntegrityStatus !== CHECKSUM_INTEGRITY_STATUS.MATCHED) {
+        reasons.push(STAGING_CHECKPOINT_REASON.WRONG_ARTIFACT_CHECKSUM);
+      }
+    }
+    return;
+  }
   const backupChecksum = artifactChecksum(backup);
   const restoreChecksum = artifactChecksum(restore);
   if (!backupChecksum || !restoreChecksum || backupChecksum !== restoreChecksum) {
@@ -420,16 +459,60 @@ function assessLink(backup, restore, reasons) {
   ) {
     reasons.push(STAGING_CHECKPOINT_REASON.WRONG_ARTIFACT_CHECKSUM);
   }
-  if (backup.operationType === OPERATION_TYPE.LAYER1_BACKUP) {
-    const codes = new Set(
-      (backup.validationResults ?? [])
-        .map((entry) => (entry && typeof entry === "object" ? String(entry.code ?? "") : ""))
-        .filter((code) => code.length > 0),
-    );
-    if (!codes.has("PGBACKREST_VERIFY_OK")) {
-      reasons.push(STAGING_CHECKPOINT_REASON.WRONG_ARTIFACT_CHECKSUM);
-    }
+}
+
+/**
+ * @param {string} volumeOrPathId
+ * @param {Record<string, unknown>} observation
+ * @returns {boolean}
+ */
+function targetStorageAliasesSource(volumeOrPathId, observation) {
+  const sourceVolume = String(observation.postgresVolume ?? "").trim();
+  const sourceId = String(observation.databaseSystemIdentifier ?? "").trim();
+  const sourceContainer = String(observation.postgresContainer ?? "").trim();
+  const raw = volumeOrPathId.trim();
+  if (!raw) return true;
+  if (raw === sourceVolume || raw === sourceId || raw === sourceContainer) return true;
+  if (raw === EXPECTED_STAGING_POSTGRES_VOLUME) return true;
+
+  const canonical = canonicalizePath(raw);
+  const canonicalSourceVolume = canonicalizePath(sourceVolume);
+  if (canonical && canonicalSourceVolume && (canonical === canonicalSourceVolume || canonical.endsWith(`/${canonicalSourceVolume}`))) {
+    return true;
   }
+  if (canonical.includes(`/${EXPECTED_STAGING_POSTGRES_VOLUME}`) || canonical.endsWith(`/${EXPECTED_STAGING_POSTGRES_VOLUME}`)) {
+    return true;
+  }
+
+  // Resolve symlink / canonical-path aliases when the path exists on disk.
+  try {
+    if (existsSync(raw)) {
+      const real = realpathSync(raw);
+      const realCanonical = canonicalizePath(real);
+      if (
+        realCanonical === canonicalSourceVolume ||
+        realCanonical.endsWith(`/${EXPECTED_STAGING_POSTGRES_VOLUME}`) ||
+        realCanonical.includes(`/${EXPECTED_STAGING_POSTGRES_VOLUME}/`) ||
+        (sourceVolume && realCanonical.includes(canonicalizePath(sourceVolume)))
+      ) {
+        return true;
+      }
+      const sourceCandidates = [sourceVolume, EXPECTED_STAGING_POSTGRES_VOLUME].filter(Boolean);
+      for (const candidate of sourceCandidates) {
+        try {
+          if (existsSync(candidate)) {
+            if (realpathSync(candidate) === real) return true;
+          }
+        } catch {
+          // ignore unreadable source candidate
+        }
+      }
+    }
+  } catch {
+    // unreadable target path is not proof of isolation
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -439,25 +522,58 @@ function assessLink(backup, restore, reasons) {
  */
 function assessTarget(restore, observation, reasons) {
   const target = typeof restore.targetIdentityMarker === "string" ? restore.targetIdentityMarker.trim() : "";
-  const sourceId = String(observation.databaseSystemIdentifier ?? "");
-  const volume = String(observation.postgresVolume ?? "");
-  const container = String(observation.postgresContainer ?? "");
-  if (!target || target === sourceId || target === volume || target === container) {
+  const sourceId = String(observation.databaseSystemIdentifier ?? "").trim();
+  const volume = String(observation.postgresVolume ?? "").trim();
+  const container = String(observation.postgresContainer ?? "").trim();
+  if (!target) {
+    reasons.push(STAGING_CHECKPOINT_REASON.REUSED_OR_UNOWNED_TARGET);
+    return;
+  }
+  if (target === sourceId || target === volume || target === container || target === EXPECTED_STAGING_POSTGRES_VOLUME) {
     reasons.push(STAGING_CHECKPOINT_REASON.TARGET_EQUALS_SOURCE);
   }
+
   const fresh = findings(restore, "FRESH_TARGET_PROVISIONED")[0];
-  if (!fresh || fresh.runId !== restore.runId || fresh.reused !== false || fresh.postgresMajor !== EXPECTED_STAGING_POSTGRES_MAJOR) {
+  if (
+    !fresh ||
+    fresh.runId !== restore.runId ||
+    fresh.reused !== false ||
+    fresh.postgresMajor !== EXPECTED_STAGING_POSTGRES_MAJOR
+  ) {
     reasons.push(STAGING_CHECKPOINT_REASON.REUSED_OR_UNOWNED_TARGET);
   }
-  if (fresh?.networkInternalVerified !== true || fresh?.providerSuppressionVerified !== true) {
+
+  const provisionedIdentity = typeof fresh?.targetIdentity === "string" ? String(fresh.targetIdentity).trim() : "";
+  if (!provisionedIdentity || provisionedIdentity !== target) {
+    reasons.push(STAGING_CHECKPOINT_REASON.REUSED_OR_UNOWNED_TARGET);
+  }
+
+  const volumeOrPath = typeof fresh?.volumeOrPathId === "string" ? String(fresh.volumeOrPathId).trim() : "";
+  if (!volumeOrPath) {
+    reasons.push(STAGING_CHECKPOINT_REASON.REUSED_OR_UNOWNED_TARGET);
+  } else if (targetStorageAliasesSource(volumeOrPath, observation)) {
+    reasons.push(STAGING_CHECKPOINT_REASON.TARGET_EQUALS_SOURCE);
+  }
+
+  const kind = typeof fresh?.kind === "string" ? fresh.kind : "";
+  const providerSuppressed =
+    fresh?.providerSuppressionVerified === true || fresh?.productionDnsAbsentVerified === true;
+  if (kind === "logical") {
+    if (fresh?.networkInternalVerified !== true || !providerSuppressed) {
+      reasons.push(STAGING_CHECKPOINT_REASON.MISSING_VALIDATION);
+    }
+  } else if (kind === "pitr") {
+    // PITR isolation is distinct PGDATA path/volume proof above, not docker network.
+  } else if (fresh?.networkInternalVerified !== true || !providerSuppressed) {
     reasons.push(STAGING_CHECKPOINT_REASON.MISSING_VALIDATION);
   }
+
   const safety = evaluateTargetIdentitySafety({
     sourceIdentity: sourceId,
     targetIdentity: target,
     sourceClassification: ENVIRONMENT_CLASSIFICATION.STAGING,
     targetClassification: ENVIRONMENT_CLASSIFICATION.RECOVERY,
-    targetPgdataPath: typeof fresh?.volumeOrPathId === "string" ? fresh.volumeOrPathId : "",
+    targetPgdataPath: volumeOrPath,
   });
   if (!safety.allowed && safety.code === "SOURCE_EQUALS_TARGET") {
     reasons.push(STAGING_CHECKPOINT_REASON.TARGET_EQUALS_SOURCE);
@@ -559,11 +675,12 @@ export function evaluateStagingRecoveryCheckpoint(input = {}) {
     if (fileStat.isSymbolicLink() || !fileStat.isFile() || (fileStat.mode & 0o777) !== 0o600) {
       return blocked([STAGING_CHECKPOINT_REASON.UNSAFE_EVIDENCE_ROOT]);
     }
-    try {
-      records.push(JSON.parse(readFileSync(evidencePath, "utf8")));
-    } catch {
+    // Merge COMPLETE marker sidecars the same way store.readRunEvidence does.
+    const loaded = readRunEvidence(input.evidenceRoot, entry.name);
+    if (!loaded.ok) {
       return blocked([STAGING_CHECKPOINT_REASON.NO_EVIDENCE]);
     }
+    records.push(loaded.evidence);
   }
   const descriptorPath = path.join(input.evidenceRoot, "checkpoint.json");
   try {
@@ -615,7 +732,6 @@ export function syntheticIsolatedCheckpointFixture(options = {}) {
   const layer2Run = "20261029T095800Z-2222222222222222";
   const pitrRun = "20261029T095900Z-3333333333333333";
   const logicalRun = "20261029T095930Z-4444444444444444";
-  const layer1Checksum = "11".repeat(32);
   const layer2Checksum = "22".repeat(32);
   const identity = {
     code: "STAGING_SOURCE_IDENTITY",
@@ -652,7 +768,8 @@ export function syntheticIsolatedCheckpointFixture(options = {}) {
       { code: "LAYER1_RECOVERY_POINT" },
       { code: "REPOSITORY_GENERATION" },
     ],
-    findings: [{ code: "LAYER1_BACKUP", repositoryGeneration: "1", artifactChecksum: layer1Checksum }, identity],
+    // Layer 1 integrity is pgBackRest verify + repo generation — no invented dump SHA.
+    findings: [{ code: "LAYER1_BACKUP", repositoryGeneration: "1" }, identity],
   });
   const layer2 = createEvidence({
     ...shared,
@@ -667,15 +784,17 @@ export function syntheticIsolatedCheckpointFixture(options = {}) {
     ],
     findings: [{ code: "LAYER2_METADATA", artifactChecksum: layer2Checksum }, identity],
   });
-  const targetFinding = (runId, targetIdentity) => ({
+  const targetFinding = (runId, targetIdentity, kind) => ({
     code: "FRESH_TARGET_PROVISIONED",
+    kind,
     runId,
     targetIdentity,
     volumeOrPathId: `/tmp/boba-recovery-${runId}`,
     reused: false,
     postgresMajor: EXPECTED_STAGING_POSTGRES_MAJOR,
-    networkInternalVerified: true,
-    providerSuppressionVerified: true,
+    networkInternalVerified: kind === "logical" ? true : undefined,
+    providerSuppressionVerified: kind === "logical" ? true : undefined,
+    productionDnsAbsentVerified: kind === "logical" ? true : undefined,
   });
   const pitr = createEvidence({
     ...shared,
@@ -687,8 +806,8 @@ export function syntheticIsolatedCheckpointFixture(options = {}) {
     targetIdentityMarker: `recovery-${pitrRun}`,
     validationResults: [{ code: "BUSINESS_INTEGRITY_VALIDATED" }],
     findings: [
-      { code: "PITR_RESTORE", sourceRunId: layer1Run, artifactChecksum: layer1Checksum, repositoryGeneration: "1" },
-      targetFinding(pitrRun, `recovery-${pitrRun}`),
+      { code: "PITR_RESTORE", sourceRunId: layer1Run, repositoryGeneration: "1" },
+      targetFinding(pitrRun, `recovery-${pitrRun}`, "pitr"),
       identity,
     ],
   });
@@ -704,7 +823,7 @@ export function syntheticIsolatedCheckpointFixture(options = {}) {
     validationResults: [{ code: "BUSINESS_INTEGRITY_VALIDATED" }],
     findings: [
       { code: "LOGICAL_RESTORE", sourceRunId: layer2Run, sha256Hex: layer2Checksum },
-      targetFinding(logicalRun, `recovery-${logicalRun}`),
+      targetFinding(logicalRun, `recovery-${logicalRun}`, "logical"),
       identity,
     ],
   });

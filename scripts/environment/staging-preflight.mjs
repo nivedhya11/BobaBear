@@ -603,10 +603,13 @@ function evaluateRecovery(recovery, source, findings) {
       });
       return { outcome: PREFLIGHT_OUTCOME.BLOCKED, binding: recovery.binding };
     }
+    // Freshness uses the trusted evaluation clock only. Stored evaluatedAt is
+    // informational and must never freeze proof validity. Isolated tests may
+    // inject recovery.evaluationClock explicitly; operational preflight omits it.
     const chain = evaluateStagingRecoveryChain({
       records: recovery.evidenceRecords,
       observation: recovery.checkpointObservation,
-      now: recovery.evaluatedAt,
+      now: recovery.evaluationClock,
       source,
     });
     if (chain.outcome !== "PASS" || chain.operationalAuthority !== false) {
@@ -762,7 +765,10 @@ function syntheticCheckpointRecovery() {
   return {
     evidenceRecords: fixture.records,
     checkpointObservation: fixture.observation,
+    // Informational collection timestamp — not a freshness authority.
     evaluatedAt: fixture.now.toISOString(),
+    // Explicit isolated-test clock seam only. Operational probes omit this.
+    evaluationClock: fixture.now.toISOString(),
   };
 }
 

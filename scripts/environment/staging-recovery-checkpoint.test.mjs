@@ -137,9 +137,10 @@ test("mismatched backup and restore linkage blocks", () => {
 });
 
 test("stale recovery point blocks", () => {
+  // RPO applies to measured PITR restore point, not Layer 1 physical backup age.
   blocked((sample) => {
-    const backup = sample.records.find((record) => record.operationType === "layer1-backup");
-    backup.recoveryPoint = new Date(NOW.getTime() - 2 * 60 * 60 * 1000).toISOString();
+    const restore = sample.records.find((record) => record.operationType === "restore-pitr");
+    restore.recoveryPoint = new Date(NOW.getTime() - 2 * 60 * 60 * 1000).toISOString();
   }, STAGING_CHECKPOINT_REASON.STALE_RECOVERY_POINT);
 });
 
@@ -268,4 +269,107 @@ test("checkpoint qualification does not mutate the evidence root or staging runt
   assert.equal(result.operationalRecoveryBinding, "BLOCKED");
   assert.equal(beforeStat.mtimeMs, afterStat.mtimeMs);
   rmSync(stored.parent, { recursive: true, force: true });
+});
+
+test("stored evaluatedAt cannot preserve stale proof when evaluation clock advances", () => {
+  const sample = fixture();
+  const fresh = evaluateStagingRecoveryChain({
+    records: sample.records,
+    observation: sample.observation,
+    now: sample.now,
+    source: { head: sample.observation.candidateSha, tree: sample.observation.candidateTree },
+  });
+  assert.equal(fresh.outcome, "PASS");
+  const later = new Date(sample.now.getTime() + 20 * 60 * 1000);
+  const stale = evaluateStagingRecoveryChain({
+    records: sample.records,
+    observation: sample.observation,
+    now: later,
+    source: { head: sample.observation.candidateSha, tree: sample.observation.candidateTree },
+  });
+  assert.equal(stale.outcome, "BLOCKED");
+  assert.equal(stale.reasonCodes.includes(STAGING_CHECKPOINT_REASON.STALE_RECOVERY_POINT), true);
+  assert.equal(stale.operationalAuthority, false);
+});
+
+test("provisioned target identity mismatch with restore marker blocks", () => {
+  blocked((sample) => {
+    for (const record of sample.records) {
+      if (!record.operationType.startsWith("restore-")) continue;
+      for (const finding of record.findings ?? []) {
+        if (finding.code === "FRESH_TARGET_PROVISIONED") {
+          finding.targetIdentity = "unrelated-provisioned-target";
+        }
+      }
+    }
+  }, STAGING_CHECKPOINT_REASON.REUSED_OR_UNOWNED_TARGET);
+});
+
+test("recovery target volume equal to staging source blocks", () => {
+  blocked((sample) => {
+    for (const record of sample.records) {
+      if (!record.operationType.startsWith("restore-")) continue;
+      for (const finding of record.findings ?? []) {
+        if (finding.code === "FRESH_TARGET_PROVISIONED") {
+          finding.volumeOrPathId = sample.observation.postgresVolume;
+        }
+      }
+    }
+  }, STAGING_CHECKPOINT_REASON.TARGET_EQUALS_SOURCE);
+});
+
+test("canonical-path or symlink alias to staging source blocks", () => {
+  const parent = mkdtempSync(path.join(tmpdir(), "boba-alias-"));
+  const sourceDir = path.join(parent, "boba-staging_postgres-data");
+  mkdirSync(sourceDir, { recursive: true });
+  const alias = path.join(parent, "recovery-alias");
+  symlinkSync(sourceDir, alias);
+  try {
+    blocked((sample) => {
+      for (const record of sample.records) {
+        if (!record.operationType.startsWith("restore-")) continue;
+        for (const finding of record.findings ?? []) {
+          if (finding.code === "FRESH_TARGET_PROVISIONED") {
+            finding.volumeOrPathId = alias;
+          }
+        }
+      }
+    }, STAGING_CHECKPOINT_REASON.TARGET_EQUALS_SOURCE);
+  } finally {
+    rmSync(parent, { recursive: true, force: true });
+  }
+});
+
+test("missing provisioner proof blocks", () => {
+  blocked((sample) => {
+    for (const record of sample.records) {
+      if (!record.operationType.startsWith("restore-")) continue;
+      record.findings = (record.findings ?? []).filter((entry) => entry.code !== "FRESH_TARGET_PROVISIONED");
+    }
+  }, STAGING_CHECKPOINT_REASON.REUSED_OR_UNOWNED_TARGET);
+});
+
+test("Layer 1 backup without WAL recovery-point proof blocks", () => {
+  blocked((sample) => {
+    const backup = sample.records.find((record) => record.operationType === "layer1-backup");
+    backup.validationResults = (backup.validationResults ?? []).filter(
+      (entry) => entry.code !== "LAYER1_RECOVERY_POINT",
+    );
+    backup.recoveryPoint = null;
+  }, STAGING_CHECKPOINT_REASON.STALE_RECOVERY_POINT);
+});
+
+test("candidate mismatch blocks unverified checkpoint reuse", () => {
+  blocked((sample) => {
+    sample.observation.candidateSha = "d".repeat(40);
+    sample.observation.candidateTree = "e".repeat(40);
+  }, STAGING_CHECKPOINT_REASON.CANDIDATE_OR_SCHEMA_INCOMPATIBLE);
+});
+
+test("complete compatible chain passes only in isolated qualification and keeps operational authority blocked", () => {
+  const result = chain();
+  assert.equal(result.outcome, "PASS");
+  assert.equal(result.isolatedQualification, "PASS");
+  assert.equal(result.operationalAuthority, false);
+  assert.equal(result.operationalRecoveryBinding, "BLOCKED");
 });
