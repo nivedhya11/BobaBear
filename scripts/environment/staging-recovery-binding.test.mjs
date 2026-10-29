@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { bindStagingRecoveryEvidence } from "./staging-recovery-binding.mjs";
+import { bindStagingRecoveryEvidence, STAGING_RECOVERY_BINDING_BLOCKERS } from "./staging-recovery-binding.mjs";
 import { evaluateQualifyingRecoveryProof } from "../recovery/evidence.mjs";
 
 function qualifyingStagingRecord() {
@@ -35,6 +35,16 @@ test("a qualifying staging record still cannot clear the design dependency", () 
   assert.deepEqual(bound.evidenceRecords, []);
   assert.equal(bound.restoreProofPresent, false);
   assert.equal(bound.rollbackPlanSuitable, false);
+});
+
+test("default adapter stays fail-closed and lists the undecided blockers", () => {
+  const bound = bindStagingRecoveryEvidence();
+  assert.equal(bound.bindingDesignDependency, true);
+  assert.equal(bound.checkpointPresent, false);
+  assert.equal(bound.restoreProofPresent, false);
+  assert.equal(bound.stagingBound, false);
+  assert.deepEqual(bound.evidenceRecords, []);
+  assert.deepEqual(bound.bindingBlockers, [...STAGING_RECOVERY_BINDING_BLOCKERS]);
 });
 
 test("backup success is not a binding input", () => {

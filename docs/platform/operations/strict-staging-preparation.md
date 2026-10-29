@@ -8,6 +8,9 @@ IMP-038 or IMP-039.
 STRICT_STAGING_DIRECTION = FOUNDER_APPROVED
 LIVE_STAGING_DEPLOYMENT = NOT_AUTHORIZED
 RECOVERY_PROOF_BINDING = DESIGN_DEPENDENCY
+CANDIDATE_PREPARATION_COMMAND = npm run env:staging:prepare-candidate
+CANDIDATE_PREPARATION_EXECUTION = NOT_AUTHORIZED
+ACTIVATION_REQUIRES_ASSERT_PREFLIGHT = YES
 ```
 
 ## Identities
@@ -17,10 +20,13 @@ RECOVERY_PROOF_BINDING = DESIGN_DEPENDENCY
    `nivedhya11/BobaBear`, equal to local `HEAD` and `HEAD^{tree}`.
 3. Isolated artifact context: a disposable `git archive` under the system temp
    directory, verified, then removed. It is not the protected checkout.
-4. Fresh image: built only after a preflight `PASS`, from that archive, with
-   `org.opencontainers.image.revision` and the image id recorded together.
+4. Candidate image: built only by the separate preparation command, from that
+   archive, then scanned. The evidence record binds source SHA, source tree,
+   image id, and digest. It is written outside the protected checkout.
+   Preparation does not authorize deployment.
 5. Running staging container: must match that recorded revision and image id.
    Project `boba-staging`. Volume `boba-staging_postgres-data` is preserved.
+   Activation does not build a new image.
 
 `protectedCheckoutUsed` is true when the artifact context realpath is inside the
 canonical checkout. A dry-run from that checkout can still observe an isolated
@@ -28,13 +34,21 @@ context. An operator boolean cannot set the flag false.
 
 ## Two phases
 
-Preparation, separately authorized later, may materialize a verified archive and
-build images. Activation (stop, env write, migrate, bootstrap, compose up)
-runs only after `assertPreflightAllowsDeployment`. Preflight does not build
-images, start containers, migrate, or restore.
+Phase A is `npm run env:staging:prepare-candidate`. It checks source isolation,
+strict configuration, and the current publishing policy, then may materialize a
+verified archive, build candidate images, scan them, and write image-security
+evidence outside the protected checkout. It does not call
+`assertPreflightAllowsDeployment`. It does not stop containers, migrate,
+bootstrap, or compose up. `PREPARATION_ELIGIBLE` is not deployment
+authorization. Running the command is not authorized by this document.
 
-Image-security evidence stays absent until a scan of the fresh staging image
-matches its digest and the source SHA. Source CI does not supply that proof.
+Phase B is `npm run env:staging:deploy`. Activation (stop, env write, migrate,
+bootstrap, compose up) runs only after `assertPreflightAllowsDeployment`.
+Full preflight requires image-security evidence bound to this source SHA, tree,
+image id, and digest, and a fresh inspect that matches that evidence. Missing,
+stale, or rebound evidence blocks activation before any runtime mutation.
+Preflight does not build images. Activation does not build a replacement image
+after that gate. Source CI does not supply image-security proof.
 
 ## Strict environment
 
@@ -44,9 +58,12 @@ shared by `BOBA_BEAR_PUBLIC_ORIGIN`, `BOBA_BEAR_AUTHORIZED_STAGING_ORIGIN`,
 `BOBA_BEAR_ALLOW_UNSAFE_ADAPTERS=false`; a release; trusted-proxy hops `1`;
 and `BOBA_BEAR_STAGING_TLS_TERMINATION` equal to a shipped allowlist entry.
 
-The shipped allowlist is empty. Hostname, DNS authority, certificate method,
-and TLS termination point are not invented here. Local `docker:env:init`
-remains the local contract and is not a staging fallback.
+The shipped allowlist is empty. A token in that allowlist is a configuration
+assertion, not independent DNS or TLS evidence. Hostname, DNS authority,
+certificate method, and TLS termination point are not invented here. Local
+`docker:env:init` remains the local contract and is not a staging fallback.
+Every runtime service must carry the same valid public origin; a missing or
+malformed service origin is not ignored when other services agree.
 
 ## Recovery and database
 
@@ -90,8 +107,9 @@ Gate B needs an authorized read-only staging database preflight, a Founder
 decision that binds restore proof to this database and volume, and a ledger
 label mapping.
 
-Gate C needs a fresh correlated image, a complete preflight PASS, and explicit
-deployment authorization.
+Gate C needs a fresh correlated image from a separately authorized preparation,
+a complete preflight PASS, and explicit deployment authorization. Preparation
+evidence alone does not open this gate.
 
 Gate D is Founder Functional UAT, Founder Experience UAT, and formal acceptance.
 None of these gates authorizes the next.

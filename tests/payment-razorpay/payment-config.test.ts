@@ -77,6 +77,21 @@ describe("loadCustomerCommercePaymentConfig", () => {
     }
   });
 
+  it("rejects an ambiguous Razorpay key id in staging before composing a client", () => {
+    const ambiguousKeyId = "rzp_test_";
+    expect(() =>
+      loadCustomerCommercePaymentConfig(
+        {
+          BOBA_BEAR_PAYMENT_PROVIDER: "razorpay",
+          BOBA_BEAR_RAZORPAY_KEY_ID: ambiguousKeyId,
+          BOBA_BEAR_RAZORPAY_KEY_SECRET: "test_only_key_secret",
+          BOBA_BEAR_RAZORPAY_WEBHOOK_SECRET: "test_only_webhook_secret",
+        },
+        "staging",
+      ),
+    ).toThrow(/test-mode key id/);
+  });
+
   it("still accepts a live Razorpay key id in production", () => {
     const config = loadCustomerCommercePaymentConfig(
       {
