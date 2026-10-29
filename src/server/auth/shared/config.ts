@@ -119,9 +119,32 @@ function validateAuthBaseUrl(
   return ok(new URL(`${url.protocol}//${url.host}`));
 }
 
+type AuthValidationOptions = {
+  readonly expectedPublicOrigin?: string;
+};
+
+function assertStagingOriginAgreement(
+  url: URL,
+  environment: AppEnvironment,
+  expectedPublicOrigin: string | undefined,
+): FieldResult<URL> {
+  if (environment !== "staging" || expectedPublicOrigin === undefined) return ok(url);
+  let expected: URL;
+  try {
+    expected = new URL(expectedPublicOrigin);
+  } catch {
+    return fail("Staging auth base URL must equal BOBA_BEAR_PUBLIC_ORIGIN.");
+  }
+  if (`${url.protocol}//${url.host}` !== `${expected.protocol}//${expected.host}`) {
+    return fail("Staging auth base URL must equal BOBA_BEAR_PUBLIC_ORIGIN.");
+  }
+  return ok(url);
+}
+
 export function validateCustomerAuthConfig(
   source: AuthEnvSource,
   environmentType: AppEnvironment,
+  options: AuthValidationOptions = {},
 ): { ok: true; config: CustomerAuthConfig } | { ok: false; issues: SafeIssue[] } {
   const issues: SafeIssue[] = [];
 
@@ -134,7 +157,12 @@ export function validateCustomerAuthConfig(
   }
 
   const baseUrlResult = validateAuthBaseUrl(source.CUSTOMER_AUTH_BASE_URL, environmentType);
-  if (!baseUrlResult.ok) {
+  const agreedCustomer = baseUrlResult.ok
+    ? assertStagingOriginAgreement(baseUrlResult.value, environmentType, options.expectedPublicOrigin)
+    : baseUrlResult;
+  if (!agreedCustomer.ok) {
+    issues.push({ key: "CUSTOMER_AUTH_BASE_URL", message: agreedCustomer.message });
+  } else if (!baseUrlResult.ok) {
     issues.push({ key: "CUSTOMER_AUTH_BASE_URL", message: baseUrlResult.message });
   }
 
@@ -154,6 +182,7 @@ export function validateCustomerAuthConfig(
 export function validateWorkforceAuthConfig(
   source: AuthEnvSource,
   environmentType: AppEnvironment,
+  options: AuthValidationOptions = {},
 ): { ok: true; config: WorkforceAuthConfig } | { ok: false; issues: SafeIssue[] } {
   const issues: SafeIssue[] = [];
 
@@ -166,8 +195,11 @@ export function validateWorkforceAuthConfig(
   }
 
   const baseUrlResult = validateAuthBaseUrl(source.WORKFORCE_AUTH_BASE_URL, environmentType);
-  if (!baseUrlResult.ok) {
-    issues.push({ key: "WORKFORCE_AUTH_BASE_URL", message: baseUrlResult.message });
+  const agreedWorkforce = baseUrlResult.ok
+    ? assertStagingOriginAgreement(baseUrlResult.value, environmentType, options.expectedPublicOrigin)
+    : baseUrlResult;
+  if (!agreedWorkforce.ok) {
+    issues.push({ key: "WORKFORCE_AUTH_BASE_URL", message: agreedWorkforce.message });
   }
 
   if (issues.length > 0) return { ok: false, issues };
@@ -196,9 +228,10 @@ interface SafeIssue {
 export function loadAuthFoundationConfig(
   source: AuthEnvSource,
   environmentType: AppEnvironment,
+  options: AuthValidationOptions = {},
 ): AuthFoundationConfig {
-  const customerResult = validateCustomerAuthConfig(source, environmentType);
-  const workforceResult = validateWorkforceAuthConfig(source, environmentType);
+  const customerResult = validateCustomerAuthConfig(source, environmentType, options);
+  const workforceResult = validateWorkforceAuthConfig(source, environmentType, options);
 
   const issues: SafeIssue[] = [
     ...(customerResult.ok ? [] : customerResult.issues),
