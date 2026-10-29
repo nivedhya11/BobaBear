@@ -317,11 +317,13 @@ export function evaluateStagingPublicationContract(contract, context = {}) {
     if (!/^[0-9a-f]{40}$/.test(c.boundCandidateSha)) {
       return { ok: false, reason: "staging publication contract boundCandidateSha malformed" };
     }
-    if (
-      typeof context.candidateSha === "string" &&
-      context.candidateSha.length > 0 &&
-      c.boundCandidateSha !== context.candidateSha
-    ) {
+    if (typeof context.candidateSha !== "string" || !/^[0-9a-f]{40}$/.test(context.candidateSha)) {
+      return {
+        ok: false,
+        reason: "staging publication contract boundCandidateSha cannot be verified without candidate SHA context",
+      };
+    }
+    if (c.boundCandidateSha !== context.candidateSha) {
       return { ok: false, reason: "staging publication contract boundCandidateSha mismatch" };
     }
   }
@@ -455,6 +457,22 @@ export function classifyPublishingIsolation(input = {}) {
     contradictions.push("staging origin hostname collides with marketing hostname");
   }
 
+  // A projected/planned staging origin without independent exposure/isolation evidence
+  // fails closed for the affected eligibility decision. Missing origin remains compatible
+  // with marketing-only classification (no invented private-staging claim).
+  const exposureEvidence =
+    typeof staging.exposureEvidence === "string" ? staging.exposureEvidence : null;
+  if (
+    stagingOriginHost != null &&
+    staging.observedExposure !== true &&
+    exposureEvidence !== "INDEPENDENTLY_OBSERVED_PRIVATE" &&
+    exposureEvidence !== "INDEPENDENTLY_OBSERVED_EXPOSED"
+  ) {
+    reasons.push(
+      "staging origin present without independent exposure/isolation evidence; missing observations are not proof of private staging",
+    );
+  }
+
   const stagingHostTarget =
     typeof staging.hostingTarget === "string" && staging.hostingTarget.length > 0
       ? staging.hostingTarget
@@ -518,75 +536,62 @@ export function classifyPublishingIsolation(input = {}) {
         : contractEval.reason
       : null;
 
+  const candidateSha = typeof input.candidateSha === "string" ? input.candidateSha : null;
+  const baseParts = {
+    workflowFile,
+    githubWorkflow,
+    pages,
+    staging,
+    contradictions,
+    marketingBaselineOk: marketing.ok,
+    contractEval,
+    candidateSha,
+  };
+
   // Precedence 1: unresolved / contradictory marketing/workflow evidence
   if (contradictions.length > 0) {
     return finalizeClassification(PUBLISHING_CLASSIFICATION.PUBLISHING_UNKNOWN_OR_CONFLICTING, {
-      workflowFile,
-      githubWorkflow,
-      pages,
-      staging,
-      contradictions,
+      ...baseParts,
       reasons: [...reasons, ...contradictions],
-      marketingBaselineOk: marketing.ok,
-      contractEval,
     });
   }
 
   if (reasons.length > 0 || !marketing.ok) {
     return finalizeClassification(PUBLISHING_CLASSIFICATION.PUBLISHING_UNKNOWN_OR_CONFLICTING, {
-      workflowFile,
-      githubWorkflow,
-      pages,
-      staging,
-      contradictions,
+      ...baseParts,
       reasons: reasons.length > 0 ? reasons : [marketing.reason],
-      marketingBaselineOk: marketing.ok,
-      contractEval,
     });
   }
 
   // Precedence 2: positively observed unauthorized staging exposure / forged authorization
   if (observedUnauthorizedExposure || unauthorizedClaim != null) {
     return finalizeClassification(PUBLISHING_CLASSIFICATION.STAGING_PUBLIC_UNAUTHORIZED, {
-      workflowFile,
-      githubWorkflow,
-      pages,
-      staging,
-      contradictions,
+      ...baseParts,
       reasons: [
         unauthorizedClaim ??
           "staging public exposure observed without Founder publication contract",
       ],
-      marketingBaselineOk: marketing.ok,
-      contractEval,
     });
   }
 
   // Precedence 3: positively observed authorized staging (marketing still isolated)
   if (staging.observedExposure === true && hasCompleteAuthorizedContract) {
     return finalizeClassification(PUBLISHING_CLASSIFICATION.STAGING_PUBLIC_AUTHORIZED, {
-      workflowFile,
-      githubWorkflow,
-      pages,
-      staging,
-      contradictions,
+      ...baseParts,
       reasons: ["founder staging publication contract and observations agree"],
-      marketingBaselineOk: marketing.ok,
-      contractEval,
+      marketingBaselineOk: true,
     });
   }
 
-  // Precedence 4: verified marketing; no unauthorized/conflicting staging exposure
-  // Workflow API may be active or disabled_manually — neither alone is staging-unsafe.
+  // Precedence 4: verified marketing; no positively observed unauthorized staging exposure.
+  // Missing exposure evidence is not proof of private staging, and is also not by itself
+  // a marketing publishing violation. Workflow API may be active or disabled_manually.
   return finalizeClassification(PUBLISHING_CLASSIFICATION.PUBLIC_MARKETING, {
-    workflowFile,
-    githubWorkflow,
-    pages,
-    staging,
-    contradictions,
-    reasons: ["authorized public marketing publication verified; no unauthorized staging exposure"],
+    ...baseParts,
+    reasons: [
+      "authorized public marketing publication verified; no positively observed unauthorized staging exposure",
+    ],
     marketingBaselineOk: true,
-    contractEval,
   });
 }
 
@@ -612,6 +617,7 @@ function finalizeClassification(classification, parts) {
     fileDeployWorkflowState: parts.workflowFile?.fileDeployWorkflowState ?? "UNKNOWN",
     pagesSourceKnown,
     unsafeActivePublishingPath,
+    candidateSha: typeof parts.candidateSha === "string" ? parts.candidateSha : null,
     workflowFile: parts.workflowFile,
     githubWorkflow: parts.githubWorkflow,
     pages: parts.pages,

@@ -138,7 +138,7 @@ export function evaluateStagingDeployPreflight(evidence) {
   }
 
   categories.source = evaluateSource(e.source, findings);
-  categories.publishing = evaluatePublishing(e.publishing, findings);
+  categories.publishing = evaluatePublishing(e.publishing, findings, e.source?.head);
   categories.runtime = evaluateRuntime(e.runtime, findings);
   categories.environment = evaluateEnvironment(e.environment, findings);
   categories.database = evaluateDatabase(e.database, findings);
@@ -227,7 +227,7 @@ export function evaluateCandidatePreparationEligibility(evidence) {
     });
   }
   const source = evaluateSource(e.source, findings);
-  const publishing = evaluatePublishing(e.publishing, findings);
+  const publishing = evaluatePublishing(e.publishing, findings, e.source?.head);
   const environment = evaluateEnvironment(e.environment, findings);
   const categoriesPass = [source, publishing, environment].every((value) => value === PREFLIGHT_OUTCOME.PASS);
   const blocked = !categoriesPass || findings.some((finding) => finding.code === PREFLIGHT_REASON.EVIDENCE_MALFORMED);
@@ -360,16 +360,22 @@ function evaluateSource(source, findings) {
   return PREFLIGHT_OUTCOME.PASS;
 }
 
-function resolvePublishingClassification(publishing) {
+function resolvePublishingClassification(publishing, sourceHead) {
   // Classification strings are never authority. Re-derive from observations when present.
   if (publishing.workflowFile || publishing.githubWorkflow || publishing.pages || publishing.staging) {
+    const candidateSha =
+      typeof sourceHead === "string" && /^[0-9a-f]{40}$/.test(sourceHead)
+        ? sourceHead
+        : typeof publishing.candidateSha === "string"
+          ? publishing.candidateSha
+          : null;
     return classifyPublishingIsolation({
       workflowFile: publishing.workflowFile,
       githubWorkflow: publishing.githubWorkflow,
       pages: publishing.pages,
       staging: publishing.staging,
       repositoryIdentity: publishing.repositoryIdentity,
-      candidateSha: publishing.candidateSha,
+      candidateSha,
       nowMs: publishing.nowMs,
       evidenceStale: publishing.evidenceStale === true,
     });
@@ -377,7 +383,7 @@ function resolvePublishingClassification(publishing) {
   return null;
 }
 
-function evaluatePublishing(publishing, findings) {
+function evaluatePublishing(publishing, findings, sourceHead) {
   if (!publishing || typeof publishing !== "object") {
     findings.push({
       code: PREFLIGHT_REASON.PUBLISHING_UNSAFE_OR_UNKNOWN,
@@ -387,7 +393,7 @@ function evaluatePublishing(publishing, findings) {
     return PREFLIGHT_OUTCOME.UNKNOWN;
   }
 
-  const classified = resolvePublishingClassification(publishing);
+  const classified = resolvePublishingClassification(publishing, sourceHead);
   if (classified == null) {
     findings.push({
       code: PREFLIGHT_REASON.PUBLISHING_UNSAFE_OR_UNKNOWN,

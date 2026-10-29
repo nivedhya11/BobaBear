@@ -1411,14 +1411,21 @@ function gatherStagingPreflightEvidence(
       observeStaging:
         typeof observeStagingPublishing === "function"
           ? observeStagingPublishing
-          : () => ({
-              observedExposure: false,
-              origin: projectedOrigin,
-              hostingTarget: null,
-              marketingHostingTarget: null,
-              authorization: null,
-              claimedAuthorized: false,
-            }),
+          : () => {
+              // Missing independent exposure/routing evidence is not proof of private staging.
+              // It is also not positive unauthorized exposure. Do not invent exposure=false.
+              const hasProjectedOrigin =
+                typeof projectedOrigin === "string" && projectedOrigin.length > 0;
+              return {
+                exposureEvidence: hasProjectedOrigin ? "ORIGIN_PROJECTED_ONLY" : "NOT_OBSERVED",
+                observedExposure: false,
+                origin: projectedOrigin,
+                hostingTarget: null,
+                marketingHostingTarget: null,
+                authorization: null,
+                claimedAuthorized: false,
+              };
+            },
       candidateSha: candidate.head,
     });
 

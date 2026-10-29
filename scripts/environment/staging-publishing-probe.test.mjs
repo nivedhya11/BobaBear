@@ -318,7 +318,7 @@ test("13: missing DNS/origin evidence required for staging-origin decisions fail
 });
 
 test("14: private unexposed staging is not classified as authorized public staging", () => {
-  const result = classifyPublishingIsolation({
+  const missingEvidence = classifyPublishingIsolation({
     workflowText: liveWorkflowText,
     githubWorkflow: marketingGithub(),
     pages: marketingPages(),
@@ -326,10 +326,34 @@ test("14: private unexposed staging is not classified as authorized public stagi
       ...privateStaging(),
       origin: "https://staging.example.test",
       observedExposure: false,
+      exposureEvidence: "ORIGIN_PROJECTED_ONLY",
     },
   });
-  assert.equal(result.classification, PUBLISHING_CLASSIFICATION.PUBLIC_MARKETING);
-  assert.notEqual(result.classification, PUBLISHING_CLASSIFICATION.STAGING_PUBLIC_AUTHORIZED);
+  assert.equal(
+    missingEvidence.classification,
+    PUBLISHING_CLASSIFICATION.PUBLISHING_UNKNOWN_OR_CONFLICTING,
+  );
+  assert.notEqual(
+    missingEvidence.classification,
+    PUBLISHING_CLASSIFICATION.STAGING_PUBLIC_AUTHORIZED,
+  );
+
+  const independentlyPrivate = classifyPublishingIsolation({
+    workflowText: liveWorkflowText,
+    githubWorkflow: marketingGithub(),
+    pages: marketingPages(),
+    staging: {
+      ...privateStaging(),
+      origin: "https://staging.example.test",
+      observedExposure: false,
+      exposureEvidence: "INDEPENDENTLY_OBSERVED_PRIVATE",
+    },
+  });
+  assert.equal(independentlyPrivate.classification, PUBLISHING_CLASSIFICATION.PUBLIC_MARKETING);
+  assert.notEqual(
+    independentlyPrivate.classification,
+    PUBLISHING_CLASSIFICATION.STAGING_PUBLIC_AUTHORIZED,
+  );
 });
 
 test("15: synthetic STAGING_PUBLIC_AUTHORIZED passes publishing only with complete proofs", () => {
@@ -353,6 +377,7 @@ test("15: synthetic STAGING_PUBLIC_AUTHORIZED passes publishing only with comple
     pages: marketingPages(),
     staging: {
       observedExposure: true,
+      exposureEvidence: "INDEPENDENTLY_OBSERVED_EXPOSED",
       origin: "https://staging.example.test",
       authorization: completeAuthorizedContract(),
       claimedAuthorized: true,
@@ -500,4 +525,46 @@ test("supplied classification string alone cannot force publishing PASS", () => 
   assert.ok(
     decision.findings.some((finding) => finding.code === PREFLIGHT_REASON.PUBLISHING_UNSAFE_OR_UNKNOWN),
   );
+});
+
+test("projected staging origin without independent exposure evidence fails closed", () => {
+  const result = classifyPublishingIsolation({
+    workflowText: liveWorkflowText,
+    githubWorkflow: marketingGithub(),
+    pages: marketingPages(),
+    staging: {
+      exposureEvidence: "ORIGIN_PROJECTED_ONLY",
+      observedExposure: false,
+      origin: "https://staging.example.test",
+      authorization: null,
+      claimedAuthorized: false,
+    },
+  });
+  assert.equal(result.classification, PUBLISHING_CLASSIFICATION.PUBLISHING_UNKNOWN_OR_CONFLICTING);
+});
+
+test("publication contract bound SHA is evaluated against preflight source head", () => {
+  const publishing = classifyPublishingIsolation({
+    workflowText: liveWorkflowText,
+    githubWorkflow: marketingGithub(),
+    pages: marketingPages(),
+    staging: {
+      observedExposure: true,
+      exposureEvidence: "INDEPENDENTLY_OBSERVED_EXPOSED",
+      origin: "https://staging.example.test",
+      authorization: completeAuthorizedContract({ boundCandidateSha: "b".repeat(40) }),
+      claimedAuthorized: true,
+    },
+    candidateSha: "b".repeat(40),
+  });
+  assert.equal(publishing.classification, PUBLISHING_CLASSIFICATION.STAGING_PUBLIC_AUTHORIZED);
+  assert.equal(publishing.candidateSha, "b".repeat(40));
+
+  const mismatched = evaluateStagingDeployPreflight(
+    validPreflightEvidence({
+      source: { head: "a".repeat(40), originMain: "a".repeat(40) },
+      publishing,
+    }),
+  );
+  assert.equal(mismatched.categories.publishing, PREFLIGHT_OUTCOME.BLOCKED);
 });
