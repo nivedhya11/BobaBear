@@ -31,11 +31,11 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2396,
-    "executableTestFiles": 562,
+    "trackedPathsConsidered": 2398,
+    "executableTestFiles": 563,
     "sourceTestFiles": 165,
     "testsTreeExecutableFiles": 295,
-    "scriptTestFiles": 102,
+    "scriptTestFiles": 103,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
     "playwrightConfigs": 7,
@@ -534,6 +534,7 @@
     "scripts/ci-container-scan-paths.test.mjs",
     "scripts/ci-security-sensitive-paths.test.mjs",
     "scripts/customer-commerce/build.test.mjs",
+    "scripts/customer-otp-transport-assessment.test.mjs",
     "scripts/database/lib/migration-history.test.mjs",
     "scripts/database/lib/migration-integrity.test.mjs",
     "scripts/decision-register-table.test.mjs",
@@ -1905,6 +1906,23 @@
     },
     {
       "path": "scripts/customer-commerce/build.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/customer-otp-transport-assessment.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
       "testType": "script-unit",
