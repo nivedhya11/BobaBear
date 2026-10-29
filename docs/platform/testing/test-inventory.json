@@ -31,11 +31,11 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2393,
-    "executableTestFiles": 560,
+    "trackedPathsConsidered": 2394,
+    "executableTestFiles": 561,
     "sourceTestFiles": 164,
     "testsTreeExecutableFiles": 295,
-    "scriptTestFiles": 101,
+    "scriptTestFiles": 102,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
     "playwrightConfigs": 7,
@@ -551,6 +551,7 @@
     "scripts/environment/staging-config-projection.test.mjs",
     "scripts/environment/staging-database-preflight.test.mjs",
     "scripts/environment/staging-preflight.test.mjs",
+    "scripts/environment/staging-publishing-probe.test.mjs",
     "scripts/environment/staging-recovery-binding.test.mjs",
     "scripts/environment/staging-recovery-checkpoint.test.mjs",
     "scripts/environment/staging-recovery-producer-compat.test.mjs",
@@ -2209,6 +2210,23 @@
     },
     {
       "path": "scripts/environment/staging-preflight.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/environment/staging-publishing-probe.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
       "testType": "script-unit",

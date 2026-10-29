@@ -6,7 +6,10 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
 import { POSTGRES_INIT_DISPOSITION } from "./postgres-init-identity.mjs";
-import { probePublishingWorkflow } from "./staging-publishing-probe.mjs";
+import {
+  classifyPublishingIsolation,
+  probePublishingWorkflow,
+} from "./staging-publishing-probe.mjs";
 import {
   assertPreflightAllowsDeployment,
   evaluateCandidatePreparationEligibility,
@@ -223,30 +226,36 @@ test("preparation refuses the protected checkout and does not build", async () =
   assert.equal(built, false);
 });
 
-test("active Pages publishing still blocks preparation and activation", async () => {
+test("verified marketing Pages publishing can satisfy publishing without authorizing activation", async () => {
   const workflow = readFileSync(
     path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../.github/workflows/deploy.yml"),
     "utf8",
   );
-  const publishing = probePublishingWorkflow(workflow);
+  const publishing = classifyPublishingIsolation({
+    workflowText: workflow,
+    githubWorkflow: {
+      observed: true,
+      state: "disabled_manually",
+      path: ".github/workflows/deploy.yml",
+      repositoryIdentity: "nivedhya11/BobaBear",
+    },
+    pages: {
+      observed: true,
+      sourceBranch: "gh-pages",
+      sourcePath: "/",
+      cname: "thebobabear.in",
+      status: "built",
+      repositoryIdentity: "nivedhya11/BobaBear",
+    },
+    staging: { observedExposure: false, authorization: null, claimedAuthorized: false },
+  });
   const evidence = validPreflightEvidence({ publishing });
-  assert.equal(evaluateCandidatePreparationEligibility(evidence).outcome, "BLOCKED");
-  assert.equal(evaluateStagingDeployPreflight(evidence).outcome, PREFLIGHT_OUTCOME.BLOCKED);
-  let built = false;
-  await assert.rejects(
-    () =>
-      runStagingPrepareCandidate(candidate, {
-        assertPreconditions: () => {},
-        gatherPreparation: () => evidence,
-        evidenceFile: path.join(os.tmpdir(), "unused-staging-evidence.json"),
-        compose: () => {
-          built = true;
-        },
-        log: () => {},
-      }),
-    /CANDIDATE_PREPARATION_BLOCKED/,
-  );
-  assert.equal(built, false);
+  assert.equal(evaluateCandidatePreparationEligibility(evidence).categories.publishing, PREFLIGHT_OUTCOME.PASS);
+  assert.equal(evaluateCandidatePreparationEligibility(evidence).deploymentAuthorized, false);
+  assert.equal(evaluateStagingDeployPreflight(evidence).categories.publishing, PREFLIGHT_OUTCOME.PASS);
+  // File-only observation still fails closed and cannot authorize preparation alone.
+  const fileOnly = validPreflightEvidence({ publishing: probePublishingWorkflow(workflow) });
+  assert.equal(evaluateCandidatePreparationEligibility(fileOnly).outcome, "BLOCKED");
 });
 
 test("wrong candidate SHA or digest blocks activation before runtime mutation", () => {

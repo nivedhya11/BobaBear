@@ -41,7 +41,7 @@ import { extractVerifiedGitArchive, observeIsolatedArtifactContext, readPinnedGi
 import { projectStrictStagingConfiguration } from "./staging-config-projection.mjs";
 import { copyOwnerOnlySecretFile, ensureOwnerOnlySecretDirectory, inspectOwnerOnlyDirectory, inspectOwnerOnlyFile } from "./staging-secret-files.mjs";
 import { bindStagingRecoveryEvidence } from "./staging-recovery-binding.mjs";
-import { readPublishingWorkflow } from "./staging-publishing-probe.mjs";
+import { gatherPublishingEvidence } from "./staging-publishing-probe.mjs";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = path.resolve(scriptDir, "..", "..");
@@ -1285,7 +1285,10 @@ function gatherStagingPreflightEvidence(
       ),
     readDiagnostic = readStagingDiagnosticEnabled,
     resolveInit = null,
-    publishingState = readPublishingWorkflow(path.join(repositoryRoot, ".github/workflows/deploy.yml")),
+    publishingState = null,
+    observeGithubWorkflow = undefined,
+    observePages = undefined,
+    observeStagingPublishing = undefined,
     probeRuntime = probeStagingRuntimeIdentity,
     repositoryIdentityOf = readRepositoryIdentityFromRemote,
     readGithubMain = () => readPinnedGithubMainSha(repositoryRoot),
@@ -1393,6 +1396,39 @@ function gatherStagingPreflightEvidence(
     security = absentImageSecurityEvidence();
   }
 
+  const projectedOrigin =
+    projected && typeof projected.publicOrigin === "string" ? projected.publicOrigin : null;
+  const publishing =
+    publishingState ??
+    gatherPublishingEvidence({
+      repositoryIdentity: repositoryIdentity ?? "nivedhya11/BobaBear",
+      workflowPath: path.join(repositoryRoot, ".github/workflows/deploy.yml"),
+      readWorkflowText: () =>
+        readFileSync(path.join(repositoryRoot, ".github/workflows/deploy.yml"), "utf8"),
+      observeGithubWorkflow:
+        typeof observeGithubWorkflow === "function" ? observeGithubWorkflow : undefined,
+      observePages: typeof observePages === "function" ? observePages : undefined,
+      observeStaging:
+        typeof observeStagingPublishing === "function"
+          ? observeStagingPublishing
+          : () => {
+              // Missing independent exposure/routing evidence is not proof of private staging.
+              // It is also not positive unauthorized exposure. Do not invent exposure=false.
+              const hasProjectedOrigin =
+                typeof projectedOrigin === "string" && projectedOrigin.length > 0;
+              return {
+                exposureEvidence: hasProjectedOrigin ? "ORIGIN_PROJECTED_ONLY" : "NOT_OBSERVED",
+                observedExposure: false,
+                origin: projectedOrigin,
+                hostingTarget: null,
+                marketingHostingTarget: null,
+                authorization: null,
+                claimedAuthorized: false,
+              };
+            },
+      candidateSha: candidate.head,
+    });
+
   return {
     source: {
       repositoryIdentity: repositoryIdentity ?? "UNKNOWN",
@@ -1408,7 +1444,7 @@ function gatherStagingPreflightEvidence(
       authoritativeSourceRoot: sourceObservation.authoritativeSourceRoot ?? repositoryRoot,
       githubMainMatchesHead,
     },
-    publishing: publishingState,
+    publishing,
     runtime: {
       evidenceComplete: runtime.evidenceComplete === true,
       identityUnknown: runtime.identityUnknown === true,
