@@ -23,6 +23,8 @@ import {
 } from "./staging-image-security-evidence.mjs";
 import { BOBA_BUILD_IMAGES, runStagingDeploy, runStagingPrepareCandidate } from "./staging.mjs";
 
+const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+
 const candidate = {
   branch: "main",
   head: "a".repeat(40),
@@ -96,7 +98,7 @@ test("an evidence reader does not inspect images when no outside file is configu
     evidenceFile: "",
     sourceSha: candidate.head,
     sourceTree: "b".repeat(40),
-    repositoryRoot: "/home/ajoshi/repos/boba-bear-platform",
+    repositoryRoot,
     inspectImage: () => {
       inspected = true;
       return null;
@@ -162,7 +164,7 @@ test("synthetic evidence traverses preparation then activation without a deadloc
       evidenceFile,
       sourceSha: candidate.head,
       sourceTree: "b".repeat(40),
-      repositoryRoot: "/home/ajoshi/repos/boba-bear-platform",
+      repositoryRoot,
       inspectImage: (name) => images.find((image) => image.name === name),
     });
     const activation = evaluateStagingDeployPreflight(validPreflightEvidence({ security: loaded }));
@@ -172,7 +174,7 @@ test("synthetic evidence traverses preparation then activation without a deadloc
       evidenceFile,
       sourceSha: candidate.head,
       sourceTree: "b".repeat(40),
-      repositoryRoot: "/home/ajoshi/repos/boba-bear-platform",
+      repositoryRoot,
       inspectImage: (name) => {
         const image = images.find((item) => item.name === name);
         return { ...image, digest: `sha256:${"e".repeat(64)}` };
@@ -191,7 +193,7 @@ test("synthetic evidence traverses preparation then activation without a deadloc
       evidenceFile,
       sourceSha: candidate.head,
       sourceTree: "b".repeat(40),
-      repositoryRoot: "/home/ajoshi/repos/boba-bear-platform",
+      repositoryRoot,
       readFile: () => JSON.stringify(staleSha),
       inspectImage: () => {
         throw new Error("stale evidence must not be inspected as this candidate");
@@ -210,7 +212,7 @@ test("preparation refuses the protected checkout and does not build", async () =
       runStagingPrepareCandidate(candidate, {
         assertPreconditions: () => {},
         gatherPreparation: () => validPreflightEvidence(),
-        evidenceFile: "/home/ajoshi/repos/boba-bear-platform/staging-image-security.json",
+        evidenceFile: path.join(repositoryRoot, "staging-image-security.json"),
         compose: () => {
           built = true;
         },
