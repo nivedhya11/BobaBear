@@ -184,8 +184,9 @@ function assertDeployPreconditions(candidate) {
   }
 }
 
-function readRepositoryPublicBuildEnv(contextDir) {
-  const envPath = path.join(contextDir, ".env");
+function readRepositoryPublicBuildEnv() {
+  // Browser build key only. It is not artifact authority and is absent from git archive.
+  const envPath = path.join(repositoryRoot, ".env");
   if (!existsSync(envPath)) return {};
   const parsed = parseEnvFile(readFileSync(envPath, "utf8"));
   const extracted = extractValues(parsed);
@@ -196,7 +197,7 @@ function readRepositoryPublicBuildEnv(contextDir) {
 }
 
 function podmanCompose(buildDir, args, extraEnv = {}) {
-  const publicBuildEnv = readRepositoryPublicBuildEnv(buildDir);
+  const publicBuildEnv = readRepositoryPublicBuildEnv();
   const result = spawnIgnoringStdin("podman-compose", ["-f", "compose.yaml", "-p", STAGING_PROJECT, ...args], {
     cwd: buildDir,
     env: {

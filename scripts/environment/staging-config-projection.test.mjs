@@ -130,3 +130,44 @@ test("razorpay key classification never echoes the key", () => {
   assert.equal(classifyRazorpayKeyId("rzp_test_"), "ambiguous");
   assert.equal(classifyRazorpayKeyId(undefined), "missing");
 });
+
+test("one service file cannot mask another service effective environment", () => {
+  const projected = projectStrictStagingConfiguration({
+    directory: "/unused",
+    allowlist: ["fixture-termination"],
+    readFile(fileName) {
+      const layer = {
+        BOBA_BEAR_ENV: "staging",
+        NODE_ENV: "production",
+        BOBA_BEAR_PUBLIC_ORIGIN: ORIGIN,
+        BOBA_BEAR_AUTHORIZED_STAGING_ORIGIN: ORIGIN,
+        BOBA_BEAR_ALLOW_UNSAFE_ADAPTERS: "false",
+        BOBA_BEAR_RELEASE: "rel-staging-1",
+        BOBA_BEAR_STAGING_TLS_TERMINATION: "fixture-termination",
+        BOBA_BEAR_PAYMENT_PROVIDER: "disabled",
+        CUSTOMER_AUTH_BASE_URL: ORIGIN,
+        WORKFORCE_AUTH_BASE_URL: ORIGIN,
+        CUSTOMER_AUTH_TRUST_PROXY_HOPS: "1",
+        WORKFORCE_AUTH_TRUST_PROXY_HOPS: "1",
+        CUSTOMER_COMMERCE_TRUST_PROXY_HOPS: "1",
+      };
+      if (fileName === ".env.customer-auth.docker.local") {
+        layer.BOBA_BEAR_ALLOW_UNSAFE_ADAPTERS = "true";
+      }
+      if (fileName === ".env.customer-commerce.docker.local") {
+        layer.BOBA_BEAR_PAYMENT_PROVIDER = "razorpay";
+        layer.BOBA_BEAR_RAZORPAY_KEY_ID = "rzp_live_ExampleKey1";
+        layer.BOBA_BEAR_RAZORPAY_KEY_SECRET = "live_only_key_secret";
+        layer.BOBA_BEAR_RAZORPAY_WEBHOOK_SECRET = "live_only_webhook_secret";
+      }
+      return Object.entries(layer)
+        .map(([key, value]) => `${key}=${value}`)
+        .join("\n");
+    },
+  });
+  assert.equal(projected.projectedConfigState, "INVALID");
+  assert.equal(projected.paymentIsolation, "LIVE_REJECTED");
+  assert.ok(projected.reasons.includes("PAYMENT_ISOLATION_UNVERIFIED"));
+  assert.ok(projected.reasons.includes("UNSAFE_ADAPTERS_NOT_EXPLICITLY_FALSE"));
+  assert.equal(JSON.stringify(projected).includes("rzp_live_ExampleKey1"), false);
+});
