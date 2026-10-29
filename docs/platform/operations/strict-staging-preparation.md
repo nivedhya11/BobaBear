@@ -11,7 +11,31 @@ RECOVERY_PROOF_BINDING = DESIGN_DEPENDENCY
 CANDIDATE_PREPARATION_COMMAND = npm run env:staging:prepare-candidate
 CANDIDATE_PREPARATION_EXECUTION = NOT_AUTHORIZED
 ACTIVATION_REQUIRES_ASSERT_PREFLIGHT = YES
+D3_PUBLISHING_ISOLATION = FOUR_STATE_POLICY
+PUBLIC_STAGING_EXPOSURE = NOT_AUTHORIZED
 ```
+
+## Publishing isolation (D3 Option A)
+
+Preflight classifies repository publishing with four states. The states are derived
+from independently established observations; they are not operator-selectable flags.
+
+1. `PUBLISHING_UNKNOWN_OR_CONFLICTING` — missing, stale, mismatched, or contradictory
+   workflow/Pages/origin evidence. **Blocks** the publishing category.
+2. `STAGING_PUBLIC_UNAUTHORIZED` — positively observed staging exposure without a
+   Founder staging-publication contract. **Blocks**.
+3. `STAGING_PUBLIC_AUTHORIZED` — only when a separate Founder exposure contract and
+   matching observations agree. **Not granted** by the present D3 approval.
+4. `PUBLIC_MARKETING` — verified authorized static marketing publication
+   (`thebobabear.in` / GitHub Pages `gh-pages`) with no unauthorized or conflicting
+   staging exposure.
+
+A GitHub Pages workflow file that triggers on `main` is not, by itself, a staging
+publishing violation. Workflow YAML trigger text is distinct from the GitHub Actions
+operational state. A manually disabled workflow does not prove already-published
+Pages content is gone. Public marketing may satisfy the publishing-isolation
+category without authorizing staging exposure, candidate preparation execution, or
+deployment. Publishing-category PASS never promotes whole-preflight PASS.
 
 ## Identities
 

@@ -16,6 +16,10 @@ import { evaluateQualifyingRecoveryProof, validateEvidence } from "../recovery/e
 import { POSTGRES_INIT_DISPOSITION } from "./postgres-init-identity.mjs";
 import { syntheticBoundImages, sameBoundImages } from "./staging-image-security-evidence.mjs";
 import { PROTECTED_PRIMARY_REPOSITORY } from "./staging-source-isolation.mjs";
+import {
+  classifyPublishingIsolation,
+  PUBLISHING_CLASSIFICATION,
+} from "./staging-publishing-probe.mjs";
 
 export const PREFLIGHT_OUTCOME = Object.freeze({
   PASS: "PASS",
@@ -28,6 +32,10 @@ export const PREFLIGHT_REASON = Object.freeze({
   SOURCE_SHA_TREE_DRIFT: "SOURCE_SHA_TREE_DRIFT",
   SOURCE_DIRTY_OR_PROTECTED: "SOURCE_DIRTY_OR_PROTECTED",
   PUBLISHING_UNSAFE_OR_UNKNOWN: "PUBLISHING_UNSAFE_OR_UNKNOWN",
+  PUBLISHING_STAGING_UNAUTHORIZED: "PUBLISHING_STAGING_UNAUTHORIZED",
+  PUBLISHING_EVIDENCE_CONFLICTING: "PUBLISHING_EVIDENCE_CONFLICTING",
+  PUBLISHING_MARKETING_ORIGIN_COLLISION: "PUBLISHING_MARKETING_ORIGIN_COLLISION",
+  PUBLISHING_AUTHORIZED_CONTRACT_INVALID: "PUBLISHING_AUTHORIZED_CONTRACT_INVALID",
   RUNTIME_IDENTITY_INVALID: "RUNTIME_IDENTITY_INVALID",
   ENVIRONMENT_INVALID: "ENVIRONMENT_INVALID",
   DIAGNOSTIC_UNEXPECTEDLY_ENABLED: "DIAGNOSTIC_UNEXPECTEDLY_ENABLED",
@@ -347,23 +355,87 @@ function evaluateSource(source, findings) {
   return PREFLIGHT_OUTCOME.PASS;
 }
 
+function resolvePublishingClassification(publishing) {
+  // Classification strings are never authority. Re-derive from observations when present.
+  if (publishing.workflowFile || publishing.githubWorkflow || publishing.pages || publishing.staging) {
+    return classifyPublishingIsolation({
+      workflowFile: publishing.workflowFile,
+      githubWorkflow: publishing.githubWorkflow,
+      pages: publishing.pages,
+      staging: publishing.staging,
+      repositoryIdentity: publishing.repositoryIdentity,
+      candidateSha: publishing.candidateSha,
+      nowMs: publishing.nowMs,
+      evidenceStale: publishing.evidenceStale === true,
+    });
+  }
+  return null;
+}
+
 function evaluatePublishing(publishing, findings) {
   if (!publishing || typeof publishing !== "object") {
-    findings.push({ code: PREFLIGHT_REASON.PUBLISHING_UNSAFE_OR_UNKNOWN, category: "publishing", detail: "missing publishing evidence" });
+    findings.push({
+      code: PREFLIGHT_REASON.PUBLISHING_UNSAFE_OR_UNKNOWN,
+      category: "publishing",
+      detail: "missing publishing evidence",
+    });
     return PREFLIGHT_OUTCOME.UNKNOWN;
   }
-  if (publishing.state === "UNKNOWN" || publishing.deployWorkflowState === "UNKNOWN") {
-    findings.push({ code: PREFLIGHT_REASON.PUBLISHING_UNSAFE_OR_UNKNOWN, category: "publishing" });
+
+  const classified = resolvePublishingClassification(publishing);
+  if (classified == null) {
+    findings.push({
+      code: PREFLIGHT_REASON.PUBLISHING_UNSAFE_OR_UNKNOWN,
+      category: "publishing",
+      detail: "publishing observations missing; classification strings are not authoritative",
+    });
     return PREFLIGHT_OUTCOME.UNKNOWN;
   }
-  const deployDisabled = publishing.deployWorkflowState === "disabled_manually";
-  const pagesKnown = publishing.pagesSourceKnown === true;
-  const unsafe = publishing.unsafeActivePublishingPath === true;
-  if (!deployDisabled || !pagesKnown || unsafe) {
-    findings.push({ code: PREFLIGHT_REASON.PUBLISHING_UNSAFE_OR_UNKNOWN, category: "publishing" });
+
+  const classification = classified.classification;
+  if (typeof publishing.classification === "string" && publishing.classification !== classification) {
+    findings.push({
+      code: PREFLIGHT_REASON.PUBLISHING_EVIDENCE_CONFLICTING,
+      category: "publishing",
+      detail: "supplied classification disagrees with independently derived publishing classification",
+    });
     return PREFLIGHT_OUTCOME.BLOCKED;
   }
-  return PREFLIGHT_OUTCOME.PASS;
+
+  if (classification === PUBLISHING_CLASSIFICATION.PUBLIC_MARKETING) {
+    return PREFLIGHT_OUTCOME.PASS;
+  }
+
+  if (classification === PUBLISHING_CLASSIFICATION.STAGING_PUBLIC_AUTHORIZED) {
+    return PREFLIGHT_OUTCOME.PASS;
+  }
+
+  if (classification === PUBLISHING_CLASSIFICATION.STAGING_PUBLIC_UNAUTHORIZED) {
+    findings.push({
+      code: PREFLIGHT_REASON.PUBLISHING_STAGING_UNAUTHORIZED,
+      category: "publishing",
+      detail: (classified.reasons ?? []).join("; ") || "unauthorized staging publication",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+
+  const detail = (classified.reasons ?? classified.contradictions ?? []).join("; ");
+  const collision = (classified.contradictions ?? []).some((item) =>
+    String(item).includes("collides with marketing"),
+  );
+  const code = collision
+    ? PREFLIGHT_REASON.PUBLISHING_MARKETING_ORIGIN_COLLISION
+    : (classified.contradictions ?? []).length > 0
+      ? PREFLIGHT_REASON.PUBLISHING_EVIDENCE_CONFLICTING
+      : detail.includes("contract")
+        ? PREFLIGHT_REASON.PUBLISHING_AUTHORIZED_CONTRACT_INVALID
+        : PREFLIGHT_REASON.PUBLISHING_UNSAFE_OR_UNKNOWN;
+  findings.push({
+    code,
+    category: "publishing",
+    detail: detail || "publishing evidence unknown or conflicting",
+  });
+  return PREFLIGHT_OUTCOME.BLOCKED;
 }
 
 function evaluateRuntime(runtime, findings) {
@@ -759,9 +831,43 @@ export function validPreflightEvidence(overrides = {}) {
       ...(overrides.source ?? {}),
     },
     publishing: {
+      classification: PUBLISHING_CLASSIFICATION.PUBLIC_MARKETING,
+      state: PUBLISHING_CLASSIFICATION.PUBLIC_MARKETING,
       deployWorkflowState: "disabled_manually",
+      fileDeployWorkflowState: "active_on_main",
       pagesSourceKnown: true,
       unsafeActivePublishingPath: false,
+      marketingBaselineOk: true,
+      reasons: ["test fixture: verified public marketing isolation"],
+      contradictions: [],
+      workflowFile: {
+        present: true,
+        triggersMain: true,
+        publishDir: "./out",
+        cname: "thebobabear.in",
+        pagesSourceDescribed: true,
+        fileDeployWorkflowState: "active_on_main",
+      },
+      githubWorkflow: {
+        observed: true,
+        state: "disabled_manually",
+        path: ".github/workflows/deploy.yml",
+        repositoryIdentity: EXPECTED_REPOSITORY_IDENTITY,
+      },
+      pages: {
+        observed: true,
+        sourceBranch: "gh-pages",
+        sourcePath: "/",
+        cname: "thebobabear.in",
+        status: "built",
+        repositoryIdentity: EXPECTED_REPOSITORY_IDENTITY,
+      },
+      staging: {
+        observedExposure: false,
+        origin: null,
+        authorization: null,
+        claimedAuthorized: false,
+      },
       ...(overrides.publishing ?? {}),
     },
     runtime: {

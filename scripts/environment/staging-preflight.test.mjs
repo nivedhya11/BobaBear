@@ -200,14 +200,21 @@ test("P09: source SHA/tree drift -> BLOCK", () => {
 });
 
 test("P10: publishing state unknown/unsafe -> BLOCK", () => {
-  assertBlocked(
-    evaluateStagingDeployPreflight(
-      validPreflightEvidence({
-        publishing: { deployWorkflowState: "active", pagesSourceKnown: false, unsafeActivePublishingPath: true },
-      }),
-    ),
-    PREFLIGHT_REASON.PUBLISHING_UNSAFE_OR_UNKNOWN,
-  );
+  const evidence = validPreflightEvidence();
+  evidence.publishing = {
+    workflowFile: {
+      present: true,
+      triggersMain: true,
+      publishDir: "./out",
+      cname: "thebobabear.in",
+      pagesSourceDescribed: true,
+      fileDeployWorkflowState: "active_on_main",
+    },
+    githubWorkflow: { observed: false, state: "UNKNOWN", detail: "missing" },
+    pages: { observed: false, detail: "missing" },
+    staging: { observedExposure: false, authorization: null, claimedAuthorized: false },
+  };
+  assertBlocked(evaluateStagingDeployPreflight(evidence), PREFLIGHT_REASON.PUBLISHING_UNSAFE_OR_UNKNOWN);
 });
 
 test("P11: diagnostic unexpectedly enabled -> BLOCK for Gate 2 path", () => {
@@ -249,9 +256,16 @@ test("negative preflight paths invoke zero operational side effects in runStagin
     validPreflightEvidence({
       database: { baselineCompatibility: "PARTIAL_OR_INCOMPATIBLE" },
     }),
-    validPreflightEvidence({
-      publishing: { deployWorkflowState: "UNKNOWN", pagesSourceKnown: false, unsafeActivePublishingPath: true },
-    }),
+    (() => {
+      const evidence = validPreflightEvidence();
+      evidence.publishing = {
+        workflowFile: { present: false, triggersMain: false, publishDir: null, cname: null, pagesSourceDescribed: false, fileDeployWorkflowState: "UNKNOWN" },
+        githubWorkflow: { observed: false, state: "UNKNOWN" },
+        pages: { observed: false },
+        staging: { observedExposure: false },
+      };
+      return evidence;
+    })(),
     { probeTimedOut: true, probeDetail: "podman inspect timeout" },
   ];
 
