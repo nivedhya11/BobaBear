@@ -31,9 +31,9 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2394,
-    "executableTestFiles": 561,
-    "sourceTestFiles": 164,
+    "trackedPathsConsidered": 2396,
+    "executableTestFiles": 562,
+    "sourceTestFiles": 165,
     "testsTreeExecutableFiles": 295,
     "scriptTestFiles": 102,
     "playwrightSpecs": 12,
@@ -162,6 +162,7 @@
     "src/server/customer-auth/http/response.test.ts",
     "src/server/customer-auth/pii.test.ts",
     "src/server/customer-auth/provider/local.test.ts",
+    "src/server/customer-auth/provider/msg91.test.ts",
     "src/server/customer-auth/rate-limit/hashing.test.ts",
     "src/server/customer-auth/rate-limit/progressive.test.ts",
     "src/server/customer-commerce/checkout-prepare-diagnostic-config.test.ts",
@@ -5392,6 +5393,25 @@
     },
     {
       "path": "src/server/customer-auth/provider/local.test.ts",
+      "runner": "vitest",
+      "domain": "server/customer-auth",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/server/customer-auth/provider/msg91.test.ts",
       "runner": "vitest",
       "domain": "server/customer-auth",
       "testType": "unit-or-domain",
