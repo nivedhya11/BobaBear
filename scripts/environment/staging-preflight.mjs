@@ -14,6 +14,7 @@
 import { ENVIRONMENT_CLASSIFICATION } from "../recovery/constants.mjs";
 import { evaluateQualifyingRecoveryProof, validateEvidence } from "../recovery/evidence.mjs";
 import { POSTGRES_INIT_DISPOSITION } from "./postgres-init-identity.mjs";
+import { syntheticBoundImages, sameBoundImages } from "./staging-image-security-evidence.mjs";
 import { PROTECTED_PRIMARY_REPOSITORY } from "./staging-source-isolation.mjs";
 
 export const PREFLIGHT_OUTCOME = Object.freeze({
@@ -40,6 +41,7 @@ export const PREFLIGHT_REASON = Object.freeze({
   RECOVERY_PROOF_BINDING_DESIGN_DEPENDENCY: "RECOVERY_PROOF_BINDING_DESIGN_DEPENDENCY",
   SECURITY_EVIDENCE_MISSING: "SECURITY_EVIDENCE_MISSING",
   SECURITY_RISK_WAIVED: "SECURITY_RISK_WAIVED",
+  IMAGE_SECURITY_NOT_BOUND: "IMAGE_SECURITY_NOT_BOUND",
   CAPACITY_OR_PRESERVATION_UNSAFE: "CAPACITY_OR_PRESERVATION_UNSAFE",
   POSTGRES_INIT_NOT_PRESERVABLE: "POSTGRES_INIT_NOT_PRESERVABLE",
   PROBE_FAILURE: "PROBE_FAILURE",
@@ -129,7 +131,7 @@ export function evaluateStagingDeployPreflight(evidence) {
   categories.database = evaluateDatabase(e.database, findings);
   const recovery = evaluateRecovery(e.recovery, findings);
   categories.recovery = recovery.outcome;
-  categories.security = evaluateSecurity(e.security, findings);
+  categories.security = evaluateSecurity(e.security, e.source, findings);
   categories.capacity = evaluateCapacity(e.capacity, findings);
   categories.postgresInit = evaluatePostgresInit(e.postgresInit, findings);
 
@@ -183,6 +185,45 @@ export function assertPreflightAllowsDeployment(decision) {
     error.name = "StagingPreflightBlockedError";
     throw error;
   }
+}
+
+const PREPARATION_BYPASS_FLAGS = ["ready", "bypass", "forceDeploy", "approved", "waive", "skipPreflight"];
+
+/**
+ * Phase A eligibility. PREPARATION_ELIGIBLE is not deployment authorization
+ * and does not satisfy assertPreflightAllowsDeployment.
+ * Image-security evidence is intentionally not required here.
+ * @param {unknown} evidence
+ */
+export function evaluateCandidatePreparationEligibility(evidence) {
+  /** @type {PreflightFinding[]} */
+  const findings = [];
+  if (evidence == null || typeof evidence !== "object" || Array.isArray(evidence)) {
+    return {
+      outcome: "BLOCKED",
+      findings: [{ code: PREFLIGHT_REASON.EVIDENCE_MALFORMED, category: "meta", detail: "evidence object required" }],
+      deploymentAuthorized: false,
+    };
+  }
+  const e = /** @type {Record<string, any>} */ (evidence);
+  if (PREPARATION_BYPASS_FLAGS.some((flag) => e[flag] === true)) {
+    findings.push({
+      code: PREFLIGHT_REASON.EVIDENCE_MALFORMED,
+      category: "meta",
+      detail: "operator ready/bypass flags are not authoritative and do not establish preparation eligibility",
+    });
+  }
+  const source = evaluateSource(e.source, findings);
+  const publishing = evaluatePublishing(e.publishing, findings);
+  const environment = evaluateEnvironment(e.environment, findings);
+  const categoriesPass = [source, publishing, environment].every((value) => value === PREFLIGHT_OUTCOME.PASS);
+  const blocked = !categoriesPass || findings.some((finding) => finding.code === PREFLIGHT_REASON.EVIDENCE_MALFORMED);
+  return {
+    outcome: blocked ? "BLOCKED" : "PREPARATION_ELIGIBLE",
+    findings,
+    categories: { source, publishing, environment },
+    deploymentAuthorized: false,
+  };
 }
 
 function evaluateSource(source, findings) {
@@ -571,7 +612,7 @@ function evaluateRecovery(recovery, findings) {
   return { outcome: PREFLIGHT_OUTCOME.PASS, binding: recovery.binding };
 }
 
-function evaluateSecurity(security, findings) {
+function evaluateSecurity(security, source, findings) {
   if (!security || typeof security !== "object") {
     findings.push({ code: PREFLIGHT_REASON.SECURITY_EVIDENCE_MISSING, category: "security", detail: "missing security evidence" });
     return PREFLIGHT_OUTCOME.UNKNOWN;
@@ -591,6 +632,17 @@ function evaluateSecurity(security, findings) {
       code: PREFLIGHT_REASON.SECURITY_EVIDENCE_MISSING,
       category: "security",
       detail: "image security evidence must be independently present",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+  const shaBound = isFullGitSha(security.boundSourceSha) && security.boundSourceSha === source?.head;
+  const treeBound = isFullGitSha(security.boundSourceTree) && security.boundSourceTree === source?.tree;
+  const imagesBound = sameBoundImages(security.boundImages, security.observedImages);
+  if (!shaBound || !treeBound || !imagesBound || security.scanPassed !== true) {
+    findings.push({
+      code: PREFLIGHT_REASON.IMAGE_SECURITY_NOT_BOUND,
+      category: "security",
+      detail: "image security evidence is not bound to this candidate SHA, tree, image id, and digest",
     });
     return PREFLIGHT_OUTCOME.BLOCKED;
   }
@@ -763,6 +815,12 @@ export function validPreflightEvidence(overrides = {}) {
       imageSecurityEvidencePresent: true,
       issue409RiskWaived: false,
       sourceImageCorrelated: true,
+      boundSourceSha: "a".repeat(40),
+      boundSourceTree: "b".repeat(40),
+      boundImages: syntheticBoundImages(),
+      observedImages: syntheticBoundImages(),
+      scanPassed: true,
+      evidenceSchema: "staging-image-security-v1",
       ...(overrides.security ?? {}),
     },
     capacity: {

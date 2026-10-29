@@ -8,7 +8,11 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-/** Empty until the Founder names one verified TLS termination token. */
+/**
+ * Configuration assertion only. Membership is not DNS, certificate, or
+ * observed termination evidence. Empty until a Founder decision names one
+ * verified token.
+ */
 export const STAGING_TLS_TERMINATION_ALLOWLIST = Object.freeze([]);
 
 const REQUIRED_FILES = Object.freeze([
@@ -128,12 +132,19 @@ function effectiveEnv(files, service) {
   return values;
 }
 
-function sameOrigin(parts) {
-  const present = parts.filter((part) => part != null);
-  if (present.length === 0) return null;
-  const canonical = present[0].canonical;
-  if (present.some((part) => part.canonical !== canonical)) return null;
-  return present[0];
+/**
+ * Every supplied service origin must be present and identical.
+ * A missing or malformed origin is not dropped so the others can agree.
+ */
+function requireAgreedOrigin(parts) {
+  if (!Array.isArray(parts) || parts.length === 0 || parts.some((part) => part == null)) {
+    return { origin: null, missing: true, mismatch: false };
+  }
+  const canonical = parts[0].canonical;
+  if (parts.some((part) => part.canonical !== canonical)) {
+    return { origin: null, missing: false, mismatch: true };
+  }
+  return { origin: parts[0], missing: false, mismatch: false };
 }
 
 /**
@@ -171,26 +182,29 @@ export function projectStrictStagingConfiguration(input) {
   const services = Object.fromEntries(
     Object.keys(SERVICE_ENV_PRECEDENCE).map((service) => [service, effectiveEnv(files, service)]),
   );
-  const publicOrigin = sameOrigin(
+  const publicAgreement = requireAgreedOrigin(
     Object.values(services).map((values) => originParts(values.BOBA_BEAR_PUBLIC_ORIGIN)),
   );
-  const authorized = sameOrigin(
+  const authorizedAgreement = requireAgreedOrigin(
     Object.values(services).map((values) => originParts(values.BOBA_BEAR_AUTHORIZED_STAGING_ORIGIN)),
   );
   const customer = originParts(services["customer-auth"].CUSTOMER_AUTH_BASE_URL);
   const workforce = originParts(services["workforce-auth"].WORKFORCE_AUTH_BASE_URL);
+  if (publicAgreement.missing || authorizedAgreement.missing || !customer || !workforce) {
+    reasons.push("STRICT_STAGING_ORIGIN_MISSING_OR_MALFORMED");
+  }
+  const comparable = publicAgreement.origin && authorizedAgreement.origin && customer && workforce;
   const shared =
-    publicOrigin &&
-    authorized &&
-    customer &&
-    workforce &&
-    publicOrigin.canonical === authorized.canonical &&
-    publicOrigin.canonical === customer.canonical &&
-    publicOrigin.canonical === workforce.canonical
-      ? publicOrigin
+    comparable &&
+    publicAgreement.origin.canonical === authorizedAgreement.origin.canonical &&
+    publicAgreement.origin.canonical === customer.canonical &&
+    publicAgreement.origin.canonical === workforce.canonical
+      ? publicAgreement.origin
       : null;
 
-  if (!shared) reasons.push("STRICT_STAGING_ORIGIN_MISMATCH");
+  if (!shared && (publicAgreement.mismatch || authorizedAgreement.mismatch || comparable)) {
+    reasons.push("STRICT_STAGING_ORIGIN_MISMATCH");
+  }
   if (
     shared &&
     (shared.protocol !== "https:" ||

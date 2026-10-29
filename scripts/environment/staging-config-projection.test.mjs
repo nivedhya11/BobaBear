@@ -131,6 +131,37 @@ test("razorpay key classification never echoes the key", () => {
   assert.equal(classifyRazorpayKeyId(undefined), "missing");
 });
 
+test("a missing origin on one service is not ignored when the others agree", () => {
+  const projected = projectStrictStagingConfiguration({
+    directory: "/unused",
+    allowlist: ["fixture-termination"],
+    readFile(fileName) {
+      const layer = {
+        BOBA_BEAR_ENV: "staging",
+        NODE_ENV: "production",
+        BOBA_BEAR_PUBLIC_ORIGIN: ORIGIN,
+        BOBA_BEAR_AUTHORIZED_STAGING_ORIGIN: ORIGIN,
+        BOBA_BEAR_ALLOW_UNSAFE_ADAPTERS: "false",
+        BOBA_BEAR_RELEASE: "rel-staging-1",
+        BOBA_BEAR_STAGING_TLS_TERMINATION: "fixture-termination",
+        BOBA_BEAR_PAYMENT_PROVIDER: "disabled",
+        CUSTOMER_AUTH_BASE_URL: ORIGIN,
+        WORKFORCE_AUTH_BASE_URL: ORIGIN,
+        CUSTOMER_AUTH_TRUST_PROXY_HOPS: "1",
+        WORKFORCE_AUTH_TRUST_PROXY_HOPS: "1",
+        CUSTOMER_COMMERCE_TRUST_PROXY_HOPS: "1",
+      };
+      if (fileName === ".env.operations.docker.local") layer.BOBA_BEAR_PUBLIC_ORIGIN = "";
+      return Object.entries(layer)
+        .map(([key, value]) => `${key}=${value}`)
+        .join("\n");
+    },
+  });
+  assert.equal(projected.projectedConfigState, "INVALID");
+  assert.equal(projected.publicOrigin, null);
+  assert.ok(projected.reasons.includes("STRICT_STAGING_ORIGIN_MISSING_OR_MALFORMED"));
+});
+
 test("one service file cannot mask another service effective environment", () => {
   const projected = projectStrictStagingConfiguration({
     directory: "/unused",

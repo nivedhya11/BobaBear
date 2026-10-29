@@ -12,6 +12,7 @@ import {
   validPreflightEvidence,
 } from "./staging-preflight.mjs";
 import { POSTGRES_INIT_DISPOSITION } from "./postgres-init-identity.mjs";
+import { absentImageSecurityEvidence } from "./staging-image-security-evidence.mjs";
 import {
   gatherStagingPreflightEvidence,
   readStagingDiagnosticEnabled,
@@ -177,6 +178,14 @@ test("P08: wrong project / wrong Podman context -> BLOCK", () => {
     ),
     PREFLIGHT_REASON.RUNTIME_IDENTITY_INVALID,
   );
+});
+
+test("wrong staging volume identity blocks activation", () => {
+  const evidence = validPreflightEvidence({
+    runtime: { postgresVolume: "not-boba-staging_postgres-data" },
+  });
+  assertBlocked(evaluateStagingDeployPreflight(evidence), PREFLIGHT_REASON.RUNTIME_IDENTITY_INVALID);
+  assertZeroOperationalEffects(evidence);
 });
 
 test("P09: source SHA/tree drift -> BLOCK", () => {
@@ -553,6 +562,7 @@ test("R11: live gatherer does not fabricate runtime/project PASS constants", () 
           reasonCode: "POSTGRES_INIT_PROBE_NOT_RUN",
         },
       }),
+      readImageSecurity: () => absentImageSecurityEvidence(),
     },
   );
   assert.notEqual(evidence.runtime.composeProject, "boba-staging");
@@ -568,6 +578,8 @@ test("R11: live gatherer does not fabricate runtime/project PASS constants", () 
   assert.equal(evidence.source.isolatedArtifactContextVerified, false);
   const decision = evaluateStagingDeployPreflight(evidence);
   assert.equal(decision.outcome, PREFLIGHT_OUTCOME.BLOCKED);
+  assert.ok(decision.findings.some((finding) => finding.code === PREFLIGHT_REASON.RECOVERY_PROOF_BINDING_DESIGN_DEPENDENCY));
+  assert.equal(evidence.security.imageSecurityEvidencePresent, false);
   assertZeroOperationalEffects(evidence);
 });
 

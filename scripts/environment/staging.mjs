@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** Founder staging provenance, status, and exact merged Git-tree deployment for `boba-staging`. */
 import { execFileSync, spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   cpSync,
   existsSync,
@@ -25,9 +26,17 @@ import {
 } from "./postgres-init-identity.mjs";
 import {
   assertPreflightAllowsDeployment,
+  evaluateCandidatePreparationEligibility,
   evaluateStagingDeployPreflight,
   PREFLIGHT_OUTCOME,
 } from "./staging-preflight.mjs";
+import {
+  absentImageSecurityEvidence,
+  evidencePathRefusal,
+  IMAGE_SECURITY_EVIDENCE_SCHEMA,
+  readOperatorImageSecurityEvidence,
+  writeImageSecurityEvidence,
+} from "./staging-image-security-evidence.mjs";
 import { extractVerifiedGitArchive, observeIsolatedArtifactContext, readPinnedGithubMainSha } from "./staging-source-isolation.mjs";
 import { projectStrictStagingConfiguration } from "./staging-config-projection.mjs";
 import { copyOwnerOnlySecretFile, ensureOwnerOnlySecretDirectory, inspectOwnerOnlyDirectory, inspectOwnerOnlyFile } from "./staging-secret-files.mjs";
@@ -81,7 +90,7 @@ const UAT_SERVICEABILITY_CASES = [
 
 const command = process.argv[2];
 const isCli = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
-if (isCli && !["status", "deploy-dry-run", "deploy", "recover-postgres", "workforce-user-create"].includes(command)) {
+if (isCli && !["status", "deploy-dry-run", "deploy", "prepare-candidate", "recover-postgres", "workforce-user-create"].includes(command)) {
   console.error("Usage: npm run env:staging:status | npm run env:staging:deploy:dry-run | npm run env:staging:deploy | npm run env:staging:recover-postgres | npm run env:staging:workforce:user:create -- [workforce:user:create arguments]");
   process.exit(1);
 }
@@ -422,6 +431,64 @@ function resolveStagingPostgresInitMount(
 
 function podmanInspect(name, format) {
   return execIgnoringStdin("podman", ["inspect", name, "--format", format], { encoding: "utf8" }).trim();
+}
+
+function inspectLocalImageIdentity(name) {
+  const imageId = podmanInspect(name, "{{.Id}}");
+  let digest = "";
+  try {
+    const parsed = JSON.parse(podmanInspect(name, "{{json .RepoDigests}}"));
+    if (Array.isArray(parsed) && typeof parsed[0] === "string") {
+      const at = parsed[0].lastIndexOf("@");
+      if (at >= 0) digest = parsed[0].slice(at + 1);
+    }
+  } catch {
+    digest = "";
+  }
+  if (!/^sha256:[0-9a-f]{64}$/.test(digest)) digest = imageId;
+  return { imageId, digest };
+}
+
+function assertBoundCandidateImages(security, inspectImage = inspectLocalImageIdentity) {
+  if (!security || security.scanPassed !== true || !Array.isArray(security.boundImages)) {
+    throw new Error("Activation refused: image security evidence is not bound.");
+  }
+  const builtImageIds = {};
+  for (const [service, imageName] of Object.entries(BOBA_BUILD_IMAGES)) {
+    const bound = security.boundImages.find((image) => image?.name === imageName);
+    if (!bound) throw new Error(`Activation refused: scanned image missing for ${service}.`);
+    const live = inspectImage(imageName);
+    if (!live || live.imageId !== bound.imageId || live.digest !== bound.digest) {
+      throw new Error(`Activation refused: ${service} image digest does not match the scanned candidate.`);
+    }
+    builtImageIds[service] = live.imageId;
+  }
+  return builtImageIds;
+}
+
+async function scanPreparedImagesWithTrivy(images) {
+  const trivy = await import("../run-trivy.mjs");
+  const bin = await trivy.ensureBinary();
+  const reports = [];
+  for (const image of images) {
+    const scanned = trivy.scanImage({
+      bin,
+      image: image.name,
+      ignorefile: path.join(repositoryRoot, ".trivyignore"),
+      cwd: repositoryRoot,
+    });
+    const blocking = (scanned.findings ?? []).some(
+      (finding) => finding.severity === "CRITICAL" || finding.severity === "HIGH",
+    );
+    if (scanned.status !== 0 || blocking || (scanned.errors ?? []).length > 0) {
+      return { passed: false, reportSha256: null };
+    }
+    reports.push({ name: image.name, status: scanned.status, findings: scanned.findings ?? [] });
+  }
+  return {
+    passed: true,
+    reportSha256: createHash("sha256").update(JSON.stringify(reports)).digest("hex"),
+  };
 }
 
 function imageRevision(image) {
@@ -1225,6 +1292,7 @@ function gatherStagingPreflightEvidence(
     observeSource = observeIsolatedArtifactContext,
     projectConfig = () => projectStrictStagingConfiguration({ directory: STAGING_ENV_DIR }),
     bindRecovery = () => bindStagingRecoveryEvidence(),
+    readImageSecurity = null,
   } = {},
 ) {
   let tree;
@@ -1307,6 +1375,23 @@ function gatherStagingPreflightEvidence(
     inspectOwnerOnlyDirectory(STAGING_ENV_DIR).ok === true &&
     STAGING_ENV_FILES.every((file) => inspectOwnerOnlyFile(path.join(STAGING_ENV_DIR, file)).ok === true);
   const recovery = bindRecovery();
+  let security = absentImageSecurityEvidence();
+  try {
+    const reader =
+      readImageSecurity ??
+      ((request) =>
+        readOperatorImageSecurityEvidence({
+          evidenceFile: process.env.BOBA_STAGING_IMAGE_SECURITY_EVIDENCE_FILE,
+          sourceSha: request.sourceSha,
+          sourceTree: request.sourceTree,
+          repositoryRoot,
+          inspectImage: inspectLocalImageIdentity,
+        }));
+    const loaded = reader({ sourceSha: candidate.head, sourceTree: tree });
+    if (loaded && typeof loaded === "object") security = loaded;
+  } catch {
+    security = absentImageSecurityEvidence();
+  }
 
   return {
     source: {
@@ -1356,12 +1441,7 @@ function gatherStagingPreflightEvidence(
       duplicateAuthAccountGroupCount: null,
     },
     recovery,
-    security: {
-      imageSecurityEvidenceRequired: true,
-      imageSecurityEvidencePresent: false,
-      issue409RiskWaived: false,
-      sourceImageCorrelated: false,
-    },
+    security,
     capacity: {
       diskSufficient: null,
       memorySufficient: null,
@@ -1451,6 +1531,16 @@ export function runStagingDeploy(candidate, deps = {}) {
     throw error;
   }
   record("preflightPass");
+  let builtImageIds;
+  try {
+    builtImageIds = assertBoundCandidateImages(readiness.evidence?.security, deps.inspectImage);
+    record("assertBoundCandidateImages");
+    assertImages(candidate.head);
+    record("assertImageRevisions");
+  } catch (error) {
+    log("STAGING_DEPLOY_MUTATION_STARTED NO");
+    throw error;
+  }
 
   stopLegacy();
   const buildDir = materializeTree(candidate.head);
@@ -1460,21 +1550,9 @@ export function runStagingDeploy(candidate, deps = {}) {
   try {
     ensureEnv(buildDir);
     record("ensureStagingEnvFiles");
-    compose(
-      buildDir,
-      ["build", "app", "migrate", "customer-auth", "workforce-auth", "customer-commerce", "operations"],
-      { BOBA_BUILD_SHA: candidate.head, COMPOSE_PROFILES: "tools" },
-    );
-    record("composeBuild");
-    assertImages(candidate.head);
-    record("assertImageRevisions");
-    const builtImageIds = {};
-    for (const [service, image] of Object.entries(BOBA_BUILD_IMAGES)) {
-      builtImageIds[service] = podmanInspect(image, "{{.Id}}");
-    }
-    log("BUILT_IMAGE_CANDIDATE_MATCH YES");
+    log("BOUND_IMAGE_CANDIDATE_MATCH YES");
 
-    // Re-resolve init mount after build using candidate archive contents (read-only inspect).
+    // Re-resolve init mount from the candidate archive. Activation does not build images.
     const initPlan = resolveInitMount(buildDir, candidate.head, deps);
     record("resolveStagingPostgresInitMount");
     if (initPlan.disposition.disposition !== POSTGRES_INIT_DISPOSITION.PRESERVE) {
@@ -1541,6 +1619,101 @@ export function runStagingDeploy(candidate, deps = {}) {
   }
 }
 
+const PREPARE_BUILD_ARGS = [
+  "build",
+  "app",
+  "migrate",
+  "customer-auth",
+  "workforce-auth",
+  "customer-commerce",
+  "operations",
+];
+
+/**
+ * Phase A. Builds and scans a candidate image in an isolated archive.
+ * Does not stop containers, migrate, bootstrap, or compose up.
+ * Does not call assertPreflightAllowsDeployment and cannot authorize activation.
+ * Executing this command remains a separate Founder authorization.
+ */
+export async function runStagingPrepareCandidate(candidate, deps = {}) {
+  const effects = deps.effects ?? [];
+  const record = (name) => {
+    effects.push(name);
+  };
+  const {
+    assertPreconditions = assertDeployPreconditions,
+    gatherPreparation = (value) => gatherStagingPreflightEvidence(value, deps),
+    evaluatePreparation = evaluateCandidatePreparationEligibility,
+    materializeTree = materializeExactGitTree,
+    compose = podmanCompose,
+    inspectImage = inspectLocalImageIdentity,
+    scanImages = scanPreparedImagesWithTrivy,
+    writeEvidence = writeImageSecurityEvidence,
+    removeDir = rmSync,
+    evidenceFile = process.env.BOBA_STAGING_IMAGE_SECURITY_EVIDENCE_FILE,
+    log = console.log,
+  } = deps;
+
+  assertPreconditions(candidate);
+  record("assertDeployPreconditions");
+  const gathered = gatherPreparation(candidate);
+  const eligibility = evaluatePreparation(gathered);
+  log(`CANDIDATE_PREPARATION ${eligibility.outcome}`);
+  log("STAGING_DEPLOYMENT_AUTHORIZED NO");
+  if (eligibility.outcome !== "PREPARATION_ELIGIBLE" || eligibility.deploymentAuthorized !== false) {
+    record("preparationBlocked");
+    log("ACTIVATION_STARTED NO");
+    const error = new Error("CANDIDATE_PREPARATION_BLOCKED");
+    error.eligibility = eligibility;
+    throw error;
+  }
+  const refusal = evidencePathRefusal(evidenceFile, repositoryRoot);
+  if (refusal) {
+    record("preparationBlocked");
+    log("ACTIVATION_STARTED NO");
+    throw new Error(refusal);
+  }
+  const sourceTree = gathered?.source?.tree;
+  if (typeof sourceTree !== "string" || !/^[0-9a-f]{40}$/.test(sourceTree)) {
+    record("preparationBlocked");
+    log("ACTIVATION_STARTED NO");
+    throw new Error("CANDIDATE_TREE_UNBOUND");
+  }
+
+  const buildDir = materializeTree(candidate.head);
+  record("materializeCandidateArchive");
+  try {
+    compose(buildDir, PREPARE_BUILD_ARGS, { BOBA_BUILD_SHA: candidate.head, COMPOSE_PROFILES: "tools" });
+    record("composeBuildCandidate");
+    const images = Object.values(BOBA_BUILD_IMAGES).map((name) => {
+      const live = inspectImage(name);
+      if (!live || !/^sha256:[0-9a-f]{64}$/.test(live.imageId ?? "") || !/^sha256:[0-9a-f]{64}$/.test(live.digest ?? "")) {
+        throw new Error(`CANDIDATE_IMAGE_IDENTITY_UNBOUND ${name}`);
+      }
+      return { name, imageId: live.imageId, digest: live.digest };
+    });
+    const scan = await scanImages(images);
+    if (!scan || scan.passed !== true || !/^[0-9a-f]{64}$/.test(scan.reportSha256 ?? "")) {
+      throw new Error("IMAGE_SECURITY_SCAN_FAILED");
+    }
+    writeEvidence(evidenceFile, {
+      schema: IMAGE_SECURITY_EVIDENCE_SCHEMA,
+      sourceSha: candidate.head,
+      sourceTree,
+      images,
+      scanPassed: true,
+      scanReportSha256: scan.reportSha256,
+    });
+    record("imageSecurityEvidenceWritten");
+  } finally {
+    removeDir(buildDir, { recursive: true, force: true });
+    record("candidateArchiveRemoved");
+  }
+  log("ACTIVATION_STARTED NO");
+  log("CANDIDATE_PREPARATION_IS_NOT_DEPLOYMENT YES");
+  return { ok: true, deploymentAuthorized: false, effects };
+}
+
 function deploy(candidate) {
   runStagingDeploy(candidate);
 }
@@ -1571,6 +1744,12 @@ if (isCli) {
   }
 
   if (command === "deploy") deploy(candidate);
+  if (command === "prepare-candidate") {
+    runStagingPrepareCandidate(candidate).catch((error) => {
+      console.error(error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    });
+  }
   if (command === "recover-postgres") recoverPostgres(candidate);
   if (command === "status") reportRunningProvenance(candidate.originMain);
   if (command === "workforce-user-create") createStagingWorkforceUser(process.argv.slice(3));
