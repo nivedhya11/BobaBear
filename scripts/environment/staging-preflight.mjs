@@ -14,6 +14,7 @@
 import { ENVIRONMENT_CLASSIFICATION } from "../recovery/constants.mjs";
 import { evaluateQualifyingRecoveryProof, validateEvidence } from "../recovery/evidence.mjs";
 import { POSTGRES_INIT_DISPOSITION } from "./postgres-init-identity.mjs";
+import { PROTECTED_PRIMARY_REPOSITORY } from "./staging-source-isolation.mjs";
 
 export const PREFLIGHT_OUTCOME = Object.freeze({
   PASS: "PASS",
@@ -106,7 +107,14 @@ export function evaluateStagingDeployPreflight(evidence) {
   }
 
   // Explicitly ignore any operator-controlled ready/bypass flags.
-  if (e.ready === true || e.bypass === true || e.forceDeploy === true || e.approved === true) {
+  if (
+    e.ready === true ||
+    e.bypass === true ||
+    e.forceDeploy === true ||
+    e.approved === true ||
+    e.waive === true ||
+    e.skipPreflight === true
+  ) {
     findings.push({
       code: PREFLIGHT_REASON.EVIDENCE_MALFORMED,
       category: "meta",
@@ -144,7 +152,14 @@ export function evaluateStagingDeployPreflight(evidence) {
   }
 
   // If any bypass flag was present, never PASS.
-  if (e.ready === true || e.bypass === true || e.forceDeploy === true || e.approved === true) {
+  if (
+    e.ready === true ||
+    e.bypass === true ||
+    e.forceDeploy === true ||
+    e.approved === true ||
+    e.waive === true ||
+    e.skipPreflight === true
+  ) {
     outcome = PREFLIGHT_OUTCOME.BLOCKED;
   }
 
@@ -252,11 +267,38 @@ function evaluateSource(source, findings) {
     return PREFLIGHT_OUTCOME.BLOCKED;
   }
 
-  if (source.protectedCheckoutUsed !== false) {
+  if (source.protectedCheckoutUsed !== false || source.artifactContextInsideProtectedRoot !== false) {
     findings.push({
       code: PREFLIGHT_REASON.SOURCE_DIRTY_OR_PROTECTED,
       category: "source",
-      detail: "protectedCheckoutUsed must be explicitly false",
+      detail: "artifact context must be observed outside the protected checkout",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+
+  if (source.isolatedArtifactContextVerified !== true) {
+    findings.push({
+      code: PREFLIGHT_REASON.SOURCE_DIRTY_OR_PROTECTED,
+      category: "source",
+      detail: "isolated git-archive context was not verified",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+
+  if (source.authoritativeSourceRoot !== PROTECTED_PRIMARY_REPOSITORY) {
+    findings.push({
+      code: PREFLIGHT_REASON.SOURCE_AUTHORITY_INVALID,
+      category: "source",
+      detail: "authoritative source root must be the canonical repository",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+
+  if (source.githubMainMatchesHead !== true) {
+    findings.push({
+      code: PREFLIGHT_REASON.SOURCE_SHA_TREE_DRIFT,
+      category: "source",
+      detail: "pinned GitHub main must equal the candidate head",
     });
     return PREFLIGHT_OUTCOME.BLOCKED;
   }
@@ -351,12 +393,30 @@ function evaluateEnvironment(environment, findings) {
     return PREFLIGHT_OUTCOME.UNKNOWN;
   }
 
+  if (
+    environment.secretModesSecure == null ||
+    environment.paymentIsolation == null ||
+    environment.bobaBearEnvDrift == null ||
+    environment.secretsPrinted == null
+  ) {
+    findings.push({
+      code: PREFLIGHT_REASON.ENVIRONMENT_INVALID,
+      category: "environment",
+      detail: "secret mode, payment isolation, or drift evidence is missing",
+    });
+    return PREFLIGHT_OUTCOME.UNKNOWN;
+  }
+
+  const paymentIsolated = environment.paymentIsolation === "DISABLED" || environment.paymentIsolation === "TEST";
   const ok =
     environment.requiredEnvFilesPresent === true &&
     environment.projectedConfigValid === true &&
     environment.diagnosticEnabled === false &&
-    environment.bobaBearEnvDrift !== true &&
-    environment.secretsPrinted !== true;
+    environment.bobaBearEnvDrift === false &&
+    environment.secretsPrinted === false &&
+    environment.secretModesSecure === true &&
+    environment.unsafeAdaptersExplicitlyFalse === true &&
+    paymentIsolated;
   if (!ok) {
     findings.push({ code: PREFLIGHT_REASON.ENVIRONMENT_INVALID, category: "environment" });
     return PREFLIGHT_OUTCOME.BLOCKED;
@@ -388,8 +448,24 @@ function evaluateDatabase(database, findings) {
     });
     return PREFLIGHT_OUTCOME.BLOCKED;
   }
-  if (database.unexplainedPendingMutation === true) {
+  if (database.unexplainedPendingMutation == null || database.authAccountUniquenessKnown == null) {
+    findings.push({
+      code: PREFLIGHT_REASON.DATABASE_STATE_UNKNOWN_OR_UNSAFE,
+      category: "database",
+      detail: "pending-mutation or auth-account uniqueness evidence is missing",
+    });
+    return PREFLIGHT_OUTCOME.UNKNOWN;
+  }
+  if (database.unexplainedPendingMutation === true || database.authAccountUniquenessKnown !== true) {
     findings.push({ code: PREFLIGHT_REASON.DATABASE_STATE_UNKNOWN_OR_UNSAFE, category: "database" });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+  if (database.duplicateAuthAccountGroupCount !== 0) {
+    findings.push({
+      code: PREFLIGHT_REASON.DATABASE_STATE_UNKNOWN_OR_UNSAFE,
+      category: "database",
+      detail: "duplicate auth-account groups must be an observed zero count",
+    });
     return PREFLIGHT_OUTCOME.BLOCKED;
   }
   const baseline = database.baselineCompatibility;
@@ -458,7 +534,16 @@ function evaluateRecovery(recovery, findings) {
     return { outcome: PREFLIGHT_OUTCOME.BLOCKED, binding: recovery.binding };
   }
 
-  if (Array.isArray(recovery.evidenceRecords)) {
+  if (!Array.isArray(recovery.evidenceRecords)) {
+    findings.push({
+      code: PREFLIGHT_REASON.RECOVERY_INTEGRITY_UNVERIFIED,
+      category: "recovery",
+      detail: "recovery evidence records are required; booleans alone are not proof",
+    });
+    return { outcome: PREFLIGHT_OUTCOME.BLOCKED, binding: recovery.binding };
+  }
+
+  {
     const stagingRecords = recovery.evidenceRecords.filter((record) => {
       const parsed = validateEvidence(record);
       if (!parsed.ok) return false;
@@ -491,9 +576,13 @@ function evaluateSecurity(security, findings) {
     findings.push({ code: PREFLIGHT_REASON.SECURITY_EVIDENCE_MISSING, category: "security", detail: "missing security evidence" });
     return PREFLIGHT_OUTCOME.UNKNOWN;
   }
-  if (security.issue409RiskWaived === true) {
-    findings.push({ code: PREFLIGHT_REASON.SECURITY_RISK_WAIVED, category: "security" });
-    return PREFLIGHT_OUTCOME.BLOCKED;
+  if (security.issue409RiskWaived !== false) {
+    findings.push({
+      code: security.issue409RiskWaived === true ? PREFLIGHT_REASON.SECURITY_RISK_WAIVED : PREFLIGHT_REASON.SECURITY_EVIDENCE_MISSING,
+      category: "security",
+      detail: "issue 409 waiver must be explicitly false",
+    });
+    return security.issue409RiskWaived === true ? PREFLIGHT_OUTCOME.BLOCKED : PREFLIGHT_OUTCOME.UNKNOWN;
   }
   // Image-security proof is never optional. An unchecked/omitted "required"
   // boolean must not authorize PASS without independently present correlation.
@@ -521,11 +610,25 @@ function evaluateCapacity(capacity, findings) {
     });
     return PREFLIGHT_OUTCOME.UNKNOWN;
   }
+  const measured = [
+    capacity.diskSufficient,
+    capacity.memorySufficient,
+    capacity.priorImagesPreserved,
+    capacity.unintendedPostgresReplacement,
+  ];
+  if (measured.some((value) => value !== true && value !== false)) {
+    findings.push({
+      code: PREFLIGHT_REASON.CAPACITY_OR_PRESERVATION_UNSAFE,
+      category: "capacity",
+      detail: "capacity evidence was not measured",
+    });
+    return PREFLIGHT_OUTCOME.UNKNOWN;
+  }
   const ok =
     capacity.diskSufficient === true &&
     capacity.memorySufficient === true &&
     capacity.priorImagesPreserved === true &&
-    capacity.unintendedPostgresReplacement !== true;
+    capacity.unintendedPostgresReplacement === false;
   if (!ok) {
     findings.push({ code: PREFLIGHT_REASON.CAPACITY_OR_PRESERVATION_UNSAFE, category: "capacity" });
     return PREFLIGHT_OUTCOME.BLOCKED;
@@ -556,6 +659,31 @@ function evaluatePostgresInit(postgresInit, findings) {
   return PREFLIGHT_OUTCOME.BLOCKED;
 }
 
+function syntheticQualifyingStagingRecord() {
+  return {
+    schemaVersion: "imp037-evidence-v1",
+    runId: "20260101T000000Z-0123456789abcdef",
+    operationType: "layer2-logical-backup",
+    recoveryLayer: "LAYER_2",
+    status: "SUCCEEDED",
+    readiness: "READY",
+    startedAt: "2026-01-01T00:00:00.000Z",
+    endedAt: "2026-01-01T00:01:00.000Z",
+    candidate: {
+      commitSha: "a".repeat(40),
+      repositoryPath: PROTECTED_PRIMARY_REPOSITORY,
+    },
+    sourceEnvironmentClassification: ENVIRONMENT_CLASSIFICATION.STAGING,
+    sourceIdentityMarker: "boba-staging",
+    recoveryArtifactReference: "synthetic-artifact",
+    recoveryPoint: "synthetic-point",
+    checksumIntegrityStatus: "MATCHED",
+    validationResults: [{ code: "REMOTE_STORED_ARTIFACT_VERIFIED" }, { code: "LAYER2_COMPLETE" }],
+    incomplete: false,
+    synthetic: true,
+  };
+}
+
 /**
  * Construct a fully valid evidence object for isolated tests only.
  * Not an operator bypass — production probes must independently establish each field.
@@ -572,6 +700,10 @@ export function validPreflightEvidence(overrides = {}) {
       originMainTree: "b".repeat(40),
       trackedDirty: "",
       protectedCheckoutUsed: false,
+      isolatedArtifactContextVerified: true,
+      artifactContextInsideProtectedRoot: false,
+      authoritativeSourceRoot: PROTECTED_PRIMARY_REPOSITORY,
+      githubMainMatchesHead: true,
       ...(overrides.source ?? {}),
     },
     publishing: {
@@ -599,6 +731,9 @@ export function validPreflightEvidence(overrides = {}) {
       diagnosticConflict: false,
       bobaBearEnvDrift: false,
       secretsPrinted: false,
+      secretModesSecure: true,
+      unsafeAdaptersExplicitlyFalse: true,
+      paymentIsolation: "DISABLED",
       ...(overrides.environment ?? {}),
     },
     database: {
@@ -606,6 +741,8 @@ export function validPreflightEvidence(overrides = {}) {
       migrationLedgerState: "APPLIED_CURRENT",
       baselineCompatibility: "COMPLETE_COMPATIBLE",
       unexplainedPendingMutation: false,
+      authAccountUniquenessKnown: true,
+      duplicateAuthAccountGroupCount: 0,
       ...(overrides.database ?? {}),
     },
     recovery: {
@@ -618,6 +755,7 @@ export function validPreflightEvidence(overrides = {}) {
       freshnessOk: true,
       bindingDesignDependency: false,
       binding: "BOUND",
+      evidenceRecords: [syntheticQualifyingStagingRecord()],
       ...(overrides.recovery ?? {}),
     },
     security: {

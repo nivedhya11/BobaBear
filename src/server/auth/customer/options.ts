@@ -124,6 +124,17 @@ export function buildCustomerBetterAuthOptions(
     advanced: {
       cookiePrefix: CUSTOMER_AUTH_COOKIE_PREFIX,
       useSecureCookies: PRODUCTION_LIKE_ENVIRONMENTS.has(config.environmentType),
+      ...(PRODUCTION_LIKE_ENVIRONMENTS.has(config.environmentType)
+        ? {
+            defaultCookieAttributes: {
+              sameSite: "lax" as const,
+              httpOnly: true,
+              secure: true,
+              path: "/",
+            },
+            crossSubDomainCookies: { enabled: false as const },
+          }
+        : {}),
     },
 
     rateLimit: {

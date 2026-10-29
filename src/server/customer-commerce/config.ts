@@ -77,7 +77,11 @@ export function loadCustomerCommerceServiceConfig(
   source: CustomerCommerceEnvSource,
   environmentType: AppEnvironment,
 ): CustomerCommerceServiceConfig {
-  const customerResult = validateCustomerAuthConfig(source, environmentType);
+  const customerResult = validateCustomerAuthConfig(
+    source,
+    environmentType,
+    environmentType === "staging" ? { expectedPublicOrigin: source.BOBA_BEAR_PUBLIC_ORIGIN ?? "" } : {},
+  );
   if (!customerResult.ok) {
     throw new AuthFoundationConfigurationError(customerResult.issues);
   }
@@ -90,6 +94,11 @@ export function loadCustomerCommerceServiceConfig(
     issues.push({
       key: "CUSTOMER_COMMERCE_TRUST_PROXY_HOPS",
       message: hopsResult.message,
+    });
+  } else if (environmentType === "staging" && hopsResult.value !== 1) {
+    issues.push({
+      key: "CUSTOMER_COMMERCE_TRUST_PROXY_HOPS",
+      message: "Staging requires exactly 1 trusted proxy hop.",
     });
   }
 

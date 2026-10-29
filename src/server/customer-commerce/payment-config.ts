@@ -53,6 +53,14 @@ function requireSecret(
   return raw;
 }
 
+/** Classify a key id without echoing it. Staging uses this to reject live keys. */
+export function classifyRazorpayKeyId(keyId: string): "test" | "live" | "ambiguous" | "missing" {
+  if (keyId.length === 0) return "missing";
+  if (/^rzp_test_[A-Za-z0-9]+$/.test(keyId)) return "test";
+  if (/^rzp_live_[A-Za-z0-9]+$/.test(keyId)) return "live";
+  return "ambiguous";
+}
+
 export function loadCustomerCommercePaymentConfig(
   source: CustomerCommerceEnvSource,
   environmentType: AppEnvironment,
@@ -96,6 +104,19 @@ export function loadCustomerCommercePaymentConfig(
 
   if (issues.length > 0) {
     throw new CustomerCommerceConfigurationError(issues);
+  }
+
+  if (environmentType === "staging" && selector === "razorpay") {
+    const keyClass = classifyRazorpayKeyId(keyId!);
+    if (keyClass !== "test") {
+      throw new CustomerCommerceConfigurationError([
+        {
+          key: "BOBA_BEAR_RAZORPAY_KEY_ID",
+          message:
+            "Staging requires a Razorpay test-mode key id. Live, missing, and ambiguous key ids are rejected.",
+        },
+      ]);
+    }
   }
 
   return Object.freeze({

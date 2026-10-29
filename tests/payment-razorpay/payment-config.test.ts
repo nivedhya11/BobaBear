@@ -33,7 +33,7 @@ describe("loadCustomerCommercePaymentConfig", () => {
     const config = loadCustomerCommercePaymentConfig(
       {
         BOBA_BEAR_PAYMENT_PROVIDER: "razorpay",
-        BOBA_BEAR_RAZORPAY_KEY_ID: "rzp_test_key_id_xx",
+        BOBA_BEAR_RAZORPAY_KEY_ID: "rzp_test_KeyIdXx12",
         BOBA_BEAR_RAZORPAY_KEY_SECRET: "test_only_key_secret",
         BOBA_BEAR_RAZORPAY_WEBHOOK_SECRET: "test_only_webhook_secret",
       },
@@ -42,10 +42,51 @@ describe("loadCustomerCommercePaymentConfig", () => {
     expect(config).toEqual({
       selector: "razorpay",
       razorpay: {
-        keyId: "rzp_test_key_id_xx",
+        keyId: "rzp_test_KeyIdXx12",
         keySecret: "test_only_key_secret",
         webhookSecret: "test_only_webhook_secret",
       },
     });
+  });
+
+  it("rejects a live Razorpay key id in staging before composing a client", () => {
+    const liveKeyId = "rzp_live_KeyIdXx12";
+    expect(() =>
+      loadCustomerCommercePaymentConfig(
+        {
+          BOBA_BEAR_PAYMENT_PROVIDER: "razorpay",
+          BOBA_BEAR_RAZORPAY_KEY_ID: liveKeyId,
+          BOBA_BEAR_RAZORPAY_KEY_SECRET: "live_only_key_secret",
+          BOBA_BEAR_RAZORPAY_WEBHOOK_SECRET: "live_only_webhook_secret",
+        },
+        "staging",
+      ),
+    ).toThrow(/test-mode key id/);
+    try {
+      loadCustomerCommercePaymentConfig(
+        {
+          BOBA_BEAR_PAYMENT_PROVIDER: "razorpay",
+          BOBA_BEAR_RAZORPAY_KEY_ID: liveKeyId,
+          BOBA_BEAR_RAZORPAY_KEY_SECRET: "live_only_key_secret",
+          BOBA_BEAR_RAZORPAY_WEBHOOK_SECRET: "live_only_webhook_secret",
+        },
+        "staging",
+      );
+    } catch (error) {
+      expect(String(error)).not.toContain(liveKeyId);
+    }
+  });
+
+  it("still accepts a live Razorpay key id in production", () => {
+    const config = loadCustomerCommercePaymentConfig(
+      {
+        BOBA_BEAR_PAYMENT_PROVIDER: "razorpay",
+        BOBA_BEAR_RAZORPAY_KEY_ID: "rzp_live_KeyIdXx12",
+        BOBA_BEAR_RAZORPAY_KEY_SECRET: "live_only_key_secret",
+        BOBA_BEAR_RAZORPAY_WEBHOOK_SECRET: "live_only_webhook_secret",
+      },
+      "production",
+    );
+    expect(config.selector).toBe("razorpay");
   });
 });
