@@ -309,7 +309,6 @@ export async function evaluateCheckout(
     evaluatedAt: now,
     fulfilmentMode: preload.fulfilmentMode,
     serviceabilityEvaluatedAt,
-    manualCouponCode: preload.cart.manualCouponCode,
     destination:
       preload.fulfilmentMode === "DELIVERY" ? preload.destination : null,
     pickupLocation:

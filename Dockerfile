@@ -34,7 +34,7 @@
 # a Next.js server, and never touches PostgreSQL.
 
 ARG NODE_IMAGE=docker.io/library/node:22.23.1-bookworm-slim
-ARG NGINX_IMAGE=docker.io/library/nginx:1.30.4-alpine3.24
+ARG NGINX_IMAGE=docker.io/library/nginx:1.30.6-alpine3.24
 ARG BOBA_BUILD_SHA=unversioned-local
 
 # ── base ─────────────────────────────────────────────────────────────────

@@ -1,8 +1,11 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import { CheckoutSnapshotLineList } from "./CheckoutReviewSections";
 import { CommercialOfferStack } from "./CommercialOfferStack";
 import { CouponField } from "./CouponField";
+import { narrowCheckoutSnapshotLines } from "./checkout-line-presentation";
+import { OrderMoneySummaryPanel } from "./OrderMoneySummaryPanel";
 import { IMP036J_COPY } from "./imp036j-copy";
 import {
   automaticStatusCopy,
@@ -301,12 +304,26 @@ describe("IMP-036J Tranche 5 customer presentation", () => {
         payableLabel={IMP036J_COPY.TOTAL_PAYABLE}
         payablePaise="21000"
         stale
+        staleMessage={IMP036J_COPY.STALE}
         giftGone
       />,
     );
     expect(screen.getByTestId("copy-stale")).toHaveTextContent(IMP036J_COPY.STALE);
     expect(screen.getByTestId("copy-gift-gone")).toHaveTextContent(IMP036J_COPY.GIFT_GONE);
     expect(screen.getByRole("region", { name: IMP036J_COPY.PRICE_SUMMARY })).toBeInTheDocument();
+  });
+
+  it("defaults stale alert to neutral unconfirmed copy when no message is supplied", () => {
+    render(
+      <CommercialOfferStack
+        explanation={null}
+        payableLabel={IMP036J_COPY.TOTAL_PAYABLE}
+        payablePaise="21000"
+        stale
+      />,
+    );
+    expect(screen.getByTestId("copy-stale")).toHaveTextContent(IMP036J_COPY.STALE_UNCONFIRMED);
+    expect(screen.getByTestId("copy-stale")).not.toHaveTextContent(IMP036J_COPY.STALE);
   });
 
   it("reuses Checkout evaluation only when fulfilment, revision, and snapshot match", () => {
@@ -948,6 +965,195 @@ describe("IMP-036J T8 executable presentation evidence", () => {
         },
       })?.text,
     ).toBe(IMP036J_COPY.SIGN_IN);
+  });
+});
+
+describe("Option A sealed item lines and purchased saving vocabulary", () => {
+  it("shows sealed gross on an ordinary row and sealed zero on a complimentary row", () => {
+    const lines = narrowCheckoutSnapshotLines([
+      {
+        productName: "Purple Rain",
+        variantName: "",
+        quantity: 1,
+        lineSubtotalPaise: "51800",
+        lineTotalPaise: "46620",
+        lineOrigin: "cart",
+      },
+      {
+        productName: "Taro Milk Tea",
+        variantName: "",
+        quantity: 1,
+        lineSubtotalPaise: "15000",
+        lineTotalPaise: "0",
+        lineOrigin: "complimentary_offer",
+      },
+    ]);
+    render(<CheckoutSnapshotLineList title="Your items" lines={lines} />);
+    const rows = screen.getAllByRole("listitem");
+    expect(rows[0]).toHaveTextContent("₹518.00");
+    expect(rows[0]).not.toHaveTextContent("₹466.20");
+    expect(rows[1]).toHaveTextContent("₹0.00");
+    expect(rows[1]).toHaveTextContent("Included with your offer");
+    expect(rows[1]).not.toHaveTextContent("₹150.00");
+  });
+
+  it("keeps an ordinary row on the sealed net amount when gross was not supplied", () => {
+    const lines = narrowCheckoutSnapshotLines([
+      {
+        productName: "Hong Kong Milk Tea Boba",
+        variantName: "Regular",
+        quantity: 3,
+        lineTotalPaise: "78700",
+      },
+    ]);
+    expect(lines[0]?.lineSubtotalPaise).toBeNull();
+    render(<CheckoutSnapshotLineList lines={lines} />);
+    expect(screen.getByRole("listitem")).toHaveTextContent("₹787.00");
+  });
+
+  it("shows purchased order and delivery saving that sum to Total saved", () => {
+    render(
+      <OrderMoneySummaryPanel
+        title="Payment summary"
+        moneySummary={{
+          prePromotionSubtotalMinor: "51800",
+          promotionDiscountMinor: "9180",
+          orderSavingMinor: "5180",
+          deliverySavingMinor: "4000",
+          charges: [
+            { chargeCode: "packaging", name: "Packaging", amountMinor: "2000" },
+            { chargeCode: "delivery", name: "Delivery", amountMinor: "0" },
+          ],
+          taxMinor: "1000",
+          grandTotalMinor: "45620",
+          currency: "INR",
+        }}
+      />,
+    );
+    const summary = screen.getByTestId("order-money-summary");
+    const labels = [...summary.querySelectorAll("dt")].map((node) => node.textContent);
+    expect(labels).toEqual([
+      "Subtotal",
+      "Order saving",
+      "Packaging",
+      "Delivery",
+      "Delivery saving",
+      "Tax",
+      "Total saved",
+      "Total payable",
+    ]);
+    expect(summary).toHaveTextContent("₹51.80");
+    expect(summary).toHaveTextContent("₹40.00");
+    expect(summary).toHaveTextContent("₹91.80");
+    expect(summary).toHaveTextContent("₹456.20");
+    expect(summary).toHaveTextContent("₹0.00");
+    expect(summary).not.toHaveTextContent("Discount");
+  });
+
+  it("shows only the positive purchased component beside Total saved", () => {
+    const { rerender } = render(
+      <OrderMoneySummaryPanel
+        moneySummary={{
+          prePromotionSubtotalMinor: "51800",
+          promotionDiscountMinor: "5180",
+          orderSavingMinor: "5180",
+          deliverySavingMinor: "0",
+          charges: [],
+          taxMinor: "0",
+          grandTotalMinor: "46620",
+          currency: "INR",
+        }}
+      />,
+    );
+    let summary = screen.getByTestId("order-money-summary");
+    expect(summary).toHaveTextContent("Order saving");
+    expect(summary).toHaveTextContent("Total saved");
+    expect(summary).not.toHaveTextContent("Delivery saving");
+
+    rerender(
+      <OrderMoneySummaryPanel
+        moneySummary={{
+          prePromotionSubtotalMinor: "51800",
+          promotionDiscountMinor: "4000",
+          orderSavingMinor: "0",
+          deliverySavingMinor: "4000",
+          charges: [{ chargeCode: "delivery", name: "Delivery", amountMinor: "0" }],
+          taxMinor: "0",
+          grandTotalMinor: "47800",
+          currency: "INR",
+        }}
+      />,
+    );
+    summary = screen.getByTestId("order-money-summary");
+    expect(summary).toHaveTextContent("Delivery saving");
+    expect(summary).toHaveTextContent("Total saved");
+    expect(summary).not.toHaveTextContent("Order saving");
+  });
+
+  it("omits saving rows and does not invent a split when nothing was saved", () => {
+    render(
+      <OrderMoneySummaryPanel
+        moneySummary={{
+          prePromotionSubtotalMinor: "19900",
+          promotionDiscountMinor: "0",
+          orderSavingMinor: "0",
+          deliverySavingMinor: "0",
+          charges: [{ chargeCode: "delivery", name: "Delivery", amountMinor: "4000" }],
+          taxMinor: "0",
+          grandTotalMinor: "23900",
+          currency: "INR",
+        }}
+      />,
+    );
+    const summary = screen.getByTestId("order-money-summary");
+    expect(summary).not.toHaveTextContent("Order saving");
+    expect(summary).not.toHaveTextContent("Delivery saving");
+    expect(summary).not.toHaveTextContent("Total saved");
+    expect(summary).toHaveTextContent("Delivery");
+    expect(summary).toHaveTextContent("₹239.00");
+  });
+
+  it("shows Total saved without an order or delivery row when the split was not sealed", () => {
+    render(
+      <OrderMoneySummaryPanel
+        moneySummary={{
+          prePromotionSubtotalMinor: "10000",
+          promotionDiscountMinor: "2000",
+          orderSavingMinor: "0",
+          deliverySavingMinor: "0",
+          charges: [],
+          taxMinor: "0",
+          grandTotalMinor: "8000",
+          currency: "INR",
+        }}
+      />,
+    );
+    const summary = screen.getByTestId("order-money-summary");
+    expect(summary).toHaveTextContent("Total saved");
+    expect(summary).toHaveTextContent("₹20.00");
+    expect(summary).not.toHaveTextContent("Order saving");
+    expect(summary).not.toHaveTextContent("Delivery saving");
+  });
+
+  it("does not invent order or delivery rows when the sealed split is absent", () => {
+    render(
+      <OrderMoneySummaryPanel
+        moneySummary={{
+          prePromotionSubtotalMinor: "51800",
+          promotionDiscountMinor: "5180",
+          charges: [{ chargeCode: "packaging", name: "Packaging", amountMinor: "2000" }],
+          taxMinor: "0",
+          grandTotalMinor: "48620",
+          currency: "INR",
+        }}
+      />,
+    );
+    const summary = screen.getByTestId("order-money-summary");
+    expect(summary).toHaveTextContent("Total saved");
+    expect(summary).toHaveTextContent("₹51.80");
+    expect(summary).not.toHaveTextContent("Order saving");
+    expect(summary).not.toHaveTextContent("Delivery saving");
+    expect(summary).not.toHaveTextContent("Discount");
   });
 });
 

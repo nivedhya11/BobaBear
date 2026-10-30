@@ -191,15 +191,16 @@ export function couponStatusCopy(input: {
 }): Readonly<{ text: string; tone: OfferStatusTone }> | null {
   const explanation = input.explanation;
   const submitted = explanation?.submittedCouponResult;
-  if (submitted?.status === "INVALID") {
-    return { text: IMP036J_COPY.INVALID, tone: "alert" };
-  }
   if (
     submitted?.reasonCode === "NOT_EFFECTIVE" ||
     submitted?.reasonCode === "RETIRED" ||
-    submitted?.reasonCode === "COUPON_EXPIRED"
+    submitted?.reasonCode === "COUPON_EXPIRED" ||
+    submitted?.reasonCode === "COUPON_NOT_EFFECTIVE"
   ) {
     return { text: IMP036J_COPY.EXPIRED, tone: "alert" };
+  }
+  if (submitted?.status === "INVALID") {
+    return { text: IMP036J_COPY.INVALID, tone: "alert" };
   }
   if (submitted?.status === "CUSTOMER_IDENTITY_REQUIRED") {
     return { text: IMP036J_COPY.SIGN_IN, tone: "alert" };

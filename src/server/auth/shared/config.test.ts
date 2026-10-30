@@ -202,6 +202,31 @@ describe("loadAuthFoundationConfig — base URL validation", () => {
     expect(config.customer.baseURL.protocol).toBe("https:");
     expect(config.workforce.baseURL.protocol).toBe("https:");
   });
+
+  it("requires staging auth origins to equal the public origin when that origin is supplied", () => {
+    const issues = issuesOf(() =>
+      loadAuthFoundationConfig(
+        source({
+          CUSTOMER_AUTH_BASE_URL: "https://staging.example.test",
+          WORKFORCE_AUTH_BASE_URL: "https://other.example.test",
+        }),
+        "staging",
+        { expectedPublicOrigin: "https://staging.example.test" },
+      ),
+    );
+    expect(issues.some((issue) => issue.key === "WORKFORCE_AUTH_BASE_URL")).toBe(true);
+
+    const config = loadAuthFoundationConfig(
+      source({
+        CUSTOMER_AUTH_BASE_URL: "https://staging.example.test",
+        WORKFORCE_AUTH_BASE_URL: "https://staging.example.test",
+      }),
+      "staging",
+      { expectedPublicOrigin: "https://staging.example.test" },
+    );
+    expect(config.customer.baseURL.origin).toBe("https://staging.example.test");
+    expect(config.workforce.baseURL.origin).toBe("https://staging.example.test");
+  });
 });
 
 describe("loadAuthFoundationConfig — immutability and brands", () => {

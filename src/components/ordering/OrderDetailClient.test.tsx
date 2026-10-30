@@ -101,6 +101,47 @@ describe("OrderDetailClient", () => {
     );
   });
 
+  it("shows the same purchased saving split as confirmation", async () => {
+    getCustomerOrder.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        order: {
+          ...baseOrder,
+          money: { grandTotalMinor: "45620", currency: "INR" },
+          moneySummary: {
+            prePromotionSubtotalMinor: "51800",
+            promotionDiscountMinor: "9180",
+            orderSavingMinor: "5180",
+            deliverySavingMinor: "4000",
+            charges: [
+              { chargeCode: "packaging", name: "Packaging", amountMinor: "2000" },
+              { chargeCode: "delivery", name: "Delivery", amountMinor: "0" },
+            ],
+            taxMinor: "1000",
+            grandTotalMinor: "45620",
+            currency: "INR",
+          },
+        },
+      },
+    });
+    render(<OrderDetailClient />);
+    await waitFor(() => expect(screen.getByTestId("copy-purchased")).toBeInTheDocument());
+    expect(screen.getByTestId("copy-purchased")).toHaveTextContent(
+      "You saved ₹91.80 on this order.",
+    );
+    const summary = screen.getByTestId("order-money-summary");
+    expect(summary).toHaveTextContent("Order saving");
+    expect(summary).toHaveTextContent("₹51.80");
+    expect(summary).toHaveTextContent("Delivery saving");
+    expect(summary).toHaveTextContent("₹40.00");
+    expect(summary).toHaveTextContent("Total saved");
+    expect(summary).toHaveTextContent("₹91.80");
+    expect(summary).toHaveTextContent("Total payable");
+    expect(summary).toHaveTextContent("₹456.20");
+    expect(summary).not.toHaveTextContent("Discount");
+  });
+
   it("renders detail errors", async () => {
     getCustomerOrder.mockResolvedValue({
       ok: false,

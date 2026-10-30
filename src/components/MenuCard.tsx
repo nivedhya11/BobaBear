@@ -17,7 +17,6 @@
  */
 
 import { useState } from "react";
-import type { MenuItem } from "@/types/menu";
 import { MenuTags, type MenuCardTag } from "@/components/MenuTags";
 
 export type { MenuCardTag };
@@ -34,17 +33,24 @@ const AURORA_BG = [
 export type MenuCardType = "drink" | "plate" | "kstreet";
 
 export interface MenuCardProps {
-  item: MenuItem;
+  item: {
+    name: string;
+    description: string;
+  };
+  /**
+   * Omitted when the projection has no authoritative outlet price.
+   * A brand-only homepage must not present a payable price.
+   */
+  priceLabel?: string;
   index: number;
   type?: MenuCardType;
   img?: string;
   tags?: MenuCardTag[];
 }
 
-const formatPrice = (p: number) => `₹${p}`;
-
 export function MenuCard({
   item,
+  priceLabel,
   index,
   type = "drink",
   img,
@@ -130,19 +136,20 @@ export function MenuCard({
           {item.description}
         </p>
 
-        {/* Saffron price pill — secondary fill, on-secondary text for contrast */}
-        <div className="mt-auto pt-3 w-full flex justify-center">
-          <span
-            className={[
-              "font-body font-bold text-[13px]",
-              "text-[var(--text-on-secondary)]",
-              "bg-[var(--interactive-secondary)]",
-              "px-3 py-1 rounded-full",
-            ].join(" ")}
-          >
-            {formatPrice(item.price)}
-          </span>
-        </div>
+        {priceLabel ? (
+          <div className="mt-auto pt-3 w-full flex justify-center">
+            <span
+              className={[
+                "font-body font-bold text-[13px]",
+                "text-[var(--text-on-secondary)]",
+                "bg-[var(--interactive-secondary)]",
+                "px-3 py-1 rounded-full",
+              ].join(" ")}
+            >
+              {priceLabel}
+            </span>
+          </div>
+        ) : null}
       </article>
     );
   }
@@ -204,17 +211,18 @@ export function MenuCard({
         {item.description}
       </p>
 
-      {/* Bottom row — price */}
-      <div
-        className={[
-          "mt-auto pt-2 md:pt-3 flex justify-end items-center",
-          "border-t border-[var(--border-subtle)]",
-        ].join(" ")}
-      >
-        <span className="font-display text-[16px] md:text-[22px] text-[var(--interactive-secondary)]">
-          {formatPrice(item.price)}
-        </span>
-      </div>
+      {priceLabel ? (
+        <div
+          className={[
+            "mt-auto pt-2 md:pt-3 flex justify-end items-center",
+            "border-t border-[var(--border-subtle)]",
+          ].join(" ")}
+        >
+          <span className="font-display text-[16px] md:text-[22px] text-[var(--interactive-secondary)]">
+            {priceLabel}
+          </span>
+        </div>
+      ) : null}
     </article>
   );
 }

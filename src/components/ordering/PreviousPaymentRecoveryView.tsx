@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/Button";
 import {
@@ -13,29 +13,50 @@ import {
   PREVIOUS_CHECKOUT_ADDRESS_LOCK_COPY,
   PREVIOUS_CHECKOUT_LOCK_COPY,
 } from "@/components/ordering/cart-changed-recovery-presentation";
+import { buildCustomerMenuLookups } from "@/components/ordering/cart-presentation";
 import { formatPaise } from "@/components/ordering/format-money";
+import { getCustomerMenu } from "@/lib/customer-commerce";
 import type {
   CommerceCart,
   CommerceCheckoutSnapshot,
 } from "@/lib/customer-commerce";
-import type { OrderingCatalog } from "@/shared/ordering-catalog";
 
-function currentCartLineSummaries(
-  cart: CommerceCart,
-  catalog: OrderingCatalog,
-): readonly { quantity: number; name: string }[] {
-  const byVariant = new Map(catalog.items.map((item) => [item.variantId, item.name]));
-  return cart.lines.map((line) =>
-    Object.freeze({
-      quantity: line.quantity,
-      name: byVariant.get(line.variantId) ?? "Item",
-    }),
-  );
+const UNRESOLVED_LINE_NAME = "Item";
+
+function usePublishedLineNames(cart: CommerceCart): ReadonlyMap<string, string> | null {
+  const variantKey = cart.lines.map((line) => line.variantId).join("\n");
+  const [loaded, setLoaded] = useState<{
+    key: string;
+    names: ReadonlyMap<string, string>;
+  } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void getCustomerMenu({ brandId: cart.brandId })
+      .then((result) => {
+        if (cancelled) return;
+        const resolved = new Map<string, string>();
+        if (result.ok) {
+          const lookups = buildCustomerMenuLookups(result.data.menu);
+          for (const variantId of variantKey.split("\n").filter((id) => id.length > 0)) {
+            resolved.set(variantId, lookups.itemByVariant.get(variantId)?.name ?? UNRESOLVED_LINE_NAME);
+          }
+        }
+        setLoaded({ key: variantKey, names: resolved });
+      })
+      .catch(() => {
+        if (!cancelled) setLoaded({ key: variantKey, names: new Map() });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [cart.brandId, variantKey]);
+
+  return loaded?.key === variantKey ? loaded.names : null;
 }
 
 export function PreviousPaymentRecoveryView(props: {
   cart: CommerceCart;
-  catalog: OrderingCatalog;
   previousSnapshot: CommerceCheckoutSnapshot | null;
   paymentSlot?: ReactNode;
 }) {
@@ -47,7 +68,7 @@ export function PreviousPaymentRecoveryView(props: {
   const previousTotal = props.previousSnapshot
     ? formatPaise(props.previousSnapshot.grandTotalPaise)
     : null;
-  const currentLines = currentCartLineSummaries(props.cart, props.catalog);
+  const publishedNames = usePublishedLineNames(props.cart);
   const currentItemCount = props.cart.lines.reduce((sum, line) => sum + line.quantity, 0);
 
   return (
@@ -111,14 +132,14 @@ export function PreviousPaymentRecoveryView(props: {
         <p className="font-body text-[14px] text-[var(--text-secondary)]">
           {currentItemCount} {currentItemCount === 1 ? "item" : "items"}
         </p>
-        {currentLines.length > 0 ? (
+        {props.cart.lines.length > 0 ? (
           <ul className="flex flex-col gap-2" data-testid="current-cart-lines">
-            {currentLines.map((line, index) => (
+            {props.cart.lines.map((line, index) => (
               <li
-                key={`${line.name}-${index}`}
+                key={`${line.id}-${index}`}
                 className="font-body text-[14px] text-[var(--text-primary)]"
               >
-                {line.quantity} × {line.name}
+                {line.quantity} × {publishedNames?.get(line.variantId) ?? UNRESOLVED_LINE_NAME}
               </li>
             ))}
           </ul>

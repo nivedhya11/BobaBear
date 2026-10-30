@@ -1,6 +1,6 @@
 ---
 Status: Canonical index
-Last updated: 2026-09-10
+Last updated: 2026-10-25
 ---
 
 # BOBA Bear Platform Documentation
@@ -54,9 +54,11 @@ IMP-036F. X2/X3 work also uses an
 [Experience Definition](./product/templates/experience-definition-template.md). A pre-GTM
 experience, product-language, and instrumentation audit is required before public GTM cutover /
 IMP-040 acceptance; adopting PD-2 does not perform that audit. TEST-1 remains the verification
-policy. TEST-1's CI restructuring is TARGET until Session 3 implements it; this index makes no
-claim of full current CI enforcement. GitHub branch protection on `main` is not currently
-enforced; PD-2 still requires CI and CodeQL evidence before merge as process authority.
+policy. This index does not claim that current CI fully implements TEST-1. The active GitHub
+ruleset **Protect main** applies to the default branch: it blocks deletion and non-fast-forward
+updates, requires a pull request with resolved review threads, and requires the status checks
+configured on that ruleset. Exact required check names are owned by the ruleset, not by this
+index. PD-2 still requires CI and CodeQL evidence before merge as process authority.
 
 Machine check: `npm run project:consistency`.
 
@@ -146,12 +148,16 @@ through metadata, targeted searches, and relevant ranges, as described in PD-1.
 | [`roadmap-and-open-decisions.md`](./roadmap-and-open-decisions.md) | SUPPORTING / HISTORICAL | Open-decision notes; current IMP sequence → `ROADMAP.md` only |
 | [`decision-register-historical.md`](./decision-register-historical.md) | HISTORICAL | D-001–D-355 inventory; CURRENT binding status → `decision-register.md` (canonical lowercase path; historical uppercase `DECISION-REGISTER.md` expectation retired for portability) |
 | [`accepted-foundation-operating-rules.md`](./accepted-foundation-operating-rules.md) | SUPPORTING | Migrated AGENTS foundation constraints |
+| [`engineering/customer-otp-transport-assessment.md`](./engineering/customer-otp-transport-assessment.md) | NON-AUTHORITATIVE ASSESSMENT | Founder Option A OTP transport evidence and provider-contract comparison. Not a decision-register row, not a provider selection, and not activation authority. |
+| [`operations/strict-staging-preparation.md`](./operations/strict-staging-preparation.md) | SUPPORTING OPERATOR | Founder strict-staging direction, designated hostname, D2 design-only Tunnel/Access record, and D3 four-state publishing isolation. Does not authorize preparation, deploy, DNS, TLS tokens, or public staging exposure. |
+| [`operations/d2-restricted-cloudflare-tunnel-design.md`](./operations/d2-restricted-cloudflare-tunnel-design.md) | SUPPORTING OPERATOR DESIGN | Founder-approved 2026-10-30 D2 restricted Cloudflare Tunnel + Access design evidence. Not a decision-register entry; not operational verification; not `STAGING_PUBLIC_AUTHORIZED`. |
 | [`operations/imp037-recovery-runbook.md`](./operations/imp037-recovery-runbook.md) | SUPPORTING OPERATOR | IMP-037 recovery operator runbook (Layer 1/2 CLI, restore, gate). Repository tooling merged; does not claim live Spaces/provider proof, systemd host install, or RPO/RTO proof. |
 | [`operations/imp037-implementation-evidence.md`](./operations/imp037-implementation-evidence.md) | SUPPORTING OPS EVIDENCE | IMP-037 repository automated-proof notes + merge provenance. Not lifecycle authority. |
 | [`operations/imp037-external-proof-plan.md`](./operations/imp037-external-proof-plan.md) | SUPPORTING OPS PLAN | Future R3 external-proof campaign phases + 50-AC matrix. Planning only; does not authorize live action. |
-| [`engineering/change-workflow.md`](./engineering/change-workflow.md) | SUPPORTING | Bounded task, evidence, review, and promotion workflow; does not alter product acceptance authority |
+| [`engineering/change-workflow.md`](./engineering/change-workflow.md) | SUPPORTING ENGINEERING WORKFLOW | BEDS-1 bounded task, evidence, review, and promotion workflow. Not a product, architecture, lifecycle, or acceptance authority. |
+| [`engineering/repository-conventions.md`](./engineering/repository-conventions.md) | SUPPORTING ENGINEERING STANDARD | RHS-1 naming, placement, retirement, and incremental CI hygiene. Not a product, architecture, lifecycle, or agent-governance authority. |
 | [`engineering/package-scripts-command-surface.md`](./engineering/package-scripts-command-surface.md) | SUPPORTING | HYG-04 npm script taxonomy, help/inventory discoverability, non-breaking migration plan. Does not rename or delete scripts. |
-| [`testing/`](./testing/README.md) | SUPPORTING ENGINEERING EVIDENCE | Repeatable test inventory, TEST-1 baseline, and CI gap analysis. Policy authority remains [`TESTING.md`](./TESTING.md). Does not activate IMP-036F or change acceptance. |
+| [`testing/`](./testing/README.md) | SUPPORTING ENGINEERING EVIDENCE | Repeatable test inventory and historical CI evidence. Policy authority remains [`TESTING.md`](./TESTING.md). Current activation is read from ROADMAP and STATE. This directory does not accept a slice. |
 | [`experience/enterprise-experience/`](./experience/enterprise-experience/) | SUPPORTING PROGRAMME CONTRACT | Enterprise Experience Programme and IMP-036A–G experience contracts. Per-slice lifecycle authority = ROADMAP / STATE / relevant capability artifact; this index does not independently restate slice status. |
 | [`experience/`](./experience/) | **SUPPORTING PRODUCT / EXPERIENCE MATERIAL** | BOBA Direct UX, brand, detailed [customer journey](./experience/customer-journey.md), gap map, and research. The [Food Direct planning lock](./experience/food-direct-product-architecture-lock.md) is supporting rationale. Canonical experience and language authorities are [`EXPERIENCE.md`](./EXPERIENCE.md) (EXP-1) and [`PRODUCT-LANGUAGE.md`](./PRODUCT-LANGUAGE.md) (LANG-1), outside this pack. Per-slice lifecycle authority = ROADMAP / STATE / relevant capability artifact. Dated support/gap claims are historical observations, not current status. Binding decisions remain in decision-register; prospective product artifacts are indexed in [product/](./product/README.md). Index: [`experience/README.md`](./experience/README.md). |
 
@@ -165,6 +171,9 @@ through metadata, targeted searches, and relevant ranges, as described in PD-1.
 
 ADRs under [`decisions/`](./decisions/) preserve detailed rationale/history. Binding status and
 supersession are owned by [`decision-register.md`](./decision-register.md). Notably:
+
+- **D-384** (DR-25): Tactical Closure and Pre-GTM Strategic Programme Baseline — planning
+  programme only; does not change ROADMAP/STATE lifecycle or authorize IMP-036K implementation
 
 - ADR-014 Route-Handler-as-canonical HTTP host → **SUPERSEDED** by D-356
 - ADR-010 detailed kitchen workflow → **AMENDED** by D-357 (accepted Order lifecycle is IMP-023)

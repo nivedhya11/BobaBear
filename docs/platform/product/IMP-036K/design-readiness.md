@@ -57,6 +57,7 @@ ARCH_R23 = UNCHANGED
 DR_24 = UNCHANGED
 D-383 = CURRENT
 D-384 = NO
+D-384_SCOPE = SOURCE_DESIGN_READINESS_OPERATION
 ARCH-R24 = NO
 NEW_ADR = NO
 
@@ -84,6 +85,11 @@ This document is the persisted Design Readiness for IMP-036K. Independent Archit
 `d3106dd6e8c94e062bc7c33015171da1e06b9203`, and working-tree fingerprint
 `4aadf87243f0a221bcc1289d27d4bc83a86a6953d3e7939eef97053872290481`. Candidate exact-head CI
 `37053735361` and CodeQL `37053735365` succeeded. The reviewed design semantics are unchanged.
+`D-384 = NO` with `D-384_SCOPE = SOURCE_DESIGN_READINESS_OPERATION` and
+`SOURCE_DECISION_REGISTER = DR-24` record source-era Design Readiness provenance only: this
+operation did not create D-384. A later CURRENT tip may allocate D-384 under a later
+decision-register revision without rewriting this Design Readiness operation or granting
+IMP-036K implementation authority.
 
 Architect review `5394618739` STOPPED the first text of this same candidate at head
 `815ad8e711aa09c012aed8e65f59af788c21869e`. That STOP remains historical evidence. Architect

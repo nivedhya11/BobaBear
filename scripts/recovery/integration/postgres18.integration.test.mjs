@@ -185,7 +185,7 @@ test("postgres18 disposable: business integrity + Layer2 COMPLETE chain", async 
       evidenceDir,
       recipients: [recipient],
       sourceIdentity: "integration-ephemeral-pg",
-      sourceClassification: "recovery",
+      sourceClassification: "staging",
       candidate: {
         repositoryPath: "/home/ajoshi/repos/boba-bear-platform",
         branch: "test",

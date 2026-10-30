@@ -36,6 +36,11 @@ import { findCartRowById, loadCartAggregate } from "../cart/repository";
 export type CheckoutOperationOptions = Readonly<{
   clock?: CheckoutClock;
   policy?: CheckoutPolicy;
+  /**
+   * Optional per-request CHECKOUT_REPRICED diagnostic observer (IMP-036J #391B).
+   * Payment-start path only when staging gate enables it. Must not alter outcomes.
+   */
+  prepareDiagnosticObserver?: import("./prepare-diagnostic").CheckoutPrepareDiagnosticObserver;
 }>;
 
 function assertOwnedUsableCheckout(

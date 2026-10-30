@@ -13,6 +13,7 @@ import {
   evaluateCheckout,
   getActiveCart,
   getActiveCheckout,
+  getCustomerMenu,
   listCheckoutPickupOptions,
   listCheckoutScheduledWindows,
   listCustomerOrders,
@@ -65,18 +66,28 @@ import {
   couponFieldStatusFromExplanation,
   couponFieldStatusFromMutationFailure,
   isIncompleteCouponTransport,
+  isReviewCommercialCurrent,
 } from "@/components/ordering/coupon-result-presentation";
 import { postCommittedPresentationObservation } from "@/components/ordering/committed-presentation-observation";
 import { narrowCheckoutSnapshotLines } from "@/components/ordering/checkout-line-presentation";
 import { PaymentPanel } from "@/components/ordering/PaymentPanel";
 import { PreviousPaymentRecoveryView } from "@/components/ordering/PreviousPaymentRecoveryView";
 import { cartChangedRecoveryPresentation } from "@/components/ordering/cart-changed-recovery-presentation";
+import {
+  decideStaleRecoveryPresentation,
+  type StaleRecoveryPresentation,
+} from "@/components/ordering/stale-recovery-presentation";
+import { CheckoutItemAttentionNotice } from "@/components/ordering/CheckoutItemAttentionNotice";
+import {
+  namedCartLinesForCheckout,
+  presentCheckoutItemAttention,
+  type CheckoutItemAttention,
+} from "@/components/ordering/checkout-unavailable-item-presentation";
 import { commerceErrorCopy } from "@/components/ordering/error-copy";
 import {
   fulfilmentModeLabel,
   pickupAddressLines,
 } from "@/components/ordering/pickup-location-presentation";
-import type { OrderingCatalog } from "@/shared/ordering-catalog";
 
 type Screen =
   | "loading"
@@ -117,11 +128,13 @@ function snapshotHasDeliveryFee(snapshot: CommerceCheckoutSnapshot): boolean {
   });
 }
 
-export function CheckoutClient(props: { catalog: OrderingCatalog }) {
-  const brandId = props.catalog.brandId;
+export function CheckoutClient(props: { brandId: string }) {
+  const brandId = props.brandId;
+  const publishedNamesRef = useRef<readonly { variantId: string; name: string }[]>([]);
   const [screen, setScreen] = useState<Screen>("loading");
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setCheckoutError] = useState<string | null>(null);
+  const [itemAttention, setItemAttention] = useState<readonly CheckoutItemAttention[] | null>(null);
   const [cart, setCart] = useState<CommerceCart | null>(null);
   const [checkout, setCheckout] = useState<CommerceCheckout | null>(null);
   const [snapshot, setSnapshot] = useState<CommerceCheckoutSnapshot | null>(null);
@@ -138,7 +151,16 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
   >(null);
   const [couponFocusInputToken, setCouponFocusInputToken] = useState(0);
   const [couponFocusResultToken, setCouponFocusResultToken] = useState(0);
-  const [staleReview, setStaleReview] = useState(false);
+  const [staleRecovery, setStaleRecovery] = useState<StaleRecoveryPresentation | null>(
+    null,
+  );
+  /**
+   * Single owner for concurrent Review-affecting async work: automatic stale
+   * recovery, coupon-driven rebase, and fulfilment escape that abandons recovery.
+   * Older in-flight responses must not write Review / recovery presentation once
+   * a newer generation has begun.
+   */
+  const reviewAsyncGenerationRef = useRef(0);
   const [giftGone, setGiftGone] = useState(false);
   const [offerDropped, setOfferDropped] = useState(false);
   const reviewSummaryRef = useRef<HTMLDivElement | null>(null);
@@ -156,6 +178,46 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
   const [scheduledWindows, setScheduledWindows] = useState<CommerceScheduledWindows | null>(null);
   const [selectedWindowStart, setSelectedWindowStart] = useState<string | null>(null);
   const reviewExplanation = parseCommercialExplanation(reviewQuote);
+  const reviewCommercialCurrent = isReviewCommercialCurrent({
+    cartRevision: cart?.revision ?? null,
+    snapshotSourceCartRevision: snapshot?.sourceCartRevision ?? null,
+  });
+  const reviewMoneyConfirmed =
+    reviewCommercialCurrent &&
+    (staleRecovery == null || staleRecovery.showFreshPayableAsCurrent);
+
+  function showTextError(message: string | null) {
+    setItemAttention(null);
+    setCheckoutError(message);
+  }
+
+  function showCommerceFailure(failure: {
+    code: string;
+    problems?: readonly { cartLineId: string; code: string }[];
+  }) {
+    const attention = presentCheckoutItemAttention(
+      failure.problems,
+      namedCartLinesForCheckout({
+        cart,
+        catalog: { items: publishedNamesRef.current },
+        snapshotLines: snapshot?.lines,
+      }),
+    );
+    if (attention.length > 0) {
+      setCheckoutError(null);
+      setItemAttention(attention);
+      return;
+    }
+    showTextError(commerceErrorCopy(failure.code));
+  }
+
+  function beginReviewAsync(): number {
+    return ++reviewAsyncGenerationRef.current;
+  }
+
+  function isReviewAsyncCurrent(generation: number): boolean {
+    return generation === reviewAsyncGenerationRef.current;
+  }
 
   function adoptEvaluated(evaluated: {
     checkout: CommerceCheckout;
@@ -207,41 +269,87 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
   }, [screen, evaluationId, reviewSurfaceToken, cartActivationId, snapshot?.id, couponPending]);
 
   useEffect(() => {
-    if (screen !== "review" || !staleReview) return;
+    if (screen !== "review" || !staleRecovery?.kind) return;
     document.querySelector<HTMLElement>("[data-testid='copy-stale']")?.focus();
-  }, [screen, staleReview, snapshot?.id]);
+    // Key on message/kind so identical failure rewrites do not steal focus again.
+  }, [screen, staleRecovery?.message, staleRecovery?.kind, snapshot?.id]);
 
-  async function recoverStaleReview(): Promise<void> {
-    setStaleReview(true);
-    setScreen("review");
+  async function recoverStaleReview(triggerCode: string): Promise<void> {
+    const generation = beginReviewAsync();
     const priorSnapshot = snapshot;
     const priorCheckout = checkout;
-    if (!cart) return;
+    const priorGrandTotalPaise = priorSnapshot?.grandTotalPaise ?? null;
+    // Immediate neutral alert — never claim a monetary change from the error code.
+    setStaleRecovery(
+      decideStaleRecoveryPresentation({
+        trigger: triggerCode,
+        priorGrandTotalPaise,
+        freshGrandTotalPaise: null,
+        freshSnapshotConfirmed: false,
+      }),
+    );
+    setScreen("review");
+    if (!cart) {
+      showTextError(commerceErrorCopy("CART_NOT_FOUND"));
+      return;
+    }
     const refreshed = await getActiveCart(brandId, { guestToken: false });
-    if (!refreshed.ok || !refreshed.data.cart) return;
+    if (!isReviewAsyncCurrent(generation)) return;
+    if (!refreshed.ok || !refreshed.data.cart) {
+      // Keep the already-set unconfirmed presentation; surface a retryable error.
+      // Coupon / fulfilment correction remain available as escape paths.
+      if (refreshed.ok === false) showCommerceFailure(refreshed);
+      else showTextError(commerceErrorCopy("CART_NOT_FOUND"));
+      return;
+    }
     setCart(refreshed.data.cart);
-    await rebaseReviewAfterCouponMutation(
+    const rebased = await rebaseReviewAfterCouponMutation(
       refreshed.data.cart,
       priorSnapshot,
       priorCheckout,
+      generation,
     );
-    setStaleReview(true);
+    if (!isReviewAsyncCurrent(generation)) return;
+    if (!rebased.ok) {
+      if (rebased.code === "REVIEW_ASYNC_SUPERSEDED") return;
+      // rebase already setError; keep unconfirmed presentation from the initial write.
+      setScreen("review");
+      return;
+    }
+    showTextError(null);
+    setStaleRecovery(
+      decideStaleRecoveryPresentation({
+        trigger: triggerCode,
+        priorGrandTotalPaise,
+        freshGrandTotalPaise: rebased.snapshot.grandTotalPaise,
+        freshSnapshotConfirmed: true,
+      }),
+    );
     setScreen("review");
   }
+
+  type ReviewRebaseResult =
+    | { ok: true; snapshot: CommerceCheckoutSnapshot }
+    | { ok: false; code: string };
 
   /**
    * After Review coupon APPLY/CHANGE/REMOVE advances Cart revision, rebase onto
    * the canonical T4 successor/reuse Checkout and re-establish fulfilment context.
+   * Also used by automatic stale recovery. All Review writes are generation-gated.
    */
   async function rebaseReviewAfterCouponMutation(
     nextCart: CommerceCart,
     priorSnapshot: CommerceCheckoutSnapshot | null,
     priorCheckout: CommerceCheckout | null,
-  ): Promise<boolean> {
+    generation: number,
+  ): Promise<ReviewRebaseResult> {
     const started = await startCheckout({ cartId: nextCart.id });
+    if (!isReviewAsyncCurrent(generation)) {
+      return { ok: false, code: "REVIEW_ASYNC_SUPERSEDED" };
+    }
     if (!started.ok) {
-      setError(commerceErrorCopy(started.code));
-      return false;
+      showCommerceFailure(started);
+      return { ok: false, code: started.code };
     }
     let current = started.data.checkout;
     setCheckout(current);
@@ -261,9 +369,12 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
             }
           : { pickupOutletId: null }),
       });
+      if (!isReviewAsyncCurrent(generation)) {
+        return { ok: false, code: "REVIEW_ASYNC_SUPERSEDED" };
+      }
       if (!fulfilled.ok) {
-        setError(commerceErrorCopy(fulfilled.code));
-        return false;
+        showCommerceFailure(fulfilled);
+        return { ok: false, code: fulfilled.code };
       }
       current = fulfilled.data.checkout;
       setCheckout(current);
@@ -295,9 +406,12 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
         expectedCheckoutRevision: current.revision,
         destination: destinationInput,
       });
+      if (!isReviewAsyncCurrent(generation)) {
+        return { ok: false, code: "REVIEW_ASYNC_SUPERSEDED" };
+      }
       if (!setDest.ok) {
-        setError(commerceErrorCopy(setDest.code));
-        return false;
+        showCommerceFailure(setDest);
+        return { ok: false, code: setDest.code };
       }
       current = setDest.data.checkout;
       setCheckout(current);
@@ -314,9 +428,12 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
         scheduledWindowStartAt: priorSnapshot.scheduledWindowStartAt,
         scheduledWindowEndAt: priorSnapshot.scheduledWindowEndAt,
       });
+      if (!isReviewAsyncCurrent(generation)) {
+        return { ok: false, code: "REVIEW_ASYNC_SUPERSEDED" };
+      }
       if (!timed.ok) {
-        setError(commerceErrorCopy(timed.code));
-        return false;
+        showCommerceFailure(timed);
+        return { ok: false, code: timed.code };
       }
       current = timed.data.checkout;
       setCheckout(current);
@@ -326,6 +443,9 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
         expectedCheckoutRevision: current.revision,
         fulfilmentTiming: "ASAP",
       });
+      if (!isReviewAsyncCurrent(generation)) {
+        return { ok: false, code: "REVIEW_ASYNC_SUPERSEDED" };
+      }
       if (timed.ok) {
         current = timed.data.checkout;
         setCheckout(current);
@@ -335,20 +455,25 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
       checkoutId: current.id,
       expectedCheckoutRevision: current.revision,
     });
+    if (!isReviewAsyncCurrent(generation)) {
+      return { ok: false, code: "REVIEW_ASYNC_SUPERSEDED" };
+    }
     if (!evaluated.ok) {
-      setError(commerceErrorCopy(evaluated.code));
-      return false;
+      showCommerceFailure(evaluated);
+      return { ok: false, code: evaluated.code };
     }
     adoptEvaluated(evaluated.data);
     setChosenMode(evaluated.data.snapshot.fulfilmentMode);
     setScreen("review");
-    return true;
+    return { ok: true, snapshot: evaluated.data.snapshot };
   }
 
   async function mutateReviewCoupon(
     work: () => Promise<{ ok: true; data: { cart: CommerceCart } } | { ok: false; code: string }>,
   ): Promise<void> {
     if (!cart || couponPending) return;
+    // Customer coupon mutation supersedes any in-flight automatic recovery.
+    const generation = beginReviewAsync();
     const priorSnapshot = snapshot;
     const priorCart = cart;
     const priorDraft = couponDraft;
@@ -359,6 +484,10 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
     setCouponPending(true);
     setCouponStatusOverride(null);
     const result = await work();
+    if (!isReviewAsyncCurrent(generation)) {
+      setCouponPending(false);
+      return;
+    }
     if (!result.ok) {
       setCouponPending(false);
       const status = couponFieldStatusFromMutationFailure(result.code);
@@ -372,25 +501,45 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
         setReviewSurfaceToken(priorToken);
         setReviewQuote(priorQuote);
       }
-      if (status.invalid) setCouponFocusInputToken((token) => token + 1);
+      if (status.invalid || status.retryVisible) {
+        setCouponFocusInputToken((token) => token + 1);
+      }
       return;
     }
+    // Cart coupon write committed — keep intent even if Review evaluation fails.
     setCart(result.data.cart);
     setCouponDraft(result.data.cart.manualCouponCode ?? "");
     const rebased = await rebaseReviewAfterCouponMutation(
       result.data.cart,
       priorSnapshot,
       priorCheckout,
+      generation,
     );
+    if (!isReviewAsyncCurrent(generation)) {
+      setCouponPending(false);
+      return;
+    }
     setCouponPending(false);
-    if (!rebased) {
-      // Mutation succeeded; keep new cart code but surface rebase error without inventing money.
-      setCouponStatusOverride(couponFieldStatusFromMutationFailure("INVALID_RESPONSE"));
-      setCouponFocusInputToken((token) => token + 1);
+    if (!rebased.ok) {
+      if (rebased.code === "REVIEW_ASYNC_SUPERSEDED") return;
+      // Do not describe a successful cart write as a failed coupon mutation.
+      // Drop the prior quote so a stale payable is not presented as current.
+      setReviewQuote(null);
+      setEvaluationId(null);
+      setReviewSurfaceToken(null);
+      const status = couponFieldStatusFromMutationFailure(rebased.code);
+      setCouponStatusOverride(status);
+      if (status.invalid || status.retryVisible) {
+        setCouponFocusInputToken((token) => token + 1);
+      }
+      setScreen("review");
       return;
     }
     setCouponStatusOverride(null);
     setCouponFocusResultToken((token) => token + 1);
+    // Case E / recovery escape — a successful coupon-driven re-evaluation is a
+    // fresh authoritative Review; clear prior payment-start recovery chrome.
+    setStaleRecovery(null);
   }
 
   useEffect(() => {
@@ -411,14 +560,28 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  async function loadPublishedLineNames(): Promise<void> {
+    try {
+      const menu = await getCustomerMenu({ brandId });
+      if (!menu.ok) return;
+      publishedNamesRef.current = menu.data.menu.items.map((item) => ({
+        variantId: item.variantId,
+        name: item.name,
+      }));
+    } catch {
+      publishedNamesRef.current = [];
+    }
+  }
+
   async function bootstrap(): Promise<void> {
-    setError(null);
+    showTextError(null);
+    await loadPublishedLineNames();
     const guest = readGuestCartCredential();
     const customerCartResult = await getActiveCart(brandId, { guestToken: false });
     if (!customerCartResult.ok && customerCartResult.code !== "CART_NOT_FOUND") {
       if (customerCartResult.code === "NETWORK_ERROR") {
         setScreen("error");
-        setError(commerceErrorCopy(customerCartResult.code));
+        showCommerceFailure(customerCartResult);
         return;
       }
       if (customerCartResult.code === "CUSTOMER_AUTH_REQUIRED") {
@@ -448,7 +611,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
           clearGuestCartCredential();
         } else {
           setScreen("error");
-          setError(commerceErrorCopy(claimed.code));
+          showCommerceFailure(claimed);
           return;
         }
       } else {
@@ -473,7 +636,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
           return;
         }
         setScreen("error");
-        setError(commerceErrorCopy(reconciled.code));
+        showCommerceFailure(reconciled);
         return;
       }
       clearGuestCartCredential();
@@ -495,7 +658,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
     const active = await getActiveCheckout({ cartId: ownedCart.id });
     if (!active.ok) {
       setScreen("error");
-      setError(commerceErrorCopy(active.code));
+      showCommerceFailure(active);
       return;
     }
     let current = active.data.checkout;
@@ -516,7 +679,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
       setCheckout(current);
       setSnapshot(current.activeSnapshot);
       setCartChangedWhilePending(true);
-      setError(null);
+      showTextError(null);
       const recovery = readPaymentRecovery();
       setResumePaymentId(recovery?.checkoutId === current.id ? recovery.paymentId : null);
       setScreen("cart_changed_unresolved");
@@ -537,7 +700,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
       });
       if (!started.ok) {
         setScreen("error");
-        setError(commerceErrorCopy(started.code));
+        showCommerceFailure(started);
         return;
       }
       current = started.data.checkout;
@@ -554,6 +717,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
     ) {
       setSnapshot(current.activeSnapshot);
       setChosenMode(current.activeSnapshot.fulfilmentMode);
+      setStaleRecovery(null);
       setScreen("payment");
       return;
     }
@@ -565,7 +729,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
   async function startFreshCheckoutFromCurrentCart(): Promise<void> {
     if (pending || !cart) return;
     setPending(true);
-    setError(null);
+    showTextError(null);
     setCartChangedWhilePending(false);
     setResumePaymentId(null);
     const started = await startCheckout({ cartId: cart.id });
@@ -577,7 +741,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
         return;
       }
       setScreen("error");
-      setError(commerceErrorCopy(started.code));
+      showCommerceFailure(started);
       return;
     }
     const fresh = started.data.checkout;
@@ -599,7 +763,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
   async function chooseResolution(resolution: CartReconciliationResolution): Promise<void> {
     if (pending || !guestRevision || !customerRevision) return;
     setPending(true);
-    setError(null);
+    showTextError(null);
     const reconciled = await reconcileGuestCart({
       brandId,
       expectedGuestRevision: guestRevision,
@@ -608,7 +772,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
     });
     setPending(false);
     if (!reconciled.ok) {
-      setError(commerceErrorCopy(reconciled.code));
+      showCommerceFailure(reconciled);
       return;
     }
     clearGuestCartCredential();
@@ -619,7 +783,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
   async function chooseFulfilmentMode(mode: CheckoutFulfilmentChoiceMode): Promise<void> {
     if (pending || !checkout) return;
     setPending(true);
-    setError(null);
+    showTextError(null);
     setChosenMode(mode);
     const fulfilled = await setCheckoutFulfilment({
       checkoutId: checkout.id,
@@ -629,7 +793,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
     });
     setPending(false);
     if (!fulfilled.ok) {
-      setError(commerceErrorCopy(fulfilled.code));
+      showCommerceFailure(fulfilled);
       return;
     }
     setCheckout(fulfilled.data.checkout);
@@ -646,12 +810,12 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
 
   async function loadPickupOptions(currentCheckout: CommerceCheckout): Promise<void> {
     setPickupLoading(true);
-    setError(null);
+    showTextError(null);
     setScreen("pickup");
     const options = await listCheckoutPickupOptions({ checkoutId: currentCheckout.id });
     setPickupLoading(false);
     if (!options.ok) {
-      setError(commerceErrorCopy(options.code));
+      showCommerceFailure(options);
       setPickupPolicy("UNAVAILABLE");
       setPickupOutlets([]);
       setSelectedPickupOutletId(null);
@@ -659,6 +823,21 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
     }
     setPickupPolicy(options.data.selectionPolicy);
     setPickupOutlets(options.data.outlets);
+    const pickupAttention = presentCheckoutItemAttention(
+      options.data.merchandiseProblems,
+      namedCartLinesForCheckout({
+        cart,
+        catalog: { items: publishedNamesRef.current },
+        snapshotLines: currentCheckout.activeSnapshot?.lines ?? snapshot?.lines,
+      }),
+    );
+    if (
+      (options.data.selectionPolicy === "UNAVAILABLE" || options.data.outlets.length === 0) &&
+      pickupAttention.length > 0
+    ) {
+      setCheckoutError(null);
+      setItemAttention(pickupAttention);
+    }
     if (options.data.selectionPolicy === "AUTO_SELECT" && options.data.outlets.length === 1) {
       setSelectedPickupOutletId(options.data.outlets[0]!.outletId);
     } else if (
@@ -674,7 +853,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
   async function continuePickupWithOutlet(): Promise<void> {
     if (pending || !checkout || !selectedPickupOutletId) return;
     setPending(true);
-    setError(null);
+    showTextError(null);
     const fulfilled = await setCheckoutFulfilment({
       checkoutId: checkout.id,
       expectedCheckoutRevision: checkout.revision,
@@ -683,7 +862,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
     });
     if (!fulfilled.ok) {
       setPending(false);
-      setError(commerceErrorCopy(fulfilled.code));
+      showCommerceFailure(fulfilled);
       return;
     }
     const nextCheckout = fulfilled.data.checkout;
@@ -694,7 +873,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
     });
     setPending(false);
     if (!evaluated.ok) {
-      setError(commerceErrorCopy(evaluated.code));
+      showCommerceFailure(evaluated);
       return;
     }
     adoptEvaluated(evaluated.data);
@@ -705,12 +884,12 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
   async function openTiming(current: CommerceCheckout): Promise<void> {
     setScreen("timing");
     setTimingLoading(true);
-    setError(null);
+    showTextError(null);
     const listed = await listCheckoutScheduledWindows({ checkoutId: current.id });
     setTimingLoading(false);
     if (!listed.ok) {
       setScheduledWindows(null);
-      setError(commerceErrorCopy(listed.code));
+      showCommerceFailure(listed);
       return;
     }
     setScheduledWindows(listed.data);
@@ -724,7 +903,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
   ): Promise<void> {
     if (pending || !checkout) return;
     setPending(true);
-    setError(null);
+    showTextError(null);
     let current = checkout;
     const saved = await setCheckoutFulfilmentTiming({
       checkoutId: current.id,
@@ -736,7 +915,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
     });
     if (!saved.ok) {
       setPending(false);
-      setError(commerceErrorCopy(saved.code));
+      showCommerceFailure(saved);
       if (saved.code === "CHECKOUT_STATE_CONFLICT" || saved.code === "CHECKOUT_REPRICED") {
         await openTiming(current);
       }
@@ -750,7 +929,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
     });
     setPending(false);
     if (!evaluated.ok) {
-      setError(commerceErrorCopy(evaluated.code));
+      showCommerceFailure(evaluated);
       if (evaluated.code === "CHECKOUT_STATE_CONFLICT" || evaluated.code === "CHECKOUT_REPRICED") {
         await openTiming(evaluated.ok ? current : current);
       }
@@ -763,7 +942,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
   async function applyDestinationDraft(draft: CheckoutDestinationDraft): Promise<void> {
     if (pending || !checkout) return;
     setPending(true);
-    setError(null);
+    showTextError(null);
 
     let destinationCheckout = checkout;
 
@@ -771,7 +950,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
       const updated = await updateOwnAddress(draft.savedAddressId, { coordinates: draft.coordinates });
       if (!updated.ok) {
         setPending(false);
-        setError(commerceErrorCopy(updated.code));
+        showCommerceFailure(updated);
         return;
       }
       const dest = await setCheckoutDestination({
@@ -781,7 +960,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
       });
       if (!dest.ok) {
         setPending(false);
-        setError(commerceErrorCopy(dest.code));
+        showCommerceFailure(dest);
         return;
       }
       destinationCheckout = dest.data.checkout;
@@ -793,7 +972,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
       });
       if (!dest.ok) {
         setPending(false);
-        setError(commerceErrorCopy(dest.code));
+        showCommerceFailure(dest);
         return;
       }
       destinationCheckout = dest.data.checkout;
@@ -804,7 +983,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
       });
       if (!created.ok) {
         setPending(false);
-        setError(commerceErrorCopy(created.code));
+        showCommerceFailure(created);
         return;
       }
       setAddresses((current) => [...current, created.data.address]);
@@ -815,7 +994,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
       });
       if (!dest.ok) {
         setPending(false);
-        setError(commerceErrorCopy(dest.code));
+        showCommerceFailure(dest);
         return;
       }
       destinationCheckout = dest.data.checkout;
@@ -840,7 +1019,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
       });
       if (!dest.ok) {
         setPending(false);
-        setError(commerceErrorCopy(dest.code));
+        showCommerceFailure(dest);
         return;
       }
       destinationCheckout = dest.data.checkout;
@@ -853,7 +1032,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
     });
     setPending(false);
     if (!evaluated.ok) {
-      setError(commerceErrorCopy(evaluated.code));
+      showCommerceFailure(evaluated);
       return;
     }
     adoptEvaluated(evaluated.data);
@@ -871,19 +1050,23 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
    * must not keep a pre-payment expectedCheckoutRevision.
    */
   async function returnToFulfilment(): Promise<void> {
-    if (pending || !checkout || !cart) return;
+    if (pending || couponPending || !checkout || !cart) return;
+    // Fulfilment escape supersedes in-flight automatic recovery / coupon rebase.
+    // Do not clear recovery presentation until navigation succeeds — a failed
+    // escape must not re-enable Continue on an unconfirmed prior payable.
+    beginReviewAsync();
     setPending(true);
-    setError(null);
+    showTextError(null);
     const active = await getActiveCheckout({ cartId: cart.id });
     if (!active.ok) {
       setPending(false);
-      setError(commerceErrorCopy(active.code));
+      showCommerceFailure(active);
       return;
     }
     const current = active.data.checkout;
     if (!current || current.id !== checkout.id) {
       setPending(false);
-      setError(commerceErrorCopy("CHECKOUT_NOT_FOUND"));
+      showTextError(commerceErrorCopy("CHECKOUT_NOT_FOUND"));
       return;
     }
     setCheckout(current);
@@ -893,13 +1076,14 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
     setPending(false);
     if (current.status === "PAYMENT_PENDING") {
       // Existing domain forbids fulfilment mutation while PAYMENT_PENDING.
-      setError(commerceErrorCopy("CHECKOUT_STATE_CONFLICT"));
+      showTextError(commerceErrorCopy("CHECKOUT_STATE_CONFLICT"));
       return;
     }
     setChosenMode(null);
     setPickupOutlets([]);
     setPickupPolicy(null);
     setSelectedPickupOutletId(null);
+    setStaleRecovery(null);
     setScreen("fulfilment");
   }
 
@@ -992,7 +1176,14 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
           <p className="font-body text-[15px] text-[var(--text-secondary)]">Preparing checkout…</p>
         ) : null}
 
-        {error &&
+        {itemAttention &&
+        itemAttention.length > 0 &&
+        screen !== "cart_changed_unresolved" &&
+        screen !== "cart_changed_fresh" &&
+        screen !== "fulfilment" &&
+        screen !== "pickup" ? (
+          <CheckoutItemAttentionNotice items={itemAttention} />
+        ) : error &&
         screen !== "cart_changed_unresolved" &&
         screen !== "cart_changed_fresh" &&
         screen !== "fulfilment" &&
@@ -1016,7 +1207,6 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
         {screen === "cart_changed_unresolved" && cart ? (
           <PreviousPaymentRecoveryView
             cart={cart}
-            catalog={props.catalog}
             previousSnapshot={snapshot}
             paymentSlot={
               checkout && snapshot ? (
@@ -1113,11 +1303,12 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
             selectedOutletId={selectedPickupOutletId}
             errorId="checkout-pickup-error"
             errorMessage={error}
+            itemAttention={itemAttention}
             onSelectOutlet={setSelectedPickupOutletId}
             onContinue={() => void continuePickupWithOutlet()}
             onChooseDelivery={() => void chooseFulfilmentMode("DELIVERY")}
             onBackToMode={() => {
-              setError(null);
+              showTextError(null);
               setChosenMode(null);
               setScreen("fulfilment");
             }}
@@ -1167,7 +1358,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
               disabled={pending}
               data-testid="checkout-timing-back"
               onClick={() => {
-                setError(null);
+                showTextError(null);
                 setScreen(chosenMode === "PICKUP" ? "pickup" : "destination");
               }}
             >
@@ -1235,7 +1426,7 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
                 variant="outline"
                 className="mt-3 min-h-[44px]"
                 data-testid="checkout-back-to-delivery"
-                disabled={pending}
+                disabled={pending || couponPending}
                 onClick={() => void returnToFulfilment()}
               >
                 {snapshot.fulfilmentMode === "PICKUP" ? "Change fulfilment" : "Edit delivery"}
@@ -1247,20 +1438,32 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
             />
             <div ref={reviewSummaryRef}>
               <CommercialOfferStack
-                explanation={reviewExplanation}
+                explanation={reviewMoneyConfirmed ? reviewExplanation : null}
                 payableLabel={IMP036J_COPY.TOTAL_PAYABLE}
-                payablePaise={snapshot.grandTotalPaise}
+                payablePaise={
+                  reviewMoneyConfirmed ? snapshot.grandTotalPaise : "0"
+                }
                 fulfilmentMode={snapshot.fulfilmentMode}
-                baseSnapshot={snapshot}
-                stale={staleReview}
+                baseSnapshot={reviewMoneyConfirmed ? snapshot : null}
+                stale={staleRecovery != null}
+                staleMessage={staleRecovery?.message ?? null}
                 giftGone={giftGone}
                 dropped={offerDropped}
                 complimentaryName={
-                  narrowCheckoutSnapshotLines(snapshot.lines).find(
-                    (line) => line.lineOrigin === "complimentary_offer",
-                  )?.productName ?? null
+                  reviewMoneyConfirmed
+                    ? narrowCheckoutSnapshotLines(snapshot.lines).find(
+                        (line) => line.lineOrigin === "complimentary_offer",
+                      )?.productName ?? null
+                    : null
                 }
-                waitingText={couponPending ? IMP036J_COPY.CHECKING : null}
+                hidePayable={!reviewMoneyConfirmed}
+                waitingText={
+                  couponPending
+                    ? IMP036J_COPY.CHECKING
+                    : reviewMoneyConfirmed
+                      ? null
+                      : IMP036J_COPY.UPDATING
+                }
               />
             </div>
             <Button
@@ -1268,8 +1471,13 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
               variant="primary"
               size="lg"
               data-testid="continue-to-payment"
-              disabled={pending || couponPending}
-              onClick={() => setScreen("payment")}
+              disabled={pending || couponPending || !reviewMoneyConfirmed}
+              onClick={() => {
+                // Case E — clear presentation recovery once the customer proceeds
+                // on a confirmed Review. Does not clear payment/checkout authority.
+                setStaleRecovery(null);
+                setScreen("payment");
+              }}
             >
               Continue to payment
             </Button>
@@ -1378,8 +1586,8 @@ export function CheckoutClient(props: { catalog: OrderingCatalog }) {
                 adoptCheckoutRevision(revision);
                 setScreen("review");
               }}
-              onStaleReview={() => {
-                void recoverStaleReview();
+              onStaleReview={(code) => {
+                void recoverStaleReview(code);
               }}
               onOrderReady={(orderId) => {
                 window.location.assign(`/order/confirmation/?orderId=${encodeURIComponent(orderId)}`);

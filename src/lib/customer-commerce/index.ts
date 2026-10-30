@@ -3,6 +3,7 @@ export {
   parseCommerceErrorBody,
   type CommerceApiError,
   type CommerceFailure,
+  type CommerceMerchandiseProblem,
   type CommerceTransportError,
 } from "./errors";
 export {

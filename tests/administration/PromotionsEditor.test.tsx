@@ -9,7 +9,22 @@ import type {
 } from "../../src/components/administration/commercial/commercial-types";
 import {
   COPY_CANCEL,
+  COPY_OP_COUPON_CODE_REQUIRED,
+  COPY_OP_COUPON_CREATED_DRAFT,
+  COPY_OP_COUPONS_UNREADABLE,
   COPY_OP_GIFT,
+  COPY_OP_IDENTIFIER_INVALID,
+  COPY_OP_EXPIRED,
+  COPY_OP_LIVE,
+  COPY_OP_LIVE_WITH_COUPON,
+  COPY_OP_LIVE_WITHOUT_COUPON,
+  COPY_OP_READINESS_CUE,
+  COPY_OP_SCHEDULED,
+  COPY_OP_STATE_CURRENT,
+  COPY_OP_STATE_ENDED,
+  COPY_OP_STATE_NOT_STARTED,
+  COPY_OP_NO_ACTIVE_COUPON_CODES,
+  COPY_OP_NO_COUPON_CODES,
   COPY_OP_RETIRED,
   COPY_RETIRE_CONFIRM,
   COPY_RETIRE_TITLE,
@@ -25,13 +40,14 @@ const setPromotionTargets = vi.fn();
 const previewPromotionConsequence = vi.fn();
 const retirePromotion = vi.fn();
 const activatePromotion = vi.fn();
+const createCoupon = vi.fn();
 
 vi.mock("@/lib/administration/commercial-promotions", () => ({
   listPromotions: (...args: unknown[]) => listPromotions(...args),
   listCoupons: (...args: unknown[]) => listCoupons(...args),
   getPromotion: (...args: unknown[]) => getPromotion(...args),
   createPromotion: (...args: unknown[]) => createPromotion(...args),
-  createCoupon: vi.fn(),
+  createCoupon: (...args: unknown[]) => createCoupon(...args),
   savePromotionDraft: (...args: unknown[]) => savePromotionDraft(...args),
   savePromotionBenefit: (...args: unknown[]) => savePromotionBenefit(...args),
   setPromotionTargets: (...args: unknown[]) => setPromotionTargets(...args),
@@ -82,7 +98,7 @@ function draftPromotion(overrides: Partial<{
   return {
     id: overrides.id ?? "promo-1",
     brandId: "brand-1",
-    code: "WELCOME",
+    code: "welcome",
     displayName: "Welcome",
     scopeType: "brand",
     territoryId: null,
@@ -152,6 +168,7 @@ beforeEach(() => {
   previewPromotionConsequence.mockReset();
   retirePromotion.mockReset();
   activatePromotion.mockReset();
+  createCoupon.mockReset();
   mockPromotionDetail(draftPromotion());
 });
 
@@ -199,8 +216,8 @@ describe("PromotionsEditor", () => {
         onStatus={vi.fn()}
       />,
     );
-    await waitFor(() => expect(screen.getByText(/Welcome \(WELCOME\)/)).toBeInTheDocument());
-    await user.click(screen.getByRole("button", { name: /Welcome \(WELCOME\)/ }));
+    await waitFor(() => expect(screen.getByRole("button", { name: /Welcome \(identifier: welcome\)/ })).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: /Welcome \(identifier: welcome\)/ }));
     await waitFor(() => expect(screen.getByText(/Trigger: automatic/)).toBeInTheDocument());
     expect(screen.queryByTestId("coupon-authoring")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Create coupon/i })).not.toBeInTheDocument();
@@ -220,8 +237,8 @@ describe("PromotionsEditor", () => {
         onStatus={vi.fn()}
       />,
     );
-    await waitFor(() => expect(screen.getByText(/Welcome \(WELCOME\)/)).toBeInTheDocument());
-    await user.click(screen.getByRole("button", { name: /Welcome \(WELCOME\)/ }));
+    await waitFor(() => expect(screen.getByRole("button", { name: /Welcome \(identifier: welcome\)/ })).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: /Welcome \(identifier: welcome\)/ }));
     await waitFor(() => expect(screen.getByTestId("coupon-authoring")).toBeInTheDocument());
     expect(screen.getByRole("button", { name: /Create coupon/i })).toBeInTheDocument();
   });
@@ -244,8 +261,8 @@ describe("PromotionsEditor", () => {
         onStatus={vi.fn()}
       />,
     );
-    await waitFor(() => expect(screen.getByText(/Welcome \(WELCOME\)/)).toBeInTheDocument());
-    await user.click(screen.getByRole("button", { name: /Welcome \(WELCOME\)/ }));
+    await waitFor(() => expect(screen.getByRole("button", { name: /Welcome \(identifier: welcome\)/ })).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: /Welcome \(identifier: welcome\)/ }));
     await waitFor(() => expect(screen.getByTestId("promotion-targets")).toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: "Set qualifier to selected variant" }));
     await waitFor(() => expect(setPromotionTargets).toHaveBeenCalled());
@@ -278,8 +295,8 @@ describe("PromotionsEditor", () => {
         onStatus={vi.fn()}
       />,
     );
-    await waitFor(() => expect(screen.getByText(/Welcome \(WELCOME\)/)).toBeInTheDocument());
-    await user.click(screen.getByRole("button", { name: /Welcome \(WELCOME\)/ }));
+    await waitFor(() => expect(screen.getByRole("button", { name: /Welcome \(identifier: welcome\)/ })).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: /Welcome \(identifier: welcome\)/ }));
     await waitFor(() => expect(screen.getByLabelText("Benefit type")).toBeInTheDocument());
     expect(screen.queryByRole("button", { name: /Review & activate/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Review & retire/i })).not.toBeInTheDocument();
@@ -300,8 +317,8 @@ describe("PromotionsEditor", () => {
         onStatus={vi.fn()}
       />,
     );
-    await waitFor(() => expect(screen.getByText(/Welcome \(WELCOME\)/)).toBeInTheDocument());
-    await user.click(screen.getByRole("button", { name: /Welcome \(WELCOME\)/ }));
+    await waitFor(() => expect(screen.getByRole("button", { name: /Welcome \(identifier: welcome\)/ })).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: /Welcome \(identifier: welcome\)/ }));
     await waitFor(() =>
       expect(screen.getByRole("button", { name: /Review & activate/i })).toBeInTheDocument(),
     );
@@ -322,8 +339,8 @@ describe("PromotionsEditor", () => {
         onStatus={vi.fn()}
       />,
     );
-    await waitFor(() => expect(screen.getByText(/Welcome \(WELCOME\)/)).toBeInTheDocument());
-    await user.click(screen.getByRole("button", { name: /Welcome \(WELCOME\)/ }));
+    await waitFor(() => expect(screen.getByRole("button", { name: /Welcome \(identifier: welcome\)/ })).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: /Welcome \(identifier: welcome\)/ }));
     await waitFor(() => expect(screen.getByText(/Trigger:/)).toBeInTheDocument());
     expect(screen.queryByRole("button", { name: /Review & activate/i })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Review & retire/i })).toBeInTheDocument();
@@ -341,8 +358,8 @@ describe("PromotionsEditor", () => {
         onStatus={vi.fn()}
       />,
     );
-    await waitFor(() => expect(screen.getByText(/Welcome \(WELCOME\)/)).toBeInTheDocument());
-    await user.click(screen.getByRole("button", { name: /Welcome \(WELCOME\)/ }));
+    await waitFor(() => expect(screen.getByRole("button", { name: /Welcome \(identifier: welcome\)/ })).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: /Welcome \(identifier: welcome\)/ }));
     await waitFor(() => expect(screen.getByText("First order only")).toBeInTheDocument());
     expect(screen.getByText("Fulfilment mode")).toBeInTheDocument();
     expect(screen.getByLabelText("Maximum redemptions")).toBeInTheDocument();
@@ -399,8 +416,8 @@ describe("PromotionsEditor", () => {
         onStatus={vi.fn()}
       />,
     );
-    await waitFor(() => expect(screen.getByText(/Welcome \(WELCOME\)/)).toBeInTheDocument());
-    await user.click(screen.getByRole("button", { name: /Welcome \(WELCOME\)/ }));
+    await waitFor(() => expect(screen.getByRole("button", { name: /Welcome \(identifier: welcome\)/ })).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: /Welcome \(identifier: welcome\)/ }));
     await waitFor(() => expect(screen.getByLabelText("Benefit type")).toHaveValue("buy_x_get_y"));
     expect(screen.getByLabelText("Buy quantity")).toHaveValue("2");
     expect(screen.getByLabelText("Get quantity")).toHaveValue("1");
@@ -457,8 +474,8 @@ describe("PromotionsEditor", () => {
         onStatus={onStatus}
       />,
     );
-    await waitFor(() => expect(screen.getByText(/Welcome \(WELCOME\)/)).toBeInTheDocument());
-    await user.click(screen.getByRole("button", { name: /Welcome \(WELCOME\)/ }));
+    await waitFor(() => expect(screen.getByRole("button", { name: /Welcome \(identifier: welcome\)/ })).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: /Welcome \(identifier: welcome\)/ }));
     await waitFor(() => expect(screen.getByLabelText("Benefit type")).toHaveValue("buy_x_get_y"));
     const cap = screen.getByLabelText("Maximum reward quantity");
     await user.clear(cap);
@@ -493,8 +510,8 @@ describe("PromotionsEditor", () => {
         onStatus={vi.fn()}
       />,
     );
-    await waitFor(() => expect(screen.getByText(/Welcome \(WELCOME\)/)).toBeInTheDocument());
-    await user.click(screen.getByRole("button", { name: /Welcome \(WELCOME\)/ }));
+    await waitFor(() => expect(screen.getByRole("button", { name: /Welcome \(identifier: welcome\)/ })).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: /Welcome \(identifier: welcome\)/ }));
     await waitFor(() => expect(screen.getByLabelText("Benefit type")).toBeInTheDocument());
     await user.selectOptions(screen.getByLabelText("Benefit type"), "delivery_fee_waiver");
     await user.click(screen.getByRole("button", { name: /Save benefit/i }));
@@ -527,7 +544,7 @@ describe("PromotionsEditor", () => {
     );
     await waitFor(() => expect(screen.getByLabelText("Promotion scope")).toBeInTheDocument());
     await user.selectOptions(screen.getByLabelText("Promotion scope"), "outlet");
-    await user.type(screen.getByLabelText("Promotion code"), "OUT1");
+    await user.type(screen.getByLabelText("Promotion identifier"), "out1");
     await user.type(screen.getByLabelText("Promotion display name"), "Outlet promo");
     await user.click(screen.getByRole("button", { name: /^Create$/i }));
     await waitFor(() => expect(createPromotion).toHaveBeenCalled());
@@ -536,7 +553,7 @@ describe("PromotionsEditor", () => {
       outletId: "outlet-1",
     });
 
-    await user.click(screen.getByRole("button", { name: /Welcome \(WELCOME\)/ }));
+    await user.click(screen.getByRole("button", { name: /Welcome \(identifier: welcome\)/ }));
     await waitFor(() => expect(screen.getByLabelText("Minimum item quantity")).toBeInTheDocument());
     await user.clear(screen.getByLabelText("Minimum item quantity"));
     await user.type(screen.getByLabelText("Minimum item quantity"), "3");
@@ -573,8 +590,8 @@ describe("PromotionsEditor", () => {
         onStatus={onStatus}
       />,
     );
-    await waitFor(() => expect(screen.getByText(/Welcome \(WELCOME\)/)).toBeInTheDocument());
-    await user.click(screen.getByRole("button", { name: /Welcome \(WELCOME\)/ }));
+    await waitFor(() => expect(screen.getByRole("button", { name: /Welcome \(identifier: welcome\)/ })).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: /Welcome \(identifier: welcome\)/ }));
     await waitFor(() => expect(screen.getByRole("button", { name: /Review & retire/i })).toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /Review & retire/i }));
     expect(await screen.findByText(COPY_RETIRE_TITLE)).toBeInTheDocument();
@@ -590,5 +607,264 @@ describe("PromotionsEditor", () => {
     await user.click(screen.getByRole("button", { name: COPY_RETIRE_CONFIRM }));
     await waitFor(() => expect(retirePromotion).toHaveBeenCalled());
     expect(onStatus).toHaveBeenCalledWith(COPY_OP_RETIRED);
+  });
+});
+
+function coupon(
+  code: string,
+  status: "draft" | "active" | "disabled" | "retired",
+  overrides: { startsAt?: string | null; endsAt?: string | null } = {},
+) {
+  return {
+    id: `coupon-${code}`,
+    promotionId: "promo-1",
+    canonicalCode: code,
+    origin: "manual" as const,
+    status,
+    startsAt: overrides.startsAt === undefined ? null : overrides.startsAt,
+    endsAt: overrides.endsAt === undefined ? null : overrides.endsAt,
+    maximumRedemptions: null,
+    maximumRedemptionsPerCustomer: null,
+    revision: "1",
+    supportedLifecycleStates: ["draft", "active", "disabled", "retired"] as const,
+  };
+}
+
+function mockCouponPromotion(opts: {
+  status: "draft" | "active" | "retired";
+  coupons: ReturnType<typeof coupon>[];
+  couponListOk?: boolean;
+  startsAt?: string;
+  endsAt?: string | null;
+}) {
+  const promotion = {
+    ...draftPromotion({ triggerType: "coupon", status: opts.status }),
+    startsAt: opts.startsAt ?? "2000-01-01T00:00:00.000Z",
+    endsAt: opts.endsAt === undefined ? null : opts.endsAt,
+    eligibleFulfilmentModes: ["DELIVERY"],
+    eligibleFulfilmentTimings: ["ASAP", "SCHEDULED"],
+  };
+  listPromotions.mockResolvedValue({ ok: true, status: 200, data: { promotions: [promotion] } });
+  listCoupons.mockResolvedValue(
+    opts.couponListOk === false
+      ? { ok: false, status: 500, code: "INTERNAL_ERROR", requestId: "r" }
+      : { ok: true, status: 200, data: { coupons: opts.coupons } },
+  );
+  getPromotion.mockResolvedValue({
+    ok: true,
+    status: 200,
+    data: {
+      promotion,
+      benefit: { benefitType: "percentage_discount", percentageBps: 1000 },
+      qualifierTargets: [],
+      benefitTargets: [],
+      redemptionCounts: {
+        reservedCount: 0,
+        consumedCount: 0,
+        releasedCount: 0,
+        applicationCount: 0,
+      },
+    },
+  });
+}
+
+async function openWelcome(onStatus = vi.fn()) {
+  const user = userEvent.setup();
+  render(
+    <PromotionsEditor
+      context={baseContext}
+      capabilities={capabilities}
+      authoringAllowed
+      onStatus={onStatus}
+    />,
+  );
+  const item = await screen.findByRole("button", { name: /Welcome \(identifier: welcome\)/ });
+  await user.click(item);
+  await screen.findByTestId("promotion-readiness");
+  return { user, onStatus };
+}
+
+describe("PromotionsEditor operator readiness (#376)", () => {
+  it("active coupon promotion with zero issued coupons is not presented as customer-ready", async () => {
+    mockCouponPromotion({ status: "active", coupons: [] });
+    await openWelcome();
+    const readiness = screen.getByTestId("promotion-readiness");
+    expect(readiness).toHaveTextContent(
+      "Active, but customers can't use it yet: no coupon code is active.",
+    );
+    expect(readiness).toHaveTextContent(COPY_OP_LIVE_WITHOUT_COUPON);
+    expect(readiness).toHaveTextContent(COPY_OP_NO_COUPON_CODES);
+    expect(readiness).toHaveTextContent("Create a coupon code customers type — to do");
+    expect(readiness).not.toHaveTextContent("Customers can receive this offer.");
+    expect(readiness).not.toHaveTextContent(COPY_OP_LIVE);
+    expect(screen.getByTestId("coupon-empty-state")).toHaveTextContent(COPY_OP_NO_COUPON_CODES);
+  });
+
+  it("active coupon promotion with only a draft coupon asks for coupon activation", async () => {
+    mockCouponPromotion({ status: "active", coupons: [coupon("TEST123", "draft")] });
+    await openWelcome();
+    const readiness = screen.getByTestId("promotion-readiness");
+    expect(readiness).toHaveTextContent(COPY_OP_LIVE_WITHOUT_COUPON);
+    expect(readiness).toHaveTextContent(COPY_OP_NO_ACTIVE_COUPON_CODES);
+    expect(readiness).toHaveTextContent("Activate the coupon code — to do");
+  });
+
+  it("active coupon promotion with an active coupon names the code customers type", async () => {
+    mockCouponPromotion({
+      status: "active",
+      coupons: [coupon("TEST123", "active"), coupon("OLD1", "retired")],
+    });
+    await openWelcome();
+    const readiness = screen.getByTestId("promotion-readiness");
+    expect(readiness).toHaveTextContent("Customers can receive this offer.");
+    expect(readiness).toHaveTextContent(COPY_OP_LIVE_WITH_COUPON);
+    expect(readiness).toHaveTextContent(COPY_OP_READINESS_CUE);
+    expect(readiness).toHaveTextContent("Customer-ready coupon codes: TEST123");
+    expect(readiness).not.toHaveTextContent("Customer-ready coupon codes: TEST123, OLD1");
+    expect(screen.getByTestId("readiness-coupon-TEST123")).toHaveTextContent(COPY_OP_STATE_CURRENT);
+    expect(screen.getByTestId("coupon-readiness-TEST123")).toHaveTextContent(COPY_OP_STATE_CURRENT);
+    expect(screen.getByTestId("readiness-coupon-OLD1")).toHaveTextContent("Not active");
+    expect(screen.getByTestId("coupon-readiness-OLD1")).toHaveTextContent("Not active");
+    expect(screen.getByTestId("promotion-window-readiness").textContent).toBe(
+      screen.getByTestId("promotion-window-claim").textContent,
+    );
+    expect(screen.getByTestId("promotion-identifier")).toHaveTextContent(
+      "Promotion identifier: welcome (internal, not a coupon code)",
+    );
+  });
+
+  it("does not claim zero coupons when the coupon list could not be loaded", async () => {
+    mockCouponPromotion({ status: "active", coupons: [], couponListOk: false });
+    await openWelcome();
+    expect(screen.getByTestId("promotion-readiness")).toHaveTextContent(COPY_OP_COUPONS_UNREADABLE);
+    expect(screen.queryByTestId("coupon-empty-state")).not.toBeInTheDocument();
+  });
+
+  it("states the customer meaning from saved settings instead of an opaque benefit flag", async () => {
+    mockCouponPromotion({ status: "active", coupons: [] });
+    await openWelcome();
+    const meaning = screen.getByTestId("promotion-customer-meaning");
+    expect(meaning).toHaveTextContent("Customers enter a coupon. 10% off eligible items.");
+    expect(meaning).toHaveTextContent("Delivery orders only. Pickup orders don't get it.");
+    expect(screen.queryByText(/Configured \(server\)/)).not.toBeInTheDocument();
+  });
+
+  it("does not present an active coupon as customer-ready before its saved start", async () => {
+    mockCouponPromotion({
+      status: "active",
+      coupons: [
+        coupon("SOON", "active", {
+          startsAt: "2099-01-01T00:00:00.000Z",
+          endsAt: "2099-02-01T00:00:00.000Z",
+        }),
+      ],
+    });
+    await openWelcome();
+    const readiness = screen.getByTestId("promotion-readiness");
+    expect(readiness).toHaveTextContent(COPY_OP_SCHEDULED);
+    expect(readiness).toHaveTextContent(COPY_OP_STATE_NOT_STARTED);
+    expect(readiness).not.toHaveTextContent(COPY_OP_LIVE_WITH_COUPON);
+    expect(readiness).not.toHaveTextContent("Customer-ready coupon codes:");
+    expect(screen.getByTestId("coupon-readiness-SOON")).toHaveTextContent(COPY_OP_STATE_NOT_STARTED);
+    expect(screen.getByTestId("readiness-coupon-SOON")).toHaveTextContent(COPY_OP_STATE_NOT_STARTED);
+    expect(screen.getByTestId("promotion-window-claim")).toHaveTextContent(COPY_OP_STATE_CURRENT);
+  });
+
+  it("does not present an active coupon as customer-ready at or after its saved end", async () => {
+    mockCouponPromotion({
+      status: "active",
+      coupons: [
+        coupon("OLD", "active", {
+          startsAt: "2020-01-01T00:00:00.000Z",
+          endsAt: "2020-02-01T00:00:00.000Z",
+        }),
+      ],
+    });
+    await openWelcome();
+    const readiness = screen.getByTestId("promotion-readiness");
+    expect(readiness).toHaveTextContent(COPY_OP_EXPIRED);
+    expect(readiness).not.toHaveTextContent(COPY_OP_LIVE_WITH_COUPON);
+    expect(screen.getByTestId("coupon-readiness-OLD")).toHaveTextContent(COPY_OP_STATE_ENDED);
+    expect(screen.getByTestId("readiness-coupon-OLD")).toHaveTextContent(COPY_OP_STATE_ENDED);
+  });
+
+  it("uses the parent promotion window for an otherwise open active coupon", async () => {
+    mockCouponPromotion({
+      status: "active",
+      startsAt: "2099-03-01T00:00:00.000Z",
+      endsAt: "2099-04-01T00:00:00.000Z",
+      coupons: [coupon("OPEN", "active")],
+    });
+    await openWelcome();
+    expect(screen.getByTestId("promotion-readiness")).toHaveTextContent(COPY_OP_SCHEDULED);
+    expect(screen.getByTestId("promotion-readiness")).not.toHaveTextContent(COPY_OP_LIVE_WITH_COUPON);
+    expect(screen.getByTestId("coupon-readiness-OPEN")).toHaveTextContent(COPY_OP_STATE_NOT_STARTED);
+    expect(screen.getByTestId("promotion-window-readiness").textContent).toBe(
+      screen.getByTestId("promotion-window-claim").textContent,
+    );
+    expect(screen.getByTestId("promotion-window-claim")).toHaveTextContent(COPY_OP_STATE_NOT_STARTED);
+  });
+
+  it("draft coupon promotion explains that coupon activation follows promotion activation", async () => {
+    mockCouponPromotion({ status: "draft", coupons: [] });
+    await openWelcome();
+    expect(screen.getByTestId("promotion-readiness")).toHaveTextContent(
+      "After that, create a coupon code and activate it.",
+    );
+    expect(screen.getByTestId("coupon-authoring")).toHaveTextContent(
+      "Coupon codes can be activated after the promotion is active.",
+    );
+  });
+});
+
+describe("PromotionsEditor identifier vs coupon code fields (#376 / #381)", () => {
+  it("rejects a coupon-style identifier on the field without calling the server", async () => {
+    const user = userEvent.setup();
+    const onStatus = vi.fn();
+    render(
+      <PromotionsEditor
+        context={baseContext}
+        capabilities={capabilities}
+        authoringAllowed
+        onStatus={onStatus}
+      />,
+    );
+    const field = await screen.findByLabelText("Promotion identifier");
+    await user.type(field, "TEST123");
+    await user.type(screen.getByLabelText("Promotion display name"), "Test offer");
+    await user.click(screen.getByRole("button", { name: /^Create$/i }));
+    expect(createPromotion).not.toHaveBeenCalled();
+    expect(field).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByRole("alert")).toHaveTextContent(COPY_OP_IDENTIFIER_INVALID);
+    expect(onStatus).toHaveBeenCalledWith(COPY_OP_IDENTIFIER_INVALID);
+
+    await user.clear(field);
+    await user.type(field, "test123");
+    await user.click(screen.getByRole("button", { name: /^Create$/i }));
+    await waitFor(() => expect(createPromotion).toHaveBeenCalled());
+    expect(createPromotion.mock.calls[0]?.[1]).toMatchObject({ code: "test123" });
+    expect(field).not.toHaveAttribute("aria-invalid");
+  });
+
+  it("requires the coupon code customers type and reports the draft next step", async () => {
+    mockCouponPromotion({ status: "active", coupons: [] });
+    createCoupon.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: { coupon: { id: "coupon-new", canonicalCode: "TEST123", revision: "1" } },
+    });
+    const { user, onStatus } = await openWelcome();
+    await user.click(screen.getByRole("button", { name: /^Create coupon$/i }));
+    expect(createCoupon).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("Coupon code")).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByText(COPY_OP_COUPON_CODE_REQUIRED)).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("Coupon code"), "test123");
+    await user.click(screen.getByRole("button", { name: /^Create coupon$/i }));
+    await waitFor(() => expect(createCoupon).toHaveBeenCalled());
+    expect(createCoupon.mock.calls[0]?.[2]).toEqual({ origin: "manual", canonicalCode: "test123" });
+    await waitFor(() =>
+      expect(onStatus).toHaveBeenCalledWith(`${COPY_OP_COUPON_CREATED_DRAFT} Code: TEST123.`),
+    );
   });
 });

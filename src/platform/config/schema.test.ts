@@ -133,6 +133,38 @@ describe("loadConfig — BOBA_BEAR_PUBLIC_ORIGIN", () => {
     expect(issues.some((i) => i.key === "BOBA_BEAR_PUBLIC_ORIGIN")).toBe(true);
   });
 
+  it("rejects a non-443 port and an IP host in staging", () => {
+    const portIssues = issuesOf(() =>
+      loadConfig({
+        processKind: "web",
+        source: source({
+          BOBA_BEAR_ENV: "staging",
+          NODE_ENV: "production",
+          BOBA_BEAR_PUBLIC_ORIGIN: "https://staging.example.test:8080",
+          BOBA_BEAR_RELEASE: "rel-1",
+          BOBA_BEAR_DATABASE_URL: "postgresql://app_user:s3cret-pw@db.internal.example.com/boba_bear",
+          BOBA_BEAR_DATABASE_SSL_MODE: "verify-full",
+        }),
+      }),
+    );
+    expect(portIssues.some((issue) => issue.key === "BOBA_BEAR_PUBLIC_ORIGIN")).toBe(true);
+
+    const ipIssues = issuesOf(() =>
+      loadConfig({
+        processKind: "web",
+        source: source({
+          BOBA_BEAR_ENV: "staging",
+          NODE_ENV: "production",
+          BOBA_BEAR_PUBLIC_ORIGIN: "https://203.0.113.10",
+          BOBA_BEAR_RELEASE: "rel-1",
+          BOBA_BEAR_DATABASE_URL: "postgresql://app_user:s3cret-pw@db.internal.example.com/boba_bear",
+          BOBA_BEAR_DATABASE_SSL_MODE: "verify-full",
+        }),
+      }),
+    );
+    expect(ipIssues.some((issue) => issue.key === "BOBA_BEAR_PUBLIC_ORIGIN")).toBe(true);
+  });
+
   it("rejects credentials in the origin", () => {
     const issues = issuesOf(() =>
       loadConfig({
@@ -523,6 +555,19 @@ describe("loadConfig — unknown/unapproved variables", () => {
         GITHUB_SHA: "abc123",
       }),
     });
+    expect(config.environment).toBe("local");
+  });
+
+  it("accepts the approved IMP-036J #391B checkout prepare diagnostic keys", () => {
+    const config = loadConfig({
+      processKind: "worker",
+      source: source({
+        ...LOCAL_WEB_BASE,
+        BOBA_BEAR_CHECKOUT_PREPARE_DIAGNOSTIC_ENABLED: "true",
+        BOBA_BEAR_CHECKOUT_PREPARE_DIAGNOSTIC_RUNTIME_PROJECT: "boba-staging",
+      }),
+    });
+    expect(config.processKind).toBe("worker");
     expect(config.environment).toBe("local");
   });
 });

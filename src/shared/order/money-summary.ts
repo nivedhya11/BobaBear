@@ -4,6 +4,7 @@
 
 import type { CheckoutSnapshot } from "../../shared/checkout";
 import { serializeMoneyMinor } from "./canonicalize";
+import { sealedCustomerSavingSplit } from "./purchased-savings";
 
 export type OrderMoneySummaryCharge = Readonly<{
   chargeCode: string;
@@ -19,6 +20,10 @@ export type OrderMoneySummary = Readonly<{
    * Excludes complimentary-item synthetic zeroing allocations.
    */
   promotionDiscountMinor: string;
+  /** Positive purchased merchandise/order saving. Zero when none was sealed. */
+  orderSavingMinor: string;
+  /** Positive purchased delivery-charge saving. Zero when none was sealed. */
+  deliverySavingMinor: string;
   charges: readonly OrderMoneySummaryCharge[];
   taxMinor: string;
   grandTotalMinor: string;
@@ -33,30 +38,20 @@ export type OrderMoneySummary = Readonly<{
 export function customerMonetarySavingPaiseFromSnapshot(
   snapshot: Pick<CheckoutSnapshot, "promotionDiscountPaise" | "promotionEffects">,
 ): bigint {
-  let complimentaryAllocation = BigInt(0);
-  for (const effect of snapshot.promotionEffects) {
-    if (
-      effect.effectKind === "monetary_allocation" &&
-      effect.snapshotLineId != null &&
-      effect.amountPaise != null
-    ) {
-      complimentaryAllocation += effect.amountPaise;
-    }
-  }
-  const customer = snapshot.promotionDiscountPaise - complimentaryAllocation;
-  return customer < BigInt(0) ? BigInt(0) : customer;
+  return sealedCustomerSavingSplit(snapshot).totalSavedPaise;
 }
 
 export function moneySummaryFromSnapshot(snapshot: CheckoutSnapshot): OrderMoneySummary {
   const merchandisePaise =
     snapshot.prePromotionSubtotalPaise - snapshot.chargesPaise;
+  const saving = sealedCustomerSavingSplit(snapshot);
   return Object.freeze({
     prePromotionSubtotalMinor: serializeMoneyMinor(
       merchandisePaise < BigInt(0) ? BigInt(0) : merchandisePaise,
     ),
-    promotionDiscountMinor: serializeMoneyMinor(
-      customerMonetarySavingPaiseFromSnapshot(snapshot),
-    ),
+    promotionDiscountMinor: serializeMoneyMinor(saving.totalSavedPaise),
+    orderSavingMinor: serializeMoneyMinor(saving.orderSavingPaise),
+    deliverySavingMinor: serializeMoneyMinor(saving.deliverySavingPaise),
     charges: Object.freeze(
       snapshot.charges.map((charge) =>
         Object.freeze({

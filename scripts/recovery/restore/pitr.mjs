@@ -8,10 +8,16 @@
  * Arbitrary paths without positive ownership proof are BLOCKED.
  */
 import { spawnSync } from "node:child_process";
-import { OPERATION_STATUS, OPERATION_TYPE, RECOVERY_LAYER } from "../constants.mjs";
+import {
+  CHECKSUM_INTEGRITY_STATUS,
+  OPERATION_STATUS,
+  OPERATION_TYPE,
+  RECOVERY_LAYER,
+} from "../constants.mjs";
 import { createEvidence } from "../evidence.mjs";
 import { canonicalizePath } from "../identity.mjs";
 import { generateRunId } from "../run-id.mjs";
+import { stagingSourceIdentityFindings } from "../staging-source-identity.mjs";
 import { persistEvidence } from "../store.mjs";
 import { redactText } from "../redact.mjs";
 import {
@@ -188,6 +194,13 @@ export async function runPitrRestore(options) {
 
   const endedAt = new Date().toISOString();
   const provisionFields = provisioned ? targetEvidenceFields(provisioned) : { findings: [] };
+  const sourceRunId = typeof options.sourceRunId === "string" ? options.sourceRunId.trim() : "";
+  const recoveryArtifactReference =
+    typeof options.recoveryArtifactReference === "string" && options.recoveryArtifactReference.trim()
+      ? options.recoveryArtifactReference.trim()
+      : typeof options.repositoryGeneration === "string" || typeof options.repositoryGeneration === "number"
+        ? `repo-gen-${options.repositoryGeneration}`
+        : null;
   const evidence = createEvidence({
     runId,
     operationType: OPERATION_TYPE.RESTORE_PITR,
@@ -195,13 +208,31 @@ export async function runPitrRestore(options) {
     status: OPERATION_STATUS.SUCCEEDED,
     startedAt,
     endedAt,
+    candidate: options.candidate ?? {},
+    migrationSchemaContext: options.migrationSchemaContext ?? null,
+    sourceEnvironmentClassification: options.sourceClassification ?? null,
     sourceIdentityMarker: options.sourceIdentity,
     targetIdentityMarker: targetIdentity,
     recoveryPoint: target.value,
+    recoveryArtifactReference,
+    checksumIntegrityStatus:
+      options.checksumIntegrityStatus ?? CHECKSUM_INTEGRITY_STATUS.NOT_CHECKED,
+    validationResults: Array.isArray(options.validationResults)
+      ? options.validationResults
+      : Array.isArray(afterRestore?.validationResults)
+        ? afterRestore.validationResults
+        : undefined,
     findings: [
-      { code: "PITR_RESTORE", targetType: target.type, targetPgdataPath },
+      {
+        code: "PITR_RESTORE",
+        targetType: target.type,
+        targetPgdataPath,
+        ...(sourceRunId ? { sourceRunId } : {}),
+        ...(recoveryArtifactReference ? { repositoryGeneration: String(options.repositoryGeneration ?? "") } : {}),
+      },
       ...(afterRestore?.findings ?? []),
       ...(provisionFields.findings ?? []),
+      ...stagingSourceIdentityFindings(options),
     ],
   });
   if (options.evidenceDir) persistEvidence(options.evidenceDir, evidence);

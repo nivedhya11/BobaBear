@@ -91,6 +91,17 @@ export function buildWorkforceBetterAuthOptions(
     advanced: {
       cookiePrefix: WORKFORCE_AUTH_COOKIE_PREFIX,
       useSecureCookies: PRODUCTION_LIKE_ENVIRONMENTS.has(config.environmentType),
+      ...(PRODUCTION_LIKE_ENVIRONMENTS.has(config.environmentType)
+        ? {
+            defaultCookieAttributes: {
+              sameSite: "lax" as const,
+              httpOnly: true,
+              secure: true,
+              path: "/",
+            },
+            crossSubDomainCookies: { enabled: false as const },
+          }
+        : {}),
     },
 
     rateLimit: {
@@ -103,10 +114,6 @@ export function buildWorkforceBetterAuthOptions(
 
     telemetry: {
       enabled: false,
-    },
-
-    experimental: {
-      joins: false,
     },
   };
 }
