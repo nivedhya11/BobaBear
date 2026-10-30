@@ -22,6 +22,16 @@ MARKETING_APEX_AND_WWW = UNCHANGED
 STAGING_DNS_CONTROL = UNVERIFIED
 STAGING_INGRESS = UNAUTHORIZED
 STAGING_TLS = UNVERIFIED
+D2_DESIGN_DIRECTION = APPROVED
+D2_APPROVED_ON = 2026-10-30
+D2_APPROVAL_SCOPE = DESIGN_ONLY
+D2_INGRESS = CLOUDFLARE_TUNNEL
+D2_ACCESS = CLOUDFLARE_ACCESS_RESTRICTED
+D2_HOSTNAME = staging.thebobabear.in
+D2_RUNTIME_TARGET = EXISTING_WSL_PODMAN_STAGING
+D2_RECORD = SUPPORTING_OPERATOR_DESIGN_EVIDENCE
+D2_DECISION_REGISTER_STATUS = NOT_CURRENT_REGISTER_ENTRY
+D2_DETAIL = docs/platform/operations/d2-restricted-cloudflare-tunnel-design.md
 ```
 
 ## Designated staging hostname
@@ -46,6 +56,55 @@ staging remains not required for the pilot (D-374 / ADR-016 / ARCH-G26).
 This section is a supporting operator record. It is not a decision-register
 entry, it does not assign a `D-` identity, and it does not change D3 publishing
 classification, ROADMAP, or STATE.
+
+## D2 restricted Cloudflare Tunnel design (design-only)
+
+On 30 October 2026 the Founder approved the D2 staging ingress **design
+direction** only:
+
+```text
+D2_INGRESS = CLOUDFLARE_TUNNEL
+D2_ACCESS = CLOUDFLARE_ACCESS_RESTRICTED
+D2_HOSTNAME = staging.thebobabear.in
+D2_RUNTIME_TARGET = EXISTING_WSL_PODMAN_STAGING
+D2_APPROVAL_SCOPE = DESIGN_ONLY
+```
+
+Intended chain (not operationally verified here):
+
+```text
+Founder browser
+→ Cloudflare HTTPS
+→ Cloudflare Access (deny-by-default; explicit Founder identity)
+→ Cloudflare Tunnel
+→ WSL Podman Nginx (:8080 HTTP origin listener)
+→ BOBA application services
+```
+
+This approval does **not** authorize tunnel creation or activation, Cloudflare
+Access account setup, DNS mutations, certificate issuance, TLS allowlist tokens,
+provider credentials, runtime modifications, candidate preparation, staging
+deployment, public staging publication, or Access Bypass / public webhook
+exceptions. `STAGING_INGRESS` remains `UNAUTHORIZED`. `STAGING_TLS` remains
+`UNVERIFIED`. `PUBLIC_STAGING_EXPOSURE` and `LIVE_STAGING_DEPLOYMENT` stay
+`NOT_AUTHORIZED`. D3 four-state publishing isolation is unchanged; this design
+does not grant `STAGING_PUBLIC_AUTHORIZED`.
+
+Founder-approved **restricted Cloudflare Access** on a DNS-published
+`staging.thebobabear.in` route is **not** “unpublished” or private staging for D3.
+It can still produce **positive staging-exposure observations** classifiable as
+`STAGING_PUBLIC_UNAUTHORIZED` without a separate Founder staging-publication
+contract. Restricted Access does **not** satisfy `STAGING_PUBLIC_AUTHORIZED` and
+does not replace independent D3 evidence.
+
+Production ingress remains D-375 / ADR-017 (Cloudflare proxied DNS → DigitalOcean
+origin trust). This D2 record is Founder **staging** design evidence only and does
+not amend ARCH-G or allocate a decision-register `D-` identity (D-385 / D-386 /
+D-387 stay reserved by other open proposals).
+
+Detailed topology, origin-trust compatibility, rejected unsafe approaches, and
+the webhook / Access RED decision package live in
+[`d2-restricted-cloudflare-tunnel-design.md`](./d2-restricted-cloudflare-tunnel-design.md).
 
 ## Publishing isolation (D3 Option A)
 
@@ -178,10 +237,12 @@ cannot seal an order.
 
 ## Gates that remain closed
 
-Gate A has a designated hostname (`staging.thebobabear.in`). It still needs
-authorized DNS, a certificate, a TLS termination token, secret-permission
-remediation, and verified test payment credentials. The hostname designation
-does not satisfy those remaining inputs.
+Gate A has a designated hostname (`staging.thebobabear.in`) and a Founder-approved
+D2 **design** direction (Tunnel + restricted Access). It still needs authorized
+DNS, an operational ingress realization, a certificate / TLS termination token,
+secret-permission remediation, verified test payment credentials, and a separate
+webhook / machine-callback strategy under Access constraints. The hostname
+designation and D2 design-only approval do not satisfy those remaining inputs.
 
 Gate B needs an authorized read-only staging database preflight, a Founder
 decision that binds restore proof to this database and volume, and a ledger
