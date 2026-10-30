@@ -31,18 +31,18 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2413,
-    "executableTestFiles": 564,
+    "trackedPathsConsidered": 2419,
+    "executableTestFiles": 565,
     "sourceTestFiles": 165,
-    "testsTreeExecutableFiles": 295,
+    "testsTreeExecutableFiles": 296,
     "scriptTestFiles": 104,
-    "playwrightSpecs": 12,
+    "playwrightSpecs": 13,
     "vitestConfigs": 2,
-    "playwrightConfigs": 7,
-    "testSupportScripts": 51,
+    "playwrightConfigs": 8,
+    "testSupportScripts": 54,
     "packageTestCommands": 94,
     "packageAuditCommands": 28,
-    "packageE2eCommands": 9,
+    "packageE2eCommands": 10,
     "packageCheckCommands": 17,
     "packageCoverageCommands": 1,
     "packageInventoryCommands": 2,
@@ -392,6 +392,7 @@
     "tests/e2e/customer-ordering.spec.ts",
     "tests/e2e/external-links.spec.ts",
     "tests/e2e/food-direct-ux-foundation.spec.ts",
+    "tests/e2e/gtm-uat-browser-journeys.spec.ts",
     "tests/e2e/home-page.spec.ts",
     "tests/e2e/imp-036b-uat-precert.spec.ts",
     "tests/e2e/location-selector-layout.spec.ts",
@@ -627,6 +628,7 @@
     "tests/e2e/customer-ordering.spec.ts",
     "tests/e2e/external-links.spec.ts",
     "tests/e2e/food-direct-ux-foundation.spec.ts",
+    "tests/e2e/gtm-uat-browser-journeys.spec.ts",
     "tests/e2e/home-page.spec.ts",
     "tests/e2e/imp-036b-uat-precert.spec.ts",
     "tests/e2e/location-selector-layout.spec.ts",
@@ -644,6 +646,7 @@
     "playwright.config.ts",
     "playwright.customer-auth.config.ts",
     "playwright.customer-ordering.config.ts",
+    "playwright.gtm-uat-browser.config.ts",
     "playwright.location-selector.config.ts",
     "playwright.operations-lifecycle.config.ts",
     "playwright.workforce-auth.config.ts"
@@ -653,9 +656,12 @@
     "scripts/e2e/build-operations-lifecycle-seed.mjs",
     "scripts/e2e/customer-auth-server.ts",
     "scripts/e2e/customer-ordering-server.ts",
+    "scripts/e2e/gtm-uat-browser-control.ts",
+    "scripts/e2e/gtm-uat-browser-fixtures.ts",
     "scripts/e2e/run-commercial-workspace-e2e.mjs",
     "scripts/e2e/run-customer-auth-e2e.mjs",
     "scripts/e2e/run-customer-ordering-e2e.mjs",
+    "scripts/e2e/run-gtm-uat-browser-e2e.mjs",
     "scripts/e2e/run-operations-lifecycle-e2e.mjs",
     "scripts/e2e/run-workforce-auth-e2e.mjs",
     "scripts/e2e/seed-commercial-workspace.ts",
@@ -834,6 +840,7 @@
       "test:e2e:customer-auth",
       "test:e2e:customer-ordering",
       "test:e2e:docker",
+      "test:e2e:gtm-uat-browser",
       "test:e2e:headed",
       "test:e2e:location-selector-layout",
       "test:e2e:operations-lifecycle",
@@ -964,6 +971,7 @@
     "test:e2e:customer-auth": "npm run build && npm run customer-auth:build && node scripts/e2e/run-customer-auth-e2e.mjs",
     "test:e2e:customer-ordering": "NEXT_PUBLIC_BOBA_BEAR_GOOGLE_MAPS_BROWSER_KEY=e2e-maps-browser-key-fixture npm run build && npm run customer-auth:build && npm run customer-commerce:build && node scripts/e2e/run-customer-ordering-e2e.mjs",
     "test:e2e:docker": "PLAYWRIGHT_TARGET=docker playwright test",
+    "test:e2e:gtm-uat-browser": "NEXT_PUBLIC_BOBA_BEAR_GOOGLE_MAPS_BROWSER_KEY=e2e-maps-browser-key-fixture npm run build && npm run customer-auth:build && npm run customer-commerce:build && node scripts/e2e/run-gtm-uat-browser-e2e.mjs",
     "test:e2e:headed": "npm run build && playwright test --headed",
     "test:e2e:location-selector-layout": "NEXT_PUBLIC_BOBA_BEAR_GOOGLE_MAPS_BROWSER_KEY=e2e-maps-browser-key-fixture npm run build && npm run customer-auth:build && npm run customer-commerce:build && playwright test --config=playwright.location-selector.config.ts",
     "test:e2e:operations-lifecycle": "node scripts/e2e/run-operations-lifecycle-e2e.mjs",
@@ -9570,6 +9578,24 @@
       "externalProviderSubstitute": "UNKNOWN",
       "packageCommands": [
         "test:e2e"
+      ],
+      "ciInclusion": "NO",
+      "test1Layers": [
+        "11-e2e-browser-ui"
+      ],
+      "classificationConfidence": "LOW"
+    },
+    {
+      "path": "tests/e2e/gtm-uat-browser-journeys.spec.ts",
+      "runner": "playwright",
+      "domain": "e2e",
+      "testType": "e2e-spec",
+      "dbRequired": "UNKNOWN",
+      "browserRequired": "YES",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:e2e",
+        "test:e2e:gtm-uat-browser"
       ],
       "ciInclusion": "NO",
       "test1Layers": [
