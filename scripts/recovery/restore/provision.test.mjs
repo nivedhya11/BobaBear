@@ -1,17 +1,32 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { existsSync, mkdtempSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { generateRunId } from "../run-id.mjs";
 import {
+  assertLogicalTargetNotSource,
   assertOwnedLogicalTarget,
   assertOwnedPitrTarget,
   cleanupProvisionedTarget,
+  normalizeDbEndpoint,
+  normalizeDbTcpEndpoint,
   provisionPitrTarget,
 } from "./provision.mjs";
 import { runPitrRestore } from "./pitr.mjs";
 import { runLogicalRestore } from "./logical.mjs";
+
+function completeBodyFor(runId, ciphertext = Buffer.from("AGEENC")) {
+  const sha256Hex = createHash("sha256").update(ciphertext).digest("hex");
+  return {
+    runId,
+    artifactKey: `logical/${runId}/dump.age`,
+    sha256Hex,
+    keyVersion: "test-kv",
+    completedAt: "2026-09-20T12:00:00.000Z",
+  };
+}
 
 test("PITR provision creates run-owned fresh PGDATA and refuses reuse", () => {
   const root = mkdtempSync(path.join(os.tmpdir(), "boba-pitr-prov-"));
@@ -148,6 +163,7 @@ test("PITR ownership: arbitrary / unowned / wrong-run / wrong-path / source-alia
       targetPgdataPath: provisioned.target.pgdataPath,
       targetIdentity: provisioned.target.targetIdentity,
       sourceIdentity: "prod",
+      sourceClassification: "production",
       sourcePgdataPath: "/var/lib/postgresql/data",
     });
     assert.equal(allowed.ok, true);
@@ -181,6 +197,56 @@ test("PITR ownership: arbitrary / unowned / wrong-run / wrong-path / source-alia
   }
 });
 
+test("logical ownership: hostaddr/query/encoded host cannot bypass source-equals-target", () => {
+  const sourceUrl = "postgresql://backup@prod.db.internal:5432/boba_prod";
+  assert.equal(
+    assertLogicalTargetNotSource(
+      "postgresql://recovery@prod.db.internal:5432/?dbname=boba_prod",
+      sourceUrl,
+    ).ok,
+    false,
+  );
+  assert.equal(
+    assertLogicalTargetNotSource(
+      "postgresql://recovery@pro%64.db.internal:5432/boba_prod",
+      sourceUrl,
+    ).ok,
+    false,
+  );
+  assert.equal(
+    assertLogicalTargetNotSource(
+      "postgresql://u@recovery.host,prod.db/boba_recovery",
+      sourceUrl,
+    ).ok,
+    false,
+  );
+  // hostaddr changes the ownership fingerprint vs a loopback-only descriptor form.
+  const hostaddrTarget =
+    "postgresql://recovery:pw@127.0.0.1:55432/boba_recovery?hostaddr=10.0.0.5";
+  assert.notEqual(normalizeDbEndpoint(hostaddrTarget), "127.0.0.1|127.0.0.1:55432/boba_recovery");
+  assert.match(normalizeDbEndpoint(hostaddrTarget), /10\.0\.0\.5/);
+
+  // Source≠target must compare the TCP destination libpq opens.
+  assert.equal(
+    assertLogicalTargetNotSource(
+      "postgresql://u@10.0.0.5/app?sslmode=require",
+      "postgresql:///app?hostaddr=10.0.0.5&user=u&sslmode=require",
+    ).ok,
+    false,
+  );
+  assert.equal(
+    assertLogicalTargetNotSource(
+      "postgresql://u@10.0.0.5/app?sslmode=require",
+      "postgresql://u@db.prod/app?hostaddr=10.0.0.5&sslmode=require",
+    ).ok,
+    false,
+  );
+  assert.equal(
+    normalizeDbTcpEndpoint("postgresql://u@10.0.0.5/app"),
+    normalizeDbTcpEndpoint("postgresql:///app?hostaddr=10.0.0.5&user=u"),
+  );
+});
+
 test("logical ownership: missing source / same endpoint / arbitrary URL BLOCKED; owned allowed", async () => {
   const runId = generateRunId({ now: new Date(Date.UTC(2026, 8, 20, 14, 0, 0)), randomHex: "dddddddddddddddd" });
   const targetUrl = "postgresql://boba_recovery:x@127.0.0.1:55432/boba_recovery";
@@ -189,7 +255,7 @@ test("logical ownership: missing source / same endpoint / arbitrary URL BLOCKED;
     runId,
     targetIdentity: `recovery-target-${runId}`,
     databaseUrl: targetUrl,
-    endpoint: "127.0.0.1:55432/boba_recovery",
+    endpoint: "127.0.0.1|127.0.0.1:55432/boba_recovery",
     environment: "recovery",
   };
 
@@ -225,16 +291,20 @@ test("logical ownership: missing source / same endpoint / arbitrary URL BLOCKED;
     sourceDatabaseUrl: sourceUrl,
     ownershipDescriptor: ownership,
     sourceIdentity: "prod",
+    sourceClassification: "production",
   });
   assert.equal(allowed.ok, true);
 
+  const ciphertext = Buffer.from("AGEENC");
   const objectStore = {
     async headObject() {
       return { exists: true };
     },
     async getObject({ key }) {
-      if (key.endsWith("/COMPLETE")) return { body: Buffer.from("{}") };
-      return { body: Buffer.from("AGEENC") };
+      if (key.endsWith("/COMPLETE")) {
+        return { body: Buffer.from(JSON.stringify(completeBodyFor(runId, ciphertext)), "utf8") };
+      }
+      return { body: ciphertext };
     },
   };
 
@@ -244,6 +314,7 @@ test("logical ownership: missing source / same endpoint / arbitrary URL BLOCKED;
     objectStore,
     identityFile: "/tmp/missing",
     sourceIdentity: "prod",
+    sourceClassification: "production",
     databaseUrl: "postgresql://remote.example:5432/prod",
     provisionTarget: false,
     decryptFn: async () => ({ ok: true, plaintext: Buffer.from("PGDUMP") }),
@@ -258,6 +329,7 @@ test("logical ownership: missing source / same endpoint / arbitrary URL BLOCKED;
     objectStore,
     identityFile: "/tmp/missing",
     sourceIdentity: "prod",
+    sourceClassification: "production",
     sourceDatabaseUrl: sourceUrl,
     databaseUrl: targetUrl,
     targetOwnership: ownership,

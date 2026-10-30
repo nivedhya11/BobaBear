@@ -308,6 +308,7 @@ async function assertCommercialTermsStillAccepted(
             ) ?? undefined)
           : undefined,
       fulfilmentMode: mode,
+      fulfilmentTiming: input.snapshot.fulfilmentTiming ?? "ASAP",
       previouslyPresentedComplimentaryVariantId: presentedComplimentaryVariantId(
         input.snapshot,
       ),
@@ -348,7 +349,6 @@ async function assertCommercialTermsStillAccepted(
     evaluatedAt: input.snapshot.evaluatedAt,
     fulfilmentMode: mode,
     serviceabilityEvaluatedAt: input.snapshot.serviceabilityEvaluatedAt,
-    manualCouponCode: input.snapshot.manualCouponCode,
     destination,
     pickupLocation: input.snapshot.pickupLocation,
     commercial,

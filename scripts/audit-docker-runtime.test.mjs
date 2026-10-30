@@ -29,7 +29,7 @@ import {
 
 const VALID_DOCKERFILE = `
 ARG NODE_IMAGE=docker.io/library/node:22.23.1-bookworm-slim
-ARG NGINX_IMAGE=docker.io/library/nginx:1.30.4-alpine3.24
+ARG NGINX_IMAGE=docker.io/library/nginx:1.30.6-alpine3.24
 FROM \${NODE_IMAGE} AS base
 FROM base AS dependencies
 FROM base AS builder
@@ -178,7 +178,7 @@ test("checkFullyQualifiedExternalBaseImages rejects short-name Node/Nginx ARG de
   const result = checkFullyQualifiedExternalBaseImages(dockerfile);
   assert.equal(result.passed, false);
   assert.match(result.detail, /node:22\.23\.1-bookworm-slim/);
-  assert.match(result.detail, /nginx:1\.30\.4-alpine3\.24/);
+  assert.match(result.detail, /nginx:1\.30\.6-alpine3\.24/);
 });
 
 test("checkNoFloatingImageTags rejects an untagged image and accepts stage self-references", () => {

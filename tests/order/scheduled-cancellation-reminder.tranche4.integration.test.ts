@@ -2,7 +2,7 @@
  * IMP-036I Tranche 4 — purchased cancellation cutoff and scheduled reminder.
  */
 import { eq, sql } from "drizzle-orm";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { deliveriesTable } from "../../src/platform/database/schema/delivery";
 import { notificationRequestsTable } from "../../src/platform/database/schema/notifications";
@@ -38,8 +38,11 @@ import type { NotificationOutboxPayload } from "../../src/server/notifications/o
 import {
   cancelCustomerScheduledOrder,
   cancelOrder,
+  fixedOrderClock,
   materializeOrderForCompletedCheckout,
 } from "../../src/server/order";
+import * as afterPaymentSucceededModule from "../../src/server/payment/after-payment-succeeded";
+import * as orderMaterializeHook from "../../src/server/payment/order-materialize-hook";
 import { completeZeroPayableCheckout, startPayment } from "../../src/server/payment";
 import { requestRefund } from "../../src/server/refund";
 import { refundProviderIdempotencyKey } from "../../src/shared/refund";
@@ -67,6 +70,7 @@ import {
 } from "../database/support/order-fixtures";
 
 afterEach(async () => {
+  vi.restoreAllMocks();
   await closeTrackedPersistenceHandles();
 });
 
@@ -280,14 +284,30 @@ async function cancelledNotifications(persistence: Harness["persistence"], order
 const FAR_WINDOW = (start: Date, now: Date) =>
   start.getTime() - now.getTime() > 2 * 60 * 60 * 1000;
 
-async function waitForInsideReminderSlot(): Promise<void> {
-  const step = 30 * 60 * 1000;
-  const now = Date.now();
-  const next = Math.ceil(now / step) * step;
-  const delta = next === now ? step : next - now;
-  if (delta < 90_000) {
-    await new Promise((resolve) => setTimeout(resolve, delta + 1_000));
-  }
+/**
+ * Payment success normally materializes Order via systemOrderClock.
+ * For reminder-boundary proofs, defer that hook and materialize with a
+ * controlled Order clock so dueAt comparisons do not depend on wall :00/:30.
+ */
+function deferOrderMaterializationOnPaymentSuccess(): void {
+  vi.spyOn(afterPaymentSucceededModule, "afterPaymentSucceeded").mockResolvedValue(
+    undefined,
+  );
+  vi.spyOn(
+    orderMaterializeHook,
+    "tryMaterializeOrderAfterPaymentCompletion",
+  ).mockResolvedValue(undefined);
+}
+
+async function materializePurchasedOrderAt(
+  persistence: Harness["persistence"],
+  checkoutId: string,
+  materializedAt: Date,
+) {
+  return materializeOrderForCompletedCheckout(persistence, checkoutId, {
+    policy: ORDER_POLICY,
+    clock: fixedOrderClock(materializedAt),
+  });
 }
 
 describe("IMP-036I tranche 4 scheduled cancellation and reminder", () => {
@@ -606,28 +626,126 @@ describe("IMP-036I tranche 4 scheduled cancellation and reminder", () => {
     });
   });
 
-  it("does not enqueue a reminder when the purchase is inside the reminder window", async () => {
-    await waitForInsideReminderSlot();
+  it("enqueues a reminder when Order materializes strictly before the due instant", async () => {
     await withCheckoutReadyHarness(async (h) => {
       await saveOutletSchedulingProfile(h.persistence, {
         outletId: h.actors.tree.outletA.id,
-        pickupMinLeadMinutes: 1,
-        deliveryMinLeadMinutes: 1,
+        pickupMinLeadMinutes: 30,
+        deliveryMinLeadMinutes: 30,
         now: new Date(),
       });
-      const inside = await scheduleCheckout(
-        h,
-        "DELIVERY",
-        (start, now) => {
-          const lead = start.getTime() - now.getTime();
-          return lead >= 60_000 && lead < 30 * 60 * 1000;
-        },
+      const { ready, window } = await scheduleCheckout(h, "DELIVERY", FAR_WINDOW);
+      const dueAt = scheduledReminderDueAt(window.startAt);
+      const beforeDue = new Date(dueAt.getTime() - 1);
+      deferOrderMaterializationOnPaymentSuccess();
+      await purchasePositive(h, ready.checkout.id, ready.checkout.revision);
+      const preexisting = await h.persistence.withContext((ctx) =>
+        ctx.db.select({ id: ordersTable.id }).from(ordersTable).where(eq(ordersTable.checkoutId, ready.checkout.id)),
       );
-      await purchasePositive(h, inside.ready.checkout.id, inside.ready.checkout.revision);
-      const order = await orderRow(h.persistence, inside.ready.checkout.id);
-      expect(await reminderRows(h.persistence, order.id)).toHaveLength(0);
+      expect(preexisting).toEqual([]);
+      const materialized = await materializePurchasedOrderAt(
+        h.persistence,
+        ready.checkout.id,
+        beforeDue,
+      );
+      expect(materialized.disposition).toBe("CREATED");
+      expect(materialized.order.createdAt.toISOString()).toBe(beforeDue.toISOString());
+      const reminders = await reminderRows(h.persistence, materialized.order.id);
+      expect(reminders).toHaveLength(1);
+      expect(reminders[0]!.availableAt.toISOString()).toBe(dueAt.toISOString());
+    });
+  });
+
+  it("does not enqueue a reminder when Order materializes exactly at the due instant", async () => {
+    await withCheckoutReadyHarness(async (h) => {
+      await saveOutletSchedulingProfile(h.persistence, {
+        outletId: h.actors.tree.outletA.id,
+        pickupMinLeadMinutes: 30,
+        deliveryMinLeadMinutes: 30,
+        now: new Date(),
+      });
+      const { ready, window } = await scheduleCheckout(h, "DELIVERY", FAR_WINDOW);
+      const dueAt = scheduledReminderDueAt(window.startAt);
+      deferOrderMaterializationOnPaymentSuccess();
+      await purchasePositive(h, ready.checkout.id, ready.checkout.revision);
+      const materialized = await materializePurchasedOrderAt(
+        h.persistence,
+        ready.checkout.id,
+        dueAt,
+      );
+      expect(materialized.disposition).toBe("CREATED");
+      expect(materialized.order.createdAt.toISOString()).toBe(dueAt.toISOString());
+      expect(await reminderRows(h.persistence, materialized.order.id)).toHaveLength(0);
+    });
+  });
+
+  it("does not enqueue a reminder when Order materializes after the due instant", async () => {
+    await withCheckoutReadyHarness(async (h) => {
+      await saveOutletSchedulingProfile(h.persistence, {
+        outletId: h.actors.tree.outletA.id,
+        pickupMinLeadMinutes: 30,
+        deliveryMinLeadMinutes: 30,
+        now: new Date(),
+      });
+      const { ready, window } = await scheduleCheckout(h, "DELIVERY", FAR_WINDOW);
+      const dueAt = scheduledReminderDueAt(window.startAt);
+      // Still before window start: after due, inside the reminder lead.
+      const afterDue = new Date(dueAt.getTime() + 60_000);
+      expect(afterDue.getTime()).toBeLessThan(window.startAt.getTime());
+      deferOrderMaterializationOnPaymentSuccess();
+      await purchasePositive(h, ready.checkout.id, ready.checkout.revision);
+      const materialized = await materializePurchasedOrderAt(
+        h.persistence,
+        ready.checkout.id,
+        afterDue,
+      );
+      expect(materialized.disposition).toBe("CREATED");
+      expect(materialized.order.createdAt.toISOString()).toBe(afterDue.toISOString());
+      expect(await reminderRows(h.persistence, materialized.order.id)).toHaveLength(0);
       const deliveries = await h.persistence.withContext((ctx) =>
-        ctx.db.select({ id: deliveriesTable.id }).from(deliveriesTable).where(eq(deliveriesTable.orderId, order.id)),
+        ctx.db
+          .select({ id: deliveriesTable.id })
+          .from(deliveriesTable)
+          .where(eq(deliveriesTable.orderId, materialized.order.id)),
+      );
+      expect(deliveries).toEqual([]);
+    });
+  });
+
+  it("does not enqueue a reminder when the purchase is inside the reminder window", async () => {
+    await withCheckoutReadyHarness(async (h) => {
+      await saveOutletSchedulingProfile(h.persistence, {
+        outletId: h.actors.tree.outletA.id,
+        pickupMinLeadMinutes: 30,
+        deliveryMinLeadMinutes: 30,
+        now: new Date(),
+      });
+      // Server-eligible far window + controlled Order clock inside the lead.
+      // Avoids waiting for a real :00/:30 boundary where near windows disappear.
+      const { ready, window } = await scheduleCheckout(h, "DELIVERY", FAR_WINDOW);
+      const dueAt = scheduledReminderDueAt(window.startAt);
+      const insideReminderWindow = new Date(
+        window.startAt.getTime() - 15 * 60 * 1000,
+      );
+      expect(insideReminderWindow.getTime()).toBeGreaterThanOrEqual(dueAt.getTime());
+      expect(insideReminderWindow.getTime()).toBeLessThan(window.startAt.getTime());
+      deferOrderMaterializationOnPaymentSuccess();
+      await purchasePositive(h, ready.checkout.id, ready.checkout.revision);
+      const materialized = await materializePurchasedOrderAt(
+        h.persistence,
+        ready.checkout.id,
+        insideReminderWindow,
+      );
+      expect(materialized.disposition).toBe("CREATED");
+      expect(materialized.order.createdAt.toISOString()).toBe(
+        insideReminderWindow.toISOString(),
+      );
+      expect(await reminderRows(h.persistence, materialized.order.id)).toHaveLength(0);
+      const deliveries = await h.persistence.withContext((ctx) =>
+        ctx.db
+          .select({ id: deliveriesTable.id })
+          .from(deliveriesTable)
+          .where(eq(deliveriesTable.orderId, materialized.order.id)),
       );
       expect(deliveries).toEqual([]);
     });

@@ -29,8 +29,8 @@
     "test:database:administration": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/administration/admin-http.integration.test.ts tests/administration/admin-step-up-http.integration.test.ts tests/administration/imp036g-proofs.integration.test.ts tests/administration/admin-catalog-http.integration.test.ts tests/administration/admin-catalog-http-customer-truth.integration.test.ts tests/administration/admin-menu-http.integration.test.ts tests/administration/admin-assortment-http.integration.test.ts tests/administration/admin-pricing-http.integration.test.ts tests/administration/admin-promotions-http.integration.test.ts tests/administration/admin-tariff-http.integration.test.ts tests/administration/admin-commercial-http.integration.test.ts tests/administration/admin-brand-policy-http.tranche3.integration.test.ts",
     "test:access-control:cli": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/access-control/cli",
     "test:catalog": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/catalog",
-    "test:customer-auth:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-auth/http.integration.test.ts",
-    "test:workforce-auth:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/workforce-auth/http.integration.test.ts",
+    "test:customer-auth:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-auth/http.integration.test.ts tests/customer-auth/trusted-identity.integration.test.ts",
+    "test:workforce-auth:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/workforce-auth/http.integration.test.ts tests/workforce-auth/trusted-identity.integration.test.ts",
     "test:operations:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/operations/store-http.integration.test.ts tests/operations/refunds-http.integration.test.ts tests/operations/orders-read-http.integration.test.ts tests/operations/orders-mutation-http.integration.test.ts tests/operations/notifications-http.integration.test.ts tests/operations/scheduling-http.tranche3.integration.test.ts tests/operations/scheduling-profile-workforce-journey.integration.test.ts",
     "test:e2e:customer-auth": "npm run build && npm run customer-auth:build && node scripts/e2e/run-customer-auth-e2e.mjs",
     "test:e2e:customer-ordering": "NEXT_PUBLIC_BOBA_BEAR_GOOGLE_MAPS_BROWSER_KEY=e2e-maps-browser-key-fixture npm run build && npm run customer-auth:build && npm run customer-commerce:build && node scripts/e2e/run-customer-ordering-e2e.mjs",
@@ -38,11 +38,13 @@
     "test:e2e:workforce-auth": "npm run build && npm run workforce-auth:build && node scripts/e2e/run-workforce-auth-e2e.mjs",
     "test:e2e:operations-lifecycle": "node scripts/e2e/run-operations-lifecycle-e2e.mjs",
     "test:e2e:commercial-workspace": "node scripts/e2e/run-commercial-workspace-e2e.mjs",
+    "test:e2e:gtm-uat-browser": "NEXT_PUBLIC_BOBA_BEAR_GOOGLE_MAPS_BROWSER_KEY=e2e-maps-browser-key-fixture npm run build && npm run customer-auth:build && npm run customer-commerce:build && node scripts/e2e/run-gtm-uat-browser-e2e.mjs",
     "env:compose": "node scripts/environment/podman-compose.mjs",
     "env:hygiene": "node scripts/environment/hygiene.mjs",
     "env:staging:status": "node scripts/environment/staging.mjs status",
     "env:staging:deploy:dry-run": "node scripts/environment/staging.mjs deploy-dry-run",
     "env:staging:deploy": "node scripts/environment/staging.mjs deploy",
+    "env:staging:prepare-candidate": "node scripts/environment/staging.mjs prepare-candidate",
     "env:staging:recover-postgres": "node scripts/environment/staging.mjs recover-postgres",
     "env:staging:workforce:user:create": "node scripts/environment/staging.mjs workforce-user-create",
     "staging:baseline-classify": "node --conditions=react-server --import tsx scripts/environment/staging-baseline-classify.ts",
@@ -131,6 +133,7 @@
     "audit:config": "node scripts/audit-config-boundary.mjs",
     "audit:database": "node scripts/audit-database.mjs",
     "audit:persistence": "node scripts/audit-persistence.mjs",
+    "audit:repo-hygiene": "node scripts/repository/check-repository-conventions.mjs",
     "audit:outbox-idempotency": "node scripts/audit-outbox-idempotency.mjs",
     "config:check": "tsx scripts/check-config.ts --process web",
     "config:check:web": "tsx scripts/check-config.ts --process web",
@@ -260,24 +263,24 @@
     "docker:operations:logs": "docker compose logs --tail=200 operations"
   },
   "dependencies": {
-    "@better-auth/drizzle-adapter": "1.6.25",
+    "@better-auth/drizzle-adapter": "1.7.14",
     "@next/env": "16.3.6",
     "@radix-ui/react-slot": "^1.2.4",
-    "better-auth": "1.6.25",
+    "better-auth": "1.7.14",
     "clsx": "^2.1.1",
     "drizzle-orm": "0.45.2",
     "framer-motion": "^12.38.0",
     "html2pdfsmith": "0.2.9",
     "libphonenumber-js": "1.13.10",
     "lucide-react": "^1.8.0",
-    "next": "16.3.6",
+    "next": "16.4.2",
     "pg": "8.22.0",
     "qrcode": "1.5.4",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "server-only": "0.0.1",
     "tailwind-merge": "3.7.0",
-    "zod": "4.4.3"
+    "zod": "4.6.7"
   },
   "overrides": {
     "lodash": "4.18.1",
@@ -285,7 +288,15 @@
     "browserslist": "4.29.0",
     "js-yaml": "4.3.2",
     "brace-expansion@1": "1.1.21",
-    "brace-expansion@5": "5.0.12"
+    "brace-expansion@5": "5.0.12",
+    "undici@7": "7.30.1",
+    "undici@8": "8.12.2",
+    "vite": {
+      "postcss": "8.5.26"
+    },
+    "@tailwindcss/postcss": {
+      "postcss": "8.5.26"
+    }
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
@@ -301,8 +312,8 @@
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.1",
-    "@vitest/coverage-v8": "4.1.10",
-    "auth": "1.6.25",
+    "@vitest/coverage-v8": "4.1.12",
+    "auth": "1.7.14",
     "drizzle-kit": "0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
@@ -312,7 +323,8 @@
     "tailwindcss": "4.3.3",
     "tsx": "4.23.1",
     "typescript": "^5",
+    "vite": "8.2.4",
     "vite-tsconfig-paths": "6.1.1",
-    "vitest": "4.1.10"
+    "vitest": "4.1.12"
   }
 }

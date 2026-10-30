@@ -7,7 +7,7 @@ import { after, before, describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const nginxImage = "docker.io/library/nginx:1.30.4-alpine3.24";
+const nginxImage = "docker.io/library/nginx:1.30.6-alpine3.24";
 const directoryRoutes = ["/order", "/login", "/order/cart", "/privacy"];
 
 function resolveContainerCli() {

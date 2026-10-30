@@ -7,42 +7,31 @@ Authority: docs/platform/TESTING.md (TEST-1)
 
 ## Purpose
 
-Repeatable inventory, baseline measurement, TRACEABILITY assessment, and CI gap
-analysis for Session 3 verification work.
+Supporting inventory and historical verification evidence. Current execution and acceptance
+are owned by [`../ROADMAP.md`](../ROADMAP.md) and [`../STATE.md`](../STATE.md).
 
 ## Reading rule
 
 1. Read [`../TESTING.md`](../TESTING.md) first for verification **policy**.
-2. Read [`BASELINE.md`](./BASELINE.md) only when current verification
-   evidence / baseline measurement is needed.
-3. Use [`test-inventory.json`](./test-inventory.json) for machine-readable
-   structural inventory (regenerate/check via package scripts below).
-4. Read [`CI-GAP-ANALYSIS.md`](./CI-GAP-ANALYSIS.md) for Session 3B / 3C
-   implementation planning.
-5. Read [`CI-READINESS.md`](./CI-READINESS.md) for Session 3B1 repair evidence
-   (`npm run test` / `test:scripts` / coverage baseline).
-6. Read [`CI-JOB-CONTRACT.md`](./CI-JOB-CONTRACT.md) for the Session 3B2
-   workflow implementation contract (not an authorization to edit workflows).
-7. Read [`EVIDENCE-RETENTION.md`](./EVIDENCE-RETENTION.md) for repository-weight
-   and evidence-retention rules (HYG-05). It does not authorize deletion of
-   protected or migration evidence.
+2. Read [`../ROADMAP.md`](../ROADMAP.md) and [`../STATE.md`](../STATE.md) for current activation,
+   execution, and acceptance. Do not read those facts out of the historical evidence files below.
+3. Use [`test-inventory.json`](./test-inventory.json) for the machine-readable structural inventory
+   (regenerate or check it with the package scripts below).
+4. Read [`BASELINE.md`](./BASELINE.md) and [`CI-READINESS.md`](./CI-READINESS.md) as historical,
+   dated evidence. Their lifecycle values and observed results describe the session that wrote
+   them. They are not current execution truth, and this index does not rewrite those results.
+5. Read [`CI-GAP-ANALYSIS.md`](./CI-GAP-ANALYSIS.md) and [`CI-JOB-CONTRACT.md`](./CI-JOB-CONTRACT.md)
+   as historical Session 3 planning and implementation notes. They do not authorize workflow edits
+   and they are not current lifecycle authority.
+6. Read [`EVIDENCE-RETENTION.md`](./EVIDENCE-RETENTION.md) for repository-weight and
+   evidence-retention rules (HYG-05). It does not authorize deletion of protected or migration
+   evidence.
 
 ## Explicit non-authority
 
-These files:
-
-- do **not** activate IMP-036F
-- do **not** change acceptance, ROADMAP, or STATE
-- do **not** replace Product Definition evidence
-- do **not** upgrade Golden Journey registry status
-- do **not** claim that test presence equals acceptance evidence
-
-```text
-IMP036F_PRODUCT_DEFINITION = NOT_CREATED
-IMP036F_STORIES = NOT_CREATED
-IMP036F_ACCEPTANCE_SCENARIOS = NOT_CREATED
-IMP036F_ACTIVATED = NO
-```
+These files do not accept a slice, change ROADMAP or STATE, replace a Product Definition, or
+upgrade Golden Journey registry status. A test file is not acceptance evidence. Whether a slice
+is activated is read from ROADMAP and STATE.
 
 ## Commands
 

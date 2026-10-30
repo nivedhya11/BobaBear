@@ -8,6 +8,10 @@
 # toolchain so Trivy gobinary stdlib findings on /usr/local/bin/gosu stay
 # remediable (IMP-038 §15 image gate).
 #
+# Runtime PID 1 is postgres (UID 999). Root is used only to install packages
+# at build time. The entrypoint refuses uid 0 and does not repair mounted
+# data ownership.
+#
 # Build:
 #   docker build -f docker/postgres/Dockerfile -t boba-bear-postgres:local .
 #
@@ -15,7 +19,10 @@
 #   docker run --rm boba-bear-postgres:local pgbackrest version
 
 ARG POSTGRES_BASE_IMAGE=docker.io/library/postgres:18.4-trixie
-ARG GOSU_GO_IMAGE=docker.io/library/golang:1.26.8-bookworm
+# Go 1.26.10 rebuilds gosu against the patched stdlib (CVE-2026-111943 crypto/x509;
+# prior pin 1.26.9 covered CVE-2026-78667/78669/97031).
+# Index digest verified 2026-10-21 via registry Docker-Content-Digest for tag 1.26.10-bookworm.
+ARG GOSU_GO_IMAGE=docker.io/library/golang:1.26.10-bookworm@sha256:fe3da92a5cb2881e4aa75e625cb0b7c50571632fb4cf340cbe53e6ccdcffdd51
 ARG GOSU_VERSION=1.19
 # Immutable content pin for tianon/gosu@1.19 (do not resolve mutable tags at build).
 ARG GOSU_GIT_SHA=6456aaa0f3c854d199d0f037f068eb97515b7513
@@ -43,7 +50,8 @@ LABEL org.opencontainers.image.title="boba-bear-postgres" \
       org.opencontainers.image.description="PostgreSQL 18 with pinned pgBackRest >= 2.55 for IMP-037" \
       boba.pgbackrest.version="${PGBACKREST_VERSION}" \
       boba.pgbackrest.min_version="2.55.0" \
-      boba.gosu.version="${GOSU_VERSION}"
+      boba.gosu.version="${GOSU_VERSION}" \
+      boba.postgres.runtime-user="postgres"
 
 USER root
 
@@ -52,7 +60,7 @@ COPY --from=gosu-builder /gosu /usr/local/bin/gosu
 RUN chmod 0755 /usr/local/bin/gosu \
   && gosu nobody true \
   && gosu version 2>&1 | grep -F "gosu version: ${GOSU_VERSION}" \
-  && gosu version 2>&1 | grep -F "go1.26"
+  && gosu version 2>&1 | grep -F "go1.26.10"
 
 # Apply available Debian security updates before installing build deps
 # (IMP-038 §15 Trivy image gate; unfixed CVEs use --ignore-unfixed).
@@ -108,14 +116,36 @@ print(f'pgBackRest pin OK: {sys.argv[1]}')" "$installed"; \
       age; \
     rm -rf /tmp/pgbackrest.tar.gz /tmp/pgbackrest-src /tmp/pgbackrest-build /var/lib/apt/lists/*
 
-RUN mkdir -p /etc/pgbackrest /var/lib/pgbackrest /var/log/pgbackrest /var/spool/pgbackrest \
-    && chown -R postgres:postgres /etc/pgbackrest /var/lib/pgbackrest /var/log/pgbackrest /var/spool/pgbackrest \
-    && chmod 750 /etc/pgbackrest /var/lib/pgbackrest /var/log/pgbackrest /var/spool/pgbackrest
+# Image-build ownership only. A runtime mount hides these paths; the
+# entrypoint must not chown a mounted volume to compensate.
+RUN mkdir -p \
+      /etc/pgbackrest \
+      /etc/postgresql \
+      /var/lib/pgbackrest \
+      /var/lib/postgresql \
+      /var/log/pgbackrest \
+      /var/spool/pgbackrest \
+      /var/run/postgresql \
+    && chown -R postgres:postgres \
+      /etc/pgbackrest \
+      /etc/postgresql \
+      /var/lib/pgbackrest \
+      /var/lib/postgresql \
+      /var/log/pgbackrest \
+      /var/spool/pgbackrest \
+      /var/run/postgresql \
+    && chmod 750 /etc/pgbackrest /var/lib/pgbackrest /var/log/pgbackrest /var/spool/pgbackrest \
+    && chmod 755 /etc/postgresql \
+    && chmod 3775 /var/run/postgresql
 
 COPY docker/postgres/pgbackrest/pgbackrest.conf.template /etc/pgbackrest/pgbackrest.conf.template
 COPY docker/postgres/pgbackrest/render-conf.sh /usr/local/bin/boba-render-pgbackrest-conf
 COPY docker/postgres/pgbackrest/entrypoint-wrapper.sh /usr/local/bin/boba-postgres-entrypoint
-RUN chmod 755 /usr/local/bin/boba-render-pgbackrest-conf /usr/local/bin/boba-postgres-entrypoint
+RUN chmod 755 /usr/local/bin/boba-render-pgbackrest-conf /usr/local/bin/boba-postgres-entrypoint \
+    && chown postgres:postgres /etc/pgbackrest /etc/postgresql /var/run/postgresql
+
+# C1 contract: container starts and runs as postgres. No root entrypoint.
+USER postgres
 
 ENTRYPOINT ["boba-postgres-entrypoint"]
 CMD ["postgres"]

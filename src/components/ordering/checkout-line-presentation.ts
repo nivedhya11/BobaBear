@@ -7,6 +7,8 @@ export type CheckoutSnapshotLineRow = Readonly<{
   variantName: string;
   quantity: number;
   lineTotalPaise: string;
+  /** Sealed gross line subtotal. Null when the snapshot row did not carry it. */
+  lineSubtotalPaise: string | null;
   lineOrigin?: "cart" | "complimentary_offer";
 }>;
 
@@ -29,6 +31,8 @@ export function narrowCheckoutSnapshotLines(
         : typeof raw.lineTotalMinor === "string"
           ? raw.lineTotalMinor
           : null;
+    const lineSubtotalPaise =
+      typeof raw.lineSubtotalPaise === "string" ? raw.lineSubtotalPaise : null;
     if (!productName || quantity === null || !lineTotalPaise) continue;
     rows.push(
       Object.freeze({
@@ -36,6 +40,7 @@ export function narrowCheckoutSnapshotLines(
         variantName,
         quantity,
         lineTotalPaise,
+        lineSubtotalPaise,
         lineOrigin:
           raw.lineOrigin === "complimentary_offer" ? "complimentary_offer" : "cart",
       }),

@@ -685,7 +685,6 @@ describe("IMP-028C modifier bootstrap (Slice 4)", () => {
       evaluatedAt: AT,
       fulfilmentMode: "DELIVERY",
       serviceabilityEvaluatedAt: AT,
-      manualCouponCode: null,
       destination,
       pickupLocation: null,
       commercial: {

@@ -397,6 +397,11 @@ test("default Vitest umbrella includes explicit tests/** and excludes e2e/cli/in
   assert.equal(isDefaultVitestIncludedPath("tests/imp-036b/delivery-context.test.ts"), true);
   assert.equal(isDefaultVitestIncludedPath("tests/menu-parity/existing-menu-parity.test.ts"), true);
   assert.equal(isDefaultVitestIncludedPath("tests/workforce-hub/destinations.test.ts"), true);
+  assert.equal(isDefaultVitestIncludedPath("tests/gtm-closure/coupon-journeys.test.ts"), true);
+  assert.equal(
+    isDefaultVitestIncludedPath("tests/gtm-closure/accessible-names.test.tsx"),
+    true,
+  );
   assert.equal(isDefaultVitestIncludedPath("tests/e2e/customer-ordering.spec.ts"), false);
   assert.equal(
     isDefaultVitestIncludedPath("tests/access-control/cli/bootstrap-platform-admin.test.ts"),

@@ -139,7 +139,7 @@ test("PITR negatives: pgbackrest nonzero and restored startup failure never SUCC
       runId: generateRunId({ now: new Date(Date.UTC(2026, 8, 21, 10, 0, 0)), randomHex: "1111111111111111" }),
       target: { type: "name", value: "missing_point" },
       sourceIdentity: "disposable-source",
-      sourceClassification: "recovery",
+      sourceClassification: "staging",
       sourcePgdataPath: "/var/lib/postgresql/data",
       workspaceRoot: path.join(root, "nz"),
       provisionTarget: true,
@@ -153,7 +153,7 @@ test("PITR negatives: pgbackrest nonzero and restored startup failure never SUCC
       runId: generateRunId({ now: new Date(Date.UTC(2026, 8, 21, 10, 1, 0)), randomHex: "2222222222222222" }),
       target: { type: "name", value: RESTORE_POINT_NAME },
       sourceIdentity: "disposable-source",
-      sourceClassification: "recovery",
+      sourceClassification: "staging",
       sourcePgdataPath: "/var/lib/postgresql/data",
       workspaceRoot: path.join(root, "sf"),
       provisionTarget: true,
@@ -1043,13 +1043,13 @@ test("repeatability: distinct RUN_ID targets do not collide", async (t) => {
   const a = await provisionLogicalTarget({
     runId: runA,
     sourceIdentity: "src-a",
-    sourceClassification: "recovery",
+    sourceClassification: "staging",
     sourceDatabaseUrl: "postgresql://u:p@10.255.255.2:5432/a",
   });
   const b = await provisionLogicalTarget({
     runId: runB,
     sourceIdentity: "src-b",
-    sourceClassification: "recovery",
+    sourceClassification: "staging",
     sourceDatabaseUrl: "postgresql://u:p@10.255.255.3:5432/b",
   });
   try {

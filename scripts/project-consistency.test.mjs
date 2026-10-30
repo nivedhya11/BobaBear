@@ -107,6 +107,10 @@ import {
   isSupportedImp030GovernanceCheckpoint,
   evaluateD382Current,
   evaluateD382AmendedByD383,
+  evaluateD383Current,
+  evaluateD384ProgrammeBaselineProgression,
+  collectDecisionRegisterIdRows,
+  evaluateImp036kSourceEraDecisionAllocation,
   evaluateImp036jApprovedProductDefinition,
   evaluateImp036jPd2ExperienceTransition,
   evaluateImp036jExperienceGatePass,
@@ -10384,7 +10388,7 @@ describe("D-374 cost-optimized pilot infrastructure checkpoint", () => {
     assert.match(roadmap, /"roadmapVersion":\s*"GTM-R1(?:37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56|57|58|59|60|61|62|63|64|65|66|67|68|69|70|71|72|73|74|75|76|77|78|79|80|81|82|83|84|85|86|87|88|89|90)"/);
     assert.match(state, /"stateVersion":\s*"STATE-R1(?:35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56|57|58|59|60|61|62|63|64|65|66|67|68|69|70|71|72|73|74|75|76|77|78|79|80|81|82|83|84|85|86|87)"/);
     assert.match(architecture, /"architectureVersion":\s*"ARCH-R2[0-3]"/);
-    assert.match(decision, /"decisionRegisterVersion":\s*"DR-(?:1[6789]|2[0-4])"/);
+    assert.match(decision, /"decisionRegisterVersion":\s*"DR-(?:1[6789]|2[0-5])"/);
     assert.match(decision, /\|\s*D-374\s*\|[^\n]*\|\s*CURRENT\s*\|/);
     assert.match(decision, /D-375/);
     assert.match(decision, /D-376/);
@@ -19417,3 +19421,129 @@ describe("IMP-036K Design Readiness plan-finalized flags", () => {
   });
 });
 
+
+describe("D-384 programme baseline / IMP-036K source-era decision allocation", () => {
+  const liveDecision = readFileSync("docs/platform/decision-register.md", "utf8");
+
+  function extractMeta(text) {
+    const block = text.match(/<!--\s*governance-meta\s*(\{[\s\S]*?\})\s*-->/);
+    assert.ok(block, "decision-register governance-meta missing");
+    return JSON.parse(block[1]);
+  }
+
+  it("SOURCE_PREDICTION: GOV-2 tip at DR-25 fails under frozen DR-24 tip expectation", () => {
+    // Executed prediction against the intended progression fixture shape: before the
+    // compatibility change, isGov2AuthorityDocuments tip expected DR-24 (IMP028_DR_VERSION).
+    const PREVIOUS_GOV2_TIP_EXPECTATION = "DR-24";
+    const meta = extractMeta(liveDecision);
+    assert.equal(meta.decisionRegisterVersion, "DR-25");
+    assert.notEqual(meta.decisionRegisterVersion, PREVIOUS_GOV2_TIP_EXPECTATION);
+  });
+
+  it("accepts live DR-25 / D-384 / next-D-385 programme baseline progression", () => {
+    const meta = extractMeta(liveDecision);
+    const result = evaluateD384ProgrammeBaselineProgression({ meta, text: liveDecision });
+    assert.equal(result.ok, true, result.message);
+    assert.match(liveDecision, /next ID \*\*D-385\*\*/);
+    assert.match(liveDecision, /\|\s*D-384\s*\|/);
+    assert.deepEqual(evaluateD383Current(liveDecision), { ok: true, status: "CURRENT" });
+    assert.deepEqual(evaluateD382AmendedByD383(liveDecision), { ok: true, status: "AMENDED" });
+  });
+
+  it("rejects DR-25 progression missing D-384 allocation", () => {
+    const meta = { decisionRegisterVersion: "DR-25", supersedes: "DR-24" };
+    const text = liveDecision.replace(/^\|\s*D-384\s*\|.*\n/m, "");
+    assert.notEqual(text, liveDecision);
+    const result = evaluateD384ProgrammeBaselineProgression({ meta, text });
+    assert.equal(result.ok, false);
+    assert.equal(result.code, "D384_MISSING");
+  });
+
+  it("accepts a valid single D-384 table row (uniqueness PASS)", () => {
+    const meta = extractMeta(liveDecision);
+    assert.equal(collectDecisionRegisterIdRows(liveDecision, "D-384").length, 1);
+    const result = evaluateD384ProgrammeBaselineProgression({ meta, text: liveDecision });
+    assert.equal(result.ok, true, result.message);
+  });
+
+  it("rejects an identical second D-384 table row (duplicate allocation FAIL)", () => {
+    const meta = { decisionRegisterVersion: "DR-25", supersedes: "DR-24" };
+    const primary = collectDecisionRegisterIdRows(liveDecision, "D-384")[0];
+    assert.ok(primary);
+    // First-match row-status would still see CURRENT; uniqueness must fail independently.
+    const text = `${liveDecision}\n${primary}\n`;
+    assert.equal(collectDecisionRegisterIdRows(text, "D-384").length, 2);
+    const result = evaluateD384ProgrammeBaselineProgression({ meta, text });
+    assert.equal(result.ok, false);
+    assert.equal(result.code, "D384_DUPLICATE");
+  });
+
+  it("rejects a conflicting second D-384 table row regardless of order (FAIL)", () => {
+    const meta = { decisionRegisterVersion: "DR-25", supersedes: "DR-24" };
+    const primary = collectDecisionRegisterIdRows(liveDecision, "D-384")[0];
+    assert.ok(primary);
+    const conflicting =
+      "| D-384 | Conflicting alternate programme baseline | Roadmap / Program / Planning | PROPOSED | Other record | — | — | Issue #380 |";
+    const afterPrimary = `${liveDecision}\n${conflicting}\n`;
+    const beforePrimary = liveDecision.replace(primary, `${conflicting}\n${primary}`);
+    assert.equal(collectDecisionRegisterIdRows(afterPrimary, "D-384").length, 2);
+    assert.equal(collectDecisionRegisterIdRows(beforePrimary, "D-384").length, 2);
+    const resultAfter = evaluateD384ProgrammeBaselineProgression({ meta, text: afterPrimary });
+    const resultBefore = evaluateD384ProgrammeBaselineProgression({ meta, text: beforePrimary });
+    assert.equal(resultAfter.ok, false);
+    assert.equal(resultAfter.code, "D384_DUPLICATE");
+    assert.equal(resultBefore.ok, false);
+    assert.equal(resultBefore.code, "D384_DUPLICATE");
+  });
+
+  it("rejects DR-25 progression with stale next free ID D-384", () => {
+    const meta = { decisionRegisterVersion: "DR-25", supersedes: "DR-24" };
+    const text = liveDecision
+      .replace(/next ID \*\*D-385\*\*/, "next ID **D-384**")
+      .replace(/Next free decision ID advances to \*\*D-385\*\*/, "Next free decision ID advances to **D-384**");
+    assert.notEqual(text, liveDecision);
+    const result = evaluateD384ProgrammeBaselineProgression({ meta, text });
+    assert.equal(result.ok, false);
+    assert.ok(["D384_NEXT_ID", "D384_NEXT_ID_STALE"].includes(result.code), result.code);
+  });
+
+  it("rejects inconsistent register version/metadata for programme baseline", () => {
+    const result = evaluateD384ProgrammeBaselineProgression({
+      meta: { decisionRegisterVersion: "DR-24", supersedes: "DR-23" },
+      text: liveDecision,
+    });
+    assert.equal(result.ok, false);
+    assert.equal(result.code, "D384_DR_VERSION");
+  });
+
+  it("keeps IMP-036K source-era provenance valid only without a D-384 table row", () => {
+    const sourceEra = [
+      "next ID **D-384**",
+      "| D-383 | Pre-GTM Revenue Recommendations | Roadmap | CURRENT | record | — | — | GTM |",
+    ].join("\n");
+    assert.deepEqual(evaluateImp036kSourceEraDecisionAllocation(sourceEra), { ok: true });
+
+    const withLaterAllocation = `${sourceEra}\n| D-384 | Later programme baseline | Roadmap / Program / Planning | CURRENT | This register | — | — | Issue #380 |`;
+    const rejected = evaluateImp036kSourceEraDecisionAllocation(withLaterAllocation);
+    assert.equal(rejected.ok, false);
+    assert.equal(rejected.code, "IMP036K_SOURCE_ERA_D384");
+  });
+
+  it("does not treat live DR-25 D-384 as IMP-036K source-era Fit/Design provenance", () => {
+    // Live tip has D-384; source-era helper must fail-closed against that tip text.
+    const rejected = evaluateImp036kSourceEraDecisionAllocation(liveDecision);
+    assert.equal(rejected.ok, false);
+    assert.equal(rejected.code, "IMP036K_SOURCE_ERA_D384");
+    // Capability / design-readiness markers remain source-scoped and unchanged in meaning.
+    const capability = readFileSync(
+      "docs/platform/capabilities/IMP-036K-revenue-recommendations.md",
+      "utf8",
+    );
+    const design = readFileSync("docs/platform/product/IMP-036K/design-readiness.md", "utf8");
+    assert.match(capability, /D-384_CREATED = NO/);
+    assert.match(capability, /D-384_CREATED_SCOPE = SOURCE_FIT_LOCK_OPERATION/);
+    assert.match(design, /D-384 = NO/);
+    assert.match(design, /D-384_SCOPE = SOURCE_DESIGN_READINESS_OPERATION/);
+    assert.match(design, /SOURCE_DECISION_REGISTER = DR-24/);
+  });
+});

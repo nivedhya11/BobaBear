@@ -103,8 +103,11 @@ export function startEphemeralPostgres(options = {}) {
   const image = options.image ?? DISPOSABLE_POSTGRES_IMAGE;
   const execFn =
     options.execFn ??
-    ((command, args) => {
-      const result = spawnSync(command, args, { encoding: "utf8" });
+    ((command, args, opts = {}) => {
+      const result = spawnSync(command, args, {
+        encoding: "utf8",
+        env: opts.env ?? process.env,
+      });
       return {
         status: typeof result.status === "number" ? result.status : 1,
         stdout: result.stdout ?? "",
@@ -116,20 +119,31 @@ export function startEphemeralPostgres(options = {}) {
   if (!cli) {
     return { ok: false, reason: "neither docker nor podman is available" };
   }
-  const result = execFn(cli, [
-    "run",
-    "-d",
-    "--rm",
-    "--name",
-    name,
-    "-e",
-    "POSTGRES_PASSWORD=recovery-test-only",
-    "-e",
-    "POSTGRES_USER=boba_recovery",
-    "-e",
-    "POSTGRES_DB=boba_recovery",
-    image,
-  ]);
+  // CS4: deliver disposable test credentials via child env + -e NAME (no =value in argv).
+  const childEnv = {
+    ...process.env,
+    POSTGRES_PASSWORD: "recovery-test-only",
+    POSTGRES_USER: "boba_recovery",
+    POSTGRES_DB: "boba_recovery",
+  };
+  const result = execFn(
+    cli,
+    [
+      "run",
+      "-d",
+      "--rm",
+      "--name",
+      name,
+      "-e",
+      "POSTGRES_PASSWORD",
+      "-e",
+      "POSTGRES_USER",
+      "-e",
+      "POSTGRES_DB",
+      image,
+    ],
+    { env: childEnv },
+  );
   if (result.status !== 0) {
     return {
       ok: false,

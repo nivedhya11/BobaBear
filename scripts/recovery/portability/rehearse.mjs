@@ -16,7 +16,13 @@ import { createEvidence } from "../evidence.mjs";
 import { generateRunId } from "../run-id.mjs";
 import { persistEvidence } from "../store.mjs";
 import { redactText } from "../redact.mjs";
-import { runLogicalRestore } from "../restore/logical.mjs";
+import { requireExplicitSourceClassification } from "../identity.mjs";
+import {
+  applyLibpqSecretEnv,
+  buildLibpqChildConnection,
+  buildPsqlHostArgv,
+  runLogicalRestore,
+} from "../restore/logical.mjs";
 import { cleanupProvisionedTarget } from "../restore/provision.mjs";
 import { createRestoreTargetId, assertFreshTarget } from "../restore/target.mjs";
 import { runPostRestoreMigrations } from "../migrate/post-restore.mjs";
@@ -38,12 +44,22 @@ export async function runPortabilityRehearsal(options) {
   const startedAt = (options.now instanceof Date ? options.now : new Date()).toISOString();
   let targetIdentity = options.targetIdentity ?? createRestoreTargetId(runId);
 
+  const sourceClass = requireExplicitSourceClassification(options.sourceClassification, {
+    composeProjectName: options.composeProjectName ?? options.env?.COMPOSE_PROJECT_NAME,
+    claimedRuntimeEnv: options.claimedRuntimeEnv ?? options.env?.BOBA_BEAR_ENV,
+  });
+  if (!sourceClass.ok) {
+    return interrupt(options, runId, startedAt, targetIdentity, sourceClass.reason);
+  }
+
   const fresh = assertFreshTarget({
     sourceIdentity: options.sourceIdentity,
     targetIdentity,
-    sourceClassification: options.sourceClassification,
+    sourceClassification: sourceClass.classification,
     targetClassification: "recovery",
     forceProduction: options.forceProduction,
+    composeProjectName: options.composeProjectName ?? options.env?.COMPOSE_PROJECT_NAME,
+    claimedRuntimeEnv: options.claimedRuntimeEnv ?? options.env?.BOBA_BEAR_ENV,
   });
   if (!fresh.ok) {
     return interrupt(options, runId, startedAt, targetIdentity, fresh.reason);
@@ -76,7 +92,9 @@ export async function runPortabilityRehearsal(options) {
       objectStore: options.objectStore,
       identityFile: options.identityFile,
       sourceIdentity: options.sourceIdentity,
-      sourceClassification: options.sourceClassification,
+      sourceClassification: sourceClass.classification,
+      composeProjectName: options.composeProjectName ?? options.env?.COMPOSE_PROJECT_NAME,
+      claimedRuntimeEnv: options.claimedRuntimeEnv ?? options.env?.BOBA_BEAR_ENV,
       sourceDatabaseUrl: options.sourceDatabaseUrl,
       targetIdentity,
       databaseUrl: databaseUrl || undefined,
@@ -279,11 +297,20 @@ function createTargetQueryFn(databaseUrl, env, provisioned = null) {
         { encoding: "utf8", env: env ?? process.env, timeout: 60_000 },
       );
     } else {
-      result = spawnSync("psql", [databaseUrl, "-v", "ON_ERROR_STOP=1", "-t", "-A", "-F", ",", "-c", text], {
-        encoding: "utf8",
-        env: env ?? process.env,
-        timeout: 60_000,
-      });
+      // CS4/C2: password-free libpq URI in argv; secrets only in child env.
+      const conn = buildLibpqChildConnection(databaseUrl);
+      if (!conn.ok) {
+        throw new Error(conn.reason);
+      }
+      result = spawnSync(
+        "psql",
+        buildPsqlHostArgv(conn, ["-v", "ON_ERROR_STOP=1", "-t", "-A", "-F", ",", "-c", text]),
+        {
+          encoding: "utf8",
+          env: applyLibpqSecretEnv(env ?? process.env, conn),
+          timeout: 60_000,
+        },
+      );
     }
     if (result.error && /ENOENT/i.test(String(result.error.message ?? result.error))) {
       throw new Error("psql unavailable on host and no provisioned container query path");

@@ -18,6 +18,7 @@ import {
 import type {
   AppliedPromotion,
   PromotionDefinition,
+  SubmittedCouponResult,
 } from "../../../shared/promotions";
 import type { Cart } from "../../../shared/cart";
 import type {
@@ -48,6 +49,7 @@ import {
   loadEffectiveVariantContent,
 } from "../../catalog/revisions";
 import { assertApplicationRole } from "../assert-role";
+import { withCanonicalCartSelectionOrder } from "../selection-order";
 import type { CatalogLineLabels } from "./catalog";
 
 export type CheckoutCommercialLine = Readonly<{
@@ -246,6 +248,55 @@ function lineDiscountFromAllocations(
   return total;
 }
 
+/**
+ * True when the pricing engine finished evaluating the submitted coupon.
+ * Indeterminate/unavailable enforcement must not soft-succeed.
+ */
+export function isDefinitiveSubmittedCouponOutcome(
+  result: SubmittedCouponResult,
+): boolean {
+  if (result.status === "REDEMPTION_ENFORCEMENT_UNAVAILABLE") return false;
+  return (
+    result.status === "APPLIED" ||
+    result.status === "VALID_BUT_NOT_SELECTED" ||
+    result.status === "NOT_APPLICABLE" ||
+    result.status === "INVALID" ||
+    result.status === "CUSTOMER_IDENTITY_REQUIRED" ||
+    result.reasonCode === "COMPLIMENTARY_UNAVAILABLE"
+  );
+}
+
+/**
+ * Fit §8 sealed snapshot field: applied selected coupon code, else null.
+ * Cart intent (`carts.manual_coupon_code`) remains separate and may still hold
+ * an entered but unselected / ineligible code.
+ */
+export function sealedManualCouponCodeFromCommercial(
+  commercial: CheckoutCommercialResult,
+): string | null {
+  const submitted = commercial.quote.submittedCouponResult;
+  if (submitted?.status !== "APPLIED") return null;
+  return submitted.canonicalCode;
+}
+
+function assertSubmittedCouponOutcomeAllowsCheckout(
+  result: SubmittedCouponResult | null,
+): void {
+  if (!result) {
+    throw new CheckoutError(
+      "CHECKOUT_PROMOTION_INDETERMINATE",
+      "Promotions could not be evaluated.",
+    );
+  }
+  if (isDefinitiveSubmittedCouponOutcome(result)) {
+    return;
+  }
+  throw new CheckoutError(
+    "CHECKOUT_PROMOTION_INDETERMINATE",
+    "Promotions could not be evaluated.",
+  );
+}
+
 export async function buildCheckoutCommercialResult(
   context: PersistenceQueryContext,
   input: {
@@ -264,6 +315,8 @@ export async function buildCheckoutCommercialResult(
 ): Promise<CheckoutCommercialResult> {
   assertApplicationRole(context, "buildCheckoutCommercialResult");
   const fulfilmentMode = input.fulfilmentMode ?? "DELIVERY";
+  // Sealed and re-validated Snapshots must derive from the same selection order.
+  const cart = withCanonicalCartSelectionOrder(input.cart);
 
   let chargeDefs;
   try {
@@ -305,7 +358,7 @@ export async function buildCheckoutCommercialResult(
         amountPaise: c.amountPaise,
         taxCategoryId: c.taxCategoryId,
       })),
-      lines: input.cart.lines.map((line) => ({
+      lines: cart.lines.map((line) => ({
         lineId: line.id,
         variantId: line.variantId,
         quantity: line.quantity,
@@ -372,7 +425,7 @@ export async function buildCheckoutCommercialResult(
         amountPaise: c.amountPaise,
         taxCategoryId: c.taxCategoryId,
       })),
-      lines: input.cart.lines.map((line) => ({
+      lines: cart.lines.map((line) => ({
         lineId: line.id,
         variantId: line.variantId,
         quantity: line.quantity,
@@ -419,22 +472,17 @@ export async function buildCheckoutCommercialResult(
     );
   }
 
-  if (
-    input.cart.manualCouponCode &&
-    quote.submittedCouponResult &&
-    quote.submittedCouponResult.status !== "APPLIED" &&
-    quote.submittedCouponResult.status !== "VALID_BUT_NOT_SELECTED" &&
-    quote.submittedCouponResult.reasonCode !== "COMPLIMENTARY_UNAVAILABLE"
-  ) {
-    throw new CheckoutError(
-      "CHECKOUT_COUPON_INELIGIBLE",
-      "Manual coupon is not eligible for this Checkout.",
-    );
+  // Fit §8 / AC-036J-006/007: finished evaluator outcomes (invalid, expired,
+  // inapplicable, exhausted, identity-required, valid-not-selected) stay on the
+  // commercial result so Review can explain and recover. Only missing or
+  // indeterminate promotion evaluation fails closed.
+  if (input.cart.manualCouponCode) {
+    assertSubmittedCouponOutcomeAllowsCheckout(quote.submittedCouponResult);
   }
 
   const lines: CheckoutCommercialLine[] = [];
   let sequence = 0;
-  for (const line of input.cart.lines) {
+  for (const line of cart.lines) {
     const labels = input.labels.get(line.id);
     if (!labels) {
       throw new CheckoutError(

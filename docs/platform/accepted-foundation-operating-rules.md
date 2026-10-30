@@ -4,7 +4,7 @@ Authority: Accepted foundation operating constraints (not roadmap/state)
 Canonical sequence: docs/platform/ROADMAP.md
 Canonical accepted state: docs/platform/STATE.md
 Canonical architecture: docs/platform/ARCHITECTURE.md
-Last updated: 2026-08-18
+Last updated: 2026-10-30
 ---
 
 # Accepted foundation operating constraints
@@ -160,7 +160,7 @@ still has no HTTP API, and still has no business-domain table.
   are never named in a `COPY` instruction. Runtime/migration credentials reach a tooling container
   only via Compose `env_file` at `docker compose run` time.
 - **Never use a floating image tag.** `Dockerfile` and `compose.yaml` pin exact versions
-  (`node:22.23.1-bookworm-slim`, `nginx:1.30.4-alpine3.24`, `postgres:18.4-trixie`) — no `latest`, no
+  (`node:22.23.1-bookworm-slim`, `nginx:1.30.6-alpine3.24`, `postgres:18.4-trixie`) — no `latest`, no
   bare `node`/`nginx`/`postgres`. `npm run audit:docker` enforces this statically.
 - **Never expose the Docker socket or run a container privileged.** No service mounts
   `/var/run/docker.sock`, sets `privileged: true`, or uses `network_mode: host`.
@@ -311,14 +311,14 @@ idempotent (that is exactly what the idempotency store exists for).
 
 ## Better Auth persistence and sessions (IMP-008)
 
-`src/server/auth/` is a server-only, database-backed Better Auth 1.6.25 foundation with two fully
+`src/server/auth/` is a server-only, database-backed Better Auth 1.7.14 foundation with two fully
 isolated authentication realms — **customer** and **workforce**. A person may hold both a customer and
 a workforce identity; this slice deliberately does not link them, so the two realms never share a
 user, session, secret, or table. This is a persistence/session foundation only — no login UI, no HTTP
 route, no credentials flow, no roles/permissions, and no customer/employee profile data.
 
-- **Pinned exact versions:** `better-auth@1.6.25`, `@better-auth/drizzle-adapter@1.6.25`, and the
-  `auth` CLI at `1.6.25` — never a caret/tilde range, never `@latest`, never a v1.7 beta. `auth` is a
+- **Pinned exact versions:** `better-auth@1.7.14`, `@better-auth/drizzle-adapter@1.7.14`, and the
+  `auth` CLI at `1.7.14` — never a caret/tilde range, never `@latest`, never a beta or release candidate. `auth` is a
   devDependency (schema generation only); the other two are runtime dependencies.
 - **Realm constants** (`src/server/auth/shared/constants.ts`) are locked, technical constants, not
   environment configuration:
@@ -395,8 +395,9 @@ route, no credentials flow, no roles/permissions, and no customer/employee profi
   only inside that realm's `drizzleAdapter(...)` closure for the runtime handle's lifetime — never
   exported as a general query interface, never a second call to `pg.Pool`/`createDatabaseClient`.
 - **Disabled by design in this slice:** `emailAndPassword.enabled: false`, `socialProviders: {}`,
-  `plugins: []`, `rateLimit.enabled: false`, `logger.disabled: true`, `telemetry.enabled: false`,
-  `experimental.joins: false`. No email/password, OTP, magic-link, passkey, username, anonymous,
+  `plugins: []`, `rateLimit.enabled: false`, `logger.disabled: true`, `telemetry.enabled: false`.
+  Database joins stay off because Better Auth 1.7 defaults `advanced.database.joins` to false.
+  No email/password, OTP, magic-link, passkey, username, anonymous,
   MFA/2FA, organization, admin, or API-key capability exists. No Better Auth HTTP route handler is
   mounted anywhere (`src/app/api/auth/**` does not exist), no `toNextJsHandler`, and no browser
   `createAuthClient`/`useSession` exists in production source — the two Better Auth instances are
@@ -434,11 +435,27 @@ both the provider factory and the service config fail closed (throw
 `CUSTOMER_OTP_PRODUCTION_PROVIDER_UNAVAILABLE`) in staging/production. Shipping real SMS delivery is
 future work, not something to approximate or stub into this slice.
 
+- **OTP transport evidence (not a decision ID).** On 29 October 2026 the Founder approved
+  Option A: sensitive OTP verification values, phone verification data, and provider
+  credentials must not travel in URL paths or query parameters. MSG91 GET-based Verify
+  remains blocked. That evidence is not a CURRENT decision-register row. DR-25 still names
+  D-385 as the next ID, and open pull requests reserve D-385, D-386, and D-387, so this
+  file does not allocate one. `src/server/customer-auth/provider/msg91.ts` is an inactive
+  offline candidate. It is not a `CustomerOtpProviderKind`, it is not selected by
+  `createCustomerOtpProvider`, and it refuses the documented MSG91 Verify, Send, and
+  Resend URL placements without calling the network. Staging and production still fail
+  closed with `CUSTOMER_OTP_PRODUCTION_PROVIDER_UNAVAILABLE`. The comparison of later
+  provider contracts is the non-authoritative assessment
+  [`engineering/customer-otp-transport-assessment.md`](./engineering/customer-otp-transport-assessment.md).
+  That assessment does not authorize a provider, credentials, DLT filing, SMS, or staging
+  enablement. ADR-004's initial five-attempt and 30-second resend figures, and this
+  service's three-attempt and 60-second send figures, stay as they are.
+
 - **Pinned exact version:** `libphonenumber-js@1.13.10` — never a caret/tilde range, never
   `@latest`. No alternate phone-parsing library (`google-libphonenumber`, `phone`,
   `awesome-phonenumber`, …), SMS/OTP provider SDK (Twilio, MSG91, Exotel, SNS, …), or third-party
   HTTP framework (Express, Fastify, Koa, …) dependency exists; `better-auth` /
-  `@better-auth/drizzle-adapter` / `auth` stay pinned to the IMP-008 `1.6.25`.
+  `@better-auth/drizzle-adapter` / `auth` stay pinned to `1.7.14`.
 - **India-only phone normalization** (`src/shared/customer-auth/phone.ts`) is the one authoritative
   place a phone string becomes a branded `E164IndianMobileNumber` — via `libphonenumber-js/mobile`,
   never a hand-rolled regular expression. `normalizeIndianMobileNumber` rejects anything not a
@@ -558,7 +575,7 @@ route) that authenticates workforce operators with email + password + mandatory 
 IMP-008's workforce realm. Authorization (roles/outlets/organizations) is explicitly out of scope —
 that is IMP-011.
 
-- **Pinned exact versions:** `better-auth@1.6.25`, `@better-auth/drizzle-adapter@1.6.25`, `auth@1.6.25`,
+- **Pinned exact versions:** `better-auth@1.7.14`, `@better-auth/drizzle-adapter@1.7.14`, `auth@1.7.14`,
   and client-side `qrcode@1.5.4` (local QR rendering of `otpauth://` URIs only — never an external QR
   service). No Admin/Organization/phone/SMS/magic-link/social/SSO/passkey plugins on the workforce
   realm; the customer `phoneNumber` plugin must never appear in workforce options.
@@ -993,11 +1010,15 @@ IMP-026B.
 
 ```text
 npm run order:recover-missing
-npm run order:recover-missing -- --cursor=<checkoutId>
+npm run order:recover-missing -- --cursor='{"lastCheckoutUpdatedAt":"2026-01-15T10:00:00.000Z","lastCheckoutId":"00000000-0000-4000-8000-000000000001"}'
 ```
 
-Uses application-role `BOBA_BEAR_*` database config. Prints safe counts/identities (checkoutId,
-orderId, orderNumber). Repeated invocation is idempotent. Not scheduled automatically in IMP-026A.
+`--cursor` is the previous batch's `nextCursor` object (`lastCheckoutUpdatedAt` and
+`lastCheckoutId`) as JSON. A checkout id alone is rejected. When a summary includes
+`nextCursor`, pass that same object on the following invocation. Uses application-role
+`BOBA_BEAR_*` database config. Prints safe counts and identities (checkoutId, orderId,
+orderNumber), including retryable-failure checkout ids. Repeated invocation is idempotent.
+Not scheduled automatically in IMP-026A.
 
 ## Razorpay Standard Checkout browser integration (IMP-026B / D-361)
 

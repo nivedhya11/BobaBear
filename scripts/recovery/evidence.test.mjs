@@ -234,3 +234,23 @@ test("synthetic magic-only markers without chain fields still fail Layer 2", () 
   assert.equal(proof.ok, false);
   assert.match(proof.reason, /recovery point|artifact|context/i);
 });
+
+test("a succeeded logical restore is not qualifying backup proof", () => {
+  const evidence = createEvidence({
+    runId: generateRunId(),
+    operationType: "restore-logical",
+    recoveryLayer: RECOVERY_LAYER.LAYER_2,
+    status: OPERATION_STATUS.SUCCEEDED,
+    endedAt: new Date().toISOString(),
+    recoveryPoint: "2026-09-20T00:00:00Z",
+    recoveryArtifactReference: "logical/run/dump.age",
+    checksumIntegrityStatus: CHECKSUM_INTEGRITY_STATUS.MATCHED,
+    candidate: { commitSha: "abc", repositoryPath: "/home/ajoshi/repos/boba-bear-platform" },
+    sourceEnvironmentClassification: "staging",
+    sourceIdentityMarker: "boba-staging",
+    targetIdentityMarker: "isolated-restore-target",
+    findings: [{ code: "LOGICAL_RESTORE" }],
+  });
+  assert.equal(validateEvidence(evidence).ok, true);
+  assert.equal(evaluateQualifyingRecoveryProof(evidence).ok, false);
+});

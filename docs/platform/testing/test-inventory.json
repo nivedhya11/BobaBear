@@ -32,23 +32,23 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2297,
-    "executableTestFiles": 502,
-    "sourceTestFiles": 148,
-    "testsTreeExecutableFiles": 274,
-    "scriptTestFiles": 80,
-    "playwrightSpecs": 12,
+    "trackedPathsConsidered": 2419,
+    "executableTestFiles": 565,
+    "sourceTestFiles": 165,
+    "testsTreeExecutableFiles": 296,
+    "scriptTestFiles": 104,
+    "playwrightSpecs": 13,
     "vitestConfigs": 2,
-    "playwrightConfigs": 7,
-    "testSupportScripts": 51,
+    "playwrightConfigs": 8,
+    "testSupportScripts": 54,
     "packageTestCommands": 94,
-    "packageAuditCommands": 27,
-    "packageE2eCommands": 9,
+    "packageAuditCommands": 28,
+    "packageE2eCommands": 10,
     "packageCheckCommands": 17,
     "packageCoverageCommands": 1,
     "packageInventoryCommands": 2,
     "ciWorkflowFiles": 4,
-    "ciValidationSteps": 130,
+    "ciValidationSteps": 135,
     "protectedEvidenceTrackedFiles": 3,
     "archiveTrackedFiles": 92
   },
@@ -59,6 +59,7 @@
     "src/components/Footer.test.tsx",
     "src/components/FooterNewsletter.test.tsx",
     "src/components/Nav.test.tsx",
+    "src/components/PublishedMenuChapters.test.tsx",
     "src/components/account/AccountShell.test.tsx",
     "src/components/account/AddressForm.validation.test.ts",
     "src/components/operations/OperationsDeliveryPanel.test.tsx",
@@ -87,18 +88,24 @@
     "src/components/ordering/PaymentPanel.test.tsx",
     "src/components/ordering/PreviousPaymentRecoveryView.test.tsx",
     "src/components/ordering/ReconcileConflictDialog.test.tsx",
+    "src/components/ordering/availability-377-recovery.test.tsx",
     "src/components/ordering/cart-changed-recovery-presentation.test.ts",
     "src/components/ordering/cart-presentation.test.ts",
     "src/components/ordering/checkout-snapshot-presentation.test.ts",
+    "src/components/ordering/checkout-unavailable-item-presentation.test.tsx",
     "src/components/ordering/client-action.test.ts",
     "src/components/ordering/committed-presentation-observation.test.ts",
     "src/components/ordering/financial-document-presentation.test.ts",
+    "src/components/ordering/imp036j-391a-stale-recovery.checkout-client.test.tsx",
+    "src/components/ordering/imp036j-coupon-recovery.checkout-client.test.tsx",
+    "src/components/ordering/imp036j-coupon-recovery.test.ts",
     "src/components/ordering/imp036j-tranche5-checkout-remediation.test.tsx",
     "src/components/ordering/imp036j-tranche5-presentation.test.tsx",
     "src/components/ordering/order-status.test.ts",
     "src/components/ordering/order-support.test.ts",
     "src/components/ordering/payment-recovery-presentation.test.ts",
     "src/components/ordering/serviceability-copy.test.ts",
+    "src/components/ordering/stale-recovery-presentation.test.ts",
     "src/components/ui/Button.test.tsx",
     "src/lib/customer-auth/chrome-session.test.tsx",
     "src/lib/customer-auth/return-to.auth-transition.test.ts",
@@ -117,6 +124,7 @@
     "src/lib/operations/orders.test.ts",
     "src/lib/operations/pending-refund-command.test.ts",
     "src/lib/operations/refund-amount.test.ts",
+    "src/lib/published-menu-cards.test.ts",
     "src/lib/razorpay/checkout-script.test.ts",
     "src/lib/razorpay/csp-origins.test.ts",
     "src/lib/razorpay/standard-checkout.test.ts",
@@ -137,13 +145,17 @@
     "src/platform/observability/metrics.test.ts",
     "src/platform/observability/redact-log.test.ts",
     "src/platform/observability/request-id.test.ts",
+    "src/platform/security/undici-zod-remediation.test.ts",
     "src/platform/startup/bootstrap.test.ts",
     "src/server/assortment/outlet-eligibility-session.test.ts",
     "src/server/auth/customer/runtime.test.ts",
+    "src/server/auth/customer/trusted-identity.test.ts",
     "src/server/auth/shared/config.test.ts",
     "src/server/auth/shared/realm-isolation.test.ts",
     "src/server/auth/workforce/operator/reset-token-bridge.test.ts",
     "src/server/auth/workforce/runtime.test.ts",
+    "src/server/checkout/explain-snapshot-difference.test.ts",
+    "src/server/checkout/prepare-diagnostic.test.ts",
     "src/server/customer-auth/http/client-ip.test.ts",
     "src/server/customer-auth/http/headers.test.ts",
     "src/server/customer-auth/http/origin.test.ts",
@@ -151,9 +163,14 @@
     "src/server/customer-auth/http/response.test.ts",
     "src/server/customer-auth/pii.test.ts",
     "src/server/customer-auth/provider/local.test.ts",
+    "src/server/customer-auth/provider/msg91.test.ts",
     "src/server/customer-auth/rate-limit/hashing.test.ts",
     "src/server/customer-auth/rate-limit/progressive.test.ts",
+    "src/server/customer-commerce/checkout-prepare-diagnostic-config.test.ts",
+    "src/server/customer-commerce/checkout-prepare-diagnostic-log.test.ts",
+    "src/server/customer-commerce/checkout-prepare-diagnostic-startup.test.ts",
     "src/server/customer-commerce/http/helpers.test.ts",
+    "src/server/customer-commerce/http/request.test.ts",
     "src/server/customer-commerce/measurement/compare-presentation.test.ts",
     "src/server/customer-commerce/measurement/report-window.test.ts",
     "src/server/customer-commerce/menu/project-customer-menu.test.ts",
@@ -247,6 +264,8 @@
     "tests/administration/commercial-types.test.ts",
     "tests/administration/imp036g-proofs.integration.test.ts",
     "tests/administration/portal-session.integration.test.ts",
+    "tests/administration/promotion-create-identifier-validation.integration.test.ts",
+    "tests/administration/promotion-readiness.test.ts",
     "tests/assortment-availability/assortment-consequence-preview.test.ts",
     "tests/assortment-availability/assortment-revision-concurrency.test.ts",
     "tests/assortment-availability/assortment-rules.test.ts",
@@ -275,11 +294,18 @@
     "tests/catalog/menu-revision.test.ts",
     "tests/catalog/modifier-create-input.contract.test.ts",
     "tests/catalog/publication-preview-f2.test.ts",
+    "tests/catalog/published-menu-runtime.test.ts",
     "tests/checkout-auth-integration/checkout.auth.test.ts",
     "tests/checkout-concurrency/checkout.concurrency.test.ts",
     "tests/checkout-security/checkout.security.test.ts",
     "tests/checkout/checkout.domain.test.ts",
     "tests/checkout/checkout.pickup.domain.test.ts",
+    "tests/checkout/imp036j-385-line-presentation-options.fixture.test.ts",
+    "tests/checkout/imp036j-391-equal-payable-repricing.diagnostic.test.ts",
+    "tests/checkout/imp036j-391b-prepare-observer-lazy.diagnostic.test.ts",
+    "tests/checkout/imp036j-391b-prepare-observer.diagnostic.test.ts",
+    "tests/checkout/imp036j-coupon-recovery.domain.test.ts",
+    "tests/checkout/imp036j-gtm-committed-cart-authority.domain.test.ts",
     "tests/checkout/legacy-outlet-price-book-retirement.domain.test.ts",
     "tests/checkout/parse-fulfilment-input.test.ts",
     "tests/checkout/scheduled-fulfilment.domain.test.ts",
@@ -289,6 +315,7 @@
     "tests/customer-address-security/security.test.ts",
     "tests/customer-addresses/domain.test.ts",
     "tests/customer-auth/http.integration.test.ts",
+    "tests/customer-auth/trusted-identity.integration.test.ts",
     "tests/customer-commerce/financial-document.http.integration.test.ts",
     "tests/customer-commerce/http.integration.test.ts",
     "tests/customer-commerce/razorpay.http.integration.test.ts",
@@ -366,6 +393,7 @@
     "tests/e2e/customer-ordering.spec.ts",
     "tests/e2e/external-links.spec.ts",
     "tests/e2e/food-direct-ux-foundation.spec.ts",
+    "tests/e2e/gtm-uat-browser-journeys.spec.ts",
     "tests/e2e/home-page.spec.ts",
     "tests/e2e/imp-036b-uat-precert.spec.ts",
     "tests/e2e/location-selector-layout.spec.ts",
@@ -375,6 +403,13 @@
     "tests/e2e/workforce-auth.spec.ts",
     "tests/enterprise/dark-only-theme.test.ts",
     "tests/enterprise/portal-surfaces.test.ts",
+    "tests/gtm-closure/accessible-names.test.tsx",
+    "tests/gtm-closure/checkout-revalidation.test.ts",
+    "tests/gtm-closure/coupon-journeys.test.ts",
+    "tests/gtm-closure/first-returning-and-fulfilment.test.ts",
+    "tests/gtm-closure/my-orders-historical-savings.test.ts",
+    "tests/gtm-closure/operator-issue-activate-retire.test.tsx",
+    "tests/gtm-closure/payment-start-recovery.test.ts",
     "tests/imp-036b/addresses-client.test.tsx",
     "tests/imp-036b/delivery-context.test.ts",
     "tests/imp-036b/display-label.test.ts",
@@ -389,6 +424,7 @@
     "tests/imp-036b/profile-welcome.test.tsx",
     "tests/imp-036b/serviceability-copy.test.ts",
     "tests/imp-036b/welcome-flow.test.ts",
+    "tests/imp-036c/checkout-destination-395-provider-readiness.test.tsx",
     "tests/imp-036c/checkout-destination-flow.test.tsx",
     "tests/imp-036c/customer-delivery-address-flow.test.tsx",
     "tests/imp036j/imp036j-tranche8-coverage.test.ts",
@@ -410,6 +446,7 @@
     "tests/order-concurrency/order.concurrency.test.ts",
     "tests/order-crash/order.crash.test.ts",
     "tests/order-security/order.security.test.ts",
+    "tests/order/order-recovery-cli.integration.test.ts",
     "tests/order/order.delivery-golden-journey.integration.test.ts",
     "tests/order/order.domain.test.ts",
     "tests/order/order.pickup-cancel-refund.test.ts",
@@ -432,6 +469,8 @@
     "tests/payment-razorpay/refund.adapter.test.ts",
     "tests/payment-reconciliation/payment.reconciliation.test.ts",
     "tests/payment-security/payment.security.test.ts",
+    "tests/payment/gtm-391-payment-review-loop.domain.test.ts",
+    "tests/payment/payment-binding-fulfilment-timing.domain.test.ts",
     "tests/payment/payment.domain.test.ts",
     "tests/payment/payment.pickup.domain.test.ts",
     "tests/payment/payment.scheduled-bind-race.domain.test.ts",
@@ -497,6 +536,7 @@
     "scripts/ci-container-scan-paths.test.mjs",
     "scripts/ci-security-sensitive-paths.test.mjs",
     "scripts/customer-commerce/build.test.mjs",
+    "scripts/customer-otp-transport-assessment.test.mjs",
     "scripts/database/lib/migration-history.test.mjs",
     "scripts/database/lib/migration-integrity.test.mjs",
     "scripts/decision-register-table.test.mjs",
@@ -510,6 +550,17 @@
     "scripts/docker/workforce-auth-smoke.test.mjs",
     "scripts/environment/hygiene.test.mjs",
     "scripts/environment/podman-compose.test.mjs",
+    "scripts/environment/postgres-init-identity.test.mjs",
+    "scripts/environment/staging-candidate-preparation.test.mjs",
+    "scripts/environment/staging-config-projection.test.mjs",
+    "scripts/environment/staging-database-preflight.test.mjs",
+    "scripts/environment/staging-preflight.test.mjs",
+    "scripts/environment/staging-publishing-probe.test.mjs",
+    "scripts/environment/staging-recovery-binding.test.mjs",
+    "scripts/environment/staging-recovery-checkpoint.test.mjs",
+    "scripts/environment/staging-recovery-producer-compat.test.mjs",
+    "scripts/environment/staging-secret-files.test.mjs",
+    "scripts/environment/staging-source-isolation.test.mjs",
     "scripts/environment/staging.test.mjs",
     "scripts/generate-nginx-security-headers.test.mjs",
     "scripts/governance-context.test.mjs",
@@ -521,10 +572,15 @@
     "scripts/governance-v2/transition-current.test.mjs",
     "scripts/lib/vitest-result-validation.test.mjs",
     "scripts/nginx-origin-redirect.test.mjs",
+    "scripts/order/recovery-cli.test.mjs",
     "scripts/origin-trust/verify-contracts.test.mjs",
+    "scripts/postgres/c1-nonroot-runtime.test.mjs",
     "scripts/project-consistency.test.mjs",
+    "scripts/proof/pg-c1-proof-cleanup.test.mjs",
     "scripts/recovery/capacity/observe.test.mjs",
+    "scripts/recovery/cli.credentials.test.mjs",
     "scripts/recovery/cli.test.mjs",
+    "scripts/recovery/entry-points.source-class.test.mjs",
     "scripts/recovery/evidence.test.mjs",
     "scripts/recovery/flock.test.mjs",
     "scripts/recovery/gate/high-risk.test.mjs",
@@ -537,12 +593,16 @@
     "scripts/recovery/layer1/container-exec.test.mjs",
     "scripts/recovery/layer1/pgbackrest.test.mjs",
     "scripts/recovery/layer1/rotation.test.mjs",
+    "scripts/recovery/layer2/age.plaintext.test.mjs",
     "scripts/recovery/layer2/backup.test.mjs",
     "scripts/recovery/layer2/rotation.test.mjs",
     "scripts/recovery/portability/rehearse.test.mjs",
     "scripts/recovery/readiness.test.mjs",
     "scripts/recovery/redact.test.mjs",
+    "scripts/recovery/restore/logical-connection.test.mjs",
+    "scripts/recovery/restore/logical-integrity.test.mjs",
     "scripts/recovery/restore/logical-pg-restore.test.mjs",
+    "scripts/recovery/restore/logical-store-failures.test.mjs",
     "scripts/recovery/restore/logical-target-hardening.test.mjs",
     "scripts/recovery/restore/provision.test.mjs",
     "scripts/recovery/run-id.test.mjs",
@@ -550,13 +610,16 @@
     "scripts/recovery/spaces/local.test.mjs",
     "scripts/recovery/spaces/s3.test.mjs",
     "scripts/recovery/systemd/validate.test.mjs",
+    "scripts/recovery/tools/age-tools.test.mjs",
     "scripts/recovery/validate/business-integrity.test.mjs",
     "scripts/recovery/validate/isolation.test.mjs",
     "scripts/recovery/validate/recovered-app.test.mjs",
+    "scripts/repository/check-repository-conventions.test.mjs",
     "scripts/run-trivy.test.mjs",
     "scripts/serve-static-export.test.mjs",
     "scripts/testing-inventory.test.mjs",
     "scripts/validation-summary.test.mjs",
+    "scripts/verify-local-fonts-build.test.mjs",
     "scripts/workforce/cli-support.test.mjs",
     "scripts/working-tree-fingerprint.test.mjs"
   ],
@@ -566,6 +629,7 @@
     "tests/e2e/customer-ordering.spec.ts",
     "tests/e2e/external-links.spec.ts",
     "tests/e2e/food-direct-ux-foundation.spec.ts",
+    "tests/e2e/gtm-uat-browser-journeys.spec.ts",
     "tests/e2e/home-page.spec.ts",
     "tests/e2e/imp-036b-uat-precert.spec.ts",
     "tests/e2e/location-selector-layout.spec.ts",
@@ -583,6 +647,7 @@
     "playwright.config.ts",
     "playwright.customer-auth.config.ts",
     "playwright.customer-ordering.config.ts",
+    "playwright.gtm-uat-browser.config.ts",
     "playwright.location-selector.config.ts",
     "playwright.operations-lifecycle.config.ts",
     "playwright.workforce-auth.config.ts"
@@ -592,9 +657,12 @@
     "scripts/e2e/build-operations-lifecycle-seed.mjs",
     "scripts/e2e/customer-auth-server.ts",
     "scripts/e2e/customer-ordering-server.ts",
+    "scripts/e2e/gtm-uat-browser-control.ts",
+    "scripts/e2e/gtm-uat-browser-fixtures.ts",
     "scripts/e2e/run-commercial-workspace-e2e.mjs",
     "scripts/e2e/run-customer-auth-e2e.mjs",
     "scripts/e2e/run-customer-ordering-e2e.mjs",
+    "scripts/e2e/run-gtm-uat-browser-e2e.mjs",
     "scripts/e2e/run-operations-lifecycle-e2e.mjs",
     "scripts/e2e/run-workforce-auth-e2e.mjs",
     "scripts/e2e/seed-commercial-workspace.ts",
@@ -761,6 +829,7 @@
       "audit:persistence",
       "audit:pricing-tax",
       "audit:promotions",
+      "audit:repo-hygiene",
       "audit:secrets",
       "audit:security-sdlc",
       "audit:serviceability",
@@ -772,6 +841,7 @@
       "test:e2e:customer-auth",
       "test:e2e:customer-ordering",
       "test:e2e:docker",
+      "test:e2e:gtm-uat-browser",
       "test:e2e:headed",
       "test:e2e:location-selector-layout",
       "test:e2e:operations-lifecycle",
@@ -830,6 +900,7 @@
     "audit:persistence": "node scripts/audit-persistence.mjs",
     "audit:pricing-tax": "node scripts/audit-pricing-tax.mjs",
     "audit:promotions": "node scripts/audit-promotions.mjs",
+    "audit:repo-hygiene": "node scripts/repository/check-repository-conventions.mjs",
     "audit:secrets": "node scripts/run-gitleaks.mjs",
     "audit:security-sdlc": "npm run audit:npm-sca && npm run audit:secrets",
     "audit:serviceability": "node scripts/audit-serviceability.mjs",
@@ -870,7 +941,7 @@
     "test:customer-address-concurrency": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-address-concurrency",
     "test:customer-address-security": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-address-security",
     "test:customer-addresses": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-addresses",
-    "test:customer-auth:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-auth/http.integration.test.ts",
+    "test:customer-auth:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-auth/http.integration.test.ts tests/customer-auth/trusted-identity.integration.test.ts",
     "test:customer-commerce:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-commerce/http.integration.test.ts tests/customer-commerce/scheduled-http.tranche3.integration.test.ts",
     "test:customer-profile-auth-integration": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-profile-auth-integration",
     "test:customer-profile-security": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-profile-security",
@@ -901,6 +972,7 @@
     "test:e2e:customer-auth": "npm run build && npm run customer-auth:build && node scripts/e2e/run-customer-auth-e2e.mjs",
     "test:e2e:customer-ordering": "NEXT_PUBLIC_BOBA_BEAR_GOOGLE_MAPS_BROWSER_KEY=e2e-maps-browser-key-fixture npm run build && npm run customer-auth:build && npm run customer-commerce:build && node scripts/e2e/run-customer-ordering-e2e.mjs",
     "test:e2e:docker": "PLAYWRIGHT_TARGET=docker playwright test",
+    "test:e2e:gtm-uat-browser": "NEXT_PUBLIC_BOBA_BEAR_GOOGLE_MAPS_BROWSER_KEY=e2e-maps-browser-key-fixture npm run build && npm run customer-auth:build && npm run customer-commerce:build && node scripts/e2e/run-gtm-uat-browser-e2e.mjs",
     "test:e2e:headed": "npm run build && playwright test --headed",
     "test:e2e:location-selector-layout": "NEXT_PUBLIC_BOBA_BEAR_GOOGLE_MAPS_BROWSER_KEY=e2e-maps-browser-key-fixture npm run build && npm run customer-auth:build && npm run customer-commerce:build && playwright test --config=playwright.location-selector.config.ts",
     "test:e2e:operations-lifecycle": "node scripts/e2e/run-operations-lifecycle-e2e.mjs",
@@ -951,7 +1023,7 @@
     "test:serviceability-security": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/serviceability-security",
     "test:staging-baseline": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/staging-baseline",
     "test:watch": "vitest",
-    "test:workforce-auth:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/workforce-auth/http.integration.test.ts",
+    "test:workforce-auth:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/workforce-auth/http.integration.test.ts tests/workforce-auth/trusted-identity.integration.test.ts",
     "testing:inventory": "node scripts/testing-inventory.mjs --write",
     "testing:inventory:check": "node scripts/testing-inventory.mjs --check",
     "typecheck": "tsc --noEmit",
@@ -995,6 +1067,10 @@
           "run": "npm run testing:inventory:check"
         },
         {
+          "name": "Repository hygiene",
+          "run": "npm run audit:repo-hygiene"
+        },
+        {
           "name": "Install dependencies",
           "run": "npm ci"
         },
@@ -1027,7 +1103,7 @@
           "run": "socket=\"/run/user/$(id -u)/podman/podman.sock\"\ncommand -v podman\nif [ ! -S \"$socket\" ]; then\nsystemctl --user start podman.socket\nfi\ntest -S \"$socket\"\npodman --version"
         },
         {
-          "name": "IMP-028C modifier / bootstrap tests",
+          "name": "Catalog · Modifier Bootstrap",
           "run": "npm run test:catalog-imp028c-modifiers"
         },
         {
@@ -1051,63 +1127,75 @@
           "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/database/customer-menu-modifier-projection.integration.test.ts"
         },
         {
-          "name": "IMP-036I Tranche 1 proof",
+          "name": "Scheduled Fulfilment · Persistence and Delivery Finality",
           "run": "npm run test:imp036i:tranche1"
         },
         {
-          "name": "IMP-036I Tranche 2 proof",
+          "name": "Scheduled Fulfilment · Windows, Checkout, and Payment Binding",
           "run": "npm run test:imp036i:tranche2"
         },
         {
-          "name": "IMP-036I Tranche 3 proof",
+          "name": "Scheduled Fulfilment · Customer and Workforce Surfaces",
           "run": "npm run test:imp036i:tranche3"
         },
         {
-          "name": "IMP-036I Tranche 4 proof",
+          "name": "Scheduled Fulfilment · Cancellation and Reminders",
           "run": "npm run test:imp036i:tranche4"
         },
         {
-          "name": "IMP-036I Tranche 5 proof",
+          "name": "Scheduled Fulfilment · Payment Hardening and Document Continuity",
           "run": "npm run test:imp036i:tranche5"
         },
         {
-          "name": "IMP-036J Tranche 1 proof",
+          "name": "Promotions · Commercial Persistence",
           "run": "npm run test:imp036j:tranche1"
         },
         {
-          "name": "IMP-036J Tranche 2 proof",
+          "name": "Promotions · Measurement Persistence",
           "run": "npm run test:imp036j:tranche2"
         },
         {
-          "name": "IMP-036J Tranche 3 proof",
+          "name": "Promotions · Evaluation and Offer Rules",
           "run": "npm run test:imp036j:tranche3"
         },
         {
-          "name": "IMP-036J Tranche 4 proof",
+          "name": "Promotions · Commercial Commands",
           "run": "npm run test:imp036j:tranche4"
         },
         {
-          "name": "Install Playwright Chromium for IMP-036J T5 responsive proof",
+          "name": "Checkout · Payment-Start Snapshot Comparison",
+          "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/payment/gtm-391-payment-review-loop.domain.test.ts"
+        },
+        {
+          "name": "Payment · Fulfilment-Timing Binding",
+          "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/payment/payment-binding-fulfilment-timing.domain.test.ts"
+        },
+        {
+          "name": "Promotions · Coupon Authority and Line Presentation",
+          "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/checkout/imp036j-gtm-committed-cart-authority.domain.test.ts\ntests/checkout/imp036j-385-line-presentation-options.fixture.test.ts"
+        },
+        {
+          "name": "Promotions · Install Chromium for Presentation Proof",
           "run": "npx playwright install --with-deps chromium"
         },
         {
-          "name": "IMP-036J Tranche 5 proof",
+          "name": "Promotions · Customer Presentation",
           "run": "npm run test:imp036j:tranche5"
         },
         {
-          "name": "IMP-036J Tranche 6 proof",
+          "name": "Promotions · Operator Authoring",
           "run": "npm run test:imp036j:tranche6"
         },
         {
-          "name": "IMP-036J Tranche 7 proof",
+          "name": "Promotions · Measurement Reporting",
           "run": "npm run test:imp036j:tranche7"
         },
         {
-          "name": "Production build for IMP-036J T8 Golden Journeys",
+          "name": "Promotions · Build Apps for Journey Proof",
           "run": "npm run build && npm run customer-auth:build && npm run customer-commerce:build"
         },
         {
-          "name": "IMP-036J Tranche 8 proof",
+          "name": "Promotions · Hardening, Journeys, and Responsive Proof",
           "run": "npm run test:imp036j:tranche8"
         },
         {
@@ -1273,6 +1361,10 @@
         {
           "name": "Administration tests",
           "run": "npm run test:administration"
+        },
+        {
+          "name": "Promotion create identifier validation",
+          "run": "node scripts/run-vitest.mjs run\n--config vitest.database.config.mts\ntests/administration/promotion-create-identifier-validation.integration.test.ts"
         },
         {
           "name": "Operations HTTP tests",
@@ -1840,6 +1932,23 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "scripts/customer-otp-transport-assessment.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "scripts/database/lib/migration-history.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
@@ -2061,6 +2170,196 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "scripts/environment/postgres-init-identity.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/environment/staging-candidate-preparation.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/environment/staging-config-projection.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/environment/staging-database-preflight.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/environment/staging-preflight.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/environment/staging-publishing-probe.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/environment/staging-recovery-binding.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/environment/staging-recovery-checkpoint.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/environment/staging-recovery-producer-compat.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/environment/staging-secret-files.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/environment/staging-source-isolation.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "scripts/environment/staging.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
@@ -2249,6 +2548,24 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "scripts/order/recovery-cli.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "scripts/origin-trust/verify-contracts.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
@@ -2266,7 +2583,41 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "scripts/postgres/c1-nonroot-runtime.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "scripts/project-consistency.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/proof/pg-c1-proof-cleanup.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
       "testType": "script-unit",
@@ -2301,7 +2652,43 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "scripts/recovery/cli.credentials.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "scripts/recovery/cli.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/recovery/entry-points.source-class.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
       "testType": "script-unit",
@@ -2543,6 +2930,24 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "scripts/recovery/layer2/age.plaintext.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "scripts/recovery/layer2/backup.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
@@ -2633,7 +3038,61 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "scripts/recovery/restore/logical-connection.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/recovery/restore/logical-integrity.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "scripts/recovery/restore/logical-pg-restore.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/recovery/restore/logical-store-failures.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
       "testType": "script-unit",
@@ -2777,6 +3236,24 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "scripts/recovery/tools/age-tools.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "scripts/recovery/validate/business-integrity.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
@@ -2827,6 +3304,23 @@
       "test1Layers": [
         "1-unit",
         "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/repository/check-repository-conventions.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
       ],
       "classificationConfidence": "HEURISTIC"
     },
@@ -2883,6 +3377,23 @@
     },
     {
       "path": "scripts/validation-summary.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/verify-local-fonts-build.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
       "testType": "script-unit",
@@ -3026,6 +3537,24 @@
       "path": "src/components/Nav.test.tsx",
       "runner": "vitest",
       "domain": "components/Nav.test.tsx",
+      "testType": "component-or-tsx",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "2-component"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/components/PublishedMenuChapters.test.tsx",
+      "runner": "vitest",
+      "domain": "components/PublishedMenuChapters.test.tsx",
       "testType": "component-or-tsx",
       "dbRequired": "NO",
       "browserRequired": "NO",
@@ -3546,6 +4075,25 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "src/components/ordering/availability-377-recovery.test.tsx",
+      "runner": "vitest",
+      "domain": "components/ordering",
+      "testType": "component-or-tsx",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "2-component",
+        "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "src/components/ordering/cart-changed-recovery-presentation.test.ts",
       "runner": "vitest",
       "domain": "components/ordering",
@@ -3602,6 +4150,24 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "src/components/ordering/checkout-unavailable-item-presentation.test.tsx",
+      "runner": "vitest",
+      "domain": "components/ordering",
+      "testType": "component-or-tsx",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "2-component"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "src/components/ordering/client-action.test.ts",
       "runner": "vitest",
       "domain": "components/ordering",
@@ -3653,6 +4219,63 @@
       "ciInclusion": "YES",
       "test1Layers": [
         "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/components/ordering/imp036j-391a-stale-recovery.checkout-client.test.tsx",
+      "runner": "vitest",
+      "domain": "components/ordering",
+      "testType": "component-or-tsx",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "2-component",
+        "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/components/ordering/imp036j-coupon-recovery.checkout-client.test.tsx",
+      "runner": "vitest",
+      "domain": "components/ordering",
+      "testType": "component-or-tsx",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "2-component",
+        "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/components/ordering/imp036j-coupon-recovery.test.ts",
+      "runner": "vitest",
+      "domain": "components/ordering",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "9-recovery-idempotency"
       ],
       "classificationConfidence": "HEURISTIC"
     },
@@ -3764,6 +4387,25 @@
       "ciInclusion": "YES",
       "test1Layers": [
         "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/components/ordering/stale-recovery-presentation.test.ts",
+      "runner": "vitest",
+      "domain": "components/ordering",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "9-recovery-idempotency"
       ],
       "classificationConfidence": "HEURISTIC"
     },
@@ -4079,6 +4721,24 @@
       "path": "src/lib/operations/refund-amount.test.ts",
       "runner": "vitest",
       "domain": "lib/operations",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/lib/published-menu-cards.test.ts",
+      "runner": "vitest",
+      "domain": "lib/published-menu-cards.test.ts",
       "testType": "unit-or-domain",
       "dbRequired": "NO",
       "browserRequired": "NO",
@@ -4454,6 +5114,25 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "src/platform/security/undici-zod-remediation.test.ts",
+      "runner": "vitest",
+      "domain": "platform/security",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "7-authorization-security"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "src/platform/startup/bootstrap.test.ts",
       "runner": "vitest",
       "domain": "platform/startup",
@@ -4492,6 +5171,25 @@
     },
     {
       "path": "src/server/auth/customer/runtime.test.ts",
+      "runner": "vitest",
+      "domain": "server/auth",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/server/auth/customer/trusted-identity.test.ts",
       "runner": "vitest",
       "domain": "server/auth",
       "testType": "unit-or-domain",
@@ -4571,6 +5269,44 @@
       "path": "src/server/auth/workforce/runtime.test.ts",
       "runner": "vitest",
       "domain": "server/auth",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/server/checkout/explain-snapshot-difference.test.ts",
+      "runner": "vitest",
+      "domain": "server/checkout",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/server/checkout/prepare-diagnostic.test.ts",
+      "runner": "vitest",
+      "domain": "server/checkout",
       "testType": "unit-or-domain",
       "dbRequired": "NO",
       "browserRequired": "NO",
@@ -4720,6 +5456,25 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "src/server/customer-auth/provider/msg91.test.ts",
+      "runner": "vitest",
+      "domain": "server/customer-auth",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "src/server/customer-auth/rate-limit/hashing.test.ts",
       "runner": "vitest",
       "domain": "server/customer-auth",
@@ -4758,7 +5513,83 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "src/server/customer-commerce/checkout-prepare-diagnostic-config.test.ts",
+      "runner": "vitest",
+      "domain": "server/customer-commerce",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/server/customer-commerce/checkout-prepare-diagnostic-log.test.ts",
+      "runner": "vitest",
+      "domain": "server/customer-commerce",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/server/customer-commerce/checkout-prepare-diagnostic-startup.test.ts",
+      "runner": "vitest",
+      "domain": "server/customer-commerce",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "src/server/customer-commerce/http/helpers.test.ts",
+      "runner": "vitest",
+      "domain": "server/customer-commerce",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/server/customer-commerce/http/request.test.ts",
       "runner": "vitest",
       "domain": "server/customer-commerce",
       "testType": "unit-or-domain",
@@ -6529,6 +7360,43 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "tests/administration/promotion-create-identifier-validation.integration.test.ts",
+      "runner": "vitest",
+      "domain": "administration",
+      "testType": "integration",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:administration"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "4-integration",
+        "5-database-integration"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/administration/promotion-readiness.test.ts",
+      "runner": "vitest",
+      "domain": "administration",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:administration",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "tests/assortment-availability/assortment-consequence-preview.test.ts",
       "runner": "vitest",
       "domain": "assortment-availability",
@@ -7012,6 +7880,23 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "tests/catalog/published-menu-runtime.test.ts",
+      "runner": "vitest",
+      "domain": "catalog",
+      "testType": "unit-or-domain",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:catalog"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "tests/checkout-auth-integration/checkout.auth.test.ts",
       "runner": "vitest",
       "domain": "checkout-auth-integration",
@@ -7082,6 +7967,111 @@
     },
     {
       "path": "tests/checkout/checkout.pickup.domain.test.ts",
+      "runner": "vitest",
+      "domain": "checkout",
+      "testType": "unit-or-domain",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:checkout"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/checkout/imp036j-385-line-presentation-options.fixture.test.ts",
+      "runner": "vitest",
+      "domain": "checkout",
+      "testType": "unit-or-domain",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:checkout"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/checkout/imp036j-391-equal-payable-repricing.diagnostic.test.ts",
+      "runner": "vitest",
+      "domain": "checkout",
+      "testType": "unit-or-domain",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:checkout"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/checkout/imp036j-391b-prepare-observer-lazy.diagnostic.test.ts",
+      "runner": "vitest",
+      "domain": "checkout",
+      "testType": "unit-or-domain",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:checkout"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/checkout/imp036j-391b-prepare-observer.diagnostic.test.ts",
+      "runner": "vitest",
+      "domain": "checkout",
+      "testType": "unit-or-domain",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:checkout"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/checkout/imp036j-coupon-recovery.domain.test.ts",
+      "runner": "vitest",
+      "domain": "checkout",
+      "testType": "unit-or-domain",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:checkout"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case",
+        "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/checkout/imp036j-gtm-committed-cart-authority.domain.test.ts",
       "runner": "vitest",
       "domain": "checkout",
       "testType": "unit-or-domain",
@@ -7255,6 +8245,24 @@
         "4-integration",
         "5-database-integration",
         "6-http-api-contract"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/customer-auth/trusted-identity.integration.test.ts",
+      "runner": "vitest",
+      "domain": "customer-auth",
+      "testType": "integration",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:customer-auth:http"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "4-integration",
+        "5-database-integration"
       ],
       "classificationConfidence": "HEURISTIC"
     },
@@ -8579,6 +9587,24 @@
       "classificationConfidence": "LOW"
     },
     {
+      "path": "tests/e2e/gtm-uat-browser-journeys.spec.ts",
+      "runner": "playwright",
+      "domain": "e2e",
+      "testType": "e2e-spec",
+      "dbRequired": "UNKNOWN",
+      "browserRequired": "YES",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:e2e",
+        "test:e2e:gtm-uat-browser"
+      ],
+      "ciInclusion": "NO",
+      "test1Layers": [
+        "11-e2e-browser-ui"
+      ],
+      "classificationConfidence": "LOW"
+    },
+    {
       "path": "tests/e2e/home-page.spec.ts",
       "runner": "playwright",
       "domain": "e2e",
@@ -8736,6 +9762,133 @@
         "1-unit"
       ],
       "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/gtm-closure/accessible-names.test.tsx",
+      "runner": "vitest",
+      "domain": "gtm-closure",
+      "testType": "component-or-tsx",
+      "dbRequired": "UNKNOWN",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "2-component"
+      ],
+      "classificationConfidence": "LOW"
+    },
+    {
+      "path": "tests/gtm-closure/checkout-revalidation.test.ts",
+      "runner": "vitest",
+      "domain": "gtm-closure",
+      "testType": "unit-or-domain",
+      "dbRequired": "UNKNOWN",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "LOW"
+    },
+    {
+      "path": "tests/gtm-closure/coupon-journeys.test.ts",
+      "runner": "vitest",
+      "domain": "gtm-closure",
+      "testType": "unit-or-domain",
+      "dbRequired": "UNKNOWN",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "LOW"
+    },
+    {
+      "path": "tests/gtm-closure/first-returning-and-fulfilment.test.ts",
+      "runner": "vitest",
+      "domain": "gtm-closure",
+      "testType": "unit-or-domain",
+      "dbRequired": "UNKNOWN",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "LOW"
+    },
+    {
+      "path": "tests/gtm-closure/my-orders-historical-savings.test.ts",
+      "runner": "vitest",
+      "domain": "gtm-closure",
+      "testType": "unit-or-domain",
+      "dbRequired": "UNKNOWN",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "LOW"
+    },
+    {
+      "path": "tests/gtm-closure/operator-issue-activate-retire.test.tsx",
+      "runner": "vitest",
+      "domain": "gtm-closure",
+      "testType": "component-or-tsx",
+      "dbRequired": "UNKNOWN",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "2-component"
+      ],
+      "classificationConfidence": "LOW"
+    },
+    {
+      "path": "tests/gtm-closure/payment-start-recovery.test.ts",
+      "runner": "vitest",
+      "domain": "gtm-closure",
+      "testType": "unit-or-domain",
+      "dbRequired": "UNKNOWN",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "9-recovery-idempotency"
+      ],
+      "classificationConfidence": "LOW"
     },
     {
       "path": "tests/imp-036b/addresses-client.test.tsx",
@@ -8986,6 +10139,24 @@
       "ciInclusion": "YES",
       "test1Layers": [
         "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/imp-036c/checkout-destination-395-provider-readiness.test.tsx",
+      "runner": "vitest",
+      "domain": "imp-036c",
+      "testType": "component-or-tsx",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "2-component"
       ],
       "classificationConfidence": "HEURISTIC"
     },
@@ -9360,6 +10531,25 @@
       "ciInclusion": "NO",
       "test1Layers": [
         "7-authorization-security"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/order/order-recovery-cli.integration.test.ts",
+      "runner": "vitest",
+      "domain": "order",
+      "testType": "integration",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:order"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "4-integration",
+        "5-database-integration",
+        "9-recovery-idempotency"
       ],
       "classificationConfidence": "HEURISTIC"
     },
@@ -9746,6 +10936,42 @@
       "ciInclusion": "YES",
       "test1Layers": [
         "7-authorization-security"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/payment/gtm-391-payment-review-loop.domain.test.ts",
+      "runner": "vitest",
+      "domain": "payment",
+      "testType": "unit-or-domain",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:payment"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/payment/payment-binding-fulfilment-timing.domain.test.ts",
+      "runner": "vitest",
+      "domain": "payment",
+      "testType": "unit-or-domain",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:payment"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
       ],
       "classificationConfidence": "HEURISTIC"
     },
@@ -10402,8 +11628,10 @@
       "dbRequired": "YES",
       "browserRequired": "NO",
       "externalProviderSubstitute": "UNKNOWN",
-      "packageCommands": [],
-      "ciInclusion": "NO",
+      "packageCommands": [
+        "test:workforce-auth:http"
+      ],
+      "ciInclusion": "YES",
       "test1Layers": [
         "4-integration",
         "5-database-integration"

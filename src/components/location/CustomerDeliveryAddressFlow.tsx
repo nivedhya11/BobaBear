@@ -150,6 +150,8 @@ export function CustomerDeliveryAddressFlow(props: {
   const debounceTimerRef = useRef<number | null>(null);
   const providerConfiguredRef = useRef(false);
   const queryRef = useRef("");
+  const stepRef = useRef(step);
+  stepRef.current = step;
   const listboxId = useId();
   const comboboxId = useId();
 
@@ -169,6 +171,27 @@ export function CustomerDeliveryAddressFlow(props: {
     })();
     return () => {
       cancelled = true;
+    };
+  }, []);
+
+  // Recover retained input when provider status resolves after early typing.
+  // Depends only on providerConfigured so step transitions do not re-fire search.
+  useEffect(() => {
+    if (!providerConfigured) return;
+    if (stepRef.current !== "location") return;
+    const trimmed = queryRef.current.trim();
+    if (trimmed.length >= SEARCH_MIN_CHARS) {
+      scheduleAutocomplete(trimmed);
+    }
+  }, [providerConfigured]);
+
+  useEffect(() => {
+    return () => {
+      searchAbortRef.current?.abort();
+      if (debounceTimerRef.current !== null) {
+        window.clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = null;
+      }
     };
   }, []);
 

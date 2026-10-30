@@ -23,6 +23,7 @@
 /test-results-operations-lifecycle
 /test-results-commercial-workspace
 /test-results-location-selector-layout
+/test-results-gtm-uat-browser
 # Live customer-ordering Playwright outputDir (HYG-05 remediation).
 # Distinct from protected historical triad under test-results-customer-ordering/
 # (tracked; preserved byte-for-byte; not Playwright outputDir — see

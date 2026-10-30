@@ -105,6 +105,11 @@ export type PaymentOperationOptions = Readonly<{
    */
   checkoutPolicy?: CheckoutPolicy;
   /**
+   * Optional per-request prepare diagnostic observer (IMP-036J #391B).
+   * Forwarded only into {@link prepareCheckoutForPayment}.
+   */
+  prepareDiagnosticObserver?: import("../checkout/prepare-diagnostic").CheckoutPrepareDiagnosticObserver;
+  /**
    * After Checkout preparation and before the binding transaction opens.
    * Tests commit a concurrent authority change in that interval.
    * Must not perform provider I/O.
@@ -438,7 +443,11 @@ export async function startPayment(
         checkoutId: parsed.checkoutId,
         expectedCheckoutRevision: parsed.expectedCheckoutRevision,
       },
-      { clock, policy: checkoutPolicy },
+      {
+        clock,
+        policy: checkoutPolicy,
+        prepareDiagnosticObserver: options.prepareDiagnosticObserver,
+      },
     );
   } catch (error) {
     if (isCheckoutError(error)) throw error;

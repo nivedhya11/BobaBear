@@ -1,10 +1,19 @@
 #!/usr/bin/env node
 /**
  * IMP-038 §15 container image scan — download pinned Trivy OSS binary and scan
- * actual built production runtime images (including base/OS layers).
+ * actual built production runtime images (including base/OS layers and image
+ * configuration misconfigurations such as DS-0002).
  *
  * Avoids aquasecurity/trivy-action / setup-trivy GitHub Actions after the
  * 2026 supply-chain tag compromise. Prefer pinned binary + SHA256 verify.
+ *
+ * Exception policy:
+ *   - Committed `.trivyignore` suppressions must match ACTIVE rows in
+ *     docs/platform/security/vulnerability-exception-register.md
+ *     (`## Container / Trivy exceptions`).
+ *   - Expired / unauthorized ignore entries fail closed even if Trivy would
+ *     otherwise silently suppress the finding.
+ *   - ACTIVE ignores are applied only to the justified `image` target id.
  *
  * Usage:
  *   node scripts/run-trivy.mjs
@@ -14,10 +23,23 @@
  *   BOBA_TRIVY_SKIP_BUILD=1 — reuse already-tagged local images (still fails
  *     closed if any required image is missing; never silently skips scan).
  *   BOBA_TRIVY_CONTAINER_CLI — force docker|podman
+ *
+ * Time: production/CI always uses real UTC calendar day. Expiry tests inject
+ * `todayIso` via `loadTrivyExceptionPolicy({ todayIso })` or the optional
+ * second argument to `utcTodayIso` — never via process env in the gate CLI.
  */
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
@@ -32,6 +54,23 @@ export const TRIVY_URL =
   `https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/${TRIVY_ARCHIVE}`;
 export const TRIVY_SHA256 =
   "1816b632dfe529869c740c0913e36bd1629cb7688bd5634f4a858c1d57c88b75";
+
+export const REGISTER_REL =
+  "docs/platform/security/vulnerability-exception-register.md";
+export const TRIVYIGNORE_REL = ".trivyignore";
+
+export const TRIVY_EXCEPTION_HEADERS = Object.freeze([
+  "id",
+  "finding_id",
+  "image",
+  "severity",
+  "owner",
+  "rationale",
+  "authority",
+  "compensating_controls",
+  "retest_date",
+  "expiry",
+]);
 
 /**
  * V1 deployable production runtime image targets.
@@ -151,8 +190,9 @@ export function resolveContainerCli(forced = process.env.BOBA_TRIVY_CONTAINER_CL
  * @returns {string[]}
  */
 export function buildArgsForTarget(target) {
-  // --network=host: next/font Google fetch during web-runtime build fails
-  // intermittently under the default podman CNI/slirp path (null font loader).
+  // --network=host retained for container DNS/registry reliability during image
+  // build. App UI fonts are local (`next/font/local`); they no longer require
+  // Google Fonts reachability at build time.
   const args = ["build", "--network=host", "-f", target.dockerfile, "-t", target.image];
   if (target.target) args.push("--target", target.target);
   args.push(target.context);
@@ -162,9 +202,10 @@ export function buildArgsForTarget(target) {
 /**
  * @param {string} image
  * @param {string} ignorefile
+ * @param {string} outputPath JSON report path (avoids spawnSync 1 MiB maxBuffer)
  * @returns {string[]}
  */
-export function trivyImageArgs(image, ignorefile) {
+export function trivyImageArgs(image, ignorefile, outputPath) {
   return [
     "image",
     image,
@@ -173,16 +214,308 @@ export function trivyImageArgs(image, ignorefile) {
     "--exit-code",
     "1",
     "--format",
-    "table",
+    "json",
     "--scanners",
     "vuln,misconfig",
+    // Image metadata / Dockerfile USER root (DS-0002) lives here — not in
+    // filesystem `--scanners misconfig` alone (Trivy 0.69.3).
+    "--image-config-scanners",
+    "misconfig",
     // Fail closed on remediable findings. Distro CVEs without an available
     // fixed package remain visible in full scans but do not block the gate;
     // Dockerfile apt/apk upgrades apply available patches first.
     "--ignore-unfixed",
     "--ignorefile",
     ignorefile,
+    // File-backed JSON: large clean reports must not hit spawnSync ENOBUFS.
+    "--output",
+    outputPath,
   ];
+}
+
+/**
+ * @param {string} iso
+ * @returns {boolean}
+ */
+export function isIsoDate(iso) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(iso);
+}
+
+/**
+ * Inclusive UTC calendar expiry (same contract as SCA `isActiveExpiry`).
+ * @param {string} todayIso
+ * @param {string} expiryIso
+ */
+export function isActiveExpiry(todayIso, expiryIso) {
+  if (!isIsoDate(todayIso) || !isIsoDate(expiryIso)) return false;
+  return expiryIso >= todayIso;
+}
+
+/**
+ * UTC YYYY-MM-DD for exception expiry checks.
+ *
+ * Production / required CI must call with wall-clock `now` only. Optional
+ * `injectedTodayIso` exists solely for isolated unit/integration test paths;
+ * the gate CLI (`main`) never reads process env for the calendar day.
+ *
+ * @param {Date} [now]
+ * @param {string} [injectedTodayIso] explicit test injection (not `process.env`)
+ * @returns {string}
+ */
+export function utcTodayIso(now = new Date(), injectedTodayIso = undefined) {
+  const override = (injectedTodayIso || "").trim();
+  if (override) {
+    if (!isIsoDate(override)) {
+      throw new Error(`INVALID_BOBA_TRIVY_TODAY value=${override}`);
+    }
+    return override;
+  }
+  return now.toISOString().slice(0, 10);
+}
+
+/**
+ * @param {string} line
+ * @returns {string[]}
+ */
+function splitRow(line) {
+  const trimmed = line.trim().replace(/^\|/, "").replace(/\|$/, "");
+  return trimmed.split("|").map((c) => c.trim());
+}
+
+/**
+ * Parse Container / Trivy exceptions table from the register markdown.
+ * @param {string} markdown
+ * @returns {{ rows: Array<Record<string, string>>, errors: string[] }}
+ */
+export function parseTrivyExceptionRegister(markdown) {
+  const errors = [];
+  const sectionMatch = markdown.match(/^## Container \/ Trivy exceptions\s*$/m);
+  if (!sectionMatch || sectionMatch.index === undefined) {
+    return { rows: [], errors: ["MISSING_TRIVY_EXCEPTIONS_SECTION"] };
+  }
+  const after = markdown.slice(sectionMatch.index + sectionMatch[0].length);
+  const lines = after
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0);
+
+  // Skip prose until the machine table header.
+  let tableStart = -1;
+  for (let i = 0; i < lines.length; i += 1) {
+    if (lines[i].startsWith("|") && /finding_id/i.test(lines[i])) {
+      tableStart = i;
+      break;
+    }
+    // Stop if a new markdown section begins before the table.
+    if (lines[i].startsWith("## ")) break;
+  }
+  if (tableStart < 0) {
+    return { rows: [], errors: ["MISSING_TRIVY_EXCEPTION_TABLE"] };
+  }
+
+  const tableLines = [];
+  for (let i = tableStart; i < lines.length; i += 1) {
+    if (!lines[i].startsWith("|")) break;
+    tableLines.push(lines[i]);
+  }
+  if (tableLines.length < 2) {
+    return { rows: [], errors: ["MISSING_TRIVY_EXCEPTION_TABLE"] };
+  }
+
+  const headerCells = splitRow(tableLines[0]).map((h) => h.toLowerCase());
+  const sep = tableLines[1];
+  if (!/^\|[\s:-]+\|/.test(sep)) {
+    errors.push("INVALID_TRIVY_TABLE_SEPARATOR");
+  }
+  if (headerCells.length !== TRIVY_EXCEPTION_HEADERS.length) {
+    errors.push(
+      `TRIVY_HEADER_COUNT_MISMATCH expected=${TRIVY_EXCEPTION_HEADERS.length} got=${headerCells.length}`,
+    );
+  }
+  for (let i = 0; i < TRIVY_EXCEPTION_HEADERS.length; i += 1) {
+    const got = headerCells[i] || "";
+    if (got !== TRIVY_EXCEPTION_HEADERS[i]) {
+      errors.push(
+        `TRIVY_HEADER_MISMATCH col=${i} expected=${TRIVY_EXCEPTION_HEADERS[i]} got=${got || "<missing>"}`,
+      );
+    }
+  }
+
+  const knownImages = new Set(PRODUCTION_IMAGE_TARGETS.map((t) => t.id));
+  /** @type {Array<Record<string, string>>} */
+  const rows = [];
+  for (let i = 2; i < tableLines.length; i += 1) {
+    const cells = splitRow(tableLines[i]);
+    if (cells.every((c) => c === "")) continue;
+    if (cells.length !== TRIVY_EXCEPTION_HEADERS.length) {
+      errors.push(
+        `TRIVY_ROW_COL_COUNT id=${cells[0] || "?"} expected=${TRIVY_EXCEPTION_HEADERS.length} got=${cells.length}`,
+      );
+      continue;
+    }
+    /** @type {Record<string, string>} */
+    const row = {};
+    for (let c = 0; c < TRIVY_EXCEPTION_HEADERS.length; c += 1) {
+      row[TRIVY_EXCEPTION_HEADERS[c]] = cells[c];
+    }
+    for (const key of TRIVY_EXCEPTION_HEADERS) {
+      if (!row[key]) errors.push(`TRIVY_EMPTY_FIELD id=${row.id || "?"} field=${key}`);
+    }
+    if (row.expiry && !isIsoDate(row.expiry)) {
+      errors.push(`TRIVY_INVALID_EXPIRY id=${row.id || "?"} value=${row.expiry}`);
+    }
+    if (row.retest_date && !isIsoDate(row.retest_date)) {
+      errors.push(`TRIVY_INVALID_RETEST id=${row.id || "?"} value=${row.retest_date}`);
+    }
+    const sev = (row.severity || "").toLowerCase();
+    if (sev && !["critical", "high", "moderate", "low"].includes(sev)) {
+      errors.push(`TRIVY_INVALID_SEVERITY id=${row.id || "?"} value=${row.severity}`);
+    }
+    row.severity = sev;
+    if (row.image && !knownImages.has(row.image)) {
+      errors.push(
+        `TRIVY_UNKNOWN_IMAGE id=${row.id || "?"} image=${row.image} (must be a PRODUCTION_IMAGE_TARGETS id)`,
+      );
+    }
+    if (!/^[A-Z0-9][A-Z0-9_-]*$/.test(row.finding_id || "")) {
+      errors.push(`TRIVY_INVALID_FINDING_ID id=${row.id || "?"} value=${row.finding_id}`);
+    }
+    rows.push(row);
+  }
+
+  return { rows, errors };
+}
+
+/**
+ * Parse committed `.trivyignore` finding lines (IDs + optional exp:YYYY-MM-DD).
+ * @param {string} text
+ * @returns {{ entries: Array<{ id: string, expiry: string | null, raw: string }>, errors: string[] }}
+ */
+export function parseTrivyIgnoreFile(text) {
+  const errors = [];
+  /** @type {Array<{ id: string, expiry: string | null, raw: string }>} */
+  const entries = [];
+  for (const rawLine of text.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("#")) continue;
+    // Plain .trivyignore: `DS-0002` or `DS-0002 exp:2026-10-23`
+    const match = line.match(/^([A-Za-z0-9][A-Za-z0-9._:-]*)(?:\s+exp:(\d{4}-\d{2}-\d{2}))?\s*$/);
+    if (!match) {
+      errors.push(`TRIVYIGNORE_UNPARSEABLE line=${JSON.stringify(line)}`);
+      continue;
+    }
+    const id = match[1];
+    const expiry = match[2] || null;
+    if (expiry && !isIsoDate(expiry)) {
+      errors.push(`TRIVYIGNORE_INVALID_EXPIRY id=${id} value=${expiry}`);
+    }
+    entries.push({ id, expiry, raw: line });
+  }
+  return { entries, errors };
+}
+
+/**
+ * Fail closed when ignorefile and register disagree, or when an ignore is expired.
+ * @param {object} options
+ * @param {Array<{ id: string, expiry: string | null, raw: string }>} options.ignoreEntries
+ * @param {Array<Record<string, string>>} options.registerRows
+ * @param {string} options.todayIso
+ * @returns {{ activeByFinding: Map<string, Record<string, string>>, errors: string[] }}
+ */
+export function enforceTrivyExceptionPolicy(options) {
+  const { ignoreEntries, registerRows, todayIso } = options;
+  /** @type {string[]} */
+  const errors = [];
+  /** @type {Map<string, Record<string, string>>} */
+  const activeByFinding = new Map();
+  /** @type {Map<string, Record<string, string>>} */
+  const rowsByFinding = new Map();
+
+  for (const row of registerRows) {
+    const finding = row.finding_id;
+    if (rowsByFinding.has(finding)) {
+      errors.push(`TRIVY_REGISTER_DUPLICATE_FINDING finding_id=${finding}`);
+    }
+    rowsByFinding.set(finding, row);
+    if (isActiveExpiry(todayIso, row.expiry)) {
+      activeByFinding.set(finding, row);
+    }
+  }
+
+  for (const entry of ignoreEntries) {
+    const row = rowsByFinding.get(entry.id);
+    if (!row) {
+      errors.push(
+        `TRIVY_IGNORE_UNAUTHORIZED finding_id=${entry.id} (absent from Container / Trivy exceptions register)`,
+      );
+      continue;
+    }
+    if (!isActiveExpiry(todayIso, row.expiry)) {
+      errors.push(
+        `TRIVY_EXCEPTION_EXPIRED id=${row.id} finding_id=${entry.id} expiry=${row.expiry} today=${todayIso} (fail closed; do not silently suppress)`,
+      );
+      continue;
+    }
+    if (entry.expiry && entry.expiry !== row.expiry) {
+      errors.push(
+        `TRIVY_IGNORE_EXPIRY_MISMATCH finding_id=${entry.id} ignore=${entry.expiry} register=${row.expiry}`,
+      );
+    }
+    if (!entry.expiry) {
+      // Permanent ignore lines are forbidden for register-backed HIGH/CRITICAL suppressions.
+      errors.push(
+        `TRIVY_IGNORE_MISSING_EXPIRY finding_id=${entry.id} (must mirror register expiry ${row.expiry})`,
+      );
+    }
+  }
+
+  // Register ACTIVE rows must be represented in the ignorefile (keeps dual sources aligned).
+  for (const [finding, row] of activeByFinding) {
+    if (!ignoreEntries.some((e) => e.id === finding)) {
+      errors.push(
+        `TRIVY_REGISTER_IGNORE_MISSING id=${row.id} finding_id=${finding} (ACTIVE register row has no .trivyignore entry)`,
+      );
+    }
+  }
+
+  return { activeByFinding, errors };
+}
+
+/**
+ * Build a temp ignorefile containing only ACTIVE exceptions for one image target.
+ * Image-config path filters cannot scope DS-0002; per-target ignore application does.
+ *
+ * Trivy 0.69.3 plain-ignore `exp:YYYY-MM-DD` stops suppressing on that UTC calendar
+ * day (exclusive). The exception register uses inclusive ACTIVE (`expiry >= today`),
+ * matching SCA. Therefore materialized scan ignores omit Trivy's `exp:` and the gate
+ * alone enforces register expiry fail-closed before any scan runs.
+ *
+ * @param {object} options
+ * @param {string} options.imageId
+ * @param {Map<string, Record<string, string>>} options.activeByFinding
+ * @param {Array<{ id: string, expiry: string | null }>} options.ignoreEntries
+ * @param {string} options.dir
+ * @returns {string} path to ignorefile for this scan
+ */
+export function materializeIgnorefileForImage(options) {
+  const { imageId, activeByFinding, ignoreEntries, dir } = options;
+  const lines = [
+    "# Generated by scripts/run-trivy.mjs — do not commit.",
+    `# target_image_id=${imageId}`,
+    "# Only ACTIVE register-backed exceptions for this image are included.",
+    "# Register expiry is enforced by the gate (inclusive). Trivy exp: omitted on purpose.",
+  ];
+  for (const entry of ignoreEntries) {
+    const row = activeByFinding.get(entry.id);
+    if (!row) continue;
+    if (row.image !== imageId) continue;
+    lines.push(`# register_id=${row.id} register_expiry=${row.expiry}`);
+    lines.push(entry.id);
+  }
+  lines.push("");
+  const filePath = path.join(dir, `trivyignore.${imageId}`);
+  writeFileSync(filePath, `${lines.join("\n")}\n`, "utf8");
+  return filePath;
 }
 
 /**
@@ -227,56 +560,368 @@ export function ensureImageBuilt(options) {
 }
 
 /**
+ * True when the report names the scanned image (ArtifactName or RepoTags).
+ * @param {object} data
+ * @param {string} image
+ */
+export function trivyReportMatchesImage(data, image) {
+  if (!image || typeof image !== "string") return false;
+  if (data.ArtifactName === image) return true;
+  const tags = data.Metadata?.RepoTags;
+  if (Array.isArray(tags) && tags.includes(image)) return true;
+  // Podman often stores `localhost/<name>:<tag>` while the scan arg omits the prefix.
+  if (Array.isArray(tags)) {
+    for (const tag of tags) {
+      if (typeof tag === "string" && (tag === `localhost/${image}` || tag.endsWith(`/${image}`))) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/**
+ * Fail closed on unsupported / unparseable scanner JSON.
+ * Requires Trivy SchemaVersion 2 + artifact identity. Valid clean reports may
+ * omit `Results` or include targets with no Vulnerabilities/Misconfigurations.
+ *
+ * @param {string} stdout
+ * @param {string} image
+ * @returns {{ findings: Array<{ id: string, severity: string, type: string }>, errors: string[] }}
+ */
+export function interpretTrivyJson(stdout, image) {
+  const errors = [];
+  const trimmed = (stdout || "").trim();
+  if (!trimmed) {
+    return { findings: [], errors: [`TRIVY_EMPTY_OUTPUT image=${image}`] };
+  }
+  let data;
+  try {
+    data = JSON.parse(trimmed);
+  } catch {
+    return { findings: [], errors: [`TRIVY_JSON_UNPARSEABLE image=${image}`] };
+  }
+  if (data === null || typeof data !== "object" || Array.isArray(data)) {
+    return { findings: [], errors: [`TRIVY_JSON_UNSUPPORTED_SHAPE image=${image}`] };
+  }
+  // Empty `{}` and non-Trivy objects must not look like a clean pass.
+  if (Object.keys(data).length === 0) {
+    return { findings: [], errors: [`TRIVY_JSON_EMPTY_OBJECT image=${image}`] };
+  }
+  if (!Object.prototype.hasOwnProperty.call(data, "SchemaVersion")) {
+    return { findings: [], errors: [`TRIVY_SCHEMA_MISSING image=${image}`] };
+  }
+  if (Number(data.SchemaVersion) !== 2) {
+    return {
+      findings: [],
+      errors: [`TRIVY_SCHEMA_UNSUPPORTED image=${image} version=${String(data.SchemaVersion)}`],
+    };
+  }
+  if (typeof data.ArtifactName !== "string" || data.ArtifactName.trim() === "") {
+    return { findings: [], errors: [`TRIVY_ARTIFACT_NAME_MISSING image=${image}`] };
+  }
+  if (data.ArtifactType !== "container_image") {
+    return {
+      findings: [],
+      errors: [
+        `TRIVY_ARTIFACT_TYPE_UNSUPPORTED image=${image} type=${String(data.ArtifactType)}`,
+      ],
+    };
+  }
+  if (!trivyReportMatchesImage(data, image)) {
+    return {
+      findings: [],
+      errors: [
+        `TRIVY_ARTIFACT_MISMATCH image=${image} artifact=${data.ArtifactName}`,
+      ],
+    };
+  }
+  // Trivy may omit Results when there are zero findings; treat missing key as empty.
+  if (
+    Object.prototype.hasOwnProperty.call(data, "Results") &&
+    data.Results != null &&
+    !Array.isArray(data.Results)
+  ) {
+    return { findings: [], errors: [`TRIVY_RESULTS_NOT_ARRAY image=${image}`] };
+  }
+
+  /** @type {Array<{ id: string, severity: string, type: string }>} */
+  const findings = [];
+  for (const result of data.Results || []) {
+    if (!result || typeof result !== "object") {
+      errors.push(`TRIVY_RESULT_UNSUPPORTED image=${image}`);
+      continue;
+    }
+    for (const vuln of result.Vulnerabilities || []) {
+      if (!vuln || typeof vuln !== "object" || !vuln.VulnerabilityID) {
+        errors.push(`TRIVY_VULN_UNSUPPORTED image=${image}`);
+        continue;
+      }
+      findings.push({
+        id: String(vuln.VulnerabilityID),
+        severity: String(vuln.Severity || "").toUpperCase(),
+        type: "vuln",
+      });
+    }
+    for (const misc of result.Misconfigurations || []) {
+      if (!misc || typeof misc !== "object") {
+        errors.push(`TRIVY_MISCONFIG_UNSUPPORTED image=${image}`);
+        continue;
+      }
+      const id = misc.ID || misc.AVDID;
+      if (!id) {
+        errors.push(`TRIVY_MISCONFIG_MISSING_ID image=${image}`);
+        continue;
+      }
+      findings.push({
+        id: String(id),
+        severity: String(misc.Severity || "").toUpperCase(),
+        type: "misconfig",
+      });
+    }
+  }
+  return { findings, errors };
+}
+
+/** Diagnostics-only capture budget; JSON reports are file-backed via `--output`. */
+export const TRIVY_SPAWN_MAX_BUFFER = 16 * 1024 * 1024;
+
+/**
  * @param {object} options
  * @param {string} options.bin
  * @param {string} options.image
  * @param {string} options.ignorefile
  * @param {string} options.cwd
- * @param {(cmd: string, args: string[], opts?: object) => { status: number | null }} [options.spawn]
+ * @param {string} [options.reportPath] optional path for Trivy `--output` (tests)
+ * @param {(cmd: string, args: string[], opts?: object) => { status: number | null, stdout?: string, stderr?: string, error?: Error }} [options.spawn]
+ * @returns {{ status: number, findings: Array<{ id: string, severity: string, type: string }>, errors: string[], stdout: string, stderr: string }}
  */
 export function scanImage(options) {
   const spawn = options.spawn ?? spawnSync;
-  const args = trivyImageArgs(options.image, options.ignorefile);
-  console.log(`Scanning image ${options.image}: ${options.bin} ${args.join(" ")}`);
-  const result = spawn(options.bin, args, {
-    cwd: options.cwd,
-    encoding: "utf8",
-    stdio: "inherit",
+  const ownReportDir = !options.reportPath;
+  const reportDir = ownReportDir
+    ? mkdtempSync(path.join(os.tmpdir(), "boba-trivy-report-"))
+    : path.dirname(options.reportPath);
+  const reportPath = options.reportPath || path.join(reportDir, "report.json");
+
+  try {
+    const args = trivyImageArgs(options.image, options.ignorefile, reportPath);
+    console.log(`Scanning image ${options.image}: ${options.bin} ${args.join(" ")}`);
+    const result = spawn(options.bin, args, {
+      cwd: options.cwd,
+      encoding: "utf8",
+      maxBuffer: TRIVY_SPAWN_MAX_BUFFER,
+    });
+    const stderr = result.stderr || "";
+    // Keep operator logs compact: surface Trivy diagnostics, not the full JSON blob.
+    if (stderr) process.stderr.write(stderr.endsWith("\n") ? stderr : `${stderr}\n`);
+
+    if (result.error) {
+      const err = result.error;
+      const code = err.code || "UNKNOWN";
+      return {
+        status: 1,
+        findings: [],
+        errors: [
+          `TRIVY_SPAWN_ERROR image=${options.image} code=${code} message=${err.message}`,
+        ],
+        stdout: result.stdout || "",
+        stderr,
+      };
+    }
+
+    const status = typeof result.status === "number" ? result.status : 1;
+    // Unknown flags / unsupported scanner values → Trivy FATAL (non-zero) → fail closed.
+    if (status !== 0 && status !== 1) {
+      return {
+        status: status || 1,
+        findings: [],
+        errors: [
+          `TRIVY_SCANNER_ERROR image=${options.image} status=${status} (unsupported/unknown scanner output fails closed)`,
+        ],
+        stdout: result.stdout || "",
+        stderr,
+      };
+    }
+
+    if (!existsSync(reportPath)) {
+      return {
+        status: 1,
+        findings: [],
+        errors: [
+          `TRIVY_REPORT_MISSING image=${options.image} path=${reportPath} (fail closed; JSON must be file-backed)`,
+        ],
+        stdout: "",
+        stderr,
+      };
+    }
+
+    const stdout = readFileSync(reportPath, "utf8");
+    const interpreted = interpretTrivyJson(stdout, options.image);
+    if (interpreted.errors.length > 0) {
+      return {
+        status: 1,
+        findings: interpreted.findings,
+        errors: interpreted.errors,
+        stdout,
+        stderr,
+      };
+    }
+
+    // status 1 with findings = policy failure; status 0 = clean.
+    // If Trivy exited 1 but JSON has no HIGH/CRITICAL findings, treat as scanner error (fail closed).
+    const blocking = interpreted.findings.filter(
+      (f) => f.severity === "CRITICAL" || f.severity === "HIGH",
+    );
+    if (blocking.length > 0) {
+      console.error(
+        `Trivy HIGH/CRITICAL findings image=${options.image}: ${blocking.map((f) => `${f.type}:${f.id}/${f.severity}`).join(", ")}`,
+      );
+    }
+    if (status === 1 && blocking.length === 0) {
+      return {
+        status: 1,
+        findings: interpreted.findings,
+        errors: [
+          `TRIVY_EXIT_WITHOUT_FINDINGS image=${options.image} (fail closed on unexplained non-zero exit)`,
+        ],
+        stdout,
+        stderr,
+      };
+    }
+    if (status === 0 && blocking.length > 0) {
+      return {
+        status: 1,
+        findings: interpreted.findings,
+        errors: [
+          `TRIVY_FINDINGS_WITH_ZERO_EXIT image=${options.image} (fail closed on inconsistent scanner output)`,
+        ],
+        stdout,
+        stderr,
+      };
+    }
+
+    return {
+      status: blocking.length > 0 ? 1 : 0,
+      findings: interpreted.findings,
+      errors: [],
+      stdout,
+      stderr,
+    };
+  } finally {
+    if (ownReportDir) {
+      rmSync(reportDir, { recursive: true, force: true });
+    }
+  }
+}
+
+/**
+ * Load + enforce register/ignore policy. Exported for tests.
+ * @param {object} [options]
+ * @param {string} [options.root]
+ * @param {string} [options.todayIso]
+ */
+export function loadTrivyExceptionPolicy(options = {}) {
+  const root = options.root || projectRoot;
+  // Prefer explicit test injection; never fall back to process.env overrides.
+  const todayIso = options.todayIso || utcTodayIso();
+  const registerPath = path.join(root, REGISTER_REL);
+  const ignorePath = path.join(root, TRIVYIGNORE_REL);
+
+  if (!existsSync(registerPath)) {
+    throw new Error(`MISSING_EXCEPTION_REGISTER expected ${REGISTER_REL}`);
+  }
+  if (!existsSync(ignorePath)) {
+    throw new Error(`MISSING_TRIVYIGNORE expected ${TRIVYIGNORE_REL} at repository root`);
+  }
+
+  const registerMd = readFileSync(registerPath, "utf8");
+  const ignoreText = readFileSync(ignorePath, "utf8");
+  const parsedRegister = parseTrivyExceptionRegister(registerMd);
+  const parsedIgnore = parseTrivyIgnoreFile(ignoreText);
+  const policy = enforceTrivyExceptionPolicy({
+    ignoreEntries: parsedIgnore.entries,
+    registerRows: parsedRegister.rows,
+    todayIso,
   });
-  return typeof result.status === "number" ? result.status : 1;
+
+  const errors = [...parsedRegister.errors, ...parsedIgnore.errors, ...policy.errors];
+  return {
+    todayIso,
+    registerRows: parsedRegister.rows,
+    ignoreEntries: parsedIgnore.entries,
+    activeByFinding: policy.activeByFinding,
+    errors,
+  };
 }
 
 async function main() {
-  const ignorefile = path.join(projectRoot, ".trivyignore");
-  if (!existsSync(ignorefile)) {
-    throw new Error("MISSING_TRIVYIGNORE expected .trivyignore at repository root");
+  const policy = loadTrivyExceptionPolicy();
+  if (policy.errors.length > 0) {
+    console.error("FAIL: Trivy exception policy errors (fail closed):");
+    for (const err of policy.errors) {
+      console.error(`  - ${err}`);
+    }
+    const expired = policy.errors.some((e) => e.startsWith("TRIVY_EXCEPTION_EXPIRED"));
+    if (expired) {
+      console.error(
+        "BLOCKED_BY_EXCEPTION_AUTHORITY: renewing VEX-TRIVY-* requires explicit Founder/authority approval; do not extend expiry in this gate.",
+      );
+    }
+    process.exit(1);
   }
 
   const skipBuild = process.env.BOBA_TRIVY_SKIP_BUILD === "1";
   const cli = resolveContainerCli();
   const bin = await ensureBinary();
   const targets = PRODUCTION_IMAGE_TARGETS;
+  const tempDir = mkdtempSync(path.join(os.tmpdir(), "boba-trivy-ignore-"));
 
   console.log(
-    `Trivy image gate v${TRIVY_VERSION} cli=${cli} targets=${targets.length} skip_build=${skipBuild}`,
+    `Trivy image gate v${TRIVY_VERSION} cli=${cli} targets=${targets.length} skip_build=${skipBuild} today=${policy.todayIso} image_config_scanners=misconfig`,
   );
 
-  /** @type {Array<{ id: string, image: string, status: number }>} */
+  /** @type {Array<{ id: string, image: string, status: number, findings: string[] }>} */
   const results = [];
-  for (const target of targets) {
-    ensureImageBuilt({ cli, target, cwd: projectRoot, skipBuild });
-    const status = scanImage({
-      bin,
-      image: target.image,
-      ignorefile,
-      cwd: projectRoot,
-    });
-    results.push({ id: target.id, image: target.image, status });
-    if (status !== 0) {
-      console.error(`FAIL: trivy image scan id=${target.id} image=${target.image} exit=${status}`);
-    } else {
-      console.log(`PASS: trivy image scan id=${target.id} image=${target.image}`);
+  try {
+    for (const target of targets) {
+      ensureImageBuilt({ cli, target, cwd: projectRoot, skipBuild });
+      const ignorefile = materializeIgnorefileForImage({
+        imageId: target.id,
+        activeByFinding: policy.activeByFinding,
+        ignoreEntries: policy.ignoreEntries,
+        dir: tempDir,
+      });
+      const scanned = scanImage({
+        bin,
+        image: target.image,
+        ignorefile,
+        cwd: projectRoot,
+      });
+      if (scanned.errors.length > 0) {
+        for (const err of scanned.errors) {
+          console.error(`FAIL: ${err}`);
+        }
+      }
+      const findingIds = scanned.findings
+        .filter((f) => f.severity === "CRITICAL" || f.severity === "HIGH")
+        .map((f) => f.id);
+      results.push({
+        id: target.id,
+        image: target.image,
+        status: scanned.errors.length > 0 ? 1 : scanned.status,
+        findings: findingIds,
+      });
+      if (scanned.errors.length > 0 || scanned.status !== 0) {
+        console.error(
+          `FAIL: trivy image scan id=${target.id} image=${target.image} exit=${scanned.status} findings=${findingIds.join(",") || "-"}`,
+        );
+      } else {
+        console.log(`PASS: trivy image scan id=${target.id} image=${target.image}`);
+      }
     }
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
   }
 
   const failed = results.filter((r) => r.status !== 0);
@@ -285,7 +930,9 @@ async function main() {
       `FAIL: ${failed.length}/${results.length} production image(s) have CRITICAL/HIGH findings (or scan error)`,
     );
     for (const f of failed) {
-      console.error(`  - ${f.id} (${f.image}) exit=${f.status}`);
+      console.error(
+        `  - ${f.id} (${f.image}) exit=${f.status} findings=${f.findings.join(",") || "-"}`,
+      );
     }
     process.exit(1);
   }

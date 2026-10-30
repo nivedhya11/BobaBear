@@ -10,7 +10,10 @@ import type {
   CheckoutSnapshot,
   FulfilmentMode,
 } from "../../shared/checkout";
-import type { CheckoutCommercialResult } from "./adapters/pricing";
+import {
+  sealedManualCouponCodeFromCommercial,
+  type CheckoutCommercialResult,
+} from "./adapters/pricing";
 import type { SnapshotCommitPayload } from "./repository";
 import type { ScheduledSnapshotSeal } from "./scheduled-eligibility";
 
@@ -37,7 +40,6 @@ export function buildSnapshotCandidate(input: {
   fulfilmentMode: FulfilmentMode;
   /** Required for DELIVERY; null for PICKUP. */
   serviceabilityEvaluatedAt: Date | null;
-  manualCouponCode: string | null;
   /** Required for DELIVERY; null for PICKUP. */
   destination: CheckoutDestination | null;
   /** Required for PICKUP; null for DELIVERY. */
@@ -50,6 +52,8 @@ export function buildSnapshotCandidate(input: {
   const snapshotId = randomUUID();
   const createdAt = input.evaluatedAt;
   const fulfilmentMode = input.fulfilmentMode;
+  // Fit §8: seal only the selected applied coupon, never bare cart intent.
+  const manualCouponCode = sealedManualCouponCodeFromCommercial(input.commercial);
   const destination =
     fulfilmentMode === "DELIVERY" ? input.destination : null;
   const pickupLocation =
@@ -147,7 +151,7 @@ export function buildSnapshotCandidate(input: {
       seal?.scheduledCancellationCutoffMinutes ?? null,
     serviceabilityEvaluatedAt,
     currency: "INR",
-    manualCouponCode: input.manualCouponCode,
+    manualCouponCode,
     destination,
     pickupLocation,
     basePaise: q.basePaise,
@@ -182,7 +186,7 @@ export function buildSnapshotCandidate(input: {
       seal?.scheduledCancellationCutoffMinutes ?? null,
     serviceabilityEvaluatedAt,
     currency: "INR",
-    manualCouponCode: input.manualCouponCode,
+    manualCouponCode,
     destination,
     pickupLocation,
     basePaise: q.basePaise,

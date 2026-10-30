@@ -308,12 +308,47 @@ async function runFullCommercialJourney(
   // 6–7. Promotion (coupon-triggered) + targets + activate + coupon lifecycle
   await page.getByRole("button", { name: /Promotions & coupons/i }).click();
   await expect(page.getByTestId("promotions-editor")).toBeVisible();
+
+  // #381 — the editor blocks a non-lowercase identifier before any request.
+  // The same session then posts the rejected shape so the server status is observed.
+  await page.getByLabel("Promotion identifier").fill("TEST123");
+  await page.getByLabel("Promotion display name").fill("Malformed diagnostic");
+  await page.getByLabel("Trigger type").selectOption("coupon");
+  await page.getByTestId("promotions-editor").getByRole("button", { name: /^Create$/i }).click();
+  await expect(page.locator("#promotion-identifier-error")).toContainText(/lowercase letters/i);
+  await expect(page.getByText(/Promotion created as draft/i)).toHaveCount(0);
+  const malformed = await page.evaluate(async (brandId) => {
+    const response = await fetch(`/api/admin/v1/brands/${brandId}/promotions`, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        code: "TEST123",
+        displayName: "Malformed diagnostic",
+        scopeType: "brand",
+        triggerType: "coupon",
+        startsAt: new Date().toISOString(),
+      }),
+    });
+    const body = (await response.json().catch(() => null)) as { code?: string } | null;
+    return { status: response.status, code: body?.code ?? null };
+  }, fixture.brandId);
+  test.info().annotations.push({
+    type: "issue-381",
+    description: `create promotion HTTP ${malformed.status} ${malformed.code ?? ""}`.trim(),
+  });
+  expect(malformed.status, JSON.stringify(malformed)).toBe(500);
+  expect(malformed.code).toBe("INTERNAL_ERROR");
+
   const promoCode = `cpn${stamp.replace(/[^a-z0-9]/g, "").slice(-10)}`;
-  await page.getByLabel("Promotion code").fill(promoCode);
+  await page.getByLabel("Promotion identifier").fill(promoCode);
   await page.getByLabel("Promotion display name").fill(`F6B Coupon Promo ${opts.suffix}`);
   await page.getByLabel("Trigger type").selectOption("coupon");
   await page.getByTestId("promotions-editor").getByRole("button", { name: /^Create$/i }).click();
   await expect(page.getByText(/Promotion created as draft/i)).toBeVisible({ timeout: 45_000 });
+  await expect(page.getByTestId("promotion-readiness")).toContainText(
+    "Not live yet. Customers do not receive this.",
+  );
   await expect(page.getByText(/Trigger:\s*coupon/i)).toBeVisible();
   await page.getByLabel("Benefit type").selectOption("percentage_discount");
   await page.getByRole("button", { name: /^Save benefit$/i }).click();
@@ -330,18 +365,54 @@ async function runFullCommercialJourney(
   await page.getByRole("button", { name: /^Review & activate$/i }).click();
   await confirmConsequence(page, /Confirm effect/i);
   await expect(page.getByText(/Lifecycle effect applied/i)).toBeVisible({ timeout: 45_000 });
+  await expect(page.getByTestId("promotion-readiness")).toContainText(
+    "Active, but customers can't use it yet: no coupon code is active.",
+  );
+  await expect(page.getByTestId("promotion-readiness")).toContainText("No coupon codes yet.");
 
   await expect(page.getByTestId("coupon-authoring")).toBeVisible();
   await page.getByLabel("Coupon code").fill(`code${stamp.replace(/[^a-z0-9]/g, "").slice(-6)}`);
   await page.getByRole("button", { name: /^Create coupon$/i }).click();
   await expect(page.getByText(/Coupon created/i)).toBeVisible({ timeout: 45_000 });
+  await expect(page.getByTestId("promotion-readiness")).toContainText("Not active");
   await page.getByTestId("coupon-authoring").getByRole("button", { name: /^Activate$/i }).first().click();
   await confirmConsequence(page, /Confirm effect/i);
   await expect(page.getByText(/Lifecycle effect applied/i)).toBeVisible({ timeout: 45_000 });
 
+  // Active promotion whose saved start is still in the future: not customer-ready, and no coupon issued.
+  const futureCode = `fut${stamp.replace(/[^a-z0-9]/g, "").slice(-10)}`;
+  await page.getByLabel("Promotion identifier").fill(futureCode);
+  await page.getByLabel("Promotion display name").fill(`Future window ${opts.suffix}`);
+  await page.getByLabel("Trigger type").selectOption("coupon");
+  await page.getByTestId("promotions-editor").getByRole("button", { name: /^Create$/i }).click();
+  await expect(page.getByText(/Promotion created as draft/i).last()).toBeVisible({ timeout: 45_000 });
+  await page.getByLabel("Starts at").fill("2099-01-01T00:00:00.000Z");
+  await page.getByTestId("promotions-editor").getByRole("button", { name: /^Save draft$/i }).click();
+  await expect(page.getByText(/Promotion draft saved/i)).toBeVisible({ timeout: 45_000 });
+  await page.getByLabel("Benefit type").selectOption("percentage_discount");
+  await page.getByRole("button", { name: /^Save benefit$/i }).click();
+  await expect(page.getByText(/Benefit saved/i).last()).toBeVisible({ timeout: 45_000 });
+  await page.getByRole("button", { name: /Set qualifier to selected variant/i }).click();
+  await expect(
+    page.getByRole("status").filter({ hasText: /qualifier targets updated/i }).last(),
+  ).toBeVisible({ timeout: 45_000 });
+  await page.getByRole("button", { name: /Set benefit to selected variant/i }).click();
+  await expect(
+    page.getByRole("status").filter({ hasText: /benefit targets updated/i }).last(),
+  ).toBeVisible({ timeout: 45_000 });
+  await page.getByRole("button", { name: /^Review & activate$/i }).click();
+  await confirmConsequence(page, /Confirm effect/i);
+  await expect(page.getByTestId("promotion-readiness")).toContainText(
+    "Not started yet. Not customer-ready until the saved start time.",
+    { timeout: 45_000 },
+  );
+  await expect(page.getByTestId("promotion-readiness")).toContainText(
+    "Create a coupon code customers type",
+  );
+
   // Automatic promo must not offer coupon creation
   const autoCode = `auto${stamp.replace(/[^a-z0-9]/g, "").slice(-10)}`;
-  await page.getByLabel("Promotion code").fill(autoCode);
+  await page.getByLabel("Promotion identifier").fill(autoCode);
   await page.getByLabel("Promotion display name").fill(`F6B Auto ${opts.suffix}`);
   await page.getByLabel("Trigger type").selectOption("automatic");
   await page.getByTestId("promotions-editor").getByRole("button", { name: /^Create$/i }).click();

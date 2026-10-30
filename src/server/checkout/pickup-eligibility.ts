@@ -15,6 +15,7 @@ import { outletsTable } from "../../platform/database/schema/organizations";
 import type { Cart } from "../../shared/cart";
 import {
   CheckoutError,
+  type CheckoutMerchandiseProblem,
   type CheckoutPickupLocation,
 } from "../../shared/checkout";
 import { resolveOutletOperatingState } from "../assortment/resolve-operating";
@@ -139,7 +140,7 @@ async function assertCorePickupOutletGates(
   return Object.freeze({ outletId: outlet.id, profile });
 }
 
-async function cartMerchandiseFulfilableAtOutlet(
+async function cartMerchandiseProblemsAtOutlet(
   context: PersistenceQueryContext,
   input: Readonly<{
     brandId: string;
@@ -147,20 +148,19 @@ async function cartMerchandiseFulfilableAtOutlet(
     cart: Cart;
     now: Date;
   }>,
-): Promise<boolean> {
+): Promise<readonly CheckoutMerchandiseProblem[]> {
   const catalogProblems = await validateCheckoutCartMerchandise(
     context,
     input.brandId,
     input.cart,
   );
-  if (catalogProblems.length > 0) return false;
-  const assortmentProblems = await collectAssortmentAvailabilityProblems(
+  if (catalogProblems.length > 0) return catalogProblems;
+  return collectAssortmentAvailabilityProblems(
     context,
     input.cart,
     input.outletId,
     input.now,
   );
-  return assortmentProblems.length === 0;
 }
 
 function toEligibleOption(
@@ -191,6 +191,11 @@ function toEligibleOption(
  * Lists brand outlets that are eligible for ASAP Pickup for the given cart.
  * Order is stable by outlet name then id.
  */
+export type EligiblePickupOutletListing = Readonly<{
+  outlets: readonly EligiblePickupOutlet[];
+  merchandiseProblems: readonly CheckoutMerchandiseProblem[];
+}>;
+
 export async function listEligiblePickupOutletsForCheckout(
   context: PersistenceQueryContext,
   input: Readonly<{
@@ -198,11 +203,14 @@ export async function listEligiblePickupOutletsForCheckout(
     cart: Cart;
     now: Date;
   }>,
-): Promise<readonly EligiblePickupOutlet[]> {
+): Promise<EligiblePickupOutletListing> {
   assertApplicationRole(context, "listEligiblePickupOutletsForCheckout");
 
   if (input.cart.lines.length === 0) {
-    return Object.freeze([]);
+    return Object.freeze({
+      outlets: Object.freeze([]),
+      merchandiseProblems: Object.freeze([]),
+    });
   }
 
   const outlets = await context.db
@@ -220,6 +228,8 @@ export async function listEligiblePickupOutletsForCheckout(
     .orderBy(asc(outletsTable.name), asc(outletsTable.id));
 
   const eligible: EligiblePickupOutlet[] = [];
+  const merchandiseProblems: CheckoutMerchandiseProblem[] = [];
+  const seenProblem = new Set<string>();
   for (const outlet of outlets) {
     try {
       const core = await assertCorePickupOutletGates(context, {
@@ -227,14 +237,21 @@ export async function listEligiblePickupOutletsForCheckout(
         outletId: outlet.id,
         now: input.now,
       });
-      const fulfilable = await cartMerchandiseFulfilableAtOutlet(context, {
+      const problems = await cartMerchandiseProblemsAtOutlet(context, {
         brandId: input.brandId,
         outletId: outlet.id,
         cart: input.cart,
         now: input.now,
       });
-      if (fulfilable) {
+      if (problems.length === 0) {
         eligible.push(toEligibleOption(core.profile, outlet.id));
+      } else {
+        for (const problem of problems) {
+          const key = `${problem.cartLineId}\u0000${problem.code}`;
+          if (seenProblem.has(key)) continue;
+          seenProblem.add(key);
+          merchandiseProblems.push(problem);
+        }
       }
     } catch (error) {
       if (
@@ -246,7 +263,10 @@ export async function listEligiblePickupOutletsForCheckout(
       throw error;
     }
   }
-  return Object.freeze(eligible);
+  return Object.freeze({
+    outlets: Object.freeze(eligible),
+    merchandiseProblems: Object.freeze(merchandiseProblems),
+  });
 }
 
 /**

@@ -45,7 +45,7 @@ export function checkPinnedBaseImages(dockerfileText) {
       dockerfileText,
     );
   const hasNginx =
-    /ARG\s+NGINX_IMAGE\s*=\s*docker\.io\/library\/nginx:1\.30\.4-alpine3\.24\b/.test(
+    /ARG\s+NGINX_IMAGE\s*=\s*docker\.io\/library\/nginx:1\.30\.6-alpine3\.24\b/.test(
       dockerfileText,
     );
   return {
