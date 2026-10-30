@@ -13,7 +13,39 @@ CANDIDATE_PREPARATION_EXECUTION = NOT_AUTHORIZED
 ACTIVATION_REQUIRES_ASSERT_PREFLIGHT = YES
 D3_PUBLISHING_ISOLATION = FOUR_STATE_POLICY
 PUBLIC_STAGING_EXPOSURE = NOT_AUTHORIZED
+DESIGNATED_STAGING_HOSTNAME = staging.thebobabear.in
+DESIGNATED_STAGING_HTTPS_ORIGIN = https://staging.thebobabear.in
+STAGING_HOSTNAME_APPROVAL_SCOPE = DESIGNATION_ONLY
+STAGING_HOSTNAME_APPROVED_ON = 2026-10-29
+STAGING_HOSTNAME_RECORD = SUPPORTING_OPERATOR_RECORD
+MARKETING_APEX_AND_WWW = UNCHANGED
+STAGING_DNS_CONTROL = UNVERIFIED
+STAGING_INGRESS = UNAUTHORIZED
+STAGING_TLS = UNVERIFIED
 ```
+
+## Designated staging hostname
+
+On 29 October 2026 the Founder approved `staging.thebobabear.in` as BOBA Bear's
+designated staging hostname. The intended HTTPS origin is
+`https://staging.thebobabear.in`.
+
+The approval designates that name only. It does not verify DNS control, create
+or change DNS records, select ingress, issue or install a certificate, name a
+TLS termination token, expose staging publicly, run
+`npm run env:staging:prepare-candidate`, or run `npm run env:staging:deploy`.
+`LIVE_STAGING_DEPLOYMENT`, `CANDIDATE_PREPARATION_EXECUTION`, and
+`PUBLIC_STAGING_EXPOSURE` stay `NOT_AUTHORIZED`.
+
+Marketing publication on `thebobabear.in` and `www.thebobabear.in` (GitHub Pages
+`gh-pages`) is unchanged by this designation. It does not adopt the amended
+historical ADR-002 prose that mapped `staging.thebobabear.in` to DigitalOcean
+staging. That line is not current pilot authority. Permanent always-on cloud
+staging remains not required for the pilot (D-374 / ADR-016 / ARCH-G26).
+
+This section is a supporting operator record. It is not a decision-register
+entry, it does not assign a `D-` identity, and it does not change D3 publishing
+classification, ROADMAP, or STATE.
 
 ## Publishing isolation (D3 Option A)
 
@@ -83,8 +115,10 @@ shared by `BOBA_BEAR_PUBLIC_ORIGIN`, `BOBA_BEAR_AUTHORIZED_STAGING_ORIGIN`,
 and `BOBA_BEAR_STAGING_TLS_TERMINATION` equal to a shipped allowlist entry.
 
 The shipped allowlist is empty. A token in that allowlist is a configuration
-assertion, not independent DNS or TLS evidence. Hostname, DNS authority,
-certificate method, and TLS termination point are not invented here. Local
+assertion, not independent DNS or TLS evidence. The designated hostname above
+is a name selection only. DNS authority, certificate method, and TLS
+termination point are not invented here and are not authorized by that
+designation. Local
 `docker:env:init` remains the local contract and is not a staging fallback.
 Every runtime service must carry the same valid public origin; a missing or
 malformed service origin is not ignored when other services agree.
@@ -144,8 +178,10 @@ cannot seal an order.
 
 ## Gates that remain closed
 
-Gate A needs an authorized hostname, DNS, certificate, TLS termination token,
-secret-permission remediation, and verified test payment credentials.
+Gate A has a designated hostname (`staging.thebobabear.in`). It still needs
+authorized DNS, a certificate, a TLS termination token, secret-permission
+remediation, and verified test payment credentials. The hostname designation
+does not satisfy those remaining inputs.
 
 Gate B needs an authorized read-only staging database preflight, a Founder
 decision that binds restore proof to this database and volume, and a ledger
