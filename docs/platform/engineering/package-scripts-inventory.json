@@ -2,19 +2,19 @@
   "schemaVersion": 1,
   "generatedBy": "scripts/package-scripts-inventory.mjs",
   "packageName": "boba-bear-landing",
-  "scriptCount": 258,
+  "scriptCount": 261,
   "categoryCounts": {
     "BUILD": 5,
     "DEV": 2,
     "TEST_UNIT": 12,
     "TEST_INTEGRATION": 43,
     "TEST_DATABASE": 21,
-    "TEST_E2E": 8,
-    "AUDIT": 32,
+    "TEST_E2E": 9,
+    "AUDIT": 33,
     "GOVERNANCE": 16,
     "DATABASE": 18,
     "ENVIRONMENT": 2,
-    "STAGING": 6,
+    "STAGING": 7,
     "DOCKER": 26,
     "RECOVERY": 14,
     "BOOTSTRAP": 10,
@@ -22,9 +22,9 @@
     "ONE_OFF": 19,
     "LEGACY_OR_ALIAS": 2
   },
-  "orphanCount": 56,
+  "orphanCount": 57,
   "duplicateBodyCount": 4,
-  "publicStableCount": 188,
+  "publicStableCount": 191,
   "internalOnlyCount": 2,
   "mutatingCommandCount": 37,
   "aliasCount": 2,
@@ -116,6 +116,7 @@
     "test:database:pricing-tax",
     "test:database:promotions",
     "test:database:workforce-auth",
+    "test:e2e:gtm-uat-browser",
     "test:e2e:headed",
     "test:imp036j:responsive-browser-proof",
     "test:menu-import",
@@ -793,6 +794,29 @@
       "orphan": false
     },
     {
+      "name": "audit:repo-hygiene",
+      "body": "node scripts/repository/check-repository-conventions.mjs",
+      "category": "AUDIT",
+      "workflowCallers": [
+        ".github/workflows/ci.yml"
+      ],
+      "docCallers": [
+        "AGENTS.md",
+        "docs/platform/engineering/repository-conventions.md",
+        "docs/platform/testing/test-inventory.json"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": false,
+      "orphan": false
+    },
+    {
       "name": "audit:secrets",
       "body": "node scripts/run-gitleaks.mjs",
       "category": "AUDIT",
@@ -954,6 +978,7 @@
         "test:e2e",
         "test:e2e:customer-auth",
         "test:e2e:customer-ordering",
+        "test:e2e:gtm-uat-browser",
         "test:e2e:headed",
         "test:e2e:location-selector-layout",
         "test:e2e:workforce-auth"
@@ -962,7 +987,8 @@
         "Dockerfile",
         "scripts/e2e/customer-ordering-server.ts",
         "scripts/package-scripts-inventory.test.mjs",
-        "scripts/serve-static-export.mjs"
+        "scripts/serve-static-export.mjs",
+        "scripts/verify-local-fonts-build.mjs"
       ],
       "publicStable": true,
       "internalOnly": false,
@@ -1140,6 +1166,7 @@
       "packageScriptCallers": [
         "test:e2e:customer-auth",
         "test:e2e:customer-ordering",
+        "test:e2e:gtm-uat-browser",
         "test:e2e:location-selector-layout"
       ],
       "otherCallers": [
@@ -1185,6 +1212,7 @@
       ],
       "packageScriptCallers": [
         "test:e2e:customer-ordering",
+        "test:e2e:gtm-uat-browser",
         "test:e2e:location-selector-layout"
       ],
       "otherCallers": [
@@ -2205,12 +2233,15 @@
       "body": "node scripts/environment/staging.mjs deploy",
       "category": "STAGING",
       "workflowCallers": [],
-      "docCallers": [],
+      "docCallers": [
+        "docs/platform/operations/imp037-recovery-runbook.md",
+        "docs/platform/operations/strict-staging-preparation.md"
+      ],
       "packageScriptCallers": [],
       "otherCallers": [
         "scripts/environment/staging.mjs"
       ],
-      "publicStable": false,
+      "publicStable": true,
       "internalOnly": false,
       "alias": false,
       "duplicate": false,
@@ -2225,12 +2256,32 @@
       "category": "STAGING",
       "workflowCallers": [],
       "docCallers": [
-        "README.md"
+        "README.md",
+        "docs/platform/operations/imp037-recovery-runbook.md"
       ],
       "packageScriptCallers": [],
       "otherCallers": [
         "scripts/environment/staging.mjs"
       ],
+      "publicStable": true,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": false
+    },
+    {
+      "name": "env:staging:prepare-candidate",
+      "body": "node scripts/environment/staging.mjs prepare-candidate",
+      "category": "STAGING",
+      "workflowCallers": [],
+      "docCallers": [
+        "docs/platform/operations/strict-staging-preparation.md"
+      ],
+      "packageScriptCallers": [],
+      "otherCallers": [],
       "publicStable": true,
       "internalOnly": false,
       "alias": false,
@@ -2265,7 +2316,8 @@
       "category": "STAGING",
       "workflowCallers": [],
       "docCallers": [
-        "README.md"
+        "README.md",
+        "docs/platform/operations/imp037-recovery-runbook.md"
       ],
       "packageScriptCallers": [],
       "otherCallers": [
@@ -2734,6 +2786,7 @@
       "category": "OPERATIONS",
       "workflowCallers": [],
       "docCallers": [
+        "docs/platform/operations/d2-restricted-cloudflare-tunnel-design.md",
         "docs/platform/security/README.md",
         "docs/platform/security/origin-trust/README.md",
         "docs/platform/security/origin-trust/imp039-handoff-checklist.md"
@@ -3130,9 +3183,7 @@
       "body": "next start",
       "category": "OPERATIONS",
       "workflowCallers": [],
-      "docCallers": [
-        "README.md"
-      ],
+      "docCallers": [],
       "packageScriptCallers": [],
       "otherCallers": [],
       "publicStable": true,
@@ -3157,8 +3208,8 @@
         "docs/platform/testing/CI-GAP-ANALYSIS.md",
         "docs/platform/testing/CI-JOB-CONTRACT.md",
         "docs/platform/testing/CI-READINESS.md",
-        "docs/platform/testing/README.md",
-        "docs/platform/testing/test-inventory.json"
+        "docs/platform/testing/test-inventory.json",
+        "docs/uat/gtm-closure-20261024/FOUNDER_FUNCTIONAL_EXPERIENCE_UAT_CHECKLIST.md"
       ],
       "packageScriptCallers": [
         "check"
@@ -3605,7 +3656,7 @@
     },
     {
       "name": "test:customer-auth:http",
-      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-auth/http.integration.test.ts",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-auth/http.integration.test.ts tests/customer-auth/trusted-identity.integration.test.ts",
       "category": "TEST_INTEGRATION",
       "workflowCallers": [
         ".github/workflows/ci.yml"
@@ -3719,7 +3770,8 @@
       "otherCallers": [
         "playwright.customer-auth.config.ts",
         "scripts/e2e/customer-auth-server.ts",
-        "scripts/package-scripts-inventory.test.mjs"
+        "scripts/package-scripts-inventory.test.mjs",
+        "scripts/repository/check-repository-conventions.test.mjs"
       ],
       "publicStable": true,
       "internalOnly": false,
@@ -4262,6 +4314,23 @@
       "orphan": false
     },
     {
+      "name": "test:e2e:gtm-uat-browser",
+      "body": "NEXT_PUBLIC_BOBA_BEAR_GOOGLE_MAPS_BROWSER_KEY=e2e-maps-browser-key-fixture npm run build && npm run customer-auth:build && npm run customer-commerce:build && node scripts/e2e/run-gtm-uat-browser-e2e.mjs",
+      "category": "TEST_E2E",
+      "workflowCallers": [],
+      "docCallers": [],
+      "packageScriptCallers": [],
+      "otherCallers": [],
+      "publicStable": false,
+      "internalOnly": false,
+      "alias": false,
+      "duplicate": false,
+      "duplicateGroup": [],
+      "mutating": false,
+      "environmentSpecific": true,
+      "orphan": true
+    },
+    {
       "name": "test:e2e:headed",
       "body": "npm run build && playwright test --headed",
       "category": "TEST_E2E",
@@ -4430,7 +4499,9 @@
         "docs/platform/testing/test-inventory.json"
       ],
       "packageScriptCallers": [],
-      "otherCallers": [],
+      "otherCallers": [
+        "scripts/repository/check-repository-conventions.test.mjs"
+      ],
       "publicStable": true,
       "internalOnly": false,
       "alias": false,
@@ -4579,7 +4650,9 @@
         "docs/platform/testing/test-inventory.json"
       ],
       "packageScriptCallers": [],
-      "otherCallers": [],
+      "otherCallers": [
+        "scripts/repository/check-repository-conventions.test.mjs"
+      ],
       "publicStable": true,
       "internalOnly": false,
       "alias": false,
@@ -5148,6 +5221,7 @@
         ".github/workflows/ci.yml"
       ],
       "docCallers": [
+        "docs/platform/engineering/repository-conventions.md",
         "docs/platform/testing/BASELINE.md",
         "docs/platform/testing/CI-GAP-ANALYSIS.md",
         "docs/platform/testing/CI-JOB-CONTRACT.md",
@@ -5291,7 +5365,7 @@
     },
     {
       "name": "test:workforce-auth:http",
-      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/workforce-auth/http.integration.test.ts",
+      "body": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/workforce-auth/http.integration.test.ts tests/workforce-auth/trusted-identity.integration.test.ts",
       "category": "TEST_INTEGRATION",
       "workflowCallers": [
         ".github/workflows/ci.yml"
@@ -5595,6 +5669,8 @@
         "docs/platform/product/IMP-036G/product-definition.md",
         "docs/platform/product/IMP-036K/product-definition.md",
         "docs/platform/product/IMP-037/product-definition.md",
+        "docs/uat/gtm-closure-20261024/FOUNDER_FUNCTIONAL_EXPERIENCE_UAT_CHECKLIST.md",
+        "docs/uat/imp036j-gtm-20261024/FOUNDER_UAT_PACKAGE.md",
         "scripts/fixtures/imp033-acceptance-state.md",
         "scripts/fixtures/imp034-acceptance-state.md",
         "scripts/fixtures/imp034-completion-state.md",
