@@ -139,7 +139,7 @@ export async function requirePromotionManageForScope(
   // Brand-level permission short-circuits lower-scope RBAC, but must still
   // prove the referenced scope resource exists in this brand before mutation.
   if (brandDecision.allowed) {
-    await assertPromotionScopeResourceInBrand(context, { brandId, ...input });
+    await assertPromotionScopeResourceInBrand(context, { ...input, brandId });
     return;
   }
 
@@ -160,7 +160,7 @@ export async function requirePromotionManageForScope(
         "Territory promotions are not delegated by Brand policy.",
       );
     }
-    await assertPromotionScopeResourceInBrand(context, { brandId, ...input });
+    await assertPromotionScopeResourceInBrand(context, { ...input, brandId });
     const territoryId = assertUuid(input.territoryId, "territoryId");
     await requireAuthorization(context, {
       actor: principal,
@@ -176,7 +176,7 @@ export async function requirePromotionManageForScope(
         "Organization promotions are not delegated by Brand policy.",
       );
     }
-    await assertPromotionScopeResourceInBrand(context, { brandId, ...input });
+    await assertPromotionScopeResourceInBrand(context, { ...input, brandId });
     const organizationId = assertUuid(input.organizationId, "organizationId");
     await requireAuthorization(context, {
       actor: principal,
@@ -192,7 +192,7 @@ export async function requirePromotionManageForScope(
         "Outlet promotions are not delegated by Brand policy.",
       );
     }
-    await assertPromotionScopeResourceInBrand(context, { brandId, ...input });
+    await assertPromotionScopeResourceInBrand(context, { ...input, brandId });
     const outlet = await findOutletById(context, assertUuid(input.outletId, "outletId"));
     // assertPromotionScopeResourceInBrand already proved brand ownership.
     if (!outlet) throw new PromotionNotFoundError("outlet");
