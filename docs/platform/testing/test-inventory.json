@@ -31,11 +31,11 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2419,
-    "executableTestFiles": 565,
-    "sourceTestFiles": 165,
+    "trackedPathsConsidered": 2425,
+    "executableTestFiles": 568,
+    "sourceTestFiles": 167,
     "testsTreeExecutableFiles": 296,
-    "scriptTestFiles": 104,
+    "scriptTestFiles": 105,
     "playwrightSpecs": 13,
     "vitestConfigs": 2,
     "playwrightConfigs": 8,
@@ -61,7 +61,9 @@
     "src/components/PublishedMenuChapters.test.tsx",
     "src/components/account/AccountShell.test.tsx",
     "src/components/account/AddressForm.validation.test.ts",
+    "src/components/operations/OperationsDeliveryConsequenceDialog.test.tsx",
     "src/components/operations/OperationsDeliveryPanel.test.tsx",
+    "src/components/operations/OperationsDeliveryWorkspaceClient.test.tsx",
     "src/components/operations/OperationsLifecycleConfirmationDialog.test.tsx",
     "src/components/operations/OperationsOrderDetailClient.test.tsx",
     "src/components/operations/OperationsOrderDetailShell.test.ts",
@@ -561,6 +563,7 @@
     "scripts/environment/staging-secret-files.test.mjs",
     "scripts/environment/staging-source-isolation.test.mjs",
     "scripts/environment/staging.test.mjs",
+    "scripts/eslint-client-boundary.test.mjs",
     "scripts/generate-nginx-security-headers.test.mjs",
     "scripts/governance-context.test.mjs",
     "scripts/governance-fingerprint.test.mjs",
@@ -2375,6 +2378,23 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "scripts/eslint-client-boundary.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "scripts/generate-nginx-security-headers.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
@@ -3604,7 +3624,43 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "src/components/operations/OperationsDeliveryConsequenceDialog.test.tsx",
+      "runner": "vitest",
+      "domain": "components/operations",
+      "testType": "component-or-tsx",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "2-component"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "src/components/operations/OperationsDeliveryPanel.test.tsx",
+      "runner": "vitest",
+      "domain": "components/operations",
+      "testType": "component-or-tsx",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "2-component"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/components/operations/OperationsDeliveryWorkspaceClient.test.tsx",
       "runner": "vitest",
       "domain": "components/operations",
       "testType": "component-or-tsx",
