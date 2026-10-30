@@ -1,7 +1,7 @@
 # First-party UI fonts
 
 Self-hosted latin WOFF2 subsets for deterministic CI and production builds via
-`next/font/local` in `src/app/layout.tsx`.
+`next/font/local` in `src/app/layout.tsx` (assets in `src/shared/brand-fonts`).
 
 This removes build-time Google Fonts network fetches that intermittently fail
 Next's Google font loader (`TypeError: Cannot read properties of null (reading '1')`
