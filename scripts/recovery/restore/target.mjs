@@ -45,12 +45,15 @@ export function assertFreshTarget(input) {
   }
 
   const targetClassification = input.targetClassification ?? ENVIRONMENT_CLASSIFICATION.RECOVERY;
+  // CS3: never silently default source classification to production.
   const safety = evaluateTargetIdentitySafety({
     sourceIdentity: input.sourceIdentity,
     targetIdentity: input.targetIdentity,
-    sourceClassification: input.sourceClassification ?? ENVIRONMENT_CLASSIFICATION.PRODUCTION,
+    sourceClassification: input.sourceClassification,
     targetClassification,
     targetPgdataPath: input.targetPgdataPath,
+    composeProjectName: input.composeProjectName,
+    claimedRuntimeEnv: input.claimedRuntimeEnv,
   });
   if (!safety.allowed) {
     return { ok: false, code: safety.code, reason: safety.reason };

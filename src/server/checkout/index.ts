@@ -71,3 +71,17 @@ export {
   prepareCheckoutForPayment,
   type PrepareCheckoutForPaymentResult,
 } from "./prepare";
+
+export {
+  CHECKOUT_PREPARE_DIAGNOSTIC_LOG_FIELDS,
+  CHECKOUT_PREPARE_REJECTION_STAGES,
+  buildCheckoutPrepareDiagnosticEvent,
+  observeNonStructuralCheckoutPrepareRejection,
+  observeStructuralCheckoutPrepareMismatch,
+  safeNotifyCheckoutPrepareDiagnostic,
+  type CheckoutPrepareDiagnosticEvent,
+  type CheckoutPrepareDiagnosticObservation,
+  type CheckoutPrepareDiagnosticObservationSource,
+  type CheckoutPrepareDiagnosticObserver,
+  type CheckoutPrepareRejectionStage,
+} from "./prepare-diagnostic";

@@ -286,7 +286,7 @@ const BRACES_CHAIN_VULNS = {
   },
 };
 
-test("VEX-NPM-001 is the only ACTIVE npm row and expires after 2026-10-17", () => {
+test("VEX-NPM-001 remains expired; withdrawn GHSA has no active exception", () => {
   const registerPath = path.join(
     path.dirname(fileURLToPath(import.meta.url)),
     "..",
@@ -297,22 +297,47 @@ test("VEX-NPM-001 is the only ACTIVE npm row and expires after 2026-10-17", () =
   assert.deepEqual(errors, []);
   const npmRows = rows.filter((r) => String(r.id).startsWith("VEX-NPM-"));
   assert.equal(npmRows.length, 1);
-  assert.equal(npmRows[0].id, "VEX-NPM-001");
-  assert.equal(npmRows[0]["package/cve"], "GHSA-vfj7-8cjw-p6xm");
-  assert.equal(npmRows[0].severity, "high");
-  assert.equal(npmRows[0].owner, "platform-security");
-  assert.equal(npmRows[0].retest_date, "2026-10-10");
-  assert.equal(npmRows[0].expiry, "2026-10-17");
-  assert.match(npmRows[0].authority, /5966965948/);
+  assert.equal(npmRows.some((r) => r.id === "VEX-NPM-002"), false);
+
+  const vex001 = npmRows.find((r) => r.id === "VEX-NPM-001");
+  assert.ok(vex001);
+  assert.equal(vex001["package/cve"], "GHSA-vfj7-8cjw-p6xm");
+  assert.equal(vex001.severity, "high");
+  assert.equal(vex001.owner, "platform-security");
+  assert.equal(vex001.retest_date, "2026-10-10");
+  assert.equal(vex001.expiry, "2026-10-17");
+  assert.match(vex001.authority, /5966965948/);
+  assert.equal(isActiveExpiry("2026-10-17", vex001.expiry), true);
+  assert.equal(isActiveExpiry("2026-10-18", vex001.expiry), false);
+  assert.equal(isActiveExpiry("2026-10-26", vex001.expiry), false);
+
   assert.equal(
     rows.some((r) => ["VEX-NPM-002", "VEX-NPM-003", "VEX-NPM-004", "VEX-NPM-005"].includes(r.id)),
     false,
   );
-  assert.equal(isActiveExpiry("2026-10-03", npmRows[0].expiry), true);
-  assert.equal(isActiveExpiry("2026-10-17", npmRows[0].expiry), true);
-  assert.equal(isActiveExpiry("2026-10-18", npmRows[0].expiry), false);
+  assert.match(markdown, /VEX-NPM-002` was removed/);
+  assert.match(markdown, /not renewed/);
+
   assert.equal(activeExceptions(npmRows, "2026-10-03").length, 1);
   assert.equal(activeExceptions(npmRows, "2026-10-18").length, 0);
+  assert.equal(activeExceptions(npmRows, "2026-10-26").length, 0);
+});
+
+test("withdrawn braces GHSA has no active cover and a reported high would fail closed", () => {
+  const registerPath = path.join(
+    path.dirname(fileURLToPath(import.meta.url)),
+    "..",
+    "docs/platform/security/vulnerability-exception-register.md",
+  );
+  const markdown = readFileSync(registerPath, "utf8");
+  const { rows, errors } = parseExceptionRegister(markdown);
+  assert.deepEqual(errors, []);
+
+  const activeRetest = activeExceptions(rows, "2026-10-26");
+  assert.equal(activeRetest.length, 0);
+  const uncovered = filterUncoveredPolicyFindings(BRACES_CHAIN_VULNS, activeRetest);
+  assert.equal(uncovered.length, 1);
+  assert.ok(uncovered[0].keys.includes("ghsa-vfj7-8cjw-p6xm"));
 });
 
 test("root GHSA covers the current inherited braces chain", () => {

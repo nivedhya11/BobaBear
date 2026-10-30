@@ -216,10 +216,13 @@ POLICY =
   Secrets = pinned gitleaks OSS binary (scripts/run-gitleaks.mjs)
   Containers = scripts/run-trivy.mjs pinned Trivy binary v0.69.3 image scan CRITICAL,HIGH
                of built V1 production runtimes (web/auth/commerce/operations/postgres)
-               including base/OS layers (not aquasecurity/trivy-action; post-2026 Actions
-               compromise; not filesystem-only). Fail closed on remediable findings
-               (--ignore-unfixed); Dockerfile apt/apk upgrade applies available patches;
-               .trivyignore for VEX-TRIVY-001 (DS-0002). Runtime npm installs use
+               including base/OS layers and image-config misconfig
+               (--image-config-scanners misconfig; not aquasecurity/trivy-action;
+               post-2026 Actions compromise; not filesystem-only). Fail closed on
+               remediable findings (--ignore-unfixed); Dockerfile apt/apk upgrade
+               applies available patches; register-backed .trivyignore for
+               VEX-TRIVY-001 (DS-0002) applied only to the postgres image target with
+               strict expiry (expired ignores fail closed). Runtime npm installs use
                --omit=dev --omit=optional so optional peer tooling (drizzle-kit/vitest/
                esbuild) is not shipped. Path-filtered on PR via
                scripts/ci-container-scan-paths.mjs; always on main

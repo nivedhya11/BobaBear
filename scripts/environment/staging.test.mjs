@@ -12,7 +12,6 @@ import { test } from "node:test";
 import {
   BOBA_BUILD_IMAGES,
   BOBA_RUNTIME_SERVICES,
-  STAGING_PUBLIC_ORIGIN,
   assertImageRevisions,
   assertRunningProvenance,
   assertServiceabilitySmokeResponse,
@@ -24,7 +23,6 @@ import {
   ensureStagingEnvFiles,
   isFullGitSha,
   normalizeEnvAssignment,
-  normalizeStagingAuthOriginEnv,
   readSecretStdinBuffer,
   runPodmanWithSecretStdin,
   spawnIgnoringStdin,
@@ -48,7 +46,10 @@ test("staging status declares an exact merged Git-tree artifact source", () => {
     /console\.log\("EXACT_GIT_TREE_MECHANISM git archive HEAD to isolated temporary build context"\)/,
   );
   assert.match(source, /console\.log\("LIVE_UNTRACKED_CONTENT_CAN_AFFECT_STAGING_ARTIFACT NO"\)/);
-  assert.match(source, /git -C .* archive .* \| tar -x -C/);
+  const isolation = readFileSync(path.resolve("scripts/environment/staging-source-isolation.mjs"), "utf8");
+  assert.match(isolation, /archive", "--format=tar"/);
+  assert.match(isolation, /get-tar-commit-id/);
+  assert.match(isolation, /process\.umask\(0o022\)/);
 });
 
 test("staging serviceability smoke fails closed for indeterminate or unexpected responses", () => {
@@ -78,26 +79,48 @@ test("staging deploy passes the rootless Podman project to the customer-auth smo
 
 test("staging deploy retains the current-main Podman hardening safeguards", () => {
   const source = readFileSync(path.resolve("scripts/environment/staging.mjs"), "utf8");
-  assert.match(source, /git -C .* archive .* \| tar -x -C/);
+  const isolation = readFileSync(path.resolve("scripts/environment/staging-source-isolation.mjs"), "utf8");
+  assert.match(isolation, /archive", "--format=tar"/);
+  assert.match(source, /extractVerifiedGitArchive/);
   assert.match(source, /podman-compose", \["-f", "compose\.yaml", "-p", STAGING_PROJECT/);
   assert.match(source, /\["up", "-d", "--force-recreate", "--no-deps", \.\.\.services\]/);
-  assert.match(source, /ensurePersistentPostgres\(buildDir, initDir\)/);
-  assert.match(source, /POSTGRES_INIT_MOUNT_REFRESH YES/);
+  assert.match(source, /verifyPreMutationReadiness/);
+  assert.match(source, /assertPreflightAllowsDeployment/);
+  assert.match(source, /stopLegacyRuntimeIfNeeded/);
+  assert.match(source, /ensurePersistentPostgres\(/);
+  assert.match(source, /POSTGRES_INIT_MOUNT_PRESERVED YES/);
+  assert.match(source, /POSTGRES_CONTAINER_REPLACED NO/);
   assert.match(source, /POSTGRES_VOLUME_PRESERVED YES/);
+  assert.doesNotMatch(source, /POSTGRES_INIT_MOUNT_REFRESH YES/);
   assert.match(source, /\["run", "--rm", "--no-deps", "migrate"\]/);
-  assert.match(source, /decideAndApplyStagingBootstrap\(buildDir\)/);
+  assert.match(source, /decideBootstrap\(buildDir\)|decideAndApplyStagingBootstrap\(buildDir\)/);
+  assert.match(source, /decideBootstrap = decideAndApplyStagingBootstrap/);
   assert.match(source, /classifyStagingBaselineInTooling/);
   assert.match(source, /runLegacySeedBootstrapChain/);
   assert.match(source, /stagingBaselineDecisionLogLines/);
   assert.match(source, /PARTIAL_OR_INCOMPATIBLE/);
   assert.match(source, /"--no-deps"/);
-  assert.match(source, /upAndWait\(buildDir, BOBA_RUNTIME_SERVICES, \{ BOBA_POSTGRES_INIT_DIR: initDir \}\)/);
+  assert.match(source, /BOBA_POSTGRES_INIT_DIR: initDir/);
   assert.doesNotMatch(source, /upAndWait\(buildDir, \["postgres"\]\)/);
   assert.doesNotMatch(source, /--wait/);
   assert.match(source, /State\.Health\.Status/);
   assert.match(source, /boba-bear_app_1/);
   assert.match(source, /PERSISTENT_DB_VOLUME \$\{STAGING_PROJECT\}_postgres-data/);
   assert.doesNotMatch(source, /postgres-data.*rmSync|rmSync.*postgres-data/);
+});
+
+test("staging deploy invokes fail-closed preflight before the first operational mutation", () => {
+  const source = readFileSync(path.resolve("scripts/environment/staging.mjs"), "utf8");
+  const marker = "export function runStagingDeploy(candidate, deps = {})";
+  const start = source.indexOf(marker);
+  assert.ok(start >= 0);
+  const window = source.slice(start, start + 4000);
+  const preflightIdx = window.indexOf("verifyReadiness(candidate, deps)");
+  const assertPassIdx = window.indexOf("assertPreflightAllowsDeployment(readiness.decision)");
+  const stopIdx = window.indexOf("stopLegacy();");
+  assert.ok(preflightIdx >= 0 && assertPassIdx >= 0 && stopIdx >= 0);
+  assert.ok(preflightIdx < assertPassIdx);
+  assert.ok(assertPassIdx < stopIdx);
 });
 
 test("all final BOBA image targets persist the OCI revision label", () => {
@@ -133,8 +156,11 @@ test("staging PostgreSQL uses a durable configurable init mount", () => {
   const postgres = compose.match(/  postgres:\n([\s\S]*?)(?=\n  [a-z-]+:)/)?.[1] ?? "";
   assert.match(postgres, /\$\{BOBA_POSTGRES_INIT_DIR:-\.\/docker\/postgres\/init\}/);
   assert.match(source, /STAGING_RUNTIME_ASSETS_DIR/);
-  assert.match(source, /materializeStagingPostgresInit\(buildDir, sha\)/);
-  assert.match(source, /cpSync\(source, destination, \{ recursive: true, preserveTimestamps: true \}\)/);
+  assert.match(source, /function materializeStagingPostgresInit\(/);
+  assert.match(source, /resolvePostgresInitDisposition/);
+  assert.match(source, /collectInitManifest/);
+  assert.match(source, /STAGING_POSTGRES_INIT_MATERIALIZE SKIP_ACTIVE_MOUNT/);
+  assert.doesNotMatch(source, /rmSync\(destination,/);
   assert.match(source, /rmSync\(buildDir, \{ recursive: true, force: true \}\)/);
   assert.match(source, /BOBA_POSTGRES_INIT_DIR: initDir/);
 });
@@ -200,7 +226,7 @@ test("staging workforce operator uses direct Podman without Compose dependency r
   assert.match(source, /"--label",\s*\n\s*`\$\{OCI_REVISION_LABEL\}=\$\{candidate\.head\}`/);
   assert.match(source, /LOCAL_OPERATOR_BASE_IMAGE_REQUIRED/);
   assert.match(source, /discardStaleTag\(image, candidate\.head\)/);
-  assert.match(source, /umask 022; git -C .* archive .* \| tar -x/);
+  assert.match(readFileSync(path.resolve("scripts/environment/staging-source-isolation.mjs"), "utf8"), /process\.umask\(0o022\)/);
   assert.doesNotMatch(source.match(/function createStagingWorkforceUser\(args, deps = \{\}\) \{([\s\S]*?)\n\}/)?.[1] ?? "", /--no-cache/);
   assert.match(source, /runOperator\(runArgs, secretBuffer/);
   assert.match(source, /--env-file/);
@@ -232,6 +258,18 @@ test("all persistent BOBA services require their inspected running image revisio
   assert.doesNotThrow(() => assertRunningProvenance(candidateSha, records));
   records[2].revision = "";
   assert.throws(() => assertRunningProvenance(candidateSha, records), /workforce-auth.*MISSING/);
+});
+
+test("running image ids must match the freshly built ids when that record exists", () => {
+  const records = BOBA_RUNTIME_SERVICES.map((service) => ({
+    service,
+    revision: candidateSha,
+    imageId: `sha256:${service}`,
+  }));
+  const built = Object.fromEntries(records.map((record) => [record.service, record.imageId]));
+  assert.doesNotThrow(() => assertRunningProvenance(candidateSha, records, built));
+  built[records[0].service] = "sha256:stale";
+  assert.throws(() => assertRunningProvenance(candidateSha, records, built), /image id mismatch/);
 });
 
 test("staging status reports inspected image IDs and labels instead of a Git-only deployment claim", () => {
@@ -409,8 +447,9 @@ test("createStagingWorkforceUser delivers password to final podman run only", ()
   assert.equal(discarded.sha, candidateSha);
 
   const source = readFileSync(path.resolve("scripts/environment/staging.mjs"), "utf8");
-  assert.match(source, /spawnIgnoringStdin\(\s*"bash"/);
-  assert.match(source, /spawnIgnoringStdin\("npm", step\.args/);
+  const isolation = readFileSync(path.resolve("scripts/environment/staging-source-isolation.mjs"), "utf8");
+  assert.match(isolation, /stdio: \[options\.input != null \? "pipe" : "ignore"/);
+  assert.doesNotMatch(source, /docker:env:init/);
   assert.match(source, /function runPodman\(args, options = \{\}\) \{\n  const result = spawnIgnoringStdin\("podman"/);
   assert.match(source, /secretBuffer = readStdin\(\)/);
   assert.doesNotMatch(source, /runPodman\(\["run", "--rm"/);
@@ -507,48 +546,26 @@ test("createStagingWorkforceUser does not mutate persistent staging services", (
 });
 
 test("normalizeEnvAssignment replaces, appends once, and stays idempotent", () => {
+  const origin = "https://staging.example.test";
   const wrong = "WORKFORCE_AUTH_BASE_URL=http://127.0.0.1:8080\nWORKFORCE_AUTH_SECRET=s3cret-value-do-not-log\n";
-  const replaced = normalizeEnvAssignment(wrong, "WORKFORCE_AUTH_BASE_URL", STAGING_PUBLIC_ORIGIN);
+  const replaced = normalizeEnvAssignment(wrong, "WORKFORCE_AUTH_BASE_URL", origin);
   assert.equal(
     replaced,
-    "WORKFORCE_AUTH_BASE_URL=http://localhost:8080\nWORKFORCE_AUTH_SECRET=s3cret-value-do-not-log\n",
+    "WORKFORCE_AUTH_BASE_URL=https://staging.example.test\nWORKFORCE_AUTH_SECRET=s3cret-value-do-not-log\n",
   );
-  assert.equal(
-    normalizeEnvAssignment(replaced, "WORKFORCE_AUTH_BASE_URL", STAGING_PUBLIC_ORIGIN),
-    replaced,
-  );
+  assert.equal(normalizeEnvAssignment(replaced, "WORKFORCE_AUTH_BASE_URL", origin), replaced);
 
   const missing = "WORKFORCE_AUTH_SECRET=s3cret-value-do-not-log\n";
-  const appended = normalizeEnvAssignment(missing, "WORKFORCE_AUTH_BASE_URL", STAGING_PUBLIC_ORIGIN);
+  const appended = normalizeEnvAssignment(missing, "WORKFORCE_AUTH_BASE_URL", origin);
   assert.equal(
     appended,
-    "WORKFORCE_AUTH_SECRET=s3cret-value-do-not-log\nWORKFORCE_AUTH_BASE_URL=http://localhost:8080\n",
+    "WORKFORCE_AUTH_SECRET=s3cret-value-do-not-log\nWORKFORCE_AUTH_BASE_URL=https://staging.example.test\n",
   );
-  assert.equal(
-    normalizeEnvAssignment(appended, "WORKFORCE_AUTH_BASE_URL", STAGING_PUBLIC_ORIGIN),
-    appended,
-  );
+  assert.equal(normalizeEnvAssignment(appended, "WORKFORCE_AUTH_BASE_URL", origin), appended);
   assert.equal([...appended.matchAll(/^WORKFORCE_AUTH_BASE_URL=/gm)].length, 1);
 });
 
-test("normalizeStagingAuthOriginEnv covers customer and workforce auth files only", () => {
-  const customer = normalizeStagingAuthOriginEnv(
-    ".env.customer-auth.docker.local",
-    "CUSTOMER_AUTH_BASE_URL=http://127.0.0.1:8080\n",
-  );
-  assert.equal(customer, "CUSTOMER_AUTH_BASE_URL=http://localhost:8080\n");
-
-  const workforce = normalizeStagingAuthOriginEnv(
-    ".env.workforce-auth.docker.local",
-    "WORKFORCE_AUTH_BASE_URL=http://127.0.0.1:8080\n",
-  );
-  assert.equal(workforce, "WORKFORCE_AUTH_BASE_URL=http://localhost:8080\n");
-
-  const untouched = "OTHER=1\n";
-  assert.equal(normalizeStagingAuthOriginEnv(".env.runtime.docker.local", untouched), untouched);
-});
-
-test("ensureStagingEnvFiles canonicalizes workforce and customer auth origins into both copies", () => {
+test("ensureStagingEnvFiles preserves auth origins and does not rewrite them to localhost", () => {
   const root = mkdtempSync(path.join(os.tmpdir(), "boba-staging-env-root-"));
   const stagingEnvDir = mkdtempSync(path.join(os.tmpdir(), "boba-staging-env-persist-"));
   const buildDir = mkdtempSync(path.join(os.tmpdir(), "boba-staging-env-build-"));
@@ -631,15 +648,14 @@ test("ensureStagingEnvFiles canonicalizes workforce and customer auth origins in
 
     assert.equal(workforcePersistent, workforceBuild);
     assert.equal(customerPersistent, customerBuild);
-    assert.match(workforcePersistent, /^WORKFORCE_AUTH_BASE_URL=http:\/\/localhost:8080$/m);
-    assert.equal([...workforcePersistent.matchAll(/^WORKFORCE_AUTH_BASE_URL=/gm)].length, 1);
-    assert.doesNotMatch(workforcePersistent, /127\.0\.0\.1:8080/);
+    assert.match(workforcePersistent, /^WORKFORCE_AUTH_BASE_URL=http:\/\/127\.0\.0\.1:8080$/m);
+    assert.doesNotMatch(workforcePersistent, /localhost:8080/);
     assert.match(workforcePersistent, new RegExp(`^WORKFORCE_AUTH_SECRET=${secret}$`, "m"));
     assert.match(workforcePersistent, new RegExp(`^WORKFORCE_AUTH_PII_HASH_SECRET=${pii}$`, "m"));
     assert.match(workforcePersistent, /^WORKFORCE_AUTH_TRUST_PROXY_HOPS=1$/m);
     assert.match(workforcePersistent, /^WORKFORCE_AUTH_SERVICE_PORT=8082$/m);
-    assert.match(customerPersistent, /^CUSTOMER_AUTH_BASE_URL=http:\/\/localhost:8080$/m);
-    assert.equal([...customerPersistent.matchAll(/^CUSTOMER_AUTH_BASE_URL=/gm)].length, 1);
+    assert.match(customerPersistent, /^CUSTOMER_AUTH_BASE_URL=http:\/\/127\.0\.0\.1:8080$/m);
+    assert.doesNotMatch(customerPersistent, /localhost:8080/);
     assert.match(customerPersistent, new RegExp(`^CUSTOMER_AUTH_SECRET=${customerSecret}$`, "m"));
 
     assert.equal(readFileSync(path.join(root, ".env.workforce-auth.docker.local"), "utf8"), liveWorkforceBefore);
@@ -652,7 +668,7 @@ test("ensureStagingEnvFiles canonicalizes workforce and customer auth origins in
   }
 });
 
-test("ensureStagingEnvFiles appends missing WORKFORCE_AUTH_BASE_URL exactly once", () => {
+test("ensureStagingEnvFiles does not append a localhost auth origin", () => {
   const root = mkdtempSync(path.join(os.tmpdir(), "boba-staging-env-root-"));
   const stagingEnvDir = mkdtempSync(path.join(os.tmpdir(), "boba-staging-env-persist-"));
   const buildDir = mkdtempSync(path.join(os.tmpdir(), "boba-staging-env-build-"));
@@ -667,11 +683,8 @@ test("ensureStagingEnvFiles appends missing WORKFORCE_AUTH_BASE_URL exactly once
     ensureStagingEnvFiles(buildDir, { stagingEnvDir, root, envFiles, initMissing: false });
     ensureStagingEnvFiles(buildDir, { stagingEnvDir, root, envFiles, initMissing: false });
     const content = readFileSync(path.join(buildDir, ".env.workforce-auth.docker.local"), "utf8");
-    assert.equal(
-      content,
-      "WORKFORCE_AUTH_SECRET=keep-me-secret\nWORKFORCE_AUTH_BASE_URL=http://localhost:8080\n",
-    );
-    assert.equal([...content.matchAll(/^WORKFORCE_AUTH_BASE_URL=/gm)].length, 1);
+    assert.equal(content, "WORKFORCE_AUTH_SECRET=keep-me-secret\n");
+    assert.doesNotMatch(content, /localhost:8080/);
     assert.equal(readFileSync(path.join(root, ".env.workforce-auth.docker.local"), "utf8"), "OTHER=1\n");
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -680,11 +693,10 @@ test("ensureStagingEnvFiles appends missing WORKFORCE_AUTH_BASE_URL exactly once
   }
 });
 
-test("staging auth-origin normalization never logs secrets", () => {
+test("staging env copy never logs secrets or rewrites auth origins to localhost", () => {
   const source = readFileSync(path.resolve("scripts/environment/staging.mjs"), "utf8");
-  assert.match(source, /STAGING_AUTH_ORIGIN_NORMALIZATIONS[\s\S]*WORKFORCE_AUTH_BASE_URL/);
-  assert.match(source, /STAGING_AUTH_ORIGIN_NORMALIZATIONS[\s\S]*CUSTOMER_AUTH_BASE_URL/);
-  assert.match(source, /normalizeStagingAuthOriginEnv\(file,/);
+  assert.doesNotMatch(source, /STAGING_PUBLIC_ORIGIN = "http:\/\/localhost:8080"/);
+  assert.doesNotMatch(source, /normalizeStagingAuthOriginEnv\(file,/);
   assert.doesNotMatch(
     source,
     /console\.(log|info|debug|warn|error)\([^)]*(AUTH_SECRET|PII_HASH_SECRET|password|PASSWORD)/,

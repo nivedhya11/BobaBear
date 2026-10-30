@@ -92,8 +92,11 @@ all run in the PostgreSQL service:
 docker compose exec -T postgres pgbackrest --config=/etc/pgbackrest/pgbackrest.conf --stanza=boba backup --type=full
 ```
 
-`npm run recovery -- backup layer1` is that same container backend. systemd full/diff units
-call this CLI under the host flock. Continuous WAL archive-push does **not** take that lock.
+`npm run recovery -- backup layer1 --source-class production|staging` is that same
+container backend. systemd full/diff units call this CLI under the host flock and
+expand `BOBA_RECOVERY_SOURCE_CLASSIFICATION` from `.env.recovery.local` into
+`--source-class` (absent/invalid class is BLOCKED; no silent production default).
+Continuous WAL archive-push does **not** take that lock.
 
 `BOBA_PGBACKREST_ARCHIVE` defaults to `0` (local/dev unchanged). When it is `1`, the
 postgres entrypoint renders `/etc/pgbackrest/pgbackrest.conf` **before** `archive_command`
@@ -249,8 +252,18 @@ Templates live under `docker/recovery/systemd/`. Validate:
 npm run recovery:systemd:validate
 ```
 
-Installing/enabling timers is an **operator R3** action and is **not** performed by
-this packet. See `docker/recovery/systemd/README.md`.
+Before enabling timers, set an explicit non-secret classification in
+`.env.recovery.local`:
+
+```bash
+# production host example — choose the real source class; never leave unset
+BOBA_RECOVERY_SOURCE_CLASSIFICATION=production
+```
+
+Units pass `--source-class=${BOBA_RECOVERY_SOURCE_CLASSIFICATION}` into
+`npm run recovery -- backup ...`. Installing/enabling timers is an **operator R3**
+action and is **not** performed by this packet. See
+`docker/recovery/systemd/README.md`.
 
 ### Compose
 
@@ -261,7 +274,47 @@ this packet. See `docker/recovery/systemd/README.md`.
   `BOBA_PGBACKREST_REPO_MODE=posix`.
 - Overlay: `compose.recovery.yaml` documents container-context Layer 1
   (`docker compose exec -T postgres pgbackrest`) and the Layer 2 tools-profile oneshot.
+  The Layer 2 oneshot requires
+  `BOBA_RECOVERY_SOURCE_CLASSIFICATION=production|staging` (Compose `${VAR:?...}`
+  fail-closed; no silent default) and passes it as `--source-class`.
   There is no Layer 1 backup sidecar.
+
+## Founder staging deploy preflight (STOP contract)
+
+`npm run env:staging:deploy` evaluates a fail-closed pre-mutation preflight **before**
+legacy container stops, env materialization, image rebuild, PostgreSQL operations,
+migrations, or cutover. Outcomes are `PASS` | `BLOCKED` | `UNKNOWN`. Only `PASS`
+authorizes operational mutation. Operator `ready`/`bypass` flags are not authority.
+
+Recovery qualification for that gate requires a staging-bound, integrity-verified
+backup/restore checkpoint with identifiable recovery point and suitable rollback plan.
+When the repository cannot yet automatically establish that staging-specific restore
+binding:
+
+```text
+RECOVERY_PROOF_BINDING = DESIGN_DEPENDENCY
+STAGING_DEPLOY_PREFLIGHT = BLOCKED
+STAGING_DEPLOY_MUTATION_STARTED = NO
+```
+
+That BLOCK is an expected safety result until an authorized R3 staging recovery
+checkpoint exists. It does **not** claim production readiness.
+
+Critical dependency (intentional): completing a future R3 backup alone does **not**
+make the current deployment executable. Additional authorized live evidence bindings
+are still required before Gate 2, including staging-specific recovery-proof binding,
+live migration/baseline evidence, candidate image-security identity, publishing
+evidence when unavailable, and capacity/rollback evidence when unavailable. Those
+remain fail-closed; they must not be replaced with permissive defaults.
+
+`npm run env:staging:status` remains read-only. `npm run env:staging:deploy:dry-run`
+remains non-mutating and reports that preflight readiness is **not** established as
+deployment authorization.
+
+PostgreSQL init mounts are compared by **content identity** (paths, digests, executable
+bits). Same init bytes under a new Git SHA path must preserve the running PostgreSQL
+container and persistent volume. Content mismatch or untrusted mounts fail closed
+without automatic PostgreSQL recreation.
 
 ## Safety boundaries (locked; still binding)
 

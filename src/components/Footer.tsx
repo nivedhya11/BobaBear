@@ -16,6 +16,7 @@
  * Mounted in app/layout.tsx so it renders on every route.
  */
 
+import { FooterMenuLinks } from "@/components/FooterMenuLinks";
 import { FooterNewsletter } from "@/components/FooterNewsletter";
 import { EmailLink } from "@/components/EmailLink";
 import { Reveal } from "@/components/motion/Reveal";
@@ -26,15 +27,10 @@ import { CONTACT, BUSINESS } from "@/lib/site";
 
 // `disabled` marks links whose destination doesn't exist yet — they render
 // inert (no navigation) so they never hit a 404, but keep their hover styling.
-// Section links are root-relative ("/#bar") so they work from any route:
-// on the homepage the browser scrolls to the fragment; from /privacy etc. it
-// returns home first, then scrolls.
-const MENU_LINKS = [
-  { label: "Boba drinks",    href: "/#bar",    disabled: false },
-  { label: "K-Street",       href: "/#plates", disabled: false },
-  { label: "Beary sweet",    href: "/#sweet",  disabled: false },
-  { label: "Vegan / gluten", href: "/#menu",   disabled: true  },
-] as const;
+// Menu links resolve in FooterMenuLinks: a published chapter anchor when the
+// name corresponds, otherwise the ordering Menu.
+const MENU_LINK_CLASS =
+  "font-body text-body-md text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors duration-[150ms] ease-out";
 
 const BEAR_LINKS = [
   { label: "Artists", href: "/#artists", disabled: false },
@@ -173,19 +169,7 @@ function MobileFooter() {
       <div className="w-full grid grid-cols-2 gap-x-6 gap-y-5 text-left pt-9 border-t border-[var(--border-subtle)]">
         <div className="flex flex-col gap-4">
           <ColHeading>The Menu</ColHeading>
-          <ul className="flex flex-col gap-3">
-            {MENU_LINKS.map(({ label, href, disabled }) => (
-              <li key={href}>
-                <FooterLink
-                  href={href}
-                  disabled={disabled}
-                  className="font-body text-body-md text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors duration-[150ms] ease-out"
-                >
-                  {label}
-                </FooterLink>
-              </li>
-            ))}
-          </ul>
+          <FooterMenuLinks listClassName="flex flex-col gap-3" linkClassName={MENU_LINK_CLASS} />
         </div>
         <div className="flex flex-col gap-4">
           <ColHeading>The Bear</ColHeading>
@@ -287,19 +271,7 @@ export function Footer() {
         <div className="col-span-5 flex gap-10 xl:gap-12">
           <div className="flex flex-col gap-4">
             <ColHeading>The Menu</ColHeading>
-            <ul className="flex flex-col gap-2.5">
-              {MENU_LINKS.map(({ label, href, disabled }) => (
-                <li key={href}>
-                  <FooterLink
-                    href={href}
-                    disabled={disabled}
-                    className="font-body text-body-md text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors duration-[150ms] ease-out"
-                  >
-                    {label}
-                  </FooterLink>
-                </li>
-              ))}
-            </ul>
+            <FooterMenuLinks listClassName="flex flex-col gap-2.5" linkClassName={MENU_LINK_CLASS} />
           </div>
 
           <div className="flex flex-col gap-4">

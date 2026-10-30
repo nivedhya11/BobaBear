@@ -51,7 +51,11 @@ export function loadCustomerAuthServiceConfig(
   source: CustomerAuthServiceEnvSource,
   environmentType: AppEnvironment,
 ): CustomerAuthServiceConfig {
-  const customerResult = validateCustomerAuthConfig(source, environmentType);
+  const customerResult = validateCustomerAuthConfig(
+    source,
+    environmentType,
+    environmentType === "staging" ? { expectedPublicOrigin: source.BOBA_BEAR_PUBLIC_ORIGIN ?? "" } : {},
+  );
   if (!customerResult.ok) {
     throw new AuthFoundationConfigurationError(customerResult.issues);
   }

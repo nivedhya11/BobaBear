@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -63,13 +64,28 @@ test("E: failed pg_restore must not proceed into migration / business-validation
       now: new Date(Date.UTC(2026, 8, 21, 12, 0, 0)),
       randomHex: "aaaaaaaaaaaaaaaa",
     });
+    const ciphertext = Buffer.from("AGEENC");
+    const sha256Hex = createHash("sha256").update(ciphertext).digest("hex");
     const objectStore = {
       async headObject() {
         return { exists: true };
       },
       async getObject({ key }) {
-        if (key.endsWith("/COMPLETE")) return { body: Buffer.from("{}") };
-        return { body: Buffer.from("AGEENC") };
+        if (key.endsWith("/COMPLETE")) {
+          return {
+            body: Buffer.from(
+              JSON.stringify({
+                runId,
+                artifactKey: `logical/${runId}/dump.age`,
+                sha256Hex,
+                keyVersion: "test-kv",
+                completedAt: "2026-09-21T12:00:00.000Z",
+              }),
+              "utf8",
+            ),
+          };
+        }
+        return { body: ciphertext };
       },
     };
 
@@ -86,7 +102,7 @@ test("E: failed pg_restore must not proceed into migration / business-validation
         runId,
         targetIdentity: `recovery-target-${runId}`,
         databaseUrl: "postgresql://boba_recovery:x@127.0.0.1:55432/boba_recovery",
-        endpoint: "127.0.0.1:55432/boba_recovery",
+        endpoint: "127.0.0.1|127.0.0.1:55432/boba_recovery",
         environment: "recovery",
       },
       provisionTarget: false,

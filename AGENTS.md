@@ -47,6 +47,12 @@ canonical method is [`PRODUCT-DELIVERY.md`](docs/platform/PRODUCT-DELIVERY.md). 
 [`EXPERIENCE.md`](docs/platform/EXPERIENCE.md) (EXP-1). Product language is
 [`PRODUCT-LANGUAGE.md`](docs/platform/PRODUCT-LANGUAGE.md) (LANG-1).
 
+For new brand/editorial writing and mockups, the Founder-approved supporting creative guide is
+[`docs/platform/experience/brand-voice-and-microcopy.md`](docs/platform/experience/brand-voice-and-microcopy.md)
+(BB-VOICE-1.0). It locks creative naming and tone only; LANG-1 and approved Product/Experience
+contracts remain authoritative for task labels, customer promises, money, checkout, payment, and
+recovery. Reading this guide never authorizes navigation, route, or live-copy changes.
+
 The authoritative PD-2 phase sequence lives only in `PRODUCT-DELIVERY.md`. These are delivery
 process phases, not new ROADMAP lifecycle states. IMP-036E and earlier retain their existing lifecycle
 (`ANCHOR → GATE → EXECUTE → PROVE → ACCEPT → RECONCILE → ADVANCE`). Historical accepted IMPs are
@@ -110,6 +116,23 @@ convenience only. If the named skill cannot be read, STOP the affected action.
 | Implementation-prompt construction, historical-context selection, or review-evidence packaging | [`.cursor/skills/boba-context-efficiency/SKILL.md`](.cursor/skills/boba-context-efficiency/SKILL.md) |
 | Founder UAT deployment or Founder-UAT acceptance evidence | [`.cursor/skills/boba-founder-uat/SKILL.md`](.cursor/skills/boba-founder-uat/SKILL.md) |
 | Governed working-tree fingerprint or post-merge branch hygiene | [`.cursor/skills/boba-branch-and-fingerprint/SKILL.md`](.cursor/skills/boba-branch-and-fingerprint/SKILL.md) |
+
+## Repository hygiene (RHS-1)
+
+[`docs/platform/engineering/repository-conventions.md`](docs/platform/engineering/repository-conventions.md)
+is a supporting engineering standard. It is not a product, architecture, lifecycle, security,
+payment, or agent-governance authority. This file remains the sole agent operating contract. Do not
+add a `.cursor/rules` layer or a duplicate `.agents` skill tree for these conventions.
+
+Before creating, moving, renaming, archiving, or removing an artifact:
+
+- Check the proposed file name and destination against that standard.
+- After the relevant repository edits, run `npm run audit:repo-hygiene`.
+- Verify moves and renames do not break imports, tests, scripts, or documentation references.
+- Classify retirement before removing anything. Age is a review trigger, not deletion authority.
+- Report the hygiene-check result in the normal delivery report.
+
+Do not mass-rename or delete legacy artifacts during ordinary feature work.
 
 ## Operating planes
 

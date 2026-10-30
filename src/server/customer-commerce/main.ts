@@ -17,6 +17,7 @@ import { ConfigurationError } from "../../platform/config/config-error";
 import { AuthFoundationConfigurationError } from "../auth/shared/errors";
 import { composeCustomerCommercePayment } from "./compose-payment";
 import { loadCustomerCommerceServiceConfig } from "./config";
+import { loadCheckoutPrepareDiagnosticConfig } from "./checkout-prepare-diagnostic-config";
 import { CustomerCommerceConfigurationError } from "./errors";
 import { loadCustomerCommercePaymentConfig } from "./payment-config";
 import { loadMetaWhatsAppProviderConfig } from "../notifications/provider/meta-whatsapp";
@@ -56,6 +57,10 @@ async function main(): Promise<void> {
     workerConfig.environment,
   );
   const locationProvider = createLocationSearchProviderFromConfig(locationConfig);
+  const checkoutPrepareDiagnostic = loadCheckoutPrepareDiagnosticConfig(
+    process.env,
+    workerConfig.environment,
+  );
 
   const service = new CustomerCommerceService({
     auth: serviceConfig.auth,
@@ -68,6 +73,7 @@ async function main(): Promise<void> {
     metaWhatsApp:
       whatsappConfig.selector === "meta_cloud_api" ? whatsappConfig.meta : null,
     locationProvider,
+    checkoutPrepareDiagnostic,
   });
 
   await service.start();

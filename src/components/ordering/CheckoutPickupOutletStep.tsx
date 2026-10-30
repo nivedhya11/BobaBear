@@ -3,6 +3,8 @@
 import { Button } from "@/components/ui/Button";
 import type { CommercePickupOption } from "@/lib/customer-commerce";
 import { cn } from "@/lib/utils";
+import { CheckoutItemAttentionNotice } from "@/components/ordering/CheckoutItemAttentionNotice";
+import type { CheckoutItemAttention } from "@/components/ordering/checkout-unavailable-item-presentation";
 import {
   pickupAddressLines,
   type PickupLocationFields,
@@ -26,6 +28,7 @@ export function CheckoutPickupOutletStep(props: {
   onBackToMode: () => void;
   errorId?: string;
   errorMessage?: string | null;
+  itemAttention?: readonly CheckoutItemAttention[] | null;
 }) {
   const {
     pending,
@@ -39,6 +42,7 @@ export function CheckoutPickupOutletStep(props: {
     onBackToMode,
     errorId,
     errorMessage,
+    itemAttention,
   } = props;
 
   if (loading) {
@@ -57,6 +61,9 @@ export function CheckoutPickupOutletStep(props: {
     );
   }
 
+  const merchandiseAttention =
+    itemAttention && itemAttention.length > 0 ? itemAttention : null;
+
   if (selectionPolicy === "UNAVAILABLE" || outlets.length === 0) {
     return (
       <section
@@ -68,17 +75,21 @@ export function CheckoutPickupOutletStep(props: {
           id="checkout-pickup-unavailable-heading"
           className="font-display text-[22px] text-[var(--text-primary)]"
         >
-          Pickup unavailable
+          {merchandiseAttention ? "Item needs attention" : "Pickup unavailable"}
         </h2>
-        <p
-          id={errorId ?? "checkout-pickup-unavailable-message"}
-          role="alert"
-          className="font-body text-[14px] text-[var(--text-secondary)]"
-        >
-          <span className="font-semibold text-[var(--text-primary)]">Not available: </span>
-          No BOBA Bear location can take this order for pickup right now. Delivery remains
-          available if your address is serviceable.
-        </p>
+        {merchandiseAttention ? (
+          <CheckoutItemAttentionNotice items={merchandiseAttention} showReturnLink={false} />
+        ) : (
+          <p
+            id={errorId ?? "checkout-pickup-unavailable-message"}
+            role="alert"
+            className="font-body text-[14px] text-[var(--text-secondary)]"
+          >
+            <span className="font-semibold text-[var(--text-primary)]">Not available: </span>
+            No BOBA Bear location can take this order for pickup right now. Delivery remains
+            available if your address is serviceable.
+          </p>
+        )}
         <div className="flex flex-col gap-3 sm:flex-row">
           <Button
             type="button"
@@ -100,6 +111,19 @@ export function CheckoutPickupOutletStep(props: {
             onClick={onBackToMode}
           >
             Back
+          </Button>
+          <Button asChild variant="outline" className="min-h-[44px]">
+            <a
+              href="/order/cart/"
+              data-testid="checkout-pickup-review-cart"
+              aria-disabled={pending ? "true" : undefined}
+              tabIndex={pending ? -1 : undefined}
+              onClick={(event) => {
+                if (pending) event.preventDefault();
+              }}
+            >
+              {merchandiseAttention ? "Return to cart" : "Review cart"}
+            </a>
           </Button>
         </div>
       </section>
@@ -158,7 +182,9 @@ export function CheckoutPickupOutletStep(props: {
         </div>
       )}
 
-      {errorMessage ? (
+      {merchandiseAttention ? (
+        <CheckoutItemAttentionNotice items={merchandiseAttention} />
+      ) : errorMessage ? (
         <p
           id={errorId}
           role="alert"

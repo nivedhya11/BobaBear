@@ -11,7 +11,15 @@ import { fileURLToPath } from "node:url";
 import { CLI_EXIT, OPERATION_STATUS, OPERATION_TYPE, READINESS_LEVEL, RECOVERY_LAYER } from "./constants.mjs";
 import { generateRunId } from "./run-id.mjs";
 import { createEvidence, evaluateQualifyingRecoveryProof, validateEvidence } from "./evidence.mjs";
-import { evaluateTargetIdentitySafety } from "./identity.mjs";
+import {
+  evaluateTargetIdentitySafety,
+  resolveSourceClassificationFromCli,
+} from "./identity.mjs";
+import {
+  applyLibpqSecretEnv,
+  buildLibpqChildConnection,
+  buildPgDumpArgv,
+} from "./restore/logical.mjs";
 import { evaluateReadiness } from "./readiness.mjs";
 import { inspectEvidence, persistEvidence, readRunEvidence } from "./store.mjs";
 import { redactText, safeJson } from "./redact.mjs";
@@ -90,11 +98,11 @@ export function usage() {
     "  recovery evidence validate [--json] [--evidence-dir DIR] [--run-id RUN_ID]",
     "  recovery evidence reconcile-layer2 --run-id RUN_ID --evidence-dir DIR (--local-store DIR | Spaces env) [--json]",
     "  recovery target check --source ID --target ID --source-class CLASS --target-class CLASS [--target-pgdata PATH] [--json]",
-    "  recovery backup layer1 --type full|diff [--evidence-dir DIR] [--generation N] [--json]",
-    "  recovery backup layer2 [--evidence-dir DIR] (--local-store DIR | logical Spaces env) [--recipient AGE_RECIPIENT] [--json]",
-    "  recovery restore pitr --source ID --target-time|--target-lsn|--target-name VALUE [--workspace-root DIR] [--target-pgdata OWNED_PATH] [--evidence-dir DIR] [--json]",
-    "  recovery restore logical --run-id RUN_ID --source ID --identity-file PATH (--local-store DIR | logical Spaces env) [--database-url URL --target-ownership FILE] [--evidence-dir DIR] [--json]",
-    "  recovery drill|rehearsal --run-id-to-restore RUN_ID --source ID --identity-file PATH (--local-store DIR | logical Spaces env) --network-isolated --production-dns-absent --production-credentials-absent [--evidence-dir DIR] [--json]",
+    "  recovery backup layer1 --type full|diff --source-class production|staging --source ID [--evidence-dir DIR] [--generation N] [--json]",
+    "  recovery backup layer2 --source-class production|staging --source ID [--evidence-dir DIR] (--local-store DIR | logical Spaces env) [--recipient AGE_RECIPIENT] [--json]",
+    "  recovery restore pitr --source ID --source-class production|staging --target-time|--target-lsn|--target-name VALUE [--workspace-root DIR] [--target-pgdata OWNED_PATH] [--evidence-dir DIR] [--json]",
+    "  recovery restore logical --run-id RUN_ID --source ID --source-class production|staging --identity-file PATH (--local-store DIR | logical Spaces env) [--database-url URL --target-ownership FILE] [--evidence-dir DIR] [--json]",
+    "  recovery drill|rehearsal --run-id-to-restore RUN_ID --source ID --source-class production|staging --identity-file PATH (--local-store DIR | logical Spaces env) --network-isolated --production-dns-absent --production-credentials-absent [--evidence-dir DIR] [--json]",
     "  recovery gate|readiness-gate high-risk [--evidence-dir DIR] [--json]",
     "  recovery capacity [--layer1-base-bytes N] [--layer1-wal-bytes N] [--layer2-bytes N] [--json]",
     "  recovery systemd validate [--unit-dir DIR] [--json]",
@@ -114,6 +122,8 @@ export function usage() {
     "before scheduled backup; do not auto-run against real Spaces from CI.",
     "",
     "Safety: --force-production is forbidden on all restore/drill paths.",
+    "Safety: --source-class is required on backup/restore/drill (no silent production default).",
+    "        Scheduled templates may supply it via BOBA_RECOVERY_SOURCE_CLASSIFICATION (still validated).",
     "PITR --target-pgdata requires TARGET_OWNED_BY_RUN ownership proof; arbitrary paths are BLOCKED.",
     "Logical --database-url requires --target-ownership descriptor + resolved source endpoint.",
     "Missing docker/pgBackRest/credentials exit BLOCKED or FAILURE — never placeholder SUCCEEDED.",
@@ -300,6 +310,9 @@ function runTargetCheck({ flags, json, stdout }) {
 }
 
 async function runBackupLayer1({ flags, env, json, stdout, stderr }) {
+  const sourceClassification = resolveRequiredSourceClassification(flags, env, stdout, json);
+  if (!sourceClassification.ok) return sourceClassification.exitCode;
+
   const type = stringFlag(flags.type);
   if (type !== "full" && type !== "diff") {
     stderr(redactText("backup layer1 requires --type full|diff"));
@@ -341,7 +354,7 @@ async function runBackupLayer1({ flags, env, json, stdout, stderr }) {
     stanza: stringFlag(flags.stanza) ?? env.BOBA_PGBACKREST_STANZA ?? "boba",
     candidate: resolveCandidateProvenance({ env }),
     sourceIdentity: stringFlag(flags.source) ?? env.BOBA_RECOVERY_SOURCE_IDENTITY ?? "unspecified-source",
-    sourceClassification: stringFlag(flags["source-class"]) ?? "production",
+    sourceClassification: sourceClassification.classification,
     env,
     containerCli: containerCli ?? undefined,
     skipLock: flags["skip-lock"] === true || env.BOBA_RECOVERY_LOCK_ALREADY_HELD === "1",
@@ -360,6 +373,9 @@ async function runBackupLayer1({ flags, env, json, stdout, stderr }) {
 }
 
 async function runBackupLayer2({ flags, env, json, stdout, stderr }) {
+  const sourceClassification = resolveRequiredSourceClassification(flags, env, stdout, json);
+  if (!sourceClassification.ok) return sourceClassification.exitCode;
+
   const evidenceDir = resolveEvidenceDir(flags, env);
   const localStore = stringFlag(flags["local-store"]) ?? env.BOBA_RECOVERY_LOCAL_STORE ?? null;
   const recipient =
@@ -428,7 +444,7 @@ async function runBackupLayer2({ flags, env, json, stdout, stderr }) {
     recipients: [recipient],
     evidenceDir: evidenceDir || path.join(process.cwd(), ".recovery-evidence"),
     sourceIdentity: stringFlag(flags.source) ?? env.BOBA_RECOVERY_SOURCE_IDENTITY ?? "unspecified-source",
-    sourceClassification: stringFlag(flags["source-class"]) ?? "production",
+    sourceClassification: sourceClassification.classification,
     candidate: resolveCandidateProvenance({ env }),
     ageBin,
     dumpFn,
@@ -454,6 +470,9 @@ async function runRestorePitr({ flags, env, json, stdout }) {
   if (flags["force-production"] === true || flags.force === true) {
     return refuseForceProduction(stdout, json, "PITR restore");
   }
+  const sourceClassification = resolveRequiredSourceClassification(flags, env, stdout, json);
+  if (!sourceClassification.ok) return sourceClassification.exitCode;
+
   const source = stringFlag(flags.source) ?? stringFlag(flags["source-identity"]);
   if (!source) {
     emit(stdout, json, { ok: false, reason: "--source is required" }, "PITR restore FAILURE: --source is required");
@@ -480,7 +499,7 @@ async function runRestorePitr({ flags, env, json, stdout }) {
   const result = await runPitrRestore({
     target,
     sourceIdentity: source,
-    sourceClassification: stringFlag(flags["source-class"]) ?? "production",
+    sourceClassification: sourceClassification.classification,
     targetPgdataPath: stringFlag(flags["target-pgdata"]) || undefined,
     sourcePgdataPath: stringFlag(flags["source-pgdata"]) || undefined,
     workspaceRoot: stringFlag(flags["workspace-root"]) || env.BOBA_RECOVERY_TARGET_ROOT || undefined,
@@ -503,6 +522,9 @@ async function runRestoreLogical({ flags, env, json, stdout }) {
   if (flags["force-production"] === true || flags.force === true) {
     return refuseForceProduction(stdout, json, "Logical restore");
   }
+  const sourceClassification = resolveRequiredSourceClassification(flags, env, stdout, json);
+  if (!sourceClassification.ok) return sourceClassification.exitCode;
+
   const runIdToRestore = stringFlag(flags["run-id"]) ?? stringFlag(flags["run-id-to-restore"]);
   const source = stringFlag(flags.source);
   const identityFile = stringFlag(flags["identity-file"]);
@@ -581,7 +603,9 @@ async function runRestoreLogical({ flags, env, json, stdout }) {
     objectStore,
     identityFile,
     sourceIdentity: source,
-    sourceClassification: stringFlag(flags["source-class"]) ?? "production",
+    sourceClassification: sourceClassification.classification,
+    composeProjectName: env.COMPOSE_PROJECT_NAME,
+    claimedRuntimeEnv: env.BOBA_BEAR_ENV,
     sourceDatabaseUrl: stringFlag(flags["source-database-url"]) ?? env.BOBA_LOGICAL_BACKUP_DATABASE_URL,
     targetPgdataPath: stringFlag(flags["target-pgdata"]),
     databaseUrl: databaseUrl || undefined,
@@ -603,6 +627,9 @@ async function runDrill({ flags, env, json, stdout }) {
   if (flags["force-production"] === true || flags.force === true) {
     return refuseForceProduction(stdout, json, "Portability rehearsal");
   }
+  const sourceClassification = resolveRequiredSourceClassification(flags, env, stdout, json);
+  if (!sourceClassification.ok) return sourceClassification.exitCode;
+
   const runIdToRestore = stringFlag(flags["run-id-to-restore"]);
   const source = stringFlag(flags.source);
   const identityFile = stringFlag(flags["identity-file"]);
@@ -650,7 +677,9 @@ async function runDrill({ flags, env, json, stdout }) {
     objectStore,
     identityFile,
     sourceIdentity: source,
-    sourceClassification: stringFlag(flags["source-class"]) ?? "production",
+    sourceClassification: sourceClassification.classification,
+    composeProjectName: env.COMPOSE_PROJECT_NAME,
+    claimedRuntimeEnv: env.BOBA_BEAR_ENV,
     sourceDatabaseUrl: stringFlag(flags["source-database-url"]) ?? env.BOBA_LOGICAL_BACKUP_DATABASE_URL,
     databaseUrl: databaseUrl || undefined,
     provisionTarget: flags["no-provision"] !== true,
@@ -945,6 +974,31 @@ function refuseForceProduction(stdout, json, label) {
   return CLI_EXIT.BLOCKED;
 }
 
+/**
+ * CS3: explicit source classification required — never silently default to production.
+ * Flag wins; otherwise accept explicit non-secret BOBA_RECOVERY_SOURCE_CLASSIFICATION
+ * (scheduled/oneshot templates). Presence alone is not authority — still validated.
+ * @returns {{ ok: true, classification: string } | { ok: false, exitCode: number }}
+ */
+function resolveRequiredSourceClassification(flags, env, stdout, json) {
+  const required = resolveSourceClassificationFromCli({
+    sourceClassFlag: stringFlag(flags["source-class"]),
+    sourceClassificationFlag: stringFlag(flags["source-classification"]),
+    env,
+  });
+  if (!required.ok) {
+    const payload = {
+      ok: false,
+      status: OPERATION_STATUS.BLOCKED,
+      code: required.code,
+      reason: required.reason,
+    };
+    emit(stdout, json, payload, `Source classification BLOCKED: ${payload.reason}`);
+    return { ok: false, exitCode: CLI_EXIT.BLOCKED };
+  }
+  return { ok: true, classification: required.classification };
+}
+
 function hasRehearsalFlags(flags) {
   return Boolean(
     stringFlag(flags["run-id-to-restore"]) ||
@@ -999,10 +1053,15 @@ function buildDumpFn(env, flags) {
   const databaseUrl = stringFlag(flags["database-url"]) ?? env.BOBA_LOGICAL_BACKUP_DATABASE_URL;
   if (databaseUrl) {
     return async () => {
-      const result = spawnSync("pg_dump", ["-Fc", databaseUrl], {
+      const conn = buildLibpqChildConnection(databaseUrl);
+      if (!conn.ok) {
+        throw new Error(conn.reason);
+      }
+      // CS4/C2: password-free libpq URI in argv; secrets only in child env.
+      const result = spawnSync("pg_dump", buildPgDumpArgv(conn), {
         encoding: "buffer",
         maxBuffer: 512 * 1024 * 1024,
-        env,
+        env: applyLibpqSecretEnv(env, conn),
       });
       if (result.status !== 0) {
         throw new Error(redactText(String(result.stderr ?? `pg_dump exited ${result.status}`)));

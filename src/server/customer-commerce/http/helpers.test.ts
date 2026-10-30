@@ -4,6 +4,7 @@
 import { describe, expect, it } from "vitest";
 
 import { CartError } from "../../../shared/cart";
+import { CheckoutError } from "../../../shared/checkout";
 import { FinancialDocumentError } from "../../../shared/financial-document";
 import { PaymentError } from "../../../shared/payment";
 import { mapCommerceError } from "./error-map";
@@ -103,6 +104,29 @@ describe("IMP-024 error-map", () => {
       requestId: "req-fd-2",
     });
     expect(JSON.stringify(mapped.body)).not.toContain("00000000-0000-4000-8000");
+  });
+
+  it("passes checkout merchandise problem lines through without the internal message", () => {
+    const mapped = mapCommerceError(
+      new CheckoutError(
+        "CHECKOUT_TEMPORARILY_UNAVAILABLE",
+        "Checkout merchandise validation failed.",
+        {
+          problems: [
+            { cartLineId: "line-gangnam", code: "CHECKOUT_TEMPORARILY_UNAVAILABLE" },
+          ],
+        },
+      ),
+      "req-item",
+    );
+    expect(mapped.status).toBe(400);
+    expect(mapped.body).toEqual({
+      ok: false,
+      code: "CHECKOUT_TEMPORARILY_UNAVAILABLE",
+      requestId: "req-item",
+      problems: [{ cartLineId: "line-gangnam", code: "CHECKOUT_TEMPORARILY_UNAVAILABLE" }],
+    });
+    expect(JSON.stringify(mapped.body)).not.toContain("validation failed");
   });
 
   it("maps Financial Document INVALID_ACCESS_INPUT to 400", () => {

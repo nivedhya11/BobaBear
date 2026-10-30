@@ -33,6 +33,7 @@ import {
   resolveCartPresentationEstimate,
 } from "@/components/ordering/cart-presentation";
 import { publishCartCount } from "@/components/ordering/cart-count-sync";
+import { presentCartLineProblems } from "@/components/ordering/cart-line-problem-presentation";
 import {
   readDeliveryContext,
   subscribeToDeliveryContext,
@@ -325,6 +326,7 @@ export function CartClient(props: { brandId: string }) {
   }
 
   const checkoutBlocked = isCartCheckoutBlocked(evaluation);
+  const lineProblems = presentCartLineProblems(evaluation, cart?.revision, linePresentations);
 
   async function mutateCoupon(
     work: () => Promise<{ ok: true; data: { cart: CommerceCart } } | { ok: false; code: string }>,
@@ -608,6 +610,7 @@ export function CartClient(props: { brandId: string }) {
         {cart && cart.lines.length > 0 ? (
           <CartLineList
             lines={linePresentations}
+            lineProblems={lineProblems.byLineId}
             pending={pending}
             onChangeQuantity={(lineId, quantity) => void changeQuantity(lineId, quantity)}
             onEdit={openEdit}
@@ -621,15 +624,20 @@ export function CartClient(props: { brandId: string }) {
           </p>
         ) : null}
 
-        {evaluation?.problems && evaluation.problems.length > 0 ? (
+        {lineProblems.summary.length > 0 ? (
           <ul
             className="flex flex-col gap-2 rounded-lg border border-[var(--border-warning)] bg-[var(--bg-section)] p-3"
             data-testid="cart-evaluation-problems"
             role="alert"
           >
-            {evaluation.problems.map((problem) => (
-              <li key={`${problem.cartLineId}-${problem.code}`} className="font-body text-[13px] text-[var(--text-secondary)]">
-                {commerceErrorCopy(problem.code)}
+            {lineProblems.summary.map((entry) => (
+              <li key={entry.key} className="font-body text-[13px] text-[var(--text-secondary)]">
+                {entry.itemName ? (
+                  <span className="font-semibold text-[var(--text-primary)]">
+                    {entry.itemName}:{" "}
+                  </span>
+                ) : null}
+                {entry.message}
               </li>
             ))}
           </ul>

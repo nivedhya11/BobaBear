@@ -59,6 +59,8 @@ export default defineConfig({
       "tests/refund-architecture/**/*.test.ts",
       // IMP-027: Razorpay Refund adapter uses mocked HTTP (no database).
       "tests/payment-razorpay/refund.adapter.test.ts",
+      // Strict staging: payment-provider classification is DB-free.
+      "tests/payment-razorpay/payment-config.test.ts",
       // IMP-029: DB-free Operations workforce-principal trust adapter test.
       "tests/operations/workforce-principal-adapter.test.ts",
       // IMP-035: DB-free Administration transport and UI security tests.
@@ -74,6 +76,8 @@ export default defineConfig({
       "tests/scheduled-fulfilment/**/*.test.ts",
       // IMP-036J T8: AC/XR/BR executable-evidence completeness (no database).
       "tests/imp036j/**/*.test.ts",
+      // GTM closure: accepted customer and operator journey regression (no database).
+      "tests/gtm-closure/**/*.test.{ts,tsx}",
     ],
     exclude: [
       "**/node_modules/**",

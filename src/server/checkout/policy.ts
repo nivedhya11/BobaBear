@@ -12,4 +12,5 @@ export { requireCheckoutTtlMs };
 export type CheckoutOperationOptions = Readonly<{
   clock?: import("./clock").CheckoutClock;
   policy?: CheckoutPolicy;
+  prepareDiagnosticObserver?: import("./prepare-diagnostic").CheckoutPrepareDiagnosticObserver;
 }>;

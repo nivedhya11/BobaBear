@@ -31,8 +31,26 @@ export type TrustedCustomerAuthCredentials =
 type SessionLookup = {
   findSession: (
     token: string,
-  ) => Promise<{ session: { token: string }; user: { id: string } } | null>;
+  ) => Promise<{
+    session: { token: string; expiresAt?: unknown };
+    user: { id: string };
+  } | null>;
 };
+
+/**
+ * Better Auth `getSession` treats `expiresAt < now` as an invalid session.
+ * The raw token lookup must apply that same check. A missing or unreadable
+ * expiry is not a valid session.
+ */
+function isUnexpiredCustomerSession(
+  session: { expiresAt?: unknown } | null | undefined,
+): boolean {
+  const expiresAt = session?.expiresAt;
+  if (!(expiresAt instanceof Date) || Number.isNaN(expiresAt.getTime())) {
+    return false;
+  }
+  return !(expiresAt < new Date());
+}
 
 function mintTrustedCustomerAuthIdentity(
   userId: string,
@@ -69,7 +87,8 @@ export function isTrustedCustomerAuthIdentity(
  *
  * - `{ headers }` uses Better Auth `auth.api.getSession` (cookie/request path).
  * - `{ sessionToken }` uses Better Auth's database session lookup for the raw
- *   opaque token (same store `getSession` ultimately consults).
+ *   opaque token and the same absolute expiry check `getSession` applies.
+ *   It does not delete the session row.
  */
 export async function resolveTrustedCustomerAuthIdentity(
   runtime: CustomerAuthRuntime,
@@ -106,6 +125,9 @@ export async function resolveTrustedCustomerAuthIdentity(
     );
     const userId = found?.user?.id;
     if (typeof userId !== "string" || userId.length === 0) {
+      return null;
+    }
+    if (!isUnexpiredCustomerSession(found?.session)) {
       return null;
     }
     return mintTrustedCustomerAuthIdentity(userId);

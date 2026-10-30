@@ -1,86 +1,118 @@
 "use client";
 
 /**
- * TheSweet — Chapter 02 · The Menu (The Sweet)
- *
- * Polaroid stage for the four signature sweets. Each dessert is a square
- * cream-bg "photo" tilted at a small fixed angle.
- *   < xl : a 2 × 2 grid — two photos per row, four in two rows. The cards are
- *          too wide to sit four-across below large-desktop widths.
- *   xl+  : a centred row of four — the inner two photos ride higher than the
- *          outer pair, which splay out with mirrored tilts. Reads hand-placed.
- *
- * Cards are draggable; they spring back to origin on release
- * (Framer Motion `dragSnapToOrigin`, handled inside PolaroidCard).
+ * TheSweet — polaroid presentation for one published menu chapter.
+ * Every published card in the active section is shown. Nothing is sliced off
+ * because of a fixed dessert count.
  */
 
+import { useMemo, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 import { PolaroidCard } from "@/components/PolaroidCard";
 import { SectionHead } from "@/components/SectionHead";
-import menuData from "@/data/menu.json";
-import type { MenuData } from "@/types/menu";
-import { MENU_IMAGES } from "@/lib/menuImages";
+import { Reveal } from "@/components/motion/Reveal";
+import { Toggle } from "@/components/ui/Toggle";
+import {
+  publishedMenuHeading,
+  type PublishedMenuChapter,
+} from "@/lib/published-menu-cards";
 
-const menu = menuData as MenuData;
-
-// < xl — 2 × 2 grid; small alternating tilts so no two neighbours match.
 const STACK_TILTS = [-5, 5, -3, 4];
-
-// xl+ — centred row of four. Inner pair rides high (mt-0); the outer two drop
-// and splay out with mirrored tilts.
-const ROW_TILTS  = [-7, -2, 3, 7];
+const ROW_TILTS = [-7, -2, 3, 7];
 const ROW_NUDGES = ["mt-12", "mt-0", "mt-0", "mt-12"];
 
-export function TheSweet() {
+export function TheSweet(props: {
+  chapter: PublishedMenuChapter;
+  sectionId: string;
+  showChapterLabel: boolean;
+}) {
   const reduce = useReducedMotion() ?? false;
+  const heading = publishedMenuHeading(props.chapter.name);
+  const tabs = props.chapter.tabs;
+  const [activeId, setActiveId] = useState(tabs[0]?.id ?? "");
+  const selectedId = tabs.some((tab) => tab.id === activeId) ? activeId : (tabs[0]?.id ?? "");
 
-  const desserts =
-    menu.categories
-      .find((c) => c.name === "The Sweet")
-      ?.subcategories.flatMap((s) => s.items)
-      .slice(0, 4) ?? [];
+  const cards = useMemo(
+    () => tabs.find((tab) => tab.id === selectedId)?.cards ?? [],
+    [selectedId, tabs],
+  );
 
   return (
     <section
-      id="sweet"
+      id={props.sectionId}
       className="bg-[var(--bg-section)]"
+      data-testid="published-menu-chapter"
     >
       <div className="mx-auto max-w-[1340px] px-5 md:px-10 lg:px-14 py-16 md:py-24 lg:py-28">
         <SectionHead
-          leading="Beary"
-          accent="Sweet"
+          chapter={props.showChapterLabel ? "CHAPTER 02 · THE MENU" : undefined}
+          leading={heading.leading}
+          accent={heading.accent}
+          glue={heading.glue}
           nowrap
-          description="Signature sundaes & toasted marshmallows — cold, layered, sticky. Drag the polaroids; they bounce back home."
+          description="From the current menu."
         />
 
-        {/* < xl — 2 × 2 grid (two per row). Draggable. */}
-        <div className="xl:hidden grid grid-cols-2 justify-items-center gap-4 md:gap-8 py-6 md:py-10">
-          {desserts.map((item, i) => (
-            <PolaroidCard
-              key={item.name}
-              name={item.name}
-              description={item.description}
-              price={item.price}
-              tilt={reduce ? 0 : (STACK_TILTS[i] ?? 0)}
-              img={MENU_IMAGES[item.name]}
-              index={i}
-              tags={item.tags}
-            />
+        {tabs.length > 1 ? (
+          <Reveal
+            as="div"
+            y={16}
+            role="tablist"
+            aria-label={props.chapter.name}
+            className="flex flex-wrap gap-2 md:gap-2.5 mb-7 md:mb-9"
+          >
+            {tabs.map((tab) => {
+              const active = tab.id === selectedId;
+              return (
+                <Toggle
+                  key={tab.id}
+                  id={`sweet-tab-${tab.id}`}
+                  role="tab"
+                  aria-selected={active}
+                  aria-controls={`sweet-panel-${props.chapter.id}`}
+                  selected={active}
+                  onClick={() => setActiveId(tab.id)}
+                >
+                  {tab.name}
+                </Toggle>
+              );
+            })}
+          </Reveal>
+        ) : null}
+
+        <div
+          id={`sweet-panel-${props.chapter.id}`}
+          role="tabpanel"
+          aria-label={props.chapter.name}
+          className="xl:hidden grid grid-cols-2 justify-items-center gap-4 md:gap-8 py-6 md:py-10"
+        >
+          {cards.map((card, index) => (
+            <div key={card.variantId} data-testid="published-menu-card" data-variant-id={card.variantId}>
+              <PolaroidCard
+                name={card.name}
+                description={card.description}
+                tilt={reduce ? 0 : (STACK_TILTS[index % STACK_TILTS.length] ?? 0)}
+                img={card.imagePath ?? undefined}
+                index={index}
+              />
+            </div>
           ))}
         </div>
 
-        {/* xl+ — centred row of four with raised inner photos. */}
-        <div className="hidden xl:flex justify-center items-start gap-6 2xl:gap-10 py-12">
-          {desserts.map((item, i) => (
-            <div key={item.name} className={ROW_NUDGES[i]}>
+        <div className="hidden xl:flex flex-wrap justify-center items-start gap-6 2xl:gap-10 py-12">
+          {cards.map((card, index) => (
+            <div
+              key={card.variantId}
+              className={ROW_NUDGES[index % ROW_NUDGES.length]}
+              data-testid="published-menu-card"
+              data-variant-id={card.variantId}
+            >
               <PolaroidCard
-                name={item.name}
-                description={item.description}
-                price={item.price}
-                tilt={reduce ? 0 : (ROW_TILTS[i] ?? 0)}
-                img={MENU_IMAGES[item.name]}
-                index={i}
-                tags={item.tags}
+                name={card.name}
+                description={card.description}
+                tilt={reduce ? 0 : (ROW_TILTS[index % ROW_TILTS.length] ?? 0)}
+                img={card.imagePath ?? undefined}
+                index={index}
               />
             </div>
           ))}
