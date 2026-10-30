@@ -83,6 +83,9 @@ describe("CustomerOrderFulfilmentPanel", () => {
           fulfilmentMode: "DELIVERY",
           fulfilmentTiming: "SCHEDULED",
           scheduledWindow: {
+            startAt: "2026-09-24T12:30:00.000Z",
+            endAt: "2026-09-24T13:00:00.000Z",
+            localDate: "2026-09-24",
             label: "18:00–18:30",
             timeZone: "Asia/Kolkata",
           },
