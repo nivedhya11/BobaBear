@@ -31,11 +31,11 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2418,
-    "executableTestFiles": 565,
+    "trackedPathsConsidered": 2420,
+    "executableTestFiles": 566,
     "sourceTestFiles": 165,
     "testsTreeExecutableFiles": 296,
-    "scriptTestFiles": 104,
+    "scriptTestFiles": 105,
     "playwrightSpecs": 13,
     "vitestConfigs": 2,
     "playwrightConfigs": 8,
@@ -561,6 +561,7 @@
     "scripts/environment/staging-secret-files.test.mjs",
     "scripts/environment/staging-source-isolation.test.mjs",
     "scripts/environment/staging.test.mjs",
+    "scripts/eslint-client-boundary.test.mjs",
     "scripts/generate-nginx-security-headers.test.mjs",
     "scripts/governance-context.test.mjs",
     "scripts/governance-fingerprint.test.mjs",
@@ -2359,6 +2360,23 @@
     },
     {
       "path": "scripts/environment/staging.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/eslint-client-boundary.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
       "testType": "script-unit",
