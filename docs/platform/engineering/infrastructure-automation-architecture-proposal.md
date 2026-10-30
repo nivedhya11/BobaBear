@@ -55,7 +55,7 @@ infrastructure implementation; cloud mutation; IMP-039 activation; production re
 
 | ID | Status | Design direction (Founder-approved evidence) |
 |---|---|---|
-| **IA-01** | `APPROVED_DESIGN_DIRECTION` | One immutable **release-set** manifest containing individually pinned container image digests. |
+| **IA-01** | `APPROVED_DESIGN_DIRECTION` | One immutable **release-set** manifest containing individually pinned container image digests; validation/approval are separate attestations that must not mutate that sealed identity. |
 | **IA-02** | `UNRESOLVED` / `DECISION_REQUIRED` | Identical staging/production image digests require focused static-build / public-config / CSP proof before selection. |
 | **IA-03** | `APPROVED_DESIGN_DIRECTION` | Isolated, private, versioned DigitalOcean Spaces **Terraform state** storage, separate from backup data. |
 | **IA-04** | `APPROVED_DESIGN_DIRECTION` | Retain D-374 single-Droplet DigitalOcean production. |
@@ -131,34 +131,55 @@ immutable manifest binding the set of digests promoted together.
 ### 4.3 Proposed ADR-002 amendment wording (NOT BINDING — do not paste into ADR-002)
 
 > **Proposed (future formal amendment only):** For the D-374 Compose Droplet topology,
-> a production-promotable unit is an immutable **release-set manifest** that pins, for one
-> source commit SHA and Git tree, the OCI digest of each runtime service image, the
-> tooling image digest used for migration/check jobs, the PostgreSQL base/image digest
-> recorded as release evidence (without implying automatic PostgreSQL rollout), the build
-> profile / public-config fingerprint that produced those digests, migration-ledger
-> compatibility evidence, required CI/security scan evidence, staging-validated artifact
-> identities, and human production-approval provenance. Staging validation and production
-> promotion MUST reference the same release-set identity. Environments MUST NOT rebuild
-> application images at deploy time. Mutable tags (for example `latest`) MUST NOT be the
-> sole production reference. Web and worker processes that historically shared one image
-> MAY remain co-located in one digest when architecture so requires; multiple service
-> digests in one release-set do not authorize independent unsynchronized production
-> promotion of a subset without an explicit human gate.
+> a production-promotable unit begins as an immutable **release-set manifest**
+> (`IMMUTABLE_RELEASE_MANIFEST`) that seals, for one source commit SHA and Git tree, the
+> exact OCI digest of each runtime service image, the tooling image digest used for
+> migration/check jobs, the PostgreSQL base/image digest recorded as release evidence
+> (without implying automatic PostgreSQL rollout), the build profile / public-config
+> fingerprint that produced those digests, migration-ledger compatibility requirements,
+> required immutable build/security evidence, and the manifest’s own content hash.
+> Staging validation and production approval are **separate attestation records** that
+> reference that sealed manifest identity; neither may mutate the sealed manifest or
+> change its identity. Deployment records similarly reference the sealed manifest and
+> the validation/approval attestations while recording actual deployed identity and
+> health. Environments MUST NOT rebuild application images at deploy time. Mutable
+> tags (for example `latest`) MUST NOT be the sole production reference. Web and worker
+> processes that historically shared one image MAY remain co-located in one digest when
+> architecture so requires; multiple service digests in one release-set do not authorize
+> independent unsynchronized production promotion of a subset without an explicit human
+> gate.
 
 ```text
 ADR002_BINDING_AMENDMENT = NOT_PERFORMED
 THIS_SECTION_IS_PROPOSAL_ONLY = YES
 ```
 
-## 5. Proposed release-set manifest structure and guards
+## 5. Proposed release identity records and guards
 
-Schema name (proposed): `boba.release-set.v1`  
-Authority of this schema today: **NONE** (documentation proposal).
+Four **separate** proposed records. Authority of these schemas today: **NONE**
+(documentation proposal). Validation and approval **must not** rewrite the sealed
+manifest or change its identity.
 
-### 5.1 Required fields (proposed)
+```text
+IMMUTABLE_RELEASE_MANIFEST          = sealed build identity
+STAGING_VALIDATION_ATTESTATION      = post-validation evidence referencing the manifest
+PRODUCTION_APPROVAL_ATTESTATION     = post-authorization evidence referencing the manifest
+DEPLOYMENT_RECORD                   = post-deploy identity/health referencing both
+SEALED_MANIFEST_MUTATION_BY_VALIDATION_OR_APPROVAL = FORBIDDEN
+```
+
+### 5.1 `IMMUTABLE_RELEASE_MANIFEST` (proposed; sealed at build)
+
+Schema name (proposed): `boba.release-set.v1`
+
+Sealed once at trusted build. Contains source identity, exact OCI digest set,
+build-profile fingerprint, migration requirements, immutable build/security evidence,
+and the manifest hash. Does **not** embed staging validation outcomes or human
+production-approval provenance.
 
 ```text
 schemaVersion: "boba.release-set.v1"
+manifestHash: <content hash of this sealed document>
 source:
   repository: "nivedhya11/BobaBear"   # GitHub identity; local path may differ
   commitSha: <full git sha>
@@ -180,40 +201,89 @@ postgres:
   lifecycle: "INDEPENDENT_OF_APPLICATION_RELEASE"
   rolloutAuthorizedByThisManifest: false
 migrationLedger:
-  compatibility: <attestation / head migration id / CI proof reference>
+  compatibilityRequirement: <head migration id / required ledger proof identity>
 security:
-  scans: [<CI job / SARIF / advisory refs>]
-  requiredGates: [<named required checks>]
-stagingValidation:
-  artifactIdentities: [<release-set id / digests observed in staging>]
-  evidenceRefs: [<URLs or paths; may be empty until authorized staging exists>]
-productionApproval:
-  required: true
-  actor: <human>
-  decisionRef: <ticket / recorded approval>
-  approvedAt: <timestamp>
+  scans: [<CI job / SARIF / advisory refs sealed at build>]
+  requiredGates: [<named required checks sealed at build>]
 ```
 
-### 5.2 Guards (proposed; future T1/T2 enforce)
+### 5.2 `STAGING_VALIDATION_ATTESTATION` (proposed; produced after validation)
+
+Produced **after** validation. References the sealed manifest identity (`manifestHash` /
+release-set id) and records the digests actually observed/validated. Must not rewrite
+the sealed manifest.
+
+```text
+schemaVersion: "boba.staging-validation-attestation.v1"
+manifestRef:
+  schemaVersion: "boba.release-set.v1"
+  manifestHash: <exact sealed IMMUTABLE_RELEASE_MANIFEST hash>
+  commitSha: <must match sealed source.commitSha>
+validatedDigests: [<exact digests observed; must equal sealed image digests>]
+evidenceRefs: [<URLs or paths; may be empty until authorized staging exists>]
+validatedAt: <timestamp>
+```
+
+### 5.3 `PRODUCTION_APPROVAL_ATTESTATION` (proposed; produced after human authorization)
+
+Produced **after** human authorization. References the same sealed manifest identity and
+the validation evidence used for the gate. Must not rewrite the sealed manifest.
+
+```text
+schemaVersion: "boba.production-approval-attestation.v1"
+manifestRef:
+  schemaVersion: "boba.release-set.v1"
+  manifestHash: <exact sealed IMMUTABLE_RELEASE_MANIFEST hash>
+  commitSha: <must match sealed source.commitSha>
+validationRef:
+  schemaVersion: "boba.staging-validation-attestation.v1"
+  evidenceIdentity: <attestation id / hash>
+actor: <human>
+decisionRef: <ticket / recorded approval>
+approvedAt: <timestamp>
+```
+
+### 5.4 `DEPLOYMENT_RECORD` (proposed; produced after deploy)
+
+References the sealed manifest and the validation/approval attestations. Records actual
+deployment identity and health. Must not rewrite the sealed manifest.
+
+```text
+schemaVersion: "boba.deployment-record.v1"
+manifestRef:
+  schemaVersion: "boba.release-set.v1"
+  manifestHash: <exact sealed IMMUTABLE_RELEASE_MANIFEST hash>
+validationRef: <staging-validation attestation identity>
+approvalRef: <production-approval attestation identity>
+deployedDigests: [<exact digests actually running>]
+environment: <staging | production | founder-local | ephemeral>
+health: <observed health / smoke evidence refs>
+deployedAt: <timestamp>
+```
+
+### 5.5 Guards (proposed; future T1/T2 enforce)
 
 1. **Digest-only deploy references** — Compose production overrides reference `@sha256:…`
-   digests from the manifest; tag floating is rejected.
+   digests from the sealed manifest; tag floating is rejected.
 2. **No runtime build in production** — production Compose must not invoke `build:` for
    application services.
 3. **Build-profile binding** — promoting digests requires matching `buildProfile.fingerprint`;
-   same `commitSha` with a different profile is a **different** release-set.
+   same `commitSha` with a different profile is a **different** sealed manifest.
 4. **PostgreSQL independence** — postgres digest is evidence; changing it requires an
    explicit DB lifecycle change, not an automatic side effect of app release.
 5. **Migration serialization** — tooling digest + ledger compatibility must pass before
    new app digests receive traffic; concurrent migration jobs forbidden (ADR-002).
-6. **Pre-production validation binding** — production approval binds to a validated
-   release-set identity. Under D-374, permanent always-on cloud staging remains
-   `NOT_REQUIRED_FOR_PILOT`; Founder-local or ephemeral validation may satisfy the
-   gate until a separately authorized staging consume path exists. Unmerged PR digests
-   remain ineligible for production.
-7. **Rollback separation** — application rollback = prior release-set image redeploy;
-   database recovery = IMP-037 recovery path; do not conflate.
-8. **Human production gate** — no automatic production apply/release from merge alone.
+6. **Sealed-manifest integrity** — staging validation and production approval are separate
+   attestations that reference `manifestHash`; they MUST NOT mutate sealed fields or mint
+   a new release identity for the same sealed bytes. Under D-374, permanent always-on
+   cloud staging remains `NOT_REQUIRED_FOR_PILOT`; Founder-local or ephemeral validation
+   may satisfy the gate until a separately authorized staging consume path exists.
+   Unmerged PR digests remain ineligible for production.
+7. **Rollback separation** — application rollback = prior sealed release-set image
+   redeploy; database recovery = IMP-037 recovery path; do not conflate.
+8. **Human production gate** — no automatic production apply/release from merge alone;
+   production requires a `PRODUCTION_APPROVAL_ATTESTATION` referencing the sealed
+   manifest and validation evidence.
 9. **No silent staging-requirement reintroduction** — this proposal must not treat
    ADR-002’s historical “automatic hosted staging on every merge” prose as CURRENT
    pilot obligation; prefer D-374 / ADR-016.
@@ -376,10 +446,14 @@ No cloud plan/apply from this T0 documentation PR
 Developer PR
   → credential-free CI (lint/type/unit/integration/build/container validation)
   → merge to main (human)
-  → trusted release-set build + digest publish to GHCR (future authorized workflow)
-  → optional staging consume of exact release-set (D2 design remains separate; not D-375)
+  → trusted release-set build + digest publish to GHCR
+    → seal IMMUTABLE_RELEASE_MANIFEST (future authorized workflow)
+  → optional staging consume of exact sealed digests (D2 design remains separate; not D-375)
+    → produce STAGING_VALIDATION_ATTESTATION (references sealed manifest; does not mutate it)
   → human production approval
+    → produce PRODUCTION_APPROVAL_ATTESTATION (references sealed manifest + validation)
   → production Compose digest-only deploy on single Droplet (D-374)
+    → produce DEPLOYMENT_RECORD (references manifest + attestations; records health)
   → Cloudflare D-375 trust chain remains production ingress
 ```
 
@@ -420,7 +494,7 @@ T1_AUTHORIZED = NO
 | N7 | CI credentials ≠ production credentials; untrusted PRs have neither | Workflow permission review |
 | N8 | No unapproved infrastructure apply | Workflow `environment` / manual gate |
 | N9 | No automatic production release on merge | Workflow absence / required `workflow_dispatch` |
-| N10 | Same release-set digests + build-profile binding across promote | Manifest equality test |
+| N10 | Same sealed release-set digests + build-profile binding across promote | Manifest equality test |
 | N11 | No production deployment from an unmerged PR | Gate on `main` + release-set provenance |
 | N12 | Migration serialization + compatibility | Lock + ledger checks |
 | N13 | Rollback image path ≠ database restore path | Runbook / gate wording tests |
@@ -428,6 +502,7 @@ T1_AUTHORIZED = NO
 | N15 | D2 staging Tunnel design remains separate | Doc/authority cross-check |
 | N16 | GitHub Pages marketing unchanged | DNS/docs non-goal check |
 | N17 | No default paid infrastructure additions | Cost guardrail checklist |
+| N18 | Validation/approval attestations do not mutate sealed manifest identity | Schema separation + hash-stability test |
 
 ## 11. Outstanding RED decisions
 
