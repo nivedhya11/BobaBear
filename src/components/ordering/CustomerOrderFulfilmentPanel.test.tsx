@@ -75,4 +75,39 @@ describe("CustomerOrderFulfilmentPanel", () => {
       "https://example.test/track",
     );
   });
+
+  it("LANG-1: scheduled Delivery uses Delivery window, not fulfilment window", () => {
+    render(
+      <CustomerOrderFulfilmentPanel
+        order={{
+          fulfilmentMode: "DELIVERY",
+          fulfilmentTiming: "SCHEDULED",
+          scheduledWindow: {
+            label: "18:00–18:30",
+            timeZone: "Asia/Kolkata",
+          },
+          destination: {
+            recipientName: "Guest",
+            recipientPhone: "+919876543210",
+            addressLine1: "12 Mall Road",
+            addressLine2: null,
+            landmark: null,
+            locality: null,
+            city: "Dehradun",
+            stateCode: "IN-UT",
+            postalCode: "248001",
+            label: null,
+          },
+          pickupLocation: null,
+          delivery: null,
+        }}
+      />,
+    );
+    expect(screen.getByTestId("order-fulfilment-timing")).toHaveTextContent(
+      "Delivery window 18:00–18:30 (Asia/Kolkata)",
+    );
+    expect(screen.getByTestId("order-fulfilment-timing")).not.toHaveTextContent(
+      /fulfilment/i,
+    );
+  });
 });
