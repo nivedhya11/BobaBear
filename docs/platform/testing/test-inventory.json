@@ -31,11 +31,11 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2400,
-    "executableTestFiles": 563,
+    "trackedPathsConsidered": 2413,
+    "executableTestFiles": 564,
     "sourceTestFiles": 165,
     "testsTreeExecutableFiles": 295,
-    "scriptTestFiles": 103,
+    "scriptTestFiles": 104,
     "playwrightSpecs": 12,
     "vitestConfigs": 2,
     "playwrightConfigs": 7,
@@ -617,6 +617,7 @@
     "scripts/serve-static-export.test.mjs",
     "scripts/testing-inventory.test.mjs",
     "scripts/validation-summary.test.mjs",
+    "scripts/verify-local-fonts-build.test.mjs",
     "scripts/workforce/cli-support.test.mjs",
     "scripts/working-tree-fingerprint.test.mjs"
   ],
@@ -3367,6 +3368,23 @@
     },
     {
       "path": "scripts/validation-summary.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/verify-local-fonts-build.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
       "testType": "script-unit",
