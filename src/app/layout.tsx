@@ -1,37 +1,50 @@
 import type { Metadata, Viewport } from "next";
-import {
-  Luckiest_Guy,
-  Bubblegum_Sans,
-  Nunito,
-  JetBrains_Mono,
-} from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const luckiestGuy = Luckiest_Guy({
+const luckiestGuy = localFont({
+  src: "./_fonts/LuckiestGuy-latin-400.woff2",
   weight: "400",
+  style: "normal",
   variable: "--font-display",
-  subsets: ["latin"],
   display: "swap",
 });
 
-const bubblegumSans = Bubblegum_Sans({
+const bubblegumSans = localFont({
+  src: "./_fonts/BubblegumSans-latin-400.woff2",
   weight: "400",
+  style: "normal",
   variable: "--font-heading",
-  subsets: ["latin"],
   display: "swap",
 });
 
-const nunito = Nunito({
-  weight: ["400", "600", "700"],
+const nunito = localFont({
+  src: [
+    {
+      path: "./_fonts/Nunito-latin-400.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "./_fonts/Nunito-latin-600.woff2",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "./_fonts/Nunito-latin-700.woff2",
+      weight: "700",
+      style: "normal",
+    },
+  ],
   variable: "--font-body",
-  subsets: ["latin"],
   display: "swap",
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  weight: ["400"],
+const jetbrainsMono = localFont({
+  src: "./_fonts/JetBrainsMono-latin-400.woff2",
+  weight: "400",
+  style: "normal",
   variable: "--font-mono",
-  subsets: ["latin"],
   display: "swap",
 });
 
