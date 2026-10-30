@@ -20,6 +20,7 @@ import {
 } from "../constants.mjs";
 import { createEvidence } from "../evidence.mjs";
 import { requireExplicitSourceClassification } from "../identity.mjs";
+import { stagingSourceIdentityFindings } from "../staging-source-identity.mjs";
 import {
   cleanupOwnedAgeTempPath,
   decryptFromAge,
@@ -352,16 +353,21 @@ export async function runLogicalRestore(options) {
       recoveryArtifactReference: artifactKey,
       recoveryPoint: sourceRunId,
       checksumIntegrityStatus: CHECKSUM_INTEGRITY_STATUS.MATCHED,
+      candidate: options.candidate ?? {},
+      migrationSchemaContext: options.migrationSchemaContext ?? null,
       findings: [
         {
           code: "LOGICAL_RESTORE",
+          sourceRunId,
           completeKey,
           artifactKey,
           sha256Hex: binding.sha256Hex,
           volumeOrPathId: provisioned?.volumeOrPathId ?? null,
         },
         ...(provisionFields.findings ?? []),
+        ...stagingSourceIdentityFindings(options),
       ],
+      validationResults: Array.isArray(options.validationResults) ? options.validationResults : undefined,
     });
     if (options.evidenceDir) persistEvidence(options.evidenceDir, evidence);
     return {

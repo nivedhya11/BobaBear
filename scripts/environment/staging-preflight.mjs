@@ -13,7 +13,18 @@
  */
 import { ENVIRONMENT_CLASSIFICATION } from "../recovery/constants.mjs";
 import { evaluateQualifyingRecoveryProof, validateEvidence } from "../recovery/evidence.mjs";
+import {
+  evaluateStagingRecoveryChain,
+  STAGING_CHECKPOINT_REASON,
+  syntheticIsolatedCheckpointFixture,
+} from "./staging-recovery-checkpoint.mjs";
 import { POSTGRES_INIT_DISPOSITION } from "./postgres-init-identity.mjs";
+import { syntheticBoundImages, sameBoundImages } from "./staging-image-security-evidence.mjs";
+import { PROTECTED_PRIMARY_REPOSITORY } from "./staging-source-isolation.mjs";
+import {
+  classifyPublishingIsolation,
+  PUBLISHING_CLASSIFICATION,
+} from "./staging-publishing-probe.mjs";
 
 export const PREFLIGHT_OUTCOME = Object.freeze({
   PASS: "PASS",
@@ -26,6 +37,10 @@ export const PREFLIGHT_REASON = Object.freeze({
   SOURCE_SHA_TREE_DRIFT: "SOURCE_SHA_TREE_DRIFT",
   SOURCE_DIRTY_OR_PROTECTED: "SOURCE_DIRTY_OR_PROTECTED",
   PUBLISHING_UNSAFE_OR_UNKNOWN: "PUBLISHING_UNSAFE_OR_UNKNOWN",
+  PUBLISHING_STAGING_UNAUTHORIZED: "PUBLISHING_STAGING_UNAUTHORIZED",
+  PUBLISHING_EVIDENCE_CONFLICTING: "PUBLISHING_EVIDENCE_CONFLICTING",
+  PUBLISHING_MARKETING_ORIGIN_COLLISION: "PUBLISHING_MARKETING_ORIGIN_COLLISION",
+  PUBLISHING_AUTHORIZED_CONTRACT_INVALID: "PUBLISHING_AUTHORIZED_CONTRACT_INVALID",
   RUNTIME_IDENTITY_INVALID: "RUNTIME_IDENTITY_INVALID",
   ENVIRONMENT_INVALID: "ENVIRONMENT_INVALID",
   DIAGNOSTIC_UNEXPECTEDLY_ENABLED: "DIAGNOSTIC_UNEXPECTEDLY_ENABLED",
@@ -39,6 +54,7 @@ export const PREFLIGHT_REASON = Object.freeze({
   RECOVERY_PROOF_BINDING_DESIGN_DEPENDENCY: "RECOVERY_PROOF_BINDING_DESIGN_DEPENDENCY",
   SECURITY_EVIDENCE_MISSING: "SECURITY_EVIDENCE_MISSING",
   SECURITY_RISK_WAIVED: "SECURITY_RISK_WAIVED",
+  IMAGE_SECURITY_NOT_BOUND: "IMAGE_SECURITY_NOT_BOUND",
   CAPACITY_OR_PRESERVATION_UNSAFE: "CAPACITY_OR_PRESERVATION_UNSAFE",
   POSTGRES_INIT_NOT_PRESERVABLE: "POSTGRES_INIT_NOT_PRESERVABLE",
   PROBE_FAILURE: "PROBE_FAILURE",
@@ -106,7 +122,14 @@ export function evaluateStagingDeployPreflight(evidence) {
   }
 
   // Explicitly ignore any operator-controlled ready/bypass flags.
-  if (e.ready === true || e.bypass === true || e.forceDeploy === true || e.approved === true) {
+  if (
+    e.ready === true ||
+    e.bypass === true ||
+    e.forceDeploy === true ||
+    e.approved === true ||
+    e.waive === true ||
+    e.skipPreflight === true
+  ) {
     findings.push({
       code: PREFLIGHT_REASON.EVIDENCE_MALFORMED,
       category: "meta",
@@ -115,13 +138,13 @@ export function evaluateStagingDeployPreflight(evidence) {
   }
 
   categories.source = evaluateSource(e.source, findings);
-  categories.publishing = evaluatePublishing(e.publishing, findings);
+  categories.publishing = evaluatePublishing(e.publishing, findings, e.source?.head);
   categories.runtime = evaluateRuntime(e.runtime, findings);
   categories.environment = evaluateEnvironment(e.environment, findings);
   categories.database = evaluateDatabase(e.database, findings);
-  const recovery = evaluateRecovery(e.recovery, findings);
+  const recovery = evaluateRecovery(e.recovery, e.source, findings);
   categories.recovery = recovery.outcome;
-  categories.security = evaluateSecurity(e.security, findings);
+  categories.security = evaluateSecurity(e.security, e.source, findings);
   categories.capacity = evaluateCapacity(e.capacity, findings);
   categories.postgresInit = evaluatePostgresInit(e.postgresInit, findings);
 
@@ -144,7 +167,14 @@ export function evaluateStagingDeployPreflight(evidence) {
   }
 
   // If any bypass flag was present, never PASS.
-  if (e.ready === true || e.bypass === true || e.forceDeploy === true || e.approved === true) {
+  if (
+    e.ready === true ||
+    e.bypass === true ||
+    e.forceDeploy === true ||
+    e.approved === true ||
+    e.waive === true ||
+    e.skipPreflight === true
+  ) {
     outcome = PREFLIGHT_OUTCOME.BLOCKED;
   }
 
@@ -168,6 +198,45 @@ export function assertPreflightAllowsDeployment(decision) {
     error.name = "StagingPreflightBlockedError";
     throw error;
   }
+}
+
+const PREPARATION_BYPASS_FLAGS = ["ready", "bypass", "forceDeploy", "approved", "waive", "skipPreflight"];
+
+/**
+ * Phase A eligibility. PREPARATION_ELIGIBLE is not deployment authorization
+ * and does not satisfy assertPreflightAllowsDeployment.
+ * Image-security evidence is intentionally not required here.
+ * @param {unknown} evidence
+ */
+export function evaluateCandidatePreparationEligibility(evidence) {
+  /** @type {PreflightFinding[]} */
+  const findings = [];
+  if (evidence == null || typeof evidence !== "object" || Array.isArray(evidence)) {
+    return {
+      outcome: "BLOCKED",
+      findings: [{ code: PREFLIGHT_REASON.EVIDENCE_MALFORMED, category: "meta", detail: "evidence object required" }],
+      deploymentAuthorized: false,
+    };
+  }
+  const e = /** @type {Record<string, any>} */ (evidence);
+  if (PREPARATION_BYPASS_FLAGS.some((flag) => e[flag] === true)) {
+    findings.push({
+      code: PREFLIGHT_REASON.EVIDENCE_MALFORMED,
+      category: "meta",
+      detail: "operator ready/bypass flags are not authoritative and do not establish preparation eligibility",
+    });
+  }
+  const source = evaluateSource(e.source, findings);
+  const publishing = evaluatePublishing(e.publishing, findings, e.source?.head);
+  const environment = evaluateEnvironment(e.environment, findings);
+  const categoriesPass = [source, publishing, environment].every((value) => value === PREFLIGHT_OUTCOME.PASS);
+  const blocked = !categoriesPass || findings.some((finding) => finding.code === PREFLIGHT_REASON.EVIDENCE_MALFORMED);
+  return {
+    outcome: blocked ? "BLOCKED" : "PREPARATION_ELIGIBLE",
+    findings,
+    categories: { source, publishing, environment },
+    deploymentAuthorized: false,
+  };
 }
 
 function evaluateSource(source, findings) {
@@ -252,11 +321,38 @@ function evaluateSource(source, findings) {
     return PREFLIGHT_OUTCOME.BLOCKED;
   }
 
-  if (source.protectedCheckoutUsed !== false) {
+  if (source.protectedCheckoutUsed !== false || source.artifactContextInsideProtectedRoot !== false) {
     findings.push({
       code: PREFLIGHT_REASON.SOURCE_DIRTY_OR_PROTECTED,
       category: "source",
-      detail: "protectedCheckoutUsed must be explicitly false",
+      detail: "artifact context must be observed outside the protected checkout",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+
+  if (source.isolatedArtifactContextVerified !== true) {
+    findings.push({
+      code: PREFLIGHT_REASON.SOURCE_DIRTY_OR_PROTECTED,
+      category: "source",
+      detail: "isolated git-archive context was not verified",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+
+  if (source.authoritativeSourceRoot !== PROTECTED_PRIMARY_REPOSITORY) {
+    findings.push({
+      code: PREFLIGHT_REASON.SOURCE_AUTHORITY_INVALID,
+      category: "source",
+      detail: "authoritative source root must be the canonical repository",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+
+  if (source.githubMainMatchesHead !== true) {
+    findings.push({
+      code: PREFLIGHT_REASON.SOURCE_SHA_TREE_DRIFT,
+      category: "source",
+      detail: "pinned GitHub main must equal the candidate head",
     });
     return PREFLIGHT_OUTCOME.BLOCKED;
   }
@@ -264,23 +360,93 @@ function evaluateSource(source, findings) {
   return PREFLIGHT_OUTCOME.PASS;
 }
 
-function evaluatePublishing(publishing, findings) {
+function resolvePublishingClassification(publishing, sourceHead) {
+  // Classification strings are never authority. Re-derive from observations when present.
+  if (publishing.workflowFile || publishing.githubWorkflow || publishing.pages || publishing.staging) {
+    const candidateSha =
+      typeof sourceHead === "string" && /^[0-9a-f]{40}$/.test(sourceHead)
+        ? sourceHead
+        : typeof publishing.candidateSha === "string"
+          ? publishing.candidateSha
+          : null;
+    return classifyPublishingIsolation({
+      workflowFile: publishing.workflowFile,
+      githubWorkflow: publishing.githubWorkflow,
+      pages: publishing.pages,
+      staging: publishing.staging,
+      repositoryIdentity: publishing.repositoryIdentity,
+      candidateSha,
+      nowMs: publishing.nowMs,
+      evidenceStale: publishing.evidenceStale === true,
+    });
+  }
+  return null;
+}
+
+function evaluatePublishing(publishing, findings, sourceHead) {
   if (!publishing || typeof publishing !== "object") {
-    findings.push({ code: PREFLIGHT_REASON.PUBLISHING_UNSAFE_OR_UNKNOWN, category: "publishing", detail: "missing publishing evidence" });
+    findings.push({
+      code: PREFLIGHT_REASON.PUBLISHING_UNSAFE_OR_UNKNOWN,
+      category: "publishing",
+      detail: "missing publishing evidence",
+    });
     return PREFLIGHT_OUTCOME.UNKNOWN;
   }
-  if (publishing.state === "UNKNOWN" || publishing.deployWorkflowState === "UNKNOWN") {
-    findings.push({ code: PREFLIGHT_REASON.PUBLISHING_UNSAFE_OR_UNKNOWN, category: "publishing" });
+
+  const classified = resolvePublishingClassification(publishing, sourceHead);
+  if (classified == null) {
+    findings.push({
+      code: PREFLIGHT_REASON.PUBLISHING_UNSAFE_OR_UNKNOWN,
+      category: "publishing",
+      detail: "publishing observations missing; classification strings are not authoritative",
+    });
     return PREFLIGHT_OUTCOME.UNKNOWN;
   }
-  const deployDisabled = publishing.deployWorkflowState === "disabled_manually";
-  const pagesKnown = publishing.pagesSourceKnown === true;
-  const unsafe = publishing.unsafeActivePublishingPath === true;
-  if (!deployDisabled || !pagesKnown || unsafe) {
-    findings.push({ code: PREFLIGHT_REASON.PUBLISHING_UNSAFE_OR_UNKNOWN, category: "publishing" });
+
+  const classification = classified.classification;
+  if (typeof publishing.classification === "string" && publishing.classification !== classification) {
+    findings.push({
+      code: PREFLIGHT_REASON.PUBLISHING_EVIDENCE_CONFLICTING,
+      category: "publishing",
+      detail: "supplied classification disagrees with independently derived publishing classification",
+    });
     return PREFLIGHT_OUTCOME.BLOCKED;
   }
-  return PREFLIGHT_OUTCOME.PASS;
+
+  if (classification === PUBLISHING_CLASSIFICATION.PUBLIC_MARKETING) {
+    return PREFLIGHT_OUTCOME.PASS;
+  }
+
+  if (classification === PUBLISHING_CLASSIFICATION.STAGING_PUBLIC_AUTHORIZED) {
+    return PREFLIGHT_OUTCOME.PASS;
+  }
+
+  if (classification === PUBLISHING_CLASSIFICATION.STAGING_PUBLIC_UNAUTHORIZED) {
+    findings.push({
+      code: PREFLIGHT_REASON.PUBLISHING_STAGING_UNAUTHORIZED,
+      category: "publishing",
+      detail: (classified.reasons ?? []).join("; ") || "unauthorized staging publication",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+
+  const detail = (classified.reasons ?? classified.contradictions ?? []).join("; ");
+  const collision = (classified.contradictions ?? []).some((item) =>
+    String(item).includes("collides with marketing"),
+  );
+  const code = collision
+    ? PREFLIGHT_REASON.PUBLISHING_MARKETING_ORIGIN_COLLISION
+    : (classified.contradictions ?? []).length > 0
+      ? PREFLIGHT_REASON.PUBLISHING_EVIDENCE_CONFLICTING
+      : detail.includes("contract")
+        ? PREFLIGHT_REASON.PUBLISHING_AUTHORIZED_CONTRACT_INVALID
+        : PREFLIGHT_REASON.PUBLISHING_UNSAFE_OR_UNKNOWN;
+  findings.push({
+    code,
+    category: "publishing",
+    detail: detail || "publishing evidence unknown or conflicting",
+  });
+  return PREFLIGHT_OUTCOME.BLOCKED;
 }
 
 function evaluateRuntime(runtime, findings) {
@@ -351,12 +517,30 @@ function evaluateEnvironment(environment, findings) {
     return PREFLIGHT_OUTCOME.UNKNOWN;
   }
 
+  if (
+    environment.secretModesSecure == null ||
+    environment.paymentIsolation == null ||
+    environment.bobaBearEnvDrift == null ||
+    environment.secretsPrinted == null
+  ) {
+    findings.push({
+      code: PREFLIGHT_REASON.ENVIRONMENT_INVALID,
+      category: "environment",
+      detail: "secret mode, payment isolation, or drift evidence is missing",
+    });
+    return PREFLIGHT_OUTCOME.UNKNOWN;
+  }
+
+  const paymentIsolated = environment.paymentIsolation === "DISABLED" || environment.paymentIsolation === "TEST";
   const ok =
     environment.requiredEnvFilesPresent === true &&
     environment.projectedConfigValid === true &&
     environment.diagnosticEnabled === false &&
-    environment.bobaBearEnvDrift !== true &&
-    environment.secretsPrinted !== true;
+    environment.bobaBearEnvDrift === false &&
+    environment.secretsPrinted === false &&
+    environment.secretModesSecure === true &&
+    environment.unsafeAdaptersExplicitlyFalse === true &&
+    paymentIsolated;
   if (!ok) {
     findings.push({ code: PREFLIGHT_REASON.ENVIRONMENT_INVALID, category: "environment" });
     return PREFLIGHT_OUTCOME.BLOCKED;
@@ -388,8 +572,24 @@ function evaluateDatabase(database, findings) {
     });
     return PREFLIGHT_OUTCOME.BLOCKED;
   }
-  if (database.unexplainedPendingMutation === true) {
+  if (database.unexplainedPendingMutation == null || database.authAccountUniquenessKnown == null) {
+    findings.push({
+      code: PREFLIGHT_REASON.DATABASE_STATE_UNKNOWN_OR_UNSAFE,
+      category: "database",
+      detail: "pending-mutation or auth-account uniqueness evidence is missing",
+    });
+    return PREFLIGHT_OUTCOME.UNKNOWN;
+  }
+  if (database.unexplainedPendingMutation === true || database.authAccountUniquenessKnown !== true) {
     findings.push({ code: PREFLIGHT_REASON.DATABASE_STATE_UNKNOWN_OR_UNSAFE, category: "database" });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+  if (database.duplicateAuthAccountGroupCount !== 0) {
+    findings.push({
+      code: PREFLIGHT_REASON.DATABASE_STATE_UNKNOWN_OR_UNSAFE,
+      category: "database",
+      detail: "duplicate auth-account groups must be an observed zero count",
+    });
     return PREFLIGHT_OUTCOME.BLOCKED;
   }
   const baseline = database.baselineCompatibility;
@@ -408,7 +608,7 @@ function evaluateDatabase(database, findings) {
   return PREFLIGHT_OUTCOME.PASS;
 }
 
-function evaluateRecovery(recovery, findings) {
+function evaluateRecovery(recovery, source, findings) {
   if (!recovery || typeof recovery !== "object") {
     findings.push({
       code: PREFLIGHT_REASON.RECOVERY_PROOF_MISSING,
@@ -458,7 +658,16 @@ function evaluateRecovery(recovery, findings) {
     return { outcome: PREFLIGHT_OUTCOME.BLOCKED, binding: recovery.binding };
   }
 
-  if (Array.isArray(recovery.evidenceRecords)) {
+  if (!Array.isArray(recovery.evidenceRecords)) {
+    findings.push({
+      code: PREFLIGHT_REASON.RECOVERY_INTEGRITY_UNVERIFIED,
+      category: "recovery",
+      detail: "recovery evidence records are required; booleans alone are not proof",
+    });
+    return { outcome: PREFLIGHT_OUTCOME.BLOCKED, binding: recovery.binding };
+  }
+
+  {
     const stagingRecords = recovery.evidenceRecords.filter((record) => {
       const parsed = validateEvidence(record);
       if (!parsed.ok) return false;
@@ -469,6 +678,24 @@ function evaluateRecovery(recovery, findings) {
         code: PREFLIGHT_REASON.RECOVERY_EVIDENCE_STALE_OR_MISBOUND,
         category: "recovery",
         detail: "no staging-classified recovery evidence",
+      });
+      return { outcome: PREFLIGHT_OUTCOME.BLOCKED, binding: recovery.binding };
+    }
+    // Freshness uses the trusted evaluation clock only. Stored evaluatedAt is
+    // informational and must never freeze proof validity. Isolated tests may
+    // inject recovery.evaluationClock explicitly; operational preflight omits it.
+    const chain = evaluateStagingRecoveryChain({
+      records: recovery.evidenceRecords,
+      observation: recovery.checkpointObservation,
+      now: recovery.evaluationClock,
+      source,
+    });
+    if (chain.outcome !== "PASS" || chain.operationalAuthority !== false) {
+      const reason = chain.reasonCodes[0];
+      findings.push({
+        code: preflightReasonForCheckpoint(reason),
+        category: "recovery",
+        detail: chain.reasonCodes.join(","),
       });
       return { outcome: PREFLIGHT_OUTCOME.BLOCKED, binding: recovery.binding };
     }
@@ -486,14 +713,40 @@ function evaluateRecovery(recovery, findings) {
   return { outcome: PREFLIGHT_OUTCOME.PASS, binding: recovery.binding };
 }
 
-function evaluateSecurity(security, findings) {
+/**
+ * @param {string | undefined} reason
+ */
+function preflightReasonForCheckpoint(reason) {
+  if (
+    reason === STAGING_CHECKPOINT_REASON.NO_EVIDENCE ||
+    reason === STAGING_CHECKPOINT_REASON.BACKUP_ONLY
+  ) {
+    return PREFLIGHT_REASON.RECOVERY_PROOF_MISSING;
+  }
+  if (
+    reason === STAGING_CHECKPOINT_REASON.RESTORE_ONLY ||
+    reason === STAGING_CHECKPOINT_REASON.FAILED_OR_INTERRUPTED_RESTORE
+  ) {
+    return PREFLIGHT_REASON.RECOVERY_RESTORE_PROOF_MISSING;
+  }
+  if (reason === STAGING_CHECKPOINT_REASON.WRONG_ARTIFACT_CHECKSUM) {
+    return PREFLIGHT_REASON.RECOVERY_INTEGRITY_UNVERIFIED;
+  }
+  return PREFLIGHT_REASON.RECOVERY_EVIDENCE_STALE_OR_MISBOUND;
+}
+
+function evaluateSecurity(security, source, findings) {
   if (!security || typeof security !== "object") {
     findings.push({ code: PREFLIGHT_REASON.SECURITY_EVIDENCE_MISSING, category: "security", detail: "missing security evidence" });
     return PREFLIGHT_OUTCOME.UNKNOWN;
   }
-  if (security.issue409RiskWaived === true) {
-    findings.push({ code: PREFLIGHT_REASON.SECURITY_RISK_WAIVED, category: "security" });
-    return PREFLIGHT_OUTCOME.BLOCKED;
+  if (security.issue409RiskWaived !== false) {
+    findings.push({
+      code: security.issue409RiskWaived === true ? PREFLIGHT_REASON.SECURITY_RISK_WAIVED : PREFLIGHT_REASON.SECURITY_EVIDENCE_MISSING,
+      category: "security",
+      detail: "issue 409 waiver must be explicitly false",
+    });
+    return security.issue409RiskWaived === true ? PREFLIGHT_OUTCOME.BLOCKED : PREFLIGHT_OUTCOME.UNKNOWN;
   }
   // Image-security proof is never optional. An unchecked/omitted "required"
   // boolean must not authorize PASS without independently present correlation.
@@ -502,6 +755,17 @@ function evaluateSecurity(security, findings) {
       code: PREFLIGHT_REASON.SECURITY_EVIDENCE_MISSING,
       category: "security",
       detail: "image security evidence must be independently present",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+  const shaBound = isFullGitSha(security.boundSourceSha) && security.boundSourceSha === source?.head;
+  const treeBound = isFullGitSha(security.boundSourceTree) && security.boundSourceTree === source?.tree;
+  const imagesBound = sameBoundImages(security.boundImages, security.observedImages);
+  if (!shaBound || !treeBound || !imagesBound || security.scanPassed !== true) {
+    findings.push({
+      code: PREFLIGHT_REASON.IMAGE_SECURITY_NOT_BOUND,
+      category: "security",
+      detail: "image security evidence is not bound to this candidate SHA, tree, image id, and digest",
     });
     return PREFLIGHT_OUTCOME.BLOCKED;
   }
@@ -521,11 +785,25 @@ function evaluateCapacity(capacity, findings) {
     });
     return PREFLIGHT_OUTCOME.UNKNOWN;
   }
+  const measured = [
+    capacity.diskSufficient,
+    capacity.memorySufficient,
+    capacity.priorImagesPreserved,
+    capacity.unintendedPostgresReplacement,
+  ];
+  if (measured.some((value) => value !== true && value !== false)) {
+    findings.push({
+      code: PREFLIGHT_REASON.CAPACITY_OR_PRESERVATION_UNSAFE,
+      category: "capacity",
+      detail: "capacity evidence was not measured",
+    });
+    return PREFLIGHT_OUTCOME.UNKNOWN;
+  }
   const ok =
     capacity.diskSufficient === true &&
     capacity.memorySufficient === true &&
     capacity.priorImagesPreserved === true &&
-    capacity.unintendedPostgresReplacement !== true;
+    capacity.unintendedPostgresReplacement === false;
   if (!ok) {
     findings.push({ code: PREFLIGHT_REASON.CAPACITY_OR_PRESERVATION_UNSAFE, category: "capacity" });
     return PREFLIGHT_OUTCOME.BLOCKED;
@@ -556,6 +834,22 @@ function evaluatePostgresInit(postgresInit, findings) {
   return PREFLIGHT_OUTCOME.BLOCKED;
 }
 
+function syntheticCheckpointRecovery() {
+  const fixture = syntheticIsolatedCheckpointFixture({
+    now: new Date("2026-10-29T10:00:00.000Z"),
+    candidateSha: "a".repeat(40),
+    candidateTree: "b".repeat(40),
+  });
+  return {
+    evidenceRecords: fixture.records,
+    checkpointObservation: fixture.observation,
+    // Informational collection timestamp — not a freshness authority.
+    evaluatedAt: fixture.now.toISOString(),
+    // Explicit isolated-test clock seam only. Operational probes omit this.
+    evaluationClock: fixture.now.toISOString(),
+  };
+}
+
 /**
  * Construct a fully valid evidence object for isolated tests only.
  * Not an operator bypass — production probes must independently establish each field.
@@ -572,12 +866,50 @@ export function validPreflightEvidence(overrides = {}) {
       originMainTree: "b".repeat(40),
       trackedDirty: "",
       protectedCheckoutUsed: false,
+      isolatedArtifactContextVerified: true,
+      artifactContextInsideProtectedRoot: false,
+      authoritativeSourceRoot: PROTECTED_PRIMARY_REPOSITORY,
+      githubMainMatchesHead: true,
       ...(overrides.source ?? {}),
     },
     publishing: {
+      classification: PUBLISHING_CLASSIFICATION.PUBLIC_MARKETING,
+      state: PUBLISHING_CLASSIFICATION.PUBLIC_MARKETING,
       deployWorkflowState: "disabled_manually",
+      fileDeployWorkflowState: "active_on_main",
       pagesSourceKnown: true,
       unsafeActivePublishingPath: false,
+      marketingBaselineOk: true,
+      reasons: ["test fixture: verified public marketing isolation"],
+      contradictions: [],
+      workflowFile: {
+        present: true,
+        triggersMain: true,
+        publishDir: "./out",
+        cname: "thebobabear.in",
+        pagesSourceDescribed: true,
+        fileDeployWorkflowState: "active_on_main",
+      },
+      githubWorkflow: {
+        observed: true,
+        state: "disabled_manually",
+        path: ".github/workflows/deploy.yml",
+        repositoryIdentity: EXPECTED_REPOSITORY_IDENTITY,
+      },
+      pages: {
+        observed: true,
+        sourceBranch: "gh-pages",
+        sourcePath: "/",
+        cname: "thebobabear.in",
+        status: "built",
+        repositoryIdentity: EXPECTED_REPOSITORY_IDENTITY,
+      },
+      staging: {
+        observedExposure: false,
+        origin: null,
+        authorization: null,
+        claimedAuthorized: false,
+      },
       ...(overrides.publishing ?? {}),
     },
     runtime: {
@@ -599,6 +931,9 @@ export function validPreflightEvidence(overrides = {}) {
       diagnosticConflict: false,
       bobaBearEnvDrift: false,
       secretsPrinted: false,
+      secretModesSecure: true,
+      unsafeAdaptersExplicitlyFalse: true,
+      paymentIsolation: "DISABLED",
       ...(overrides.environment ?? {}),
     },
     database: {
@@ -606,6 +941,8 @@ export function validPreflightEvidence(overrides = {}) {
       migrationLedgerState: "APPLIED_CURRENT",
       baselineCompatibility: "COMPLETE_COMPATIBLE",
       unexplainedPendingMutation: false,
+      authAccountUniquenessKnown: true,
+      duplicateAuthAccountGroupCount: 0,
       ...(overrides.database ?? {}),
     },
     recovery: {
@@ -618,6 +955,7 @@ export function validPreflightEvidence(overrides = {}) {
       freshnessOk: true,
       bindingDesignDependency: false,
       binding: "BOUND",
+      ...syntheticCheckpointRecovery(),
       ...(overrides.recovery ?? {}),
     },
     security: {
@@ -625,6 +963,12 @@ export function validPreflightEvidence(overrides = {}) {
       imageSecurityEvidencePresent: true,
       issue409RiskWaived: false,
       sourceImageCorrelated: true,
+      boundSourceSha: "a".repeat(40),
+      boundSourceTree: "b".repeat(40),
+      boundImages: syntheticBoundImages(),
+      observedImages: syntheticBoundImages(),
+      scanPassed: true,
+      evidenceSchema: "staging-image-security-v1",
       ...(overrides.security ?? {}),
     },
     capacity: {
