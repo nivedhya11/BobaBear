@@ -38,7 +38,7 @@ import {
   setPromotionBenefit,
   setPromotionTargets,
 } from "../../src/server/promotions";
-import { seedGtmUatBrowserFixtures } from "./gtm-uat-browser-fixtures";
+import { seedGtmUatBrowserFixtures } from "../database/gtm-uat-browser-fixtures";
 import {
   setOutletServiceabilityDistancePolicy,
   setOutletServiceabilityRoutingPriority,
