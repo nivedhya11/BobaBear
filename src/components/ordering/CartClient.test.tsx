@@ -1110,13 +1110,13 @@ describe("CartClient", () => {
         },
       },
     });
-    let resolveCheckout: ((value: unknown) => void) | undefined;
-    getActiveCheckout.mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          resolveCheckout = resolve;
-        }),
-    );
+    // Eager deferred Promise: resolver exists before render so resolve cannot
+    // silently no-op when getActiveCheckout has not yet been invoked (CI race).
+    let resolveCheckout!: (value: unknown) => void;
+    const pendingCheckout = new Promise((resolve) => {
+      resolveCheckout = resolve;
+    });
+    getActiveCheckout.mockImplementation(() => pendingCheckout);
 
     render(<CartClient brandId={brandId} />);
     // Checking total must appear before Checkout resolution (reuse pending).
@@ -1124,17 +1124,9 @@ describe("CartClient", () => {
     expect(screen.queryByText(IMP036J_COPY.ESTIMATED_SUBTOTAL)).not.toBeInTheDocument();
     expect(document.querySelector('[data-offer-component="ESTIMATED_SUBTOTAL"]')).toBeNull();
 
-    // Active Checkout request + resolver must be initialized before resolve.
-    // Optional no-op (`resolveCheckout?.(...)`) previously raced the effect and
-    // left CURRENT_CHECKOUT_TOTAL permanently pending under CI scheduling.
     await waitFor(() => {
       expect(getActiveCheckout).toHaveBeenCalled();
-      expect(resolveCheckout).toEqual(expect.any(Function));
     });
-    const resolveActiveCheckout = resolveCheckout;
-    if (typeof resolveActiveCheckout !== "function") {
-      throw new Error("expected getActiveCheckout resolver to be initialized");
-    }
 
     const checkoutResponse = {
       ok: true as const,
@@ -1151,7 +1143,7 @@ describe("CartClient", () => {
       },
     };
     await act(async () => {
-      resolveActiveCheckout(checkoutResponse);
+      resolveCheckout(checkoutResponse);
     });
 
     await waitFor(() =>
