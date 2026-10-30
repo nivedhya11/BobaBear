@@ -87,7 +87,6 @@ test("isAllowedPersistenceImportPath allows the exact additional script consumer
     "scripts/e2e/seed-customer-ordering.ts",
     "scripts/e2e/seed-operations-lifecycle.ts",
     "scripts/e2e/seed-commercial-workspace.ts",
-    "scripts/e2e/gtm-uat-browser-fixtures.ts",
     "scripts/financial-document/recover-missing-receipt-vouchers.ts",
     "scripts/financial-document/recover-missing-tax-invoices.ts",
     "scripts/financial-document/signing.ts",
@@ -98,6 +97,11 @@ test("isAllowedPersistenceImportPath allows the exact additional script consumer
   for (const path of allowedScriptPaths) {
     assert.equal(isAllowedPersistenceImportPath(path), true, path);
   }
+});
+
+test("isAllowedPersistenceImportPath allows the GTM UAT fixture only via scripts/database/ and not scripts/e2e/", () => {
+  assert.equal(isAllowedPersistenceImportPath("scripts/database/gtm-uat-browser-fixtures.ts"), true);
+  assert.equal(isAllowedPersistenceImportPath("scripts/e2e/gtm-uat-browser-fixtures.ts"), false);
 });
 
 test("isAllowedPersistenceImportPath does not generally allowlist health.ts", () => {
