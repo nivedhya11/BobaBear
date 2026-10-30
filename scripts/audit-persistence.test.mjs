@@ -99,6 +99,11 @@ test("isAllowedPersistenceImportPath allows the exact additional script consumer
   }
 });
 
+test("isAllowedPersistenceImportPath allows the GTM UAT fixture only via scripts/database/ and not scripts/e2e/", () => {
+  assert.equal(isAllowedPersistenceImportPath("scripts/database/gtm-uat-browser-fixtures.ts"), true);
+  assert.equal(isAllowedPersistenceImportPath("scripts/e2e/gtm-uat-browser-fixtures.ts"), false);
+});
+
 test("isAllowedPersistenceImportPath does not generally allowlist health.ts", () => {
   assert.equal(isAllowedPersistenceImportPath("src/platform/observability/health.ts"), false);
 });
