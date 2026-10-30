@@ -4,7 +4,7 @@ Authority: Accepted foundation operating constraints (not roadmap/state)
 Canonical sequence: docs/platform/ROADMAP.md
 Canonical accepted state: docs/platform/STATE.md
 Canonical architecture: docs/platform/ARCHITECTURE.md
-Last updated: 2026-08-18
+Last updated: 2026-10-30
 ---
 
 # Accepted foundation operating constraints
@@ -434,6 +434,22 @@ slice** — the only provider is an in-process `local` one, allowed only in `loc
 both the provider factory and the service config fail closed (throw
 `CUSTOMER_OTP_PRODUCTION_PROVIDER_UNAVAILABLE`) in staging/production. Shipping real SMS delivery is
 future work, not something to approximate or stub into this slice.
+
+- **OTP transport evidence (not a decision ID).** On 29 October 2026 the Founder approved
+  Option A: sensitive OTP verification values, phone verification data, and provider
+  credentials must not travel in URL paths or query parameters. MSG91 GET-based Verify
+  remains blocked. That evidence is not a CURRENT decision-register row. DR-25 still names
+  D-385 as the next ID, and open pull requests reserve D-385, D-386, and D-387, so this
+  file does not allocate one. `src/server/customer-auth/provider/msg91.ts` is an inactive
+  offline candidate. It is not a `CustomerOtpProviderKind`, it is not selected by
+  `createCustomerOtpProvider`, and it refuses the documented MSG91 Verify, Send, and
+  Resend URL placements without calling the network. Staging and production still fail
+  closed with `CUSTOMER_OTP_PRODUCTION_PROVIDER_UNAVAILABLE`. The comparison of later
+  provider contracts is the non-authoritative assessment
+  [`engineering/customer-otp-transport-assessment.md`](./engineering/customer-otp-transport-assessment.md).
+  That assessment does not authorize a provider, credentials, DLT filing, SMS, or staging
+  enablement. ADR-004's initial five-attempt and 30-second resend figures, and this
+  service's three-attempt and 60-second send figures, stay as they are.
 
 - **Pinned exact version:** `libphonenumber-js@1.13.10` — never a caret/tilde range, never
   `@latest`. No alternate phone-parsing library (`google-libphonenumber`, `phone`,
