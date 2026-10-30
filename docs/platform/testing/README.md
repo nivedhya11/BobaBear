@@ -23,7 +23,7 @@ are owned by [`../ROADMAP.md`](../ROADMAP.md) and [`../STATE.md`](../STATE.md).
 5. Read [`CI-GAP-ANALYSIS.md`](./CI-GAP-ANALYSIS.md) and [`CI-JOB-CONTRACT.md`](./CI-JOB-CONTRACT.md)
    as historical Session 3 planning and implementation notes. They do not authorize workflow edits
    and they are not current lifecycle authority.
-6. Read [`EVIDENCE-RETENTION.md`](./EVIDENCE-RETENTION.md) for repository-weight and
+6. Read [`evidence-retention.md`](./evidence-retention.md) for repository-weight and
    evidence-retention rules (HYG-05). It does not authorize deletion of protected or migration
    evidence.
 

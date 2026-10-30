@@ -27,7 +27,7 @@
 # Live customer-ordering Playwright outputDir (HYG-05 remediation).
 # Distinct from protected historical triad under test-results-customer-ordering/
 # (tracked; preserved byte-for-byte; not Playwright outputDir — see
-# playwright.customer-ordering.config.ts and EVIDENCE-RETENTION.md).
+# playwright.customer-ordering.config.ts and evidence-retention.md).
 /test-results-customer-ordering-runtime
 # Belt-and-suspenders: never accidentally add NEW dumps under the protected
 # historical prefix. Do not git rm protected evidence without disposition.
