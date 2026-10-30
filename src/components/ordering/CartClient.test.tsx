@@ -1119,24 +1119,39 @@ describe("CartClient", () => {
     );
 
     render(<CartClient brandId={brandId} />);
+    // Checking total must appear before Checkout resolution (reuse pending).
     expect(await screen.findAllByText(IMP036J_COPY.CHECKING_TOTAL)).not.toHaveLength(0);
     expect(screen.queryByText(IMP036J_COPY.ESTIMATED_SUBTOTAL)).not.toBeInTheDocument();
+    expect(document.querySelector('[data-offer-component="ESTIMATED_SUBTOTAL"]')).toBeNull();
 
-    await act(async () => {
-      resolveCheckout?.({
-        ok: true,
-        status: 200,
-        data: {
-          checkout: {
-            id: "chk-1",
-            fulfilmentMode: "DELIVERY",
-            sourceCartRevision: "4",
-            revision: "3",
-            status: "READY_FOR_PAYMENT",
-            activeSnapshot: { grandTotalPaise: "24900", fulfilmentMode: "DELIVERY" },
-          },
+    // Active Checkout request + resolver must be initialized before resolve.
+    // Optional no-op (`resolveCheckout?.(...)`) previously raced the effect and
+    // left CURRENT_CHECKOUT_TOTAL permanently pending under CI scheduling.
+    await waitFor(() => {
+      expect(getActiveCheckout).toHaveBeenCalled();
+      expect(resolveCheckout).toEqual(expect.any(Function));
+    });
+    const resolveActiveCheckout = resolveCheckout;
+    if (typeof resolveActiveCheckout !== "function") {
+      throw new Error("expected getActiveCheckout resolver to be initialized");
+    }
+
+    const checkoutResponse = {
+      ok: true as const,
+      status: 200,
+      data: {
+        checkout: {
+          id: "chk-1",
+          fulfilmentMode: "DELIVERY",
+          sourceCartRevision: "4",
+          revision: "3",
+          status: "READY_FOR_PAYMENT",
+          activeSnapshot: { grandTotalPaise: "24900", fulfilmentMode: "DELIVERY" },
         },
-      });
+      },
+    };
+    await act(async () => {
+      resolveActiveCheckout(checkoutResponse);
     });
 
     await waitFor(() =>
