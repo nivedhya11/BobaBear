@@ -31,10 +31,10 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2424,
-    "executableTestFiles": 568,
+    "trackedPathsConsidered": 2426,
+    "executableTestFiles": 569,
     "sourceTestFiles": 167,
-    "testsTreeExecutableFiles": 296,
+    "testsTreeExecutableFiles": 297,
     "scriptTestFiles": 105,
     "playwrightSpecs": 13,
     "vitestConfigs": 2,
@@ -318,6 +318,7 @@
     "tests/customer-auth/http.integration.test.ts",
     "tests/customer-auth/trusted-identity.integration.test.ts",
     "tests/customer-commerce/financial-document.http.integration.test.ts",
+    "tests/customer-commerce/gtm-commerce-regression.http.integration.test.ts",
     "tests/customer-commerce/http.integration.test.ts",
     "tests/customer-commerce/razorpay.http.integration.test.ts",
     "tests/customer-commerce/scheduled-http.tranche3.integration.test.ts",
@@ -8330,6 +8331,25 @@
       "externalProviderSubstitute": "UNKNOWN",
       "packageCommands": [],
       "ciInclusion": "NO",
+      "test1Layers": [
+        "4-integration",
+        "5-database-integration",
+        "6-http-api-contract"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/customer-commerce/gtm-commerce-regression.http.integration.test.ts",
+      "runner": "vitest",
+      "domain": "customer-commerce",
+      "testType": "integration",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:customer-commerce:http"
+      ],
+      "ciInclusion": "YES",
       "test1Layers": [
         "4-integration",
         "5-database-integration",
