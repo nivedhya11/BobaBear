@@ -6,7 +6,7 @@
  */
 import { spawnSync } from "node:child_process";
 import { randomBytes, randomInt, randomUUID } from "node:crypto";
-import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, copyFileSync, existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
 import { buildCommercialWorkspaceSeed } from "./build-commercial-workspace-seed.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
-const composeFile = "compose.cross-portal-promotion-e2e.yaml";
+const composeSource = path.join(root, "compose.cross-portal-promotion-e2e.yaml");
 const project = `imp036jxp_${randomBytes(6).toString("hex")}`;
 if (!/^imp036jxp_[a-z0-9]+$/.test(project)) throw new Error("Invalid E2E project name.");
 const podmanSocket = `unix:///run/user/${process.getuid()}/podman/podman.sock`;
@@ -24,7 +24,12 @@ const tempDir = mkdtempSync(path.join(os.tmpdir(), "imp036fe2e_"));
 chmodSync(tempDir, 0o700);
 const envFile = path.join(tempDir, "runtime.env");
 const manifest = path.join(tempDir, "fixtures.json");
+const composeFile = path.join(tempDir, "compose.cross-portal-promotion-e2e.yaml");
 const runId = randomUUID();
+if (!existsSync(composeSource)) {
+  throw new Error(`Missing ${composeSource}. Stay on the cross-portal task branch for this runner.`);
+}
+copyFileSync(composeSource, composeFile);
 
 function port() {
   return new Promise((resolve, reject) => {
@@ -179,15 +184,23 @@ function cleanup() {
   if (cleaned) return;
   cleaned = true;
   try {
-    compose(["down", "-v", "--remove-orphans"]);
+    if (existsSync(composeFile)) {
+      runAllowFail("podman-compose", [
+        "-p",
+        project,
+        "-f",
+        composeFile,
+        "--env-file",
+        envFile,
+        "down",
+        "-v",
+        "--remove-orphans",
+      ]);
+    }
   } catch {
     /* best-effort */
   }
-  try {
-    run("podman", ["network", "rm", `${project}_default`]);
-  } catch {
-    /* best-effort */
-  }
+  runAllowFail("podman", ["network", "rm", `${project}_default`]);
   rmSync(tempDir, { recursive: true, force: true });
 }
 process.on("SIGINT", () => {
