@@ -310,7 +310,11 @@ async function runFullCommercialJourney(
   await expect(page.getByTestId("promotions-editor")).toBeVisible();
 
   // #381 — the editor blocks a non-lowercase identifier before any request.
-  // The same session then posts the rejected shape so the server status is observed.
+  // The same session then posts the rejected shape directly. Accepted contract for a code that
+  // violates promotions_code_format_check: HTTP 400 PROMOTIONS_REQUEST_INVALID (request-shape
+  // failure, never a 500, never a created Promotion) — see
+  // tests/administration/promotion-create-identifier-validation.integration.test.ts.
+  // (Missing/foreign scope UUIDs are a separate 404 contract covered by that suite, not here.)
   await page.getByLabel("Promotion identifier").fill("TEST123");
   await page.getByLabel("Promotion display name").fill("Malformed diagnostic");
   await page.getByLabel("Trigger type").selectOption("coupon");
@@ -330,15 +334,20 @@ async function runFullCommercialJourney(
         startsAt: new Date().toISOString(),
       }),
     });
-    const body = (await response.json().catch(() => null)) as { code?: string } | null;
-    return { status: response.status, code: body?.code ?? null };
+    const body = (await response.json().catch(() => null)) as {
+      ok?: boolean;
+      code?: string;
+    } | null;
+    return { status: response.status, ok: body?.ok ?? null, code: body?.code ?? null };
   }, fixture.brandId);
   test.info().annotations.push({
     type: "issue-381",
     description: `create promotion HTTP ${malformed.status} ${malformed.code ?? ""}`.trim(),
   });
-  expect(malformed.status, JSON.stringify(malformed)).toBe(500);
-  expect(malformed.code).toBe("INTERNAL_ERROR");
+  expect(malformed.status, JSON.stringify(malformed)).toBe(400);
+  expect(malformed.ok).toBe(false);
+  expect(malformed.code).toBe("PROMOTIONS_REQUEST_INVALID");
+  await expect(page.getByText(/Promotion created as draft/i)).toHaveCount(0);
 
   const promoCode = `cpn${stamp.replace(/[^a-z0-9]/g, "").slice(-10)}`;
   await page.getByLabel("Promotion identifier").fill(promoCode);
