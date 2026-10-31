@@ -1379,7 +1379,7 @@ export function CheckoutClient(props: { brandId: string }) {
                 snapshot.scheduledWindowEndAt &&
                 snapshot.scheduledTimezone
                   ? snapshot.fulfilmentMode === "DELIVERY"
-                    ? `Arrival / fulfilment window ${formatOutletLocalWindowLabel(
+                    ? `Delivery window ${formatOutletLocalWindowLabel(
                         new Date(snapshot.scheduledWindowStartAt),
                         new Date(snapshot.scheduledWindowEndAt),
                         snapshot.scheduledTimezone,

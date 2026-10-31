@@ -886,3 +886,313 @@ describe("AC-036J-003-02 Review crossed-and-lost after re-evaluation", () => {
     expect(screen.queryByText("Add ₹601.00 more to unlock order discount.")).not.toBeInTheDocument();
   });
 });
+
+const SCHEDULED_WINDOW = {
+  startAt: "2026-09-24T12:30:00.000Z",
+  endAt: "2026-09-24T13:00:00.000Z",
+  localDate: "2026-09-24",
+  day: "TODAY" as const,
+  timeZone: "Asia/Kolkata",
+  label: "18:00–18:30",
+};
+
+const PICKUP_OUTLET = {
+  outletId: "outlet-1",
+  displayName: "Mall Road Counter",
+  addressLine1: "12 Mall Road",
+  addressLine2: null,
+  locality: "Rajpur",
+  city: "Dehradun",
+  stateCode: "IN-UT",
+  postalCode: "248001",
+  instructions: "Ask at counter",
+  coordinates: { latitude: "30.3256", longitude: "78.0437" },
+};
+
+function mockAvailableScheduledWindows(): void {
+  listCheckoutScheduledWindows.mockResolvedValue({
+    ok: true,
+    status: 200,
+    data: {
+      availability: "AVAILABLE",
+      message: null,
+      timeZone: "Asia/Kolkata",
+      todayLocalDate: "2026-09-24",
+      tomorrowLocalDate: "2026-09-25",
+      cancellationCutoffMinutes: 60,
+      windows: [SCHEDULED_WINDOW],
+    },
+  });
+}
+
+function scheduledSnapshot(overrides: Record<string, unknown> = {}) {
+  return snapshot({
+    fulfilmentTiming: "SCHEDULED",
+    scheduledWindowStartAt: SCHEDULED_WINDOW.startAt,
+    scheduledWindowEndAt: SCHEDULED_WINDOW.endAt,
+    scheduledTimezone: "Asia/Kolkata",
+    ...overrides,
+  });
+}
+
+describe("LANG-1 Checkout Review scheduled timing copy", () => {
+  it("R1: scheduled Delivery Review shows Delivery window with sealed timezone", async () => {
+    const user = userEvent.setup();
+    mockAvailableScheduledWindows();
+    setCheckoutDestination.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        checkout: checkoutState({
+          revision: "2",
+          status: "DRAFT",
+          destination: { sourceSavedAddressId: "addr-a" },
+        }),
+      },
+    });
+    setCheckoutFulfilmentTiming.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        checkout: checkoutState({
+          revision: "2",
+          status: "DRAFT",
+          fulfilmentTiming: "SCHEDULED",
+          scheduledWindowStartAt: SCHEDULED_WINDOW.startAt,
+          scheduledWindowEndAt: SCHEDULED_WINDOW.endAt,
+          scheduledTimezone: "Asia/Kolkata",
+          destination: { sourceSavedAddressId: "addr-a" },
+        }),
+      },
+    });
+    evaluateCheckout
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          checkout: checkoutState({
+            revision: "2",
+            status: "DRAFT",
+            destination: { sourceSavedAddressId: "addr-a" },
+            activeSnapshot: snapshot({ checkoutRevision: "2" }),
+          }),
+          snapshot: snapshot({ checkoutRevision: "2" }),
+        },
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          checkout: checkoutState({
+            revision: "3",
+            status: "READY_FOR_PAYMENT",
+            activeSnapshotId: "snap-1",
+            fulfilmentTiming: "SCHEDULED",
+            scheduledWindowStartAt: SCHEDULED_WINDOW.startAt,
+            scheduledWindowEndAt: SCHEDULED_WINDOW.endAt,
+            scheduledTimezone: "Asia/Kolkata",
+            activeSnapshot: scheduledSnapshot({ checkoutRevision: "3" }),
+          }),
+          snapshot: scheduledSnapshot({ checkoutRevision: "3" }),
+        },
+      });
+
+    render(<CheckoutClient brandId={catalog.brandId} />);
+    await chooseDelivery(user);
+    await waitFor(() => expect(screen.getByTestId("pick-address-a")).toBeInTheDocument());
+    await user.click(screen.getByTestId("pick-address-a"));
+    await waitFor(() =>
+      expect(screen.getByTestId(`checkout-window-${SCHEDULED_WINDOW.startAt}`)).toBeInTheDocument(),
+    );
+    await user.click(screen.getByTestId(`checkout-window-${SCHEDULED_WINDOW.startAt}`));
+    await waitFor(() => expect(screen.getByTestId("checkout-review")).toBeInTheDocument());
+
+    const timing = screen.getByTestId("checkout-review-timing");
+    expect(timing).toHaveTextContent("Delivery window 18:00–18:30 (Asia/Kolkata)");
+    expect(timing).not.toHaveTextContent(/Arrival \/ fulfilment window/i);
+    expect(timing).not.toHaveTextContent(/fulfilment window/i);
+    expect(setCheckoutFulfilmentTiming).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fulfilmentTiming: "SCHEDULED",
+        scheduledWindowStartAt: SCHEDULED_WINDOW.startAt,
+        scheduledWindowEndAt: SCHEDULED_WINDOW.endAt,
+      }),
+    );
+    expect(screen.getByRole("button", { name: /Continue to payment/i })).toBeInTheDocument();
+  });
+
+  it("R2: scheduled Pickup Review shows Pickup window, not Delivery window", async () => {
+    const user = userEvent.setup();
+    mockAvailableScheduledWindows();
+    const pickupLocation = {
+      displayName: PICKUP_OUTLET.displayName,
+      addressLine1: PICKUP_OUTLET.addressLine1,
+      addressLine2: PICKUP_OUTLET.addressLine2,
+      locality: PICKUP_OUTLET.locality,
+      city: PICKUP_OUTLET.city,
+      stateCode: PICKUP_OUTLET.stateCode,
+      postalCode: PICKUP_OUTLET.postalCode,
+      instructions: PICKUP_OUTLET.instructions,
+    };
+    setCheckoutFulfilment
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          checkout: checkoutState({
+            revision: "1",
+            status: "DRAFT",
+            fulfilmentMode: "PICKUP",
+            pickupOutletId: null,
+          }),
+        },
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          checkout: checkoutState({
+            revision: "2",
+            status: "DRAFT",
+            fulfilmentMode: "PICKUP",
+            pickupOutletId: PICKUP_OUTLET.outletId,
+          }),
+        },
+      });
+    listCheckoutPickupOptions.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        outlets: [PICKUP_OUTLET],
+        selectionPolicy: "AUTO_SELECT",
+      },
+    });
+    setCheckoutFulfilmentTiming.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        checkout: checkoutState({
+          revision: "2",
+          status: "DRAFT",
+          fulfilmentMode: "PICKUP",
+          pickupOutletId: PICKUP_OUTLET.outletId,
+          fulfilmentTiming: "SCHEDULED",
+          scheduledWindowStartAt: SCHEDULED_WINDOW.startAt,
+          scheduledWindowEndAt: SCHEDULED_WINDOW.endAt,
+          scheduledTimezone: "Asia/Kolkata",
+        }),
+      },
+    });
+    evaluateCheckout
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          checkout: checkoutState({
+            revision: "2",
+            status: "DRAFT",
+            fulfilmentMode: "PICKUP",
+            pickupOutletId: PICKUP_OUTLET.outletId,
+            activeSnapshot: scheduledSnapshot({
+              checkoutRevision: "2",
+              fulfilmentMode: "PICKUP",
+              destination: null,
+              pickupLocation,
+              fulfilmentTiming: "ASAP",
+              scheduledWindowStartAt: null,
+              scheduledWindowEndAt: null,
+              scheduledTimezone: null,
+            }),
+          }),
+          snapshot: scheduledSnapshot({
+            checkoutRevision: "2",
+            fulfilmentMode: "PICKUP",
+            destination: null,
+            pickupLocation,
+            fulfilmentTiming: "ASAP",
+            scheduledWindowStartAt: null,
+            scheduledWindowEndAt: null,
+            scheduledTimezone: null,
+          }),
+        },
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          checkout: checkoutState({
+            revision: "3",
+            status: "READY_FOR_PAYMENT",
+            fulfilmentMode: "PICKUP",
+            pickupOutletId: PICKUP_OUTLET.outletId,
+            activeSnapshotId: "snap-1",
+            fulfilmentTiming: "SCHEDULED",
+            scheduledWindowStartAt: SCHEDULED_WINDOW.startAt,
+            scheduledWindowEndAt: SCHEDULED_WINDOW.endAt,
+            scheduledTimezone: "Asia/Kolkata",
+            activeSnapshot: scheduledSnapshot({
+              checkoutRevision: "3",
+              fulfilmentMode: "PICKUP",
+              destination: null,
+              pickupLocation,
+            }),
+          }),
+          snapshot: scheduledSnapshot({
+            checkoutRevision: "3",
+            fulfilmentMode: "PICKUP",
+            destination: null,
+            pickupLocation,
+          }),
+        },
+      });
+
+    render(<CheckoutClient brandId={catalog.brandId} />);
+    await waitFor(() => expect(screen.getByTestId("checkout-fulfilment-choice")).toBeInTheDocument());
+    await user.click(screen.getByTestId("checkout-fulfilment-pickup"));
+    await waitFor(() => expect(screen.getByTestId("checkout-pickup-continue")).toBeInTheDocument());
+    await user.click(screen.getByTestId("checkout-pickup-continue"));
+    await waitFor(() =>
+      expect(screen.getByTestId(`checkout-window-${SCHEDULED_WINDOW.startAt}`)).toBeInTheDocument(),
+    );
+    await user.click(screen.getByTestId(`checkout-window-${SCHEDULED_WINDOW.startAt}`));
+    await waitFor(() => expect(screen.getByTestId("checkout-review")).toBeInTheDocument());
+
+    const timing = screen.getByTestId("checkout-review-timing");
+    expect(timing).toHaveTextContent("Pickup window 18:00–18:30 (Asia/Kolkata)");
+    expect(timing).not.toHaveTextContent(/Delivery window/i);
+    expect(timing).not.toHaveTextContent(/Arrival \/ fulfilment window/i);
+    expect(screen.getByTestId("checkout-review-pickup")).toHaveTextContent("Mall Road Counter");
+  });
+
+  it("R3: ASAP Review still shows As soon as possible without invented window", async () => {
+    const user = userEvent.setup();
+    setCheckoutDestination.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        checkout: checkoutState({
+          revision: "2",
+          status: "DRAFT",
+          destination: { sourceSavedAddressId: "addr-a" },
+        }),
+      },
+    });
+
+    render(<CheckoutClient brandId={catalog.brandId} />);
+    await chooseDelivery(user);
+    await waitFor(() => expect(screen.getByTestId("pick-address-a")).toBeInTheDocument());
+    await user.click(screen.getByTestId("pick-address-a"));
+    await user.click(await screen.findByTestId("checkout-timing-asap"));
+    await waitFor(() => expect(screen.getByTestId("checkout-review")).toBeInTheDocument());
+
+    const timing = screen.getByTestId("checkout-review-timing");
+    expect(timing).toHaveTextContent("As soon as possible");
+    expect(timing).not.toHaveTextContent(/Delivery window/i);
+    expect(timing).not.toHaveTextContent(/Pickup window/i);
+    expect(timing).not.toHaveTextContent(/18:00–18:30/);
+    expect(setCheckoutFulfilmentTiming).toHaveBeenCalledWith(
+      expect.objectContaining({ fulfilmentTiming: "ASAP" }),
+    );
+    expect(screen.getByRole("button", { name: /Continue to payment/i })).toBeInTheDocument();
+  });
+});
