@@ -143,11 +143,7 @@ test("Journey 1 — coupon Promotion lifecycle on one shared database", async ({
     },
     { brandId: fixture.brandId, promotionId: couponPromotionId },
   );
-  // Select the promotion in the list if present.
-  const promoButton = operatorPage.getByRole("button", { name: new RegExp(couponPromotionCode, "i") });
-  if (await promoButton.isVisible().catch(() => false)) {
-    await promoButton.click();
-  }
+  await selectPromotionByCode(operatorPage, couponPromotionCode);
   const afterPurchase = await fetchPromotionDetail(operatorPage, fixture.brandId, couponPromotionId);
   expect(afterPurchase.redemptionCounts?.consumed).toBeGreaterThanOrEqual(1);
   expect(afterPurchase.redemptionCounts?.applicationCount).toBeGreaterThanOrEqual(1);
@@ -245,11 +241,8 @@ test("Journey 2 — automatic Offer with ineligible negative", async ({ browser 
 
   // Eligible automatic path: enable Pickup, re-activate semantics by editing draft modes then confirming.
   await openPromotionsEditor(operatorPage, fixture);
-  const autoBtn = operatorPage.getByRole("button", { name: new RegExp(autoCode, "i") });
-  await expect(autoBtn, `delivery-only automatic ${autoCode} must be listed`).toBeVisible({
-    timeout: 45_000,
-  });
-  await autoBtn.click();
+  // List rows alone do not expose lifecycle controls — select the promotion first.
+  await selectPromotionByCode(operatorPage, autoCode);
   // Retire delivery-only, recreate pickup-eligible automatic for positive path (keeps one active complimentary rule intact).
   const retireDeliveryOnly = operatorPage.getByRole("button", { name: /Review & retire/i });
   await expect(retireDeliveryOnly).toBeVisible({ timeout: 45_000 });
@@ -324,10 +317,10 @@ test("Journey 3 — complimentary-item Offer retains exact sealed line", async (
   if (activeAutoPickupCode) {
     const priorAuto = await findPromotionByCode(operatorPage, fixture.brandId, activeAutoPickupCode);
     if (priorAuto?.status === "active") {
-      const priorBtn = operatorPage.getByRole("button", {
-        name: new RegExp(activeAutoPickupCode, "i"),
+      await selectPromotionByCode(operatorPage, activeAutoPickupCode);
+      await expect(operatorPage.getByRole("button", { name: /Review & retire/i })).toBeVisible({
+        timeout: 30_000,
       });
-      if (await priorBtn.isVisible().catch(() => false)) await priorBtn.click();
       await operatorPage.getByRole("button", { name: /Review & retire/i }).click();
       await confirmConsequence(operatorPage, /Retire offer/i);
       await expect(operatorPage.getByText(/Retired\. New orders will not receive it/i).first()).toBeVisible({
@@ -414,8 +407,10 @@ test("Journey 3 — complimentary-item Offer retains exact sealed line", async (
   };
 
   await openPromotionsEditor(operatorPage, fixture);
-  const giftBtn = operatorPage.getByRole("button", { name: new RegExp(giftCode, "i") });
-  if (await giftBtn.isVisible().catch(() => false)) await giftBtn.click();
+  await selectPromotionByCode(operatorPage, giftCode);
+  await expect(operatorPage.getByRole("button", { name: /Review & retire/i })).toBeVisible({
+    timeout: 30_000,
+  });
   await operatorPage.getByRole("button", { name: /Review & retire/i }).click();
   await confirmConsequence(operatorPage, /Retire offer/i);
   const orderAfter = await fetchOwnedOrder(page, orderId);
@@ -537,8 +532,10 @@ test("Negatives — permission, invalid config, stale pay, cross-identity isolat
 
   // Retire / invalidate Offer after Review while customer is on Payment (AC-036J-008-01).
   await openPromotionsEditor(operatorPage, fixture);
-  const staleBtn = operatorPage.getByRole("button", { name: new RegExp(stalePromo, "i") });
-  if (await staleBtn.isVisible().catch(() => false)) await staleBtn.click();
+  await selectPromotionByCode(operatorPage, stalePromo);
+  await expect(operatorPage.getByRole("button", { name: /Review & retire/i })).toBeVisible({
+    timeout: 30_000,
+  });
   await operatorPage.getByRole("button", { name: /Review & retire/i }).click();
   await confirmConsequence(operatorPage, /Retire offer/i);
   const staleListed = await findPromotionByCode(operatorPage, fixture.brandId, stalePromo);

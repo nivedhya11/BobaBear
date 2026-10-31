@@ -191,6 +191,32 @@ export async function openPromotionsEditor(page: Page, fixture: CrossPortalFixtu
   await expect(page.getByTestId("promotions-editor")).toBeVisible();
 }
 
+/**
+ * Select a promotion from the editor list by its internal identifier.
+ * List buttons expose displayName plus "(identifier: CODE)".
+ */
+export async function selectPromotionByCode(page: Page, code: string): Promise<void> {
+  const editor = page.getByTestId("promotions-editor");
+  await expect(editor).toBeVisible();
+  const escaped = code.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const row = editor.getByRole("button", { name: new RegExp(`identifier:\\s*${escaped}`, "i") });
+  await expect(row, `promotion list row for ${code}`).toBeVisible({ timeout: 60_000 });
+  await row.click();
+  await expect(editor.getByText(new RegExp(`Promotion identifier:\\s*${escaped}`, "i"))).toBeVisible({
+    timeout: 30_000,
+  });
+}
+
+/** Select a promotion in the editor list by internal identifier (code). */
+export async function selectPromotionByCode(page: Page, code: string): Promise<void> {
+  const editor = page.getByTestId("promotions-editor");
+  await expect(editor).toBeVisible();
+  const row = editor.getByRole("button", { name: new RegExp(code.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i") });
+  await expect(row, `promotion list row for ${code}`).toBeVisible({ timeout: 60_000 });
+  await row.click();
+  await expect(editor.getByTestId("promotion-identifier")).toContainText(code, { timeout: 30_000 });
+}
+
 export async function confirmConsequence(page: Page, confirmName: RegExp): Promise<void> {
   const dialog = page.getByTestId("consequence-review-dialog");
   await expect(dialog).toBeVisible({ timeout: 60_000 });
