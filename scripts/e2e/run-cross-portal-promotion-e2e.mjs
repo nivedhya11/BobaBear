@@ -6,7 +6,15 @@
  */
 import { spawnSync } from "node:child_process";
 import { randomBytes, randomInt, randomUUID } from "node:crypto";
-import { chmodSync, copyFileSync, existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  copyFileSync,
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -29,7 +37,15 @@ const runId = randomUUID();
 if (!existsSync(composeSource)) {
   throw new Error(`Missing ${composeSource}. Stay on the cross-portal task branch for this runner.`);
 }
-copyFileSync(composeSource, composeFile);
+// Keep a run-owned Compose copy so concurrent checkouts cannot unlink it mid-run, but rewrite
+// relative build/volume paths to the repository root (context "." would otherwise resolve under /tmp).
+{
+  const postgresInit = path.join(root, "docker/postgres/init");
+  const rewritten = readFileSync(composeSource, "utf8")
+    .replaceAll("context: .", `context: ${root}`)
+    .replaceAll("./docker/postgres/init", postgresInit);
+  writeFileSync(composeFile, rewritten, { mode: 0o600 });
+}
 
 function port() {
   return new Promise((resolve, reject) => {
