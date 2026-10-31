@@ -213,6 +213,9 @@ async function reachPickupReadyForPayment(page: Page, phoneNumber: string): Prom
   await expect(checkout.getByTestId("checkout-fulfilment-choice")).toBeVisible({ timeout: 20_000 });
 
   // AC-036H-041 — real keyboard: Tab from Delivery to Pickup, Enter to activate.
+  // Successful Pickup selection intentionally replaces the choice UI with the
+  // outlet step. Space must be proven while the choice remains mounted — not
+  // after that transition (stale post-navigation assertion; nightly mobile flake).
   const delivery = checkout.getByTestId("checkout-fulfilment-delivery");
   const pickup = checkout.getByTestId("checkout-fulfilment-pickup");
   await delivery.focus();
@@ -222,9 +225,20 @@ async function reachPickupReadyForPayment(page: Page, phoneNumber: string): Prom
   await page.keyboard.press("Enter");
   await expect(pickup).toHaveAttribute("aria-pressed", "true");
   await expect(delivery).toHaveAttribute("aria-pressed", "false");
-  // Space also activates when focused (toggle stays selected).
+  await expect(checkout.getByTestId("checkout-pickup-outlet")).toBeVisible({ timeout: 20_000 });
+
+  // Space also activates while the fulfilment choice is still mounted.
+  await checkout.getByTestId("checkout-pickup-back-to-mode").click();
+  await expect(checkout.getByTestId("checkout-fulfilment-choice")).toBeVisible({ timeout: 20_000 });
+  const deliveryAgain = checkout.getByTestId("checkout-fulfilment-delivery");
+  const pickupAgain = checkout.getByTestId("checkout-fulfilment-pickup");
+  await deliveryAgain.focus();
+  await expect(deliveryAgain).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(pickupAgain).toBeFocused();
   await page.keyboard.press("Space");
-  await expect(pickup).toHaveAttribute("aria-pressed", "true");
+  await expect(pickupAgain).toHaveAttribute("aria-pressed", "true");
+  await expect(deliveryAgain).toHaveAttribute("aria-pressed", "false");
 
   await expect(checkout.getByTestId("checkout-pickup-outlet")).toBeVisible({ timeout: 20_000 });
   // Single eligible outlet → AUTO_SELECT (AC-036H-003).
