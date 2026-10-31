@@ -13,6 +13,7 @@ import {
   customerPhone,
   fetchOwnedOrder,
   fetchPromotionDetail,
+  findPromotionByCode,
   listPromotionIds,
   loadCrossPortalFixture,
   loginBrandAdmin,
@@ -90,18 +91,9 @@ test("Journey 1 — coupon Promotion lifecycle on one shared database", async ({
 
   const ids = await listPromotionIds(operatorPage, fixture.brandId);
   // Detail from the open editor path: capture promotion id via list + code match.
-  couponPromotionId = await operatorPage.evaluate(
-    async ({ brandId, code }) => {
-      const response = await fetch(`/api/admin/v1/brands/${brandId}/promotions`, {
-        credentials: "same-origin",
-      });
-      const body = (await response.json()) as { items?: Array<{ id: string; code: string }> };
-      const match = (body.items ?? []).find((item) => item.code === code);
-      if (!match) throw new Error(`Promotion ${code} not listed`);
-      return match.id;
-    },
-    { brandId: fixture.brandId, code: couponPromotionCode },
-  );
+  const couponListed = await findPromotionByCode(operatorPage, fixture.brandId, couponPromotionCode);
+  expect(couponListed, `Promotion ${couponPromotionCode} not listed`).toBeTruthy();
+  couponPromotionId = couponListed!.id;
   expect(ids).toContain(couponPromotionId);
 
   const before = await fetchPromotionDetail(operatorPage, fixture.brandId, couponPromotionId);
@@ -225,18 +217,9 @@ test("Journey 2 — automatic Offer with ineligible negative", async ({ browser 
   await confirmConsequence(operatorPage, /Confirm effect/i);
   await expect(operatorPage.getByText(/Lifecycle effect applied/i)).toBeVisible({ timeout: 45_000 });
 
-  const autoPromotionId = await operatorPage.evaluate(
-    async ({ brandId, code }) => {
-      const response = await fetch(`/api/admin/v1/brands/${brandId}/promotions`, {
-        credentials: "same-origin",
-      });
-      const body = (await response.json()) as { items?: Array<{ id: string; code: string }> };
-      const match = (body.items ?? []).find((item) => item.code === code);
-      if (!match) throw new Error(`Automatic promotion ${code} missing`);
-      return match.id;
-    },
-    { brandId: fixture.brandId, code: autoCode },
-  );
+  const autoListed = await findPromotionByCode(operatorPage, fixture.brandId, autoCode);
+  expect(autoListed, `Automatic promotion ${autoCode} missing`).toBeTruthy();
+  const autoPromotionId = autoListed!.id;
 
   // Negative ineligible while Offer is ACTIVE: Delivery-only Offer must not apply on Pickup.
   const ineligible = await newCustomerContext(browser);
@@ -347,18 +330,9 @@ test("Journey 3 — complimentary-item Offer retains exact sealed line", async (
   await confirmConsequence(operatorPage, /Confirm effect/i);
   await expect(operatorPage.getByText(/Lifecycle effect applied/i)).toBeVisible({ timeout: 45_000 });
 
-  const giftPromotionId = await operatorPage.evaluate(
-    async ({ brandId, code }) => {
-      const response = await fetch(`/api/admin/v1/brands/${brandId}/promotions`, {
-        credentials: "same-origin",
-      });
-      const body = (await response.json()) as { items?: Array<{ id: string; code: string }> };
-      const match = (body.items ?? []).find((item) => item.code === code);
-      if (!match) throw new Error(`Gift promotion ${code} missing`);
-      return match.id;
-    },
-    { brandId: fixture.brandId, code: giftCode },
-  );
+  const giftListed = await findPromotionByCode(operatorPage, fixture.brandId, giftCode);
+  expect(giftListed, `Gift promotion ${giftCode} missing`).toBeTruthy();
+  const giftPromotionId = giftListed!.id;
 
   const customer = await newCustomerContext(browser);
   const page = await customer.newPage();
@@ -409,18 +383,8 @@ test("Negatives — permission, invalid config, stale pay, cross-identity isolat
   await expect(
     operatorPage.locator("#gift-invalid-reason").or(operatorPage.getByText(/complimentary|gift|variant/i).first()),
   ).toBeVisible({ timeout: 30_000 });
-  const badStatus = await operatorPage.evaluate(
-    async ({ brandId, code }) => {
-      const response = await fetch(`/api/admin/v1/brands/${brandId}/promotions`, {
-        credentials: "same-origin",
-      });
-      const body = (await response.json()) as {
-        items?: Array<{ id: string; code: string; status: string }>;
-      };
-      return (body.items ?? []).find((item) => item.code === code)?.status ?? null;
-    },
-    { brandId: fixture.brandId, code: badCode },
-  );
+  const badListed = await findPromotionByCode(operatorPage, fixture.brandId, badCode);
+  const badStatus = badListed?.status ?? null;
   expect(badStatus === "draft" || badStatus === null).toBeTruthy();
   if (badStatus === "draft") {
     await operatorPage.getByRole("button", { name: /^Review & activate$/i }).click();
@@ -428,19 +392,8 @@ test("Negatives — permission, invalid config, stale pay, cross-identity isolat
     if (await dialog.isVisible().catch(() => false)) {
       await dialog.getByRole("button", { name: /Confirm effect/i }).click();
     }
-    const afterAttempt = await operatorPage.evaluate(
-      async ({ brandId, code }) => {
-        const response = await fetch(`/api/admin/v1/brands/${brandId}/promotions`, {
-          credentials: "same-origin",
-        });
-        const body = (await response.json()) as {
-          items?: Array<{ code: string; status: string }>;
-        };
-        return (body.items ?? []).find((item) => item.code === code)?.status ?? null;
-      },
-      { brandId: fixture.brandId, code: badCode },
-    );
-    expect(afterAttempt).not.toBe("active");
+    const afterAttempt = await findPromotionByCode(operatorPage, fixture.brandId, badCode);
+    expect(afterAttempt?.status).not.toBe("active");
   }
 
   // Unauthenticated activate denied.

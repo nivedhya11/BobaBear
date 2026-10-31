@@ -209,11 +209,39 @@ export async function fetchPromotionDetail(
       const response = await fetch(`/api/admin/v1/brands/${b}/promotions/${p}`, {
         credentials: "same-origin",
       });
-      const body = (await response.json()) as PromotionDetail & { code?: string };
-      if (!response.ok) {
+      const body = (await response.json()) as {
+        code?: string;
+        promotion?: {
+          id: string;
+          code: string;
+          status: string;
+          revision: string | number;
+        };
+        redemptionCounts?: {
+          reservedCount: number;
+          consumedCount: number;
+          releasedCount: number;
+          applicationCount: number;
+        };
+      };
+      if (!response.ok || !body.promotion) {
         throw new Error(`promotion detail HTTP ${response.status} ${body.code ?? ""}`);
       }
-      return body;
+      const counts = body.redemptionCounts;
+      return {
+        id: body.promotion.id,
+        code: body.promotion.code,
+        status: body.promotion.status,
+        revision: Number(body.promotion.revision),
+        redemptionCounts: counts
+          ? {
+              reserved: counts.reservedCount,
+              consumed: counts.consumedCount,
+              released: counts.releasedCount,
+              applicationCount: counts.applicationCount,
+            }
+          : undefined,
+      };
     },
     { brandId, promotionId },
   );
@@ -224,10 +252,30 @@ export async function listPromotionIds(page: Page, brandId: string): Promise<str
     const response = await fetch(`/api/admin/v1/brands/${b}/promotions`, {
       credentials: "same-origin",
     });
-    const body = (await response.json()) as { items?: Array<{ id: string }> };
+    const body = (await response.json()) as { promotions?: Array<{ id: string }> };
     if (!response.ok) throw new Error(`promotion list HTTP ${response.status}`);
-    return (body.items ?? []).map((item) => item.id);
+    return (body.promotions ?? []).map((item) => item.id);
   }, brandId);
+}
+
+export async function findPromotionByCode(
+  page: Page,
+  brandId: string,
+  code: string,
+): Promise<{ id: string; code: string; status: string } | null> {
+  return page.evaluate(
+    async ({ brandId: b, code: c }) => {
+      const response = await fetch(`/api/admin/v1/brands/${b}/promotions`, {
+        credentials: "same-origin",
+      });
+      const body = (await response.json()) as {
+        promotions?: Array<{ id: string; code: string; status: string }>;
+      };
+      if (!response.ok) throw new Error(`promotion list HTTP ${response.status}`);
+      return (body.promotions ?? []).find((item) => item.code === c) ?? null;
+    },
+    { brandId, code },
+  );
 }
 
 export async function newCustomerContext(browser: Browser): Promise<BrowserContext> {

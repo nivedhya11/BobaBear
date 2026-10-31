@@ -2,10 +2,12 @@
 /**
  * Test-only IMP-036J cross-portal fixture extension.
  * Runs after the commercial workspace seed against the same disposable DB.
- * Confined to BOBA_BEAR_ENV=test. Adds a brand-scoped outlet_manager who cannot activate/retire.
+ * Confined to BOBA_BEAR_ENV=test. Adds an outlet-scoped outlet_manager who cannot activate/retire.
  */
 import { readFile, writeFile } from "node:fs/promises";
 import process from "node:process";
+
+import { sql } from "drizzle-orm";
 
 import { createMembership, grantRole } from "../../src/server/access-control";
 import {
@@ -67,15 +69,32 @@ async function main() {
       name: "Cross-portal Denied Outlet Manager",
       temporaryPassword: deniedTempPassword,
     });
-    if (!commercial.outletId) {
-      throw new Error("Commercial seed manifest missing outletId for denied-operator outlet scope.");
+    if (!commercial.outletId || !commercial.brandId) {
+      throw new Error("Commercial seed manifest missing brandId/outletId for denied-operator outlet scope.");
     }
+    const outletScope = await persistence.withContext(async (ctx) => {
+      const result = await ctx.db.execute<{ organization_id: string; territory_id: string }>(sql`
+        select organization_id, territory_id from app.outlets where id = ${commercial.outletId}::uuid
+      `);
+      const outlet = result.rows[0];
+      if (!outlet) {
+        throw new Error(`Seeded outlet ${commercial.outletId} missing for denied-operator scope.`);
+      }
+      return outlet;
+    });
     await persistence.transaction(async (tx) => {
       // outlet_manager is outlet-scoped only (ROLE_ALLOWED_SCOPES); brand scope is rejected.
+      // AccessScope.outlet requires brandId + organizationId + territoryId + outletId.
       const membership = await createMembership(tx, {
         workforceUserId: denied.userId,
         status: "active",
-        scope: { scopeType: "outlet", outletId: commercial.outletId },
+        scope: {
+          scopeType: "outlet",
+          brandId: commercial.brandId,
+          organizationId: outletScope.organization_id,
+          territoryId: outletScope.territory_id,
+          outletId: commercial.outletId,
+        },
       });
       // promotions.read/manage yes; promotions.activate NO.
       await grantRole(tx, { membershipId: membership.id, roleKey: "outlet_manager" });
