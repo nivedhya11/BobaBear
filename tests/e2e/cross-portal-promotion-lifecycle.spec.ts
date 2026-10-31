@@ -13,6 +13,7 @@ import {
   customerPhone,
   fetchOwnedOrder,
   fetchPromotionDetail,
+  findComplimentaryOrderLine,
   findPromotionByCode,
   listPromotionIds,
   loadCrossPortalFixture,
@@ -21,10 +22,12 @@ import {
   newCustomerContext,
   openPromotionsEditor,
   reachPickupReview,
+  readReviewComplimentaryLine,
   readReviewOrderSavingMinor,
   readReviewPayableMinor,
   uniquePromoCode,
   type CrossPortalFixture,
+  type OrderLineProjection,
   type OrderMoneySummary,
 } from "./support/cross-portal-promotion-helpers";
 
@@ -39,6 +42,8 @@ let purchasedOrderId = "";
 let purchasedMoney: OrderMoneySummary = {};
 let purchasedPayableMinor = 0;
 let purchasedSavingMinor: number | null = null;
+/** Journey 2 leaves an active automatic Offer; Journey 3 retires it before complimentary proof. */
+let activeAutoPickupCode = "";
 
 test.beforeAll(async ({ browser }) => {
   fixture = await loadCrossPortalFixture();
@@ -120,7 +125,8 @@ test("Journey 1 — coupon Promotion lifecycle on one shared database", async ({
   expect(purchasedMoney.promotionDiscountMinor ?? purchasedMoney.orderSavingMinor).toBe(
     purchasedSavingMinor,
   );
-  await expect(pageA.getByTestId("order-money-summary").or(pageA.getByTestId("order-confirmation"))).toBeVisible();
+  await expect(pageA.getByTestId("order-confirmation")).toBeVisible();
+  await expect(pageA.getByTestId("order-money-summary").first()).toBeVisible();
 
   // Operator inspects redemption counts (no customer identifiers required).
   await openPromotionsEditor(operatorPage, fixture);
@@ -278,6 +284,7 @@ test("Journey 2 — automatic Offer with ineligible negative", async ({ browser 
   await operatorPage.getByRole("button", { name: /^Review & activate$/i }).click();
   await confirmConsequence(operatorPage, /Confirm effect/i);
   await expect(operatorPage.getByText(/Lifecycle effect applied/i)).toBeVisible({ timeout: 45_000 });
+  activeAutoPickupCode = autoPickup;
 
   const customer = await newCustomerContext(browser);
   const page = await customer.newPage();
@@ -304,6 +311,24 @@ test("Journey 3 — complimentary-item Offer retains exact sealed line", async (
   test.skip(!fixture.productId || !fixture.variantId, "Commercial seed did not publish a product/variant for gift.");
 
   await openPromotionsEditor(operatorPage, fixture);
+  // Retire Journey 2's active automatic percentage Offer so complimentary evaluation is deterministic.
+  if (activeAutoPickupCode) {
+    const priorAuto = await findPromotionByCode(operatorPage, fixture.brandId, activeAutoPickupCode);
+    if (priorAuto?.status === "active") {
+      const priorBtn = operatorPage.getByRole("button", {
+        name: new RegExp(activeAutoPickupCode, "i"),
+      });
+      if (await priorBtn.isVisible().catch(() => false)) await priorBtn.click();
+      await operatorPage.getByRole("button", { name: /Review & retire/i }).click();
+      await confirmConsequence(operatorPage, /Retire offer/i);
+      await expect(operatorPage.getByText(/Retired\. New orders will not receive it/i)).toBeVisible({
+        timeout: 45_000,
+      });
+      const retiredPrior = await fetchPromotionDetail(operatorPage, fixture.brandId, priorAuto.id);
+      expect(retiredPrior.status).toBe("retired");
+    }
+  }
+
   const giftCode = uniquePromoCode("gift");
 
   await operatorPage.getByLabel("Promotion identifier").fill(giftCode);
@@ -338,16 +363,36 @@ test("Journey 3 — complimentary-item Offer retains exact sealed line", async (
   const page = await customer.newPage();
   await installRazorpayCheckoutMock(page, "succeed");
   await reachPickupReview(page, customerPhone(fixture.phoneSeed ?? "10000", 5));
-  // Complimentary: no gift picker; included line at ₹0 additional merchandise charge when applied.
-  await expect(page.getByTestId("checkout-review").getByRole("button", { name: /choose gift|pick gift/i })).toHaveCount(0);
-  const included = page.getByTestId("checkout-review").getByText(/included|complimentary|no extra/i).first();
-  // Soft presence: if evaluation selected complimentary combination, included copy appears.
-  const includedVisible = await included.isVisible().catch(() => false);
+
+  const reviewGift = await readReviewComplimentaryLine(page);
+  if (fixture.productName) {
+    expect(reviewGift.productName.toLowerCase()).toContain(fixture.productName.toLowerCase());
+  }
+
   await continueToPayment(page);
   await page.getByTestId("payment-start").click();
   const orderId = await captureOrderIdFromConfirmation(page);
   const orderBefore = await fetchOwnedOrder(page, orderId);
-  expect(orderBefore.moneySummary.grandTotalMinor).toBeTruthy();
+  expect(orderBefore.moneySummary.grandTotalMinor).toBeGreaterThan(0);
+
+  const sealedGiftBefore = findComplimentaryOrderLine(orderBefore.lines);
+  expect(sealedGiftBefore, "purchased Order must contain complimentary_offer line").toBeTruthy();
+  const giftLine: OrderLineProjection = sealedGiftBefore!;
+  expect(giftLine.quantity).toBe(1);
+  expect(giftLine.lineTotalMinor).toBe(0);
+  expect(giftLine.productName.toLowerCase()).toContain(reviewGift.productName.toLowerCase());
+  if (fixture.variantName) {
+    expect(giftLine.variantName.toLowerCase()).toBe(fixture.variantName.toLowerCase());
+  } else {
+    expect(giftLine.variantName.length).toBeGreaterThan(0);
+  }
+  const sealedGiftIdentity = {
+    productName: giftLine.productName,
+    variantName: giftLine.variantName,
+    quantity: giftLine.quantity,
+    lineTotalMinor: giftLine.lineTotalMinor,
+    lineOrigin: giftLine.lineOrigin,
+  };
 
   await openPromotionsEditor(operatorPage, fixture);
   const giftBtn = operatorPage.getByRole("button", { name: new RegExp(giftCode, "i") });
@@ -356,8 +401,10 @@ test("Journey 3 — complimentary-item Offer retains exact sealed line", async (
   await confirmConsequence(operatorPage, /Retire offer/i);
   const orderAfter = await fetchOwnedOrder(page, orderId);
   expect(orderAfter.moneySummary).toEqual(orderBefore.moneySummary);
-  // No silent substitute proof: complimentary promotion retired; history unchanged; gift picker never appeared.
-  expect(includedVisible || true).toBeTruthy();
+  const sealedGiftAfter = findComplimentaryOrderLine(orderAfter.lines);
+  expect(sealedGiftAfter, "complimentary line must survive Offer retirement").toEqual(
+    sealedGiftIdentity,
+  );
   const retired = await fetchPromotionDetail(operatorPage, fixture.brandId, giftPromotionId);
   expect(retired.status).toBe("retired");
   await customer.close();
@@ -459,38 +506,71 @@ test("Negatives — permission, invalid config, stale pay, cross-identity isolat
   await installRazorpayCheckoutMock(stalePage, "succeed");
   await reachPickupReview(stalePage, customerPhone(fixture.phoneSeed ?? "10000", 6));
   await applyCouponOnReview(stalePage, staleCoupon);
+  const couponResult = stalePage.getByTestId("checkout-review").getByTestId("coupon-result");
+  await expect(couponResult).toContainText(/Coupon applied/i, { timeout: 30_000 });
+  const staleSaving = await readReviewOrderSavingMinor(stalePage);
+  expect(staleSaving, "stale journey must lock a positive evaluated saving").toBeGreaterThan(0);
   const stalePayable = await readReviewPayableMinor(stalePage);
+  expect(stalePayable).toBeGreaterThan(0);
   await continueToPayment(stalePage);
+  await expect(stalePage.getByTestId("checkout-ready")).toBeVisible();
+  await expect(stalePage.getByTestId("payment-start")).toBeVisible();
 
-  // Retire while customer is on Payment.
+  // Retire / invalidate Offer after Review while customer is on Payment (AC-036J-008-01).
   await openPromotionsEditor(operatorPage, fixture);
   const staleBtn = operatorPage.getByRole("button", { name: new RegExp(stalePromo, "i") });
   if (await staleBtn.isVisible().catch(() => false)) await staleBtn.click();
   await operatorPage.getByRole("button", { name: /Review & retire/i }).click();
   await confirmConsequence(operatorPage, /Retire offer/i);
+  const staleListed = await findPromotionByCode(operatorPage, fixture.brandId, stalePromo);
+  expect(staleListed?.status).toBe("retired");
+
+  const providerOpenBefore = await stalePage.evaluate(() => {
+    const state = (window as unknown as { __BOBA_E2E_RAZORPAY?: { openCount?: number } })
+      .__BOBA_E2E_RAZORPAY;
+    return state?.openCount ?? 0;
+  });
 
   await stalePage.getByTestId("payment-start").click();
-  // Fail closed: either stay/recover on Review with updated amount, or no order confirmation at old amount.
-  const confirmed = await stalePage.getByTestId("order-confirmation").isVisible().catch(() => false);
-  if (confirmed) {
-    const oid = await captureOrderIdFromConfirmation(stalePage);
-    const order = await fetchOwnedOrder(stalePage, oid);
-    expect(order.moneySummary.grandTotalMinor).not.toBeUndefined();
-    // If payment somehow succeeded, it must not be at a stale retired evaluation without revalidation —
-    // treat equal payable as acceptable only when revalidated path still matches; otherwise fail.
-    expect(order.moneySummary.grandTotalMinor).toBeTruthy();
+
+  // Hard refuse: never accept an Order confirmation against the retired evaluation.
+  await expect(stalePage.getByTestId("order-confirmation")).toHaveCount(0, { timeout: 5_000 });
+
+  // Approved recovery: return to Review with stale explanation and a fresh payable.
+  await expect(stalePage.getByTestId("checkout-review")).toBeVisible({ timeout: 45_000 });
+  const staleAlert = stalePage.getByTestId("copy-stale");
+  await expect(staleAlert).toBeVisible({ timeout: 45_000 });
+  const staleCopy = (await staleAlert.innerText()).trim();
+  // Prefer COPY-STALE when payable changed; STALE_UNCONFIRMED only when amount is unconfirmed.
+  const copyStale = "Your total changed before payment. Review the updated amount.";
+  const copyUnconfirmed =
+    "We couldn't confirm your checkout for payment. Please review your items, offers and total before continuing.";
+  expect(
+    staleCopy === copyStale || staleCopy === copyUnconfirmed,
+    `unexpected stale recovery copy: ${staleCopy}`,
+  ).toBeTruthy();
+
+  const recoveredPayable = await readReviewPayableMinor(stalePage);
+  expect(recoveredPayable).toBeGreaterThan(0);
+  if (staleCopy === copyStale) {
+    expect(
+      recoveredPayable,
+      "COPY-STALE recovery must present a recalculated payable, not the retired Offer total",
+    ).not.toBe(stalePayable);
   } else {
-    await expect(
-      stalePage.getByTestId("checkout-review").or(stalePage.getByText(/changed|updated|no longer|try again|stale/i)),
-    ).toBeVisible({ timeout: 45_000 });
-    const reviewAgain = stalePage.getByTestId("checkout-review");
-    if (await reviewAgain.isVisible().catch(() => false)) {
-      const newPayable = await readReviewPayableMinor(stalePage).catch(() => null);
-      if (newPayable !== null) {
-        expect(newPayable === stalePayable || newPayable !== stalePayable).toBeTruthy();
-      }
-    }
+    // Unconfirmed path: continue-to-payment must remain blocked until a fresh confirmed total.
+    await expect(stalePage.getByRole("button", { name: /Continue to payment/i })).toBeDisabled();
   }
+
+  const providerOpenAfter = await stalePage.evaluate(() => {
+    const state = (window as unknown as { __BOBA_E2E_RAZORPAY?: { openCount?: number } })
+      .__BOBA_E2E_RAZORPAY;
+    return state?.openCount ?? 0;
+  });
+  expect(providerOpenAfter, "provider must not open on a stale retired evaluation").toBe(
+    providerOpenBefore,
+  );
+  await expect(stalePage.getByTestId("order-confirmation")).toHaveCount(0);
 
   // Cross-identity: customer must not read admin promotions; operator must not read customer order.
   const customerCtx = await newCustomerContext(browser);
