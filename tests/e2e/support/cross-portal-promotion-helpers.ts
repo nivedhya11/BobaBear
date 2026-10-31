@@ -202,18 +202,6 @@ export async function selectPromotionByCode(page: Page, code: string): Promise<v
   const row = editor.getByRole("button", { name: new RegExp(`identifier:\\s*${escaped}`, "i") });
   await expect(row, `promotion list row for ${code}`).toBeVisible({ timeout: 60_000 });
   await row.click();
-  await expect(editor.getByText(new RegExp(`Promotion identifier:\\s*${escaped}`, "i"))).toBeVisible({
-    timeout: 30_000,
-  });
-}
-
-/** Select a promotion in the editor list by internal identifier (code). */
-export async function selectPromotionByCode(page: Page, code: string): Promise<void> {
-  const editor = page.getByTestId("promotions-editor");
-  await expect(editor).toBeVisible();
-  const row = editor.getByRole("button", { name: new RegExp(code.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i") });
-  await expect(row, `promotion list row for ${code}`).toBeVisible({ timeout: 60_000 });
-  await row.click();
   await expect(editor.getByTestId("promotion-identifier")).toContainText(code, { timeout: 30_000 });
 }
 
