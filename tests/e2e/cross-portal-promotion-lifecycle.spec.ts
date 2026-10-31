@@ -292,7 +292,8 @@ test("Journey 2 — automatic Offer with ineligible negative", async ({ browser 
   const customer = await newCustomerContext(browser);
   const page = await customer.newPage();
   await installRazorpayCheckoutMock(page, "succeed");
-  await reachPickupReview(page, customerPhone(fixture.phoneSeed ?? "10000", 4));
+  journey2PurchaserPhone = customerPhone(fixture.phoneSeed ?? "10000", 4);
+  await reachPickupReview(page, journey2PurchaserPhone);
   // Automatic: no coupon typed; server-evaluated saving must appear.
   const saving = await readReviewOrderSavingMinor(page);
   const payable = await readReviewPayableMinor(page);
@@ -372,8 +373,10 @@ test("Journey 3 — complimentary-item Offer retains exact sealed line", async (
   await installRazorpayCheckoutMock(page, "succeed");
   // Returning purchaser: complimentary occupies the primary merchandise slot and must not
   // lose evaluation to the seeded first-order percentage Offer (AC-036J-013-01 / FD-036J-02).
-  expect(journey1CustomerPhone, "Journey 1 must leave a returning customer phone").toBeTruthy();
-  await reachPickupReview(page, journey1CustomerPhone);
+  // Prefer Journey 2's phone (one prior OTP) over Journey 1 (heavier OTP use / rate limits).
+  const returningPhone = journey2PurchaserPhone || journey1CustomerPhone;
+  expect(returningPhone, "prior journey must leave a returning customer phone").toBeTruthy();
+  await reachPickupReview(page, returningPhone);
 
   const reviewGift = await readReviewComplimentaryLine(page);
   // Competing percentage merchandise Offer must not be the winning explanation for this cart.
