@@ -25,6 +25,7 @@ import {
   readReviewComplimentaryLine,
   readReviewOrderSavingMinor,
   readReviewPayableMinor,
+  selectPromotionByCode,
   uniquePromoCode,
   type CrossPortalFixture,
   type OrderLineProjection,
@@ -189,7 +190,7 @@ test("Journey 1 — coupon Promotion lifecycle on one shared database", async ({
 });
 
 test("Journey 2 — automatic Offer with ineligible negative", async ({ browser }) => {
-  test.setTimeout(240_000);
+  test.setTimeout(300_000);
   await openPromotionsEditor(operatorPage, fixture);
   const autoCode = uniquePromoCode("auto");
 
@@ -245,9 +246,14 @@ test("Journey 2 — automatic Offer with ineligible negative", async ({ browser 
   // Eligible automatic path: enable Pickup, re-activate semantics by editing draft modes then confirming.
   await openPromotionsEditor(operatorPage, fixture);
   const autoBtn = operatorPage.getByRole("button", { name: new RegExp(autoCode, "i") });
-  if (await autoBtn.isVisible().catch(() => false)) await autoBtn.click();
+  await expect(autoBtn, `delivery-only automatic ${autoCode} must be listed`).toBeVisible({
+    timeout: 45_000,
+  });
+  await autoBtn.click();
   // Retire delivery-only, recreate pickup-eligible automatic for positive path (keeps one active complimentary rule intact).
-  await operatorPage.getByRole("button", { name: /Review & retire/i }).click();
+  const retireDeliveryOnly = operatorPage.getByRole("button", { name: /Review & retire/i });
+  await expect(retireDeliveryOnly).toBeVisible({ timeout: 45_000 });
+  await retireDeliveryOnly.click();
   await confirmConsequence(operatorPage, /Retire offer/i);
   await expect(operatorPage.getByText(/Retired\. New orders will not receive it/i).first()).toBeVisible({
     timeout: 45_000,
