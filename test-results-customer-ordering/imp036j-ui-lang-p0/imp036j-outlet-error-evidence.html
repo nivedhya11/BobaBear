@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>IMP-036J outlet error LANG evidence</title>
+  <style>
+    :root { --text-primary:#1a1a1a; --text-secondary:#4a4a4a; --bg:#f7f3ee; --border:#d6cfc4; }
+    body { margin:0; font-family: Georgia, "Times New Roman", serif; background: linear-gradient(180deg,#f7f3ee,#efe6db); color:var(--text-primary); }
+    .frame { max-width:420px; margin:24px auto; padding:20px; border:1px solid var(--border); background:#fffdf9; }
+    h1 { font-size:18px; margin:0 0 8px; }
+    .meta { font-size:12px; color:var(--text-secondary); margin-bottom:16px; word-break:break-all; }
+    .label { font-size:12px; letter-spacing:.04em; text-transform:uppercase; color:var(--text-secondary); margin:16px 0 8px; }
+    .alert { font-size:14px; color:var(--text-secondary); line-height:1.45; }
+    .alert strong { color:var(--text-primary); font-weight:700; }
+    .wide { max-width:920px; }
+  </style>
+</head>
+<body>
+  <section class="frame" id="mobile-before">
+    <h1>Pickup outlet alert — BEFORE</h1>
+    <p class="meta" id="meta-before"></p>
+    <p class="label">Mobile ~390px</p>
+    <p role="alert" class="alert" data-testid="checkout-pickup-outlet-error">
+      <strong>Error: </strong>That pickup location can't take this order right now. Choose another location or Delivery.
+    </p>
+  </section>
+  <section class="frame" id="mobile-after">
+    <h1>Pickup outlet alert — AFTER</h1>
+    <p class="meta" id="meta-after"></p>
+    <p class="label">Mobile ~390px</p>
+    <p role="alert" class="alert" data-testid="checkout-pickup-outlet-error">
+      <strong>Check this location: </strong>That pickup location can't take this order right now. Choose another location or Delivery.
+    </p>
+  </section>
+  <section class="frame wide" id="desktop-after">
+    <h1>Pickup outlet alert — AFTER (desktop)</h1>
+    <p class="meta" id="meta-desktop"></p>
+    <p class="label">Desktop ~1280px</p>
+    <p role="alert" class="alert" data-testid="checkout-pickup-outlet-error">
+      <strong>Check this location: </strong>That pickup location can't take this order right now. Choose another location or Delivery.
+    </p>
+  </section>
+  <script>
+    const head = "f34f6107c099cee10b5a65359e080e0c5b35f3b6";
+    for (const id of ["meta-before","meta-after","meta-desktop"]) {
+      document.getElementById(id).textContent = "HEAD f34f6107c099cee10b5a65359e080e0c5b35f3b6 | CheckoutPickupOutletStep.tsx blob a4fbf57ecaee520454f7c475f6d241c8183f9b60";
+    }
+  </script>
+</body>
+</html>

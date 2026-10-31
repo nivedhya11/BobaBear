@@ -191,7 +191,7 @@ export function CheckoutPickupOutletStep(props: {
           data-testid="checkout-pickup-outlet-error"
           className="font-body text-[14px] text-[var(--text-secondary)]"
         >
-          <span className="font-semibold text-[var(--text-primary)]">Error: </span>
+          <span className="font-semibold text-[var(--text-primary)]">Check this location: </span>
           {errorMessage}
         </p>
       ) : null}
