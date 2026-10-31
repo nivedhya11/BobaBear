@@ -47,7 +47,7 @@
     "packageCoverageCommands": 1,
     "packageInventoryCommands": 2,
     "ciWorkflowFiles": 4,
-    "ciValidationSteps": 135,
+    "ciValidationSteps": 137,
     "protectedEvidenceTrackedFiles": 3,
     "archiveTrackedFiles": 92
   },
@@ -1521,8 +1521,16 @@
           "run": "npx playwright install --with-deps chromium"
         },
         {
+          "name": "Runner disk before Commercial workspace E2E",
+          "run": "set +e\necho \"=== df -h ===\"\ndf -h\necho \"=== df -k / /tmp ${HOME} ===\"\ndf -k / /tmp \"${HOME}\"\necho \"=== podman info (graphRoot) ===\"\npodman info --format '{{.Store.GraphRoot}} {{.Store.GraphDriverName}}' 2>/dev/null || podman info\necho \"=== podman system df ===\"\npodman system df 2>/dev/null || true\nstorage=\"${HOME}/.local/share/containers/storage\"\nif [ -d \"$storage\" ]; then\necho \"=== du -sh graph-root ===\"\ndu -sh \"$storage\"\nfi"
+        },
+        {
           "name": "Commercial workspace E2E",
           "run": "npm run test:e2e:commercial-workspace"
+        },
+        {
+          "name": "Runner disk after Commercial workspace E2E",
+          "run": "set +e\necho \"=== df -h ===\"\ndf -h\necho \"=== df -k / /tmp ${HOME} ===\"\ndf -k / /tmp \"${HOME}\"\necho \"=== podman system df ===\"\npodman system df 2>/dev/null || true\nstorage=\"${HOME}/.local/share/containers/storage\"\nif [ -d \"$storage\" ]; then\necho \"=== du -sh graph-root ===\"\ndu -sh \"$storage\"\ndu -sh \"$storage\"/* 2>/dev/null | sort -h || true\nfi"
         },
         {
           "name": "Install dependencies",

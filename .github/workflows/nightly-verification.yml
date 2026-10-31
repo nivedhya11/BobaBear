@@ -224,8 +224,44 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
+      # Capacity evidence for hosted-runner Podman graph-root (Commercial image builds).
+      # Does not prune globally; diagnostics only. Runner script also snapshots around builds.
+      - name: Runner disk before Commercial workspace E2E
+        run: |
+          set +e
+          echo "=== df -h ==="
+          df -h
+          echo "=== df -k / /tmp ${HOME} ==="
+          df -k / /tmp "${HOME}"
+          echo "=== podman info (graphRoot) ==="
+          podman info --format '{{.Store.GraphRoot}} {{.Store.GraphDriverName}}' 2>/dev/null || podman info
+          echo "=== podman system df ==="
+          podman system df 2>/dev/null || true
+          storage="${HOME}/.local/share/containers/storage"
+          if [ -d "$storage" ]; then
+            echo "=== du -sh graph-root ==="
+            du -sh "$storage"
+          fi
+
       - name: Commercial workspace E2E
         run: npm run test:e2e:commercial-workspace
+
+      - name: Runner disk after Commercial workspace E2E
+        if: always()
+        run: |
+          set +e
+          echo "=== df -h ==="
+          df -h
+          echo "=== df -k / /tmp ${HOME} ==="
+          df -k / /tmp "${HOME}"
+          echo "=== podman system df ==="
+          podman system df 2>/dev/null || true
+          storage="${HOME}/.local/share/containers/storage"
+          if [ -d "$storage" ]; then
+            echo "=== du -sh graph-root ==="
+            du -sh "$storage"
+            du -sh "$storage"/* 2>/dev/null | sort -h || true
+          fi
 
       - name: Upload commercial-workspace evidence
         if: always()
