@@ -171,6 +171,8 @@ through metadata, targeted searches, and relevant ranges, as described in PD-1.
 ADRs under [`decisions/`](./decisions/) preserve detailed rationale/history. Binding status and
 supersession are owned by [`decision-register.md`](./decision-register.md). Notably:
 
+- **D-385 / AD-PF-01** (DR-26): Founder Podman Local UAT classification versus strict staging application configuration; no TLS or diagnostic-policy relaxation
+- **D-386 / AD-PF-02** (DR-26): Founder staging capacity floors, measured workload headroom and preservation requirements (policy, not host readiness)
 - **D-384** (DR-25): Tactical Closure and Pre-GTM Strategic Programme Baseline — planning
   programme only; does not change ROADMAP/STATE lifecycle or authorize IMP-036K implementation
 
