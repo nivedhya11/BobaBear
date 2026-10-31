@@ -386,18 +386,37 @@ export async function fetchOwnedOrder(
   return page.evaluate(async (id) => {
     const response = await fetch(`/api/v1/orders/${id}`, { credentials: "same-origin" });
     const body = (await response.json()) as {
-      id?: string;
-      moneySummary?: OrderMoneySummary;
-      status?: string;
       code?: string;
+      order?: {
+        orderId?: string;
+        status?: string;
+        moneySummary?: {
+          promotionDiscountMinor?: string | number;
+          orderSavingMinor?: string | number;
+          deliverySavingMinor?: string | number;
+          grandTotalMinor?: string | number;
+        };
+      };
     };
-    if (!response.ok || !body.id) {
+    const order = body.order;
+    if (!response.ok || !order?.orderId) {
       throw new Error(`order HTTP ${response.status} ${body.code ?? ""}`);
     }
+    const toMinor = (value: string | number | undefined): number | undefined => {
+      if (value === undefined || value === null) return undefined;
+      const n = typeof value === "number" ? value : Number(value);
+      return Number.isFinite(n) ? n : undefined;
+    };
+    const summary = order.moneySummary ?? {};
     return {
-      id: body.id,
-      moneySummary: body.moneySummary ?? {},
-      status: body.status,
+      id: order.orderId,
+      moneySummary: {
+        promotionDiscountMinor: toMinor(summary.promotionDiscountMinor),
+        orderSavingMinor: toMinor(summary.orderSavingMinor),
+        deliverySavingMinor: toMinor(summary.deliverySavingMinor),
+        grandTotalMinor: toMinor(summary.grandTotalMinor),
+      },
+      status: order.status,
     };
   }, orderId);
 }
@@ -420,11 +439,13 @@ export async function captureOrderIdFromConfirmation(page: Page): Promise<string
   });
   const orderId = await page.evaluate(async () => {
     const response = await fetch("/api/v1/orders", { credentials: "same-origin" });
-    const body = (await response.json()) as { items?: Array<{ id: string }> };
-    if (!response.ok || !body.items?.[0]?.id) {
+    const body = (await response.json()) as { items?: Array<{ orderId?: string; id?: string }> };
+    const first = body.items?.[0];
+    const id = first?.orderId ?? first?.id;
+    if (!response.ok || !id) {
       throw new Error(`orders list HTTP ${response.status}`);
     }
-    return body.items[0].id;
+    return id;
   });
   return orderId;
 }
