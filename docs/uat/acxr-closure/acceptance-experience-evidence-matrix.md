@@ -7,32 +7,33 @@ MAIN_HEAD = f34f6107c099cee10b5a65359e080e0c5b35f3b6
 MAIN_TREE = 45a58afba165a7ddbb8fe3a2af5a2ba9894decdd
 PR523_HEAD = 42ebc60804f9e462aab253e24ec23a8f190a7687
 PR525_HEAD = 50ccbfe6b5b808491b6e7971bb47f3a2fa270fe7
-CROSS_PORTAL_COMMIT = d6ae0b8f9d83e022cb7d3c87a65325ac679ec16c  # parked; not MAIN-proven
+CROSS_PORTAL_COMMIT = d6ae0b8f9d83e022cb7d3c87a65325ac679ec16c  # historical seed commit
+PR529_CANDIDATE_HEAD = d82e09778ffc5baa9bd3c109bab206fb4bf5d588  # unmerged; candidate evidence only
 FOUNDER_UAT = NOT_PERFORMED
 IMP036J_ACCEPTED = NO
 PROOF_RULE = PASS only if every Quality-plan layer has executed proof on an attributed candidate
 DOMAIN_PASS_IS_NOT_BROWSER_PASS = YES
-MANDATORY_AC_PROVEN_MAIN = 14/40
+MANDATORY_AC_PROVEN_MAIN = 12/40
 EXPERIENCE_REQUIREMENTS_PROVEN = 0/13
 ```
 
 Independent review (this closure):
 
-- QA: agree MAIN 14/40 after tranche4; reject inflating MAIN with PR523/525 without packet logs; package sibling cap 14–17 if logs attached.
+- QA: MAIN-strict corrected to **12/40** after downgrading `AC-036J-001-01` and `AC-036J-008-01` (missing required browser equality / COPY-STALE recovery). Reject inflating MAIN with PR523/525/529 without integrated MAIN proof.
 - PE: agree XR 0/13 strict PASS; XR-009 must stay PARTIAL (PR525 authoring ≠ concurrency/complimentary/race/retire).
 
 ## Candidate attribution rules
 
 - Rehearsal tree == MAIN tree (`45a58afb…`) for unchanged customer paths.
-- Open PR #523 / #525 are **sibling candidates only** — never inflate `MANDATORY_AC_PROVEN_MAIN`.
-- Cross-portal shared-DB harness commit exists (`d6ae0b8f9`) but is **not executed** in this packet → 011-01 / 013-02 remain **BLOCKED**.
+- Open PR #523 / #525 / #529 are **sibling candidates only** — never inflate `MANDATORY_AC_PROVEN_MAIN`.
+- Cross-portal shared-DB harness exists on PR #529 (`d82e09778…`) but remains **unmerged** → 011-01 / 013-02 stay **BLOCKED** on MAIN; candidate journeys are not MAIN PASS.
 - Reject rehearsal `ac-matrix.tsv` PARTIAL vocabulary as acceptance PASS.
 
 ## Mandatory AC table (MAIN-strict)
 
 | AC | Status | Plan layers | Executed proof (MAIN `f34f6107`) | Missing / notes | Owner |
 |---|---|---|---|---|---|
-| `AC-036J-001-01` | **PASS** | Domain,component,browser | GJ-FIRST + tranche3/5 (rehearsal on tree≡MAIN) | Browser does not assert rupee==evaluated effect | QA |
+| `AC-036J-001-01` | **NOT_EXECUTED** | Domain,component,browser | Domain/component + GJ-FIRST path (partial) | Quality plan requires browser equality of displayed ORDER_SAVING vs evaluated merchandise effect; that assert is not executed on MAIN. Keep PARTIAL narrative only. | QA |
 | `AC-036J-001-02` | **NOT_EXECUTED** | Domain,browser | tranche3 out-of-window unit | browser absence assert | QA |
 | `AC-036J-002-01` | **PASS** | Domain,HTTP,component,browser | gtm-uat Review apply `e2e10`; coupon-journeys; Payment no coupon | Cart-entry path thin; HTTP via gtm browser envelope | QA |
 | `AC-036J-002-02` | **NOT_EXECUTED** | HTTP,component,browser | — on MAIN | Sibling PR523 claims HTTP+browser invalid-code @`42ebc608` (not MAIN) | QA |
@@ -52,7 +53,7 @@ Independent review (this closure):
 | `AC-036J-006-01` | **NOT_EXECUTED** | Domain,browser | coupon-recovery 8/8 domain/db | browser mode clause | QA |
 | `AC-036J-006-02` | **PASS** | Domain,integration | **tranche4 executed** `SCHEDULED-only Offer… (AC-036J-006-02)` | — | QA |
 | `AC-036J-007-01` | **NOT_EXECUTED** | Domain,component,browser,content | tranche5 five sentences | browser five classes | QA |
-| `AC-036J-008-01` | **PASS** | Integration,recovery,browser | gtm drift refuse pay + checkout-revalidation | XD `COPY-STALE` vs `STALE_UNCONFIRMED` caveat | QA |
+| `AC-036J-008-01` | **NOT_EXECUTED** | Integration,recovery,browser | gtm sealed-drift refuse pay (generic `STALE_UNCONFIRMED`) | Quality plan requires invalidate-after-Review, refuse stale bind, Review `COPY-STALE` + new amount. Sealed-drift refuse ≠ that recovery scenario. PR #529 candidate hardening is unmerged / not MAIN. | QA |
 | `AC-036J-009-01` | **NOT_EXECUTED** | Domain,browser | tranche3 ₹80+₹40 | browser STRICT_KEEP | QA |
 | `AC-036J-009-02` | **NOT_EXECUTED** | Domain,browser | tranche3 ₹90+₹20 | browser | QA |
 | `AC-036J-009-03` | **PASS** | Domain,component | tranche3/5 | — | QA |
@@ -73,9 +74,11 @@ Independent review (this closure):
 | `AC-036J-013-03` | **NOT_EXECUTED** | Integration,recovery,browser | tranche4 unavailable complimentary refuse bind **executed**; tranche5 GIFT_GONE | **browser** gift-unavailable; do not credit cart-line unavailable | QA |
 | `AC-036J-013-04` | **NOT_EXECUTED** | Domain,browser | tranche3 NONE_CHOSEN | browser | QA |
 
-**MAIN-strict counts:** PASS **14** · NOT_EXECUTED **24** · BLOCKED **2** · FAIL **0**
+**MAIN-strict counts:** PASS **12** · NOT_EXECUTED **26** · BLOCKED **2** · FAIL **0**
 
-PASS set: `001-01, 002-01, 002-07, 002-09, 003-01, 005-01, 005-02, 006-02, 008-01, 009-03, 009-04, 010-02, 010-03, 010-04`.
+PASS set: `002-01, 002-07, 002-09, 003-01, 005-01, 005-02, 006-02, 009-03, 009-04, 010-02, 010-03, 010-04`.
+
+Downgraded from prior PASS (review findings): `001-01`, `008-01` → **NOT_EXECUTED**.
 
 ## Experience Requirements (strict)
 
