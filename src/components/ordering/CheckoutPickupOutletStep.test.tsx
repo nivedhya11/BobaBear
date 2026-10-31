@@ -145,4 +145,31 @@ describe("CheckoutPickupOutletStep", () => {
     expect((globalThis as { google?: unknown }).google).toBeUndefined();
     expect(document.querySelector("script[src*='maps.googleapis.com']")).toBeNull();
   });
+
+  it("LANG-1: outlet alert shows the safe message without an Error: prefix", () => {
+    render(
+      <CheckoutPickupOutletStep
+        pending={false}
+        loading={false}
+        selectionPolicy="CUSTOMER_SELECT"
+        outlets={[outletA, outletB]}
+        selectedOutletId={outletA.outletId}
+        onSelectOutlet={() => undefined}
+        onContinue={() => undefined}
+        onChooseDelivery={() => undefined}
+        onBackToMode={() => undefined}
+        errorId="checkout-pickup-error"
+        errorMessage="That pickup location can't take this order right now. Choose another location or Delivery."
+      />,
+    );
+
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveAttribute("data-testid", "checkout-pickup-outlet-error");
+    expect(alert).toHaveTextContent(/check this location/i);
+    expect(alert).toHaveTextContent(
+      /that pickup location can't take this order right now/i,
+    );
+    expect(alert).not.toHaveTextContent(/^Error:/);
+    expect(alert.textContent ?? "").not.toMatch(/\bError:\s/);
+  });
 });
