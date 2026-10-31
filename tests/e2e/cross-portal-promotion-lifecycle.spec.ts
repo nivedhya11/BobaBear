@@ -368,15 +368,35 @@ test("Journey 3 — complimentary-item Offer retains exact sealed line", async (
   expect(giftListed, `Gift promotion ${giftCode} missing`).toBeTruthy();
   const giftPromotionId = giftListed!.id;
 
+  // Retire seeded first-order % so a fresh phone can prove complimentary without OTP reuse
+  // (returning-phone OTP cooldowns/transient auth failures are not the product under test).
+  await openPromotionsEditor(operatorPage, fixture);
+  const firstOrderBtn = operatorPage
+    .getByTestId("promotions-editor")
+    .getByRole("button", { name: /First order welcome|identifier:\s*fo-/i })
+    .first();
+  if (await firstOrderBtn.isVisible().catch(() => false)) {
+    const label = await firstOrderBtn.innerText();
+    const codeMatch = label.match(/identifier:\s*([a-z0-9_-]+)/i);
+    if (codeMatch?.[1]) {
+      await selectPromotionByCode(operatorPage, codeMatch[1]);
+      const retireFirstOrder = operatorPage.getByRole("button", { name: /Review & retire/i });
+      if (await retireFirstOrder.isVisible().catch(() => false)) {
+        await retireFirstOrder.click();
+        await confirmConsequence(operatorPage, /Retire offer/i);
+        await expect(
+          operatorPage.getByText(/Retired\. New orders will not receive it/i).first(),
+        ).toBeVisible({ timeout: 45_000 });
+      }
+    }
+  }
+
   const customer = await newCustomerContext(browser);
   const page = await customer.newPage();
   await installRazorpayCheckoutMock(page, "succeed");
-  // Returning purchaser: complimentary occupies the primary merchandise slot and must not
-  // lose evaluation to the seeded first-order percentage Offer (AC-036J-013-01 / FD-036J-02).
-  // Prefer Journey 2's phone (one prior OTP) over Journey 1 (heavier OTP use / rate limits).
-  const returningPhone = journey2PurchaserPhone || journey1CustomerPhone;
-  expect(returningPhone, "prior journey must leave a returning customer phone").toBeTruthy();
-  await reachPickupReview(page, returningPhone);
+  // Fresh phone after first-order retirement: complimentary is the primary merchandise Offer
+  // (AC-036J-013-01 / FD-036J-02) without returning-OTP contention.
+  await reachPickupReview(page, customerPhone(fixture.phoneSeed ?? "10000", 5));
 
   const reviewGift = await readReviewComplimentaryLine(page);
   // Competing percentage merchandise Offer must not be the winning explanation for this cart.

@@ -316,19 +316,26 @@ export async function customerSignInAtCheckout(page: Page, phoneNumber: string):
   await phoneField(page).fill(phoneNumber);
   const sendCode = page.getByRole("button", { name: /send code/i });
   await sendCode.click();
-  // Serial journeys may reuse a returning phone; honor OTP send cooldown instead of failing closed.
+  // Honor OTP send cooldown / transient auth failures instead of failing closed.
   const code = codeField(page);
   const rateLimit = page.getByText(/Too many requests/i);
-  for (let attempt = 0; attempt < 4; attempt += 1) {
+  const transient = page.getByText(/Something went wrong|Please try again/i);
+  for (let attempt = 0; attempt < 5; attempt += 1) {
     await Promise.race([
       code.waitFor({ state: "visible", timeout: 45_000 }),
       rateLimit.waitFor({ state: "visible", timeout: 45_000 }),
+      transient.waitFor({ state: "visible", timeout: 45_000 }),
     ]).catch(() => undefined);
     if (await code.isVisible().catch(() => false)) break;
     if (await rateLimit.isVisible().catch(() => false)) {
       const text = await rateLimit.innerText();
       const seconds = Number((text.match(/(\d+)\s*s/i) ?? [])[1] ?? "35");
       await page.waitForTimeout(Math.min(Math.max(seconds + 2, 5), 120) * 1000);
+      await sendCode.click();
+      continue;
+    }
+    if (await transient.isVisible().catch(() => false)) {
+      await page.waitForTimeout(3_000);
       await sendCode.click();
       continue;
     }
