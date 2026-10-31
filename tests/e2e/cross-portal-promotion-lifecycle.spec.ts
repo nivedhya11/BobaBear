@@ -152,7 +152,7 @@ test("Journey 1 — coupon Promotion lifecycle on one shared database", async ({
   // Retire.
   await operatorPage.getByRole("button", { name: /Review & retire/i }).click();
   await confirmConsequence(operatorPage, /Retire offer/i);
-  await expect(operatorPage.getByText(/Retired\. New orders will not receive it/i)).toBeVisible({
+  await expect(operatorPage.getByText(/Retired\. New orders will not receive it/i).first()).toBeVisible({
     timeout: 45_000,
   });
   const retired = await fetchPromotionDetail(operatorPage, fixture.brandId, couponPromotionId);
@@ -246,7 +246,7 @@ test("Journey 2 — automatic Offer with ineligible negative", async ({ browser 
   // Retire delivery-only, recreate pickup-eligible automatic for positive path (keeps one active complimentary rule intact).
   await operatorPage.getByRole("button", { name: /Review & retire/i }).click();
   await confirmConsequence(operatorPage, /Retire offer/i);
-  await expect(operatorPage.getByText(/Retired\. New orders will not receive it/i)).toBeVisible({
+  await expect(operatorPage.getByText(/Retired\. New orders will not receive it/i).first()).toBeVisible({
     timeout: 45_000,
   });
   const retired = await fetchPromotionDetail(operatorPage, fixture.brandId, autoPromotionId);
@@ -321,7 +321,7 @@ test("Journey 3 — complimentary-item Offer retains exact sealed line", async (
       if (await priorBtn.isVisible().catch(() => false)) await priorBtn.click();
       await operatorPage.getByRole("button", { name: /Review & retire/i }).click();
       await confirmConsequence(operatorPage, /Retire offer/i);
-      await expect(operatorPage.getByText(/Retired\. New orders will not receive it/i)).toBeVisible({
+      await expect(operatorPage.getByText(/Retired\. New orders will not receive it/i).first()).toBeVisible({
         timeout: 45_000,
       });
       const retiredPrior = await fetchPromotionDetail(operatorPage, fixture.brandId, priorAuto.id);
