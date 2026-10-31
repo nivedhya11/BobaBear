@@ -351,6 +351,11 @@ test("Journey 3 — complimentary-item Offer retains exact sealed line", async (
   await expect(
     operatorPage.getByRole("status").filter({ hasText: /qualifier targets updated/i }).first(),
   ).toBeVisible({ timeout: 45_000 });
+  // Complimentary still requires an explicit benefit target set (same readiness gate as %).
+  await operatorPage.getByRole("button", { name: /Set benefit to all merchandise/i }).click();
+  await expect(
+    operatorPage.getByRole("status").filter({ hasText: /benefit targets updated/i }).first(),
+  ).toBeVisible({ timeout: 45_000 });
   await operatorPage.getByRole("button", { name: /^Review & activate$/i }).click();
   await confirmConsequence(operatorPage, /Confirm effect/i);
   await expect(operatorPage.getByText(/Lifecycle effect applied/i)).toBeVisible({ timeout: 45_000 });
