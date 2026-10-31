@@ -67,13 +67,17 @@ async function main() {
       name: "Cross-portal Denied Outlet Manager",
       temporaryPassword: deniedTempPassword,
     });
+    if (!commercial.outletId) {
+      throw new Error("Commercial seed manifest missing outletId for denied-operator outlet scope.");
+    }
     await persistence.transaction(async (tx) => {
+      // outlet_manager is outlet-scoped only (ROLE_ALLOWED_SCOPES); brand scope is rejected.
       const membership = await createMembership(tx, {
         workforceUserId: denied.userId,
         status: "active",
-        scope: { scopeType: "brand", brandId: commercial.brandId },
+        scope: { scopeType: "outlet", outletId: commercial.outletId },
       });
-      // outlet_manager: promotions.read/manage yes; promotions.activate NO.
+      // promotions.read/manage yes; promotions.activate NO.
       await grantRole(tx, { membershipId: membership.id, roleKey: "outlet_manager" });
     });
 
