@@ -319,15 +319,20 @@ export async function customerSignInAtCheckout(page: Page, phoneNumber: string):
   // Serial journeys may reuse a returning phone; honor OTP send cooldown instead of failing closed.
   const code = codeField(page);
   const rateLimit = page.getByText(/Too many requests/i);
-  await Promise.race([
-    code.waitFor({ state: "visible", timeout: 60_000 }),
-    rateLimit.waitFor({ state: "visible", timeout: 60_000 }),
-  ]).catch(() => undefined);
-  if (await rateLimit.isVisible().catch(() => false)) {
-    const text = await rateLimit.innerText();
-    const seconds = Number((text.match(/(\d+)\s*s/i) ?? [])[1] ?? "35");
-    await page.waitForTimeout(Math.min(Math.max(seconds + 2, 5), 120) * 1000);
-    await sendCode.click();
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    await Promise.race([
+      code.waitFor({ state: "visible", timeout: 45_000 }),
+      rateLimit.waitFor({ state: "visible", timeout: 45_000 }),
+    ]).catch(() => undefined);
+    if (await code.isVisible().catch(() => false)) break;
+    if (await rateLimit.isVisible().catch(() => false)) {
+      const text = await rateLimit.innerText();
+      const seconds = Number((text.match(/(\d+)\s*s/i) ?? [])[1] ?? "35");
+      await page.waitForTimeout(Math.min(Math.max(seconds + 2, 5), 120) * 1000);
+      await sendCode.click();
+      continue;
+    }
+    break;
   }
   await expect(code).toBeVisible({ timeout: 30_000 });
   await code.fill(fixedOtp!);
