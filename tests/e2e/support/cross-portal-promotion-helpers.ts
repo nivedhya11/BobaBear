@@ -313,17 +313,19 @@ export async function addFirstItemOpenCart(page: Page): Promise<void> {
 }
 
 export async function continueThroughCheckoutTimingIfPresent(page: Page): Promise<void> {
-  const timing = page.getByTestId("checkout-timing-choice");
-  if (await timing.isVisible().catch(() => false)) {
-    const asap = page.getByTestId("checkout-timing-asap");
-    if (await asap.isVisible().catch(() => false)) {
-      await asap.click();
-    }
-    const continueBtn = page.getByTestId("checkout-timing-continue");
-    if (await continueBtn.isVisible().catch(() => false)) {
-      await continueBtn.click();
-    }
+  // IMP-036I: ASAP click confirms timing and advances to review (no separate continue control).
+  const review = page.getByTestId("checkout-review");
+  const asap = page.getByTestId("checkout-timing-asap");
+  await Promise.race([
+    review.waitFor({ state: "visible", timeout: 20_000 }),
+    asap.waitFor({ state: "visible", timeout: 20_000 }),
+  ]).catch(() => undefined);
+  if (await review.isVisible().catch(() => false)) return;
+  if (await asap.isVisible().catch(() => false)) {
+    await expect(asap).toBeEnabled({ timeout: 20_000 });
+    await asap.click();
   }
+  await expect(review).toBeVisible({ timeout: 30_000 });
 }
 
 export async function reachPickupReview(page: Page, phoneNumber: string): Promise<void> {
@@ -337,7 +339,6 @@ export async function reachPickupReview(page: Page, phoneNumber: string): Promis
   await expect(checkout.getByTestId("checkout-pickup-outlet")).toBeVisible({ timeout: 20_000 });
   await checkout.getByTestId("checkout-pickup-continue").click();
   await continueThroughCheckoutTimingIfPresent(page);
-  await expect(page.getByTestId("checkout-review")).toBeVisible({ timeout: 30_000 });
 }
 
 export async function applyCouponOnReview(page: Page, code: string): Promise<void> {
