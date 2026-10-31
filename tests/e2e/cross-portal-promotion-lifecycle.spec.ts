@@ -533,33 +533,38 @@ test("Negatives — permission, invalid config, stale pay, cross-identity isolat
 
   await stalePage.getByTestId("payment-start").click();
 
-  // Hard refuse: never accept an Order confirmation against the retired evaluation.
-  await expect(stalePage.getByTestId("order-confirmation")).toHaveCount(0, { timeout: 5_000 });
-
-  // Approved recovery: return to Review with stale explanation and a fresh payable.
-  await expect(stalePage.getByTestId("checkout-review")).toBeVisible({ timeout: 45_000 });
+  // Deterministic outcome: recovery alert OR (forbidden) order confirmation.
   const staleAlert = stalePage.getByTestId("copy-stale");
+  const forbiddenConfirm = stalePage.getByTestId("order-confirmation");
+  await Promise.race([
+    staleAlert.waitFor({ state: "visible", timeout: 45_000 }),
+    forbiddenConfirm.waitFor({ state: "visible", timeout: 45_000 }),
+  ]).catch(() => undefined);
+  if (await forbiddenConfirm.isVisible().catch(() => false)) {
+    throw new Error(
+      "AC-036J-008-01 FAIL: payment bound a purchased Order after the Offer was retired (stale evaluation must be refused).",
+    );
+  }
+
+  // Approved AC-036J-008-01 recovery: Review shows COPY-STALE and the recalculated amount.
+  await expect(stalePage.getByTestId("checkout-review")).toBeVisible({ timeout: 45_000 });
   await expect(staleAlert).toBeVisible({ timeout: 45_000 });
-  const staleCopy = (await staleAlert.innerText()).trim();
-  // Prefer COPY-STALE when payable changed; STALE_UNCONFIRMED only when amount is unconfirmed.
-  const copyStale = "Your total changed before payment. Review the updated amount.";
-  const copyUnconfirmed =
-    "We couldn't confirm your checkout for payment. Please review your items, offers and total before continuing.";
-  expect(
-    staleCopy === copyStale || staleCopy === copyUnconfirmed,
-    `unexpected stale recovery copy: ${staleCopy}`,
-  ).toBeTruthy();
+  await expect(staleAlert).toHaveText(
+    "Your total changed before payment. Review the updated amount.",
+  );
 
   const recoveredPayable = await readReviewPayableMinor(stalePage);
   expect(recoveredPayable).toBeGreaterThan(0);
-  if (staleCopy === copyStale) {
+  expect(
+    recoveredPayable,
+    "stale recovery must not retain the retired Offer payable",
+  ).not.toBe(stalePayable);
+  const recoveredSaving = await readReviewOrderSavingMinor(stalePage);
+  if (staleSaving !== null && recoveredSaving !== null) {
     expect(
-      recoveredPayable,
-      "COPY-STALE recovery must present a recalculated payable, not the retired Offer total",
-    ).not.toBe(stalePayable);
-  } else {
-    // Unconfirmed path: continue-to-payment must remain blocked until a fresh confirmed total.
-    await expect(stalePage.getByRole("button", { name: /Continue to payment/i })).toBeDisabled();
+      recoveredSaving,
+      "retired coupon saving must not remain the displayed ORDER_SAVING",
+    ).not.toBe(staleSaving);
   }
 
   const providerOpenAfter = await stalePage.evaluate(() => {

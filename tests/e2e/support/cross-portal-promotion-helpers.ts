@@ -53,6 +53,14 @@ export type OrderMoneySummary = {
   grandTotalMinor?: number;
 };
 
+export type OrderLineProjection = {
+  productName: string;
+  variantName: string;
+  quantity: number;
+  lineTotalMinor: number;
+  lineOrigin: "cart" | "complimentary_offer" | string;
+};
+
 const fixturePath =
   process.env.CROSS_PORTAL_E2E_FIXTURE_MANIFEST ?? process.env.COMMERCIAL_E2E_FIXTURE_MANIFEST;
 const temporaryPassword = process.env.WORKFORCE_E2E_TEMP_PASSWORD;
@@ -351,13 +359,23 @@ export async function applyCouponOnReview(page: Page, code: string): Promise<voi
 }
 
 export async function readReviewPayableMinor(page: Page): Promise<number> {
-  const amount = await page
-    .getByTestId("checkout-review")
-    .locator("[data-offer-amount]")
-    .first()
-    .getAttribute("data-offer-amount");
+  // Payable is the TOTAL_PAYABLE / CURRENT_CHECKOUT_TOTAL row — never the first
+  // data-offer-amount (ORDER_SAVING renders before it when a saving is present).
+  const total = page.getByTestId("checkout-review").getByTestId("price-summary-total");
+  await expect(total).toBeVisible({ timeout: 15_000 });
+  const component = await total.getAttribute("data-offer-component");
+  if (component !== "TOTAL_PAYABLE" && component !== "CURRENT_CHECKOUT_TOTAL") {
+    throw new Error(
+      `Review payable row missing TOTAL_PAYABLE/CURRENT_CHECKOUT_TOTAL (got ${component ?? "null"})`,
+    );
+  }
+  const amount = await total.getAttribute("data-offer-amount");
   if (!amount || !/^\d+$/.test(amount)) {
     throw new Error(`Review payable data-offer-amount missing/invalid: ${amount}`);
+  }
+  const formatted = (await total.innerText()).trim();
+  if (!/₹|Rs\.?/i.test(formatted) && !/\d/.test(formatted)) {
+    throw new Error(`Review payable formatting missing digits/currency: ${formatted}`);
   }
   return Number(amount);
 }
@@ -369,8 +387,41 @@ export async function readReviewOrderSavingMinor(page: Page): Promise<number | n
     .first();
   if ((await node.count()) === 0) return null;
   const amount = await node.getAttribute("data-offer-amount");
-  if (!amount) return null;
+  if (!amount || !/^\d+$/.test(amount)) {
+    throw new Error(`ORDER_SAVING data-offer-amount missing/invalid: ${amount}`);
+  }
   return Number(amount);
+}
+
+export type ComplimentaryReviewLine = {
+  productName: string;
+  quantity: number;
+  amountText: string;
+};
+
+/**
+ * Requires the Review complimentary included line (no gift picker).
+ * Fails closed when the intended gift is absent from the evaluated Review.
+ */
+export async function readReviewComplimentaryLine(page: Page): Promise<ComplimentaryReviewLine> {
+  const review = page.getByTestId("checkout-review");
+  await expect(review.getByRole("button", { name: /choose gift|pick gift/i })).toHaveCount(0);
+  const line = review.getByTestId("complimentary-line");
+  await expect(line, "complimentary included line must appear on Review").toBeVisible({
+    timeout: 20_000,
+  });
+  const productName = (await line.getAttribute("data-complimentary-name"))?.trim() ?? "";
+  if (!productName) {
+    throw new Error("complimentary-line missing data-complimentary-name");
+  }
+  const included = await line.getAttribute("data-complimentary-included");
+  expect(included, "complimentary included copy").toMatch(/included/i);
+  const amountText = (await line.getAttribute("data-complimentary-amount"))?.trim() ?? "";
+  expect(amountText, "complimentary additional merchandise charge must be ₹0.00").toBe("₹0.00");
+  const body = await line.innerText();
+  expect(body).toMatch(/1\s*×/);
+  expect(body).toMatch(new RegExp(productName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
+  return { productName, quantity: 1, amountText };
 }
 
 export async function continueToPayment(page: Page): Promise<void> {
@@ -382,7 +433,12 @@ export async function continueToPayment(page: Page): Promise<void> {
 export async function fetchOwnedOrder(
   page: Page,
   orderId: string,
-): Promise<{ id: string; moneySummary: OrderMoneySummary; status?: string }> {
+): Promise<{
+  id: string;
+  moneySummary: OrderMoneySummary;
+  status?: string;
+  lines: OrderLineProjection[];
+}> {
   return page.evaluate(async (id) => {
     const response = await fetch(`/api/v1/orders/${id}`, { credentials: "same-origin" });
     const body = (await response.json()) as {
@@ -396,6 +452,13 @@ export async function fetchOwnedOrder(
           deliverySavingMinor?: string | number;
           grandTotalMinor?: string | number;
         };
+        lines?: Array<{
+          productName?: string;
+          variantName?: string;
+          quantity?: number;
+          lineTotalMinor?: string | number;
+          lineOrigin?: string;
+        }>;
       };
     };
     const order = body.order;
@@ -408,6 +471,24 @@ export async function fetchOwnedOrder(
       return Number.isFinite(n) ? n : undefined;
     };
     const summary = order.moneySummary ?? {};
+    const lines = (order.lines ?? []).map((line) => {
+      const lineTotalMinor = toMinor(line.lineTotalMinor);
+      if (
+        typeof line.productName !== "string" ||
+        typeof line.variantName !== "string" ||
+        typeof line.quantity !== "number" ||
+        lineTotalMinor === undefined
+      ) {
+        throw new Error("order line projection missing required fields");
+      }
+      return {
+        productName: line.productName,
+        variantName: line.variantName,
+        quantity: line.quantity,
+        lineTotalMinor,
+        lineOrigin: line.lineOrigin ?? "cart",
+      };
+    });
     return {
       id: order.orderId,
       moneySummary: {
@@ -417,8 +498,15 @@ export async function fetchOwnedOrder(
         grandTotalMinor: toMinor(summary.grandTotalMinor),
       },
       status: order.status,
+      lines,
     };
   }, orderId);
+}
+
+export function findComplimentaryOrderLine(
+  lines: readonly OrderLineProjection[],
+): OrderLineProjection | undefined {
+  return lines.find((line) => line.lineOrigin === "complimentary_offer");
 }
 
 export async function captureOrderIdFromConfirmation(page: Page): Promise<string> {
