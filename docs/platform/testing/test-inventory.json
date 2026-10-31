@@ -31,15 +31,15 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2424,
-    "executableTestFiles": 568,
+    "trackedPathsConsidered": 2430,
+    "executableTestFiles": 569,
     "sourceTestFiles": 167,
-    "testsTreeExecutableFiles": 296,
+    "testsTreeExecutableFiles": 297,
     "scriptTestFiles": 105,
-    "playwrightSpecs": 13,
+    "playwrightSpecs": 14,
     "vitestConfigs": 2,
-    "playwrightConfigs": 8,
-    "testSupportScripts": 53,
+    "playwrightConfigs": 9,
+    "testSupportScripts": 55,
     "packageTestCommands": 94,
     "packageAuditCommands": 28,
     "packageE2eCommands": 11,
@@ -390,6 +390,7 @@
     "tests/delivery-concurrency/delivery.concurrency.test.ts",
     "tests/delivery-manual/delivery.manual.test.ts",
     "tests/e2e/commercial-workspace.spec.ts",
+    "tests/e2e/cross-portal-promotion-lifecycle.spec.ts",
     "tests/e2e/customer-auth.spec.ts",
     "tests/e2e/customer-ordering.spec.ts",
     "tests/e2e/external-links.spec.ts",
@@ -627,6 +628,7 @@
   ],
   "playwrightSpecs": [
     "tests/e2e/commercial-workspace.spec.ts",
+    "tests/e2e/cross-portal-promotion-lifecycle.spec.ts",
     "tests/e2e/customer-auth.spec.ts",
     "tests/e2e/customer-ordering.spec.ts",
     "tests/e2e/external-links.spec.ts",
@@ -647,6 +649,7 @@
   "playwrightConfigs": [
     "playwright.commercial-workspace.config.ts",
     "playwright.config.ts",
+    "playwright.cross-portal-promotion.config.ts",
     "playwright.customer-auth.config.ts",
     "playwright.customer-ordering.config.ts",
     "playwright.gtm-uat-browser.config.ts",
@@ -661,6 +664,7 @@
     "scripts/e2e/customer-ordering-server.ts",
     "scripts/e2e/gtm-uat-browser-control.ts",
     "scripts/e2e/run-commercial-workspace-e2e.mjs",
+    "scripts/e2e/run-cross-portal-promotion-e2e.mjs",
     "scripts/e2e/run-customer-auth-e2e.mjs",
     "scripts/e2e/run-customer-ordering-e2e.mjs",
     "scripts/e2e/run-gtm-uat-browser-e2e.mjs",
@@ -703,6 +707,7 @@
     "tests/database/support/serviceability-fixtures.ts",
     "tests/database/support/test-container.ts",
     "tests/database/support/test-database.ts",
+    "tests/e2e/support/cross-portal-promotion-helpers.ts",
     "tests/e2e/support/maps-location-mocks.ts",
     "tests/e2e/support/razorpay-checkout-mock.ts",
     "tests/e2e/support/stub-customer-session.ts",
@@ -9567,6 +9572,24 @@
         "test:e2e:commercial-workspace"
       ],
       "ciInclusion": "YES",
+      "test1Layers": [
+        "11-e2e-browser-ui"
+      ],
+      "classificationConfidence": "LOW"
+    },
+    {
+      "path": "tests/e2e/cross-portal-promotion-lifecycle.spec.ts",
+      "runner": "playwright",
+      "domain": "e2e",
+      "testType": "e2e-spec",
+      "dbRequired": "UNKNOWN",
+      "browserRequired": "YES",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:e2e",
+        "test:e2e:cross-portal-promotion"
+      ],
+      "ciInclusion": "NO",
       "test1Layers": [
         "11-e2e-browser-ui"
       ],
