@@ -21,6 +21,7 @@ import {
   loginDeniedOperator,
   newCustomerContext,
   openPromotionsEditor,
+  normalizeProductLabel,
   reachPickupReview,
   reachPickupReviewAuthed,
   readReviewComplimentaryLine,
@@ -386,7 +387,9 @@ test("Journey 3 — complimentary-item Offer retains exact sealed line", async (
   // Competing percentage merchandise Offer must not be the winning explanation for this cart.
   await expect(page.getByTestId("checkout-review").locator('[data-offer-component="ORDER_SAVING"]')).toHaveCount(0);
   if (fixture.productName) {
-    expect(reviewGift.productName.toLowerCase()).toContain(fixture.productName.toLowerCase());
+    expect(normalizeProductLabel(reviewGift.productName)).toContain(
+      normalizeProductLabel(fixture.productName),
+    );
   }
 
   await continueToPayment(page);

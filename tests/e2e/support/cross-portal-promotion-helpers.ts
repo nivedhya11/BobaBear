@@ -466,6 +466,11 @@ export type ComplimentaryReviewLine = {
   amountText: string;
 };
 
+/** Compare catalog slugs (`bangkok-thai-tea-boba`) to display names (`Bangkok Thai Tea Boba`). */
+export function normalizeProductLabel(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
 /**
  * Requires the Review complimentary included line (no gift picker).
  * Fails closed when the intended gift is absent from the evaluated Review.
