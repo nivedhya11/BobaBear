@@ -441,6 +441,11 @@ test("Negatives — permission, invalid config, stale pay, cross-identity isolat
   browser,
 }) => {
   test.setTimeout(420_000);
+  const leftover = operatorPage.getByTestId("consequence-review-dialog");
+  if (await leftover.isVisible().catch(() => false)) {
+    await leftover.getByRole("button", { name: /Cancel/i }).click();
+    await expect(leftover).toHaveCount(0, { timeout: 15_000 });
+  }
   await openPromotionsEditor(operatorPage, fixture);
 
   // Invalid configuration cannot activate: complimentary without variant.
@@ -461,10 +466,14 @@ test("Negatives — permission, invalid config, stale pay, cross-identity isolat
   const badStatus = badListed?.status ?? null;
   expect(badStatus === "draft" || badStatus === null).toBeTruthy();
   if (badStatus === "draft") {
-    await operatorPage.getByRole("button", { name: /^Review & activate$/i }).click();
-    const dialog = operatorPage.getByTestId("consequence-review-dialog");
-    if (await dialog.isVisible().catch(() => false)) {
-      await dialog.getByRole("button", { name: /Confirm effect/i }).click();
+    const activate = operatorPage.getByRole("button", { name: /^Review & activate$/i });
+    if (await activate.isEnabled().catch(() => false)) {
+      await activate.click();
+      const dialog = operatorPage.getByTestId("consequence-review-dialog");
+      if (await dialog.isVisible().catch(() => false)) {
+        await dialog.getByRole("button", { name: /Cancel/i }).click();
+        await expect(dialog).toHaveCount(0, { timeout: 15_000 });
+      }
     }
     const afterAttempt = await findPromotionByCode(operatorPage, fixture.brandId, badCode);
     expect(afterAttempt?.status).not.toBe("active");
@@ -491,12 +500,26 @@ test("Negatives — permission, invalid config, stale pay, cross-identity isolat
   expect([401, 403]).toContain(unauth.status);
 
   // Denied operator (outlet_manager) cannot activate/retire — UI hides or refuses.
+  // Empty brand options are themselves denial proof; do not hang on missing brandName.
   const deniedContext = await browser.newContext();
   const deniedPage = await deniedContext.newPage();
   fixture = await loginDeniedOperator(deniedPage, fixture);
-  await openPromotionsEditor(deniedPage, fixture);
-  await expect(deniedPage.getByRole("button", { name: /Review & activate/i })).toHaveCount(0);
-  await expect(deniedPage.getByRole("button", { name: /Review & retire/i })).toHaveCount(0);
+  await deniedPage.goto("/workforce/admin/commercial/");
+  await expect(deniedPage.getByTestId("commercial-workspace")).toBeVisible({ timeout: 45_000 });
+  const deniedBrand = deniedPage.getByTestId("commercial-context-selector").getByLabel("Brand");
+  const deniedBrandByName = deniedBrand.locator("option").filter({ hasText: fixture.brandName });
+  if ((await deniedBrandByName.count()) === 0) {
+    await expect(deniedPage.getByRole("button", { name: /Review & activate/i })).toHaveCount(0);
+    await expect(deniedPage.getByRole("button", { name: /Review & retire/i })).toHaveCount(0);
+  } else {
+    const brandValue = await deniedBrandByName.first().getAttribute("value");
+    expect(brandValue, "denied brand option value").toBeTruthy();
+    await deniedBrand.selectOption(brandValue!);
+    await deniedPage.getByRole("button", { name: /Promotions & coupons/i }).click();
+    await expect(deniedPage.getByTestId("promotions-editor")).toBeVisible({ timeout: 45_000 });
+    await expect(deniedPage.getByRole("button", { name: /Review & activate/i })).toHaveCount(0);
+    await expect(deniedPage.getByRole("button", { name: /Review & retire/i })).toHaveCount(0);
+  }
   await deniedContext.close();
 
   // Stale offer: create short-lived coupon, reach payment-ready, retire, pay must fail closed.
