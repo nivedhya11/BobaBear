@@ -45,8 +45,9 @@ let purchasedPayableMinor = 0;
 let purchasedSavingMinor: number | null = null;
 /** Journey 2 leaves an active automatic Offer; Journey 3 retires it before complimentary proof. */
 let activeAutoPickupCode = "";
-/** Journey 1 purchaser — returning identity so seeded first-order 10% does not defeat complimentary. */
+/** Returning purchaser phones — seeded first-order 10% must not defeat complimentary. */
 let journey1CustomerPhone = "";
+let journey2PurchaserPhone = "";
 
 test.beforeAll(async ({ browser }) => {
   fixture = await loadCrossPortalFixture();
@@ -309,7 +310,7 @@ test("Journey 2 — automatic Offer with ineligible negative", async ({ browser 
 });
 
 test("Journey 3 — complimentary-item Offer retains exact sealed line", async ({ browser }) => {
-  test.setTimeout(240_000);
+  test.setTimeout(360_000);
   test.skip(!fixture.productId || !fixture.variantId, "Commercial seed did not publish a product/variant for gift.");
 
   await openPromotionsEditor(operatorPage, fixture);

@@ -314,9 +314,23 @@ function codeField(page: Page) {
 export async function customerSignInAtCheckout(page: Page, phoneNumber: string): Promise<void> {
   await expect(page.getByRole("heading", { name: "Sign In" })).toBeVisible({ timeout: 30_000 });
   await phoneField(page).fill(phoneNumber);
-  await page.getByRole("button", { name: /send code/i }).click();
-  await expect(codeField(page)).toBeVisible();
-  await codeField(page).fill(fixedOtp!);
+  const sendCode = page.getByRole("button", { name: /send code/i });
+  await sendCode.click();
+  // Serial journeys may reuse a returning phone; honor OTP send cooldown instead of failing closed.
+  const code = codeField(page);
+  const rateLimit = page.getByText(/Too many requests/i);
+  await Promise.race([
+    code.waitFor({ state: "visible", timeout: 60_000 }),
+    rateLimit.waitFor({ state: "visible", timeout: 60_000 }),
+  ]).catch(() => undefined);
+  if (await rateLimit.isVisible().catch(() => false)) {
+    const text = await rateLimit.innerText();
+    const seconds = Number((text.match(/(\d+)\s*s/i) ?? [])[1] ?? "35");
+    await page.waitForTimeout(Math.min(Math.max(seconds + 2, 5), 120) * 1000);
+    await sendCode.click();
+  }
+  await expect(code).toBeVisible({ timeout: 30_000 });
+  await code.fill(fixedOtp!);
   await page.getByRole("button", { name: /verify code/i }).click();
 }
 
