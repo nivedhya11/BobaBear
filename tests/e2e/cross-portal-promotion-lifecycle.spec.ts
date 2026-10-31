@@ -44,6 +44,8 @@ let purchasedPayableMinor = 0;
 let purchasedSavingMinor: number | null = null;
 /** Journey 2 leaves an active automatic Offer; Journey 3 retires it before complimentary proof. */
 let activeAutoPickupCode = "";
+/** Journey 1 purchaser — returning identity so seeded first-order 10% does not defeat complimentary. */
+let journey1CustomerPhone = "";
 
 test.beforeAll(async ({ browser }) => {
   fixture = await loadCrossPortalFixture();
@@ -110,6 +112,7 @@ test("Journey 1 — coupon Promotion lifecycle on one shared database", async ({
   const pageA = await customerA.newPage();
   await installRazorpayCheckoutMock(pageA, "succeed");
   const phoneA = customerPhone(fixture.phoneSeed ?? "10000", 1);
+  journey1CustomerPhone = phoneA;
   await reachPickupReview(pageA, phoneA);
   await applyCouponOnReview(pageA, couponCode);
   purchasedSavingMinor = await readReviewOrderSavingMinor(pageA);
@@ -367,9 +370,14 @@ test("Journey 3 — complimentary-item Offer retains exact sealed line", async (
   const customer = await newCustomerContext(browser);
   const page = await customer.newPage();
   await installRazorpayCheckoutMock(page, "succeed");
-  await reachPickupReview(page, customerPhone(fixture.phoneSeed ?? "10000", 5));
+  // Returning purchaser: complimentary occupies the primary merchandise slot and must not
+  // lose evaluation to the seeded first-order percentage Offer (AC-036J-013-01 / FD-036J-02).
+  expect(journey1CustomerPhone, "Journey 1 must leave a returning customer phone").toBeTruthy();
+  await reachPickupReview(page, journey1CustomerPhone);
 
   const reviewGift = await readReviewComplimentaryLine(page);
+  // Competing percentage merchandise Offer must not be the winning explanation for this cart.
+  await expect(page.getByTestId("checkout-review").locator('[data-offer-component="ORDER_SAVING"]')).toHaveCount(0);
   if (fixture.productName) {
     expect(reviewGift.productName.toLowerCase()).toContain(fixture.productName.toLowerCase());
   }
