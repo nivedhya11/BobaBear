@@ -33,6 +33,7 @@ const GENERATED_PREFIXES = Object.freeze([
   "test-results-workforce-auth/",
   "test-results-operations-lifecycle/",
   "test-results-commercial-workspace/",
+  "test-results-customer-ordering-runtime/",
   "artifacts/playwright-report-customer-auth/",
   "artifacts/test-results-customer-auth/",
   ".next/",
