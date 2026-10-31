@@ -106,6 +106,119 @@ Detailed topology, origin-trust compatibility, rejected unsafe approaches, and
 the webhook / Access RED decision package live in
 [`d2-restricted-cloudflare-tunnel-design.md`](./d2-restricted-cloudflare-tunnel-design.md).
 
+## IA-02 pilot build-profile Founder selection — supporting record (31 October 2026)
+
+On 31 October 2026 the Founder explicitly selected the IA-02 pilot build-profile
+direction and two companion choices. This section is **supporting operator
+evidence** of those already-made selections. It is not a decision-register
+entry, does not assign a `D-` identity, does not amend ROADMAP / STATE /
+ARCHITECTURE / ADR-002 / ADR-015, and does not grant staging publication,
+candidate preparation, deployment, merge, or Founder UAT authority.
+
+Closed Founder selections (31 October 2026):
+
+| Decision | Recorded selection |
+|---|---|
+| IA-02 | **Option A** — one canonical immutable build profile for the pilot |
+| Pre-UAT analytics | **A0** — Google Analytics disabled |
+| Production-canonical SEO on staging | **ACCEPTED_WITH_CONDITIONS** |
+
+```text
+IA02_FOUNDER_SELECTION = OPTION_A
+PRE_UAT_ANALYTICS = A0_GA_OFF
+PRODUCTION_CANONICAL_SEO_ON_STAGING = ACCEPTED_WITH_CONDITIONS
+SEO_CONDITIONS_PASSED = NO
+IA02_CANONICAL_RECORDING = PENDING
+STAGING_READINESS = BLOCKED
+PR512_MERGE = NOT_AUTHORIZED
+STAGING_PUBLICATION = NOT_AUTHORIZED
+CANDIDATE_PREPARATION = NOT_AUTHORIZED
+STAGING_DEPLOYMENT = NOT_AUTHORIZED
+FOUNDER_UAT = NOT_PERFORMED
+IMP036J_ACCEPTED = NO
+IMP039_ACTIVATED = NO
+IA02_RECORD = SUPPORTING_OPERATOR_SELECTION_EVIDENCE
+IA02_DECISION_REGISTER_STATUS = NOT_CURRENT_REGISTER_ENTRY
+```
+
+Option A semantics recorded here:
+
+- Build the canonical public configuration once for an approved release candidate.
+- Preserve the exact immutable digest **for each application runtime service
+  image** when promoting that service across environments. Different services
+  do not need to share one universal digest.
+- Production-canonical site URL: `https://thebobabear.in`.
+- Staging runtime public/auth origin: `https://staging.thebobabear.in`, subject
+  to existing strict-staging agreement requirements.
+- Google Analytics disabled during restricted pre-UAT, including GA-off CSP
+  selection.
+- Google Maps key and its multi-host restrictions remain subject to verification.
+- A later GA-enabled build requires a new release-set and applicable
+  privacy/measurement authorization.
+- Do not claim that the proposed PR #512 release-set format is already binding.
+
+SEO conditional acceptance is conditional on all of the following. **None of
+these conditions is deemed passed by this record:**
+
+1. Verified restricted Cloudflare Access and origin isolation.
+2. A separate Founder D3 staging-publication contract.
+3. No unauthorized unauthenticated or search-engine access to staging.
+4. Correct HTTPS, cookies, redirects and trusted-origin handling.
+5. Completion of required security and operational evidence.
+
+Status distinction preserved by this record:
+
+- Founder selection: **complete** (Option A / A0 / SEO ACCEPTED_WITH_CONDITIONS).
+- Supporting-document publication: pending until the documentation PR that
+  carries this section merges.
+- Canonical decision-register recording: still **PENDING** (`FD-01`).
+- Operational security evidence: **incomplete**.
+- Staging readiness: **BLOCKED**.
+
+Decision-ID collision preservation: CURRENT `main` is DR-25 and states next
+register ID D-385, but open PR #429 proposes D-385 / D-386 (DR-26) and open
+PR #488 proposes D-387 (DR-27). This supporting record MUST NOT assign D-385,
+D-386, or D-387 to IA-02. D-388 is not assumed available without a fresh
+coordinated decision-allocation review. Held PRs #429, #488, and #512 are not
+rebased, cherry-picked, or merged by this record. Supporting Founder-selection
+evidence remains distinct from a CURRENT binding decision-register entry.
+
+### C2 outstanding Founder decision queue (tracking labels only)
+
+The `FD-*` identifiers below are **tracking labels only**. They are not
+`D-xxx` decision-register identities and are not a new source of binding
+decisions. Existing C2 evidence and the canonical staging authorities above
+remain controlling. No selection is made here.
+
+| ID | Subject | Status |
+|---|---|---|
+| FD-01 | Canonical IA-02 decision-register integration | PENDING |
+| FD-02 | D3 restricted staging-publication authorization | DECISION_REQUIRED |
+| FD-03 | Staging TLS termination trust/allowlist | DECISION_REQUIRED |
+| FD-04 | Tunnel peer, client-IP and HTTPS forwarding trust | RED / DECISION_REQUIRED |
+| FD-05 | Direct-port isolation and held PR #428 | PENDING |
+| FD-06 | PAY-D1 P1–P4 payment/webhook strategy | DECISION_REQUIRED |
+| FD-07 | AUTH-D1 approved customer OTP provider | DECISION_REQUIRED |
+| FD-08 | Four staging recovery-proof bindings | DECISION_REQUIRED |
+| FD-09 | Authorized read-only live volume/system identity evidence | NOT_VERIFIED |
+| FD-10 | AD-PF-01/02 PR #429 integration and measurements | PENDING |
+| FD-11 | Live Maps browser-key restrictions | NOT_VERIFIED |
+| FD-12 | Separate prepare, preflight, publication, deployment and UAT authorizations | NOT_AUTHORIZED |
+
+Exact operational non-authorizations unchanged by this supporting record:
+
+```text
+STAGING_PUBLICATION = NOT_AUTHORIZED
+CANDIDATE_PREPARATION = NOT_AUTHORIZED
+STAGING_DEPLOYMENT = NOT_AUTHORIZED
+LIVE_STAGING_DEPLOYMENT = NOT_AUTHORIZED
+PUBLIC_STAGING_EXPOSURE = NOT_AUTHORIZED
+PR512_MERGE = NOT_AUTHORIZED
+FOUNDER_UAT = NOT_PERFORMED
+IMP036J_ACCEPTED = NO
+IMP039_ACTIVATED = NO
+```
+
 ## Publishing isolation (D3 Option A)
 
 Preflight classifies repository publishing with four states. The states are derived
