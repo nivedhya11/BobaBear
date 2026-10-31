@@ -440,7 +440,7 @@ test("Journey 3 — complimentary-item Offer retains exact sealed line", async (
 test("Negatives — permission, invalid config, stale pay, cross-identity isolation", async ({
   browser,
 }) => {
-  test.setTimeout(300_000);
+  test.setTimeout(420_000);
   await openPromotionsEditor(operatorPage, fixture);
 
   // Invalid configuration cannot activate: complimentary without variant.

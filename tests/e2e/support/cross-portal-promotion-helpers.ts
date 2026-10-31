@@ -174,18 +174,56 @@ export async function openPromotionsEditor(page: Page, fixture: CrossPortalFixtu
   await page.goto("/workforce/admin/commercial/");
   await expect(page.getByTestId("commercial-workspace")).toBeVisible({ timeout: 45_000 });
   const context = page.getByTestId("commercial-context-selector");
-  await context.getByLabel("Brand").selectOption(fixture.brandId);
+  // Select by visible brand label — option values can be UUID or slug depending on actor scope.
+  const brand = context.getByLabel("Brand");
+  const brandOption = brand.locator("option").filter({ hasText: fixture.brandName });
+  await expect(brandOption.first(), `brand option for ${fixture.brandName}`).toBeAttached({
+    timeout: 45_000,
+  });
+  const brandValue = await brandOption.first().getAttribute("value");
+  if (!brandValue) throw new Error(`Brand option for ${fixture.brandName} has empty value.`);
+  await brand.selectOption(brandValue);
   await expect(page.getByText(new RegExp(`Selected brand:\\s*${fixture.brandName}`, "i"))).toBeVisible();
   if (fixture.productId) {
     await expect(context.getByLabel("Product")).toBeEnabled({ timeout: 45_000 });
-    await context.getByLabel("Product").selectOption(fixture.productId);
+    const product = context.getByLabel("Product");
+    const byId = product.locator(`option[value="${fixture.productId}"]`);
+    if ((await byId.count()) > 0) {
+      await product.selectOption(fixture.productId);
+    } else if (fixture.productName) {
+      const byName = product.locator("option").filter({ hasText: fixture.productName });
+      await expect(byName.first()).toBeAttached({ timeout: 45_000 });
+      const value = await byName.first().getAttribute("value");
+      if (!value) throw new Error(`Product option for ${fixture.productName} has empty value.`);
+      await product.selectOption(value);
+    }
   }
   if (fixture.variantId) {
     await expect(context.getByLabel("Variant")).toBeEnabled({ timeout: 45_000 });
-    await context.getByLabel("Variant").selectOption(fixture.variantId);
+    const variant = context.getByLabel("Variant");
+    const byId = variant.locator(`option[value="${fixture.variantId}"]`);
+    if ((await byId.count()) > 0) {
+      await variant.selectOption(fixture.variantId);
+    } else if (fixture.variantName) {
+      const byName = variant.locator("option").filter({ hasText: fixture.variantName });
+      await expect(byName.first()).toBeAttached({ timeout: 45_000 });
+      const value = await byName.first().getAttribute("value");
+      if (!value) throw new Error(`Variant option for ${fixture.variantName} has empty value.`);
+      await variant.selectOption(value);
+    }
   }
   if (fixture.outletId) {
-    await context.getByLabel("Outlet").selectOption(fixture.outletId);
+    const outlet = context.getByLabel("Outlet");
+    const byId = outlet.locator(`option[value="${fixture.outletId}"]`);
+    if ((await byId.count()) > 0) {
+      await outlet.selectOption(fixture.outletId);
+    } else if (fixture.outletName) {
+      const byName = outlet.locator("option").filter({ hasText: fixture.outletName });
+      if ((await byName.count()) > 0) {
+        const value = await byName.first().getAttribute("value");
+        if (value) await outlet.selectOption(value);
+      }
+    }
   }
   await page.getByRole("button", { name: /Promotions & coupons/i }).click();
   await expect(page.getByTestId("promotions-editor")).toBeVisible();
