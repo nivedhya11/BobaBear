@@ -389,6 +389,33 @@ export async function reachPickupReview(page: Page, phoneNumber: string): Promis
   await continueThroughCheckoutTimingIfPresent(page);
 }
 
+/**
+ * Pickup Review for an already-authenticated browser context (avoids OTP reuse/rate limits).
+ */
+export async function reachPickupReviewAuthed(page: Page): Promise<void> {
+  await addFirstItemOpenCart(page);
+  await page.getByRole("button", { name: /checkout/i }).click();
+  const signIn = page.getByRole("heading", { name: "Sign In" });
+  const fulfilment = page.getByTestId("checkout-fulfilment-choice");
+  await Promise.race([
+    signIn.waitFor({ state: "visible", timeout: 20_000 }),
+    fulfilment.waitFor({ state: "visible", timeout: 20_000 }),
+    page.getByRole("heading", { name: "Checkout" }).waitFor({ state: "visible", timeout: 20_000 }),
+  ]).catch(() => undefined);
+  if (await signIn.isVisible().catch(() => false)) {
+    throw new Error(
+      "reachPickupReviewAuthed expected an authenticated customer session, but Sign In was shown.",
+    );
+  }
+  await expect(page.getByRole("heading", { name: "Checkout" })).toBeVisible({ timeout: 20_000 });
+  const checkout = page.locator("#main-content");
+  await expect(checkout.getByTestId("checkout-fulfilment-choice")).toBeVisible({ timeout: 20_000 });
+  await checkout.getByTestId("checkout-fulfilment-pickup").click();
+  await expect(checkout.getByTestId("checkout-pickup-outlet")).toBeVisible({ timeout: 20_000 });
+  await checkout.getByTestId("checkout-pickup-continue").click();
+  await continueThroughCheckoutTimingIfPresent(page);
+}
+
 export async function applyCouponOnReview(page: Page, code: string): Promise<void> {
   const review = page.getByTestId("checkout-review");
   const input = review.getByTestId("coupon-input");

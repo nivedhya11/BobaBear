@@ -3,7 +3,7 @@
  * One disposable Postgres: operator authoring → customer redeem → retire → sealed history.
  * Fake Payment only (e2e-fake-main). Not Founder UAT. Not acceptance.
  */
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type BrowserContext, type Page } from "@playwright/test";
 import { installRazorpayCheckoutMock } from "./support/razorpay-checkout-mock";
 import {
   applyCouponOnReview,
@@ -22,6 +22,7 @@ import {
   newCustomerContext,
   openPromotionsEditor,
   reachPickupReview,
+  reachPickupReviewAuthed,
   readReviewComplimentaryLine,
   readReviewOrderSavingMinor,
   readReviewPayableMinor,
@@ -48,6 +49,9 @@ let activeAutoPickupCode = "";
 /** Returning purchaser phones — seeded first-order 10% must not defeat complimentary. */
 let journey1CustomerPhone = "";
 let journey2PurchaserPhone = "";
+/** Keep Journey 2 purchaser session so Journey 3 avoids a third OTP send. */
+let returningCustomerContext: BrowserContext | null = null;
+let returningCustomerPage: Page | null = null;
 
 test.beforeAll(async ({ browser }) => {
   fixture = await loadCrossPortalFixture();
@@ -307,7 +311,9 @@ test("Journey 2 — automatic Offer with ineligible negative", async ({ browser 
   expect(order.moneySummary.promotionDiscountMinor ?? order.moneySummary.orderSavingMinor).toBe(
     saving,
   );
-  await customer.close();
+  // Leave authenticated session open for Journey 3 complimentary proof (no OTP reuse).
+  returningCustomerContext = customer;
+  returningCustomerPage = page;
 });
 
 test("Journey 3 — complimentary-item Offer retains exact sealed line", async ({ browser }) => {
@@ -368,35 +374,13 @@ test("Journey 3 — complimentary-item Offer retains exact sealed line", async (
   expect(giftListed, `Gift promotion ${giftCode} missing`).toBeTruthy();
   const giftPromotionId = giftListed!.id;
 
-  // Retire seeded first-order % so a fresh phone can prove complimentary without OTP reuse
-  // (returning-phone OTP cooldowns/transient auth failures are not the product under test).
-  await openPromotionsEditor(operatorPage, fixture);
-  const firstOrderBtn = operatorPage
-    .getByTestId("promotions-editor")
-    .getByRole("button", { name: /First order welcome|identifier:\s*fo-/i })
-    .first();
-  if (await firstOrderBtn.isVisible().catch(() => false)) {
-    const label = await firstOrderBtn.innerText();
-    const codeMatch = label.match(/identifier:\s*([a-z0-9_-]+)/i);
-    if (codeMatch?.[1]) {
-      await selectPromotionByCode(operatorPage, codeMatch[1]);
-      const retireFirstOrder = operatorPage.getByRole("button", { name: /Review & retire/i });
-      if (await retireFirstOrder.isVisible().catch(() => false)) {
-        await retireFirstOrder.click();
-        await confirmConsequence(operatorPage, /Retire offer/i);
-        await expect(
-          operatorPage.getByText(/Retired\. New orders will not receive it/i).first(),
-        ).toBeVisible({ timeout: 45_000 });
-      }
-    }
-  }
-
-  const customer = await newCustomerContext(browser);
-  const page = await customer.newPage();
+  // Reuse Journey 2 authenticated returning purchaser: first-order 10% is already consumed,
+  // and a third OTP send is not the product under test (AC-036J-013-01 / FD-036J-02).
+  expect(returningCustomerPage, "Journey 2 must leave an authenticated customer page").toBeTruthy();
+  expect(journey2PurchaserPhone.length, "Journey 2 purchaser phone").toBeGreaterThan(0);
+  const page = returningCustomerPage!;
   await installRazorpayCheckoutMock(page, "succeed");
-  // Fresh phone after first-order retirement: complimentary is the primary merchandise Offer
-  // (AC-036J-013-01 / FD-036J-02) without returning-OTP contention.
-  await reachPickupReview(page, customerPhone(fixture.phoneSeed ?? "10000", 5));
+  await reachPickupReviewAuthed(page);
 
   const reviewGift = await readReviewComplimentaryLine(page);
   // Competing percentage merchandise Offer must not be the winning explanation for this cart.
@@ -445,7 +429,9 @@ test("Journey 3 — complimentary-item Offer retains exact sealed line", async (
   );
   const retired = await fetchPromotionDetail(operatorPage, fixture.brandId, giftPromotionId);
   expect(retired.status).toBe("retired");
-  await customer.close();
+  await returningCustomerContext?.close();
+  returningCustomerContext = null;
+  returningCustomerPage = null;
 });
 
 test("Negatives — permission, invalid config, stale pay, cross-identity isolation", async ({
