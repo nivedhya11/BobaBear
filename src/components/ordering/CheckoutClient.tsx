@@ -267,7 +267,9 @@ export function CheckoutClient(props: { brandId: string }) {
       fulfilmentMode: snapshot?.fulfilmentMode ?? chosenMode,
     });
     if (!status?.text || status.invalid || status.showSignIn) return;
-    setCouponFocusResultToken((token) => token + 1);
+    document
+      .querySelector<HTMLElement>("[data-testid='checkout-review'] [data-testid='coupon-result']")
+      ?.focus();
   }, [
     screen,
     evaluationId,

@@ -3,7 +3,6 @@ import { randomInt } from "node:crypto";
 import { expect, test, type Locator, type Page, type TestInfo } from "@playwright/test";
 
 import { IMP036J_COPY } from "../../src/components/ordering/imp036j-copy";
-import { installRazorpayCheckoutMock } from "./support/razorpay-checkout-mock";
 import {
   installLocationProviderMocks,
   installMockGoogleMaps,
