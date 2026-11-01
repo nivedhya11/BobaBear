@@ -228,6 +228,10 @@ describe("IMP-036J #384A CheckoutClient coupon mutation + rebase failure", () =>
       expect(screen.getByTestId("coupon-result")).toHaveTextContent(IMP036J_COPY.RETRY);
     });
     expect(screen.getByTestId("coupon-retry")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId("coupon-retry")).toHaveFocus();
+    });
+    expect(screen.getByTestId("coupon-input")).not.toHaveFocus();
     expect(screen.getByTestId("coupon-input")).toHaveValue("TEST123");
     expect(screen.getByTestId("continue-to-payment")).toBeDisabled();
     expect(screen.queryByText(IMP036J_COPY.APPLIED_COUPON)).not.toBeInTheDocument();

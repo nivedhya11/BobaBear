@@ -30,6 +30,7 @@ import { catalogVariantsTable } from "../../platform/database/schema/catalog";
 import { eq } from "drizzle-orm";
 import {
   loadApplicableAutomaticPromotions,
+  loadRedemptionUsage,
   loadSubmittedCoupon,
   resolveOutletHierarchy,
 } from "../promotions/load-for-evaluation";
@@ -391,6 +392,9 @@ export async function buildDirectPricingQuote(
         promotion: Awaited<ReturnType<typeof loadSubmittedCoupon>>["promotion"];
       }
     | null = null;
+  let redemptionUsage:
+    | Awaited<ReturnType<typeof loadRedemptionUsage>>
+    | undefined;
   if (input.submittedCouponCode) {
     const loaded = await loadSubmittedCoupon(context, input.submittedCouponCode);
     submittedCoupon = {
@@ -398,6 +402,13 @@ export async function buildDirectPricingQuote(
       coupon: loaded.coupon,
       promotion: loaded.promotion,
     };
+    if (loaded.promotion) {
+      redemptionUsage = await loadRedemptionUsage(
+        context,
+        loaded.promotion.id,
+        input.customerId ?? null,
+      );
+    }
   }
 
   // Complimentary projection: price gift variants into the pre-promotion snapshot
@@ -504,6 +515,7 @@ export async function buildDirectPricingQuote(
     promotions: automatic,
     submittedCoupon,
     redemptionEnforcementAvailable: true,
+    redemptionUsage,
     previouslyPresentedComplimentaryVariantId:
       input.previouslyPresentedComplimentaryVariantId ?? null,
   });

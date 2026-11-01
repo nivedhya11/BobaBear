@@ -31,18 +31,18 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2438,
-    "executableTestFiles": 570,
+    "trackedPathsConsidered": 2442,
+    "executableTestFiles": 571,
     "sourceTestFiles": 167,
-    "testsTreeExecutableFiles": 298,
+    "testsTreeExecutableFiles": 299,
     "scriptTestFiles": 105,
-    "playwrightSpecs": 14,
+    "playwrightSpecs": 15,
     "vitestConfigs": 2,
     "playwrightConfigs": 9,
-    "testSupportScripts": 55,
+    "testSupportScripts": 56,
     "packageTestCommands": 94,
     "packageAuditCommands": 28,
-    "packageE2eCommands": 11,
+    "packageE2eCommands": 12,
     "packageCheckCommands": 17,
     "packageCoverageCommands": 1,
     "packageInventoryCommands": 2,
@@ -402,6 +402,7 @@
     "tests/e2e/location-selector-layout.spec.ts",
     "tests/e2e/location-selector-search-map.spec.ts",
     "tests/e2e/operations-lifecycle.spec.ts",
+    "tests/e2e/promotion-browser-journeys.spec.ts",
     "tests/e2e/public-routes.spec.ts",
     "tests/e2e/workforce-auth.spec.ts",
     "tests/enterprise/dark-only-theme.test.ts",
@@ -640,6 +641,7 @@
     "tests/e2e/location-selector-layout.spec.ts",
     "tests/e2e/location-selector-search-map.spec.ts",
     "tests/e2e/operations-lifecycle.spec.ts",
+    "tests/e2e/promotion-browser-journeys.spec.ts",
     "tests/e2e/public-routes.spec.ts",
     "tests/e2e/workforce-auth.spec.ts"
   ],
@@ -670,6 +672,7 @@
     "scripts/e2e/run-customer-ordering-e2e.mjs",
     "scripts/e2e/run-gtm-uat-browser-e2e.mjs",
     "scripts/e2e/run-operations-lifecycle-e2e.mjs",
+    "scripts/e2e/run-promotion-browser-e2e.mjs",
     "scripts/e2e/run-workforce-auth-e2e.mjs",
     "scripts/e2e/seed-commercial-workspace.ts",
     "scripts/e2e/seed-customer-ordering.ts",
@@ -853,6 +856,7 @@
       "test:e2e:headed",
       "test:e2e:location-selector-layout",
       "test:e2e:operations-lifecycle",
+      "test:e2e:promotion-browser",
       "test:e2e:workforce-auth"
     ],
     "check": [
@@ -985,6 +989,7 @@
     "test:e2e:headed": "npm run build && playwright test --headed",
     "test:e2e:location-selector-layout": "NEXT_PUBLIC_BOBA_BEAR_GOOGLE_MAPS_BROWSER_KEY=e2e-maps-browser-key-fixture npm run build && npm run customer-auth:build && npm run customer-commerce:build && playwright test --config=playwright.location-selector.config.ts",
     "test:e2e:operations-lifecycle": "node scripts/e2e/run-operations-lifecycle-e2e.mjs",
+    "test:e2e:promotion-browser": "NEXT_PUBLIC_BOBA_BEAR_GOOGLE_MAPS_BROWSER_KEY=e2e-maps-browser-key-fixture npm run build && npm run customer-auth:build && npm run customer-commerce:build && node scripts/e2e/run-promotion-browser-e2e.mjs",
     "test:e2e:workforce-auth": "npm run build && npm run workforce-auth:build && node scripts/e2e/run-workforce-auth-e2e.mjs",
     "test:imp036i:tranche1": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/imp036i-scheduled-fulfilment.integration.test.ts tests/delivery-application/delivery.d380-finality.test.ts",
     "test:imp036i:tranche2": "node scripts/run-vitest.mjs run tests/scheduled-fulfilment/windows.test.ts && node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/checkout/scheduled-fulfilment.domain.test.ts tests/payment/payment.scheduled.domain.test.ts tests/payment/payment.scheduled-bind-race.domain.test.ts",
@@ -9794,6 +9799,23 @@
         "test:e2e:operations-lifecycle"
       ],
       "ciInclusion": "YES",
+      "test1Layers": [
+        "11-e2e-browser-ui"
+      ],
+      "classificationConfidence": "LOW"
+    },
+    {
+      "path": "tests/e2e/promotion-browser-journeys.spec.ts",
+      "runner": "playwright",
+      "domain": "e2e",
+      "testType": "e2e-spec",
+      "dbRequired": "UNKNOWN",
+      "browserRequired": "YES",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:e2e"
+      ],
+      "ciInclusion": "NO",
       "test1Layers": [
         "11-e2e-browser-ui"
       ],

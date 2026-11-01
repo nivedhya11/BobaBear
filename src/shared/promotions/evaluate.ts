@@ -46,6 +46,17 @@ export type EvaluatePromotionsInput = Readonly<{
   previouslyPresentedComplimentaryVariantId?: string | null;
   /** IMP-022: true when Payment redemption claims can enforce capacity. */
   redemptionEnforcementAvailable?: boolean;
+  /**
+   * Active RESERVED + CONSUMED units for the submitted coupon's promotion.
+   * Personal units are null when no customer identity is present.
+   * Caps are the promotion-row limits; coupon-row limits stay on the coupon.
+   */
+  redemptionUsage?: Readonly<{
+    globalUnits: bigint;
+    personalUnits: bigint | null;
+    promotionGlobalCap: number | null;
+    promotionPersonalCap: number | null;
+  }>;
 }>;
 
 function couponNotApplied(
@@ -145,6 +156,45 @@ function evaluateSubmittedCoupon(
       ),
       couponPromotion: null,
     };
+  }
+
+  if (input.redemptionUsage && redemptionEnforcementAvailable) {
+    const usage = input.redemptionUsage;
+    const identity = {
+      couponId: coupon.id,
+      promotionId: coupon.promotionId,
+      canonicalCode: coupon.canonicalCode,
+    };
+    if (usage.promotionPersonalCap !== null && usage.personalUnits === null) {
+      return {
+        result: couponNotApplied("CUSTOMER_IDENTITY_REQUIRED", "CUSTOMER_IDENTITY_REQUIRED", identity),
+        couponPromotion: null,
+      };
+    }
+    const personalReached =
+      (coupon.maximumRedemptionsPerCustomer !== null &&
+        usage.personalUnits !== null &&
+        usage.personalUnits >= BigInt(coupon.maximumRedemptionsPerCustomer)) ||
+      (usage.promotionPersonalCap !== null &&
+        usage.personalUnits !== null &&
+        usage.personalUnits >= BigInt(usage.promotionPersonalCap));
+    if (personalReached) {
+      return {
+        result: couponNotApplied("NOT_APPLICABLE", "PERSONAL_CAP_REACHED", identity),
+        couponPromotion: null,
+      };
+    }
+    const globalReached =
+      (coupon.maximumRedemptions !== null &&
+        usage.globalUnits >= BigInt(coupon.maximumRedemptions)) ||
+      (usage.promotionGlobalCap !== null &&
+        usage.globalUnits >= BigInt(usage.promotionGlobalCap));
+    if (globalReached) {
+      return {
+        result: couponNotApplied("NOT_APPLICABLE", "GLOBAL_CAP_REACHED", identity),
+        couponPromotion: null,
+      };
+    }
   }
 
   const eligibility = evaluateEligibility(promotion, input.snapshot, input.context);

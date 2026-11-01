@@ -50,7 +50,7 @@ function reportDisk(label) {
       "podman system df 2>/dev/null || echo 'podman system df unavailable'",
       'echo "--- podman graph-root ---"',
       'storage="${HOME:-/home/runner}/.local/share/containers/storage"',
-      'if [ -d "$storage" ]; then du -sh "$storage"/* 2>/dev/null | sort -h; du -sh "$storage"; else echo "storage dir absent: $storage"; fi',
+      'if [ -d "$storage" ]; then timeout 20 du -sh "$storage" 2>/dev/null || echo "podman graph-root du skipped"; else echo "storage dir absent: $storage"; fi',
     ].join("; "),
   ]);
 }
