@@ -51,7 +51,9 @@ async function selectCheckoutFulfilmentDelivery(page: Page): Promise<void> {
   await delivery.focus();
   await expect(delivery).toBeFocused();
   await delivery.click();
-  await expect(delivery).toHaveAttribute("aria-pressed", "true");
+  // Activating Delivery advances to the destination step; the toggle is intentionally unmounted
+  // after the server round-trip, so post-click aria-pressed is not asserted (it raced the unmount).
+  // The caller waits for the destination step, the deterministic outcome.
 }
 
 test.beforeEach(() => {
@@ -213,20 +215,39 @@ async function reachPickupReadyForPayment(page: Page, phoneNumber: string): Prom
   await expect(checkout.getByTestId("checkout-fulfilment-choice")).toBeVisible({ timeout: 20_000 });
 
   // AC-036H-041 — real keyboard: Tab from Delivery to Pickup, Enter to activate.
+  // Successful Pickup selection intentionally replaces the choice UI with the outlet step.
+  // Assert mounted selected-state before activation; assert the outlet step after. Do not
+  // assert post-activation aria-pressed on the unmounted toggle (TEST_TIMING_RACE).
+  // Space is proven independently on the return-to-mode path while the choice is remounted.
   const delivery = checkout.getByTestId("checkout-fulfilment-delivery");
   const pickup = checkout.getByTestId("checkout-fulfilment-pickup");
+  await expect(delivery).toHaveAttribute("aria-pressed", "false");
+  await expect(pickup).toHaveAttribute("aria-pressed", "false");
   await delivery.focus();
   await expect(delivery).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(pickup).toBeFocused();
-  await page.keyboard.press("Enter");
-  await expect(pickup).toHaveAttribute("aria-pressed", "true");
+  // Keyboard Tab alone must not activate Delivery.
   await expect(delivery).toHaveAttribute("aria-pressed", "false");
-  // Space also activates when focused (toggle stays selected).
-  await page.keyboard.press("Space");
-  await expect(pickup).toHaveAttribute("aria-pressed", "true");
-
+  await page.keyboard.press("Enter");
   await expect(checkout.getByTestId("checkout-pickup-outlet")).toBeVisible({ timeout: 20_000 });
+  await expect(checkout.getByTestId("checkout-fulfilment-choice")).toHaveCount(0);
+
+  // Space activates Pickup while the fulfilment choice is mounted (fresh remount after Back).
+  await checkout.getByTestId("checkout-pickup-back-to-mode").click();
+  await expect(checkout.getByTestId("checkout-fulfilment-choice")).toBeVisible({ timeout: 20_000 });
+  const deliveryAgain = checkout.getByTestId("checkout-fulfilment-delivery");
+  const pickupAgain = checkout.getByTestId("checkout-fulfilment-pickup");
+  await expect(deliveryAgain).toHaveAttribute("aria-pressed", "false");
+  await expect(pickupAgain).toHaveAttribute("aria-pressed", "false");
+  await deliveryAgain.focus();
+  await expect(deliveryAgain).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(pickupAgain).toBeFocused();
+  await page.keyboard.press("Space");
+  await expect(checkout.getByTestId("checkout-pickup-outlet")).toBeVisible({ timeout: 20_000 });
+  await expect(checkout.getByTestId("checkout-fulfilment-choice")).toHaveCount(0);
+
   // Single eligible outlet → AUTO_SELECT (AC-036H-003).
   await expect(checkout.getByTestId("checkout-pickup-outlet-auto")).toBeVisible();
   await expect(checkout.getByTestId("checkout-destination-select")).toHaveCount(0);
