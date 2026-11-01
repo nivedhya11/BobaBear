@@ -3,9 +3,46 @@
  * Not mounted in production services. SQL stays on the database boundary.
  */
 import { timingSafeEqual } from "node:crypto";
+import { spawnSync } from "node:child_process";
 import type { IncomingMessage, ServerResponse } from "node:http";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { runGtmUatBrowserControl, type GtmUatControlInput } from "../database/gtm-uat-browser-control-db";
+
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
+
+function armM2ViaChild(databaseUrl: string, scenario: string): Record<string, unknown> {
+  const result = spawnSync(
+    process.execPath,
+    [
+      "--conditions=react-server",
+      "--import",
+      "tsx",
+      path.join(projectRoot, "scripts/database/gtm-uat-m2-scenarios.ts"),
+      scenario,
+    ],
+    {
+      cwd: projectRoot,
+      env: {
+        ...process.env,
+        BOBA_BEAR_ENV: "test",
+        M2_DATABASE_URL: databaseUrl,
+      },
+      encoding: "utf8",
+      timeout: 120_000,
+    },
+  );
+  const line = (result.stdout ?? "").trim().split("\n").filter(Boolean).at(-1) ?? "";
+  try {
+    return JSON.parse(line) as Record<string, unknown>;
+  } catch {
+    const detail = `${result.stderr ?? ""} ${result.error?.message ?? ""}`
+      .replace(/postgres(?:ql)?:\/\/\S+/gi, "[redacted]")
+      .slice(0, 300);
+    return { ok: false, mutated: 0, reason: "M2_SCENARIO_FAILED", message: detail || "no json" };
+  }
+}
 
 const PUBLIC_CONTROL_TOKEN = "gtm-uat-browser-control";
 
@@ -99,6 +136,14 @@ export async function handleGtmUatBrowserControl(
   if (!presentedRunId || !tokensMatch(presentedRunId, options.expectedRunId)) {
     res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
     res.end(JSON.stringify({ ok: false, mutated: 0, reason: "RUN_MISMATCH" }));
+    return;
+  }
+
+  if (input.action === "arm-m2") {
+    const scenario = typeof input.scenario === "string" ? input.scenario : "";
+    const armed = armM2ViaChild(options.databaseUrl, scenario);
+    res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+    res.end(JSON.stringify(armed));
     return;
   }
 

@@ -1,11 +1,16 @@
 /**
  * Load sealed promotions / coupons for quote evaluation (IMP-016).
  */
-import { and, eq, isNull, lte, or, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, lte, or, sql } from "drizzle-orm";
 
+import {
+  checkoutSnapshotsTable,
+  checkoutsTable,
+} from "../../platform/database/schema/checkout";
 import {
   promotionBenefitsTable,
   promotionCouponsTable,
+  promotionRedemptionClaimsTable,
   promotionsTable,
   promotionTargetsTable,
 } from "../../platform/database/schema/promotions";
@@ -221,6 +226,70 @@ export async function loadSubmittedCoupon(
     maximumRedemptionsPerCustomer: row.maximumRedemptionsPerCustomer,
   };
   return { coupon, promotion, canonicalCode };
+}
+
+/**
+ * Active claim units for quote-time cap sentences.
+ * RESERVED and CONSUMED count. RELEASED does not. Matches Payment capacity.
+ */
+export async function loadRedemptionUsage(
+  context: PersistenceQueryContext,
+  promotionId: string,
+  customerAuthUserId: string | null,
+): Promise<{
+  globalUnits: bigint;
+  personalUnits: bigint | null;
+  promotionGlobalCap: number | null;
+  promotionPersonalCap: number | null;
+}> {
+  assertApplicationRole(context, "loadRedemptionUsage");
+  const id = assertUuid(promotionId, "promotionId");
+  const promo = await context.db
+    .select({
+      maximumRedemptions: promotionsTable.maximumRedemptions,
+      maximumRedemptionsPerCustomer: promotionsTable.maximumRedemptionsPerCustomer,
+    })
+    .from(promotionsTable)
+    .where(eq(promotionsTable.id, id))
+    .limit(1);
+  const globalRows = await context.db
+    .select({
+      total: sql<string>`coalesce(sum(${promotionRedemptionClaimsTable.redemptionUnits}), 0)`,
+    })
+    .from(promotionRedemptionClaimsTable)
+    .where(
+      and(
+        eq(promotionRedemptionClaimsTable.promotionId, id),
+        inArray(promotionRedemptionClaimsTable.status, ["RESERVED", "CONSUMED"]),
+      ),
+    );
+  let personalUnits: bigint | null = null;
+  if (customerAuthUserId) {
+    const personalRows = await context.db
+      .select({
+        total: sql<string>`coalesce(sum(${promotionRedemptionClaimsTable.redemptionUnits}), 0)`,
+      })
+      .from(promotionRedemptionClaimsTable)
+      .innerJoin(
+        checkoutSnapshotsTable,
+        eq(checkoutSnapshotsTable.id, promotionRedemptionClaimsTable.checkoutSnapshotId),
+      )
+      .innerJoin(checkoutsTable, eq(checkoutsTable.id, checkoutSnapshotsTable.checkoutId))
+      .where(
+        and(
+          eq(promotionRedemptionClaimsTable.promotionId, id),
+          inArray(promotionRedemptionClaimsTable.status, ["RESERVED", "CONSUMED"]),
+          eq(checkoutsTable.customerAuthUserId, customerAuthUserId),
+        ),
+      );
+    personalUnits = BigInt(personalRows[0]?.total ?? "0");
+  }
+  return {
+    globalUnits: BigInt(globalRows[0]?.total ?? "0"),
+    personalUnits,
+    promotionGlobalCap: promo[0]?.maximumRedemptions ?? null,
+    promotionPersonalCap: promo[0]?.maximumRedemptionsPerCustomer ?? null,
+  };
 }
 
 // silence unused import when tree-shaken oddly

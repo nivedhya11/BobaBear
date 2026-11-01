@@ -260,6 +260,26 @@ export function CheckoutClient(props: { brandId: string }) {
   }
 
   useEffect(() => {
+    if (screen !== "review" || couponPending || staleRecovery?.kind) return;
+    if (!cart?.manualCouponCode) return;
+    const status = couponFieldStatusFromExplanation({
+      explanation: parseCommercialExplanation(reviewQuote),
+      fulfilmentMode: snapshot?.fulfilmentMode ?? chosenMode,
+    });
+    if (!status?.text || status.invalid || status.showSignIn) return;
+    setCouponFocusResultToken((token) => token + 1);
+  }, [
+    screen,
+    evaluationId,
+    cart?.manualCouponCode,
+    couponPending,
+    staleRecovery?.kind,
+    reviewQuote,
+    snapshot?.fulfilmentMode,
+    chosenMode,
+  ]);
+
+  useEffect(() => {
     if (screen !== "review" || !evaluationId || couponPending) return;
     void postCommittedPresentationObservation(reviewSummaryRef.current, {
       evaluationId,

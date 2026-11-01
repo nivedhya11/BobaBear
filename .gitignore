@@ -22,6 +22,7 @@
 /test-results-commercial-workspace
 /test-results-cross-portal-promotion
 /test-results-gtm-uat-browser
+/test-results-promotion-browser
 /blob-report
 /artifacts/playwright-report-customer-auth/
 /artifacts/test-results-customer-auth/
