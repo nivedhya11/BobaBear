@@ -161,6 +161,11 @@ export function CheckoutClient(props: { brandId: string }) {
    * a newer generation has begun.
    */
   const reviewAsyncGenerationRef = useRef(0);
+  /**
+   * Focus the coupon result once, only when Review first shows a coupon that
+   * was already on the cart after sign-in. A later review mutation owns focus.
+   */
+  const carriedCouponResultFocusRef = useRef(false);
   const [giftGone, setGiftGone] = useState(false);
   const [offerDropped, setOfferDropped] = useState(false);
   const reviewSummaryRef = useRef<HTMLDivElement | null>(null);
@@ -260,13 +265,15 @@ export function CheckoutClient(props: { brandId: string }) {
   }
 
   useEffect(() => {
-    if (screen !== "review" || couponPending || staleRecovery?.kind) return;
+    if (carriedCouponResultFocusRef.current) return;
+    if (screen !== "review" || couponPending || staleRecovery?.kind || couponStatusOverride) return;
     if (!cart?.manualCouponCode) return;
     const status = couponFieldStatusFromExplanation({
       explanation: parseCommercialExplanation(reviewQuote),
       fulfilmentMode: snapshot?.fulfilmentMode ?? chosenMode,
     });
     if (!status?.text || status.invalid || status.showSignIn) return;
+    carriedCouponResultFocusRef.current = true;
     document
       .querySelector<HTMLElement>("[data-testid='checkout-review'] [data-testid='coupon-result']")
       ?.focus();
@@ -275,6 +282,7 @@ export function CheckoutClient(props: { brandId: string }) {
     evaluationId,
     cart?.manualCouponCode,
     couponPending,
+    couponStatusOverride,
     staleRecovery?.kind,
     reviewQuote,
     snapshot?.fulfilmentMode,
@@ -351,7 +359,11 @@ export function CheckoutClient(props: { brandId: string }) {
   }
 
   type ReviewRebaseResult =
-    | { ok: true; snapshot: CommerceCheckoutSnapshot }
+    | {
+        ok: true;
+        snapshot: CommerceCheckoutSnapshot;
+        quote: { commercialExplanation?: unknown } | null;
+      }
     | { ok: false; code: string };
 
   /**
@@ -487,13 +499,20 @@ export function CheckoutClient(props: { brandId: string }) {
     adoptEvaluated(evaluated.data);
     setChosenMode(evaluated.data.snapshot.fulfilmentMode);
     setScreen("review");
-    return { ok: true, snapshot: evaluated.data.snapshot };
+    return {
+      ok: true,
+      snapshot: evaluated.data.snapshot,
+      quote: evaluated.data.quote ?? null,
+    };
   }
 
   async function mutateReviewCoupon(
     work: () => Promise<{ ok: true; data: { cart: CommerceCart } } | { ok: false; code: string }>,
   ): Promise<void> {
     if (!cart || couponPending) return;
+    // A review mutation owns focus from here. The carried-coupon effect must
+    // not move focus back to a preserved successful result after a failure.
+    carriedCouponResultFocusRef.current = true;
     // Customer coupon mutation supersedes any in-flight automatic recovery.
     const generation = beginReviewAsync();
     const priorSnapshot = snapshot;
@@ -558,7 +577,15 @@ export function CheckoutClient(props: { brandId: string }) {
       return;
     }
     setCouponStatusOverride(null);
-    setCouponFocusResultToken((token) => token + 1);
+    const appliedStatus = couponFieldStatusFromExplanation({
+      explanation: parseCommercialExplanation(rebased.quote),
+      fulfilmentMode: rebased.snapshot.fulfilmentMode,
+    });
+    if (appliedStatus?.invalid) {
+      setCouponFocusInputToken((token) => token + 1);
+    } else {
+      setCouponFocusResultToken((token) => token + 1);
+    }
     // Case E / recovery escape — a successful coupon-driven re-evaluation is a
     // fresh authoritative Review; clear prior payment-start recovery chrome.
     setStaleRecovery(null);

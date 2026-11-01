@@ -13,6 +13,18 @@ import { runGtmUatBrowserControl, type GtmUatControlInput } from "../database/gt
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 function armM2ViaChild(databaseUrl: string, scenario: string): Record<string, unknown> {
+  return runM2Child(databaseUrl, [scenario]);
+}
+
+function seedCapViaChild(
+  databaseUrl: string,
+  couponCode: string,
+  phone: string,
+): Record<string, unknown> {
+  return runM2Child(databaseUrl, ["seed-cap", couponCode, phone]);
+}
+
+function runM2Child(databaseUrl: string, args: string[]): Record<string, unknown> {
   const result = spawnSync(
     process.execPath,
     [
@@ -20,7 +32,7 @@ function armM2ViaChild(databaseUrl: string, scenario: string): Record<string, un
       "--import",
       "tsx",
       path.join(projectRoot, "scripts/database/gtm-uat-m2-scenarios.ts"),
-      scenario,
+      ...args,
     ],
     {
       cwd: projectRoot,
@@ -144,6 +156,15 @@ export async function handleGtmUatBrowserControl(
     const armed = armM2ViaChild(options.databaseUrl, scenario);
     res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
     res.end(JSON.stringify(armed));
+    return;
+  }
+
+  if (input.action === "seed-cap-claim") {
+    const couponCode = typeof input.couponCode === "string" ? input.couponCode : "";
+    const phone = typeof input.phone === "string" ? input.phone : "";
+    const seeded = seedCapViaChild(options.databaseUrl, couponCode, phone);
+    res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+    res.end(JSON.stringify(seeded));
     return;
   }
 

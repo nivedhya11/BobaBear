@@ -13,6 +13,7 @@ import { workforceAuthUsers } from "../../src/platform/database/schema/workforce
 import type { WebConfig } from "../../src/platform/config";
 import { getApplicationPersistence } from "../../src/server/persistence";
 import type { Persistence, PersistenceTransactionContext } from "../../src/server/persistence/types";
+import { loadRedemptionUsage } from "../../src/server/promotions/load-for-evaluation";
 import {
   activateCoupon,
   activatePromotion,
@@ -509,12 +510,203 @@ export async function armM2Scenario(
   }
 }
 
+/**
+ * Disposable proof that quote-time usage matches Payment capacity:
+ * RESERVED and CONSUMED count, RELEASED does not, and the totals are
+ * promotion-scoped. Does not change payment authority.
+ */
+export async function seedCapUsage(
+  databaseUrl: string,
+  couponCode: string,
+  phone: string,
+): Promise<Record<string, unknown>> {
+  if (!/^[A-Z0-9]{1,32}$/.test(couponCode)) {
+    return { ok: false, mutated: 0, reason: "BAD_CODE" };
+  }
+  const digits = phone.replace(/\D/g, "");
+  if (!/^[6-9]\d{9}$/.test(digits)) {
+    return { ok: false, mutated: 0, reason: "BAD_PHONE" };
+  }
+  const e164 = `+91${digits}`;
+  const persistence = persistenceFor(databaseUrl);
+  const now = new Date();
+  try {
+    return await persistence.transaction(async (tx) => {
+      const customer = await tx.db.execute(sql`
+        select id
+        from app.customer_auth_users
+        where phone_number = ${e164} or phone_number = ${digits}
+        limit 1
+      `);
+      const customerId = customer.rows[0]?.id as string | undefined;
+      if (!customerId) return { ok: false, mutated: 0, reason: "CUSTOMER_NOT_FOUND" };
+      const snapshot = await tx.db.execute(sql`
+        select s.id::text as snapshot_id, s.checkout_id::text as checkout_id
+        from app.checkout_snapshots s
+        join app.checkouts c on c.id = s.checkout_id
+        where c.customer_auth_user_id = ${customerId}
+        order by s.created_at desc
+        limit 1
+      `);
+      const snapshotId = snapshot.rows[0]?.snapshot_id as string | undefined;
+      const checkoutId = snapshot.rows[0]?.checkout_id as string | undefined;
+      if (!snapshotId || !checkoutId) {
+        return { ok: false, mutated: 0, reason: "SNAPSHOT_NOT_FOUND" };
+      }
+      const coupon = await tx.db.execute(sql`
+        select promotion_id::text as promotion_id
+        from app.promotion_coupons
+        where canonical_code = ${couponCode}
+        limit 1
+      `);
+      const promotionId = coupon.rows[0]?.promotion_id as string | undefined;
+      if (!promotionId) return { ok: false, mutated: 0, reason: "COUPON_NOT_FOUND" };
+
+      const before = await loadRedemptionUsage(tx, promotionId, customerId);
+      // Claims hang off a cancelled checkout so the live Review snapshot stays unpaid.
+      const shadowCheckout = await tx.db.execute(sql`
+        insert into app.checkouts (
+          id, customer_auth_user_id, brand_id, cart_id, source_cart_revision, revision,
+          status, fulfilment_mode, fulfilment_timing, expires_at, active_snapshot_id,
+          created_at, updated_at
+        )
+        select
+          gen_random_uuid(), customer_auth_user_id, brand_id, cart_id,
+          source_cart_revision, revision, 'CANCELLED', fulfilment_mode, fulfilment_timing,
+          expires_at, null, created_at, updated_at
+        from app.checkouts
+        where id = ${checkoutId}::uuid
+        returning id::text as id
+      `);
+      const shadowCheckoutId = shadowCheckout.rows[0]?.id as string | undefined;
+      if (!shadowCheckoutId) return { ok: false, mutated: 0, reason: "SHADOW_CHECKOUT_FAILED" };
+      const shadowSnapshot = await tx.db.execute(sql`
+        insert into app.checkout_snapshots
+        select (jsonb_populate_record(
+          null::app.checkout_snapshots,
+          to_jsonb(s) || jsonb_build_object(
+            'id', gen_random_uuid(),
+            'checkout_id', ${shadowCheckoutId}::uuid
+          )
+        )).*
+        from app.checkout_snapshots s
+        where s.id = ${snapshotId}::uuid
+        returning id::text as id
+      `);
+      const claimSnapshotId = shadowSnapshot.rows[0]?.id as string | undefined;
+      if (!claimSnapshotId) return { ok: false, mutated: 0, reason: "SHADOW_SNAPSHOT_FAILED" };
+      const inserted = await tx.db.execute(sql`
+        insert into app.payments (
+          id, checkout_id, checkout_snapshot_id, status, created_at, updated_at,
+          succeeded_at, cancelled_at, expired_at, superseded_at
+        ) values (
+          gen_random_uuid(), ${shadowCheckoutId}::uuid, ${claimSnapshotId}::uuid, 'CANCELLED',
+          ${now}, ${now}, null, ${now}, null, null
+        )
+        returning id::text as id
+      `);
+      const paymentId = inserted.rows[0]?.id as string;
+      const ordinalRow = await tx.db.execute(sql`
+        select coalesce(max(attempt_ordinal), 0)::text as max_ordinal
+        from app.payment_attempts
+        where payment_id = ${paymentId}::uuid
+      `);
+      let ordinal = BigInt(String(ordinalRow.rows[0]?.max_ordinal ?? "0"));
+      const stamp = randomBytes(4).toString("hex");
+      const reservedAttempt = await tx.db.execute(sql`
+        insert into app.payment_attempts (
+          id, payment_id, attempt_ordinal, provider, method_intent,
+          provider_execution_identity, status, created_at, updated_at,
+          pending_at, indeterminate_at, succeeded_at, failed_at, cancelled_at
+        ) values (
+          gen_random_uuid(), ${paymentId}::uuid, ${ordinal + BigInt(1)}, 'e2e', 'upi',
+          ${`e2e-reserved-${stamp}`}, 'CREATED', ${now}, ${now},
+          null, null, null, null, null
+        )
+        returning id::text as id
+      `);
+      ordinal += BigInt(1);
+      const releasedAttempt = await tx.db.execute(sql`
+        insert into app.payment_attempts (
+          id, payment_id, attempt_ordinal, provider, method_intent,
+          provider_execution_identity, status, created_at, updated_at,
+          pending_at, indeterminate_at, succeeded_at, failed_at, cancelled_at
+        ) values (
+          gen_random_uuid(), ${paymentId}::uuid, ${ordinal + BigInt(1)}, 'e2e', 'upi',
+          ${`e2e-released-${stamp}`}, 'FAILED', ${now}, ${now},
+          null, null, null, ${now}, null
+        )
+        returning id::text as id
+      `);
+      const reservedAttemptId = reservedAttempt.rows[0]?.id as string;
+      const releasedAttemptId = releasedAttempt.rows[0]?.id as string;
+      await tx.db.execute(sql`
+        insert into app.promotion_redemption_claims (
+          id, promotion_id, checkout_snapshot_id, payment_id, payment_attempt_id,
+          redemption_units, status, created_at, consumed_at, released_at
+        ) values (
+          gen_random_uuid(), ${promotionId}::uuid, ${claimSnapshotId}::uuid,
+          ${paymentId}::uuid, ${reservedAttemptId}::uuid,
+          1, 'RESERVED', ${now}, null, null
+        )
+      `);
+      await tx.db.execute(sql`
+        insert into app.promotion_redemption_claims (
+          id, promotion_id, checkout_snapshot_id, payment_id, payment_attempt_id,
+          redemption_units, status, created_at, consumed_at, released_at
+        ) values (
+          gen_random_uuid(), ${promotionId}::uuid, ${claimSnapshotId}::uuid,
+          ${paymentId}::uuid, ${releasedAttemptId}::uuid,
+          1, 'RELEASED', ${now}, null, ${now}
+        )
+      `);
+      await tx.db.execute(sql`
+        insert into app.promotion_redemption_claims (
+          id, promotion_id, checkout_snapshot_id, payment_id, payment_attempt_id,
+          redemption_units, status, created_at, consumed_at, released_at
+        ) values (
+          gen_random_uuid(), ${promotionId}::uuid, ${claimSnapshotId}::uuid,
+          null, null, 1, 'CONSUMED', ${now}, ${now}, null
+        )
+      `);
+      const after = await loadRedemptionUsage(tx, promotionId, customerId);
+      const counted = after.globalUnits;
+      const releasedExcluded = counted === before.globalUnits + BigInt(2);
+      return {
+        ok: true,
+        mutated: 1,
+        beforeGlobalUnits: before.globalUnits.toString(),
+        beforePersonalUnits: before.personalUnits?.toString() ?? null,
+        globalUnits: after.globalUnits.toString(),
+        personalUnits: after.personalUnits?.toString() ?? null,
+        reservedUnits: "1",
+        consumedUnits: "1",
+        releasedUnits: "1",
+        countedUnits: counted.toString(),
+        releasedExcluded,
+      };
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "CAP_SEED_FAILED";
+    return {
+      ok: false,
+      mutated: 0,
+      reason: "CAP_SEED_FAILED",
+      message: message.replace(/postgres(?:ql)?:\/\/\S+/gi, "[redacted]").slice(0, 300),
+    };
+  }
+}
+
 const invokedDirectly =
   process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 if (invokedDirectly) {
-  const scenario = process.argv[2] ?? "";
+  const command = process.argv[2] ?? "";
   const databaseUrl = process.env.M2_DATABASE_URL ?? "";
-  armM2Scenario(databaseUrl, scenario)
+  const pending =
+    command === "seed-cap"
+      ? seedCapUsage(databaseUrl, process.argv[3] ?? "", process.argv[4] ?? "")
+      : armM2Scenario(databaseUrl, command);
+  pending
     .then((result) => {
       process.stdout.write(`${JSON.stringify(result)}\n`);
       process.exit(result.ok === true ? 0 : 1);

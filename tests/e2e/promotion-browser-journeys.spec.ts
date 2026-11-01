@@ -444,10 +444,30 @@ test("cart and review share one code, replace drops the previous code, and a dro
   await expect(review.getByText(basic, { exact: true })).toHaveCount(0);
 
   const payable = await review.getByTestId("price-summary-total").getAttribute("data-offer-amount");
+  await page.route("**/api/v1/cart/coupon", async (route) => {
+    const pathname = new URL(route.request().url()).pathname;
+    if (pathname.endsWith("/api/v1/cart/coupon")) await route.abort();
+    else await route.continue();
+  });
+  await review.getByTestId("coupon-input").fill(basic);
+  await review.getByTestId("coupon-change").click();
+  await expect(review.getByTestId("coupon-result")).toContainText(IMP036J_COPY.RETRY, { timeout: 20_000 });
+  await expect(review.getByTestId("coupon-input")).toBeFocused();
+  await expect(review.getByTestId("coupon-input")).toHaveValue(basic);
+  await expect(review.getByTestId("coupon-result")).not.toBeFocused();
+  expect(await componentAmount(page, "ORDER_SAVING")).toBe("2000");
+  expect(await review.getByTestId("price-summary-total").getAttribute("data-offer-amount")).toBe(payable);
+  await expect(review.getByText(IMP036J_COPY.APPLIED_COUPON)).toHaveCount(1);
+  await page.unroute("**/api/v1/cart/coupon");
+
+  await review.getByTestId("coupon-input").fill(swap);
   await page.route("**/api/v1/cart/coupon/remove", (route) => route.abort());
   await review.getByTestId("coupon-remove").click();
   await expect(review.getByTestId("coupon-result")).toContainText(IMP036J_COPY.RETRY, { timeout: 20_000 });
   await expect(review.getByTestId("coupon-retry")).toBeVisible();
+  await expect(review.getByTestId("coupon-input")).toBeFocused();
+  await expect(review.getByTestId("coupon-input")).toHaveValue(swap);
+  await expect(review.getByTestId("coupon-result")).not.toBeFocused();
   expect(await componentAmount(page, "ORDER_SAVING")).toBe("2000");
   expect(await review.getByTestId("price-summary-total").getAttribute("data-offer-amount")).toBe(payable);
   await expect(review.getByText(IMP036J_COPY.APPLIED_COUPON)).toHaveCount(1);
@@ -488,5 +508,90 @@ test("guest identity coupon asks for sign-in and the same code is retried after 
     timeout: 20_000,
   });
   await expect(review.getByTestId("coupon-result")).toBeFocused();
+  await expect(review.getByTestId("coupon-input")).not.toBeFocused();
   await shot(page, testInfo, "ac-002-04-identity-retry");
+});
+
+test("global coupon cap stays open under the limit and closes with the exhausted sentence", async ({
+  page,
+}, testInfo) => {
+  const phone = nextPhone();
+  await reachReview(page, phone, "PICKUP");
+  const coupons = await arm(page, "cap-global");
+  const code = coupons.global;
+  if (!code) throw new Error("global cap coupon was not seeded");
+  const review = page.getByTestId("checkout-review");
+  await review.getByTestId("coupon-input").fill(code);
+  await review.getByTestId("coupon-apply").click();
+  await expect(review.getByTestId("coupon-result")).toHaveText(IMP036J_COPY.APPLIED_COUPON, {
+    timeout: 20_000,
+  });
+  expect(await componentAmount(page, "ORDER_SAVING")).toBe("1000");
+  await expect(review.getByTestId("coupon-result")).not.toHaveText(IMP036J_COPY.GLOBAL_CAP);
+
+  const seeded = await control(page, { action: "seed-cap-claim", couponCode: code, phone });
+  expect(seeded.beforeGlobalUnits).toBe("0");
+  expect(seeded.reservedUnits).toBe("1");
+  expect(seeded.consumedUnits).toBe("1");
+  expect(seeded.releasedUnits).toBe("1");
+  expect(seeded.globalUnits).toBe("2");
+  expect(seeded.countedUnits).toBe("2");
+  expect(seeded.releasedExcluded).toBe(true);
+  expect(seeded.personalUnits).toBe("2");
+
+  await review.getByTestId("coupon-remove").click();
+  await expect(review.getByTestId("coupon-apply")).toBeVisible({ timeout: 20_000 });
+  await expect.poll(async () => componentAmount(page, "ORDER_SAVING")).toBeNull();
+  const payable = await review.getByTestId("price-summary-total").getAttribute("data-offer-amount");
+  await review.getByTestId("coupon-input").fill(code);
+  await review.getByTestId("coupon-apply").click();
+  const result = review.getByTestId("coupon-result");
+  await expect(result).toHaveText(IMP036J_COPY.GLOBAL_CAP, { timeout: 20_000 });
+  await expect(result).not.toHaveText(IMP036J_COPY.PERSONAL_CAP);
+  await expect(result).not.toHaveText(IMP036J_COPY.INVALID);
+  await expect(result).not.toHaveText(IMP036J_COPY.EXPIRED);
+  await expect(result).not.toContainText(/\d+\s*(redemptions?|customers?|left|uses|remaining)/i);
+  await expect(review.getByTestId("coupon-input")).toBeFocused();
+  expect(await componentAmount(page, "ORDER_SAVING")).toBeNull();
+  expect(await review.getByTestId("price-summary-total").getAttribute("data-offer-amount")).toBe(payable);
+  await shot(page, testInfo, "ac-007-01-global-cap");
+});
+
+test("personal coupon cap uses the customer's own sentence and hides the count", async ({
+  page,
+}, testInfo) => {
+  const phone = nextPhone();
+  await reachReview(page, phone, "PICKUP");
+  const coupons = await arm(page, "cap-personal");
+  const code = coupons.personal;
+  if (!code) throw new Error("personal cap coupon was not seeded");
+  const review = page.getByTestId("checkout-review");
+  await review.getByTestId("coupon-input").fill(code);
+  await review.getByTestId("coupon-apply").click();
+  await expect(review.getByTestId("coupon-result")).toHaveText(IMP036J_COPY.APPLIED_COUPON, {
+    timeout: 20_000,
+  });
+  expect(await componentAmount(page, "ORDER_SAVING")).toBe("1000");
+
+  const seeded = await control(page, { action: "seed-cap-claim", couponCode: code, phone });
+  expect(seeded.beforePersonalUnits).toBe("0");
+  expect(seeded.personalUnits).toBe("2");
+  expect(seeded.globalUnits).toBe("2");
+  expect(seeded.releasedExcluded).toBe(true);
+
+  await review.getByTestId("coupon-remove").click();
+  await expect(review.getByTestId("coupon-apply")).toBeVisible({ timeout: 20_000 });
+  await expect.poll(async () => componentAmount(page, "ORDER_SAVING")).toBeNull();
+  const payable = await review.getByTestId("price-summary-total").getAttribute("data-offer-amount");
+  await review.getByTestId("coupon-input").fill(code);
+  await review.getByTestId("coupon-apply").click();
+  const result = review.getByTestId("coupon-result");
+  await expect(result).toHaveText(IMP036J_COPY.PERSONAL_CAP, { timeout: 20_000 });
+  await expect(result).not.toHaveText(IMP036J_COPY.GLOBAL_CAP);
+  await expect(result).not.toHaveText(IMP036J_COPY.INVALID);
+  await expect(result).not.toContainText(/\d+\s*(redemptions?|customers?|left|uses|remaining)/i);
+  await expect(review.getByTestId("coupon-input")).toBeFocused();
+  expect(await componentAmount(page, "ORDER_SAVING")).toBeNull();
+  expect(await review.getByTestId("price-summary-total").getAttribute("data-offer-amount")).toBe(payable);
+  await shot(page, testInfo, "ac-007-01-personal-cap");
 });
