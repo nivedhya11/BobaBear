@@ -31,15 +31,15 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2442,
-    "executableTestFiles": 571,
+    "trackedPathsConsidered": 2445,
+    "executableTestFiles": 573,
     "sourceTestFiles": 167,
-    "testsTreeExecutableFiles": 299,
+    "testsTreeExecutableFiles": 301,
     "scriptTestFiles": 105,
     "playwrightSpecs": 15,
     "vitestConfigs": 2,
     "playwrightConfigs": 9,
-    "testSupportScripts": 56,
+    "testSupportScripts": 57,
     "packageTestCommands": 94,
     "packageAuditCommands": 28,
     "packageE2eCommands": 12,
@@ -364,6 +364,7 @@
     "tests/database/migration-cli.integration.test.ts",
     "tests/database/migrations.integration.test.ts",
     "tests/database/notifications.integration.test.ts",
+    "tests/database/operator-promotion-administration-http.integration.test.ts",
     "tests/database/order.integration.test.ts",
     "tests/database/outbox-idempotency-migration.integration.test.ts",
     "tests/database/outbox.integration.test.ts",
@@ -493,6 +494,7 @@
     "tests/promotion-coupons/outcomes.test.ts",
     "tests/promotion-pricing-parity/parity.test.ts",
     "tests/promotions/bogo.test.ts",
+    "tests/promotions/competing-complimentary-evaluator.test.ts",
     "tests/promotions/engine.test.ts",
     "tests/promotions/fatal-and-money.test.ts",
     "tests/promotions/imp036j-tranche3-commercial-evaluation.test.ts",
@@ -665,6 +667,7 @@
     "scripts/e2e/build-operations-lifecycle-seed.mjs",
     "scripts/e2e/customer-auth-server.ts",
     "scripts/e2e/customer-ordering-server.ts",
+    "scripts/e2e/evaluate-competing-complimentary.ts",
     "scripts/e2e/gtm-uat-browser-control.ts",
     "scripts/e2e/run-commercial-workspace-e2e.mjs",
     "scripts/e2e/run-cross-portal-promotion-e2e.mjs",
@@ -1002,7 +1005,7 @@
     "test:imp036j:tranche3": "node scripts/run-vitest.mjs run tests/promotions/imp036j-tranche3-commercial-evaluation.test.ts tests/promotions/engine.test.ts tests/promotions/fatal-and-money.test.ts tests/promotions/tax-integration.test.ts tests/promotions/bogo.test.ts tests/promotions/targets-modifiers.test.ts",
     "test:imp036j:tranche4": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/imp036j-tranche4-commercial-commands.integration.test.ts",
     "test:imp036j:tranche5": "node scripts/run-vitest.mjs run src/server/customer-commerce/measurement/compare-presentation.test.ts src/components/ordering/imp036j-tranche5-presentation.test.tsx src/components/ordering/imp036j-tranche5-checkout-remediation.test.tsx src/components/ordering/committed-presentation-observation.test.ts src/components/ordering/checkout-snapshot-presentation.test.ts src/shared/order/money-summary.test.ts && node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/imp036j-tranche5-customer-presentation.integration.test.ts && node scripts/imp036j-tranche5-responsive-proof.mjs",
-    "test:imp036j:tranche6": "node scripts/run-vitest.mjs run tests/administration/PromotionsEditor.test.tsx && node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/imp036j-tranche6-workforce-authoring.integration.test.ts",
+    "test:imp036j:tranche6": "node scripts/run-vitest.mjs run tests/administration/PromotionsEditor.test.tsx && node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/imp036j-tranche6-workforce-authoring.integration.test.ts tests/database/operator-promotion-administration-http.integration.test.ts",
     "test:imp036j:tranche7": "node scripts/run-vitest.mjs run src/server/customer-commerce/measurement/report-window.test.ts && node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/imp036j-tranche7-measurement-reporting.integration.test.ts",
     "test:imp036j:tranche8": "node scripts/run-vitest.mjs run tests/imp036j/imp036j-tranche8-coverage.test.ts && node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/database/imp036j-tranche8-integration-hardening.integration.test.ts && node scripts/imp036j-tranche8-golden-journeys.mjs && node scripts/imp036j-tranche8-responsive-browser-proof.mjs",
     "test:menu-import": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/menu-import",
@@ -9151,6 +9154,25 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "tests/database/operator-promotion-administration-http.integration.test.ts",
+      "runner": "vitest",
+      "domain": "database/operator-promotion-administration-http",
+      "testType": "integration",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:imp036j:tranche6"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "4-integration",
+        "5-database-integration",
+        "6-http-api-contract"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "tests/database/order.integration.test.ts",
       "runner": "vitest",
       "domain": "database/order",
@@ -11420,6 +11442,25 @@
         "test",
         "test:coverage",
         "test:imp036j:tranche3",
+        "test:promotions"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/promotions/competing-complimentary-evaluator.test.ts",
+      "runner": "vitest",
+      "domain": "promotions",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage",
         "test:promotions"
       ],
       "ciInclusion": "YES",

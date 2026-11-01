@@ -143,10 +143,18 @@ describe("IMP-036J Tranche 5 customer presentation", () => {
         payableLabel={IMP036J_COPY.TOTAL_PAYABLE}
         payablePaise="11900"
         deliveryChargePaise="0"
+        fulfilmentMode="DELIVERY"
       />,
     );
     expect(screen.getByText(IMP036J_COPY.ORDER_SAVING_ROW)).toBeInTheDocument();
+    expect(screen.getByText(IMP036J_COPY.DELIVERY_ROW)).toBeInTheDocument();
+    expect(screen.getByText("₹0.00")).toBeInTheDocument();
     expect(screen.queryByText(IMP036J_COPY.DELIVERY_SAVING_ROW)).not.toBeInTheDocument();
+    expect(document.querySelector("[data-offer-component='DELIVERY_CHARGE']")).toHaveAttribute(
+      "data-offer-amount",
+      "0",
+    );
+    expect(document.querySelector("[data-offer-component='DELIVERY_SAVING']")).toBeNull();
   });
 
   it("maps coupon presentation classes to locked copy and never says better price on equal payable", () => {
@@ -294,6 +302,27 @@ describe("IMP-036J Tranche 5 customer presentation", () => {
       />,
     );
     expect(screen.getByTestId("copy-gift-conflict")).toHaveTextContent(IMP036J_COPY.GIFT_CONFLICT);
+    expect(screen.queryByTestId("complimentary-line")).not.toBeInTheDocument();
+  });
+
+  it("does not show competing-gift conflict copy before a line was shown", () => {
+    render(
+      <CommercialOfferStack
+        explanation={{
+          couponPresentationClass: null,
+          merchandiseOrOrderSavingPaise: "0",
+          deliverySavingPaise: "0",
+          totalSavedPaise: "0",
+          grandTotalPaise: "19900",
+          thresholdProgress: null,
+          complimentary: { competingOffers: "NONE_CHOSEN" },
+          submittedCouponResult: null,
+        }}
+        payableLabel={IMP036J_COPY.TOTAL_PAYABLE}
+        payablePaise="19900"
+      />,
+    );
+    expect(screen.queryByTestId("copy-gift-conflict")).not.toBeInTheDocument();
     expect(screen.queryByTestId("complimentary-line")).not.toBeInTheDocument();
   });
 

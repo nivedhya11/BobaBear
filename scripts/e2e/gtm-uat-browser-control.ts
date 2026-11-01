@@ -9,6 +9,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { runGtmUatBrowserControl, type GtmUatControlInput } from "../database/gtm-uat-browser-control-db";
+import { evaluateSyntheticComplimentaryDefinitions } from "./evaluate-competing-complimentary";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -152,6 +153,13 @@ export async function handleGtmUatBrowserControl(
   if (!presentedRunId || !tokensMatch(presentedRunId, options.expectedRunId)) {
     res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
     res.end(JSON.stringify({ ok: false, mutated: 0, reason: "RUN_MISMATCH" }));
+    return;
+  }
+
+  if (input.action === "evaluate-competing-complimentary") {
+    const evaluated = evaluateSyntheticComplimentaryDefinitions(2);
+    res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+    res.end(JSON.stringify(evaluated));
     return;
   }
 

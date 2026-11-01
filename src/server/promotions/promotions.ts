@@ -771,7 +771,11 @@ export async function activatePromotion(
     .limit(1);
   const benefitRow = benefits[0];
   if (!benefitRow) {
-    throw new PromotionAdminError("PROMOTION_BENEFIT_INVALID", "Benefit required before activation.");
+    throw new PromotionAdminError(
+      "PROMOTION_BENEFIT_INVALID",
+      "Benefit required before activation.",
+      { field: "benefit" },
+    );
   }
   const isComplimentaryBenefit = benefitRow.benefitType === "complimentary_item";
   if (row.complimentaryItem !== isComplimentaryBenefit) {

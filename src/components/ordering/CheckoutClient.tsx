@@ -187,6 +187,21 @@ export function CheckoutClient(props: { brandId: string }) {
   const [scheduledWindows, setScheduledWindows] = useState<CommerceScheduledWindows | null>(null);
   const [selectedWindowStart, setSelectedWindowStart] = useState<string | null>(null);
   const reviewExplanation = parseCommercialExplanation(reviewQuote);
+  const [sawComplimentaryLine, setSawComplimentaryLine] = useState(false);
+  const reviewComplimentaryCompeting = reviewExplanation?.complimentary?.competingOffers ?? null;
+  const reviewComplimentaryVariantId =
+    reviewExplanation?.complimentary?.competingOffers === "NONE"
+      ? reviewExplanation.complimentary.variantId
+      : null;
+  if (
+    !sawComplimentaryLine &&
+    reviewComplimentaryCompeting === "NONE" &&
+    reviewComplimentaryVariantId
+  ) {
+    setSawComplimentaryLine(true);
+  }
+  const showGiftConflict =
+    sawComplimentaryLine && reviewComplimentaryCompeting === "NONE_CHOSEN";
   const reviewCommercialCurrent = isReviewCommercialCurrent({
     cartRevision: cart?.revision ?? null,
     snapshotSourceCartRevision: snapshot?.sourceCartRevision ?? null,
@@ -251,9 +266,10 @@ export function CheckoutClient(props: { brandId: string }) {
         (line as { lineOrigin?: string }).lineOrigin === "complimentary_offer"
       );
     });
-    if (hadGift && !hasGift) setGiftGone(true);
     const previousExplanation = parseCommercialExplanation(reviewQuote);
     const nextExplanation = parseCommercialExplanation(evaluated.quote ?? null);
+    const competingNoneChosen = nextExplanation?.complimentary?.competingOffers === "NONE_CHOSEN";
+    if (hadGift && !hasGift && !competingNoneChosen) setGiftGone(true);
     if (hasAuthoritativeSaving(nextExplanation)) {
       setOfferDropped(false);
     } else if (offerDroppedFromAuthoritativeExplanations(previousExplanation, nextExplanation)) {
@@ -1513,6 +1529,7 @@ export function CheckoutClient(props: { brandId: string }) {
                 staleMessage={staleRecovery?.message ?? null}
                 giftGone={giftGone}
                 dropped={offerDropped}
+                showGiftConflict={showGiftConflict}
                 complimentaryName={
                   reviewMoneyConfirmed
                     ? narrowCheckoutSnapshotLines(snapshot.lines).find(

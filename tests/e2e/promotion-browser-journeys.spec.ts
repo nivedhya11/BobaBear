@@ -1,12 +1,13 @@
 import { randomInt } from "node:crypto";
 
-import { expect, test, type Locator, type Page, type TestInfo } from "@playwright/test";
+import { expect, test, type Locator, type Page, type Route, type TestInfo } from "@playwright/test";
 
 import { IMP036J_COPY } from "../../src/components/ordering/imp036j-copy";
 import {
   installLocationProviderMocks,
   installMockGoogleMaps,
 } from "./support/maps-location-mocks";
+import { installRazorpayCheckoutMock } from "./support/razorpay-checkout-mock";
 
 /**
  * Real application browser evidence for the IMP-036J rows that domain tests
@@ -184,6 +185,66 @@ async function continueCartToReview(
     const pickup = page.getByRole("region", { name: "Your pickup location" });
     await expect(pickup).toBeVisible({ timeout: 20_000 });
     await pickup.getByRole("button", { name: "Continue" }).click();
+  }
+  await expect(page.getByTestId("checkout-timing-choice")).toBeVisible({ timeout: 20_000 });
+  await page.getByTestId("checkout-timing-asap").click();
+  await expect(page.getByTestId("checkout-review")).toBeVisible({ timeout: 20_000 });
+}
+
+async function emptyCart(page: Page): Promise<void> {
+  await page.goto("/order/cart/");
+  await expect(page.getByRole("heading", { name: /your cart/i })).toBeVisible();
+  const removeName = /^Remove .+ from cart$/i;
+  for (let i = 0; i < 8; i += 1) {
+    const remove = page.getByRole("button", { name: removeName });
+    const before = await remove.count();
+    if (before === 0) break;
+    await remove.first().click();
+    await expect
+      .poll(async () => page.getByRole("button", { name: removeName }).count(), { timeout: 15_000 })
+      .toBeLessThan(before);
+  }
+  await expect(page.getByText("Your cart is empty. Browse the menu to add something.")).toBeVisible({
+    timeout: 20_000,
+  });
+}
+
+/** Later checkout in a test that already signed in. A second OTP would exceed otp_send_ip_10m. */
+async function checkoutAgain(
+  page: Page,
+  phoneNumber: string,
+  mode: "DELIVERY" | "PICKUP",
+  skipProductName?: string,
+): Promise<void> {
+  await emptyCart(page);
+  await openCart(page, skipProductName);
+  await page.getByRole("button", { name: /^checkout$/i }).click();
+  const signInHeading = page.getByRole("heading", { name: "Sign In" });
+  const delivery = page.locator("#main-content").getByTestId("checkout-fulfilment-delivery");
+  const pickup = page.locator("#main-content").getByTestId("checkout-fulfilment-pickup");
+  const review = page.getByTestId("checkout-review");
+  await expect(signInHeading.or(delivery).or(pickup).or(review).first()).toBeVisible({
+    timeout: 20_000,
+  });
+  if (await signInHeading.isVisible()) {
+    throw new Error("follow-up checkout asked for sign-in; a second OTP is outside the IP limit");
+  }
+  if (await review.isVisible()) return;
+  const choice = mode === "DELIVERY" ? delivery : pickup;
+  await choice.click();
+  await expect(choice).toHaveAttribute("aria-pressed", "true");
+  if (mode === "DELIVERY") {
+    const addAddress = page.locator("#main-content").getByRole("button", { name: "Add new address" });
+    const timing = page.getByTestId("checkout-timing-choice");
+    await expect(addAddress.or(timing).first()).toBeVisible({ timeout: 20_000 });
+    if (await addAddress.isVisible()) {
+      await saveAddress(page, phoneNumber);
+    }
+  }
+  if (mode === "PICKUP") {
+    const pickupRegion = page.getByRole("region", { name: "Your pickup location" });
+    await expect(pickupRegion).toBeVisible({ timeout: 20_000 });
+    await pickupRegion.getByRole("button", { name: "Continue" }).click();
   }
   await expect(page.getByTestId("checkout-timing-choice")).toBeVisible({ timeout: 20_000 });
   await page.getByTestId("checkout-timing-asap").click();
@@ -446,7 +507,14 @@ test("invalid, expired, and inapplicable coupon sentences stay distinct", async 
   const before = await review.getByTestId("price-summary-total").getAttribute("data-offer-amount");
   const input = review.getByTestId("coupon-input");
   await input.fill("NOT-A-CODE");
+  const couponResponse = page.waitForResponse(
+    (response) =>
+      response.url().includes("/api/v1/cart/coupon") && response.request().method() === "POST",
+  );
   await review.getByTestId("coupon-apply").click();
+  const couponBody = await (await couponResponse).text();
+  expect(couponBody.toLowerCase()).not.toMatch(/did you mean|near match|suggested code|similar code/);
+  expect(couponBody).not.toMatch(/maximumRedemptions|customerId|customer_id|\+91|@[a-z0-9.-]+\./i);
   const invalid = review.getByTestId("coupon-result");
   await expect(invalid).toHaveText(IMP036J_COPY.INVALID, { timeout: 20_000 });
   await expect(invalid).not.toContainText(/near|similar|did you mean/i);
@@ -723,7 +791,8 @@ test("guest unrestricted coupon keeps a better total and can tie without sign-in
 test("automatic complimentary item is the seeded variant at zero merchandise", async ({
   page,
 }, testInfo) => {
-  test.setTimeout(360_000);
+  test.setTimeout(540_000);
+  await installRazorpayCheckoutMock(page, "succeed");
   const armed = await control(page, { action: "arm-m2", scenario: "gift" });
   const variantId = String(armed.giftVariantId ?? "");
   const productId = String(armed.giftProductId ?? "");
@@ -752,7 +821,8 @@ test("automatic complimentary item is the seeded variant at zero merchandise", a
   expect(await componentAmount(page, "ORDER_SAVING")).toBeNull();
   await shot(page, testInfo, "ac-013-01-included");
 
-  await continueCartToReview(page, nextPhone(), "PICKUP");
+  const phone = nextPhone();
+  await continueCartToReview(page, phone, "PICKUP");
   const review = page.getByTestId("checkout-review");
   const reviewLine = review.getByTestId("complimentary-line");
   await expect(reviewLine).toBeVisible({ timeout: 20_000 });
@@ -779,11 +849,87 @@ test("automatic complimentary item is the seeded variant at zero merchandise", a
   await expect(review.getByRole("button", { name: /Continue to payment/i })).toBeVisible();
   await expect(page.getByTestId("payment-panel")).toHaveCount(0);
   await shot(page, testInfo, "ac-013-03-gift-gone");
+
+  await arm(page, "returning");
+  await checkoutAgain(page, phone, "PICKUP");
+  const firstReview = page.getByTestId("checkout-review");
+  await expect(firstReview.getByText("First order tea")).toHaveCount(0);
+  expect(await componentAmount(page, "ORDER_SAVING")).toBe("1500");
+  expect(await componentAmount(page, "DELIVERY_SAVING")).toBeNull();
+  await payFromReview(page);
+  await checkoutAgain(page, phone, "PICKUP");
+  const second = page.getByTestId("checkout-review");
+  await expect(second.getByText("First order tea")).toHaveCount(0);
+  expect(await componentAmount(page, "ORDER_SAVING")).toBeNull();
+  expect(await componentAmount(page, "DELIVERY_SAVING")).toBeNull();
+  await expect(
+    second.getByText(/already ordered|order history|returning customer|not your first/i),
+  ).toHaveCount(0);
+  await shot(page, testInfo, "xr-012-first-order-absent");
+
+  await arm(page, "standing-zero");
+  await checkoutAgain(page, phone, "DELIVERY");
+  const zeroReview = page.getByTestId("checkout-review");
+  expect(await componentAmount(page, "ORDER_SAVING")).toBe("8000");
+  expect(await componentAmount(page, "DELIVERY_SAVING")).toBeNull();
+  const charge = zeroReview.locator('[data-offer-component="DELIVERY_CHARGE"]');
+  await expect(charge).toHaveAttribute("data-offer-amount", "0");
+  await expect(charge).toContainText("₹0.00");
+  expect(await componentAmount(page, "TOTAL_SAVED")).toBe("8000");
+  await expect(zeroReview.getByText(/better price/i)).toHaveCount(0);
+  await shot(page, testInfo, "ac-004-01-standing-zero");
+
+  const giftDelivery = await control(page, { action: "arm-m2", scenario: "gift-delivery" });
+  const giftDeliveryName = String(giftDelivery.giftProductName ?? "");
+  expect(giftDeliveryName.length).toBeGreaterThan(0);
+  await checkoutAgain(page, phone, "DELIVERY", giftDeliveryName);
+  const giftReview = page.getByTestId("checkout-review");
+  const giftLine = giftReview.getByTestId("complimentary-line");
+  await expect(giftLine).toBeVisible({ timeout: 20_000 });
+  await expect(giftLine).toContainText(IMP036J_COPY.INCLUDED);
+  await expect(giftLine).toHaveAttribute("data-complimentary-amount", "₹0.00");
+  await expect(giftLine.getByRole("button")).toHaveCount(0);
+  await expect(giftLine.getByRole("combobox")).toHaveCount(0);
+  expect(await componentAmount(page, "DELIVERY_SAVING")).toBe("4000");
+  expect(await componentAmount(page, "ORDER_SAVING")).toBeNull();
+  await expect(giftReview.getByText(/better price/i)).toHaveCount(0);
+  expect(watched.read()?.competing).toBe("NONE");
+  await shot(page, testInfo, "xr-006-gift-delivery");
+
+  await arm(page, "keep");
+  await checkoutAgain(page, phone, "DELIVERY");
+  expect(await componentAmount(page, "ORDER_SAVING")).toBe("8000");
+  expect(await componentAmount(page, "DELIVERY_SAVING")).toBe("4000");
+  expect(watched.read()?.total).toBe("12000");
+  await payFromReview(page);
+  const confirmation = page.getByTestId("order-confirmation");
+  await expect(confirmation.getByText("Order saving", { exact: true })).toBeVisible();
+  await expect(confirmation.getByText("Delivery saving", { exact: true })).toBeVisible();
+  await expect(confirmation.getByText("₹80.00").first()).toBeVisible();
+  await expect(confirmation.getByText("₹40.00").first()).toBeVisible();
+  await expect(confirmation.locator("[data-offer-component='PROGRESS']")).toHaveCount(0);
+  await expect(confirmation.getByText(/more to unlock/i)).toHaveCount(0);
+  await shot(page, testInfo, "xr-008-confirmation-split");
+  await confirmation.getByRole("link", { name: /View order/i }).click();
+  const detail = page.getByTestId("order-detail");
+  await expect(detail).toBeVisible({ timeout: 20_000 });
+  await expect(detail.getByText("Order saving", { exact: true })).toBeVisible();
+  await expect(detail.getByText("Delivery saving", { exact: true })).toBeVisible();
+  await expect(detail.locator("[data-offer-component='PROGRESS']")).toHaveCount(0);
+  await expect(detail.getByText(/more to unlock/i)).toHaveCount(0);
+  await shot(page, testInfo, "xr-008-detail-split");
 });
 
-test("a previously shown complimentary line becomes a conflict without a second active gift", async ({
+test("a previously shown complimentary line becomes a conflict from the evaluator outcome", async ({
   page,
 }, testInfo) => {
+  const evaluated = await control(page, { action: "evaluate-competing-complimentary" });
+  expect(evaluated.persisted).toBe(false);
+  expect(evaluated.evaluator).toBe("evaluatePromotions");
+  expect(evaluated.syntheticDefinitionCount).toBe(2);
+  expect(evaluated.complimentaryCompetingNoneChosen).toBe(true);
+  expect(evaluated.selectedPromotionIds).toEqual([]);
+  expect(evaluated.complimentary).toEqual({ competingOffers: "NONE_CHOSEN" });
   const armed = await control(page, { action: "arm-m2", scenario: "gift" });
   const productName = String(armed.giftProductName ?? "");
   const variantId = String(armed.giftVariantId ?? "");
@@ -795,13 +941,8 @@ test("a previously shown complimentary line becomes a conflict without a second 
   const line = offer.getByTestId("complimentary-line");
   await expect(line).toBeVisible({ timeout: 20_000 });
   await expect.poll(() => watched.read()?.variantId ?? "").toBe(variantId);
-  const shownName = watched.read()?.itemName ?? "";
-  expect(shownName.length).toBeGreaterThan(0);
   await page.route("**/api/v1/cart/evaluate", async (route) => {
-    const response = await route.fetch();
-    const json = (await response.json()) as unknown;
-    projectNoneChosen(json);
-    await route.fulfill({ response, json });
+    await fulfillProjectedComplimentary(route, evaluated.complimentary);
   });
   await page.getByRole("button", { name: /^Increase / }).first().click();
   await expect(offer.getByTestId("copy-gift-conflict")).toHaveText(IMP036J_COPY.GIFT_CONFLICT, {
@@ -810,20 +951,71 @@ test("a previously shown complimentary line becomes a conflict without a second 
   await expect(offer.getByTestId("complimentary-line")).toHaveCount(0);
   await expect(offer.getByRole("combobox")).toHaveCount(0);
   await expect(page.getByText(/choose a gift|pick a gift/i)).toHaveCount(0);
+  const variantIds = evaluated.variantIds;
+  expect(Array.isArray(variantIds)).toBe(true);
+  for (const syntheticId of variantIds as unknown[]) {
+    await expect(page.getByText(String(syntheticId))).toHaveCount(0);
+  }
   await shot(page, testInfo, "ac-013-04-conflict");
-  await page.unroute("**/api/v1/cart/evaluate");
+  await page.unrouteAll({ behavior: "ignoreErrors" });
 });
 
-function projectNoneChosen(value: unknown): void {
+test("competing complimentary definitions show neither gift when none was shown", async ({ page }) => {
+  const evaluated = await control(page, { action: "evaluate-competing-complimentary" });
+  expect(evaluated.complimentary).toEqual({ competingOffers: "NONE_CHOSEN" });
+  await page.route("**/api/v1/cart/evaluate", async (route) => {
+    await fulfillProjectedComplimentary(route, evaluated.complimentary);
+  });
+  await openCart(page);
+  const offer = cartCouponScope(page);
+  await expect(offer.getByTestId("complimentary-line")).toHaveCount(0);
+  await expect(offer.getByTestId("copy-gift-conflict")).toHaveCount(0);
+  await expect(page.getByText(/choose a gift|pick a gift/i)).toHaveCount(0);
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
+
+async function fulfillProjectedComplimentary(route: Route, complimentary: unknown): Promise<void> {
+  try {
+    const response = await route.fetch();
+    const json = JSON.parse((await response.body()).toString("utf8")) as unknown;
+    projectEvaluatorComplimentary(json, complimentary);
+    const headers = response.headers();
+    delete headers["content-length"];
+    await route.fulfill({
+      status: response.status(),
+      headers,
+      contentType: "application/json",
+      body: JSON.stringify(json),
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes("Test ended") || message.includes("Target closed")) return;
+    throw error;
+  }
+}
+
+function projectEvaluatorComplimentary(value: unknown, complimentary: unknown): void {
+  if (!complimentary || typeof complimentary !== "object") {
+    throw new Error("evaluator complimentary outcome missing");
+  }
+  if ((complimentary as { competingOffers?: string }).competingOffers !== "NONE_CHOSEN") {
+    throw new Error("refusing to project an outcome that is not evaluator NONE_CHOSEN");
+  }
+  applyEvaluatorComplimentary(value, complimentary);
+}
+
+function applyEvaluatorComplimentary(value: unknown, complimentary: unknown): void {
   if (!value || typeof value !== "object") return;
   if (Array.isArray(value)) {
-    for (const entry of value) projectNoneChosen(entry);
+    for (const entry of value) applyEvaluatorComplimentary(entry, complimentary);
     return;
   }
   const record = value as Record<string, unknown>;
-  if (record.competingOffers === "NONE" || record.competingOffers === "NONE_CHOSEN") {
-    for (const key of Object.keys(record)) delete record[key];
-    record.competingOffers = "NONE_CHOSEN";
+  if (
+    typeof record.merchandiseOrOrderSavingPaise === "string" &&
+    typeof record.deliverySavingPaise === "string"
+  ) {
+    record.complimentary = complimentary;
   }
   if (Array.isArray(record.lines)) {
     record.lines = record.lines.filter((line) => {
@@ -831,5 +1023,14 @@ function projectNoneChosen(value: unknown): void {
       return (line as { lineOrigin?: string }).lineOrigin !== "complimentary_offer";
     });
   }
-  for (const child of Object.values(record)) projectNoneChosen(child);
+  for (const child of Object.values(record)) applyEvaluatorComplimentary(child, complimentary);
+}
+
+async function payFromReview(page: Page): Promise<void> {
+  await page.getByRole("button", { name: /Continue to payment/i }).click();
+  await expect(page.getByTestId("checkout-ready")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId("payment-start")).toBeVisible();
+  await expect(page.getByTestId("coupon-field")).toHaveCount(0);
+  await page.getByTestId("payment-start").click();
+  await expect(page.getByTestId("order-confirmation")).toBeVisible({ timeout: 45_000 });
 }

@@ -138,6 +138,8 @@ test("Journey 1 — coupon Promotion lifecycle on one shared database", async ({
   );
   await expect(pageA.getByTestId("order-confirmation")).toBeVisible();
   await expect(pageA.getByTestId("order-money-summary").first()).toBeVisible();
+  await expect(pageA.getByTestId("order-confirmation").getByText("Order saving", { exact: true })).toBeVisible();
+  await expect(pageA.getByTestId("order-confirmation").getByText(/more to unlock/i)).toHaveCount(0);
 
   // Operator inspects redemption counts (no customer identifiers required).
   await openPromotionsEditor(operatorPage, fixture);
@@ -154,7 +156,13 @@ test("Journey 1 — coupon Promotion lifecycle on one shared database", async ({
   const afterPurchase = await fetchPromotionDetail(operatorPage, fixture.brandId, couponPromotionId);
   expect(afterPurchase.redemptionCounts?.consumed).toBeGreaterThanOrEqual(1);
   expect(afterPurchase.redemptionCounts?.applicationCount).toBeGreaterThanOrEqual(1);
-  await expect(operatorPage.getByText(/Applications:\s*\d+/i).first()).toBeVisible({ timeout: 45_000 });
+  const counts = operatorPage.getByTestId("redemption-counts");
+  await expect(counts).toBeVisible({ timeout: 45_000 });
+  await expect(counts).toContainText(/Applications:\s*[1-9]/);
+  await expect(counts).toContainText(/Consumed:\s*[1-9]/);
+  const countsText = await counts.innerText();
+  expect(countsText).not.toContain(journey1CustomerPhone);
+  expect(countsText).not.toMatch(/@|customer id|customerId|\+91/i);
 
   // Retire.
   await operatorPage.getByRole("button", { name: /Review & retire/i }).click();
@@ -377,6 +385,40 @@ test("Journey 3 — complimentary-item Offer retains exact sealed line", async (
   await confirmConsequence(operatorPage, /Confirm effect/i);
   await expect(operatorPage.getByText(/Lifecycle effect applied/i)).toBeVisible({ timeout: 45_000 });
 
+  const secondGiftCode = uniquePromoCode("gif2");
+  await operatorPage.getByLabel("Promotion identifier").fill(secondGiftCode);
+  await operatorPage.getByLabel("Promotion display name").fill("Second complimentary");
+  await operatorPage.getByLabel("Trigger type").selectOption("automatic");
+  await operatorPage.getByTestId("promotions-editor").getByRole("button", { name: /^Create$/i }).click();
+  await expect(operatorPage.getByText(/Promotion created as draft/i).last()).toBeVisible({ timeout: 45_000 });
+  await operatorPage.getByLabel("Benefit type").selectOption("complimentary_item");
+  await operatorPage.getByLabel("Complimentary product id").fill(fixture.productId!);
+  await operatorPage.getByLabel("Complimentary variant id").fill(fixture.variantId!);
+  await operatorPage.getByRole("button", { name: /^Save benefit$/i }).click();
+  await expect(operatorPage.getByText(/Benefit saved/i).last()).toBeVisible({ timeout: 45_000 });
+  await operatorPage.getByRole("button", { name: /Set qualifier to all merchandise/i }).click();
+  await expect(
+    operatorPage.getByRole("status").filter({ hasText: /qualifier targets updated/i }).last(),
+  ).toBeVisible({ timeout: 45_000 });
+  await operatorPage.getByRole("button", { name: /Set benefit to all merchandise/i }).click();
+  await expect(
+    operatorPage.getByRole("status").filter({ hasText: /benefit targets updated/i }).last(),
+  ).toBeVisible({ timeout: 45_000 });
+  await operatorPage.getByRole("button", { name: /^Review & activate$/i }).click();
+  const secondDialog = operatorPage.getByTestId("consequence-review-dialog");
+  await expect(secondDialog).toBeVisible({ timeout: 45_000 });
+  await secondDialog.getByRole("button", { name: /Confirm effect/i }).click();
+  await expect(secondDialog).toContainText(
+    "Another included-item offer is already active. This one was not activated.",
+    { timeout: 45_000 },
+  );
+  await secondDialog.getByRole("button", { name: "Cancel" }).click();
+  await expect(secondDialog).toHaveCount(0);
+  await selectPromotionByCode(operatorPage, giftCode);
+  await expect(operatorPage.getByRole("button", { name: /Review & retire/i })).toBeVisible({
+    timeout: 30_000,
+  });
+
   const giftListed = await findPromotionByCode(operatorPage, fixture.brandId, giftCode);
   expect(giftListed, `Gift promotion ${giftCode} missing`).toBeTruthy();
   const giftPromotionId = giftListed!.id;
@@ -401,6 +443,10 @@ test("Journey 3 — complimentary-item Offer retains exact sealed line", async (
   await continueToPayment(page);
   await page.getByTestId("payment-start").click();
   const orderId = await captureOrderIdFromConfirmation(page);
+  const confirmation = page.getByTestId("order-confirmation");
+  await expect(confirmation.getByText(reviewGift.productName).first()).toBeVisible();
+  await expect(confirmation.getByText(/Included with your offer/i).first()).toBeVisible();
+  await expect(confirmation.getByText(/more to unlock/i)).toHaveCount(0);
   const orderBefore = await fetchOwnedOrder(page, orderId);
   expect(orderBefore.moneySummary.grandTotalMinor).toBeGreaterThan(0);
 
@@ -615,6 +661,10 @@ test("Negatives — permission, invalid config, stale pay, cross-identity isolat
   await expect(staleAlert).toHaveText(
     "Your total changed before payment. Review the updated amount.",
   );
+  await expect(staleAlert).toBeFocused();
+  await expect(
+    stalePage.getByTestId("checkout-review").locator("[data-offer-component='TOTAL_PAYABLE']"),
+  ).toBeVisible();
 
   const recoveredPayable = await readReviewPayableMinor(stalePage);
   expect(recoveredPayable).toBeGreaterThan(0);
