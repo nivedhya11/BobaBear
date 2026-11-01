@@ -24,6 +24,12 @@ export function CouponField(props: {
   focusResultToken?: string | number | null;
   /** When true, move focus to the input (validation / definitive failure). */
   focusInputToken?: string | number | null;
+  /**
+   * Incomplete apply, change, remove, or retry. Focus stays on that action
+   * when it is still rendered; otherwise on Try again.
+   */
+  focusAction?: "apply" | "change" | "remove" | "retry" | null;
+  focusActionToken?: string | number | null;
 }) {
   const hasApplied = Boolean(props.appliedCode);
   const busy = props.pending || props.disabled === true;
@@ -32,6 +38,10 @@ export function CouponField(props: {
   const resultId = useId();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const resultRef = useRef<HTMLParagraphElement | null>(null);
+  const applyRef = useRef<HTMLButtonElement | null>(null);
+  const changeRef = useRef<HTMLButtonElement | null>(null);
+  const removeRef = useRef<HTMLButtonElement | null>(null);
+  const retryRef = useRef<HTMLButtonElement | null>(null);
   const invalid = props.invalid === true && Boolean(props.statusText) && !props.pending;
 
   useEffect(() => {
@@ -43,6 +53,22 @@ export function CouponField(props: {
     if (props.focusResultToken == null) return;
     queueMicrotask(() => resultRef.current?.focus());
   }, [props.focusResultToken]);
+
+  useEffect(() => {
+    if (props.focusActionToken == null || props.focusAction == null) return;
+    const action = props.focusAction;
+    queueMicrotask(() => {
+      const preferred =
+        action === "apply"
+          ? applyRef.current
+          : action === "change"
+            ? changeRef.current
+            : action === "remove"
+              ? removeRef.current
+              : retryRef.current;
+      (preferred ?? retryRef.current)?.focus();
+    });
+  }, [props.focusAction, props.focusActionToken]);
 
   const describedBy = [
     hintId,
@@ -82,6 +108,7 @@ export function CouponField(props: {
       <div className="flex flex-wrap gap-2">
         {!hasApplied ? (
           <button
+            ref={applyRef}
             type="button"
             disabled={busy || props.code.trim().length === 0}
             onClick={() => props.onApply()}
@@ -93,6 +120,7 @@ export function CouponField(props: {
         ) : (
           <>
             <button
+              ref={changeRef}
               type="button"
               disabled={busy || props.code.trim().length === 0}
               onClick={() => props.onApply()}
@@ -102,6 +130,7 @@ export function CouponField(props: {
               {props.pending ? IMP036J_COPY.CHECKING : IMP036J_COPY.CHANGE}
             </button>
             <button
+              ref={removeRef}
               type="button"
               disabled={busy}
               onClick={() => props.onRemove()}
@@ -142,6 +171,7 @@ export function CouponField(props: {
       ) : null}
       {props.retryVisible ? (
         <button
+          ref={retryRef}
           type="button"
           disabled={busy}
           onClick={() => props.onRetry?.()}

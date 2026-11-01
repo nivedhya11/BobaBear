@@ -151,6 +151,10 @@ export function CheckoutClient(props: { brandId: string }) {
   >(null);
   const [couponFocusInputToken, setCouponFocusInputToken] = useState(0);
   const [couponFocusResultToken, setCouponFocusResultToken] = useState(0);
+  const [couponFocusAction, setCouponFocusAction] = useState<
+    "apply" | "change" | "remove" | "retry" | null
+  >(null);
+  const [couponFocusActionToken, setCouponFocusActionToken] = useState(0);
   const [staleRecovery, setStaleRecovery] = useState<StaleRecoveryPresentation | null>(
     null,
   );
@@ -506,8 +510,23 @@ export function CheckoutClient(props: { brandId: string }) {
     };
   }
 
+  function focusCouponRecovery(
+    status: ReturnType<typeof couponFieldStatusFromMutationFailure>,
+    action: "apply" | "change" | "remove" | "retry",
+  ): void {
+    if (status.invalid) {
+      setCouponFocusInputToken((token) => token + 1);
+      return;
+    }
+    if (status.retryVisible) {
+      setCouponFocusAction(action);
+      setCouponFocusActionToken((token) => token + 1);
+    }
+  }
+
   async function mutateReviewCoupon(
     work: () => Promise<{ ok: true; data: { cart: CommerceCart } } | { ok: false; code: string }>,
+    action: "apply" | "change" | "remove" | "retry",
   ): Promise<void> {
     if (!cart || couponPending) return;
     // A review mutation owns focus from here. The carried-coupon effect must
@@ -542,9 +561,7 @@ export function CheckoutClient(props: { brandId: string }) {
         setReviewSurfaceToken(priorToken);
         setReviewQuote(priorQuote);
       }
-      if (status.invalid || status.retryVisible) {
-        setCouponFocusInputToken((token) => token + 1);
-      }
+      focusCouponRecovery(status, action);
       return;
     }
     // Cart coupon write committed — keep intent even if Review evaluation fails.
@@ -570,9 +587,7 @@ export function CheckoutClient(props: { brandId: string }) {
       setReviewSurfaceToken(null);
       const status = couponFieldStatusFromMutationFailure(rebased.code);
       setCouponStatusOverride(status);
-      if (status.invalid || status.retryVisible) {
-        setCouponFocusInputToken((token) => token + 1);
-      }
+      focusCouponRecovery(status, action);
       setScreen("review");
       return;
     }
@@ -1541,25 +1556,29 @@ export function CheckoutClient(props: { brandId: string }) {
               }}
               onApply={() => {
                 if (!cart) return;
-                void mutateReviewCoupon(() =>
-                  applyCartCoupon({
-                    brandId,
-                    couponCode: couponDraft,
-                    expectedRevision: cart.revision,
-                    sourceCommandId: crypto.randomUUID(),
-                    reviewSurfaceToken,
-                  }),
+                void mutateReviewCoupon(
+                  () =>
+                    applyCartCoupon({
+                      brandId,
+                      couponCode: couponDraft,
+                      expectedRevision: cart.revision,
+                      sourceCommandId: crypto.randomUUID(),
+                      reviewSurfaceToken,
+                    }),
+                  cart.manualCouponCode ? "change" : "apply",
                 );
               }}
               onRemove={() => {
                 if (!cart) return;
-                void mutateReviewCoupon(() =>
-                  removeCartCoupon({
-                    brandId,
-                    expectedRevision: cart.revision,
-                    sourceCommandId: crypto.randomUUID(),
-                    reviewSurfaceToken,
-                  }),
+                void mutateReviewCoupon(
+                  () =>
+                    removeCartCoupon({
+                      brandId,
+                      expectedRevision: cart.revision,
+                      sourceCommandId: crypto.randomUUID(),
+                      reviewSurfaceToken,
+                    }),
+                  "remove",
                 );
               }}
               statusText={
@@ -1592,14 +1611,16 @@ export function CheckoutClient(props: { brandId: string }) {
               retryVisible={couponStatusOverride?.retryVisible}
               onRetry={() => {
                 if (!cart) return;
-                void mutateReviewCoupon(() =>
-                  applyCartCoupon({
-                    brandId,
-                    couponCode: couponDraft,
-                    expectedRevision: cart.revision,
-                    sourceCommandId: crypto.randomUUID(),
-                    reviewSurfaceToken,
-                  }),
+                void mutateReviewCoupon(
+                  () =>
+                    applyCartCoupon({
+                      brandId,
+                      couponCode: couponDraft,
+                      expectedRevision: cart.revision,
+                      sourceCommandId: crypto.randomUUID(),
+                      reviewSurfaceToken,
+                    }),
+                  "retry",
                 );
               }}
               returnPath="/order/checkout/"
@@ -1613,6 +1634,8 @@ export function CheckoutClient(props: { brandId: string }) {
                 )?.showSignIn
               }
               focusInputToken={couponFocusInputToken || null}
+              focusAction={couponFocusAction}
+              focusActionToken={couponFocusActionToken || null}
               focusResultToken={couponFocusResultToken || null}
             />
           </div>
