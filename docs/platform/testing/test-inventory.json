@@ -31,10 +31,10 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2430,
-    "executableTestFiles": 569,
+    "trackedPathsConsidered": 2437,
+    "executableTestFiles": 570,
     "sourceTestFiles": 167,
-    "testsTreeExecutableFiles": 297,
+    "testsTreeExecutableFiles": 298,
     "scriptTestFiles": 105,
     "playwrightSpecs": 14,
     "vitestConfigs": 2,
@@ -47,7 +47,7 @@
     "packageCoverageCommands": 1,
     "packageInventoryCommands": 2,
     "ciWorkflowFiles": 4,
-    "ciValidationSteps": 135,
+    "ciValidationSteps": 137,
     "protectedEvidenceTrackedFiles": 3,
     "archiveTrackedFiles": 92
   },
@@ -318,6 +318,7 @@
     "tests/customer-auth/http.integration.test.ts",
     "tests/customer-auth/trusted-identity.integration.test.ts",
     "tests/customer-commerce/financial-document.http.integration.test.ts",
+    "tests/customer-commerce/gtm-commerce-regression.http.integration.test.ts",
     "tests/customer-commerce/http.integration.test.ts",
     "tests/customer-commerce/razorpay.http.integration.test.ts",
     "tests/customer-commerce/scheduled-http.tranche3.integration.test.ts",
@@ -949,7 +950,7 @@
     "test:customer-address-security": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-address-security",
     "test:customer-addresses": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-addresses",
     "test:customer-auth:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-auth/http.integration.test.ts tests/customer-auth/trusted-identity.integration.test.ts",
-    "test:customer-commerce:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-commerce/http.integration.test.ts tests/customer-commerce/scheduled-http.tranche3.integration.test.ts",
+    "test:customer-commerce:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-commerce/http.integration.test.ts tests/customer-commerce/scheduled-http.tranche3.integration.test.ts tests/customer-commerce/gtm-commerce-regression.http.integration.test.ts",
     "test:customer-profile-auth-integration": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-profile-auth-integration",
     "test:customer-profile-security": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-profile-security",
     "test:customer-profiles": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-profiles",
@@ -1528,8 +1529,16 @@
           "run": "npx playwright install --with-deps chromium"
         },
         {
+          "name": "Runner disk before Commercial workspace E2E",
+          "run": "set +e\necho \"=== df -h ===\"\ndf -h\necho \"=== df -k / /tmp ${HOME} ===\"\ndf -k / /tmp \"${HOME}\"\necho \"=== podman info (graphRoot) ===\"\npodman info --format '{{.Store.GraphRoot}} {{.Store.GraphDriverName}}' 2>/dev/null || podman info\necho \"=== podman system df ===\"\npodman system df 2>/dev/null || true\nstorage=\"${HOME}/.local/share/containers/storage\"\nif [ -d \"$storage\" ]; then\necho \"=== du -sh graph-root ===\"\ndu -sh \"$storage\"\nfi"
+        },
+        {
           "name": "Commercial workspace E2E",
           "run": "npm run test:e2e:commercial-workspace"
+        },
+        {
+          "name": "Runner disk after Commercial workspace E2E",
+          "run": "set +e\necho \"=== df -h ===\"\ndf -h\necho \"=== df -k / /tmp ${HOME} ===\"\ndf -k / /tmp \"${HOME}\"\necho \"=== podman system df ===\"\npodman system df 2>/dev/null || true\nstorage=\"${HOME}/.local/share/containers/storage\"\nif [ -d \"$storage\" ]; then\necho \"=== du -sh graph-root ===\"\ndu -sh \"$storage\"\ndu -sh \"$storage\"/* 2>/dev/null | sort -h || true\nfi"
         },
         {
           "name": "Install dependencies",
@@ -8337,6 +8346,25 @@
       "externalProviderSubstitute": "UNKNOWN",
       "packageCommands": [],
       "ciInclusion": "NO",
+      "test1Layers": [
+        "4-integration",
+        "5-database-integration",
+        "6-http-api-contract"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/customer-commerce/gtm-commerce-regression.http.integration.test.ts",
+      "runner": "vitest",
+      "domain": "customer-commerce",
+      "testType": "integration",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:customer-commerce:http"
+      ],
+      "ciInclusion": "YES",
       "test1Layers": [
         "4-integration",
         "5-database-integration",
