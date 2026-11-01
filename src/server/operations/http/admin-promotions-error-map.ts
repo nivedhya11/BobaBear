@@ -40,6 +40,7 @@ export function mapPromotionsAdminError(error: unknown, requestId: string): Mapp
         code: "PROMOTIONS_REQUEST_INVALID",
         requestId,
         message: error.message,
+        ...(error.field ? { field: error.field } : {}),
         issues: [error.message],
       },
     };
@@ -127,6 +128,7 @@ export function mapPromotionsAdminError(error: unknown, requestId: string): Mapp
         code: "PROMOTIONS_REQUEST_INVALID",
         requestId,
         message: error.message,
+        ...(error.field ? { field: error.field } : {}),
         issues: [error.message],
       },
     };

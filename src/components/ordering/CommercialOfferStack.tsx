@@ -52,23 +52,21 @@ export function CommercialOfferStack(props: {
       ? explanation.complimentary
       : null;
   const giftName = props.complimentaryName ?? gift?.itemName ?? null;
-  const showConflict =
-    props.showGiftConflict === true ||
-    explanation?.complimentary?.competingOffers === "NONE_CHOSEN";
+  const showConflict = props.showGiftConflict === true;
   const base = props.baseSnapshot ?? null;
   const baseCharges = base ? narrowSnapshotCharges(base.charges) : [];
   const baseTax = base ? narrowSnapshotTaxComponents(base.taxComponents) : [];
   const packaging = baseCharges.filter((row) => row.chargeCode === "packaging");
   const deliveryFromBase = baseCharges.find((row) => row.chargeCode === "delivery");
-  const deliveryAmount =
-    deliveryFromBase?.amountPaise ??
-    (props.deliveryChargePaise && BigInt(props.deliveryChargePaise) > BigInt(0)
+  const explicitDelivery =
+    props.deliveryChargePaise != null && props.deliveryChargePaise !== ""
       ? props.deliveryChargePaise
-      : null);
+      : null;
+  const deliveryAmount = deliveryFromBase?.amountPaise ?? explicitDelivery;
   const showDeliveryRow =
     props.fulfilmentMode !== "PICKUP" &&
     deliveryAmount != null &&
-    BigInt(deliveryAmount) > BigInt(0);
+    BigInt(deliveryAmount) >= BigInt(0);
 
   return (
     <section

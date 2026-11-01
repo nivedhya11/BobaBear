@@ -7,7 +7,6 @@ import { pathToFileURL } from "node:url";
 
 import { eq, sql } from "drizzle-orm";
 
-import { catalogVariantsTable } from "../../src/platform/database/schema/catalog";
 import { promotionsTable } from "../../src/platform/database/schema/promotions";
 import { workforceAuthUsers } from "../../src/platform/database/schema/workforce-auth";
 import type { WebConfig } from "../../src/platform/config";
@@ -53,6 +52,9 @@ export type M2ScenarioName =
   | "cap-global"
   | "cap-personal"
   | "gift"
+  | "gift-delivery"
+  | "standing-zero"
+  | "returning"
   | "equal-kept"
   | "equal-selected"
   | "guest-keep";
@@ -106,6 +108,7 @@ type DraftSpec = {
   priority?: number;
   endsAt?: Date | null;
   eligibleFulfilmentModes?: Array<"DELIVERY" | "PICKUP"> | null;
+  firstOrderOnly?: boolean;
   maximumRedemptions?: number | null;
   maximumRedemptionsPerCustomer?: number | null;
   couponCode?: string;
@@ -132,6 +135,7 @@ async function author(
     endsAt: spec.endsAt ?? null,
     minimumQualifyingAmountPaise: spec.minimumQualifyingAmountPaise ?? null,
     eligibleFulfilmentModes: spec.eligibleFulfilmentModes ?? null,
+    firstOrderOnly: spec.firstOrderOnly === true,
     maximumRedemptions: spec.maximumRedemptions ?? null,
     maximumRedemptionsPerCustomer: spec.maximumRedemptionsPerCustomer ?? null,
   });
@@ -482,6 +486,56 @@ function specsFor(
           },
         ]
       : [],
+    "gift-delivery": gift
+      ? [
+          {
+            key: "giftdel",
+            displayName: "Included with delivery",
+            triggerType: "automatic",
+            stackingPolicy: "combinable",
+            benefit: moneyBenefit("complimentary_item", null),
+            benefitTarget: "merchandise",
+            complimentary: gift,
+          },
+          {
+            key: "giftdelivery",
+            displayName: "Gift delivery saving",
+            triggerType: "automatic",
+            stackingPolicy: "combinable",
+            benefit: moneyBenefit("delivery_fee_waiver", null),
+            benefitTarget: "delivery",
+          },
+        ]
+      : [],
+    "standing-zero": [
+      {
+        key: "zeroorder",
+        displayName: "Standing zero order saving",
+        triggerType: "automatic",
+        stackingPolicy: "combinable",
+        benefit: moneyBenefit("fixed_amount_discount", BigInt(8_000)),
+        benefitTarget: "merchandise",
+      },
+      {
+        key: "zerodelivery",
+        displayName: "Standing zero waiver",
+        triggerType: "automatic",
+        stackingPolicy: "combinable",
+        benefit: moneyBenefit("delivery_fee_waiver", null),
+        benefitTarget: "delivery",
+      },
+    ],
+    returning: [
+      {
+        key: "firstorder",
+        displayName: "First order tea",
+        triggerType: "automatic",
+        stackingPolicy: "exclusive",
+        benefit: moneyBenefit("fixed_amount_discount", BigInt(1_500)),
+        benefitTarget: "merchandise",
+        firstOrderOnly: true,
+      },
+    ],
   };
   const chosen = specs[scenario];
   const coupons: Record<string, string> = {};
@@ -508,6 +562,9 @@ export async function armM2Scenario(
     "cap-global",
     "cap-personal",
     "gift",
+    "gift-delivery",
+    "standing-zero",
+    "returning",
     "equal-kept",
     "equal-selected",
     "guest-keep",
@@ -518,7 +575,7 @@ export async function armM2Scenario(
   const persistence = persistenceFor(databaseUrl);
   const stamp = randomBytes(3).toString("hex").toUpperCase();
   try {
-    const deliveryPaise = scenario === "win" ? 2000 : 4000;
+    const deliveryPaise = scenario === "win" ? 2000 : scenario === "standing-zero" ? 0 : 4000;
     await persistence.withContext(async (ctx) => {
       await ctx.db.execute(sql`update app.price_book_variant_prices set amount_paise = 100000`);
       await ctx.db.execute(sql`
@@ -538,7 +595,7 @@ export async function armM2Scenario(
       const brandId = brandRow.rows[0]?.brand_id as string | undefined;
       if (!brandId) throw new Error("M2 scenario seed has no brand");
       let gift: { productId: string; variantId: string; productName: string; variantName: string } | null = null;
-      if (scenario === "gift") {
+      if (scenario === "gift" || scenario === "gift-delivery") {
         const variant = await tx.db.execute(sql`
           select v.id::text as variant_id,
                  v.product_id::text as product_id,
