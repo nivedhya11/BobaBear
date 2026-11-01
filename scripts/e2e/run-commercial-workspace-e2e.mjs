@@ -34,6 +34,65 @@ function runAllowFail(command, args, options = {}) {
   return result;
 }
 function compose(args, options) { run("podman-compose", ["-p", project, "-f", composeFile, "--env-file", envFile, ...args], options); }
+
+/** Hosted-runner / Podman graph-root capacity snapshot for ENOSPC diagnosis (TEST-1 nightly). */
+function reportDisk(label) {
+  console.log(`commercial workspace E2E: disk capacity [${label}]`);
+  runAllowFail("bash", [
+    "-lc",
+    [
+      "set +e",
+      'echo "--- df -h ---"',
+      "df -h",
+      'echo "--- df -k / /tmp ${HOME:-/home/runner} ---"',
+      'df -k / /tmp "${HOME:-/home/runner}" 2>/dev/null || df -k',
+      'echo "--- podman system df ---"',
+      "podman system df 2>/dev/null || echo 'podman system df unavailable'",
+      'echo "--- podman graph-root ---"',
+      'storage="${HOME:-/home/runner}/.local/share/containers/storage"',
+      'if [ -d "$storage" ]; then du -sh "$storage"/* 2>/dev/null | sort -h; du -sh "$storage"; else echo "storage dir absent: $storage"; fi',
+    ].join("; "),
+  ]);
+}
+
+/** Fail early with actionable diagnostics when free space is too low for sequential image builds. */
+function assertRunnerDiskCapacity(minimumAvailKiB) {
+  const result = spawnSync(
+    "bash",
+    ["-lc", "df -k --output=avail / | awk 'NR==2 {print $1}'"],
+    { cwd: root, env: childEnv, encoding: "utf8" },
+  );
+  const availKiB = Number.parseInt(String(result.stdout || "").trim(), 10);
+  if (!Number.isFinite(availKiB)) {
+    reportDisk("capacity-parse-failed");
+    throw new Error("Unable to parse runner free disk (df avail KiB) before image builds.");
+  }
+  console.log(`commercial workspace E2E: root free ${availKiB} KiB (minimum ${minimumAvailKiB} KiB)`);
+  if (availKiB < minimumAvailKiB) {
+    reportDisk("insufficient-before-build");
+    throw new Error(
+      `Runner disk insufficient for Commercial Workspace image builds: ${availKiB} KiB free on / (need ≥ ${minimumAvailKiB} KiB). ` +
+        "Do not suppress this job; raise capacity or reduce concurrent build peak.",
+    );
+  }
+}
+
+/**
+ * Build Compose images one service at a time so Podman does not run multiple
+ * full `npm ci` layer commits concurrently (GitHub-hosted runner ENOSPC cause).
+ * Order reuses shared Dockerfile stages: workforce-auth (base+deps) →
+ * operations (base + operations-deps) → app (cached deps + builder/web).
+ */
+function buildCommercialImagesSequentially() {
+  const services = ["workforce-auth", "operations", "app"];
+  for (const service of services) {
+    reportDisk(`before-build:${service}`);
+    console.log(`commercial workspace E2E: sequential build ${service}`);
+    compose(["build", service]);
+    reportDisk(`after-build:${service}`);
+  }
+}
+
 async function waitFor(url, timeout = 90_000) { const until = Date.now() + timeout; while (Date.now() < until) { try { if ((await fetch(url)).ok) return; } catch {} await new Promise((resolve) => setTimeout(resolve, 500)); } throw new Error(`Timed out waiting for ${url}`); }
 function serviceId(service) { return spawnSync("podman", ["ps", "--all", "--filter", `label=io.podman.compose.project=${project}`, "--filter", `label=com.docker.compose.service=${service}`, "--format", "{{.ID}}"], { cwd: root, env: childEnv, encoding: "utf8" }).stdout.trim(); }
 async function waitForHealth(service, timeout = 180_000) {
@@ -193,7 +252,13 @@ try {
   };
   console.log(`commercial workspace E2E: isolated project ${project}`);
   const compiledSeed = buildCommercialWorkspaceSeed({ outputRoot: path.join(tempDir, "compiled-seed") });
-  compose(["build", "app", "workforce-auth", "operations"]);
+  // GitHub ubuntu-latest overlay storage fails when three multi-stage images
+  // commit `npm ci` layers in parallel (~ENOSPC under ~/.local/share/containers).
+  // Keep coverage identical; only serialize builds and emit capacity evidence.
+  reportDisk("preflight");
+  assertRunnerDiskCapacity(3_000_000); // ~2.9 GiB free minimum before sequential builds
+  buildCommercialImagesSequentially();
+  reportDisk("post-build");
   compose(["up", "-d", "postgres"]);
   await waitForHealth("postgres");
   // pg_isready can pass before init scripts finish; retry host migrator TCP until ready.
