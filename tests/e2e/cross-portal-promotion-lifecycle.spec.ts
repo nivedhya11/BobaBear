@@ -11,6 +11,7 @@ import {
   confirmConsequence,
   continueToPayment,
   customerPhone,
+  expectHistoricalOrderDetail,
   fetchOwnedOrder,
   fetchPromotionDetail,
   findComplimentaryOrderLine,
@@ -184,9 +185,14 @@ test("Journey 1 — coupon Promotion lifecycle on one shared database", async ({
     expect(resultText.includes("invalid") || resultText.includes("expired") || resultText.includes("not") || resultText.includes("can't") || resultText.includes("cannot") || !resultText.includes("25%")).toBeTruthy();
   }
 
-  // Purchased Order A retains sealed savings after retirement.
+  // Purchased Order A retains sealed savings after retirement, including on Order Detail.
   const orderAfterRetire = await fetchOwnedOrder(pageA, purchasedOrderId);
   expect(orderAfterRetire.moneySummary).toEqual(purchasedMoney);
+  await expectHistoricalOrderDetail(pageA, {
+    orderId: purchasedOrderId,
+    savingMinor: purchasedSavingMinor,
+    payableMinor: purchasedPayableMinor,
+  });
   await customerA.close();
   await customerB.close();
 });
@@ -432,6 +438,11 @@ test("Journey 3 — complimentary-item Offer retains exact sealed line", async (
   );
   const retired = await fetchPromotionDetail(operatorPage, fixture.brandId, giftPromotionId);
   expect(retired.status).toBe("retired");
+  await expectHistoricalOrderDetail(page, {
+    orderId,
+    payableMinor: orderAfter.moneySummary.grandTotalMinor,
+    complimentaryProductName: giftLine.productName,
+  });
   await returningCustomerContext?.close();
   returningCustomerContext = null;
   returningCustomerPage = null;

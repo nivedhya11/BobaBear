@@ -534,6 +534,66 @@ export async function readReviewComplimentaryLine(page: Page): Promise<Complimen
   return { productName, quantity: 1, amountText };
 }
 
+function formatMinorRupees(minor: number): string {
+  const negative = minor < 0;
+  const abs = Math.abs(minor);
+  const rupees = Math.floor(abs / 100);
+  const fraction = (abs % 100).toString().padStart(2, "0");
+  return `${negative ? "-" : ""}₹${rupees}.${fraction}`;
+}
+
+/**
+ * Customer-visible historical truth after Offer retirement.
+ * Opens My Orders, then the purchased Order Detail. API reads are not a substitute.
+ */
+export async function expectHistoricalOrderDetail(
+  page: Page,
+  input: {
+    orderId: string;
+    savingMinor?: number | null;
+    payableMinor?: number | null;
+    complimentaryProductName?: string;
+  },
+): Promise<void> {
+  await page.goto("/order/orders/");
+  await expect(page.getByRole("heading", { name: "My Orders", level: 1 })).toBeVisible({
+    timeout: 20_000,
+  });
+  const historyLink = page.locator(`a[href*="${input.orderId}"]`);
+  await expect(historyLink, "purchased order must be listed in My Orders").toBeVisible({
+    timeout: 20_000,
+  });
+  await historyLink.click();
+  const detail = page.getByTestId("order-detail");
+  await expect(detail).toBeVisible({ timeout: 20_000 });
+  await expect(page).toHaveURL(new RegExp(`orderId=${input.orderId}`));
+  await expect(page.getByRole("heading", { name: "Order detail", level: 1 })).toBeVisible();
+
+  if (input.savingMinor != null && input.savingMinor > 0) {
+    const saved = formatMinorRupees(input.savingMinor);
+    await expect(detail.getByTestId("copy-purchased")).toHaveText(
+      `You saved ${saved} on this order.`,
+    );
+    const summary = detail.getByTestId("order-money-summary");
+    await expect(summary.getByText("Order saving", { exact: true })).toBeVisible();
+    await expect(summary.getByText(saved, { exact: true }).first()).toBeVisible();
+  }
+
+  if (input.payableMinor != null) {
+    await expect(detail.getByTestId("order-money-summary")).toContainText(
+      formatMinorRupees(input.payableMinor),
+    );
+  }
+
+  if (input.complimentaryProductName) {
+    const line = detail.locator("li").filter({ hasText: input.complimentaryProductName });
+    await expect(line, "historical complimentary line on Order Detail").toBeVisible();
+    await expect(line).toContainText("1 ×");
+    await expect(line).toContainText("₹0.00");
+    await expect(line).toContainText("Included with your offer");
+  }
+}
+
 export async function continueToPayment(page: Page): Promise<void> {
   await page.getByRole("button", { name: /Continue to payment/i }).click();
   await expect(page.getByTestId("checkout-ready")).toBeVisible({ timeout: 30_000 });
