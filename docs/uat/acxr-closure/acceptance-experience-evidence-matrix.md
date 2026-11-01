@@ -13,14 +13,14 @@ FOUNDER_UAT = NOT_PERFORMED
 IMP036J_ACCEPTED = NO
 PROOF_RULE = PASS only if every Quality-plan layer has executed proof on an attributed candidate
 DOMAIN_PASS_IS_NOT_BROWSER_PASS = YES
-MANDATORY_AC_PROVEN_MAIN = 37/40
-EXPERIENCE_REQUIREMENTS_PROVEN = 9/13
+MANDATORY_AC_PROVEN_MAIN = 34/40
+EXPERIENCE_REQUIREMENTS_PROVEN = 4/13
 ```
 
 Independent review (this closure):
 
-- QA: MAIN-strict is **37/40**. Official promotion-browser on `c46c3810e` is 14 passed / 1 skipped / EXIT 0 (`/tmp/m2-promotion-browser-final.log`). The skip is the desktop project skipping the mobile-tagged test; mobile-chromium passed in that command. Reclaimed monetary and operator rows use tranche 3–6 on `a33197fc`, commercial workspace on the tree squashed into `39954301d`, and cross-portal on `2dc13719e`.
-- PE: XR strict PASS is **9/13**. XR-007, XR-009, XR-010, and XR-011 stay PARTIAL.
+- QA: MAIN-strict is **34/40** after the independent review of `e67b48101`. Official promotion-browser on `c46c3810e` is 14 passed / 1 skipped / EXIT 0 (`/tmp/m2-promotion-browser-final.log`). The skip is the desktop project skipping the mobile-tagged test; mobile-chromium passed in that command.
+- PE: XR strict PASS is **4/13**. The review verdict is PARTIAL. No cited customer sentence is the wrong locked sentence. This is not Founder UAT or IMP acceptance.
 
 ## Candidate attribution rules
 
@@ -46,7 +46,7 @@ Independent review (this closure):
 | `AC-036J-002-10` | **PASS** | Recovery,component,browser | tranche5 RETRY component + promotion-browser on `39954301d`: aborted Review replace and remove keep the previous code and payable, show RETRY, and leave Try again in the tab order. Focus stays on Change or Remove. | Cart dropped-request is not in this browser run. Review remove is retried successfully after the fault is lifted. | QA |
 | `AC-036J-003-01` | **PASS** | Domain,component | tranche3/5 server gap (no browser required by AC) | — | QA |
 | `AC-036J-003-02` | **PASS** | Domain,browser | Tranche 3 server threshold on `a33197fc`. Promotion-browser on `c46c3810e`: one Increase crosses ₹1,500 and one Decrease drops it. The offer is not swapped by a second arm. | — | QA |
-| `AC-036J-004-01` | **PASS** | Domain,component,browser | Tranche 3 total-saved equality and standing-₹0 domain negative on `a33197fc`. Tranche 5 component. Promotion-browser on `c46c3810e`: ₹80 + ₹40 = ₹120, one row each, payable equals the quote. Pickup shows no delivery saving. | — | QA |
+| `AC-036J-004-01` | **NOT_EXECUTED** | Domain,component,browser | Tranche 3 total-saved equality and standing-₹0 domain negative on `a33197fc`. Promotion-browser on `c46c3810e` shows a real ₹80 + ₹40 delivery saving. | The standing-₹0 delivery charge is not shown on the browser layer. Pickup absence is mode eligibility, not that negative. | QA |
 | `AC-036J-005-01` | **PASS** | Domain,database | **tranche4 executed** first-order reserve/consume/abandoned-release + concurrent guard | — | QA |
 | `AC-036J-005-02` | **PASS** | Domain,database | **tranche4 executed** refund does not restore / prior success ineligible | — | QA |
 | `AC-036J-006-01` | **PASS** | Domain,browser | Tranche 3 mode eligibility on `a33197fc`. Promotion-browser on `c46c3810e`: pickup shows ₹12 and hides the delivery-only offer; delivery shows ₹15 and hides the pickup-only offer. Each opposite coupon uses its inapplicable sentence. | — | QA |
@@ -62,7 +62,7 @@ Independent review (this closure):
 | `AC-036J-010-03` | **PASS** | Domain | tranche3 best combination | — | QA |
 | `AC-036J-010-04` | **PASS** | Domain,component | tranche3/5 standing ₹0 | — | QA |
 | `AC-036J-011-01` | **PASS** | Database,HTTP,browser | Journey 1 on `2dc13719e`: shared DB, owned-order HTTP, then My Orders → Order Detail `You saved` / Order saving after retire. | Spec bytes match `b3b14f76a`. | QA |
-| `AC-036J-012-01` | **PASS** | HTTP,authorization,browser | Commercial workspace on the tree squashed into `39954301d`: activate, and redemption counts with no customer identifier (3 passed). Cross-portal Journey 1 on `2dc13719e`: the operator-authored coupon is applied by the customer. Tranche 6 on `a33197fc`: cross-scope create writes nothing and a client-supplied role does not activate. | — | QA |
+| `AC-036J-012-01` | **NOT_EXECUTED** | HTTP,authorization,browser | Commercial workspace on `39954301d` shows redemption counts before any customer redemption. Journey 1 on `2dc13719e` applies the operator-authored coupon. Tranche 6 on `a33197fc` denies a cross-scope create and a client-supplied role. | The later application count is not checked for customer identifiers, so the three runs do not form one operator proof. | QA |
 | `AC-036J-012-02` | **NOT_EXECUTED** | HTTP,authorization,component | Tranche 6 HTTP denies a client-supplied role and a cross-scope create, and writes nothing | Invalid activate through the admin HTTP route does not name the field. The field-named rejection is the persistence command only. | QA |
 | `AC-036J-012-03` | **PASS** | Component,browser,accessibility | PromotionsEditor cancel/confirm keyboard. Commercial workspace on `39954301d`: Cancel stays active; Enter on Retire offer shows the retired sentence. Cross-portal Journey 1 on `2dc13719e`: purchased money summary is unchanged after retire, including Order Detail. | — | QA |
 | `AC-036J-012-04` | **NOT_EXECUTED** | Domain,HTTP,authorization | Tranche 6 on `a33197fc`: one complete variant activates; incomplete, bundle, and required-modifier gifts return `COPY-OP-GIFT-INVALID` and stay draft | Those rejections are persistence commands. The admin HTTP benefit route was not the executed call. | QA |
@@ -71,15 +71,15 @@ Independent review (this closure):
 | `AC-036J-013-01` | **PASS** | Domain,HTTP,browser | Tranche 3 equal-payable complimentary selection on `a33197fc`. Promotion-browser on `c46c3810e`: cart and Review show the seeded variant id, ₹0.00, Included, and no picker. Cart shows the variant name; Review shows the product name. | — | QA |
 | `AC-036J-013-02` | **PASS** | Database,browser | Journey 3 on `2dc13719e`: after retire, Order Detail shows `1 ×` product, `₹0.00`, and Included with your offer. | API line assert remains; it is not the only proof. | QA |
 | `AC-036J-013-03` | **PASS** | Integration,recovery,browser | Tranche 4 unavailable complimentary refuse on `a33197fc`. Promotion-browser on `c46c3810e`: after the seeded variant is temporarily unavailable, Review shows `COPY-GIFT-GONE`, drops the included line, and does not open payment. | — | QA |
-| `AC-036J-013-04` | **PASS** | Domain,browser | Tranche 3 two qualifying gifts are `NONE_CHOSEN` on `a33197fc`. Promotion-browser on `c46c3810e`: a real included line is shown, then the next cart evaluate is projected to `NONE_CHOSEN`. The line goes away, `COPY-GIFT-CONFLICT` shows, and there is no picker. Two ACTIVE complimentary rows were not seeded. | — | QA |
+| `AC-036J-013-04` | **NOT_EXECUTED** | Domain,browser | Tranche 3 two qualifying gifts are `NONE_CHOSEN` on `a33197fc`. The browser run shows one included line, then rewrites the next evaluate body to `NONE_CHOSEN`. | That rewrite starts from one active gift, including an ordinary `NONE`, so two qualifying complimentary offers are not presented in the browser. Two ACTIVE rows were not seeded. | QA |
 
-**MAIN-strict counts:** PASS **37** · NOT_EXECUTED **3** · BLOCKED **0** · FAIL **0**
+**MAIN-strict counts:** PASS **34** · NOT_EXECUTED **6** · BLOCKED **0** · FAIL **0**
 
-PASS set: `001-01, 001-02, 002-01, 002-02, 002-03, 002-04, 002-05, 002-06, 002-07, 002-08, 002-09, 002-10, 003-01, 003-02, 004-01, 005-01, 005-02, 006-01, 006-02, 007-01, 008-01, 009-01, 009-02, 009-03, 009-04, 010-01, 010-02, 010-03, 010-04, 011-01, 012-01, 012-03, 012-06, 013-01, 013-02, 013-03, 013-04`.
+PASS set: `001-01, 001-02, 002-01, 002-02, 002-03, 002-04, 002-05, 002-06, 002-07, 002-08, 002-09, 002-10, 003-01, 003-02, 005-01, 005-02, 006-01, 006-02, 007-01, 008-01, 009-01, 009-02, 009-03, 009-04, 010-01, 010-02, 010-03, 010-04, 011-01, 012-03, 012-06, 013-01, 013-02, 013-03`.
 
-NOT_EXECUTED set: `012-02, 012-04, 012-05`. Each has executed persistence or partial HTTP proof and is open only because the named admin HTTP call was not the executed layer.
+NOT_EXECUTED set: `004-01, 012-01, 012-02, 012-04, 012-05, 013-04`.
 
-`008-01` is PASS from the merged cross-portal recovery, not from sealed-drift refusal. `013-04` browser evidence is a contract projection of `NONE_CHOSEN` onto the running cart. It is not a second ACTIVE complimentary row.
+`008-01` is PASS from the merged cross-portal recovery, not from sealed-drift refusal. `013-04` keeps its domain `NONE_CHOSEN` proof and does not count the cart rewrite as browser PASS.
 
 ## Experience Requirements (strict)
 
@@ -88,20 +88,20 @@ NOT_EXECUTED set: `012-02, 012-04, 012-05`. Each has executed persistence or par
 | `XR-IMP-036J-001` | **PASS** | Component,browser,content | Promotion-browser on `c46c3810e`: Offer applied, order saving equals the quote, estimated subtotal, screenshot `ac-001-01-cart`. Mobile screenshot `xr-010-mobile-cart`. | — |
 | `XR-IMP-036J-002` | **PASS** | HTTP,component,browser,accessibility | Promotion-browser on `c46c3810e`: Cart and Review share one code; change, remove, and the five failure sentences. The identity result is `role=status` with `aria-live=polite` and receives focus. Payment remains the read-only summary from the merged responsive journey. | — |
 | `XR-IMP-036J-003` | **PASS** | Domain,component,browser | Promotion-browser on `c46c3810e`: progress is visible below the threshold, the saving replaces it on Increase, and `COPY-DROPPED` returns on Decrease. Screenshot `xr-003-progress`. | — |
-| `XR-IMP-036J-004` | **PASS** | Domain,component,browser | Promotion-browser on `c46c3810e`: order saving, delivery saving, total saved, and payable are one quote. Screenshot `ac-004-01-breakdown`. Pickup does not show a delivery saving. | — |
+| `XR-IMP-036J-004` | **PARTIAL** | Domain,component,browser | Promotion-browser on `c46c3810e` shows a real order saving plus a real delivery saving as one quote. | Standing ₹0 delivery, and the absence of a second saving for it, is not on that browser run. |
 | `XR-IMP-036J-005` | **PASS** | Component,browser,content | Promotion-browser on `c46c3810e`: strict-keep, equal-kept, and equal-selected. None say better price. Screenshots `ac-009-01-strict-keep`, `xr-005-equal-kept`, `xr-005-equal-selected`. | — |
-| `XR-IMP-036J-006` | **PASS** | Component,browser | Promotion-browser on `c46c3810e`: one included ₹0 line and no picker. The conflict projection removes that line and shows `COPY-GIFT-CONFLICT` without a picker. | — |
+| `XR-IMP-036J-006` | **PARTIAL** | Component,browser | Promotion-browser on `c46c3810e` shows one included ₹0 line and no picker. | That line is not shown with a real delivery saving, and the conflict body is a rewrite of one active gift. |
 | `XR-IMP-036J-007` | **PARTIAL** | Integration,browser,accessibility | gtm stale refuse pay | focus + XD COPY-STALE |
-| `XR-IMP-036J-008` | **PASS** | Browser,content | Cross-portal on `2dc13719e`: Journey 1 keeps purchased savings on Order Detail after retire. Journey 3 keeps `1 ×`, `₹0.00`, and Included with your offer. | — |
+| `XR-IMP-036J-008` | **PARTIAL** | Browser,content | Cross-portal on `2dc13719e`: Journey 1 keeps purchased savings on Order Detail after retire. Journey 3 keeps `1 ×`, `₹0.00`, and Included with your offer. | Confirmation text for a sealed order-saving plus delivery-saving split, and absence of a live progress line, are not asserted. |
 | `XR-IMP-036J-009` | **PARTIAL** | Component,authorization,concurrency,browser | PromotionsEditor + commercial workspace retire on `39954301d`. Tranche 6 concurrency is `AC-036J-012-06`. | Complimentary activation and its non-success are not on the commercial-workspace browser run. |
 | `XR-IMP-036J-010` | **PARTIAL** | Accessibility,browser | Promotion-browser on `c46c3810e` includes the mobile cart screenshot and keyboard focus on the failed coupon action and the identity result. | A screen-reader session was not run. |
 | `XR-IMP-036J-011` | **PARTIAL** | Component,content,security | component coarse copy. Promotion-browser on `39954301d` shows five coarse sentences and no counts | Security layer is not re-attributed as a strict PASS |
-| `XR-IMP-036J-012` | **PASS** | Component,browser,content | Promotion-browser on `c46c3810e`: pickup hides the delivery-only offer and delivery hides the pickup-only offer. Neither surface shows the other mode's saving. | — |
-| `XR-IMP-036J-013` | **PASS** | Component,browser,content | Promotion-browser on `c46c3810e`: Review shows the seeded included line, ₹0.00, no picker, and no better-price claim. Screenshot `xr-013-included-review`. | — |
+| `XR-IMP-036J-012` | **PARTIAL** | Component,browser,content | Promotion-browser on `c46c3810e`: pickup hides the delivery-only offer and delivery hides the pickup-only offer. Pickup shows no delivery saving. | First-order absence without a history lecture is not in this run. |
+| `XR-IMP-036J-013` | **PARTIAL** | Component,browser,content | Promotion-browser on `c46c3810e`: Review shows the seeded included line, ₹0.00, no picker, and no better-price claim. Screenshot `xr-013-included-review`. | The run does not place a real delivery saving beside that tie. |
 
-**XR counts:** PASS **9** · PARTIAL **4**
+**XR counts:** PASS **4** · PARTIAL **9**
 
-PASS: `001, 002, 003, 004, 005, 006, 008, 012, 013`. PARTIAL: `007, 009, 010, 011`.
+PASS: `001, 002, 003, 005`. PARTIAL: `004, 006, 007, 008, 009, 010, 011, 012, 013`.
 
 ## Golden Journeys
 
@@ -139,8 +139,8 @@ PASS: `001, 002, 003, 004, 005, 006, 008, 012, 013`. PARTIAL: `007, 009, 010, 01
 ```text
 PRODUCT_FAIL_REPORTED = 0
 MANDATORY_BLOCKERS = NONE in the former 011-01 / 013-02 harness gap
-REMAINING_NOT_EXECUTED = 3
-XR_STRICT_PASS = 9/13
+REMAINING_NOT_EXECUTED = 6
+XR_STRICT_PASS = 4/13
 ```
 
 Open issues #381/#383/#384/#385 remain evidence/test gaps — not silently reclassified as PASS.
@@ -148,9 +148,9 @@ Open issues #381/#383/#384/#385 remain evidence/test gaps — not silently recla
 ## Independent review summary
 
 ```text
-QA_INDEPENDENT_REVIEW = pending this revision's review. Prior #530 review is not this head.
-PE_INDEPENDENT_REVIEW = pending this revision's review.
-XR_STRICT_PASS = 9/13
+QA_INDEPENDENT_REVIEW = PARTIAL on e67b48101. Unsupported strict PASS claims were downgraded before merge.
+PE_INDEPENDENT_REVIEW = PARTIAL on e67b48101. No cited customer sentence is the wrong locked sentence.
+XR_STRICT_PASS = 4/13
 FOUNDER_UAT = NOT_PERFORMED
 IMP036J_ACCEPTED = NO
 ```
