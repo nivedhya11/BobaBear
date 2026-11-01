@@ -602,3 +602,19 @@ test("personal coupon cap uses the customer's own sentence and hides the count",
   expect(await review.getByTestId("price-summary-total").getAttribute("data-offer-amount")).toBe(payable);
   await shot(page, testInfo, "ac-007-01-personal-cap");
 });
+
+test("automatic complimentary item is one included line at zero merchandise", async ({ page }, testInfo) => {
+  const armed = await control(page, { action: "arm-m2", scenario: "gift" });
+  expect(typeof armed.giftVariantId).toBe("string");
+  expect(armed.giftVariantId).not.toBe("");
+  await openCart(page);
+  const line = cartCouponScope(page).getByTestId("complimentary-line");
+  await expect(line).toBeVisible({ timeout: 20_000 });
+  await expect(line).toContainText(/1 × /);
+  await expect(line).toContainText(IMP036J_COPY.INCLUDED);
+  await expect(line).toHaveAttribute("data-complimentary-amount", "₹0.00");
+  await expect(line.getByRole("button")).toHaveCount(0);
+  await expect(line.getByRole("combobox")).toHaveCount(0);
+  await expect(page.getByText(/choose a gift|pick a gift|gift picker/i)).toHaveCount(0);
+  await shot(page, testInfo, "ac-013-01-included");
+});
