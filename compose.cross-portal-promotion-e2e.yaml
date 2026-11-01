@@ -1,0 +1,145 @@
+# Test-only IMP-036J cross-portal shared-DB E2E.
+# One disposable Postgres for workforce commercial + customer commerce.
+# Does not use production compose.yaml image tags or staging env files.
+services:
+  postgres:
+    image: docker.io/library/postgres:18.4-trixie
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_MIGRATOR_PASSWORD: ${POSTGRES_MIGRATOR_PASSWORD}
+      POSTGRES_APP_PASSWORD: ${POSTGRES_APP_PASSWORD}
+    ports: ["127.0.0.1:${POSTGRES_HOST_PORT}:5432"]
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+  workforce-auth:
+    build: { context: ., dockerfile: Dockerfile, target: workforce-auth-runtime }
+    expose: ["8082"]
+    environment:
+      BOBA_BEAR_ENV: test
+      BOBA_BEAR_PUBLIC_ORIGIN: ${BOBA_BEAR_PUBLIC_ORIGIN}
+      BOBA_BEAR_DATABASE_URL: ${BOBA_BEAR_DATABASE_URL}
+      BOBA_BEAR_DATABASE_SSL_MODE: disable
+      BOBA_BEAR_ALLOW_UNSAFE_ADAPTERS: "true"
+      WORKFORCE_AUTH_SECRET: ${WORKFORCE_AUTH_SECRET}
+      WORKFORCE_AUTH_BASE_URL: ${WORKFORCE_AUTH_BASE_URL}
+      WORKFORCE_AUTH_PII_HASH_SECRET: ${WORKFORCE_AUTH_PII_HASH_SECRET}
+      WORKFORCE_AUTH_TRUST_PROXY_HOPS: "1"
+      WORKFORCE_AUTH_SERVICE_HOST: 0.0.0.0
+      WORKFORCE_AUTH_SERVICE_PORT: "8082"
+    depends_on: { postgres: { condition: service_healthy } }
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:8082/health/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 15s
+  operations:
+    build: { context: ., dockerfile: Dockerfile, target: operations-runtime }
+    expose: ["8084"]
+    environment:
+      BOBA_BEAR_ENV: test
+      BOBA_BEAR_PUBLIC_ORIGIN: ${BOBA_BEAR_PUBLIC_ORIGIN}
+      BOBA_BEAR_DATABASE_URL: ${BOBA_BEAR_DATABASE_URL}
+      BOBA_BEAR_DATABASE_SSL_MODE: disable
+      BOBA_BEAR_ALLOW_UNSAFE_ADAPTERS: "true"
+      WORKFORCE_AUTH_SECRET: ${WORKFORCE_AUTH_SECRET}
+      WORKFORCE_AUTH_BASE_URL: ${WORKFORCE_AUTH_BASE_URL}
+      WORKFORCE_AUTH_PII_HASH_SECRET: ${WORKFORCE_AUTH_PII_HASH_SECRET}
+      OPERATIONS_SERVICE_HOST: 0.0.0.0
+      OPERATIONS_SERVICE_PORT: "8084"
+    depends_on: { postgres: { condition: service_healthy } }
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:8084/health/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 15s
+  customer-auth:
+    build: { context: ., dockerfile: Dockerfile, target: customer-auth-runtime }
+    expose: ["8081"]
+    environment:
+      BOBA_BEAR_ENV: test
+      BOBA_BEAR_PUBLIC_ORIGIN: ${BOBA_BEAR_PUBLIC_ORIGIN}
+      BOBA_BEAR_DATABASE_URL: ${BOBA_BEAR_DATABASE_URL}
+      BOBA_BEAR_DATABASE_SSL_MODE: disable
+      BOBA_BEAR_ALLOW_UNSAFE_ADAPTERS: "true"
+      CUSTOMER_AUTH_SECRET: ${CUSTOMER_AUTH_SECRET}
+      CUSTOMER_AUTH_PII_HASH_SECRET: ${CUSTOMER_AUTH_PII_HASH_SECRET}
+      CUSTOMER_AUTH_BASE_URL: ${CUSTOMER_AUTH_BASE_URL}
+      CUSTOMER_OTP_PROVIDER: local
+      CUSTOMER_OTP_LOCAL_FIXED_CODE: ${CUSTOMER_OTP_LOCAL_FIXED_CODE}
+      CUSTOMER_AUTH_TRUST_PROXY_HOPS: "1"
+      CUSTOMER_AUTH_SERVICE_HOST: 0.0.0.0
+      CUSTOMER_AUTH_SERVICE_PORT: "8081"
+    depends_on: { postgres: { condition: service_healthy } }
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:8081/health/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 15s
+  customer-commerce:
+    build: { context: ., dockerfile: Dockerfile, target: customer-commerce-runtime }
+    # Fake Payment entrypoint only — never the production main.js selector.
+    command:
+      [
+        "node",
+        "--conditions=react-server",
+        "dist-customer-commerce/server/customer-commerce/e2e-fake-main.js",
+      ]
+    expose: ["8083"]
+    environment:
+      BOBA_BEAR_ENV: test
+      BOBA_BEAR_PUBLIC_ORIGIN: ${BOBA_BEAR_PUBLIC_ORIGIN}
+      BOBA_BEAR_DATABASE_URL: ${BOBA_BEAR_DATABASE_URL}
+      BOBA_BEAR_DATABASE_SSL_MODE: disable
+      BOBA_BEAR_ALLOW_UNSAFE_ADAPTERS: "true"
+      CUSTOMER_AUTH_SECRET: ${CUSTOMER_AUTH_SECRET}
+      CUSTOMER_AUTH_PII_HASH_SECRET: ${CUSTOMER_AUTH_PII_HASH_SECRET}
+      CUSTOMER_AUTH_BASE_URL: ${CUSTOMER_AUTH_BASE_URL}
+      CUSTOMER_COMMERCE_SERVICE_HOST: 0.0.0.0
+      CUSTOMER_COMMERCE_SERVICE_PORT: "8083"
+      CUSTOMER_COMMERCE_TRUST_PROXY_HOPS: "1"
+      CUSTOMER_COMMERCE_FAKE_PAYMENT_OUTCOME: razorpay_standard_checkout
+    depends_on: { postgres: { condition: service_healthy } }
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:8083/health/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 15s
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: web-runtime
+      args:
+        NEXT_PUBLIC_SITE_URL: "${BOBA_BEAR_PUBLIC_ORIGIN}"
+        NEXT_PUBLIC_BOBA_BEAR_GOOGLE_MAPS_BROWSER_KEY: "e2e-maps-browser-key-fixture"
+    ports: ["127.0.0.1:${BOBA_BEAR_APP_HOST_PORT}:8080"]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: [/tmp, /var/cache/nginx, /var/run]
+    depends_on:
+      workforce-auth: { condition: service_healthy }
+      operations: { condition: service_healthy }
+      customer-auth: { condition: service_healthy }
+      customer-commerce: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://127.0.0.1:8080/"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+volumes:
+  postgres-data:
