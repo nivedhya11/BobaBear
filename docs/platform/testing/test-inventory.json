@@ -31,15 +31,15 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2438,
-    "executableTestFiles": 570,
+    "trackedPathsConsidered": 2442,
+    "executableTestFiles": 571,
     "sourceTestFiles": 167,
-    "testsTreeExecutableFiles": 298,
+    "testsTreeExecutableFiles": 299,
     "scriptTestFiles": 105,
-    "playwrightSpecs": 14,
+    "playwrightSpecs": 15,
     "vitestConfigs": 2,
     "playwrightConfigs": 9,
-    "testSupportScripts": 55,
+    "testSupportScripts": 56,
     "packageTestCommands": 94,
     "packageAuditCommands": 28,
     "packageE2eCommands": 12,
@@ -402,6 +402,7 @@
     "tests/e2e/location-selector-layout.spec.ts",
     "tests/e2e/location-selector-search-map.spec.ts",
     "tests/e2e/operations-lifecycle.spec.ts",
+    "tests/e2e/promotion-browser-journeys.spec.ts",
     "tests/e2e/public-routes.spec.ts",
     "tests/e2e/workforce-auth.spec.ts",
     "tests/enterprise/dark-only-theme.test.ts",
@@ -640,6 +641,7 @@
     "tests/e2e/location-selector-layout.spec.ts",
     "tests/e2e/location-selector-search-map.spec.ts",
     "tests/e2e/operations-lifecycle.spec.ts",
+    "tests/e2e/promotion-browser-journeys.spec.ts",
     "tests/e2e/public-routes.spec.ts",
     "tests/e2e/workforce-auth.spec.ts"
   ],
@@ -670,6 +672,7 @@
     "scripts/e2e/run-customer-ordering-e2e.mjs",
     "scripts/e2e/run-gtm-uat-browser-e2e.mjs",
     "scripts/e2e/run-operations-lifecycle-e2e.mjs",
+    "scripts/e2e/run-promotion-browser-e2e.mjs",
     "scripts/e2e/run-workforce-auth-e2e.mjs",
     "scripts/e2e/seed-commercial-workspace.ts",
     "scripts/e2e/seed-customer-ordering.ts",
@@ -9796,6 +9799,23 @@
         "test:e2e:operations-lifecycle"
       ],
       "ciInclusion": "YES",
+      "test1Layers": [
+        "11-e2e-browser-ui"
+      ],
+      "classificationConfidence": "LOW"
+    },
+    {
+      "path": "tests/e2e/promotion-browser-journeys.spec.ts",
+      "runner": "playwright",
+      "domain": "e2e",
+      "testType": "e2e-spec",
+      "dbRequired": "UNKNOWN",
+      "browserRequired": "YES",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:e2e"
+      ],
+      "ciInclusion": "NO",
       "test1Layers": [
         "11-e2e-browser-ui"
       ],
