@@ -387,6 +387,39 @@ async function runFullCommercialJourney(
   await page.getByTestId("coupon-authoring").getByRole("button", { name: /^Activate$/i }).first().click();
   await confirmConsequence(page, /Confirm effect/i);
   await expect(page.getByText(/Lifecycle effect applied/i)).toBeVisible({ timeout: 45_000 });
+  const redemptionCounts = page.getByTestId("redemption-counts");
+  await expect(redemptionCounts).toBeVisible();
+  await expect(redemptionCounts).toContainText(/Applications:\s*\d+/);
+  await expect(redemptionCounts).not.toContainText(/@|\+91|customer id/i);
+  await page.screenshot({
+    path: test.info().outputPath("operator-redemption-counts.png"),
+    fullPage: true,
+  });
+
+  await page.getByRole("button", { name: /^Review & retire$/i }).click();
+  const retireDialog = page.getByTestId("consequence-review-dialog");
+  await expect(retireDialog.getByText("Retire this offer?")).toBeVisible();
+  const cancel = retireDialog.getByRole("button", { name: "Cancel" });
+  await cancel.focus();
+  await expect(cancel).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(retireDialog).toHaveCount(0);
+  await expect(page.getByText("Retirement cancelled. The offer is still active.")).toBeVisible();
+  await expect(page.getByText("Retired. New orders will not receive it.")).toHaveCount(0);
+
+  await page.getByRole("button", { name: /^Review & retire$/i }).click();
+  await expect(retireDialog.getByText("Retire this offer?")).toBeVisible();
+  const confirmRetire = retireDialog.getByRole("button", { name: "Retire offer" });
+  await confirmRetire.focus();
+  await expect(confirmRetire).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.getByText("Retired. New orders will not receive it.")).toBeVisible({
+    timeout: 45_000,
+  });
+  await page.screenshot({
+    path: test.info().outputPath("operator-retire-confirmed.png"),
+    fullPage: true,
+  });
 
   // Active promotion whose saved start is still in the future: not customer-ready, and no coupon issued.
   const futureCode = `fut${stamp.replace(/[^a-z0-9]/g, "").slice(-10)}`;
