@@ -47,6 +47,20 @@ async function control(page: Page, input: Record<string, unknown>): Promise<Reco
   return body;
 }
 
+async function replaceGuestCoupon(page: Page, code: string): Promise<Locator> {
+  await page.goto("/order/cart/");
+  await expect(page.getByRole("heading", { name: /your cart/i })).toBeVisible();
+  const cart = cartCouponScope(page);
+  const remove = cart.getByTestId("coupon-remove");
+  if ((await remove.count()) > 0) {
+    await remove.click();
+    await expect(cart.getByTestId("coupon-apply")).toBeVisible({ timeout: 20_000 });
+  }
+  await cart.getByTestId("coupon-input").fill(code);
+  await cart.getByTestId("coupon-apply").click();
+  return cart;
+}
+
 async function arm(page: Page, scenario: string): Promise<Record<string, string>> {
   const body = await control(page, { action: "arm-m2", scenario });
   const coupons = body.coupons;
@@ -67,7 +81,7 @@ async function installLocationMocks(page: Page): Promise<void> {
   await installLocationProviderMocks(page, { stubServiceability: false });
 }
 
-async function addFirstPlainItem(page: Page): Promise<void> {
+async function addFirstPlainItem(page: Page, skipProductName?: string): Promise<void> {
   const menu = page.locator("#main-content");
   const buttons = menu.getByRole("button", { name: /^add (?!one\b)/i });
   await expect(buttons.first()).toBeVisible({ timeout: 20_000 });
@@ -76,6 +90,9 @@ async function addFirstPlainItem(page: Page): Promise<void> {
     const button = buttons.nth(i);
     const row = button.locator("xpath=ancestor::li[1]");
     if ((await row.getByText("Customisable", { exact: true }).count()) > 0) continue;
+    if (skipProductName && (await row.getByText(skipProductName, { exact: true }).count()) > 0) {
+      continue;
+    }
     await button.click();
     await expect(page.locator("header").getByRole("link", { name: /^cart \(1\)$/i })).toBeVisible({
       timeout: 15_000,
@@ -102,7 +119,7 @@ async function confirmServiceableContext(page: Page): Promise<void> {
   });
 }
 
-async function openCart(page: Page): Promise<void> {
+async function openCart(page: Page, skipProductName?: string): Promise<void> {
   await installLocationMocks(page);
   await page.goto("/order/");
   await expect(page.getByRole("heading", { name: /^the bar$/i, level: 1 })).toBeVisible();
@@ -110,7 +127,7 @@ async function openCart(page: Page): Promise<void> {
   await expect(page.getByRole("heading", { name: /^the bar$/i, level: 1 })).toBeVisible({
     timeout: 20_000,
   });
-  await addFirstPlainItem(page);
+  await addFirstPlainItem(page, skipProductName);
   await page.locator("header").getByRole("link", { name: /^cart \(1\)$/i }).click();
   await expect(page.getByRole("heading", { name: /your cart/i })).toBeVisible();
 }
@@ -139,8 +156,21 @@ async function saveAddress(page: Page, phoneNumber: string): Promise<void> {
   await checkout.getByRole("button", { name: "Save address" }).click();
 }
 
-async function reachReview(page: Page, phoneNumber: string, mode: "DELIVERY" | "PICKUP"): Promise<void> {
-  await openCart(page);
+async function reachReview(
+  page: Page,
+  phoneNumber: string,
+  mode: "DELIVERY" | "PICKUP",
+  skipProductName?: string,
+): Promise<void> {
+  await openCart(page, skipProductName);
+  await continueCartToReview(page, phoneNumber, mode);
+}
+
+async function continueCartToReview(
+  page: Page,
+  phoneNumber: string,
+  mode: "DELIVERY" | "PICKUP",
+): Promise<void> {
   await page.getByRole("button", { name: /^checkout$/i }).click();
   await signIn(page, phoneNumber);
   const checkout = page.locator("#main-content");
@@ -193,11 +223,21 @@ function findExplanation(value: unknown, depth: number): Record<string, string> 
       typeof total === "string" &&
       typeof payable === "string"
     ) {
+      const complimentary = raw.complimentary;
+      const gift =
+        complimentary && typeof complimentary === "object"
+          ? (complimentary as Record<string, unknown>)
+          : null;
       return {
         order,
         delivery,
         total,
         payable,
+        couponClass: typeof raw.couponPresentationClass === "string" ? raw.couponPresentationClass : "",
+        competing: gift && typeof gift.competingOffers === "string" ? gift.competingOffers : "",
+        variantId: gift && typeof gift.variantId === "string" ? gift.variantId : "",
+        productId: gift && typeof gift.productId === "string" ? gift.productId : "",
+        itemName: gift && typeof gift.itemName === "string" ? gift.itemName : "",
       };
     }
   }
@@ -275,6 +315,7 @@ test("closed-window offer is absent and an open threshold can cross and drop", a
   await expect(page.locator("s, del, [class*='line-through']")).toHaveCount(0);
   expect(await componentAmount(page, "ORDER_SAVING")).toBeNull();
   await expect(page.locator('[data-offer-component="PROGRESS"]')).toHaveCount(0);
+  await shot(page, testInfo, "ac-001-02-closed");
 
   await arm(page, "below");
   await page.goto("/order/cart/");
@@ -283,17 +324,18 @@ test("closed-window offer is absent and an open threshold can cross and drop", a
   await expect(offer.locator('[data-offer-component="PROGRESS"]')).toBeVisible({ timeout: 20_000 });
   expect(await componentAmount(page, "ORDER_SAVING")).toBeNull();
   await expect(offer.getByText(IMP036J_COPY.DROPPED)).toHaveCount(0);
+  await shot(page, testInfo, "xr-003-progress");
 
-  await arm(page, "met");
   await page.getByRole("button", { name: /^Increase / }).first().click();
   await expect(offer.locator('[data-offer-component="ORDER_SAVING"]')).toBeVisible({ timeout: 20_000 });
   await expect(offer.locator('[data-offer-component="PROGRESS"]')).toHaveCount(0);
   await expect(offer.getByText(IMP036J_COPY.APPLIED_AUTO)).toBeVisible();
+  expect(await componentAmount(page, "ORDER_SAVING")).toBe("1000");
 
-  await arm(page, "below");
-  await page.getByRole("button", { name: /^Increase / }).first().click();
+  await page.getByRole("button", { name: /^Decrease / }).first().click();
   await expect(offer.getByTestId("copy-dropped")).toHaveText(IMP036J_COPY.DROPPED, { timeout: 20_000 });
   await expect(offer.locator('[data-offer-component="ORDER_SAVING"]')).toHaveCount(0);
+  await expect(offer.locator('[data-offer-component="PROGRESS"]')).toBeVisible();
   await shot(page, testInfo, "ac-003-02-dropped");
 });
 
@@ -358,12 +400,14 @@ test("coupon pair beats the exclusive offer and shows both real savings", async 
 test("mode eligibility uses the allowed-mode sentence and does not show the other saving", async ({
   page,
 }, testInfo) => {
+  test.setTimeout(360_000);
   const coupons = await arm(page, "modes");
   const phone = nextPhone();
   await reachReview(page, phone, "PICKUP");
   const review = page.getByTestId("checkout-review");
   await expect(review.getByText("Delivery only offer")).toHaveCount(0);
   expect(await componentAmount(page, "DELIVERY_SAVING")).toBeNull();
+  expect(await componentAmount(page, "ORDER_SAVING")).toBe("1200");
   await expect(review.getByText(IMP036J_COPY.APPLIED_AUTO).first()).toBeVisible({ timeout: 20_000 });
   await review.getByTestId("coupon-input").fill(coupons.cdel ?? "");
   await review.getByTestId("coupon-apply").click();
@@ -372,6 +416,26 @@ test("mode eligibility uses the allowed-mode sentence and does not show the othe
   });
   await expect(review.getByTestId("coupon-result")).not.toContainText(IMP036J_COPY.INVALID);
   await shot(page, testInfo, "ac-006-01-pickup");
+
+  await page.context().clearCookies();
+  await page.evaluate(() => {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+  });
+  await reachReview(page, nextPhone(), "DELIVERY");
+  const delivery = page.getByTestId("checkout-review");
+  await expect(delivery.getByText("Pickup only offer")).toHaveCount(0);
+  await expect(delivery.getByText(IMP036J_COPY.APPLIED_AUTO).first()).toBeVisible({ timeout: 20_000 });
+  expect(await componentAmount(page, "ORDER_SAVING")).toBe("1500");
+  expect(await componentAmount(page, "DELIVERY_SAVING")).toBeNull();
+  await delivery.getByTestId("coupon-input").fill(coupons.cpick ?? "");
+  await delivery.getByTestId("coupon-apply").click();
+  await expect(delivery.getByTestId("coupon-result")).toContainText(IMP036J_COPY.INAPPLICABLE_PICKUP, {
+    timeout: 20_000,
+  });
+  await expect(delivery.getByTestId("coupon-result")).not.toContainText(IMP036J_COPY.INVALID);
+  await expect(delivery.locator('[data-offer-component="DELIVERY_SAVING"]')).toHaveCount(0);
+  await shot(page, testInfo, "ac-006-01-delivery");
 });
 
 test("invalid, expired, and inapplicable coupon sentences stay distinct", async ({ page }, testInfo) => {
@@ -507,14 +571,24 @@ test("guest identity coupon asks for sign-in and the same code is retried after 
   const pickup = page.getByRole("region", { name: "Your pickup location" });
   await expect(pickup).toBeVisible({ timeout: 20_000 });
   await pickup.getByRole("button", { name: "Continue" }).click();
+  const evaluated = page.waitForResponse(
+    (response) =>
+      response.ok() &&
+      response.url().includes("/api/v1/checkouts/") &&
+      response.url().includes("/evaluate"),
+  );
   await page.getByTestId("checkout-timing-asap").click();
   const review = page.getByTestId("checkout-review");
   await expect(review).toBeVisible({ timeout: 20_000 });
+  const payload = JSON.stringify(await (await evaluated).json());
+  expect(payload).toContain(code);
+  expect(payload).not.toContain("another customer");
   await expect(review.getByTestId("coupon-input")).toHaveValue(code);
-  await expect(review.getByTestId("coupon-result")).toContainText(IMP036J_COPY.APPLIED_COUPON, {
-    timeout: 20_000,
-  });
-  await expect(review.getByTestId("coupon-result")).toBeFocused();
+  const result = review.getByTestId("coupon-result");
+  await expect(result).toContainText(IMP036J_COPY.APPLIED_COUPON, { timeout: 20_000 });
+  await expect(result).toHaveAttribute("role", "status");
+  await expect(result).toHaveAttribute("aria-live", "polite");
+  await expect(result).toBeFocused();
   await expect(review.getByTestId("coupon-input")).not.toBeFocused();
   await shot(page, testInfo, "ac-002-04-identity-retry");
 });
@@ -603,18 +677,159 @@ test("personal coupon cap uses the customer's own sentence and hides the count",
   await shot(page, testInfo, "ac-007-01-personal-cap");
 });
 
-test("automatic complimentary item is one included line at zero merchandise", async ({ page }, testInfo) => {
-  const armed = await control(page, { action: "arm-m2", scenario: "gift" });
-  expect(typeof armed.giftVariantId).toBe("string");
-  expect(armed.giftVariantId).not.toBe("");
+test("guest unrestricted coupon keeps a better total and can tie without sign-in", async ({
+  page,
+}, testInfo) => {
+  test.setTimeout(240_000);
+  const keep = await arm(page, "guest-keep");
   await openCart(page);
+  const cart = cartCouponScope(page);
+  const payable = await cart.getByTestId("price-summary-total").getAttribute("data-offer-amount");
+  await cart.getByTestId("coupon-input").fill(keep.gkeep ?? "");
+  await cart.getByTestId("coupon-apply").click();
+  const kept = cart.getByTestId("coupon-result");
+  await expect(kept).toHaveText(IMP036J_COPY.STRICT_KEEP, { timeout: 20_000 });
+  await expect(kept).not.toContainText(/better price|sign in/i);
+  expect(await componentAmount(page, "ORDER_SAVING")).toBe("8000");
+  expect(await cart.getByTestId("price-summary-total").getAttribute("data-offer-amount")).toBe(payable);
+  await shot(page, testInfo, "ac-002-05-strict-keep");
+
+  const equalKept = await arm(page, "equal-kept");
+  const keptCart = await replaceGuestCoupon(page, equalKept.eqkeep ?? "");
+  await expect(keptCart.getByTestId("coupon-result")).toHaveText(IMP036J_COPY.EQUAL_KEPT, {
+    timeout: 20_000,
+  });
+  await expect(keptCart.getByTestId("coupon-result")).not.toContainText(/better price|sign in/i);
+  expect(await componentAmount(page, "ORDER_SAVING")).toBe("1000");
+  await shot(page, testInfo, "xr-005-equal-kept");
+
+  const equalSelected = await arm(page, "equal-selected");
+  const selectedCart = await replaceGuestCoupon(page, equalSelected.eqsel ?? "");
+  await expect(selectedCart.getByTestId("coupon-result")).toHaveText(IMP036J_COPY.EQUAL_SELECTED, {
+    timeout: 20_000,
+  });
+  await expect(selectedCart.getByTestId("coupon-result")).not.toContainText(/better price|sign in/i);
+  expect(await componentAmount(page, "ORDER_SAVING")).toBe("1000");
+  await shot(page, testInfo, "xr-005-equal-selected");
+
+  const identity = await arm(page, "identity");
+  const identityCart = await replaceGuestCoupon(page, identity.identity ?? "");
+  await expect(identityCart.getByTestId("coupon-result")).toHaveText(IMP036J_COPY.SIGN_IN, {
+    timeout: 20_000,
+  });
+  await expect(identityCart.getByText(IMP036J_COPY.APPLIED_COUPON)).toHaveCount(0);
+});
+
+test("automatic complimentary item is the seeded variant at zero merchandise", async ({
+  page,
+}, testInfo) => {
+  test.setTimeout(360_000);
+  const armed = await control(page, { action: "arm-m2", scenario: "gift" });
+  const variantId = String(armed.giftVariantId ?? "");
+  const productId = String(armed.giftProductId ?? "");
+  const productName = String(armed.giftProductName ?? "");
+  const variantName = String(armed.giftVariantName ?? "");
+  expect(variantId).toMatch(/^[0-9a-f-]{36}$/i);
+  expect(productId).toMatch(/^[0-9a-f-]{36}$/i);
+  expect(productName.length).toBeGreaterThan(0);
+  expect(variantName.length).toBeGreaterThan(0);
+  const watched = watchExplanation(page);
+  await openCart(page, productName);
   const line = cartCouponScope(page).getByTestId("complimentary-line");
   await expect(line).toBeVisible({ timeout: 20_000 });
-  await expect(line).toContainText(/1 × /);
+  await expect.poll(() => watched.read()?.variantId ?? "").toBe(variantId);
+  expect(watched.read()?.productId).toBe(productId);
+  expect(watched.read()?.competing).toBe("NONE");
+  const shownName = watched.read()?.itemName ?? "";
+  expect([variantName, productName]).toContain(shownName);
+  await expect(line).toHaveAttribute("data-complimentary-name", shownName);
+  await expect(line).toContainText(`1 × ${shownName}`);
   await expect(line).toContainText(IMP036J_COPY.INCLUDED);
   await expect(line).toHaveAttribute("data-complimentary-amount", "₹0.00");
   await expect(line.getByRole("button")).toHaveCount(0);
   await expect(line.getByRole("combobox")).toHaveCount(0);
   await expect(page.getByText(/choose a gift|pick a gift|gift picker/i)).toHaveCount(0);
+  expect(await componentAmount(page, "ORDER_SAVING")).toBeNull();
   await shot(page, testInfo, "ac-013-01-included");
+
+  await continueCartToReview(page, nextPhone(), "PICKUP");
+  const review = page.getByTestId("checkout-review");
+  const reviewLine = review.getByTestId("complimentary-line");
+  await expect(reviewLine).toBeVisible({ timeout: 20_000 });
+  await expect(reviewLine).toContainText(`1 × ${productName}`);
+  await expect(reviewLine).toHaveAttribute("data-complimentary-name", productName);
+  await expect(reviewLine).toContainText(IMP036J_COPY.INCLUDED);
+  await expect(reviewLine).toHaveAttribute("data-complimentary-amount", "₹0.00");
+  await expect(reviewLine.getByRole("button")).toHaveCount(0);
+  await expect(review.getByText(/better price/i)).toHaveCount(0);
+  await expect.poll(() => watched.read()?.variantId ?? "").toBe(variantId);
+  await shot(page, testInfo, "xr-013-included-review");
+
+  const marked = await control(page, { action: "mark-gift-unavailable", variantId });
+  expect(marked.ok).toBe(true);
+  await review.getByTestId("checkout-back-to-delivery").click();
+  const pickup = page.locator("#main-content").getByTestId("checkout-fulfilment-pickup");
+  await expect(pickup).toBeVisible({ timeout: 20_000 });
+  await pickup.click();
+  await page.getByRole("region", { name: "Your pickup location" }).getByRole("button", { name: "Continue" }).click();
+  await page.getByTestId("checkout-timing-asap").click();
+  await expect(review).toBeVisible({ timeout: 20_000 });
+  await expect(review.getByTestId("copy-gift-gone")).toHaveText(IMP036J_COPY.GIFT_GONE, { timeout: 20_000 });
+  await expect(review.getByTestId("complimentary-line")).toHaveCount(0);
+  await expect(review.getByRole("button", { name: /Continue to payment/i })).toBeVisible();
+  await expect(page.getByTestId("payment-panel")).toHaveCount(0);
+  await shot(page, testInfo, "ac-013-03-gift-gone");
 });
+
+test("a previously shown complimentary line becomes a conflict without a second active gift", async ({
+  page,
+}, testInfo) => {
+  const armed = await control(page, { action: "arm-m2", scenario: "gift" });
+  const productName = String(armed.giftProductName ?? "");
+  const variantId = String(armed.giftVariantId ?? "");
+  expect(productName.length).toBeGreaterThan(0);
+  expect(variantId).toMatch(/^[0-9a-f-]{36}$/i);
+  const watched = watchExplanation(page);
+  await openCart(page, productName);
+  const offer = cartCouponScope(page);
+  const line = offer.getByTestId("complimentary-line");
+  await expect(line).toBeVisible({ timeout: 20_000 });
+  await expect.poll(() => watched.read()?.variantId ?? "").toBe(variantId);
+  const shownName = watched.read()?.itemName ?? "";
+  expect(shownName.length).toBeGreaterThan(0);
+  await page.route("**/api/v1/cart/evaluate", async (route) => {
+    const response = await route.fetch();
+    const json = (await response.json()) as unknown;
+    projectNoneChosen(json);
+    await route.fulfill({ response, json });
+  });
+  await page.getByRole("button", { name: /^Increase / }).first().click();
+  await expect(offer.getByTestId("copy-gift-conflict")).toHaveText(IMP036J_COPY.GIFT_CONFLICT, {
+    timeout: 20_000,
+  });
+  await expect(offer.getByTestId("complimentary-line")).toHaveCount(0);
+  await expect(offer.getByRole("combobox")).toHaveCount(0);
+  await expect(page.getByText(/choose a gift|pick a gift/i)).toHaveCount(0);
+  await shot(page, testInfo, "ac-013-04-conflict");
+  await page.unroute("**/api/v1/cart/evaluate");
+});
+
+function projectNoneChosen(value: unknown): void {
+  if (!value || typeof value !== "object") return;
+  if (Array.isArray(value)) {
+    for (const entry of value) projectNoneChosen(entry);
+    return;
+  }
+  const record = value as Record<string, unknown>;
+  if (record.competingOffers === "NONE" || record.competingOffers === "NONE_CHOSEN") {
+    for (const key of Object.keys(record)) delete record[key];
+    record.competingOffers = "NONE_CHOSEN";
+  }
+  if (Array.isArray(record.lines)) {
+    record.lines = record.lines.filter((line) => {
+      if (!line || typeof line !== "object") return true;
+      return (line as { lineOrigin?: string }).lineOrigin !== "complimentary_offer";
+    });
+  }
+  for (const child of Object.values(record)) projectNoneChosen(child);
+}

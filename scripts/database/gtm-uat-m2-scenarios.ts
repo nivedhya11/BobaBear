@@ -52,7 +52,10 @@ export type M2ScenarioName =
   | "basic"
   | "cap-global"
   | "cap-personal"
-  | "gift";
+  | "gift"
+  | "equal-kept"
+  | "equal-selected"
+  | "guest-keep";
 
 const pools = new Map<string, { config: WebConfig; persistence: Persistence }>();
 
@@ -100,6 +103,7 @@ type DraftSpec = {
   benefit: PromotionBenefitConfig;
   benefitTarget: "merchandise" | "delivery";
   minimumQualifyingAmountPaise?: bigint | null;
+  priority?: number;
   endsAt?: Date | null;
   eligibleFulfilmentModes?: Array<"DELIVERY" | "PICKUP"> | null;
   maximumRedemptions?: number | null;
@@ -123,6 +127,7 @@ async function author(
     scopeType: "brand",
     triggerType: spec.triggerType,
     stackingPolicy: spec.stackingPolicy,
+    priority: spec.priority,
     startsAt: new Date("2020-01-01T00:00:00Z"),
     endsAt: spec.endsAt ?? null,
     minimumQualifyingAmountPaise: spec.minimumQualifyingAmountPaise ?? null,
@@ -194,7 +199,7 @@ async function author(
 function specsFor(
   scenario: M2ScenarioName,
   stamp: string,
-  gift: { productId: string; variantId: string } | null,
+  gift: { productId: string; variantId: string; productName: string; variantName: string } | null,
 ): { specs: DraftSpec[]; coupons: Record<string, string> } {
   const keep = `K${stamp}`;
   const win = `W${stamp}`;
@@ -227,7 +232,7 @@ function specsFor(
         stackingPolicy: "exclusive",
         benefit: moneyBenefit("fixed_amount_discount", BigInt(1_000)),
         benefitTarget: "merchandise",
-        minimumQualifyingAmountPaise: BigInt(5_000_000),
+        minimumQualifyingAmountPaise: BigInt(150_000),
       },
     ],
     met: [
@@ -403,6 +408,67 @@ function specsFor(
         couponCode: personal,
       },
     ],
+    "guest-keep": [
+      {
+        key: "gauto",
+        displayName: "Better automatic",
+        triggerType: "automatic",
+        stackingPolicy: "exclusive",
+        benefit: moneyBenefit("fixed_amount_discount", BigInt(8_000)),
+        benefitTarget: "merchandise",
+      },
+      {
+        key: "gkeep",
+        displayName: "Worse guest coupon",
+        triggerType: "coupon",
+        stackingPolicy: "exclusive",
+        benefit: moneyBenefit("fixed_amount_discount", BigInt(1_000)),
+        benefitTarget: "merchandise",
+        couponCode: `H${stamp}`,
+      },
+    ],
+    "equal-kept": [
+      {
+        key: "eqauto",
+        displayName: "Equal automatic",
+        triggerType: "automatic",
+        stackingPolicy: "exclusive",
+        priority: 10,
+        benefit: moneyBenefit("fixed_amount_discount", BigInt(1_000)),
+        benefitTarget: "merchandise",
+      },
+      {
+        key: "eqkeep",
+        displayName: "Equal coupon kept",
+        triggerType: "coupon",
+        stackingPolicy: "exclusive",
+        priority: 0,
+        benefit: moneyBenefit("fixed_amount_discount", BigInt(1_000)),
+        benefitTarget: "merchandise",
+        couponCode: `Q${stamp}`,
+      },
+    ],
+    "equal-selected": [
+      {
+        key: "eqauto2",
+        displayName: "Equal automatic lower",
+        triggerType: "automatic",
+        stackingPolicy: "exclusive",
+        priority: 0,
+        benefit: moneyBenefit("fixed_amount_discount", BigInt(1_000)),
+        benefitTarget: "merchandise",
+      },
+      {
+        key: "eqsel",
+        displayName: "Equal coupon selected",
+        triggerType: "coupon",
+        stackingPolicy: "exclusive",
+        priority: 10,
+        benefit: moneyBenefit("fixed_amount_discount", BigInt(1_000)),
+        benefitTarget: "merchandise",
+        couponCode: `R${stamp}`,
+      },
+    ],
     gift: gift
       ? [
           {
@@ -442,6 +508,9 @@ export async function armM2Scenario(
     "cap-global",
     "cap-personal",
     "gift",
+    "equal-kept",
+    "equal-selected",
+    "guest-keep",
   ];
   if (!allowed.includes(scenario as M2ScenarioName)) {
     return { ok: false, mutated: 0, reason: "UNKNOWN_SCENARIO" };
@@ -468,16 +537,35 @@ export async function armM2Scenario(
       `);
       const brandId = brandRow.rows[0]?.brand_id as string | undefined;
       if (!brandId) throw new Error("M2 scenario seed has no brand");
-      let gift: { productId: string; variantId: string } | null = null;
+      let gift: { productId: string; variantId: string; productName: string; variantName: string } | null = null;
       if (scenario === "gift") {
-        const variant = await tx.db
-          .select({ id: catalogVariantsTable.id, productId: catalogVariantsTable.productId })
-          .from(catalogVariantsTable)
-          .where(eq(catalogVariantsTable.brandId, brandId))
-          .limit(1);
-        const row = variant[0];
+        const variant = await tx.db.execute(sql`
+          select v.id::text as variant_id,
+                 v.product_id::text as product_id,
+                 p.name as product_name,
+                 v.name as variant_name
+          from app.catalog_variants v
+          join app.catalog_products p on p.id = v.product_id
+          where v.brand_id = ${brandId}::uuid
+            and v.lifecycle_status = 'active'
+            and p.lifecycle_status = 'active'
+          order by p.name desc, v.id desc
+          limit 1
+        `);
+        const row = variant.rows[0] as
+          | { variant_id: string; product_id: string; product_name: string; variant_name: string }
+          | undefined;
         if (!row) throw new Error("M2 gift scenario has no variant");
-        gift = { productId: row.productId, variantId: row.id };
+        await tx.db.execute(sql`
+          delete from app.outlet_variant_availability
+          where variant_id = ${row.variant_id}::uuid
+        `);
+        gift = {
+          productId: row.product_id,
+          variantId: row.variant_id,
+          productName: row.product_name,
+          variantName: row.variant_name,
+        };
       }
       const { specs, coupons } = specsFor(scenario as M2ScenarioName, stamp, gift);
       if (specs.length === 0) throw new Error("M2 scenario produced no promotions");
@@ -496,7 +584,13 @@ export async function armM2Scenario(
         const code = `m2${stamp.toLowerCase()}${spec.key}`.slice(0, 64);
         await author(tx, actor, brandId, spec, code);
       }
-      return { coupons, giftVariantId: gift?.variantId ?? null };
+      return {
+        coupons,
+        giftVariantId: gift?.variantId ?? null,
+        giftProductId: gift?.productId ?? null,
+        giftProductName: gift?.productName ?? null,
+        giftVariantName: gift?.variantName ?? null,
+      };
     });
     return { ok: true, mutated: 1, scenario, ...result };
   } catch (error) {
@@ -697,6 +791,57 @@ export async function seedCapUsage(
   }
 }
 
+/**
+ * Makes one complimentary variant ineligible at every outlet of its brand.
+ * The customer's own cart variant is left alone when the caller passes a
+ * different variant id.
+ */
+export async function markGiftVariantUnavailable(
+  databaseUrl: string,
+  variantId: string,
+): Promise<Record<string, unknown>> {
+  if (!/^[0-9a-f-]{36}$/i.test(variantId)) {
+    return { ok: false, mutated: 0, reason: "BAD_VARIANT" };
+  }
+  const persistence = persistenceFor(databaseUrl);
+  try {
+    const mutated = await persistence.transaction(async (tx) => {
+      const actorRow = await tx.db.select({ id: workforceAuthUsers.id }).from(workforceAuthUsers).limit(1);
+      const userId = actorRow[0]?.id;
+      if (!userId) throw new Error("M2 gift unavailability has no workforce actor");
+      const written = await tx.db.execute(sql`
+        insert into app.outlet_variant_availability (
+          id, brand_id, organization_id, territory_id, outlet_id, variant_id,
+          state, unavailable_until, reason_code, note, updated_by_workforce_user_id,
+          created_at, updated_at
+        )
+        select gen_random_uuid(), o.brand_id, o.organization_id, o.territory_id, o.id,
+               ${variantId}::uuid, 'temporarily_unavailable', null, 'e2e',
+               'gift unavailable before pay', ${userId}, now(), now()
+        from app.outlets o
+        join app.catalog_variants v on v.id = ${variantId}::uuid and v.brand_id = o.brand_id
+        on conflict (outlet_id, variant_id) do update
+          set state = 'temporarily_unavailable',
+              unavailable_until = null,
+              updated_at = now(),
+              updated_by_workforce_user_id = excluded.updated_by_workforce_user_id
+        returning id
+      `);
+      return written.rows.length;
+    });
+    if (mutated < 1) return { ok: false, mutated: 0, reason: "GIFT_OUTLET_NOT_FOUND" };
+    return { ok: true, mutated, variantId };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "GIFT_UNAVAILABLE_FAILED";
+    return {
+      ok: false,
+      mutated: 0,
+      reason: "GIFT_UNAVAILABLE_FAILED",
+      message: message.replace(/postgres(?:ql)?:\/\/\S+/gi, "[redacted]").slice(0, 300),
+    };
+  }
+}
+
 const invokedDirectly =
   process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 if (invokedDirectly) {
@@ -705,7 +850,9 @@ if (invokedDirectly) {
   const pending =
     command === "seed-cap"
       ? seedCapUsage(databaseUrl, process.argv[3] ?? "", process.argv[4] ?? "")
-      : armM2Scenario(databaseUrl, command);
+      : command === "mark-gift"
+        ? markGiftVariantUnavailable(databaseUrl, process.argv[3] ?? "")
+        : armM2Scenario(databaseUrl, command);
   pending
     .then((result) => {
       process.stdout.write(`${JSON.stringify(result)}\n`);
