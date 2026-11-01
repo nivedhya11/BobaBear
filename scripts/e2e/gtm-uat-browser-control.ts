@@ -16,6 +16,10 @@ function armM2ViaChild(databaseUrl: string, scenario: string): Record<string, un
   return runM2Child(databaseUrl, [scenario]);
 }
 
+function markGiftViaChild(databaseUrl: string, variantId: string): Record<string, unknown> {
+  return runM2Child(databaseUrl, ["mark-gift", variantId]);
+}
+
 function seedCapViaChild(
   databaseUrl: string,
   couponCode: string,
@@ -156,6 +160,14 @@ export async function handleGtmUatBrowserControl(
     const armed = armM2ViaChild(options.databaseUrl, scenario);
     res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
     res.end(JSON.stringify(armed));
+    return;
+  }
+
+  if (input.action === "mark-gift-unavailable") {
+    const variantId = typeof input.variantId === "string" ? input.variantId : "";
+    const marked = markGiftViaChild(options.databaseUrl, variantId);
+    res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+    res.end(JSON.stringify(marked));
     return;
   }
 
