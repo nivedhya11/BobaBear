@@ -62,7 +62,7 @@ export type EvaluatePromotionsInput = Readonly<{
    * for these ids is ignored at quote time so structural equality preserves the
    * accepted snapshot; Payment claim locks still enforce capacity.
    */
-  preserveAppliedPromotionIds?: ReadonlySet<string> | readonly string[];
+  preserveAppliedPromotionIds?: readonly string[];
 }>;
 
 function couponNotApplied(
@@ -184,12 +184,9 @@ function evaluateSubmittedCoupon(
       (usage.promotionPersonalCap !== null &&
         usage.personalUnits !== null &&
         usage.personalUnits >= BigInt(usage.promotionPersonalCap));
-    const preserve =
-      input.preserveAppliedPromotionIds instanceof Set
-        ? input.preserveAppliedPromotionIds.has(coupon.promotionId)
-        : Boolean(
-            input.preserveAppliedPromotionIds?.includes(coupon.promotionId),
-          );
+    const preserve = Boolean(
+      input.preserveAppliedPromotionIds?.includes(coupon.promotionId),
+    );
     if (personalReached && !preserve) {
       return {
         result: couponNotApplied("NOT_APPLICABLE", "PERSONAL_CAP_REACHED", identity),

@@ -93,7 +93,7 @@ export type BuildDirectPricingQuoteInput = Readonly<{
    * live usage (so non-sealed codes stay exhausted) but preserve those ids for
    * structural prepare equality. Payment claim locks remain capacity authority.
    */
-  preserveAppliedPromotionIds?: ReadonlySet<string> | readonly string[];
+  preserveAppliedPromotionIds?: readonly string[];
 }>;
 
 type InternalTaxableLine = {

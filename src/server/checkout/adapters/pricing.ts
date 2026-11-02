@@ -316,7 +316,7 @@ export async function buildCheckoutCommercialResult(
      * ids so peer RESERVED/CONSUMED does not reprice those benefits before
      * claim locks return PAYMENT_PROMOTION_CAPACITY_UNAVAILABLE.
      */
-    preserveAppliedPromotionIds?: ReadonlySet<string> | readonly string[];
+    preserveAppliedPromotionIds?: readonly string[];
   },
 ): Promise<CheckoutCommercialResult> {
   assertApplicationRole(context, "buildCheckoutCommercialResult");
