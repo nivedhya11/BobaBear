@@ -560,7 +560,8 @@ export function PaymentPanel(props: {
       applyPaymentFailure(started);
       if (
         started.code === "CHECKOUT_REPRICED" ||
-        started.code === "CHECKOUT_CART_CHANGED"
+        started.code === "CHECKOUT_CART_CHANGED" ||
+        started.code === "PAYMENT_PROMOTION_CAPACITY_UNAVAILABLE"
       ) {
         props.onStaleReview?.(started.code);
         return;

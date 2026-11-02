@@ -88,6 +88,12 @@ export type BuildDirectPricingQuoteInput = Readonly<{
    * checkout attempt. Cart quotes omit this.
    */
   previouslyPresentedComplimentaryVariantId?: string | null;
+  /**
+   * Sealed applied promotion ids. When set, quote-time cap checks still load
+   * live usage (so non-sealed codes stay exhausted) but preserve those ids for
+   * structural prepare equality. Payment claim locks remain capacity authority.
+   */
+  preserveAppliedPromotionIds?: readonly string[];
 }>;
 
 type InternalTaxableLine = {
@@ -516,6 +522,7 @@ export async function buildDirectPricingQuote(
     submittedCoupon,
     redemptionEnforcementAvailable: true,
     redemptionUsage,
+    preserveAppliedPromotionIds: input.preserveAppliedPromotionIds,
     previouslyPresentedComplimentaryVariantId:
       input.previouslyPresentedComplimentaryVariantId ?? null,
   });

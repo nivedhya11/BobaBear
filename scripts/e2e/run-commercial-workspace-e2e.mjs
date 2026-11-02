@@ -47,7 +47,9 @@ function reportDisk(label) {
       'echo "--- df -k / /tmp ${HOME:-/home/runner} ---"',
       'df -k / /tmp "${HOME:-/home/runner}" 2>/dev/null || df -k',
       'echo "--- podman system df ---"',
-      "podman system df 2>/dev/null || echo 'podman system df unavailable'",
+      // Unbounded `podman system df` can hang when the engine is contended;
+      // the disk gate itself still uses `df` above.
+      "timeout 20 podman system df 2>/dev/null || echo 'podman system df unavailable or timed out'",
       'echo "--- podman graph-root ---"',
       'storage="${HOME:-/home/runner}/.local/share/containers/storage"',
       'if [ -d "$storage" ]; then timeout 20 du -sh "$storage" 2>/dev/null || echo "podman graph-root du skipped"; else echo "storage dir absent: $storage"; fi',
