@@ -93,6 +93,7 @@ const ALLOWED_PERSISTENCE_IMPORT_PREFIXES = [
   "tests/serviceability-concurrency/",
   "tests/administration/",
   "tests/operations/",
+  "tests/customer-auth/",
   "tests/workforce-auth/",
   "tests/staging-baseline/",
 ];

@@ -4,6 +4,9 @@
  * Staging/production always fail closed — no approved production SMS
  * adapter exists in this slice. DLT configuration keys are recognized as
  * future requirements but never invented or populated here.
+ *
+ * `./msg91` is an inactive offline candidate. This factory does not select
+ * it, and `CustomerOtpProviderKind` stays `"local" | "disabled"`.
  */
 import type { AppEnvironment } from "../../../platform/config";
 import { CustomerOtpProviderError } from "../errors";

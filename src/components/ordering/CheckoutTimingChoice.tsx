@@ -43,7 +43,7 @@ export function CheckoutTimingChoice(props: {
   const today = windows.filter((window) => window.day === "TODAY");
   const tomorrow = windows.filter((window) => window.day === "TOMORROW");
   const promiseLabel =
-    mode === "DELIVERY" ? "Arrival / fulfilment window" : "Pickup window";
+    mode === "DELIVERY" ? "Delivery window" : "Pickup window";
 
   return (
     <section
@@ -56,7 +56,7 @@ export function CheckoutTimingChoice(props: {
       </h2>
       <p className="font-body text-[14px] text-[var(--text-secondary)]">
         {mode === "DELIVERY"
-          ? "Choose as soon as possible, or an arrival / fulfilment window."
+          ? "Choose as soon as possible, or a delivery window."
           : "Choose as soon as possible, or a pickup window."}
         {timeZone ? ` Times use ${timeZone}.` : ""}
       </p>

@@ -263,4 +263,90 @@ describe("coupon journeys on the accepted evaluator", () => {
       removed.candidates.every((candidate) => candidate.promotionDiscountTotalPaise === BigInt(0)),
     ).toBe(true);
   });
+
+  it("keeps a capped coupon eligible while active units are still under the cap", () => {
+    const promotion = offer({ id: "promo-cap", triggerType: "coupon" });
+    const evaluated = evaluatePromotions({
+      context: evaluationContext(),
+      snapshot: merchandiseSnapshot(MERCHANDISE),
+      promotions: [promotion],
+      redemptionEnforcementAvailable: true,
+      redemptionUsage: {
+        globalUnits: BigInt(0),
+        personalUnits: BigInt(0),
+        promotionGlobalCap: null,
+        promotionPersonalCap: null,
+      },
+      submittedCoupon: {
+        rawCode: "CAPOK",
+        coupon: couponRecord({
+          id: "coupon-capok",
+          promotionId: promotion.id,
+          canonicalCode: "CAPOK",
+          maximumRedemptions: 1,
+          maximumRedemptionsPerCustomer: 1,
+        }),
+        promotion,
+      },
+    });
+    expect(evaluated.submittedCouponResult?.reasonCode).toBe("COUPON_VALID_BUT_NOT_SELECTED");
+    expect(evaluated.eligiblePromotionIds).toContain("promo-cap");
+  });
+
+  it("emits distinct global and personal exhaustion reasons and no saving", () => {
+    const promotion = offer({ id: "promo-spent", triggerType: "coupon" });
+    const coupon = couponRecord({
+      id: "coupon-spent",
+      promotionId: promotion.id,
+      canonicalCode: "SPENT",
+      maximumRedemptions: 1,
+      maximumRedemptionsPerCustomer: 1,
+    });
+    const base = {
+      context: evaluationContext(),
+      snapshot: merchandiseSnapshot(MERCHANDISE),
+      promotions: [promotion],
+      redemptionEnforcementAvailable: true,
+      submittedCoupon: { rawCode: "SPENT", coupon, promotion },
+    };
+    const global = evaluatePromotions({
+      ...base,
+      redemptionUsage: {
+        globalUnits: BigInt(1),
+        personalUnits: BigInt(0),
+        promotionGlobalCap: null,
+        promotionPersonalCap: null,
+      },
+    });
+    const personal = evaluatePromotions({
+      ...base,
+      redemptionUsage: {
+        globalUnits: BigInt(0),
+        personalUnits: BigInt(1),
+        promotionGlobalCap: null,
+        promotionPersonalCap: null,
+      },
+    });
+    expect(global.submittedCouponResult).toMatchObject({
+      status: "NOT_APPLICABLE",
+      reasonCode: "GLOBAL_CAP_REACHED",
+    });
+    expect(personal.submittedCouponResult).toMatchObject({
+      status: "NOT_APPLICABLE",
+      reasonCode: "PERSONAL_CAP_REACHED",
+    });
+    expect(global.eligiblePromotionIds).not.toContain("promo-spent");
+    expect(personal.eligiblePromotionIds).not.toContain("promo-spent");
+    const globalCopy = couponStatusCopy({
+      explanation: explanation({ submittedCouponResult: global.submittedCouponResult }),
+    })?.text;
+    const personalCopy = couponStatusCopy({
+      explanation: explanation({ submittedCouponResult: personal.submittedCouponResult }),
+    })?.text;
+    expect(globalCopy).toBe(IMP036J_COPY.GLOBAL_CAP);
+    expect(personalCopy).toBe(IMP036J_COPY.PERSONAL_CAP);
+    expect(globalCopy).not.toBe(IMP036J_COPY.INVALID);
+    expect(personalCopy).not.toBe(IMP036J_COPY.INVALID);
+    expect(globalCopy).not.toBe(personalCopy);
+  });
 });

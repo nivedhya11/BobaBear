@@ -99,6 +99,11 @@ test("isAllowedPersistenceImportPath allows the exact additional script consumer
   }
 });
 
+test("isAllowedPersistenceImportPath allows the GTM UAT fixture only via scripts/database/ and not scripts/e2e/", () => {
+  assert.equal(isAllowedPersistenceImportPath("scripts/database/gtm-uat-browser-fixtures.ts"), true);
+  assert.equal(isAllowedPersistenceImportPath("scripts/e2e/gtm-uat-browser-fixtures.ts"), false);
+});
+
 test("isAllowedPersistenceImportPath does not generally allowlist health.ts", () => {
   assert.equal(isAllowedPersistenceImportPath("src/platform/observability/health.ts"), false);
 });
@@ -118,13 +123,17 @@ test("isAllowedPersistenceImportPath allows the exact modifier-bootstrap integra
   );
 });
 
-test("isAllowedPersistenceImportPath allows administration/operations/workforce-auth test trees", () => {
+test("isAllowedPersistenceImportPath allows administration/operations/auth test trees", () => {
   assert.equal(
     isAllowedPersistenceImportPath("tests/administration/admin-http.integration.test.ts"),
     true,
   );
   assert.equal(
     isAllowedPersistenceImportPath("tests/operations/store-http.integration.test.ts"),
+    true,
+  );
+  assert.equal(
+    isAllowedPersistenceImportPath("tests/customer-auth/trusted-identity.integration.test.ts"),
     true,
   );
   assert.equal(

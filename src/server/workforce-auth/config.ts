@@ -37,7 +37,11 @@ export function loadWorkforceAuthServiceConfig(
   source: WorkforceAuthServiceEnvSource,
   environmentType: AppEnvironment,
 ): WorkforceAuthServiceConfig {
-  const workforceResult = validateWorkforceAuthConfig(source, environmentType);
+  const workforceResult = validateWorkforceAuthConfig(
+    source,
+    environmentType,
+    environmentType === "staging" ? { expectedPublicOrigin: source.BOBA_BEAR_PUBLIC_ORIGIN ?? "" } : {},
+  );
   if (!workforceResult.ok) {
     throw new AuthFoundationConfigurationError(workforceResult.issues);
   }

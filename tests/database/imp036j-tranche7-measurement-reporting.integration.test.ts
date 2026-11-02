@@ -167,6 +167,26 @@ async function withHarness(
   });
 }
 
+/**
+ * Window for facts stamped by PostgreSQL clock_timestamp().
+ * The anchor is one day before that clock, so the half-open 28-civil-day
+ * window contains this test's writes. Fixed-date inclusion, exclusion,
+ * cutoff, snapshot, replay, concurrency, and maturation cases keep the
+ * 2026-10-01 anchor in withHarness.
+ */
+async function measurementWindowAroundDatabaseClock(
+  persistence: Persistence,
+): Promise<ReturnType<typeof initialMeasurementWindow>> {
+  const clock = await persistence.withContext(async (ctx) => {
+    const result = await ctx.db.execute(sql`select clock_timestamp() as clock`);
+    const value = (result.rows[0] as { clock: Date | string }).clock;
+    return value instanceof Date ? value : new Date(value);
+  });
+  return initialMeasurementWindow({
+    productionReleaseAnchor: new Date(clock.getTime() - 24 * 60 * 60 * 1000),
+  });
+}
+
 type Tx = PersistenceTransactionContext;
 
 async function ensureHead(tx: Tx, journeyKey: string): Promise<void> {
@@ -1522,9 +1542,14 @@ describe("IMP-036J tranche 7 measurement reporting", () => {
       expect(String(second.resolved_at)).toBe(String(first.resolved_at));
       expect(second.origin_count).toBe("1");
       expect(second.change_facts).toBe("0");
+      const storedResolution = new Date(first.resolved_at);
+      const reportAsOf =
+        storedResolution.getTime() < window.reportAsOf.getTime()
+          ? window.reportAsOf
+          : new Date(storedResolution.getTime() + 1);
       const report = await publishMeasurementReport(persistence, {
         productionReleaseAnchor: window.windowStart,
-        reportAsOf: window.reportAsOf,
+        reportAsOf,
       });
       expect(report.paymentCompletionAfterRevalidation.status).toBe("RATE");
       if (report.paymentCompletionAfterRevalidation.status !== "RATE") return;
@@ -1670,8 +1695,9 @@ describe("IMP-036J tranche 7 measurement reporting", () => {
         });
       });
       void recovered;
+      const releaseWindow = await measurementWindowAroundDatabaseClock(h.persistence);
       const report = await publishMeasurementReport(h.persistence, {
-        productionReleaseAnchor: new Date("2026-10-01T18:30:00.000Z"),
+        productionReleaseAnchor: releaseWindow.windowStart,
       });
       expect(report.changedTotalRecoveryContinuation.status).toBe("RATE");
       if (report.changedTotalRecoveryContinuation.status !== "RATE") return;
@@ -1732,8 +1758,9 @@ describe("IMP-036J tranche 7 measurement reporting", () => {
           continueSourceCommandId: randomUUID(),
         });
       });
+      const releaseWindow = await measurementWindowAroundDatabaseClock(h.persistence);
       const report = await publishMeasurementReport(h.persistence, {
-        productionReleaseAnchor: new Date("2026-10-01T18:30:00.000Z"),
+        productionReleaseAnchor: releaseWindow.windowStart,
       });
       expect(report.changedTotalRecoveryContinuation.status).toBe(
         "INSUFFICIENT_EVIDENCE",
@@ -1899,8 +1926,9 @@ describe("IMP-036J tranche 7 measurement reporting", () => {
           continueSourceCommandId: randomUUID(),
         });
       });
+      const releaseWindow = await measurementWindowAroundDatabaseClock(h.persistence);
       const report = await publishMeasurementReport(h.persistence, {
-        productionReleaseAnchor: new Date("2026-10-01T18:30:00.000Z"),
+        productionReleaseAnchor: releaseWindow.windowStart,
       });
       expect(report.complimentaryUnavailableContinuation.status).toBe("RATE");
       if (report.complimentaryUnavailableContinuation.status !== "RATE") return;
@@ -2374,8 +2402,9 @@ describe("IMP-036J tranche 7 measurement reporting", () => {
           continueSourceCommandId: randomUUID(),
         });
       });
+      const releaseWindow = await measurementWindowAroundDatabaseClock(h.persistence);
       const report = await publishMeasurementReport(h.persistence, {
-        productionReleaseAnchor: new Date("2026-10-01T18:30:00.000Z"),
+        productionReleaseAnchor: releaseWindow.windowStart,
       });
       expect(report.complimentaryUnavailableContinuation.status).toBe("RATE");
       if (report.complimentaryUnavailableContinuation.status !== "RATE") return;

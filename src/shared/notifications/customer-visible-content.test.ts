@@ -78,7 +78,7 @@ describe("renderCustomerVisibleNotificationContent", () => {
       scheduledWindowLabel: "18:00–18:30",
       scheduledTimeZone: "Asia/Kolkata",
     });
-    expect(content.summary).toContain("Arrival / fulfilment window 18:00–18:30 (Asia/Kolkata)");
+    expect(content.summary).toContain("Delivery window 18:00–18:30 (Asia/Kolkata)");
     expect(content.summary).not.toMatch(/SCHEDULED_FULFILMENT_REMINDER/);
   });
 
@@ -102,7 +102,7 @@ describe("renderCustomerVisibleNotificationContent", () => {
       scheduledWindowLabel: "18:00–18:30",
       scheduledTimeZone: "Asia/Kolkata",
     });
-    expect(delivery.summary).toContain("Arrival / fulfilment window 18:00–18:30 (Asia/Kolkata)");
+    expect(delivery.summary).toContain("Delivery window 18:00–18:30 (Asia/Kolkata)");
     expect(delivery.summary).not.toMatch(/pickup/i);
   });
 
@@ -112,6 +112,6 @@ describe("renderCustomerVisibleNotificationContent", () => {
         semanticType: "ORDER_ACCEPTED",
         fulfilmentMode: "DELIVERY",
       }).summary,
-    ).not.toMatch(/Arrival \/ fulfilment window/);
+    ).not.toMatch(/fulfilment window/i);
   });
 });

@@ -76,7 +76,7 @@ export function OrderHistoryClient() {
             ? "Pickup · Collect from BOBA Bear"
             : "Delivery"}
           {order.fulfilmentTiming === "SCHEDULED" && order.scheduledWindow
-            ? ` · ${order.fulfilmentMode === "PICKUP" ? "Pickup window" : "Arrival / fulfilment window"} ${order.scheduledWindow.label}`
+            ? ` · ${order.fulfilmentMode === "PICKUP" ? "Pickup window" : "Delivery window"} ${order.scheduledWindow.label}`
             : " · As soon as possible"}
         </p>
       </li>

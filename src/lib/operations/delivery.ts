@@ -47,11 +47,15 @@ export async function getWorkforceDelivery(
   return { ok: true, status: result.status, data: { delivery: result.data.delivery ?? null } };
 }
 
-function stringifyBody(payload: Record<string, unknown>): Record<string, string> {
-  const body: Record<string, string> = {};
+/**
+ * Preserve JSON primitives (including boolean attestation flags).
+ * Do not coerce booleans to strings — server parsers require `inactiveBookingConfirmed === true`.
+ */
+function toCommandBody(payload: Record<string, unknown>): Record<string, unknown> {
+  const body: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(payload)) {
     if (value === undefined || value === null) continue;
-    body[key] = typeof value === "string" ? value : String(value);
+    body[key] = value;
   }
   return body;
 }
@@ -63,7 +67,7 @@ export async function postDeliveryCommand(
 ): Promise<OperationsHttpResult<{ result: unknown }>> {
   const result = await operationsRequest<CommandEnvelope>(
     `/api/operations/v1/orders/${orderId}/delivery/${action}`,
-    { method: "POST", body: stringifyBody(payload) },
+    { method: "POST", body: toCommandBody(payload) },
   );
   if (!result.ok) return result;
   return { ok: true, status: result.status, data: { result: result.data.result } };

@@ -103,6 +103,7 @@ export function CartClient(props: { brandId: string }) {
   const stickyAmountRef = useRef<HTMLDivElement | null>(null);
   /** One delivery-context surface generation for outlet/menu → cart eval. */
   const surfaceGenerationRef = useRef(0);
+  const [sawComplimentaryLine, setSawComplimentaryLine] = useState(false);
   /** Latest cart-evaluation epoch within (and across) a delivery generation. */
   const evaluationEpochRef = useRef(0);
   const cartRef = useRef<CommerceCart | null>(null);
@@ -437,6 +438,16 @@ export function CartClient(props: { brandId: string }) {
     ? resolveCartPresentationEstimate(cart, menuLookups)
     : { complete: false as const, totalPaise: BigInt(0) };
   const explanation = parseCommercialExplanation(evaluation?.quote);
+  const complimentaryCompeting = explanation?.complimentary?.competingOffers ?? null;
+  const complimentaryVariantId =
+    explanation?.complimentary?.competingOffers === "NONE"
+      ? explanation.complimentary.variantId
+      : null;
+  if (!sawComplimentaryLine && complimentaryCompeting === "NONE" && complimentaryVariantId) {
+    setSawComplimentaryLine(true);
+  }
+  const showGiftConflict =
+    sawComplimentaryLine && complimentaryCompeting === "NONE_CHOSEN";
   const reuseCheckoutEval = evaluation?.reusedCheckoutEvaluation === true;
   const reuseCheckoutEligible =
     cart != null &&
@@ -655,6 +666,7 @@ export function CartClient(props: { brandId: string }) {
                   usingCheckoutEvaluation ? activeCheckout?.fulfilmentMode ?? null : null
                 }
                 complimentaryName={complimentaryName}
+                showGiftConflict={showGiftConflict}
                 hidePayable
                 dropped={offerDropped}
                 waitingText={
@@ -710,6 +722,7 @@ export function CartClient(props: { brandId: string }) {
                   usingCheckoutEvaluation ? activeCheckout?.fulfilmentMode ?? null : null
                 }
                 complimentaryName={complimentaryName}
+                showGiftConflict={showGiftConflict}
                 dropped={offerDropped}
                 waitingText={
                   couponPending
@@ -849,7 +862,7 @@ function snapshotDeliveryChargePaise(snapshot: CommerceCheckout["activeSnapshot"
     if (typeof raw !== "object" || raw === null) continue;
     const row = raw as Record<string, unknown>;
     if (row.chargeCode === "delivery" && typeof row.amountPaise === "string") {
-      return BigInt(row.amountPaise) > BigInt(0) ? row.amountPaise : null;
+      return row.amountPaise;
     }
   }
   return null;

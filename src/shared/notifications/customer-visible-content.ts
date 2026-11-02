@@ -140,7 +140,7 @@ function scheduledTimingSentence(
   if (input.fulfilmentMode === "PICKUP") {
     return ` Scheduled pickup window ${label}${zoneSuffix}.`;
   }
-  return ` Arrival / fulfilment window ${label}${zoneSuffix}.`;
+  return ` Delivery window ${label}${zoneSuffix}.`;
 }
 
 export function summaryClaimsRiderOrDeliveryProgress(summary: string): boolean {

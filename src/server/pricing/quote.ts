@@ -30,6 +30,7 @@ import { catalogVariantsTable } from "../../platform/database/schema/catalog";
 import { eq } from "drizzle-orm";
 import {
   loadApplicableAutomaticPromotions,
+  loadRedemptionUsage,
   loadSubmittedCoupon,
   resolveOutletHierarchy,
 } from "../promotions/load-for-evaluation";
@@ -87,6 +88,12 @@ export type BuildDirectPricingQuoteInput = Readonly<{
    * checkout attempt. Cart quotes omit this.
    */
   previouslyPresentedComplimentaryVariantId?: string | null;
+  /**
+   * Sealed applied promotion ids. When set, quote-time cap checks still load
+   * live usage (so non-sealed codes stay exhausted) but preserve those ids for
+   * structural prepare equality. Payment claim locks remain capacity authority.
+   */
+  preserveAppliedPromotionIds?: readonly string[];
 }>;
 
 type InternalTaxableLine = {
@@ -391,6 +398,9 @@ export async function buildDirectPricingQuote(
         promotion: Awaited<ReturnType<typeof loadSubmittedCoupon>>["promotion"];
       }
     | null = null;
+  let redemptionUsage:
+    | Awaited<ReturnType<typeof loadRedemptionUsage>>
+    | undefined;
   if (input.submittedCouponCode) {
     const loaded = await loadSubmittedCoupon(context, input.submittedCouponCode);
     submittedCoupon = {
@@ -398,6 +408,13 @@ export async function buildDirectPricingQuote(
       coupon: loaded.coupon,
       promotion: loaded.promotion,
     };
+    if (loaded.promotion) {
+      redemptionUsage = await loadRedemptionUsage(
+        context,
+        loaded.promotion.id,
+        input.customerId ?? null,
+      );
+    }
   }
 
   // Complimentary projection: price gift variants into the pre-promotion snapshot
@@ -504,6 +521,8 @@ export async function buildDirectPricingQuote(
     promotions: automatic,
     submittedCoupon,
     redemptionEnforcementAvailable: true,
+    redemptionUsage,
+    preserveAppliedPromotionIds: input.preserveAppliedPromotionIds,
     previouslyPresentedComplimentaryVariantId:
       input.previouslyPresentedComplimentaryVariantId ?? null,
   });

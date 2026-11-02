@@ -6,7 +6,9 @@ import type { PromotionScopeType } from "../../shared/promotions";
 import { authorize, requireAuthorization } from "../access-control/authorize";
 import { requireWorkforcePrincipal } from "../access-control/principal";
 import { findBrandById } from "../organization/brands";
+import { findOrganizationById } from "../organization/organizations";
 import { findOutletById } from "../organization/outlets";
+import { findTerritoryById } from "../organization/territories";
 import type { PersistenceQueryContext } from "../persistence/types";
 import { brandPromotionPoliciesTable } from "../../platform/database/schema/promotions";
 import { eq } from "drizzle-orm";
@@ -29,6 +31,54 @@ async function requireBrandPermission(
     permission,
     resource: { type: "brand", brandId: brand.id },
   });
+}
+
+/**
+ * Trusted existence + brand-ownership check for promotion scope resources.
+ * Missing and foreign-brand resources both throw PromotionNotFoundError so HTTP
+ * mapping stays a non-enumerating PROMOTIONS_NOT_FOUND (Founder #381 Option B).
+ * Does not replace RBAC; callers must authorize separately.
+ */
+async function assertPromotionScopeResourceInBrand(
+  context: PersistenceQueryContext,
+  input: {
+    brandId: string;
+    scopeType: PromotionScopeType;
+    territoryId?: string | null;
+    organizationId?: string | null;
+    outletId?: string | null;
+  },
+): Promise<void> {
+  if (input.scopeType === "brand") return;
+
+  if (input.scopeType === "territory") {
+    const territoryId = assertUuid(input.territoryId, "territoryId");
+    const territory = await findTerritoryById(context, territoryId);
+    if (!territory || territory.brandId !== input.brandId) {
+      throw new PromotionNotFoundError("territory");
+    }
+    return;
+  }
+
+  if (input.scopeType === "organization") {
+    const organizationId = assertUuid(input.organizationId, "organizationId");
+    const organization = await findOrganizationById(context, organizationId);
+    if (!organization || organization.brandId !== input.brandId) {
+      throw new PromotionNotFoundError("organization");
+    }
+    return;
+  }
+
+  if (input.scopeType === "outlet") {
+    const outletId = assertUuid(input.outletId, "outletId");
+    const outlet = await findOutletById(context, outletId);
+    if (!outlet || outlet.brandId !== input.brandId) {
+      throw new PromotionNotFoundError("outlet");
+    }
+    return;
+  }
+
+  throw new PromotionAdminError("PROMOTION_SCOPE_INVALID", "Unknown promotion scope.");
 }
 
 export async function getBrandPromotionPolicyFlags(
@@ -86,7 +136,12 @@ export async function requirePromotionManageForScope(
     permission,
     resource: { type: "brand", brandId },
   });
-  if (brandDecision.allowed) return;
+  // Brand-level permission short-circuits lower-scope RBAC, but must still
+  // prove the referenced scope resource exists in this brand before mutation.
+  if (brandDecision.allowed) {
+    await assertPromotionScopeResourceInBrand(context, { ...input, brandId });
+    return;
+  }
 
   if (input.scopeType === "brand") {
     await requireAuthorization(context, {
@@ -105,6 +160,7 @@ export async function requirePromotionManageForScope(
         "Territory promotions are not delegated by Brand policy.",
       );
     }
+    await assertPromotionScopeResourceInBrand(context, { ...input, brandId });
     const territoryId = assertUuid(input.territoryId, "territoryId");
     await requireAuthorization(context, {
       actor: principal,
@@ -120,6 +176,7 @@ export async function requirePromotionManageForScope(
         "Organization promotions are not delegated by Brand policy.",
       );
     }
+    await assertPromotionScopeResourceInBrand(context, { ...input, brandId });
     const organizationId = assertUuid(input.organizationId, "organizationId");
     await requireAuthorization(context, {
       actor: principal,
@@ -135,9 +192,10 @@ export async function requirePromotionManageForScope(
         "Outlet promotions are not delegated by Brand policy.",
       );
     }
-    const outletId = assertUuid(input.outletId, "outletId");
-    const outlet = await findOutletById(context, outletId);
-    if (!outlet || outlet.brandId !== brandId) throw new PromotionNotFoundError("outlet");
+    await assertPromotionScopeResourceInBrand(context, { ...input, brandId });
+    const outlet = await findOutletById(context, assertUuid(input.outletId, "outletId"));
+    // assertPromotionScopeResourceInBrand already proved brand ownership.
+    if (!outlet) throw new PromotionNotFoundError("outlet");
     await requireAuthorization(context, {
       actor: principal,
       permission,

@@ -53,6 +53,7 @@ export async function startPostgresTestContainer(): Promise<TestContainerHandle>
       .withUsername(TEST_ADMIN_USERNAME)
       .withPassword(password)
       .withDatabase(TEST_ADMIN_DATABASE)
+      .withStartupTimeout(180_000)
       .withLabels({
         "com.bobabear.environment": "test",
         "com.bobabear.lifecycle": "ephemeral",

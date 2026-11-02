@@ -153,11 +153,7 @@ export function buildContainerDatabaseUrl(role, password) {
 }
 
 function setRestrictivePermissions(filePath) {
-  try {
-    chmodSync(filePath, 0o600);
-  } catch {
-    // Not supported on this platform/filesystem — non-fatal, still git-ignored.
-  }
+  chmodSync(filePath, 0o600);
 }
 
 export function buildRuntimeEnvContent(appPassword, { publicOrigin = DEFAULT_PUBLIC_ORIGIN } = {}) {

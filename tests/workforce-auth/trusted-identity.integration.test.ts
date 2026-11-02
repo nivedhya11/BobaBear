@@ -7,7 +7,10 @@
 import { eq } from "drizzle-orm";
 import { afterEach, describe, expect, inject, it } from "vitest";
 
-import { workforceAuthUsers } from "../../src/platform/database/schema/workforce-auth";
+import {
+  workforceAuthSessions,
+  workforceAuthUsers,
+} from "../../src/platform/database/schema/workforce-auth";
 import type { WebConfig } from "../../src/platform/config";
 import {
   getWorkforceAuthRuntime,
@@ -194,6 +197,27 @@ describe("IMP-029 trusted workforce session resolver", () => {
       const principal = createWorkforcePrincipalFromTrustedIdentity(fromToken!);
       expect(isWorkforcePrincipal(principal)).toBe(true);
       expect(principal.workforceUserId).toBe(user.id);
+    });
+  });
+
+  it("F1. expired session token does not yield trusted eligible identity", async () => {
+    await withWorkforceResolverHarness(async ({ persistence, runtime }) => {
+      const user = await createEligibleWorkforceUser(persistence);
+      const adapter = await internalAdapterFor(runtime);
+      const session = await adapter.createSession(user.id);
+      const expiredAt = new Date(Date.now() - 60_000);
+
+      await persistence.withContext(async (ctx) => {
+        await ctx.db
+          .update(workforceAuthSessions)
+          .set({ expiresAt: expiredAt })
+          .where(eq(workforceAuthSessions.token, session.token));
+      });
+
+      const identity = await resolveTrustedWorkforceAuthIdentity(runtime, {
+        sessionToken: session.token,
+      });
+      expect(identity).toBeNull();
     });
   });
 

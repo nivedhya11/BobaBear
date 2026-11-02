@@ -58,8 +58,12 @@ export class PromotionAdminError extends Error {
 }
 
 export class PromotionValidationError extends PromotionAdminError {
-  constructor(message: string, code: PromotionAdminErrorCode = "validation") {
-    super(code, message);
+  constructor(
+    message: string,
+    code: PromotionAdminErrorCode = "validation",
+    field?: string,
+  ) {
+    super(code, message, field ? { field } : undefined);
     this.name = "PromotionValidationError";
   }
 }

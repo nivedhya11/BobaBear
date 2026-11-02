@@ -1,17 +1,14 @@
 #!/usr/bin/env node
 /** Founder staging provenance, status, and exact merged Git-tree deployment for `boba-staging`. */
 import { execFileSync, spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
-  copyFileSync,
   cpSync,
   existsSync,
-  mkdtempSync,
   mkdirSync,
   readFileSync,
   rmSync,
-  writeFileSync,
 } from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
@@ -29,9 +26,22 @@ import {
 } from "./postgres-init-identity.mjs";
 import {
   assertPreflightAllowsDeployment,
+  evaluateCandidatePreparationEligibility,
   evaluateStagingDeployPreflight,
   PREFLIGHT_OUTCOME,
 } from "./staging-preflight.mjs";
+import {
+  absentImageSecurityEvidence,
+  evidencePathRefusal,
+  IMAGE_SECURITY_EVIDENCE_SCHEMA,
+  readOperatorImageSecurityEvidence,
+  writeImageSecurityEvidence,
+} from "./staging-image-security-evidence.mjs";
+import { extractVerifiedGitArchive, observeIsolatedArtifactContext, readPinnedGithubMainSha } from "./staging-source-isolation.mjs";
+import { projectStrictStagingConfiguration } from "./staging-config-projection.mjs";
+import { copyOwnerOnlySecretFile, ensureOwnerOnlySecretDirectory, inspectOwnerOnlyDirectory, inspectOwnerOnlyFile } from "./staging-secret-files.mjs";
+import { bindStagingRecoveryEvidence } from "./staging-recovery-binding.mjs";
+import { gatherPublishingEvidence } from "./staging-publishing-probe.mjs";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = path.resolve(scriptDir, "..", "..");
@@ -80,7 +90,7 @@ const UAT_SERVICEABILITY_CASES = [
 
 const command = process.argv[2];
 const isCli = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
-if (isCli && !["status", "deploy-dry-run", "deploy", "recover-postgres", "workforce-user-create"].includes(command)) {
+if (isCli && !["status", "deploy-dry-run", "deploy", "prepare-candidate", "recover-postgres", "workforce-user-create"].includes(command)) {
   console.error("Usage: npm run env:staging:status | npm run env:staging:deploy:dry-run | npm run env:staging:deploy | npm run env:staging:recover-postgres | npm run env:staging:workforce:user:create -- [workforce:user:create arguments]");
   process.exit(1);
 }
@@ -184,6 +194,7 @@ function assertDeployPreconditions(candidate) {
 }
 
 function readRepositoryPublicBuildEnv() {
+  // Browser build key only. It is not artifact authority and is absent from git archive.
   const envPath = path.join(repositoryRoot, ".env");
   if (!existsSync(envPath)) return {};
   const parsed = parseEnvFile(readFileSync(envPath, "utf8"));
@@ -217,28 +228,18 @@ function podmanCompose(buildDir, args, extraEnv = {}) {
 }
 
 function materializeExactGitTree(sha) {
-  const buildDir = mkdtempSync(path.join(os.tmpdir(), "boba-staging-build-"));
-  // Force umask 022 so archived files are world-readable in the build context.
-  // A restrictive operator-shell umask (e.g. 077) previously produced mode 0600
-  // COPY layers and EACCES under `USER node` in the tooling/workforce operator image.
-  const result = spawnIgnoringStdin(
-    "bash",
-    ["-lc", `umask 022; git -C "${repositoryRoot}" archive "${sha}" | tar -x -C "${buildDir}"`],
-  );
-  if (result.status !== 0) {
-    rmSync(buildDir, { recursive: true, force: true });
-    process.exit(result.status ?? 1);
+  const tree = git(["rev-parse", `${sha}^{tree}`]);
+  const extracted = extractVerifiedGitArchive({
+    repositoryRoot,
+    sha,
+    expectedTree: tree,
+  });
+  if (!extracted.ok || typeof extracted.extractDir !== "string") {
+    console.error(extracted.detail ?? "exact git archive verification failed");
+    process.exit(1);
   }
-  return buildDir;
+  return extracted.extractDir;
 }
-
-/** Founder staging browser/public origin (Nginx UAT). Not a production default. */
-const STAGING_PUBLIC_ORIGIN = "http://localhost:8080";
-
-const STAGING_AUTH_ORIGIN_NORMALIZATIONS = Object.freeze({
-  ".env.customer-auth.docker.local": "CUSTOMER_AUTH_BASE_URL",
-  ".env.workforce-auth.docker.local": "WORKFORCE_AUTH_BASE_URL",
-});
 
 /**
  * Replace or append exactly one `KEY=value` assignment. Idempotent for the
@@ -252,54 +253,38 @@ function normalizeEnvAssignment(content, key, value) {
   return `${content.trimEnd()}\n${assignment}\n`;
 }
 
-/** Canonicalize Founder-staging auth base URLs to the browser public origin. */
-function normalizeStagingAuthOriginEnv(fileName, content) {
-  const key = STAGING_AUTH_ORIGIN_NORMALIZATIONS[fileName];
-  if (!key) return content;
-  return normalizeEnvAssignment(content, key, STAGING_PUBLIC_ORIGIN);
-}
-
 function ensureStagingEnvFiles(
   buildDir,
   {
     stagingEnvDir = STAGING_ENV_DIR,
     root = repositoryRoot,
     envFiles = STAGING_ENV_FILES,
-    initMissing = true,
+    initMissing = false,
   } = {},
 ) {
-  mkdirSync(stagingEnvDir, { recursive: true });
+  if (initMissing) {
+    throw new Error("Strict staging does not bootstrap local env files.");
+  }
+  ensureOwnerOnlySecretDirectory(stagingEnvDir);
   const missing = envFiles.filter(
     (file) => !existsSync(path.join(stagingEnvDir, file)) && !existsSync(path.join(root, file)),
   );
   if (missing.length > 0) {
-    if (!initMissing) {
-      throw new Error(`Missing required staging env file: ${missing.join(", ")}`);
-    }
-    for (const step of [
-      { title: "db:env:init", args: ["run", "db:env:init"] },
-      { title: "docker:env:init", args: ["run", "docker:env:init"] },
-    ]) {
-      const result = spawnIgnoringStdin("npm", step.args, { cwd: buildDir });
-      if (result.status !== 0) process.exit(result.status ?? 1);
-    }
+    throw new Error(`Missing required staging env file: ${missing.join(", ")}`);
   }
   for (const file of envFiles) {
     const persistent = path.join(stagingEnvDir, file);
     const live = path.join(root, file);
     const source = existsSync(persistent) ? persistent : live;
     if (!existsSync(source)) {
-      console.error(`Missing required staging env file: ${file}`);
-      process.exit(1);
+      throw new Error(`Missing required staging env file: ${file}`);
     }
-    if (!existsSync(persistent)) copyFileSync(source, persistent);
-    const buildCopy = path.join(buildDir, file);
-    copyFileSync(persistent, buildCopy);
-    if (Object.hasOwn(STAGING_AUTH_ORIGIN_NORMALIZATIONS, file) && existsSync(buildCopy)) {
-      const normalized = normalizeStagingAuthOriginEnv(file, readFileSync(buildCopy, "utf8"));
-      writeFileSync(buildCopy, normalized, { mode: 0o600 });
-      writeFileSync(persistent, normalized, { mode: 0o600 });
+    if (!existsSync(persistent)) {
+      copyOwnerOnlySecretFile(source, persistent);
+    } else if (inspectOwnerOnlyFile(persistent).ok !== true) {
+      throw new Error(`SECRET_FILE_MODE_INSECURE ${file}`);
     }
+    copyOwnerOnlySecretFile(persistent, path.join(buildDir, file));
   }
 }
 
@@ -448,6 +433,64 @@ function podmanInspect(name, format) {
   return execIgnoringStdin("podman", ["inspect", name, "--format", format], { encoding: "utf8" }).trim();
 }
 
+function inspectLocalImageIdentity(name) {
+  const imageId = podmanInspect(name, "{{.Id}}");
+  let digest = "";
+  try {
+    const parsed = JSON.parse(podmanInspect(name, "{{json .RepoDigests}}"));
+    if (Array.isArray(parsed) && typeof parsed[0] === "string") {
+      const at = parsed[0].lastIndexOf("@");
+      if (at >= 0) digest = parsed[0].slice(at + 1);
+    }
+  } catch {
+    digest = "";
+  }
+  if (!/^sha256:[0-9a-f]{64}$/.test(digest)) digest = imageId;
+  return { imageId, digest };
+}
+
+function assertBoundCandidateImages(security, inspectImage = inspectLocalImageIdentity) {
+  if (!security || security.scanPassed !== true || !Array.isArray(security.boundImages)) {
+    throw new Error("Activation refused: image security evidence is not bound.");
+  }
+  const builtImageIds = {};
+  for (const [service, imageName] of Object.entries(BOBA_BUILD_IMAGES)) {
+    const bound = security.boundImages.find((image) => image?.name === imageName);
+    if (!bound) throw new Error(`Activation refused: scanned image missing for ${service}.`);
+    const live = inspectImage(imageName);
+    if (!live || live.imageId !== bound.imageId || live.digest !== bound.digest) {
+      throw new Error(`Activation refused: ${service} image digest does not match the scanned candidate.`);
+    }
+    builtImageIds[service] = live.imageId;
+  }
+  return builtImageIds;
+}
+
+async function scanPreparedImagesWithTrivy(images) {
+  const trivy = await import("../run-trivy.mjs");
+  const bin = await trivy.ensureBinary();
+  const reports = [];
+  for (const image of images) {
+    const scanned = trivy.scanImage({
+      bin,
+      image: image.name,
+      ignorefile: path.join(repositoryRoot, ".trivyignore"),
+      cwd: repositoryRoot,
+    });
+    const blocking = (scanned.findings ?? []).some(
+      (finding) => finding.severity === "CRITICAL" || finding.severity === "HIGH",
+    );
+    if (scanned.status !== 0 || blocking || (scanned.errors ?? []).length > 0) {
+      return { passed: false, reportSha256: null };
+    }
+    reports.push({ name: image.name, status: scanned.status, findings: scanned.findings ?? [] });
+  }
+  return {
+    passed: true,
+    reportSha256: createHash("sha256").update(JSON.stringify(reports)).digest("hex"),
+  };
+}
+
 function imageRevision(image) {
   return podmanInspect(image, `{{ index .Config.Labels \"${OCI_REVISION_LABEL}\" }}`);
 }
@@ -507,17 +550,20 @@ function readToolingProvenance() {
   };
 }
 
-function assertRunningProvenance(expectedSha, records) {
+function assertRunningProvenance(expectedSha, records, builtImageIds = null) {
   for (const record of records) {
     if (record.revision !== expectedSha) {
       throw new Error(
         `Running image provenance mismatch for ${record.service}: expected ${expectedSha}, found ${record.revision || "MISSING"}.`,
       );
     }
+    if (builtImageIds && builtImageIds[record.service] !== record.imageId) {
+      throw new Error(`Running image id mismatch for ${record.service}.`);
+    }
   }
 }
 
-function reportRunningProvenance(expectedSha) {
+function reportRunningProvenance(expectedSha, builtImageIds = null) {
   let records;
   let tooling;
   try {
@@ -541,7 +587,7 @@ function reportRunningProvenance(expectedSha) {
   console.log(`TOOLING_IMAGE_NAME ${tooling.imageName}`);
   console.log(`TOOLING_REVISION ${tooling.revision || "MISSING"}`);
   try {
-    assertRunningProvenance(expectedSha, records);
+    assertRunningProvenance(expectedSha, records, builtImageIds);
     if (tooling.revision !== expectedSha) {
       throw new Error(`Tooling image provenance mismatch: expected ${expectedSha}, found ${tooling.revision || "MISSING"}.`);
     }
@@ -1239,10 +1285,17 @@ function gatherStagingPreflightEvidence(
       ),
     readDiagnostic = readStagingDiagnosticEnabled,
     resolveInit = null,
-    publishingState = { deployWorkflowState: "UNKNOWN", pagesSourceKnown: false, unsafeActivePublishingPath: true },
+    publishingState = null,
+    observeGithubWorkflow = undefined,
+    observePages = undefined,
+    observeStagingPublishing = undefined,
     probeRuntime = probeStagingRuntimeIdentity,
     repositoryIdentityOf = readRepositoryIdentityFromRemote,
-    protectedCheckoutUsed = path.resolve(repositoryRoot) === path.resolve(PROTECTED_PRIMARY_REPOSITORY),
+    readGithubMain = () => readPinnedGithubMainSha(repositoryRoot),
+    observeSource = observeIsolatedArtifactContext,
+    projectConfig = () => projectStrictStagingConfiguration({ directory: STAGING_ENV_DIR }),
+    bindRecovery = () => bindStagingRecoveryEvidence(),
+    readImageSecurity = null,
   } = {},
 ) {
   let tree;
@@ -1260,21 +1313,121 @@ function gatherStagingPreflightEvidence(
   const diagnostic = readDiagnostic();
   const runtime = probeRuntime();
   const repositoryIdentity = repositoryIdentityOf();
+  let githubMainMatchesHead = false;
+  try {
+    const pinned = readGithubMain();
+    githubMainMatchesHead = pinned?.ok === true && pinned.sha === candidate.head;
+  } catch {
+    githubMainMatchesHead = false;
+  }
+
+  let sourceObservation = {
+    ok: false,
+    protectedCheckoutUsed: true,
+    isolatedArtifactContextVerified: false,
+    artifactContextInsideProtectedRoot: true,
+    authoritativeSourceRoot: repositoryRoot,
+    inspection: null,
+  };
+  try {
+    sourceObservation = observeSource({
+      repositoryRoot,
+      sha: candidate.head,
+      expectedTree: tree,
+      inspect:
+        typeof resolveInit === "function"
+          ? undefined
+          : (dir) =>
+              resolveStagingPostgresInitMount(dir, candidate.head, {
+                log: () => {},
+              }),
+    });
+  } catch {
+    sourceObservation = {
+      ...sourceObservation,
+      isolatedArtifactContextVerified: false,
+      protectedCheckoutUsed: true,
+    };
+  }
+
   const initResolution =
     typeof resolveInit === "function"
       ? resolveInit()
-      : {
+      : (sourceObservation.inspection ?? {
           disposition: {
             disposition: POSTGRES_INIT_DISPOSITION.UNKNOWN,
             reasonCode: "POSTGRES_INIT_PROBE_NOT_RUN",
           },
-        };
+        });
 
-  // Full projected AppConfig validation via loadConfig would require an
-  // unapproved architecture decision (BOBA_BEAR_ENV / origins / TLS policy).
-  // Until authorized, projected config remains UNKNOWN → preflight BLOCKED.
-  const projectedConfigState = "UNKNOWN";
-  const projectedConfigValid = false;
+  let projected;
+  try {
+    projected = projectConfig();
+  } catch {
+    projected = {
+      projectedConfigState: "UNKNOWN",
+      projectedConfigValid: false,
+      publicOrigin: null,
+      paymentIsolation: "UNKNOWN",
+      unsafeAdaptersExplicitlyFalse: false,
+      bobaBearEnvDrift: null,
+      reasons: ["STRICT_STAGING_ENV_UNREADABLE"],
+    };
+  }
+  const secretModesSecure =
+    inspectOwnerOnlyDirectory(STAGING_ENV_DIR).ok === true &&
+    STAGING_ENV_FILES.every((file) => inspectOwnerOnlyFile(path.join(STAGING_ENV_DIR, file)).ok === true);
+  const recovery = bindRecovery();
+  let security = absentImageSecurityEvidence();
+  try {
+    const reader =
+      readImageSecurity ??
+      ((request) =>
+        readOperatorImageSecurityEvidence({
+          evidenceFile: process.env.BOBA_STAGING_IMAGE_SECURITY_EVIDENCE_FILE,
+          sourceSha: request.sourceSha,
+          sourceTree: request.sourceTree,
+          repositoryRoot,
+          inspectImage: inspectLocalImageIdentity,
+        }));
+    const loaded = reader({ sourceSha: candidate.head, sourceTree: tree });
+    if (loaded && typeof loaded === "object") security = loaded;
+  } catch {
+    security = absentImageSecurityEvidence();
+  }
+
+  const projectedOrigin =
+    projected && typeof projected.publicOrigin === "string" ? projected.publicOrigin : null;
+  const publishing =
+    publishingState ??
+    gatherPublishingEvidence({
+      repositoryIdentity: repositoryIdentity ?? "nivedhya11/BobaBear",
+      workflowPath: path.join(repositoryRoot, ".github/workflows/deploy.yml"),
+      readWorkflowText: () =>
+        readFileSync(path.join(repositoryRoot, ".github/workflows/deploy.yml"), "utf8"),
+      observeGithubWorkflow:
+        typeof observeGithubWorkflow === "function" ? observeGithubWorkflow : undefined,
+      observePages: typeof observePages === "function" ? observePages : undefined,
+      observeStaging:
+        typeof observeStagingPublishing === "function"
+          ? observeStagingPublishing
+          : () => {
+              // Missing independent exposure/routing evidence is not proof of private staging.
+              // It is also not positive unauthorized exposure. Do not invent exposure=false.
+              const hasProjectedOrigin =
+                typeof projectedOrigin === "string" && projectedOrigin.length > 0;
+              return {
+                exposureEvidence: hasProjectedOrigin ? "ORIGIN_PROJECTED_ONLY" : "NOT_OBSERVED",
+                observedExposure: false,
+                origin: projectedOrigin,
+                hostingTarget: null,
+                marketingHostingTarget: null,
+                authorization: null,
+                claimedAuthorized: false,
+              };
+            },
+      candidateSha: candidate.head,
+    });
 
   return {
     source: {
@@ -1285,9 +1438,13 @@ function gatherStagingPreflightEvidence(
       tree,
       originMainTree,
       trackedDirty: candidate.trackedDirty,
-      protectedCheckoutUsed,
+      protectedCheckoutUsed: sourceObservation.protectedCheckoutUsed === false ? false : true,
+      isolatedArtifactContextVerified: sourceObservation.isolatedArtifactContextVerified === true,
+      artifactContextInsideProtectedRoot: sourceObservation.artifactContextInsideProtectedRoot !== false,
+      authoritativeSourceRoot: sourceObservation.authoritativeSourceRoot ?? repositoryRoot,
+      githubMainMatchesHead,
     },
-    publishing: publishingState,
+    publishing,
     runtime: {
       evidenceComplete: runtime.evidenceComplete === true,
       identityUnknown: runtime.identityUnknown === true,
@@ -1299,46 +1456,33 @@ function gatherStagingPreflightEvidence(
     },
     environment: {
       requiredEnvFilesPresent: requiredEnvFilesPresent(),
-      projectedConfigValid,
-      projectedConfigState,
+      projectedConfigValid: projected.projectedConfigValid === true,
+      projectedConfigState: projected.projectedConfigState,
       diagnosticProjectionKnown: diagnostic.projectionKnown === true,
       diagnosticEnabled: diagnostic.enabled === true,
       diagnosticConflict: diagnostic.conflict === true || diagnostic.invalid === true,
-      bobaBearEnvDrift: false,
-      secretsPrinted: false,
+      bobaBearEnvDrift: projected.bobaBearEnvDrift,
+      secretsPrinted: /(?:AUTH_SECRET|KEY_SECRET|WEBHOOK_SECRET|PASSWORD)=/.test(JSON.stringify(projected)),
+      secretModesSecure,
+      unsafeAdaptersExplicitlyFalse: projected.unsafeAdaptersExplicitlyFalse === true,
+      paymentIsolation: projected.paymentIsolation,
+      publicOrigin: projected.publicOrigin,
     },
     database: {
-      // Live ledger/baseline require authorized DB probes; do not start classifiers here.
       migrationIdentityKnown: false,
       migrationLedgerState: "UNKNOWN",
       baselineCompatibility: "UNKNOWN",
-      unexplainedPendingMutation: false,
+      unexplainedPendingMutation: null,
+      authAccountUniquenessKnown: null,
+      duplicateAuthAccountGroupCount: null,
     },
-    recovery: {
-      // Staging-specific qualified restore checkpoint is not yet auto-established.
-      // Completing a future R3 backup alone does not make deployment executable;
-      // additional authorized live evidence bindings are still required before Gate 2.
-      bindingDesignDependency: true,
-      binding: "RECOVERY_PROOF_BINDING = DESIGN_DEPENDENCY",
-      checkpointPresent: false,
-      integrityVerified: false,
-      restoreProofPresent: false,
-      recoveryPointIdentifiable: false,
-      rollbackPlanSuitable: false,
-      stagingBound: false,
-      freshnessOk: false,
-    },
-    security: {
-      imageSecurityEvidenceRequired: true,
-      imageSecurityEvidencePresent: false,
-      issue409RiskWaived: false,
-      sourceImageCorrelated: false,
-    },
+    recovery,
+    security,
     capacity: {
-      diskSufficient: false,
-      memorySufficient: false,
-      priorImagesPreserved: false,
-      unintendedPostgresReplacement: false,
+      diskSufficient: null,
+      memorySufficient: null,
+      priorImagesPreserved: null,
+      unintendedPostgresReplacement: null,
     },
     postgresInit: {
       disposition: initResolution.disposition?.disposition ?? POSTGRES_INIT_DISPOSITION.UNKNOWN,
@@ -1347,28 +1491,12 @@ function gatherStagingPreflightEvidence(
   };
 }
 
-function defaultResolveInitForPreflight(candidate, deps = {}) {
-  // Candidate init bytes come from the verified clean tracked tree (exact origin/main).
-  // Do not materialize or mutate runtime-assets during preflight.
-  return resolveStagingPostgresInitMount(repositoryRoot, candidate.head, {
-    inspect: deps.inspect ?? inspectJson,
-    collect: deps.collect ?? collectInitManifest,
-    log: deps.quietInitLog ? () => {} : (deps.log ?? console.log),
-  });
-}
-
 function verifyPreMutationReadiness(candidate, deps = {}) {
   const {
     evaluate = evaluateStagingDeployPreflight,
     log = console.log,
   } = deps;
-  const gather =
-    deps.gather ??
-    ((c, d) =>
-      gatherStagingPreflightEvidence(c, {
-        ...d,
-        resolveInit: d.resolveInit ?? (() => defaultResolveInitForPreflight(c, d)),
-      }));
+  const gather = deps.gather ?? ((c, d) => gatherStagingPreflightEvidence(c, d));
   let evidence;
   try {
     evidence = gather(candidate, deps);
@@ -1439,6 +1567,16 @@ export function runStagingDeploy(candidate, deps = {}) {
     throw error;
   }
   record("preflightPass");
+  let builtImageIds;
+  try {
+    builtImageIds = assertBoundCandidateImages(readiness.evidence?.security, deps.inspectImage);
+    record("assertBoundCandidateImages");
+    assertImages(candidate.head);
+    record("assertImageRevisions");
+  } catch (error) {
+    log("STAGING_DEPLOY_MUTATION_STARTED NO");
+    throw error;
+  }
 
   stopLegacy();
   const buildDir = materializeTree(candidate.head);
@@ -1448,17 +1586,9 @@ export function runStagingDeploy(candidate, deps = {}) {
   try {
     ensureEnv(buildDir);
     record("ensureStagingEnvFiles");
-    compose(
-      buildDir,
-      ["build", "app", "migrate", "customer-auth", "workforce-auth", "customer-commerce", "operations"],
-      { BOBA_BUILD_SHA: candidate.head, COMPOSE_PROFILES: "tools" },
-    );
-    record("composeBuild");
-    assertImages(candidate.head);
-    record("assertImageRevisions");
-    log("BUILT_IMAGE_CANDIDATE_MATCH YES");
+    log("BOUND_IMAGE_CANDIDATE_MATCH YES");
 
-    // Re-resolve init mount after build using candidate archive contents (read-only inspect).
+    // Re-resolve init mount from the candidate archive. Activation does not build images.
     const initPlan = resolveInitMount(buildDir, candidate.head, deps);
     record("resolveStagingPostgresInitMount");
     if (initPlan.disposition.disposition !== POSTGRES_INIT_DISPOSITION.PRESERVE) {
@@ -1510,19 +1640,114 @@ export function runStagingDeploy(candidate, deps = {}) {
     record("smokes");
     smoke();
     record("serviceabilitySmoke");
-    if (!reportProvenance(candidate.head)) {
+    if (!reportProvenance(candidate.head, builtImageIds)) {
       throw new Error("Running staging images do not match the merged Git candidate.");
     }
     log(`STAGING_PROJECT ${STAGING_PROJECT}`);
     log(`EXPECTED_GIT_SHA ${candidate.head}`);
-    log(`UAT_URL http://localhost:8080/order/`);
+    log(`STRICT_STAGING_PUBLIC_ORIGIN ${readiness.evidence?.environment?.publicOrigin ?? "UNCONFIGURED"}`);
+    log("LOCAL_PUBLISHED_PORT_PROBE http://127.0.0.1:8080");
     log(`PERSISTENT_DB_VOLUME ${STAGING_PROJECT}_postgres-data`);
-    log(`CUSTOMER_AUTH_BASE_URL http://localhost:8080`);
     return { ok: true, effects, initDir, readiness };
   } finally {
     removeDir(buildDir, { recursive: true, force: true });
     log("STAGING_BUILD_DIR_REMOVED YES");
   }
+}
+
+const PREPARE_BUILD_ARGS = [
+  "build",
+  "app",
+  "migrate",
+  "customer-auth",
+  "workforce-auth",
+  "customer-commerce",
+  "operations",
+];
+
+/**
+ * Phase A. Builds and scans a candidate image in an isolated archive.
+ * Does not stop containers, migrate, bootstrap, or compose up.
+ * Does not call assertPreflightAllowsDeployment and cannot authorize activation.
+ * Executing this command remains a separate Founder authorization.
+ */
+export async function runStagingPrepareCandidate(candidate, deps = {}) {
+  const effects = deps.effects ?? [];
+  const record = (name) => {
+    effects.push(name);
+  };
+  const {
+    assertPreconditions = assertDeployPreconditions,
+    gatherPreparation = (value) => gatherStagingPreflightEvidence(value, deps),
+    evaluatePreparation = evaluateCandidatePreparationEligibility,
+    materializeTree = materializeExactGitTree,
+    compose = podmanCompose,
+    inspectImage = inspectLocalImageIdentity,
+    scanImages = scanPreparedImagesWithTrivy,
+    writeEvidence = writeImageSecurityEvidence,
+    removeDir = rmSync,
+    evidenceFile = process.env.BOBA_STAGING_IMAGE_SECURITY_EVIDENCE_FILE,
+    log = console.log,
+  } = deps;
+
+  assertPreconditions(candidate);
+  record("assertDeployPreconditions");
+  const gathered = gatherPreparation(candidate);
+  const eligibility = evaluatePreparation(gathered);
+  log(`CANDIDATE_PREPARATION ${eligibility.outcome}`);
+  log("STAGING_DEPLOYMENT_AUTHORIZED NO");
+  if (eligibility.outcome !== "PREPARATION_ELIGIBLE" || eligibility.deploymentAuthorized !== false) {
+    record("preparationBlocked");
+    log("ACTIVATION_STARTED NO");
+    const error = new Error("CANDIDATE_PREPARATION_BLOCKED");
+    error.eligibility = eligibility;
+    throw error;
+  }
+  const refusal = evidencePathRefusal(evidenceFile, repositoryRoot);
+  if (refusal) {
+    record("preparationBlocked");
+    log("ACTIVATION_STARTED NO");
+    throw new Error(refusal);
+  }
+  const sourceTree = gathered?.source?.tree;
+  if (typeof sourceTree !== "string" || !/^[0-9a-f]{40}$/.test(sourceTree)) {
+    record("preparationBlocked");
+    log("ACTIVATION_STARTED NO");
+    throw new Error("CANDIDATE_TREE_UNBOUND");
+  }
+
+  const buildDir = materializeTree(candidate.head);
+  record("materializeCandidateArchive");
+  try {
+    compose(buildDir, PREPARE_BUILD_ARGS, { BOBA_BUILD_SHA: candidate.head, COMPOSE_PROFILES: "tools" });
+    record("composeBuildCandidate");
+    const images = Object.values(BOBA_BUILD_IMAGES).map((name) => {
+      const live = inspectImage(name);
+      if (!live || !/^sha256:[0-9a-f]{64}$/.test(live.imageId ?? "") || !/^sha256:[0-9a-f]{64}$/.test(live.digest ?? "")) {
+        throw new Error(`CANDIDATE_IMAGE_IDENTITY_UNBOUND ${name}`);
+      }
+      return { name, imageId: live.imageId, digest: live.digest };
+    });
+    const scan = await scanImages(images);
+    if (!scan || scan.passed !== true || !/^[0-9a-f]{64}$/.test(scan.reportSha256 ?? "")) {
+      throw new Error("IMAGE_SECURITY_SCAN_FAILED");
+    }
+    writeEvidence(evidenceFile, {
+      schema: IMAGE_SECURITY_EVIDENCE_SCHEMA,
+      sourceSha: candidate.head,
+      sourceTree,
+      images,
+      scanPassed: true,
+      scanReportSha256: scan.reportSha256,
+    });
+    record("imageSecurityEvidenceWritten");
+  } finally {
+    removeDir(buildDir, { recursive: true, force: true });
+    record("candidateArchiveRemoved");
+  }
+  log("ACTIVATION_STARTED NO");
+  log("CANDIDATE_PREPARATION_IS_NOT_DEPLOYMENT YES");
+  return { ok: true, deploymentAuthorized: false, effects };
 }
 
 function deploy(candidate) {
@@ -1555,6 +1780,12 @@ if (isCli) {
   }
 
   if (command === "deploy") deploy(candidate);
+  if (command === "prepare-candidate") {
+    runStagingPrepareCandidate(candidate).catch((error) => {
+      console.error(error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    });
+  }
   if (command === "recover-postgres") recoverPostgres(candidate);
   if (command === "status") reportRunningProvenance(candidate.originMain);
   if (command === "workforce-user-create") createStagingWorkforceUser(process.argv.slice(3));
@@ -1563,7 +1794,6 @@ if (isCli) {
 export {
   BOBA_BUILD_IMAGES,
   BOBA_RUNTIME_SERVICES,
-  STAGING_PUBLIC_ORIGIN,
   STAGING_RUNTIME_ASSETS_DIR,
   CUSTOMER_COMMERCE_ENV_FILE_PRECEDENCE,
   assertImageRevisions,
@@ -1582,7 +1812,6 @@ export {
   ensurePersistentPostgres,
   materializeStagingPostgresInit,
   normalizeEnvAssignment,
-  normalizeStagingAuthOriginEnv,
   decideAndApplyStagingBootstrap,
   classifyStagingBaselineInTooling,
   runLegacySeedBootstrapChain,

@@ -190,8 +190,9 @@ export function resolveContainerCli(forced = process.env.BOBA_TRIVY_CONTAINER_CL
  * @returns {string[]}
  */
 export function buildArgsForTarget(target) {
-  // --network=host: next/font Google fetch during web-runtime build fails
-  // intermittently under the default podman CNI/slirp path (null font loader).
+  // --network=host retained for container DNS/registry reliability during image
+  // build. App UI fonts are local (`next/font/local`); they no longer require
+  // Google Fonts reachability at build time.
   const args = ["build", "--network=host", "-f", target.dockerfile, "-t", target.image];
   if (target.target) args.push("--target", target.target);
   args.push(target.context);

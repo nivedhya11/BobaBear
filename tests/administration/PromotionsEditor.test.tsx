@@ -689,9 +689,13 @@ describe("PromotionsEditor operator readiness (#376)", () => {
     mockCouponPromotion({ status: "active", coupons: [] });
     await openWelcome();
     const readiness = screen.getByTestId("promotion-readiness");
+    expect(readiness).toHaveTextContent(
+      "Active, but customers can't use it yet: no coupon code is active.",
+    );
     expect(readiness).toHaveTextContent(COPY_OP_LIVE_WITHOUT_COUPON);
     expect(readiness).toHaveTextContent(COPY_OP_NO_COUPON_CODES);
     expect(readiness).toHaveTextContent("Create a coupon code customers type — to do");
+    expect(readiness).not.toHaveTextContent("Customers can receive this offer.");
     expect(readiness).not.toHaveTextContent(COPY_OP_LIVE);
     expect(screen.getByTestId("coupon-empty-state")).toHaveTextContent(COPY_OP_NO_COUPON_CODES);
   });
@@ -712,6 +716,7 @@ describe("PromotionsEditor operator readiness (#376)", () => {
     });
     await openWelcome();
     const readiness = screen.getByTestId("promotion-readiness");
+    expect(readiness).toHaveTextContent("Customers can receive this offer.");
     expect(readiness).toHaveTextContent(COPY_OP_LIVE_WITH_COUPON);
     expect(readiness).toHaveTextContent(COPY_OP_READINESS_CUE);
     expect(readiness).toHaveTextContent("Customer-ready coupon codes: TEST123");

@@ -4,7 +4,7 @@
  *
  * Proves that the committed production schema
  * (`src/platform/database/schema/{customer,workforce}-auth.ts`) still
- * matches Better Auth 1.6.25's own generated core contract for both realms
+ * matches Better Auth 1.7.14's own generated core contract for both realms
  * — table set, fields, nullability, uniqueness, indexes, foreign keys,
  * relations, and physical-table mapping — normalized so formatting/import
  * order differences never cause a false failure.
@@ -31,7 +31,7 @@ const projectRoot = path.resolve(scriptDir, "..");
 // environment's WSL/NTFS-backed checkout (see AGENTS.md) has been observed
 // to take 60-90+ seconds by itself, before the CLI does any actual work.
 const GENERATE_TIMEOUT_MS = 240_000;
-const REQUIRED_VERSION = "1.6.25";
+const REQUIRED_VERSION = "1.7.14";
 const REQUIRED_MODEL_NAMES = ["user", "session", "account", "verification"] as const;
 /** Workforce-only Better Auth plugin models (IMP-010 `twoFactor`). Customer
  * remains the four core models only — never compare a customer `twoFactor`. */
@@ -318,7 +318,7 @@ async function main(): Promise<void> {
     process.exitCode = 1;
     return;
   }
-  console.log("  ✓  Customer and workforce schemas match the generated Better Auth 1.6.25 contract.");
+  console.log("  ✓  Customer and workforce schemas match the generated Better Auth 1.7.14 contract.");
   console.log("=".repeat(60));
   console.log("No Better Auth schema drift detected. ✓");
   process.exitCode = 0;

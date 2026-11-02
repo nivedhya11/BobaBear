@@ -57,6 +57,8 @@ export const APPROVED_BOBA_BEAR_KEYS: ReadonlySet<string> = new Set([
   // customer-commerce (staging + explicit flag + Compose project identity).
   "BOBA_BEAR_CHECKOUT_PREPARE_DIAGNOSTIC_ENABLED",
   "BOBA_BEAR_CHECKOUT_PREPARE_DIAGNOSTIC_RUNTIME_PROJECT",
+  "BOBA_BEAR_AUTHORIZED_STAGING_ORIGIN",
+  "BOBA_BEAR_STAGING_TLS_TERMINATION",
 ]);
 
 export const PAYMENT_PROVIDER_SELECTORS = ["disabled", "razorpay"] as const;
@@ -191,6 +193,17 @@ function validatePublicOrigin(
     }
     if (isLoopback) {
       return fail("Loopback hosts are prohibited in staging and production.");
+    }
+  }
+
+  if (environment === "staging") {
+    if (url.port !== "" && url.port !== "443") {
+      return fail("Staging public origin must omit the port or use 443.");
+    }
+    const publicDnsName =
+      !/^\d{1,3}(\.\d{1,3}){3}$/.test(hostname) && !hostname.includes(":") && !hostname.endsWith(".local");
+    if (!publicDnsName) {
+      return fail("Staging public origin must be a public DNS hostname.");
     }
   }
 

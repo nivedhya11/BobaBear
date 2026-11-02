@@ -212,6 +212,8 @@ function requireExpectedRevision(body: Readonly<Record<string, unknown>>, field:
   }
   throw new PromotionValidationError(
     `${field} must be a non-empty positive decimal string or safe positive integer.`,
+    "validation",
+    field,
   );
 }
 

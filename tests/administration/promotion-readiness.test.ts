@@ -112,6 +112,14 @@ describe("promotion identifier and coupon code shape", () => {
 });
 
 describe("promotionReadiness (#376 zero-issued coupons)", () => {
+  it("locks the approved success sentence and the no-active-coupon warning as literals", () => {
+    expect(COPY_OP_LIVE).toBe("Customers can receive this offer.");
+    expect(COPY_OP_LIVE_WITH_COUPON).toBe("Customers can receive this offer.");
+    expect(COPY_OP_LIVE_WITHOUT_COUPON).toBe(
+      "Active, but customers can't use it yet: no coupon code is active.",
+    );
+  });
+
   it("active coupon promotion with zero coupons is a warning, never the live sentence", () => {
     const r = promotionReadiness({
       promotion: promotion(),
@@ -121,8 +129,12 @@ describe("promotionReadiness (#376 zero-issued coupons)", () => {
       at: OPEN_AT,
     });
     expect(r.tone).toBe("warning");
+    expect(r.headline).toBe(
+      "Active, but customers can't use it yet: no coupon code is active.",
+    );
     expect(r.headline).toBe(COPY_OP_LIVE_WITHOUT_COUPON);
     expect(r.nextStep).toBe(COPY_OP_NO_COUPON_CODES);
+    expect(r.headline).not.toBe("Customers can receive this offer.");
     expect(r.headline).not.toBe(COPY_OP_LIVE);
     expect(r.steps.map((s) => [s.label, s.done])).toEqual([
       ["Set the benefit and who gets it", true],
@@ -165,6 +177,7 @@ describe("promotionReadiness (#376 zero-issued coupons)", () => {
       at: OPEN_AT,
     });
     expect(r.tone).toBe("success");
+    expect(r.headline).toBe("Customers can receive this offer.");
     expect(r.headline).toBe(COPY_OP_LIVE_WITH_COUPON);
     expect(r.activeCouponCodes).toEqual(["TEST123"]);
     expect(r.customerReadyCouponCodes).toEqual(["TEST123"]);
@@ -192,7 +205,7 @@ describe("promotionReadiness (#376 zero-issued coupons)", () => {
         couponsReadable: false,
         at: OPEN_AT,
       }).headline,
-    ).toBe(COPY_OP_LIVE);
+    ).toBe("Customers can receive this offer.");
     expect(
       promotionReadiness({
         promotion: promotion({ status: "draft" }),

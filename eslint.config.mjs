@@ -2,6 +2,8 @@ import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 
+import clientAuthorityBoundary from "./scripts/eslint/client-authority-boundary.mjs";
+
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
@@ -115,6 +117,30 @@ const eslintConfig = defineConfig([
           ],
         },
       ],
+    },
+  },
+  // Client-bundle authority boundary (ARCH-G11 / D-368).
+  //
+  // A module is client-executable when its own prologue is "use client", or
+  // when a static value import reaches it from such a module. Server
+  // Components, "use server" modules, and shared modules that only server
+  // code imports are server-executable even under src/app, src/components,
+  // or src/lib. This rule classifies that graph. It does not set
+  // `no-restricted-imports`, so the pg / Drizzle bans above keep their
+  // existing precedence, including on client-executable files.
+  //
+  // `import "server-only"` remains the server modules' own build guard.
+  // Persistence imports from the public app tree remain under
+  // scripts/audit-persistence.mjs. Non-literal dynamic specifiers are not
+  // classified.
+  {
+    files: ["src/**/*.{ts,tsx,js,jsx,mjs,cjs}"],
+    ignores: ["**/*.test.{ts,tsx,js,jsx}", "**/*.spec.{ts,tsx,js,jsx}"],
+    plugins: {
+      boba: clientAuthorityBoundary,
+    },
+    rules: {
+      "boba/no-client-authority-import": "error",
     },
   },
 ]);

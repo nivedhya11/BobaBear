@@ -36,7 +36,11 @@ function parsePort(raw: string | undefined): { ok: true; value: number } | { ok:
 }
 
 export function loadOperationsConfig(source: OperationsEnvSource, environmentType: AppEnvironment): OperationsConfig {
-  const workforceResult = validateWorkforceAuthConfig(source, environmentType);
+  const workforceResult = validateWorkforceAuthConfig(
+    source,
+    environmentType,
+    environmentType === "staging" ? { expectedPublicOrigin: source.BOBA_BEAR_PUBLIC_ORIGIN ?? "" } : {},
+  );
   if (!workforceResult.ok) throw new AuthFoundationConfigurationError(workforceResult.issues);
   const auth = workforceResult.config;
   const host = source.OPERATIONS_SERVICE_HOST === undefined || source.OPERATIONS_SERVICE_HOST.length === 0

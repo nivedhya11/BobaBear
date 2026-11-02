@@ -278,6 +278,11 @@ export function loadCustomerPhoneAuthServiceConfig(
       key: "CUSTOMER_AUTH_TRUST_PROXY_HOPS",
       message: hopsResult.message,
     });
+  } else if (environmentType === "staging" && hopsResult.value !== 1) {
+    issues.push({
+      key: "CUSTOMER_AUTH_TRUST_PROXY_HOPS",
+      message: "Staging requires exactly 1 trusted proxy hop.",
+    });
   }
 
   const portResult = parseServicePort(source.CUSTOMER_AUTH_SERVICE_PORT);

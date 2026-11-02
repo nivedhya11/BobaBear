@@ -13,5 +13,6 @@ describe("classifyAdminRoute", () => {
       action: "transition",
     });
     expect(classifyAdminRoute("/api/operations/v1/orders")).toBeNull();
+    expect(classifyAdminRoute("/api/admin/v1/operational-status")).toBeNull();
   });
 });

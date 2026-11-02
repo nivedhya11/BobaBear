@@ -1,12 +1,19 @@
 "use client";
 
 import { formatPaise } from "@/components/ordering/format-money";
+import { IMP036J_COPY } from "@/components/ordering/imp036j-copy";
 import type { CommerceCheckoutSnapshot } from "@/lib/customer-commerce";
 import { snapshotPayableRows } from "@/components/ordering/checkout-snapshot-presentation";
 
 export type OrderMoneySummaryWire = Readonly<{
   prePromotionSubtotalMinor: string;
   promotionDiscountMinor: string;
+  /**
+   * Sealed purchased components. Absent only when a caller does not have them.
+   * Absence must not be rendered as a guessed split.
+   */
+  orderSavingMinor?: string;
+  deliverySavingMinor?: string;
   charges: readonly Readonly<{
     chargeCode: string;
     name: string;
@@ -66,6 +73,12 @@ export function OrderMoneySummaryPanel(props: {
   );
 }
 
+function positiveMinor(value: string | undefined): bigint | null {
+  if (value == null || !/^\d+$/.test(value)) return null;
+  const amount = BigInt(value);
+  return amount > BigInt(0) ? amount : BigInt(0);
+}
+
 function buildRowsFromWire(summary: OrderMoneySummaryWire): ReadonlyArray<
   Readonly<{ key: string; label: string; amountPaise: string }>
 > {
@@ -76,19 +89,45 @@ function buildRowsFromWire(summary: OrderMoneySummaryWire): ReadonlyArray<
       amountPaise: summary.prePromotionSubtotalMinor,
     },
   ];
-  const discount = BigInt(summary.promotionDiscountMinor || "0");
-  if (discount > BigInt(0)) {
+  const componentsKnown =
+    summary.orderSavingMinor !== undefined || summary.deliverySavingMinor !== undefined;
+  const orderSaving = componentsKnown ? (positiveMinor(summary.orderSavingMinor) ?? BigInt(0)) : null;
+  const deliverySaving = componentsKnown
+    ? (positiveMinor(summary.deliverySavingMinor) ?? BigInt(0))
+    : null;
+  if (orderSaving != null && orderSaving > BigInt(0)) {
     rows.push({
-      key: "discount",
-      label: "Discount",
-      amountPaise: summary.promotionDiscountMinor,
+      key: "order-saving",
+      label: IMP036J_COPY.ORDER_SAVING_ROW,
+      amountPaise: orderSaving.toString(),
     });
   }
+  let deliverySavingPlaced = false;
   for (const charge of summary.charges) {
     rows.push({
       key: `charge-${charge.chargeCode}`,
       label: charge.name,
       amountPaise: charge.amountMinor,
+    });
+    if (
+      !deliverySavingPlaced &&
+      charge.chargeCode === "delivery" &&
+      deliverySaving != null &&
+      deliverySaving > BigInt(0)
+    ) {
+      rows.push({
+        key: "delivery-saving",
+        label: IMP036J_COPY.DELIVERY_SAVING_ROW,
+        amountPaise: deliverySaving.toString(),
+      });
+      deliverySavingPlaced = true;
+    }
+  }
+  if (!deliverySavingPlaced && deliverySaving != null && deliverySaving > BigInt(0)) {
+    rows.push({
+      key: "delivery-saving",
+      label: IMP036J_COPY.DELIVERY_SAVING_ROW,
+      amountPaise: deliverySaving.toString(),
     });
   }
   if (BigInt(summary.taxMinor || "0") > BigInt(0)) {
@@ -96,6 +135,14 @@ function buildRowsFromWire(summary: OrderMoneySummaryWire): ReadonlyArray<
       key: "tax",
       label: "Tax",
       amountPaise: summary.taxMinor,
+    });
+  }
+  const totalSaved = positiveMinor(summary.promotionDiscountMinor) ?? BigInt(0);
+  if (totalSaved > BigInt(0)) {
+    rows.push({
+      key: "total-saved",
+      label: IMP036J_COPY.TOTAL_SAVED_ROW,
+      amountPaise: summary.promotionDiscountMinor,
     });
   }
   return rows;

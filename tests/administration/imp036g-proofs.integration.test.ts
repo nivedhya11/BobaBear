@@ -3,6 +3,7 @@ import { createServer } from "node:http";
 import { randomUUID } from "node:crypto";
 
 import { serializeSignedCookie } from "better-call";
+import { eq } from "drizzle-orm";
 import { afterEach, describe, expect, it } from "vitest";
 import { inject } from "vitest";
 
@@ -31,6 +32,7 @@ import {
   updateBrand,
 } from "../../src/server/organization";
 import type { WebConfig } from "../../src/platform/config";
+import { workforceAuthSessions } from "../../src/platform/database/schema/workforce-auth";
 import type { WorkerHealthReporter } from "../../src/platform/observability/worker-health";
 import {
   createEligibleWorkforceUser,
@@ -1334,6 +1336,238 @@ describe("IMP-036G administration proofs", () => {
         for (const item of narrowed.items) {
           expect(item.outletId).toBe(tree.outletA.id);
         }
+      });
+    });
+  }, 180_000);
+
+  it("returns only the outlet-scoped audit set across pages and filters", async () => {
+    await withIsolatedTestDatabase(adminConnectionInfo(), async (database) => {
+      await applyMigrations(database.connectionString);
+      await withAdminServer(database.connectionString, async ({ request, headersFor, persistence }) => {
+        const reader = await createEligibleWorkforceUser(persistence);
+        const foreignActor = await createEligibleWorkforceUser(persistence);
+        const tree = await persistence.transaction((tx) => seedBrandTree(tx, "e3a"));
+        const foreignBrand = await seedOutletBranch(persistence, "e3a-foreign");
+        const foreignOutlet = await persistence.transaction((tx) =>
+          createOutlet(tx, {
+            ...foreignBrand,
+            code: "e3a-foreign-out",
+            name: "Foreign Brand Outlet",
+          }),
+        );
+
+        const authorizedIds: string[] = [];
+        const foreignIds: string[] = [];
+        const older = Date.now() - 24 * 60 * 60 * 1000;
+        const newer = Date.now() + 60 * 60 * 1000;
+        await persistence.transaction(async (tx) => {
+          for (let index = 0; index < 51; index += 1) {
+            const created = await insertAccessAuditEvent(tx, {
+              actorWorkforceUserId: reader.id,
+              action: "membership.created",
+              targetType: "membership",
+              targetId: `e3a-authorized-${index}`,
+              scopeType: "outlet",
+              brandId: tree.brand.id,
+              organizationId: tree.orgA.id,
+              territoryId: tree.terrA.id,
+              outletId: tree.outletA.id,
+              occurredAt: new Date(older - index * 1000),
+              metadata: { index },
+            });
+            authorizedIds.push(created.id);
+          }
+          for (let index = 0; index < 40; index += 1) {
+            const created = await insertAccessAuditEvent(tx, {
+              actorWorkforceUserId: foreignActor.id,
+              action: "membership.created",
+              targetType: "membership",
+              targetId: `e3a-foreign-outlet-${index}`,
+              scopeType: "outlet",
+              brandId: tree.brand.id,
+              organizationId: tree.orgB.id,
+              territoryId: tree.terrB.id,
+              outletId: tree.outletB.id,
+              occurredAt: new Date(newer + index * 1000),
+              metadata: { index },
+            });
+            foreignIds.push(created.id);
+          }
+          for (let index = 0; index < 20; index += 1) {
+            const created = await insertAccessAuditEvent(tx, {
+              actorWorkforceUserId: foreignActor.id,
+              action: "membership.expired",
+              targetType: "membership",
+              targetId: `e3a-foreign-expired-${index}`,
+              scopeType: "outlet",
+              brandId: tree.brand.id,
+              organizationId: tree.orgB.id,
+              territoryId: tree.terrB.id,
+              outletId: tree.outletB.id,
+              occurredAt: new Date(newer + 60_000 + index * 1000),
+              metadata: { index },
+            });
+            foreignIds.push(created.id);
+          }
+          for (let index = 0; index < 10; index += 1) {
+            const created = await insertAccessAuditEvent(tx, {
+              actorWorkforceUserId: foreignActor.id,
+              action: "brand.updated",
+              targetType: "brand",
+              targetId: foreignBrand.brandId,
+              scopeType: "brand",
+              brandId: foreignBrand.brandId,
+              occurredAt: new Date(newer + 120_000 + index * 1000),
+              metadata: { index },
+            });
+            foreignIds.push(created.id);
+          }
+          const membership = await createMembership(tx, {
+            workforceUserId: reader.id,
+            scope: {
+              scopeType: "outlet",
+              brandId: tree.brand.id,
+              organizationId: tree.orgA.id,
+              territoryId: tree.terrA.id,
+              outletId: tree.outletA.id,
+            },
+            status: "active",
+          });
+          await grantRole(tx, { membershipId: membership.id, roleKey: "outlet_manager" });
+        });
+
+        const headers = await headersFor(reader.id);
+        const drained = await drainHttpPages(request, headers, "/api/admin/v1/audit-events");
+        const seenIds = drained.items.map((item) => String(item.id));
+        expect(drained.firstPageMore).toBe(true);
+        expect(drained.pages).toBeGreaterThan(1);
+        // 51 seeded outlet events, plus outlet.created, membership.created, and role_assignment.granted.
+        expect(drained.items).toHaveLength(authorizedIds.length + 3);
+        for (const item of drained.items) {
+          expect(item.outletId).toBe(tree.outletA.id);
+          expect(item.brandId).not.toBe(foreignBrand.brandId);
+        }
+        expect(seenIds).toEqual(expect.arrayContaining(authorizedIds));
+        expect(seenIds.some((id) => foreignIds.includes(id))).toBe(false);
+        expect(drained.items.some((item) => item.outletId === foreignOutlet.id)).toBe(false);
+
+        const sameAction = await drainHttpPages(
+          request,
+          headers,
+          "/api/admin/v1/audit-events?action=membership.created",
+        );
+        const sameActionIds = sameAction.items.map((item) => String(item.id));
+        expect(sameActionIds).toEqual(expect.arrayContaining(authorizedIds));
+        expect(sameActionIds.some((id) => foreignIds.includes(id))).toBe(false);
+        for (const item of sameAction.items) {
+          expect(item.outletId).toBe(tree.outletA.id);
+        }
+
+        const expiredOnly = await request(
+          "/api/admin/v1/audit-events?action=membership.expired",
+          { headers },
+        );
+        expect(expiredOnly.status).toBe(200);
+        const expiredBody = (await expiredOnly.json()) as {
+          items: Array<{ id: string }>;
+          more: boolean;
+          nextCursor: string | null;
+        };
+        expect(expiredBody.items).toEqual([]);
+        expect(expiredBody.more).toBe(false);
+        expect(expiredBody.nextCursor).toBeNull();
+
+        const foreignActorOnly = await request(
+          `/api/admin/v1/audit-events?actorWorkforceUserId=${foreignActor.id}`,
+          { headers },
+        );
+        expect(foreignActorOnly.status).toBe(200);
+        const foreignActorBody = (await foreignActorOnly.json()) as {
+          items: unknown[];
+          more: boolean;
+        };
+        expect(foreignActorBody.items).toEqual([]);
+        expect(foreignActorBody.more).toBe(false);
+
+        for (const key of ["search", "scope"]) {
+          const rejected = await request(`/api/admin/v1/audit-events?${key}=membership.created`, {
+            headers,
+          });
+          expect(rejected.status).toBe(400);
+          const rejectedBody = (await rejected.json()) as { ok: boolean; code: string };
+          expect(rejectedBody.ok).toBe(false);
+          expect(rejectedBody.code).toBe("ADMIN_REQUEST_INVALID");
+        }
+      });
+    });
+  }, 180_000);
+
+  it("rejects an expired workforce session cookie and hides operational status on the admin API", async () => {
+    await withIsolatedTestDatabase(adminConnectionInfo(), async (database) => {
+      await applyMigrations(database.connectionString);
+      await withAdminServer(database.connectionString, async ({ request, headersFor, persistence }) => {
+        const admin = await createPlatformAdmin(persistence);
+        const headers = await headersFor(admin.id);
+
+        const hiddenGet = await request("/api/admin/v1/operational-status", { headers });
+        expect(hiddenGet.status).toBe(404);
+        expect(await hiddenGet.json()).toEqual({
+          ok: false,
+          code: "NOT_FOUND",
+          requestId: "admin-036g-request",
+        });
+
+        const hiddenPost = await request("/api/admin/v1/operational-status", {
+          method: "POST",
+          headers,
+          body: "{}",
+        });
+        expect(hiddenPost.status).toBe(404);
+        const hiddenPostText = await hiddenPost.text();
+        expect(hiddenPostText).not.toContain("queues");
+        expect(hiddenPostText).not.toContain("workers");
+        expect(JSON.parse(hiddenPostText)).toMatchObject({ ok: false, code: "NOT_FOUND" });
+
+        await persistence.withContext(async (ctx) => {
+          await ctx.db
+            .update(workforceAuthSessions)
+            .set({ expiresAt: new Date("2020-01-01T00:00:00.000Z") })
+            .where(eq(workforceAuthSessions.userId, admin.id));
+        });
+
+        const session = await request("/api/admin/v1/session", { headers });
+        expect(session.status).toBe(401);
+        const sessionText = await session.text();
+        expect(JSON.parse(sessionText)).toMatchObject({
+          ok: false,
+          code: "WORKFORCE_AUTH_REQUIRED",
+        });
+        expect(sessionText).not.toContain(admin.id);
+        expect(sessionText).not.toContain("capabilities");
+
+        const status = await request("/api/operations/v1/operational-status", { headers });
+        expect(status.status).toBe(401);
+        const statusText = await status.text();
+        expect(JSON.parse(statusText)).toMatchObject({
+          ok: false,
+          code: "WORKFORCE_AUTH_REQUIRED",
+        });
+        expect(statusText).not.toContain("queues");
+        expect(statusText).not.toContain("workers");
+        expect(statusText).not.toContain("uptimeSeconds");
+
+        const mutation = await request("/api/admin/v1/memberships", {
+          method: "POST",
+          headers,
+          body: "{}",
+        });
+        expect(mutation.status).toBe(401);
+        const mutationText = await mutation.text();
+        expect(JSON.parse(mutationText)).toMatchObject({
+          ok: false,
+          code: "WORKFORCE_AUTH_REQUIRED",
+        });
+        expect(mutationText).not.toContain("membership");
       });
     });
   }, 180_000);

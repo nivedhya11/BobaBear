@@ -17,8 +17,9 @@ export default defineConfig({
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
   workers: 1,
-  timeout: 180_000,
-  expect: { timeout: 30_000 },
+  // Full desktop/tablet authoring plus possible workforce auth rate-limit waits.
+  timeout: 360_000,
+  expect: { timeout: 45_000 },
   reporter: [["list"]],
   use: {
     ...devices["Desktop Chrome"],

@@ -113,12 +113,7 @@ function warnIfVolumeExistsWithoutCredentials() {
 }
 
 function setRestrictivePermissions(filePath) {
-  try {
-    chmodSync(filePath, 0o600);
-  } catch {
-    // Not supported on this platform/filesystem (e.g. some Windows mounts).
-    // Non-fatal — the file is still git-ignored.
-  }
+  chmodSync(filePath, 0o600);
 }
 
 function ensureDockerEnvFile() {

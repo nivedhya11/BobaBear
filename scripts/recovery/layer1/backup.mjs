@@ -14,6 +14,7 @@ import {
 import { createEvidence } from "../evidence.mjs";
 import { withHeavyOpLock } from "../flock.mjs";
 import { generateRunId } from "../run-id.mjs";
+import { stagingSourceIdentityFindings } from "../staging-source-identity.mjs";
 import { persistEvidence } from "../store.mjs";
 import { redactText } from "../redact.mjs";
 import {
@@ -114,6 +115,7 @@ export async function runLayer1Backup(options) {
       startedAt,
       endedAt,
       candidate: options.candidate ?? {},
+      migrationSchemaContext: options.migrationSchemaContext ?? null,
       sourceEnvironmentClassification: options.sourceClassification ?? null,
       sourceIdentityMarker: options.sourceIdentity ?? null,
       recoveryPoint,
@@ -128,6 +130,7 @@ export async function runLayer1Backup(options) {
           keyVersion: options.keyVersion ?? `repo-gen-${options.repositoryGeneration}`,
           recoveryPointSource: parsedPoint.source,
         },
+        ...stagingSourceIdentityFindings(options),
       ],
     });
     if (typeof options.evidenceDir === "string" && options.evidenceDir.length > 0) {

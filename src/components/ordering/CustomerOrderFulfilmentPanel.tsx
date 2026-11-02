@@ -39,7 +39,7 @@ export function CustomerOrderFulfilmentPanel(props: {
         {order.fulfilmentTiming === "SCHEDULED" && order.scheduledWindow
           ? isPickup
             ? `Pickup window ${order.scheduledWindow.label} (${order.scheduledWindow.timeZone})`
-            : `Arrival / fulfilment window ${order.scheduledWindow.label} (${order.scheduledWindow.timeZone})`
+            : `Delivery window ${order.scheduledWindow.label} (${order.scheduledWindow.timeZone})`
           : "As soon as possible"}
       </p>
 

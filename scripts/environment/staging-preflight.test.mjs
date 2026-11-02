@@ -12,6 +12,7 @@ import {
   validPreflightEvidence,
 } from "./staging-preflight.mjs";
 import { POSTGRES_INIT_DISPOSITION } from "./postgres-init-identity.mjs";
+import { absentImageSecurityEvidence } from "./staging-image-security-evidence.mjs";
 import {
   gatherStagingPreflightEvidence,
   readStagingDiagnosticEnabled,
@@ -112,6 +113,34 @@ test("P01: all required fake evidence valid -> PASS", () => {
   assert.equal(decision.outcome, PREFLIGHT_OUTCOME.PASS);
 });
 
+test("stored evaluatedAt is not a freshness authority; evaluationClock is the isolated test seam", () => {
+  const ancient = "2020-01-01T00:00:00.000Z";
+  const passWithAncientEvaluatedAt = evaluateStagingDeployPreflight(
+    validPreflightEvidence({
+      recovery: {
+        evaluatedAt: ancient,
+        evaluationClock: "2026-10-29T10:00:00.000Z",
+      },
+    }),
+  );
+  assert.equal(passWithAncientEvaluatedAt.outcome, PREFLIGHT_OUTCOME.PASS);
+
+  const blockedWhenClockAdvances = evaluateStagingDeployPreflight(
+    validPreflightEvidence({
+      recovery: {
+        evaluatedAt: "2026-10-29T10:00:00.000Z",
+        evaluationClock: "2026-10-29T10:20:00.000Z",
+      },
+    }),
+  );
+  assert.equal(blockedWhenClockAdvances.outcome, PREFLIGHT_OUTCOME.BLOCKED);
+  assert.ok(
+    blockedWhenClockAdvances.findings.some(
+      (finding) => finding.code === PREFLIGHT_REASON.RECOVERY_EVIDENCE_STALE_OR_MISBOUND,
+    ),
+  );
+});
+
 test("P02: backup absent -> BLOCK", () => {
   assertBlocked(
     evaluateStagingDeployPreflight(validPreflightEvidence({ recovery: { checkpointPresent: false } })),
@@ -179,6 +208,14 @@ test("P08: wrong project / wrong Podman context -> BLOCK", () => {
   );
 });
 
+test("wrong staging volume identity blocks activation", () => {
+  const evidence = validPreflightEvidence({
+    runtime: { postgresVolume: "not-boba-staging_postgres-data" },
+  });
+  assertBlocked(evaluateStagingDeployPreflight(evidence), PREFLIGHT_REASON.RUNTIME_IDENTITY_INVALID);
+  assertZeroOperationalEffects(evidence);
+});
+
 test("P09: source SHA/tree drift -> BLOCK", () => {
   assertBlocked(
     evaluateStagingDeployPreflight(
@@ -191,14 +228,21 @@ test("P09: source SHA/tree drift -> BLOCK", () => {
 });
 
 test("P10: publishing state unknown/unsafe -> BLOCK", () => {
-  assertBlocked(
-    evaluateStagingDeployPreflight(
-      validPreflightEvidence({
-        publishing: { deployWorkflowState: "active", pagesSourceKnown: false, unsafeActivePublishingPath: true },
-      }),
-    ),
-    PREFLIGHT_REASON.PUBLISHING_UNSAFE_OR_UNKNOWN,
-  );
+  const evidence = validPreflightEvidence();
+  evidence.publishing = {
+    workflowFile: {
+      present: true,
+      triggersMain: true,
+      publishDir: "./out",
+      cname: "thebobabear.in",
+      pagesSourceDescribed: true,
+      fileDeployWorkflowState: "active_on_main",
+    },
+    githubWorkflow: { observed: false, state: "UNKNOWN", detail: "missing" },
+    pages: { observed: false, detail: "missing" },
+    staging: { observedExposure: false, authorization: null, claimedAuthorized: false },
+  };
+  assertBlocked(evaluateStagingDeployPreflight(evidence), PREFLIGHT_REASON.PUBLISHING_UNSAFE_OR_UNKNOWN);
 });
 
 test("P11: diagnostic unexpectedly enabled -> BLOCK for Gate 2 path", () => {
@@ -240,9 +284,16 @@ test("negative preflight paths invoke zero operational side effects in runStagin
     validPreflightEvidence({
       database: { baselineCompatibility: "PARTIAL_OR_INCOMPATIBLE" },
     }),
-    validPreflightEvidence({
-      publishing: { deployWorkflowState: "UNKNOWN", pagesSourceKnown: false, unsafeActivePublishingPath: true },
-    }),
+    (() => {
+      const evidence = validPreflightEvidence();
+      evidence.publishing = {
+        workflowFile: { present: false, triggersMain: false, publishDir: null, cname: null, pagesSourceDescribed: false, fileDeployWorkflowState: "UNKNOWN" },
+        githubWorkflow: { observed: false, state: "UNKNOWN" },
+        pages: { observed: false },
+        staging: { observedExposure: false },
+      };
+      return evidence;
+    })(),
     { probeTimedOut: true, probeDetail: "podman inspect timeout" },
   ];
 
@@ -531,22 +582,46 @@ test("R11: live gatherer does not fabricate runtime/project PASS constants", () 
       }),
       repositoryIdentityOf: () => "nivedhya11/BobaBear",
       protectedCheckoutUsed: false,
+      observeSource: () => ({
+        ok: false,
+        protectedCheckoutUsed: true,
+        isolatedArtifactContextVerified: false,
+        artifactContextInsideProtectedRoot: true,
+        authoritativeSourceRoot: "/home/ajoshi/repos/boba-bear-platform",
+      }),
+      readGithubMain: () => ({ ok: false, sha: null }),
+      projectConfig: () => ({
+        projectedConfigState: "UNKNOWN",
+        projectedConfigValid: false,
+        publicOrigin: null,
+        paymentIsolation: null,
+        unsafeAdaptersExplicitlyFalse: false,
+        bobaBearEnvDrift: null,
+      }),
       resolveInit: () => ({
         disposition: {
           disposition: POSTGRES_INIT_DISPOSITION.UNKNOWN,
           reasonCode: "POSTGRES_INIT_PROBE_NOT_RUN",
         },
       }),
+      readImageSecurity: () => absentImageSecurityEvidence(),
     },
   );
   assert.notEqual(evidence.runtime.composeProject, "boba-staging");
   assert.equal(evidence.runtime.identityUnknown, true);
-  assert.equal(evidence.environment.projectedConfigState, "UNKNOWN");
+  assert.notEqual(evidence.environment.projectedConfigState, "VALID");
   assert.equal(evidence.environment.projectedConfigValid, false);
   assert.equal(evidence.security.imageSecurityEvidencePresent, false);
+  assert.equal(evidence.security.sourceImageCorrelated, false);
   assert.equal(evidence.database.migrationLedgerState, "UNKNOWN");
+  assert.equal(evidence.database.migrationIdentityKnown, false);
+  assert.equal(evidence.recovery.bindingDesignDependency, true);
+  assert.notEqual(evidence.source.protectedCheckoutUsed, false);
+  assert.equal(evidence.source.isolatedArtifactContextVerified, false);
   const decision = evaluateStagingDeployPreflight(evidence);
   assert.equal(decision.outcome, PREFLIGHT_OUTCOME.BLOCKED);
+  assert.ok(decision.findings.some((finding) => finding.code === PREFLIGHT_REASON.RECOVERY_PROOF_BINDING_DESIGN_DEPENDENCY));
+  assert.equal(evidence.security.imageSecurityEvidencePresent, false);
   assertZeroOperationalEffects(evidence);
 });
 
@@ -575,4 +650,106 @@ test("source privacy: diagnostic projection never returns raw secret values", ()
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
+});
+
+test("N-source: wrong repository, tree, branch, dirty tree, and unverified isolation block", () => {
+  assertBlocked(
+    evaluateStagingDeployPreflight(validPreflightEvidence({ source: { repositoryIdentity: "other/repo" } })),
+    PREFLIGHT_REASON.SOURCE_AUTHORITY_INVALID,
+  );
+  assertBlocked(
+    evaluateStagingDeployPreflight(validPreflightEvidence({ source: { tree: "c".repeat(40) } })),
+    PREFLIGHT_REASON.SOURCE_SHA_TREE_DRIFT,
+  );
+  assertBlocked(
+    evaluateStagingDeployPreflight(validPreflightEvidence({ source: { branch: "feature" } })),
+    PREFLIGHT_REASON.SOURCE_AUTHORITY_INVALID,
+  );
+  assertBlocked(
+    evaluateStagingDeployPreflight(validPreflightEvidence({ source: { trackedDirty: " M src/x" } })),
+    PREFLIGHT_REASON.SOURCE_DIRTY_OR_PROTECTED,
+  );
+  assertBlocked(
+    evaluateStagingDeployPreflight(validPreflightEvidence({ source: { protectedCheckoutUsed: true } })),
+    PREFLIGHT_REASON.SOURCE_DIRTY_OR_PROTECTED,
+  );
+  assertBlocked(
+    evaluateStagingDeployPreflight(
+      validPreflightEvidence({ source: { protectedCheckoutUsed: false, isolatedArtifactContextVerified: false } }),
+    ),
+    PREFLIGHT_REASON.SOURCE_DIRTY_OR_PROTECTED,
+  );
+});
+
+test("N-environment: http origin, unsafe adapters, live payment, and bypass flags block", () => {
+  assertBlocked(
+    evaluateStagingDeployPreflight(
+      validPreflightEvidence({ environment: { paymentIsolation: "LIVE_REJECTED" } }),
+    ),
+    PREFLIGHT_REASON.ENVIRONMENT_INVALID,
+  );
+  assertBlocked(
+    evaluateStagingDeployPreflight(
+      validPreflightEvidence({ environment: { unsafeAdaptersExplicitlyFalse: false } }),
+    ),
+    PREFLIGHT_REASON.ENVIRONMENT_INVALID,
+  );
+  assertBlocked(
+    evaluateStagingDeployPreflight(validPreflightEvidence({ environment: { secretModesSecure: false } })),
+    PREFLIGHT_REASON.ENVIRONMENT_INVALID,
+  );
+  assertBlocked(
+    evaluateStagingDeployPreflight(validPreflightEvidence({ waive: true })),
+    PREFLIGHT_REASON.EVIDENCE_MALFORMED,
+  );
+});
+
+test("N-recovery: backup-only records do not pass on true booleans", () => {
+  const evidence = validPreflightEvidence();
+  evidence.recovery.evidenceRecords = evidence.recovery.evidenceRecords.filter((record) =>
+    record.operationType.includes("backup"),
+  );
+  assertBlocked(evaluateStagingDeployPreflight(evidence), PREFLIGHT_REASON.RECOVERY_PROOF_MISSING);
+});
+
+test("N-recovery: omitted records and production-only records do not pass", () => {
+  const missingRecords = validPreflightEvidence();
+  delete missingRecords.recovery.evidenceRecords;
+  assertBlocked(evaluateStagingDeployPreflight(missingRecords), PREFLIGHT_REASON.RECOVERY_INTEGRITY_UNVERIFIED);
+  assertBlocked(
+    evaluateStagingDeployPreflight(
+      validPreflightEvidence({
+        recovery: {
+          evidenceRecords: [
+            {
+              ...validPreflightEvidence().recovery.evidenceRecords[0],
+              sourceEnvironmentClassification: "production",
+            },
+          ],
+        },
+      }),
+    ),
+    PREFLIGHT_REASON.RECOVERY_EVIDENCE_STALE_OR_MISBOUND,
+  );
+});
+
+test("N-security-capacity-database: uncorrelated image, unmeasured capacity, and duplicate accounts block", () => {
+  assertBlocked(
+    evaluateStagingDeployPreflight(
+      validPreflightEvidence({ security: { imageSecurityEvidencePresent: true, sourceImageCorrelated: false } }),
+    ),
+    PREFLIGHT_REASON.SECURITY_EVIDENCE_MISSING,
+  );
+  const decision = evaluateStagingDeployPreflight(
+    validPreflightEvidence({
+      capacity: { diskSufficient: null, memorySufficient: null, priorImagesPreserved: null, unintendedPostgresReplacement: null },
+    }),
+  );
+  assert.equal(decision.outcome, PREFLIGHT_OUTCOME.BLOCKED);
+  assertBlocked(
+    evaluateStagingDeployPreflight(
+      validPreflightEvidence({ database: { duplicateAuthAccountGroupCount: 2 } }),
+    ),
+    PREFLIGHT_REASON.DATABASE_STATE_UNKNOWN_OR_UNSAFE,
+  );
 });

@@ -80,6 +80,12 @@ type LocationProviderMockOptions = Readonly<{
    * before provider readiness. Default 0 — do not globally delay the mock.
    */
   statusDelayMs?: number;
+  /**
+   * Default true keeps the historical placeholder outlet id used by checkout
+   * address mocks. Availability journeys must leave this false so the
+   * disposable server selects the seeded outlet.
+   */
+  stubServiceability?: boolean;
 }>;
 
 /** Route mocks for Places-backed location APIs used by map-first address flows. */
@@ -87,7 +93,7 @@ export async function installLocationProviderMocks(
   page: Page,
   options: LocationProviderMockOptions = {},
 ): Promise<void> {
-  const { statusDelayMs = 0 } = options;
+  const { statusDelayMs = 0, stubServiceability = true } = options;
   await page.route("**/api/v1/location/status", async (route) => {
     if (statusDelayMs > 0) {
       await new Promise((resolve) => setTimeout(resolve, statusDelayMs));
@@ -136,6 +142,8 @@ export async function installLocationProviderMocks(
       }),
     });
   });
+
+  if (!stubServiceability) return;
 
   await page.route("**/api/v1/serviceability/evaluate", async (route) => {
     await route.fulfill({

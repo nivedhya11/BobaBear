@@ -401,6 +401,8 @@ export type CommerceOrderDetail = CommerceOrderSummary &
     moneySummary: Readonly<{
       prePromotionSubtotalMinor: string;
       promotionDiscountMinor: string;
+      orderSavingMinor: string;
+      deliverySavingMinor: string;
       charges: readonly Readonly<{
         chargeCode: string;
         name: string;

@@ -36,7 +36,11 @@ export function CheckoutSnapshotLineList(props: {
               ) : null}
             </span>
             <span className="shrink-0 font-semibold tabular-nums text-[var(--text-primary)]">
-              {formatPaise(line.lineTotalPaise)}
+              {formatPaise(
+                line.lineOrigin === "complimentary_offer"
+                  ? line.lineTotalPaise
+                  : (line.lineSubtotalPaise ?? line.lineTotalPaise),
+              )}
             </span>
           </li>
         ))}

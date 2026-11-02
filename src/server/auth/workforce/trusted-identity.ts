@@ -60,7 +60,10 @@ export type WorkforceAuthSessionAuthority = Readonly<{
       findUserById: (userId: string) => Promise<WorkforceUserRow | null>;
       findSession: (
         token: string,
-      ) => Promise<{ session: { token: string }; user: { id: string } } | null>;
+      ) => Promise<{
+        session: { token: string; expiresAt?: unknown };
+        user: { id: string };
+      } | null>;
     };
   }>;
 }>;
@@ -112,6 +115,19 @@ function headersFromGetSessionResult(result: GetSessionResult): Headers {
     return result.headers;
   }
   return new Headers();
+}
+
+/**
+ * Better Auth `getSession` treats `expiresAt < now` as an invalid session.
+ * The raw token lookup must apply that same check. A missing or unreadable
+ * expiry is not a valid session.
+ */
+function isUnexpiredWorkforceSession(session: { expiresAt?: unknown } | null | undefined): boolean {
+  const expiresAt = session?.expiresAt;
+  if (!(expiresAt instanceof Date) || Number.isNaN(expiresAt.getTime())) {
+    return false;
+  }
+  return !(expiresAt < new Date());
 }
 
 export function isTrustedWorkforceAuthIdentity(
@@ -177,7 +193,9 @@ async function lookupWorkforceSessionUserId(
       credentials.sessionToken,
     );
     const userId = found?.user?.id;
-    return typeof userId === "string" && userId.length > 0 ? userId : null;
+    if (typeof userId !== "string" || userId.length === 0) return null;
+    if (!isUnexpiredWorkforceSession(found?.session)) return null;
+    return userId;
   }
 
   return null;

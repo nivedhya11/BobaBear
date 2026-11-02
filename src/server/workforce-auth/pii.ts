@@ -192,6 +192,11 @@ export function loadWorkforceAuthServiceHostConfig(
       key: "WORKFORCE_AUTH_TRUST_PROXY_HOPS",
       message: hopsResult.message,
     });
+  } else if (environmentType === "staging" && hopsResult.value !== 1) {
+    issues.push({
+      key: "WORKFORCE_AUTH_TRUST_PROXY_HOPS",
+      message: "Staging requires exactly 1 trusted proxy hop.",
+    });
   }
 
   const portResult = parseServicePort(source.WORKFORCE_AUTH_SERVICE_PORT);

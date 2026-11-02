@@ -36,6 +36,7 @@ Primary entry: [`acceptance-pack/INDEX.md`](./acceptance-pack/INDEX.md)
 | Nginx / AOP / firewall / real_ip contracts | [`origin-trust/`](./origin-trust/) |
 | IMP-039 handoff checklist | [`origin-trust/imp039-handoff-checklist.md`](./origin-trust/imp039-handoff-checklist.md) |
 | Lab verify script | `npm run origin-trust:verify` → `scripts/origin-trust/verify-contracts.mjs` |
+| Founder staging D2 Tunnel/Access design (design-only) | [`../operations/d2-restricted-cloudflare-tunnel-design.md`](../operations/d2-restricted-cloudflare-tunnel-design.md) — complementary staging design evidence; does **not** supersede D-375 production origin trust or authorize Tunnel operations. `origin-trust:verify` remains lab/config-only and does **not** prove Tunnel/Access paths. |
 
 ```text
 PRODUCTION_REALIZATION_PENDING: YES (owner IMP-039)

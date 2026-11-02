@@ -1110,33 +1110,40 @@ describe("CartClient", () => {
         },
       },
     });
-    let resolveCheckout: ((value: unknown) => void) | undefined;
-    getActiveCheckout.mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          resolveCheckout = resolve;
-        }),
-    );
+    // Eager deferred Promise: resolver exists before render so resolve cannot
+    // silently no-op when getActiveCheckout has not yet been invoked (CI race).
+    let resolveCheckout!: (value: unknown) => void;
+    const pendingCheckout = new Promise((resolve) => {
+      resolveCheckout = resolve;
+    });
+    getActiveCheckout.mockImplementation(() => pendingCheckout);
 
     render(<CartClient brandId={brandId} />);
+    // Checking total must appear before Checkout resolution (reuse pending).
     expect(await screen.findAllByText(IMP036J_COPY.CHECKING_TOTAL)).not.toHaveLength(0);
     expect(screen.queryByText(IMP036J_COPY.ESTIMATED_SUBTOTAL)).not.toBeInTheDocument();
+    expect(document.querySelector('[data-offer-component="ESTIMATED_SUBTOTAL"]')).toBeNull();
 
-    await act(async () => {
-      resolveCheckout?.({
-        ok: true,
-        status: 200,
-        data: {
-          checkout: {
-            id: "chk-1",
-            fulfilmentMode: "DELIVERY",
-            sourceCartRevision: "4",
-            revision: "3",
-            status: "READY_FOR_PAYMENT",
-            activeSnapshot: { grandTotalPaise: "24900", fulfilmentMode: "DELIVERY" },
-          },
+    await waitFor(() => {
+      expect(getActiveCheckout).toHaveBeenCalled();
+    });
+
+    const checkoutResponse = {
+      ok: true as const,
+      status: 200,
+      data: {
+        checkout: {
+          id: "chk-1",
+          fulfilmentMode: "DELIVERY",
+          sourceCartRevision: "4",
+          revision: "3",
+          status: "READY_FOR_PAYMENT",
+          activeSnapshot: { grandTotalPaise: "24900", fulfilmentMode: "DELIVERY" },
         },
-      });
+      },
+    };
+    await act(async () => {
+      resolveCheckout(checkoutResponse);
     });
 
     await waitFor(() =>

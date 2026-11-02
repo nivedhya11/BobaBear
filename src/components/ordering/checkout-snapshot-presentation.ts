@@ -3,7 +3,7 @@
  */
 
 import type { CommerceCheckoutSnapshot } from "@/lib/customer-commerce";
-import { CHARGE_DEFINITION_DELIVERY_ID } from "@/shared/pricing";
+import { sealedCustomerSavingSplit } from "@/shared/order/purchased-savings";
 
 export type SnapshotChargeRow = Readonly<{
   chargeCode: "packaging" | "delivery";
@@ -136,11 +136,10 @@ function paiseFromUnknown(value: unknown): bigint {
   return BigInt(0);
 }
 
-const DELIVERY_ALLOCATION_COMPONENT_ID = `charge:${CHARGE_DEFINITION_DELIVERY_ID}`;
-
 /**
  * Sealed snapshot projection of customer monetary savings.
  * Complimentary synthetic allocations are excluded from customer saving rows.
+ * Authority is the shared purchased-saving split, not a second calculation.
  */
 export function sealedCustomerSavingsFromSnapshot(
   snapshot: CommerceCheckoutSnapshot,
@@ -149,30 +148,28 @@ export function sealedCustomerSavingsFromSnapshot(
   deliverySavingPaise: string;
   totalSavedPaise: string;
 }> {
-  let complimentaryAllocation = BigInt(0);
-  let deliverySaving = BigInt(0);
-  for (const raw of snapshot.promotionEffects) {
-    if (!isRecord(raw) || raw.effectKind !== "monetary_allocation") continue;
-    const amount = paiseFromUnknown(raw.amountPaise);
-    const snapshotLineId = raw.snapshotLineId;
-    if (snapshotLineId != null && String(snapshotLineId).length > 0) {
-      complimentaryAllocation += amount;
-      continue;
-    }
-    const componentId = typeof raw.componentId === "string" ? raw.componentId : "";
-    if (componentId === DELIVERY_ALLOCATION_COMPONENT_ID) {
-      deliverySaving += amount;
-    }
-  }
-  const discount = paiseFromUnknown(snapshot.promotionDiscountPaise);
-  const customer =
-    discount > complimentaryAllocation ? discount - complimentaryAllocation : BigInt(0);
-  const delivery = deliverySaving > customer ? customer : deliverySaving;
-  const order = customer > delivery ? customer - delivery : BigInt(0);
+  const split = sealedCustomerSavingSplit({
+    promotionDiscountPaise: paiseFromUnknown(snapshot.promotionDiscountPaise),
+    promotionEffects: snapshot.promotionEffects.flatMap((raw) => {
+      if (!isRecord(raw)) return [];
+      const snapshotLineId = raw.snapshotLineId;
+      return [
+        {
+          effectKind: typeof raw.effectKind === "string" ? raw.effectKind : "",
+          amountPaise: paiseFromUnknown(raw.amountPaise),
+          snapshotLineId:
+            snapshotLineId == null || String(snapshotLineId).length === 0
+              ? null
+              : String(snapshotLineId),
+          componentId: typeof raw.componentId === "string" ? raw.componentId : null,
+        },
+      ];
+    }),
+  });
   return Object.freeze({
-    orderSavingPaise: order.toString(),
-    deliverySavingPaise: delivery.toString(),
-    totalSavedPaise: (order + delivery).toString(),
+    orderSavingPaise: split.orderSavingPaise.toString(),
+    deliverySavingPaise: split.deliverySavingPaise.toString(),
+    totalSavedPaise: split.totalSavedPaise.toString(),
   });
 }
 

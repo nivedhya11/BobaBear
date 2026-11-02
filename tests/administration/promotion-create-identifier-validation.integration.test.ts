@@ -1,6 +1,6 @@
 /**
- * IMP-036J #381 — create-promotion request-shape failures over real HTTP
- * and a migrated disposable PostgreSQL.
+ * IMP-036J #381 — create-promotion request-shape and scope-ownership failures
+ * over real HTTP and a migrated disposable PostgreSQL.
  *
  * Binding rules this file is allowed to treat as HTTP 400
  * PROMOTIONS_REQUEST_INVALID (existing PromotionValidationError envelope):
@@ -10,10 +10,13 @@
  *   including "", must be a UUID because those columns are uuid. null and
  *   undefined stay omitted. A non-UUID is a shape failure.
  *
- * A well-formed territory UUID that is unknown or belongs to another brand
- * is an existence/foreign-key outcome. No accepted contract chooses 400
- * versus 404 for that case, so it stays the current HTTP 500. SQLSTATE 57P01
- * is harness connection teardown, not this failure.
+ * Founder #381 Option B (2026-10-30): a well-formed territory / organization /
+ * outlet UUID that is missing or belongs to another brand returns the same
+ * non-enumerating HTTP 404 PROMOTIONS_NOT_FOUND envelope. Trusted server-side
+ * existence + brand-ownership checks run before insertion; FK 23503 must not
+ * be the create path for these cases. SQLSTATE 57P01 is harness connection
+ * teardown, not this failure. Historical intermittent create 500s remain
+ * separately unattributed.
  *
  * Run: node scripts/run-vitest.mjs run --config vitest.database.config.mts <this file>
  */
@@ -137,7 +140,7 @@ function pgField(error: unknown, field: "code" | "constraint"): string | null {
 function createBody(
   input: Readonly<{
     code: string;
-    scopeType?: "brand" | "territory";
+    scopeType?: "brand" | "territory" | "organization" | "outlet";
     territoryId?: string;
     organizationId?: string;
     outletId?: string;
@@ -176,7 +179,7 @@ async function privateDriverEvidence(
   harness: PromotionsHarness,
   input: Readonly<{
     code: string;
-    scopeType?: "brand" | "territory";
+    scopeType?: "brand" | "territory" | "organization" | "outlet";
     territoryId?: string | null;
     organizationId?: string | null;
     outletId?: string | null;
@@ -210,7 +213,7 @@ async function privateDriverEvidence(
 }
 
 describe("IMP-036J #381 create-promotion HTTP validation", () => {
-  it("corrects contract-backed shape failures and leaves unbound territory existence as 500", async () => {
+  it("corrects shape failures and maps missing/foreign scopes to identical 404", async () => {
     await withIsolatedTestDatabase(adminConnectionInfo(), async (database) => {
       await applyMigrations(database.connectionString);
       const harness = await seedPromotionsHarness(database.connectionString, openHandles);
@@ -424,63 +427,111 @@ describe("IMP-036J #381 create-promotion HTTP validation", () => {
         expect(await snapshot(harness, brandId), emptyScope.label).toEqual(before);
       }
 
-      const unknownTerritoryId = randomUUID();
-      const unknownTerritory = await post(
-        harness.brandAdmin.id,
-        createBody({
-          code: "terr-unknown",
-          scopeType: "territory",
-          territoryId: unknownTerritoryId,
-        }),
-      );
-      expect(unknownTerritory).toMatchObject({
-        status: 500,
-        body: { ok: false, code: "INTERNAL_ERROR", requestId: REQUEST_ID },
-      });
-      expect(unknownTerritory.body).toEqual({
-        ok: false,
-        code: "INTERNAL_ERROR",
-        requestId: REQUEST_ID,
-      });
-      expect(
-        await privateDriverEvidence(harness, {
-          code: "terr-unknown",
-          scopeType: "territory",
-          territoryId: unknownTerritoryId,
-        }),
-      ).toEqual({
-        status: 500,
-        code: "INTERNAL_ERROR",
-        sqlState: "23503",
-        constraint: "promotions_territory_brand_fk",
-      });
+      const missingTerritoryId = randomUUID();
+      const missingOrganizationId = randomUUID();
+      const missingOutletId = randomUUID();
+      const notFoundScopeCases = [
+        {
+          label: "missing territory",
+          body: createBody({
+            code: "terr-unknown",
+            scopeType: "territory",
+            territoryId: missingTerritoryId,
+          }),
+          driver: {
+            code: "terr-unknown",
+            scopeType: "territory" as const,
+            territoryId: missingTerritoryId,
+          },
+        },
+        {
+          label: "foreign territory",
+          body: createBody({
+            code: "terr-foreign",
+            scopeType: "territory",
+            territoryId: otherTree.terrA.id,
+          }),
+          driver: {
+            code: "terr-foreign",
+            scopeType: "territory" as const,
+            territoryId: otherTree.terrA.id,
+          },
+        },
+        {
+          label: "missing organization",
+          body: createBody({
+            code: "org-unknown",
+            scopeType: "organization",
+            organizationId: missingOrganizationId,
+          }),
+          driver: {
+            code: "org-unknown",
+            scopeType: "organization" as const,
+            organizationId: missingOrganizationId,
+          },
+        },
+        {
+          label: "foreign organization",
+          body: createBody({
+            code: "org-foreign",
+            scopeType: "organization",
+            organizationId: otherTree.orgA.id,
+          }),
+          driver: {
+            code: "org-foreign",
+            scopeType: "organization" as const,
+            organizationId: otherTree.orgA.id,
+          },
+        },
+        {
+          label: "missing outlet",
+          body: createBody({
+            code: "outlet-unknown",
+            scopeType: "outlet",
+            outletId: missingOutletId,
+          }),
+          driver: {
+            code: "outlet-unknown",
+            scopeType: "outlet" as const,
+            outletId: missingOutletId,
+          },
+        },
+        {
+          label: "foreign outlet",
+          body: createBody({
+            code: "outlet-foreign",
+            scopeType: "outlet",
+            outletId: otherTree.outletA.id,
+          }),
+          driver: {
+            code: "outlet-foreign",
+            scopeType: "outlet" as const,
+            outletId: otherTree.outletA.id,
+          },
+        },
+      ] as const;
 
-      const foreignTerritory = await post(
-        harness.brandAdmin.id,
-        createBody({
-          code: "terr-foreign",
-          scopeType: "territory",
-          territoryId: otherTree.terrA.id,
-        }),
-      );
-      expect(foreignTerritory.body).toEqual({
-        ok: false,
-        code: "INTERNAL_ERROR",
-        requestId: REQUEST_ID,
-      });
-      expect(foreignTerritory.status).toBe(500);
-      expect(
-        await privateDriverEvidence(harness, {
-          code: "terr-foreign",
-          scopeType: "territory",
-          territoryId: otherTree.terrA.id,
-        }),
-      ).toEqual({
-        status: 500,
-        code: "INTERNAL_ERROR",
-        sqlState: "23503",
-        constraint: "promotions_territory_brand_fk",
-      });
+      const notFoundBodies: string[] = [];
+      for (const scopeCase of notFoundScopeCases) {
+        const before = await snapshot(harness, brandId);
+        const http = await post(harness.brandAdmin.id, scopeCase.body);
+        expect(http.status, scopeCase.label).toBe(404);
+        expect(http.body, scopeCase.label).toEqual({
+          ok: false,
+          code: "PROMOTIONS_NOT_FOUND",
+          requestId: REQUEST_ID,
+        });
+        expect(JSON.stringify(http.body), scopeCase.label).not.toMatch(SQL_LEAK);
+        notFoundBodies.push(JSON.stringify(http.body));
+        expect(await privateDriverEvidence(harness, scopeCase.driver), scopeCase.label).toEqual({
+          status: 404,
+          code: "PROMOTIONS_NOT_FOUND",
+          sqlState: null,
+          constraint: null,
+        });
+        expect(await snapshot(harness, brandId), scopeCase.label).toEqual(before);
+      }
+      expect(new Set(notFoundBodies).size).toBe(1);
 
       const beforeDenial = await snapshot(harness, brandId);
       const kitchenDenied = await post(kitchen.id, createBody({ code: "denied-kitchen" }));
@@ -513,9 +564,31 @@ describe("IMP-036J #381 create-promotion HTTP validation", () => {
       );
       expect(ownedTerritory.status).toBe(200);
       expect(ownedTerritory.body).toMatchObject({ ok: true, promotion: { revision: "1" } });
+
+      const ownedOrganization = await post(
+        harness.brandAdmin.id,
+        createBody({
+          code: "org-owned",
+          scopeType: "organization",
+          organizationId: harness.tree.orgA.id,
+        }),
+      );
+      expect(ownedOrganization.status).toBe(200);
+      expect(ownedOrganization.body).toMatchObject({ ok: true, promotion: { revision: "1" } });
+
+      const ownedOutlet = await post(
+        harness.brandAdmin.id,
+        createBody({
+          code: "outlet-owned",
+          scopeType: "outlet",
+          outletId: harness.tree.outletA.id,
+        }),
+      );
+      expect(ownedOutlet.status).toBe(200);
+      expect(ownedOutlet.body).toMatchObject({ ok: true, promotion: { revision: "1" } });
       expect(await snapshot(harness, brandId)).toEqual({
-        codes: ["terr-owned", "test123"],
-        createdAudits: 2,
+        codes: ["org-owned", "outlet-owned", "terr-owned", "test123"],
+        createdAudits: 4,
       });
     });
   }, 180_000);

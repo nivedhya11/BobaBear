@@ -151,6 +151,10 @@ export function CheckoutClient(props: { brandId: string }) {
   >(null);
   const [couponFocusInputToken, setCouponFocusInputToken] = useState(0);
   const [couponFocusResultToken, setCouponFocusResultToken] = useState(0);
+  const [couponFocusAction, setCouponFocusAction] = useState<
+    "apply" | "change" | "remove" | "retry" | null
+  >(null);
+  const [couponFocusActionToken, setCouponFocusActionToken] = useState(0);
   const [staleRecovery, setStaleRecovery] = useState<StaleRecoveryPresentation | null>(
     null,
   );
@@ -161,6 +165,11 @@ export function CheckoutClient(props: { brandId: string }) {
    * a newer generation has begun.
    */
   const reviewAsyncGenerationRef = useRef(0);
+  /**
+   * Focus the coupon result once, only when Review first shows a coupon that
+   * was already on the cart after sign-in. A later review mutation owns focus.
+   */
+  const carriedCouponResultFocusRef = useRef(false);
   const [giftGone, setGiftGone] = useState(false);
   const [offerDropped, setOfferDropped] = useState(false);
   const reviewSummaryRef = useRef<HTMLDivElement | null>(null);
@@ -178,6 +187,21 @@ export function CheckoutClient(props: { brandId: string }) {
   const [scheduledWindows, setScheduledWindows] = useState<CommerceScheduledWindows | null>(null);
   const [selectedWindowStart, setSelectedWindowStart] = useState<string | null>(null);
   const reviewExplanation = parseCommercialExplanation(reviewQuote);
+  const [sawComplimentaryLine, setSawComplimentaryLine] = useState(false);
+  const reviewComplimentaryCompeting = reviewExplanation?.complimentary?.competingOffers ?? null;
+  const reviewComplimentaryVariantId =
+    reviewExplanation?.complimentary?.competingOffers === "NONE"
+      ? reviewExplanation.complimentary.variantId
+      : null;
+  if (
+    !sawComplimentaryLine &&
+    reviewComplimentaryCompeting === "NONE" &&
+    reviewComplimentaryVariantId
+  ) {
+    setSawComplimentaryLine(true);
+  }
+  const showGiftConflict =
+    sawComplimentaryLine && reviewComplimentaryCompeting === "NONE_CHOSEN";
   const reviewCommercialCurrent = isReviewCommercialCurrent({
     cartRevision: cart?.revision ?? null,
     snapshotSourceCartRevision: snapshot?.sourceCartRevision ?? null,
@@ -242,9 +266,10 @@ export function CheckoutClient(props: { brandId: string }) {
         (line as { lineOrigin?: string }).lineOrigin === "complimentary_offer"
       );
     });
-    if (hadGift && !hasGift) setGiftGone(true);
     const previousExplanation = parseCommercialExplanation(reviewQuote);
     const nextExplanation = parseCommercialExplanation(evaluated.quote ?? null);
+    const competingNoneChosen = nextExplanation?.complimentary?.competingOffers === "NONE_CHOSEN";
+    if (hadGift && !hasGift && !competingNoneChosen) setGiftGone(true);
     if (hasAuthoritativeSaving(nextExplanation)) {
       setOfferDropped(false);
     } else if (offerDroppedFromAuthoritativeExplanations(previousExplanation, nextExplanation)) {
@@ -258,6 +283,31 @@ export function CheckoutClient(props: { brandId: string }) {
     setReviewSurfaceToken(evaluated.reviewSurfaceToken ?? null);
     setReviewQuote(evaluated.quote ?? null);
   }
+
+  useEffect(() => {
+    if (carriedCouponResultFocusRef.current) return;
+    if (screen !== "review" || couponPending || staleRecovery?.kind || couponStatusOverride) return;
+    if (!cart?.manualCouponCode) return;
+    const status = couponFieldStatusFromExplanation({
+      explanation: parseCommercialExplanation(reviewQuote),
+      fulfilmentMode: snapshot?.fulfilmentMode ?? chosenMode,
+    });
+    if (!status?.text || status.invalid || status.showSignIn) return;
+    carriedCouponResultFocusRef.current = true;
+    document
+      .querySelector<HTMLElement>("[data-testid='checkout-review'] [data-testid='coupon-result']")
+      ?.focus();
+  }, [
+    screen,
+    evaluationId,
+    cart?.manualCouponCode,
+    couponPending,
+    couponStatusOverride,
+    staleRecovery?.kind,
+    reviewQuote,
+    snapshot?.fulfilmentMode,
+    chosenMode,
+  ]);
 
   useEffect(() => {
     if (screen !== "review" || !evaluationId || couponPending) return;
@@ -329,7 +379,11 @@ export function CheckoutClient(props: { brandId: string }) {
   }
 
   type ReviewRebaseResult =
-    | { ok: true; snapshot: CommerceCheckoutSnapshot }
+    | {
+        ok: true;
+        snapshot: CommerceCheckoutSnapshot;
+        quote: { commercialExplanation?: unknown } | null;
+      }
     | { ok: false; code: string };
 
   /**
@@ -465,13 +519,35 @@ export function CheckoutClient(props: { brandId: string }) {
     adoptEvaluated(evaluated.data);
     setChosenMode(evaluated.data.snapshot.fulfilmentMode);
     setScreen("review");
-    return { ok: true, snapshot: evaluated.data.snapshot };
+    return {
+      ok: true,
+      snapshot: evaluated.data.snapshot,
+      quote: evaluated.data.quote ?? null,
+    };
+  }
+
+  function focusCouponRecovery(
+    status: ReturnType<typeof couponFieldStatusFromMutationFailure>,
+    action: "apply" | "change" | "remove" | "retry",
+  ): void {
+    if (status.invalid) {
+      setCouponFocusInputToken((token) => token + 1);
+      return;
+    }
+    if (status.retryVisible) {
+      setCouponFocusAction(action);
+      setCouponFocusActionToken((token) => token + 1);
+    }
   }
 
   async function mutateReviewCoupon(
     work: () => Promise<{ ok: true; data: { cart: CommerceCart } } | { ok: false; code: string }>,
+    action: "apply" | "change" | "remove" | "retry",
   ): Promise<void> {
     if (!cart || couponPending) return;
+    // A review mutation owns focus from here. The carried-coupon effect must
+    // not move focus back to a preserved successful result after a failure.
+    carriedCouponResultFocusRef.current = true;
     // Customer coupon mutation supersedes any in-flight automatic recovery.
     const generation = beginReviewAsync();
     const priorSnapshot = snapshot;
@@ -501,9 +577,7 @@ export function CheckoutClient(props: { brandId: string }) {
         setReviewSurfaceToken(priorToken);
         setReviewQuote(priorQuote);
       }
-      if (status.invalid || status.retryVisible) {
-        setCouponFocusInputToken((token) => token + 1);
-      }
+      focusCouponRecovery(status, action);
       return;
     }
     // Cart coupon write committed — keep intent even if Review evaluation fails.
@@ -529,14 +603,20 @@ export function CheckoutClient(props: { brandId: string }) {
       setReviewSurfaceToken(null);
       const status = couponFieldStatusFromMutationFailure(rebased.code);
       setCouponStatusOverride(status);
-      if (status.invalid || status.retryVisible) {
-        setCouponFocusInputToken((token) => token + 1);
-      }
+      focusCouponRecovery(status, action);
       setScreen("review");
       return;
     }
     setCouponStatusOverride(null);
-    setCouponFocusResultToken((token) => token + 1);
+    const appliedStatus = couponFieldStatusFromExplanation({
+      explanation: parseCommercialExplanation(rebased.quote),
+      fulfilmentMode: rebased.snapshot.fulfilmentMode,
+    });
+    if (appliedStatus?.invalid) {
+      setCouponFocusInputToken((token) => token + 1);
+    } else {
+      setCouponFocusResultToken((token) => token + 1);
+    }
     // Case E / recovery escape — a successful coupon-driven re-evaluation is a
     // fresh authoritative Review; clear prior payment-start recovery chrome.
     setStaleRecovery(null);
@@ -1379,7 +1459,7 @@ export function CheckoutClient(props: { brandId: string }) {
                 snapshot.scheduledWindowEndAt &&
                 snapshot.scheduledTimezone
                   ? snapshot.fulfilmentMode === "DELIVERY"
-                    ? `Arrival / fulfilment window ${formatOutletLocalWindowLabel(
+                    ? `Delivery window ${formatOutletLocalWindowLabel(
                         new Date(snapshot.scheduledWindowStartAt),
                         new Date(snapshot.scheduledWindowEndAt),
                         snapshot.scheduledTimezone,
@@ -1449,6 +1529,7 @@ export function CheckoutClient(props: { brandId: string }) {
                 staleMessage={staleRecovery?.message ?? null}
                 giftGone={giftGone}
                 dropped={offerDropped}
+                showGiftConflict={showGiftConflict}
                 complimentaryName={
                   reviewMoneyConfirmed
                     ? narrowCheckoutSnapshotLines(snapshot.lines).find(
@@ -1492,25 +1573,29 @@ export function CheckoutClient(props: { brandId: string }) {
               }}
               onApply={() => {
                 if (!cart) return;
-                void mutateReviewCoupon(() =>
-                  applyCartCoupon({
-                    brandId,
-                    couponCode: couponDraft,
-                    expectedRevision: cart.revision,
-                    sourceCommandId: crypto.randomUUID(),
-                    reviewSurfaceToken,
-                  }),
+                void mutateReviewCoupon(
+                  () =>
+                    applyCartCoupon({
+                      brandId,
+                      couponCode: couponDraft,
+                      expectedRevision: cart.revision,
+                      sourceCommandId: crypto.randomUUID(),
+                      reviewSurfaceToken,
+                    }),
+                  cart.manualCouponCode ? "change" : "apply",
                 );
               }}
               onRemove={() => {
                 if (!cart) return;
-                void mutateReviewCoupon(() =>
-                  removeCartCoupon({
-                    brandId,
-                    expectedRevision: cart.revision,
-                    sourceCommandId: crypto.randomUUID(),
-                    reviewSurfaceToken,
-                  }),
+                void mutateReviewCoupon(
+                  () =>
+                    removeCartCoupon({
+                      brandId,
+                      expectedRevision: cart.revision,
+                      sourceCommandId: crypto.randomUUID(),
+                      reviewSurfaceToken,
+                    }),
+                  "remove",
                 );
               }}
               statusText={
@@ -1543,14 +1628,16 @@ export function CheckoutClient(props: { brandId: string }) {
               retryVisible={couponStatusOverride?.retryVisible}
               onRetry={() => {
                 if (!cart) return;
-                void mutateReviewCoupon(() =>
-                  applyCartCoupon({
-                    brandId,
-                    couponCode: couponDraft,
-                    expectedRevision: cart.revision,
-                    sourceCommandId: crypto.randomUUID(),
-                    reviewSurfaceToken,
-                  }),
+                void mutateReviewCoupon(
+                  () =>
+                    applyCartCoupon({
+                      brandId,
+                      couponCode: couponDraft,
+                      expectedRevision: cart.revision,
+                      sourceCommandId: crypto.randomUUID(),
+                      reviewSurfaceToken,
+                    }),
+                  "retry",
                 );
               }}
               returnPath="/order/checkout/"
@@ -1564,6 +1651,8 @@ export function CheckoutClient(props: { brandId: string }) {
                 )?.showSignIn
               }
               focusInputToken={couponFocusInputToken || null}
+              focusAction={couponFocusAction}
+              focusActionToken={couponFocusActionToken || null}
               focusResultToken={couponFocusResultToken || null}
             />
           </div>

@@ -1,7 +1,7 @@
 ---
 Status: Accepted
 Decision date: 2026-08-02
-Last updated: 2026-08-02
+Last updated: 2026-10-30
 ---
 
 # ADR-004: Identity, Authentication, Sessions, and Recovery
@@ -9,6 +9,37 @@ Last updated: 2026-08-02
 ## Status
 
 Accepted
+
+## Transport-policy evidence notice
+
+```text
+RECORDED: 2026-10-30
+FOUNDER_EVIDENCE_DATE: 2026-10-29
+OTP_TRANSPORT_POLICY = OPTION_A_APPROVED
+FORMAL_REGISTER_ALLOCATION = BLOCKED
+DECISION_REGISTER_ROW_ADDED = NO
+PROVIDER_SELECTED = NO
+```
+
+On 29 October 2026 the Founder approved this transport constraint: sensitive OTP
+verification values, phone verification data, and provider credentials must not be
+transmitted in URL paths or query parameters. MSG91 GET-based Verify remains blocked.
+A later provider path must show secure HTTPS server-side transport, sensitive values
+outside URLs, and preservation of accepted BOBA authentication and session security.
+
+This notice records that evidence. It does not allocate a decision ID. DR-25 still
+names D-385 as the next register ID, and open pull requests already reserve D-385,
+D-386, and D-387. Until a non-conflicting ID is authorized, this evidence is not a
+CURRENT decision-register row.
+
+The notice does not select MSG91, its Widget, Exotel, Twilio, or any other provider.
+It does not change the accepted identity, session, attempt, or resend policy in this
+ADR. It does not authorize credentials, procurement, DLT registration, real SMS,
+staging enablement, or deployment. Provider selection remains an explicit
+non-decision below.
+
+The non-authoritative comparison is
+[`../engineering/customer-otp-transport-assessment.md`](../engineering/customer-otp-transport-assessment.md).
 
 ## Decision Date
 

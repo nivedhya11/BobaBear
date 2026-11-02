@@ -66,6 +66,65 @@ Identifier casing is not a new ESLint `naming-convention` error. The repository 
 that rule, and turning it on as an error would fail grandfathered code. Use the existing ESLint
 and TypeScript checks. Semantic quality of new identifiers stays a review obligation.
 
+This standard does not impose a universal filename length limit, and it does not apply a new
+strict identifier rule to grandfathered source.
+
+### API routes and HTTP boundaries
+
+Prefer functional, resource-oriented route names. Keep the versioning and route families that
+architecture already locked (`/api/v1/*`, `/api/operations/v1/*`, `/api/admin/v1/*`, and the
+existing auth prefixes). Request, response, and error meanings stay in the canonical contract for
+that boundary. This section does not rename an existing endpoint and does not invent a new API
+contract.
+
+### Functions, operations, and actions
+
+Name a function for the behavior it performs. Distinguish reads, mutations, validations,
+evaluations, projections, and effects. Where a neutral domain term already exists, prefer it to a
+transport or provider word. Do not start a second naming scheme for an established domain
+aggregate such as Cart, Checkout, Payment, Order, Menu, Catalog, Assortment, or Pricing.
+
+### Tests
+
+Name a test for the observable behavior it verifies. A new test filename describes that
+capability. Put an existing IMP, story, or acceptance-scenario id in traceability metadata when
+the proof needs it. Keep established test filenames and compatibility command names. The filename
+rules above still apply to new paths.
+
+### GitHub Actions
+
+Use different names for the human label and the stable id.
+
+| Kind | Convention |
+|---|---|
+| Workflow display name | What the workflow is for. Keep a name that a ruleset, script, or documented integration already matches. |
+| Job display name | What the job checks. The six required check names below are exact and stay unchanged. |
+| Job id | Stable YAML key. Do not rename it to refresh a label. |
+| Step display name | `Capability · Specific Verification`, specific enough to match the command. |
+| Step id | Stable machine id used by `needs` or outputs. Not the human label. |
+| Artifact name | Descriptive and stable. A new artifact name does not use a stage id. |
+| Security-sensitive check | Keep the existing job display name when GitHub uses it as a required context. |
+| Test command | Keep the npm script or command string. The display name may change without changing the command. |
+
+Human-readable verification steps look like:
+
+- `Scheduled Fulfilment · Cancellation and Reminders`
+- `Checkout · Snapshot Revalidation`
+- `Promotions · Operator Authoring`
+- `Customer Ordering · Browser Regression`
+- `Security · Dependency Vulnerability Scan`
+
+Do not put an implementation-stage label in a new workflow, job, or step display name. That
+includes forms such as `IMP-036J Tranche 5`, `GTM-391`, `Session 3B2`, and a temporary batch token
+such as `b5` or `batch-7`. A business name may contain a number (`PostgreSQL 18`, `HTTP 404`).
+Comments, grandfathered source filenames, compatibility commands, and traceability metadata may
+still carry those identifiers.
+
+The required GitHub check names, owned by the active repository ruleset and not by this standard,
+are `Quality`, `Scripts`, `Unit / component`, `Commerce core`, `Security SDLC`, and
+`Analyze (javascript-typescript)`. The checker fails if those job display names disappear. It does
+not authorize a ruleset edit.
+
 ### Naming exceptions
 
 These are narrow. They are not permission to invent a new IMP-named module.
@@ -256,7 +315,15 @@ Failure lines name the code, path, rule, and remediation:
 - `REPO_HYGIENE_NAMING_VIOLATION`
 - `REPO_HYGIENE_PLACEMENT_VIOLATION`
 - `REPO_HYGIENE_PROTECTED_PATH`
+- `REPO_HYGIENE_WORKFLOW_LABEL`
 - `REPO_HYGIENE_BASELINE_UNAVAILABLE`
+
+`REPO_HYGIENE_WORKFLOW_LABEL` is strict. It rejects a new workflow, job, or step display name that
+carries an implementation-stage identifier, and it rejects a change that drops one of the six
+required check names. Comments, `run` commands, artifact `name` values, and an unchanged
+grandfathered display name do not fail that rule. The checker recognizes this repository's
+workflow layout: a workflow `name` at column 0, a job `name` indented four spaces, and a step
+list item `- name` at any indentation. It does not parse arbitrary YAML.
 
 `REPO_HYGIENE_BASELINE` lines are backlog. They do not fail the command. Do not mass-rename that
 backlog inside an unrelated change.
