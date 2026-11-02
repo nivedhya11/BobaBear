@@ -312,6 +312,9 @@ async function assertCommercialTermsStillAccepted(
       previouslyPresentedComplimentaryVariantId: presentedComplimentaryVariantId(
         input.snapshot,
       ),
+      // Same as prepare: peer RESERVED/CONSUMED must not reprice sealed terms
+      // before Payment claim acquisition returns capacity unavailable.
+      applyLiveRedemptionUsage: false,
     });
   } catch (error) {
     if (error instanceof CheckoutError) {

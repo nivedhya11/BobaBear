@@ -429,6 +429,9 @@ export async function prepareCheckoutForPayment(
       previouslyPresentedComplimentaryVariantId: presentedComplimentaryVariantId(
         preload.snapshot,
       ),
+      // Capacity is decided under Payment claim locks, not by dropping sealed
+      // coupons here into CHECKOUT_REPRICED when a peer holds RESERVED.
+      applyLiveRedemptionUsage: false,
     }),
   );
 

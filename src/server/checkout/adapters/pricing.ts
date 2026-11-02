@@ -311,6 +311,11 @@ export async function buildCheckoutCommercialResult(
     fulfilmentMode?: FulfilmentMode;
     fulfilmentTiming?: "ASAP" | "SCHEDULED";
     previouslyPresentedComplimentaryVariantId?: string | null;
+    /**
+     * Forwarded to quote. False for prepare/payment-bind revalidation so live
+     * RESERVED/CONSUMED units do not convert capacity races into CHECKOUT_REPRICED.
+     */
+    applyLiveRedemptionUsage?: boolean;
   },
 ): Promise<CheckoutCommercialResult> {
   assertApplicationRole(context, "buildCheckoutCommercialResult");
@@ -352,6 +357,7 @@ export async function buildCheckoutCommercialResult(
       firstOrderPurchaseStatus,
       previouslyPresentedComplimentaryVariantId:
         input.previouslyPresentedComplimentaryVariantId ?? null,
+      applyLiveRedemptionUsage: input.applyLiveRedemptionUsage,
       charges: packagingDefs.map((c) => ({
         chargeDefinitionId: c.chargeDefinitionId,
         calculationMode: c.calculationMode,
@@ -419,6 +425,7 @@ export async function buildCheckoutCommercialResult(
       firstOrderPurchaseStatus,
       previouslyPresentedComplimentaryVariantId:
         input.previouslyPresentedComplimentaryVariantId ?? null,
+      applyLiveRedemptionUsage: input.applyLiveRedemptionUsage,
       charges: finalCharges.map((c) => ({
         chargeDefinitionId: c.chargeDefinitionId,
         calculationMode: c.calculationMode,

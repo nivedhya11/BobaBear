@@ -88,6 +88,14 @@ export type BuildDirectPricingQuoteInput = Readonly<{
    * checkout attempt. Cart quotes omit this.
    */
   previouslyPresentedComplimentaryVariantId?: string | null;
+  /**
+   * When true (default), quote-time evaluation loads RESERVED+CONSUMED units so
+   * Cart/Review can surface cap sentences. Prepare-for-payment and payment-bind
+   * commercial revalidation must pass false: competing claims must not drop a
+   * sealed coupon into CHECKOUT_REPRICED before Payment's locked acquire*Claims
+   * returns PAYMENT_PROMOTION_CAPACITY_UNAVAILABLE.
+   */
+  applyLiveRedemptionUsage?: boolean;
 }>;
 
 type InternalTaxableLine = {
@@ -402,7 +410,9 @@ export async function buildDirectPricingQuote(
       coupon: loaded.coupon,
       promotion: loaded.promotion,
     };
-    if (loaded.promotion) {
+    // Default true preserves Cart/Review cap sentences. Payment prepare/bind
+    // opt out so capacity races stay on the claim lock, not structural reprice.
+    if (loaded.promotion && input.applyLiveRedemptionUsage !== false) {
       redemptionUsage = await loadRedemptionUsage(
         context,
         loaded.promotion.id,
