@@ -89,13 +89,11 @@ export type BuildDirectPricingQuoteInput = Readonly<{
    */
   previouslyPresentedComplimentaryVariantId?: string | null;
   /**
-   * When true (default), quote-time evaluation loads RESERVED+CONSUMED units so
-   * Cart/Review can surface cap sentences. Prepare-for-payment and payment-bind
-   * commercial revalidation must pass false: competing claims must not drop a
-   * sealed coupon into CHECKOUT_REPRICED before Payment's locked acquire*Claims
-   * returns PAYMENT_PROMOTION_CAPACITY_UNAVAILABLE.
+   * Sealed applied promotion ids. When set, quote-time cap checks still load
+   * live usage (so non-sealed codes stay exhausted) but preserve those ids for
+   * structural prepare equality. Payment claim locks remain capacity authority.
    */
-  applyLiveRedemptionUsage?: boolean;
+  preserveAppliedPromotionIds?: ReadonlySet<string> | readonly string[];
 }>;
 
 type InternalTaxableLine = {
@@ -410,9 +408,7 @@ export async function buildDirectPricingQuote(
       coupon: loaded.coupon,
       promotion: loaded.promotion,
     };
-    // Default true preserves Cart/Review cap sentences. Payment prepare/bind
-    // opt out so capacity races stay on the claim lock, not structural reprice.
-    if (loaded.promotion && input.applyLiveRedemptionUsage !== false) {
+    if (loaded.promotion) {
       redemptionUsage = await loadRedemptionUsage(
         context,
         loaded.promotion.id,
@@ -526,6 +522,7 @@ export async function buildDirectPricingQuote(
     submittedCoupon,
     redemptionEnforcementAvailable: true,
     redemptionUsage,
+    preserveAppliedPromotionIds: input.preserveAppliedPromotionIds,
     previouslyPresentedComplimentaryVariantId:
       input.previouslyPresentedComplimentaryVariantId ?? null,
   });

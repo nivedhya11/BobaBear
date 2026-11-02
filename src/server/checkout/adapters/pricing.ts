@@ -312,10 +312,11 @@ export async function buildCheckoutCommercialResult(
     fulfilmentTiming?: "ASAP" | "SCHEDULED";
     previouslyPresentedComplimentaryVariantId?: string | null;
     /**
-     * Forwarded to quote. False for prepare/payment-bind revalidation so live
-     * RESERVED/CONSUMED units do not convert capacity races into CHECKOUT_REPRICED.
+     * Forwarded to quote. Prepare/payment-bind pass sealed applied promotion
+     * ids so peer RESERVED/CONSUMED does not reprice those benefits before
+     * claim locks return PAYMENT_PROMOTION_CAPACITY_UNAVAILABLE.
      */
-    applyLiveRedemptionUsage?: boolean;
+    preserveAppliedPromotionIds?: ReadonlySet<string> | readonly string[];
   },
 ): Promise<CheckoutCommercialResult> {
   assertApplicationRole(context, "buildCheckoutCommercialResult");
@@ -357,7 +358,7 @@ export async function buildCheckoutCommercialResult(
       firstOrderPurchaseStatus,
       previouslyPresentedComplimentaryVariantId:
         input.previouslyPresentedComplimentaryVariantId ?? null,
-      applyLiveRedemptionUsage: input.applyLiveRedemptionUsage,
+      preserveAppliedPromotionIds: input.preserveAppliedPromotionIds,
       charges: packagingDefs.map((c) => ({
         chargeDefinitionId: c.chargeDefinitionId,
         calculationMode: c.calculationMode,
@@ -425,7 +426,7 @@ export async function buildCheckoutCommercialResult(
       firstOrderPurchaseStatus,
       previouslyPresentedComplimentaryVariantId:
         input.previouslyPresentedComplimentaryVariantId ?? null,
-      applyLiveRedemptionUsage: input.applyLiveRedemptionUsage,
+      preserveAppliedPromotionIds: input.preserveAppliedPromotionIds,
       charges: finalCharges.map((c) => ({
         chargeDefinitionId: c.chargeDefinitionId,
         calculationMode: c.calculationMode,

@@ -312,9 +312,10 @@ async function assertCommercialTermsStillAccepted(
       previouslyPresentedComplimentaryVariantId: presentedComplimentaryVariantId(
         input.snapshot,
       ),
-      // Same as prepare: peer RESERVED/CONSUMED must not reprice sealed terms
-      // before Payment claim acquisition returns capacity unavailable.
-      applyLiveRedemptionUsage: false,
+      // Same as prepare: preserve sealed applied benefits only.
+      preserveAppliedPromotionIds: input.snapshot.promotionEffects
+        .filter((effect) => effect.effectKind === "applied_promotion")
+        .map((effect) => effect.promotionId),
     });
   } catch (error) {
     if (error instanceof CheckoutError) {

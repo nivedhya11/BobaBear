@@ -91,13 +91,18 @@ async function login(page: Page): Promise<void> {
   const rateLimited = page.getByText(/Too many attempts/i);
 
   // Desktop/tablet retries can trip workforce auth rate limits before mobile runs.
+  // The notice text is persistent (no auto-dismiss), so wait the reported delay
+  // then reload and resubmit rather than waiting for the notice to vanish.
   for (let attempt = 0; attempt < 3; attempt += 1) {
     await page.getByLabel("Work email", { exact: true }).fill(fixture.email);
     await page.getByLabel("Password", { exact: true }).fill(permanentPassword!);
     await page.getByRole("button", { name: /^Sign in$/i }).click();
 
     if (await rateLimited.isVisible().catch(() => false)) {
-      await expect(rateLimited).toBeHidden({ timeout: 180_000 });
+      const notice = (await rateLimited.innerText().catch(() => "")) || "";
+      const seconds = Number((/(\d+)\s*s/i.exec(notice) || [])[1] ?? "120");
+      await page.waitForTimeout(Math.min(Math.max(seconds, 1) + 2, 180) * 1000);
+      await page.goto("/workforce/login/");
       continue;
     }
 
@@ -105,7 +110,10 @@ async function login(page: Page): Promise<void> {
       timeout: 45_000,
     });
     if (await rateLimited.isVisible().catch(() => false)) {
-      await expect(rateLimited).toBeHidden({ timeout: 180_000 });
+      const notice = (await rateLimited.innerText().catch(() => "")) || "";
+      const seconds = Number((/(\d+)\s*s/i.exec(notice) || [])[1] ?? "120");
+      await page.waitForTimeout(Math.min(Math.max(seconds, 1) + 2, 180) * 1000);
+      await page.goto("/workforce/login/");
       continue;
     }
     if (await authenticator.isVisible().catch(() => false)) {

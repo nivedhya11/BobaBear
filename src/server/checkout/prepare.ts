@@ -429,9 +429,11 @@ export async function prepareCheckoutForPayment(
       previouslyPresentedComplimentaryVariantId: presentedComplimentaryVariantId(
         preload.snapshot,
       ),
-      // Capacity is decided under Payment claim locks, not by dropping sealed
-      // coupons here into CHECKOUT_REPRICED when a peer holds RESERVED.
-      applyLiveRedemptionUsage: false,
+      // Preserve only sealed applied benefits against peer RESERVED/CONSUMED.
+      // Non-applied cart codes still see live caps (no Review/Pay reprice loop).
+      preserveAppliedPromotionIds: preload.snapshot.promotionEffects
+        .filter((effect) => effect.effectKind === "applied_promotion")
+        .map((effect) => effect.promotionId),
     }),
   );
 
