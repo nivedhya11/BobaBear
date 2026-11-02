@@ -54,7 +54,12 @@ function totpSecret(): string {
 }
 
 async function login(page: Page): Promise<void> {
+  const hub = page.getByTestId("workforce-hub").or(page.getByTestId("admin-hub"));
   await page.goto("/workforce/login/");
+  // Retry / shared-worker sessions may already be authenticated.
+  if (await hub.first().isVisible().catch(() => false)) {
+    return;
+  }
 
   if (!fixture.totpSecretBase32) {
     await page.getByLabel("Work email", { exact: true }).fill(fixture.email);
@@ -77,20 +82,51 @@ async function login(page: Page): Promise<void> {
     await expect(page.getByText(/authenticator set up\. sign in again/i)).toBeVisible();
   } else if (!(await page.getByLabel("Work email", { exact: true }).isVisible().catch(() => false))) {
     await page.goto("/workforce/login/");
+    if (await hub.first().isVisible().catch(() => false)) {
+      return;
+    }
   }
 
-  await page.getByLabel("Work email", { exact: true }).fill(fixture.email);
-  await page.getByLabel("Password", { exact: true }).fill(permanentPassword!);
-  await page.getByRole("button", { name: /^Sign in$/i }).click();
-  await page
-    .getByLabel("Authenticator code", { exact: true })
-    .fill(await createOTP(totpSecret(), { digits: 6, period: 30 }).totp());
-  await page.getByRole("button", { name: /^Verify$/i }).click();
+  const authenticator = page.getByLabel("Authenticator code", { exact: true });
+  const rateLimited = page.getByText(/Too many attempts/i);
+
+  // Desktop/tablet retries can trip workforce auth rate limits before mobile runs.
+  // The notice text is persistent (no auto-dismiss), so wait the reported delay
+  // then reload and resubmit rather than waiting for the notice to vanish.
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await page.getByLabel("Work email", { exact: true }).fill(fixture.email);
+    await page.getByLabel("Password", { exact: true }).fill(permanentPassword!);
+    await page.getByRole("button", { name: /^Sign in$/i }).click();
+
+    if (await rateLimited.isVisible().catch(() => false)) {
+      const notice = (await rateLimited.innerText().catch(() => "")) || "";
+      const seconds = Number((/(\d+)\s*s/i.exec(notice) || [])[1] ?? "120");
+      await page.waitForTimeout(Math.min(Math.max(seconds, 1) + 2, 180) * 1000);
+      await page.goto("/workforce/login/");
+      continue;
+    }
+
+    await expect(authenticator.or(hub.first()).or(rateLimited)).toBeVisible({
+      timeout: 45_000,
+    });
+    if (await rateLimited.isVisible().catch(() => false)) {
+      const notice = (await rateLimited.innerText().catch(() => "")) || "";
+      const seconds = Number((/(\d+)\s*s/i.exec(notice) || [])[1] ?? "120");
+      await page.waitForTimeout(Math.min(Math.max(seconds, 1) + 2, 180) * 1000);
+      await page.goto("/workforce/login/");
+      continue;
+    }
+    if (await authenticator.isVisible().catch(() => false)) {
+      await authenticator.fill(
+        await createOTP(totpSecret(), { digits: 6, period: 30 }).totp(),
+      );
+      await page.getByRole("button", { name: /^Verify$/i }).click();
+    }
+    break;
+  }
 
   // Brand commercial operators typically land on the workforce hub; avoid ambiguous "Signed in" matches.
-  await expect(
-    page.getByTestId("workforce-hub").or(page.getByTestId("admin-hub")).first(),
-  ).toBeVisible({ timeout: 45_000 });
+  await expect(hub.first()).toBeVisible({ timeout: 45_000 });
 }
 
 async function openCommercialWorkspace(page: Page): Promise<void> {
@@ -156,13 +192,18 @@ async function runMandatoryPricingEffect(
   }
 
   const priceBookCode = `f6b-${opts.stamp}`;
+  // Stamp keeps retry attempts unique so strict button locators do not collide
+  // with leftovers from a prior failed attempt on the same seeded DB.
+  const priceBookName = `F6B Price Book ${opts.suffix} ${opts.stamp}`;
   await page.getByLabel("Price book code").fill(priceBookCode);
-  await page.getByLabel("Price book name").fill(`F6B Price Book ${opts.suffix}`);
+  await page.getByLabel("Price book name").fill(priceBookName);
   await page.getByRole("button", { name: /^Create$/i }).click();
   await expect(page.getByText(/price book created as draft/i)).toBeVisible({ timeout: 45_000 });
+  // Accessible name is `${name} (${code}) ${status}` — match the unique stamped
+  // name as a substring so draft/active badges do not break selection.
   await page
     .getByTestId("pricing-editor")
-    .getByRole("button", { name: new RegExp(`F6B Price Book ${opts.suffix}`, "i") })
+    .getByRole("button", { name: priceBookName })
     .click();
   await page.getByLabel("INR amount").fill("199.00");
   await page.getByRole("button", { name: /^Attach price$/i }).click();
@@ -221,12 +262,14 @@ async function runFullCommercialJourney(
   await expect(offeringButton).toBeVisible({ timeout: 45_000 });
   await offeringButton.click();
   const nameField = page.getByLabel(/^Name$/i).first();
-  await nameField.fill(`${fixture.productName} ${opts.suffix}`);
+  await nameField.fill(`${fixture.productName} ${opts.suffix} ${stamp}`);
   await page.getByRole("button", { name: /^Save draft$/i }).click();
   await expect(page.getByRole("status").filter({ hasText: /Customer truth unchanged/i }).first()).toBeVisible();
   await page.getByRole("button", { name: /^Review & publish$/i }).click();
   await confirmConsequence(page, /Publish changes/i);
-  await expect(page.getByText(/Catalog published|no customer change/i)).toBeVisible({ timeout: 45_000 });
+  await expect(
+    page.getByRole("status").filter({ hasText: /Catalog published|no customer change/i }).first(),
+  ).toBeVisible({ timeout: 45_000 });
 
   // 3. Menu: section + entry lifecycle readiness → publish
   await page.getByRole("button", { name: /^Menu$/i }).click();
@@ -234,24 +277,31 @@ async function runFullCommercialJourney(
   const menuButton = page.locator('[data-testid="menu-editor"] ul button').first();
   await expect(menuButton).toBeVisible({ timeout: 45_000 });
   await menuButton.click();
-  const sectionCode = `f6b${stamp.slice(-6)}`;
-  const sectionName = `F6B Section ${opts.suffix}`;
+  const sectionCode = `f6b${stamp.replace(/[^a-z0-9]/gi, "").slice(-8)}`;
+  const sectionName = `F6B Section ${opts.suffix} ${stamp}`;
   await page.getByLabel("Section code").fill(sectionCode);
   await page.getByLabel("Section name").fill(sectionName);
   await page.getByRole("button", { name: /^Add section$/i }).click();
-  await expect(page.getByText(/Section added to draft/i)).toBeVisible({ timeout: 45_000 });
+  await expect(
+    page.getByRole("status").filter({ hasText: /Section added to draft/i }).first(),
+  ).toBeVisible({ timeout: 45_000 });
   await page
+    .getByTestId("menu-editor")
     .locator("div")
     .filter({ hasText: sectionName })
     .getByRole("button", { name: /^Activate section$/i })
     .first()
     .click();
-  await expect(page.getByText(/Section activated/i)).toBeVisible({ timeout: 45_000 });
+  await expect(
+    page.getByRole("status").filter({ hasText: /Section activated/i }).first(),
+  ).toBeVisible({ timeout: 45_000 });
   await page.getByLabel("Target section").selectOption({ label: sectionName });
-  const entryName = `F6B Entry ${opts.suffix}`;
+  const entryName = `F6B Entry ${opts.suffix} ${stamp}`;
   await page.getByLabel("Display name override").fill(entryName);
   await page.getByRole("button", { name: /^Place entry$/i }).click();
-  await expect(page.getByText(/Product entry placed/i)).toBeVisible({ timeout: 45_000 });
+  await expect(
+    page.getByRole("status").filter({ hasText: /Product entry placed/i }).first(),
+  ).toBeVisible({ timeout: 45_000 });
   await page
     .locator("li")
     .filter({ hasText: entryName })
@@ -351,7 +401,7 @@ async function runFullCommercialJourney(
 
   const promoCode = `cpn${stamp.replace(/[^a-z0-9]/g, "").slice(-10)}`;
   await page.getByLabel("Promotion identifier").fill(promoCode);
-  await page.getByLabel("Promotion display name").fill(`F6B Coupon Promo ${opts.suffix}`);
+  await page.getByLabel("Promotion display name").fill(`F6B Coupon Promo ${opts.suffix} ${stamp}`);
   await page.getByLabel("Trigger type").selectOption("coupon");
   await page.getByTestId("promotions-editor").getByRole("button", { name: /^Create$/i }).click();
   await expect(page.getByText(/Promotion created as draft/i)).toBeVisible({ timeout: 45_000 });
@@ -413,9 +463,16 @@ async function runFullCommercialJourney(
   await confirmRetire.focus();
   await expect(confirmRetire).toBeFocused();
   await page.keyboard.press("Enter");
-  await expect(page.getByText("Retired. New orders will not receive it.")).toBeVisible({
-    timeout: 45_000,
-  });
+  // Live feedback and readiness both render the retired sentence; assert the
+  // polite status region rather than an ambiguous page-wide text match.
+  await expect(
+    page.getByRole("status").filter({
+      hasText: /^Retired\. New orders will not receive it\.$/,
+    }),
+  ).toBeVisible({ timeout: 45_000 });
+  await expect(page.getByTestId("promotion-readiness")).toContainText(
+    "Retired. New orders will not receive it.",
+  );
   await page.screenshot({
     path: test.info().outputPath("operator-retire-confirmed.png"),
     fullPage: true,
@@ -424,7 +481,7 @@ async function runFullCommercialJourney(
   // Active promotion whose saved start is still in the future: not customer-ready, and no coupon issued.
   const futureCode = `fut${stamp.replace(/[^a-z0-9]/g, "").slice(-10)}`;
   await page.getByLabel("Promotion identifier").fill(futureCode);
-  await page.getByLabel("Promotion display name").fill(`Future window ${opts.suffix}`);
+  await page.getByLabel("Promotion display name").fill(`Future window ${opts.suffix} ${stamp}`);
   await page.getByLabel("Trigger type").selectOption("coupon");
   await page.getByTestId("promotions-editor").getByRole("button", { name: /^Create$/i }).click();
   await expect(page.getByText(/Promotion created as draft/i).last()).toBeVisible({ timeout: 45_000 });
@@ -455,7 +512,7 @@ async function runFullCommercialJourney(
   // Automatic promo must not offer coupon creation
   const autoCode = `auto${stamp.replace(/[^a-z0-9]/g, "").slice(-10)}`;
   await page.getByLabel("Promotion identifier").fill(autoCode);
-  await page.getByLabel("Promotion display name").fill(`F6B Auto ${opts.suffix}`);
+  await page.getByLabel("Promotion display name").fill(`F6B Auto ${opts.suffix} ${stamp}`);
   await page.getByLabel("Trigger type").selectOption("automatic");
   await page.getByTestId("promotions-editor").getByRole("button", { name: /^Create$/i }).click();
   await expect(page.getByText(/Promotion created as draft/i)).toBeVisible({ timeout: 45_000 });
