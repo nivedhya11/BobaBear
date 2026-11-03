@@ -136,6 +136,61 @@ export function writeImageSecurityEvidence(evidenceFile, record) {
 }
 
 /**
+ * Pure ownership check for candidate tags. Present tags must already carry the
+ * expected revision label; unlabeled or foreign tags refuse overwrite.
+ * @param {{
+ *   expectedSha?: unknown,
+ *   observations?: unknown,
+ * }} input
+ * @returns {{ ok: boolean, detail: string | null }}
+ */
+export function evaluateCandidateImageTagOwnership(input = {}) {
+  const expectedSha = input.expectedSha;
+  if (typeof expectedSha !== "string" || !/^[0-9a-f]{40}$/.test(expectedSha)) {
+    return { ok: false, detail: "expectedSha must be a full Git SHA" };
+  }
+  if (!Array.isArray(input.observations)) {
+    return { ok: false, detail: "ownership observations required" };
+  }
+  const seen = new Set();
+  for (const observation of input.observations) {
+    if (!observation || typeof observation !== "object") {
+      return { ok: false, detail: "malformed ownership observation" };
+    }
+    const name = /** @type {{ name?: unknown, present?: unknown, revision?: unknown }} */ (observation).name;
+    const present = /** @type {{ present?: unknown }} */ (observation).present;
+    const revision = /** @type {{ revision?: unknown }} */ (observation).revision;
+    if (typeof name !== "string" || !STAGING_CANDIDATE_IMAGE_NAMES.includes(name)) {
+      return { ok: false, detail: "observation name is not a staging candidate tag" };
+    }
+    if (seen.has(name)) return { ok: false, detail: `duplicate ownership observation for ${name}` };
+    seen.add(name);
+    if (present !== true) continue;
+    if (revision !== expectedSha) {
+      return { ok: false, detail: `foreign or unlabeled candidate tag ${name}` };
+    }
+  }
+  for (const name of STAGING_CANDIDATE_IMAGE_NAMES) {
+    if (!seen.has(name)) return { ok: false, detail: `missing ownership observation for ${name}` };
+  }
+  return { ok: true, detail: null };
+}
+
+/**
+ * Prefer an immutable image id for scanning. Mutable tag-only targets fail closed
+ * when an imageId was expected.
+ * @param {{ name?: unknown, imageId?: unknown }} image
+ * @returns {{ target: string, binding: "imageId" | "name" } | null }
+ */
+export function resolveImmutableScanTarget(image) {
+  if (!image || typeof image !== "object" || typeof image.name !== "string") return null;
+  if (typeof image.imageId === "string" && isSha256Digest(image.imageId)) {
+    return { target: image.imageId, binding: "imageId" };
+  }
+  return null;
+}
+
+/**
  * Read-only. Does not build, tag, or delete images.
  * Without an outside-checkout file, returns absent evidence and does not inspect.
  * @param {{

@@ -26,6 +26,7 @@ import {
 } from "./postgres-init-identity.mjs";
 import {
   assertPreflightAllowsDeployment,
+  evaluateCandidateBuildEligibility,
   evaluateCandidatePreparationEligibility,
   evaluateStagingDeployPreflight,
   PREFLIGHT_OUTCOME,
@@ -33,8 +34,11 @@ import {
 import {
   absentImageSecurityEvidence,
   evidencePathRefusal,
+  evaluateCandidateImageTagOwnership,
   IMAGE_SECURITY_EVIDENCE_SCHEMA,
   readOperatorImageSecurityEvidence,
+  resolveImmutableScanTarget,
+  STAGING_CANDIDATE_IMAGE_NAMES,
   writeImageSecurityEvidence,
 } from "./staging-image-security-evidence.mjs";
 import { extractVerifiedGitArchive, observeIsolatedArtifactContext, readPinnedGithubMainSha } from "./staging-source-isolation.mjs";
@@ -90,8 +94,20 @@ const UAT_SERVICEABILITY_CASES = [
 
 const command = process.argv[2];
 const isCli = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
-if (isCli && !["status", "deploy-dry-run", "deploy", "prepare-candidate", "recover-postgres", "workforce-user-create"].includes(command)) {
-  console.error("Usage: npm run env:staging:status | npm run env:staging:deploy:dry-run | npm run env:staging:deploy | npm run env:staging:recover-postgres | npm run env:staging:workforce:user:create -- [workforce:user:create arguments]");
+const STAGING_CLI_COMMANDS = [
+  "status",
+  "deploy-dry-run",
+  "deploy",
+  "prepare-candidate",
+  "prepare-candidate-build-only",
+  "scan-candidate",
+  "recover-postgres",
+  "workforce-user-create",
+];
+if (isCli && !STAGING_CLI_COMMANDS.includes(command)) {
+  console.error(
+    "Usage: npm run env:staging:status | npm run env:staging:deploy:dry-run | npm run env:staging:deploy | npm run env:staging:prepare-candidate | npm run env:staging:prepare-candidate:build-only | npm run env:staging:scan-candidate | npm run env:staging:recover-postgres | npm run env:staging:workforce:user:create -- [workforce:user:create arguments]",
+  );
   process.exit(1);
 }
 
@@ -189,6 +205,22 @@ function assertDeployPreconditions(candidate) {
     console.error(`ORIGIN_MAIN ${candidate.originMain}`);
     console.error(`FULL_GIT_SHA ${isFullGitSha(candidate.head) ? "YES" : "NO"}`);
     console.error(`TRACKED_SOURCE_CLEAN ${candidate.trackedDirty.length === 0 ? "YES" : "NO"}`);
+    process.exit(1);
+  }
+}
+
+/**
+ * Build-only / scan-only preconditions. Exact origin/main SHA is required.
+ * Tracked dirty WIP on the protected checkout is allowed because the build
+ * archive is proven from committed objects only. Deployment keeps the stricter gate.
+ */
+function assertBuildPreconditions(candidate) {
+  if (candidate.branch !== "main" || candidate.head !== candidate.originMain || !isFullGitSha(candidate.head)) {
+    console.error("Staging candidate build requires exact origin/main SHA (tracked dirty WIP may remain on the protected checkout).");
+    console.error(`BRANCH ${candidate.branch}`);
+    console.error(`HEAD ${candidate.head}`);
+    console.error(`ORIGIN_MAIN ${candidate.originMain}`);
+    console.error(`FULL_GIT_SHA ${isFullGitSha(candidate.head) ? "YES" : "NO"}`);
     process.exit(1);
   }
 }
@@ -466,28 +498,125 @@ function assertBoundCandidateImages(security, inspectImage = inspectLocalImageId
   return builtImageIds;
 }
 
-async function scanPreparedImagesWithTrivy(images) {
+async function scanPreparedImagesWithTrivy(images, { inspectImage = inspectLocalImageIdentity } = {}) {
   const trivy = await import("../run-trivy.mjs");
   const bin = await trivy.ensureBinary();
   const reports = [];
   for (const image of images) {
+    const resolved = resolveImmutableScanTarget(image);
+    if (!resolved) {
+      return { passed: false, reportSha256: null, reason: "IMMUTABLE_SCAN_TARGET_UNBOUND" };
+    }
+    const before = inspectImage(image.name);
+    if (!before || before.imageId !== image.imageId || before.digest !== image.digest) {
+      return { passed: false, reportSha256: null, reason: "IMAGE_IDENTITY_DRIFT_BEFORE_SCAN" };
+    }
     const scanned = trivy.scanImage({
       bin,
-      image: image.name,
+      image: resolved.target,
       ignorefile: path.join(repositoryRoot, ".trivyignore"),
       cwd: repositoryRoot,
     });
+    const after = inspectImage(image.name);
+    if (!after || after.imageId !== image.imageId || after.digest !== image.digest) {
+      return { passed: false, reportSha256: null, reason: "IMAGE_IDENTITY_DRIFT_DURING_SCAN" };
+    }
     const blocking = (scanned.findings ?? []).some(
       (finding) => finding.severity === "CRITICAL" || finding.severity === "HIGH",
     );
     if (scanned.status !== 0 || blocking || (scanned.errors ?? []).length > 0) {
-      return { passed: false, reportSha256: null };
+      return { passed: false, reportSha256: null, reason: "SCANNER_BLOCKING_OR_ERROR" };
     }
-    reports.push({ name: image.name, status: scanned.status, findings: scanned.findings ?? [] });
+    reports.push({
+      name: image.name,
+      imageId: image.imageId,
+      digest: image.digest,
+      scanTarget: resolved.target,
+      scanBinding: resolved.binding,
+      status: scanned.status,
+      findings: scanned.findings ?? [],
+    });
   }
   return {
     passed: true,
     reportSha256: createHash("sha256").update(JSON.stringify(reports)).digest("hex"),
+  };
+}
+
+function observeCandidateImageOwnership(
+  expectedSha,
+  {
+    imageNames = STAGING_CANDIDATE_IMAGE_NAMES,
+    imageExists = (name) => spawnIgnoringStdin("podman", ["image", "exists", name]).status === 0,
+    inspectRevision = imageRevision,
+  } = {},
+) {
+  const observations = imageNames.map((name) => {
+    if (!imageExists(name)) return { name, present: false, revision: null };
+    let revision = null;
+    try {
+      revision = inspectRevision(name);
+    } catch {
+      revision = null;
+    }
+    return { name, present: true, revision: typeof revision === "string" && revision.length > 0 ? revision : null };
+  });
+  const ownership = evaluateCandidateImageTagOwnership({ expectedSha, observations });
+  return {
+    evidenceComplete: true,
+    observations,
+    ownershipOk: ownership.ok === true,
+    detail: ownership.detail,
+  };
+}
+
+function observeProtectedSessionSafety({
+  composeProject = STAGING_PROJECT,
+  listRunningProjects = () => {
+    try {
+      const raw = execIgnoringStdin(
+        "podman",
+        ["ps", "--format", "{{index .Labels \"io.podman.compose.project\"}}"],
+        { encoding: "utf8" },
+      );
+      return String(raw)
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0);
+    } catch {
+      return null;
+    }
+  },
+} = {}) {
+  // XR-010 attended containers may coexist unread. Collision means this command
+  // would itself target an attended project, or that compose project identity is unknown.
+  if (typeof composeProject !== "string" || composeProject.length === 0) {
+    return {
+      evidenceComplete: false,
+      composeProject: null,
+      protectedSessionImpact: null,
+      xr010ProjectCollision: null,
+    };
+  }
+  const targetsAttendedProject = /^imp036fe2e_/i.test(composeProject);
+  const wrongStagingProject = composeProject !== STAGING_PROJECT;
+  const running = listRunningProjects();
+  if (!Array.isArray(running)) {
+    return {
+      evidenceComplete: false,
+      composeProject,
+      protectedSessionImpact: null,
+      xr010ProjectCollision: null,
+    };
+  }
+  const attendedRunning = running.some((project) => /^imp036fe2e_/i.test(project));
+  return {
+    evidenceComplete: true,
+    composeProject,
+    // Impact is true only when this command's project is attended/wrong — coexistence alone is not impact.
+    protectedSessionImpact: targetsAttendedProject || wrongStagingProject,
+    xr010ProjectCollision: targetsAttendedProject || wrongStagingProject,
+    attendedSessionObservedRunning: attendedRunning,
   };
 }
 
@@ -1296,6 +1425,8 @@ function gatherStagingPreflightEvidence(
     projectConfig = () => projectStrictStagingConfiguration({ directory: STAGING_ENV_DIR }),
     bindRecovery = () => bindStagingRecoveryEvidence(),
     readImageSecurity = null,
+    observeImageOwnership = (sha) => observeCandidateImageOwnership(sha),
+    observeProtectedSession = () => observeProtectedSessionSafety(),
   } = {},
 ) {
   let tree;
@@ -1429,6 +1560,24 @@ function gatherStagingPreflightEvidence(
       candidateSha: candidate.head,
     });
 
+  let imageOwnership;
+  try {
+    imageOwnership = observeImageOwnership(candidate.head);
+  } catch {
+    imageOwnership = { evidenceComplete: false, observations: [], ownershipOk: false, detail: "ownership probe failed" };
+  }
+  let protectedSession;
+  try {
+    protectedSession = observeProtectedSession();
+  } catch {
+    protectedSession = {
+      evidenceComplete: false,
+      composeProject: null,
+      protectedSessionImpact: null,
+      xr010ProjectCollision: null,
+    };
+  }
+
   return {
     source: {
       repositoryIdentity: repositoryIdentity ?? "UNKNOWN",
@@ -1468,6 +1617,8 @@ function gatherStagingPreflightEvidence(
       paymentIsolation: projected.paymentIsolation,
       publicOrigin: projected.publicOrigin,
     },
+    imageOwnership,
+    protectedSession,
     database: {
       migrationIdentityKnown: false,
       migrationLedgerState: "UNKNOWN",
@@ -1728,7 +1879,7 @@ export async function runStagingPrepareCandidate(candidate, deps = {}) {
       }
       return { name, imageId: live.imageId, digest: live.digest };
     });
-    const scan = await scanImages(images);
+    const scan = await scanImages(images, { inspectImage });
     if (!scan || scan.passed !== true || !/^[0-9a-f]{64}$/.test(scan.reportSha256 ?? "")) {
       throw new Error("IMAGE_SECURITY_SCAN_FAILED");
     }
@@ -1748,6 +1899,194 @@ export async function runStagingPrepareCandidate(candidate, deps = {}) {
   log("ACTIVATION_STARTED NO");
   log("CANDIDATE_PREPARATION_IS_NOT_DEPLOYMENT YES");
   return { ok: true, deploymentAuthorized: false, effects };
+}
+
+/**
+ * Build-only candidate preparation. Builds six inactive images and collects
+ * identities. Never scans, never writes staging-image-security-v1 PASS evidence,
+ * and never starts deployment/mutation effects.
+ */
+export async function runStagingPrepareCandidateBuildOnly(candidate, deps = {}) {
+  const effects = deps.effects ?? [];
+  const record = (name) => {
+    effects.push(name);
+  };
+  const {
+    assertPreconditions = assertBuildPreconditions,
+    gatherPreparation = (value) => gatherStagingPreflightEvidence(value, deps),
+    evaluateBuild = evaluateCandidateBuildEligibility,
+    materializeTree = materializeExactGitTree,
+    compose = podmanCompose,
+    inspectImage = inspectLocalImageIdentity,
+    inspectRevision = imageRevision,
+    scanImages = null,
+    writeEvidence = null,
+    removeDir = rmSync,
+    log = console.log,
+  } = deps;
+
+  assertPreconditions(candidate);
+  record("assertBuildPreconditions");
+  const gathered = gatherPreparation(candidate);
+  const eligibility = evaluateBuild(gathered);
+  log(`CANDIDATE_BUILD ${eligibility.outcome}`);
+  log("STAGING_DEPLOYMENT_AUTHORIZED NO");
+  log("IMAGE_SECURITY_SCAN_EXECUTED NO");
+  if (eligibility.outcome !== "BUILD_ELIGIBLE" || eligibility.deploymentAuthorized !== false) {
+    record("buildBlocked");
+    log("ACTIVATION_STARTED NO");
+    const error = new Error("CANDIDATE_BUILD_BLOCKED");
+    error.eligibility = eligibility;
+    throw error;
+  }
+  const sourceTree = gathered?.source?.tree;
+  if (typeof sourceTree !== "string" || !/^[0-9a-f]{40}$/.test(sourceTree)) {
+    record("buildBlocked");
+    log("ACTIVATION_STARTED NO");
+    throw new Error("CANDIDATE_TREE_UNBOUND");
+  }
+
+  const buildDir = materializeTree(candidate.head);
+  record("materializeCandidateArchive");
+  /** @type {{ name: string, imageId: string, digest: string, revision: string }[]} */
+  let images = [];
+  try {
+    compose(buildDir, PREPARE_BUILD_ARGS, { BOBA_BUILD_SHA: candidate.head, COMPOSE_PROFILES: "tools" });
+    record("composeBuildCandidate");
+    images = Object.values(BOBA_BUILD_IMAGES).map((name) => {
+      const live = inspectImage(name);
+      if (!live || !/^sha256:[0-9a-f]{64}$/.test(live.imageId ?? "") || !/^sha256:[0-9a-f]{64}$/.test(live.digest ?? "")) {
+        throw new Error(`CANDIDATE_IMAGE_IDENTITY_UNBOUND ${name}`);
+      }
+      const revision = inspectRevision(name);
+      if (revision !== candidate.head) {
+        throw new Error(`CANDIDATE_IMAGE_REVISION_MISMATCH ${name}`);
+      }
+      return { name, imageId: live.imageId, digest: live.digest, revision };
+    });
+    // Explicit non-use of scan/evidence hooks keeps build-only free of security PASS side effects.
+    void scanImages;
+    void writeEvidence;
+  } finally {
+    removeDir(buildDir, { recursive: true, force: true });
+    record("candidateArchiveRemoved");
+  }
+  log("ACTIVATION_STARTED NO");
+  log("CANDIDATE_BUILD_IS_NOT_DEPLOYMENT YES");
+  log("CANDIDATE_BUILD_IS_NOT_SECURITY_PASS YES");
+  return {
+    ok: true,
+    deploymentAuthorized: false,
+    scanAuthorized: false,
+    sourceSha: candidate.head,
+    sourceTree,
+    images,
+    effects,
+  };
+}
+
+/**
+ * Exact-artifact scan-and-bind. Does not rebuild or deploy. Writes
+ * staging-image-security-v1 only after immutable identity + scanner PASS.
+ */
+export async function runStagingScanCandidate(candidate, deps = {}) {
+  const effects = deps.effects ?? [];
+  const record = (name) => {
+    effects.push(name);
+  };
+  const {
+    assertPreconditions = assertBuildPreconditions,
+    gatherPreparation = (value) => gatherStagingPreflightEvidence(value, deps),
+    evaluateBuild = evaluateCandidateBuildEligibility,
+    materializeTree = () => {
+      throw new Error("SCAN_CANDIDATE_MUST_NOT_MATERIALIZE_ARCHIVE");
+    },
+    compose = () => {
+      throw new Error("SCAN_CANDIDATE_MUST_NOT_COMPOSE_BUILD");
+    },
+    inspectImage = inspectLocalImageIdentity,
+    inspectRevision = imageRevision,
+    scanImages = scanPreparedImagesWithTrivy,
+    writeEvidence = writeImageSecurityEvidence,
+    evidenceFile = process.env.BOBA_STAGING_IMAGE_SECURITY_EVIDENCE_FILE,
+    log = console.log,
+  } = deps;
+
+  assertPreconditions(candidate);
+  record("assertBuildPreconditions");
+  const gathered = gatherPreparation(candidate);
+  const eligibility = evaluateBuild(gathered);
+  log(`CANDIDATE_SCAN ${eligibility.outcome === "BUILD_ELIGIBLE" ? "IDENTITY_GATE_PASS" : eligibility.outcome}`);
+  log("STAGING_DEPLOYMENT_AUTHORIZED NO");
+  if (eligibility.outcome !== "BUILD_ELIGIBLE" || eligibility.deploymentAuthorized !== false) {
+    record("scanBlocked");
+    const error = new Error("CANDIDATE_SCAN_BLOCKED");
+    error.eligibility = eligibility;
+    throw error;
+  }
+  const sourceTree = gathered?.source?.tree;
+  if (typeof sourceTree !== "string" || !/^[0-9a-f]{40}$/.test(sourceTree)) {
+    record("scanBlocked");
+    throw new Error("CANDIDATE_TREE_UNBOUND");
+  }
+  const refusal = evidencePathRefusal(evidenceFile, repositoryRoot);
+  if (refusal) {
+    record("scanBlocked");
+    throw new Error(refusal);
+  }
+
+  // Scan-and-bind must never rebuild. Keep hooks referenced so tests can inject
+  // throwing stubs and assert zero build effects.
+  void materializeTree;
+  void compose;
+
+  const images = Object.values(BOBA_BUILD_IMAGES).map((name) => {
+    let live;
+    try {
+      live = inspectImage(name);
+    } catch {
+      live = null;
+    }
+    if (!live || !/^sha256:[0-9a-f]{64}$/.test(live.imageId ?? "") || !/^sha256:[0-9a-f]{64}$/.test(live.digest ?? "")) {
+      throw new Error(`CANDIDATE_IMAGE_MISSING_OR_UNBOUND ${name}`);
+    }
+    const revision = inspectRevision(name);
+    if (revision !== candidate.head) {
+      throw new Error(`CANDIDATE_IMAGE_REVISION_MISMATCH ${name}`);
+    }
+    return { name, imageId: live.imageId, digest: live.digest };
+  });
+  record("candidateImagesBound");
+
+  const scan = await scanImages(images, { inspectImage });
+  record("scanPreparedImages");
+  if (!scan || scan.passed !== true || !/^[0-9a-f]{64}$/.test(scan.reportSha256 ?? "")) {
+    throw new Error(scan?.reason ? `IMAGE_SECURITY_SCAN_FAILED ${scan.reason}` : "IMAGE_SECURITY_SCAN_FAILED");
+  }
+
+  // Re-bind after scan before writing evidence.
+  for (const image of images) {
+    const live = inspectImage(image.name);
+    if (!live || live.imageId !== image.imageId || live.digest !== image.digest) {
+      throw new Error(`CANDIDATE_IMAGE_REPLACED_AFTER_SCAN ${image.name}`);
+    }
+    if (inspectRevision(image.name) !== candidate.head) {
+      throw new Error(`CANDIDATE_IMAGE_REVISION_DRIFT_AFTER_SCAN ${image.name}`);
+    }
+  }
+
+  writeEvidence(evidenceFile, {
+    schema: IMAGE_SECURITY_EVIDENCE_SCHEMA,
+    sourceSha: candidate.head,
+    sourceTree,
+    images,
+    scanPassed: true,
+    scanReportSha256: scan.reportSha256,
+  });
+  record("imageSecurityEvidenceWritten");
+  log("ACTIVATION_STARTED NO");
+  log("CANDIDATE_SCAN_IS_NOT_DEPLOYMENT YES");
+  return { ok: true, deploymentAuthorized: false, sourceSha: candidate.head, sourceTree, images, effects };
 }
 
 function deploy(candidate) {
@@ -1786,6 +2125,18 @@ if (isCli) {
       process.exit(1);
     });
   }
+  if (command === "prepare-candidate-build-only") {
+    runStagingPrepareCandidateBuildOnly(candidate).catch((error) => {
+      console.error(error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    });
+  }
+  if (command === "scan-candidate") {
+    runStagingScanCandidate(candidate).catch((error) => {
+      console.error(error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    });
+  }
   if (command === "recover-postgres") recoverPostgres(candidate);
   if (command === "status") reportRunningProvenance(candidate.originMain);
   if (command === "workforce-user-create") createStagingWorkforceUser(process.argv.slice(3));
@@ -1799,6 +2150,7 @@ export {
   assertImageRevisions,
   assertRunningProvenance,
   assertLegacyPostgresRecoveryTarget,
+  assertBuildPreconditions,
   isFullGitSha,
   closedStdinInherit,
   readSecretStdinBuffer,
@@ -1821,4 +2173,6 @@ export {
   readStagingDiagnosticEnabled,
   probeStagingRuntimeIdentity,
   readRepositoryIdentityFromRemote,
+  observeCandidateImageOwnership,
+  observeProtectedSessionSafety,
 };

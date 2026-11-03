@@ -9,7 +9,11 @@ STRICT_STAGING_DIRECTION = FOUNDER_APPROVED
 LIVE_STAGING_DEPLOYMENT = NOT_AUTHORIZED
 RECOVERY_PROOF_BINDING = DESIGN_DEPENDENCY
 CANDIDATE_PREPARATION_COMMAND = npm run env:staging:prepare-candidate
+CANDIDATE_BUILD_ONLY_COMMAND = npm run env:staging:prepare-candidate:build-only
+CANDIDATE_SCAN_COMMAND = npm run env:staging:scan-candidate
 CANDIDATE_PREPARATION_EXECUTION = NOT_AUTHORIZED
+CANDIDATE_BUILD_ONLY_EXECUTION = NOT_AUTHORIZED
+CANDIDATE_SCAN_EXECUTION = NOT_AUTHORIZED
 ACTIVATION_REQUIRES_ASSERT_PREFLIGHT = YES
 D3_PUBLISHING_ISOLATION = FOUR_STATE_POLICY
 PUBLIC_STAGING_EXPOSURE = NOT_AUTHORIZED
@@ -147,23 +151,40 @@ deployment. Publishing-category PASS never promotes whole-preflight PASS.
 canonical checkout. A dry-run from that checkout can still observe an isolated
 context. An operator boolean cannot set the flag false.
 
-## Two phases
+## Three gates (build / scan / deploy)
 
-Phase A is `npm run env:staging:prepare-candidate`. It checks source isolation,
-strict configuration, and the current publishing policy, then may materialize a
-verified archive, build candidate images, scan them, and write image-security
-evidence outside the protected checkout. It does not call
-`assertPreflightAllowsDeployment`. It does not stop containers, migrate,
-bootstrap, or compose up. `PREPARATION_ELIGIBLE` is not deployment
-authorization. Running the command is not authorized by this document.
+Build-only is `npm run env:staging:prepare-candidate:build-only`. It evaluates
+`evaluateCandidateBuildEligibility` (canonical source identity, pinned
+remote-main SHA/tree, isolated archive provenance, image-tag ownership, narrow
+build-time public settings, and no XR-010 target collision). It may materialize
+a verified archive and build the six inactive candidate images, then collect
+immutable identities. It does not run Trivy, does not write
+`staging-image-security-v1` PASS evidence, and does not authorize deployment.
+A dirty protected checkout may remain when the archive proof excludes WIP.
+Running the command is not authorized by this document.
 
-Phase B is `npm run env:staging:deploy`. Activation (stop, env write, migrate,
+Scan-and-bind is `npm run env:staging:scan-candidate`. It does not rebuild or
+deploy. It requires the same verified source SHA/tree, the exact six candidate
+images with matching revision labels and immutable ids/digests, then scans by
+immutable image id and writes `staging-image-security-v1` outside the protected
+checkout only after a fail-closed scanner PASS. Image replacement during
+verification fails closed. Running the command is not authorized by this
+document.
+
+Combined prepare remains `npm run env:staging:prepare-candidate`. It keeps the
+historical combined build+scan path and still requires
+`evaluateCandidatePreparationEligibility` (including publishing and full
+environment projection). It does not call `assertPreflightAllowsDeployment`.
+`PREPARATION_ELIGIBLE` and `BUILD_ELIGIBLE` are not deployment authorization.
+
+Deploy is `npm run env:staging:deploy`. Activation (stop, env write, migrate,
 bootstrap, compose up) runs only after `assertPreflightAllowsDeployment`.
 Full preflight requires image-security evidence bound to this source SHA, tree,
 image id, and digest, and a fresh inspect that matches that evidence. Missing,
 stale, or rebound evidence blocks activation before any runtime mutation.
-Preflight does not build images. Activation does not build a replacement image
-after that gate. Source CI does not supply image-security proof.
+Valid build or scan outcomes alone never authorize deployment. Preflight does
+not build images. Activation does not build a replacement image after that
+gate. Source CI does not supply image-security proof.
 
 ## Strict environment
 
