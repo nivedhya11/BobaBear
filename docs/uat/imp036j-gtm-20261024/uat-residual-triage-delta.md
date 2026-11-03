@@ -261,7 +261,7 @@ what is already covered or explicitly unproven.
 ```text
 BASELINE_SHA = a7026d2c80d2cfaf9184489a2dbf24b9698772b0
 BRANCH = wave-r1-a-uat-residual-20261103
-BRANCH_HEAD = recorded at commit time in §12 (docs tip ≠ baseline)
+BRANCH_HEAD = 4491ea6c63b1002270ab446ebbd78542ea27257c
 STASH_COUNT = 16 (preserved; not mutated)
 PRIMARY_CHECKOUT_UNTOUCHED = YES
 ATTENDED_WORKTREE_UNTOUCHED = YES
@@ -313,5 +313,5 @@ ISSUES_REMAIN_OPEN = #381 #383 #384
 NO_REIMPLEMENTATION_OF_386 = YES
 NO_INVENTED_384B_CAUSE = YES
 MERGE_HOLD = YES
-BRANCH_HEAD_AT_THIS_AMENDMENT = (git rev-parse HEAD after this commit)
+BRANCH_HEAD_AT_THIS_AMENDMENT = 4491ea6c63b1002270ab446ebbd78542ea27257c
 ```
