@@ -8,13 +8,15 @@ AUTHORITY = Founder-authorized via https://github.com/nivedhya11/BobaBear/issues
 WORKTREE = /home/ajoshi/repos/boba-bear-wave-r1-a-uat
 BRANCH = wave-r1-a-uat-residual-20261103
 BASELINE_SHA = a7026d2c80d2cfaf9184489a2dbf24b9698772b0
-PHASE = 1 source/CI/log/document review ONLY
+BRANCH_HEAD = (see §10 / §12 after each docs commit; not identical to BASELINE_SHA)
+PHASE = 1 source/CI/log/document review + R2 independent factual review
 XR010_SESSION_UNTOUCHED = YES
 NO_PORTS_DB_PODMAN_MUTATION = YES
 FOUNDER_UAT_VERDICT = NOT_CLAIMED
 XR010_PASS = NOT_CLAIMED
 IMP036J_ACCEPTED = NO (STATE: pendingAcceptance IMP-036J; Founder UAT NOT_PERFORMED)
 IMP036K_AUTHORIZED = NO
+ISSUE_STATUS_PRESERVED = #381/#383/#384 remain OPEN pending Founder disposition
 ```
 
 This file is **evidence / triage disposition only**. It does not grant Founder UAT PASS,
@@ -40,7 +42,7 @@ without a governance id (`uat-residual-triage-delta.md`); deliverable identity r
 | Related unmerged #384B diagnostic | [#453](https://github.com/nivedhya11/BobaBear/pull/453) (CLOSED 2026-11-02, MERGE NOT AUTHORIZED; head `a34442a98f7d1ef0d47eab066b93017081f766f9` preserved) |
 | Merged coupon-recovery correction | [#386](https://github.com/nivedhya11/BobaBear/pull/386) → merge `5773dac4ce32e342b9f0d34f9ccb9099d1d8d15a` (2026-10-16) |
 | Merged identifier-shape correction | [#481](https://github.com/nivedhya11/BobaBear/pull/481) (and later Option B [#517](https://github.com/nivedhya11/BobaBear/pull/517)) |
-| Current-main baseline | `a7026d2c80d2cfaf9184489a2dbf24b9698772b0` (**VERIFIED** worktree HEAD) |
+| Current-main baseline | `a7026d2c80d2cfaf9184489a2dbf24b9698772b0` (**VERIFIED** `origin/main` / merge-base; branch tip advances with docs-only commits) |
 | Ancestor checks | `5773dac4` (#386), `bd72725f` / #481 lineage, `8e8f81a41` (#517) are ancestors of baseline (**VERIFIED** `git merge-base --is-ancestor`) |
 | Excluded actions | No E2E, Podman, DB, image-build; no touch of ports 8179/8183/4175; no primary checkout or attended worktree mutation; no stash mutation (16 stashes preserved); no merge/deploy/DNS/production/Founder UAT |
 
@@ -257,8 +259,9 @@ what is already covered or explicitly unproven.
 ## 10. Agent A isolation confirmations
 
 ```text
-WORKTREE_HEAD = a7026d2c80d2cfaf9184489a2dbf24b9698772b0
+BASELINE_SHA = a7026d2c80d2cfaf9184489a2dbf24b9698772b0
 BRANCH = wave-r1-a-uat-residual-20261103
+BRANCH_HEAD = recorded at commit time in §12 (docs tip ≠ baseline)
 STASH_COUNT = 16 (preserved; not mutated)
 PRIMARY_CHECKOUT_UNTOUCHED = YES
 ATTENDED_WORKTREE_UNTOUCHED = YES
@@ -277,9 +280,38 @@ STATUS_VOCABULARY_CLAIMS = no XR010 PASS / no Founder acceptance / no staging re
 
 ```text
 PROMPT DEVIATIONS: NONE
-RISK_TIER: GREEN documentation/evidence triage (R0 analysis + docs-only delta)
+RISK_TIER: GREEN documentation/evidence triage (R0 analysis + docs-only delta; R2 review amendment)
 PRODUCT_DELIVERY_FIELDS: N/A for new story delivery — residual UAT triage under existing IMP-036J pending acceptance
 NO_REIMPLEMENTATION_OF_386 = YES
 NO_SPECULATIVE_384B_FIX = YES
 NO_SPECULATIVE_381_ROOT_CAUSE = YES
+```
+
+---
+
+## 12. R2 independent factual review (2026-11-03)
+
+Independent Product/QA re-check of this matrix against baseline
+`a7026d2c80d2cfaf9184489a2dbf24b9698772b0` and GitHub issue/PR state. Docs-only;
+no product/source behaviour change.
+
+| Claim | R2 result |
+|---|---|
+| #381 / #383 / #384 GitHub state | **VERIFIED OPEN** — preserve pending actual Founder disposition; do not close from this note |
+| #383 / #384A corrected on main by #386 | **VERIFIED** — merge `5773dac4…` is ancestor of baseline; coupon-recovery domain/client tests present; XD `INAPPLICABLE_DELIVERY` copy present |
+| Do not reimplement #386 | **HELD** — no code change authorized or performed |
+| #384B cause | **Still UNPROVEN** — `CHECKOUT_STATE_CONFLICT` ≠ stale-revision `CHECKOUT_CONFLICT`; #453 closed unmerged; investigation doc **NOT_FOUND** on main; no invented root cause |
+| #381 intermittent create 500 | **Still UNKNOWN** — #481/#517 fix deterministic classes only; do not equate with historical intermittent closure |
+| Historical `6e344d9…` screenshots as current-main failure | **Rejected** — not current proof after #386 + later corrections |
+| Customer copy for `CHECKOUT_STATE_CONFLICT` | **VERIFIED** at `src/components/ordering/error-copy.ts` |
+| Material matrix inaccuracies requiring content rewrite | **NOT_FOUND** this pass |
+
+```text
+R2_REVIEW = PASS_WITH_METADATA_CORRECTIONS_ONLY
+CONTENT_DISPOSITION_CHANGE = NONE
+ISSUES_REMAIN_OPEN = #381 #383 #384
+NO_REIMPLEMENTATION_OF_386 = YES
+NO_INVENTED_384B_CAUSE = YES
+MERGE_HOLD = YES
+BRANCH_HEAD_AT_THIS_AMENDMENT = (git rev-parse HEAD after this commit)
 ```
