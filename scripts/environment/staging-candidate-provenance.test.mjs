@@ -539,6 +539,8 @@ test("phase split keeps scan, build, deploy, and combined preparation boundaries
   const prepareSlice = source.slice(prepareStart, buildStart);
   assert.doesNotMatch(buildSlice, /scanPreparedImagesWithTrivy|projectStrictStagingConfiguration|readStagingDiagnosticEnabled/);
   assert.match(buildSlice, /gatherStagingBuildOnlyEvidence/);
+  assert.match(scanSlice, /gatherStagingBuildOnlyEvidence/);
+  assert.doesNotMatch(scanSlice, /gatherStagingPreflightEvidence|projectStrictStagingConfiguration|readStagingDiagnosticEnabled/);
   assert.match(scanSlice, /SCAN_CANDIDATE_MUST_NOT_COMPOSE_BUILD/);
   assert.match(scanSlice, /SCAN_CANDIDATE_MUST_NOT_MATERIALIZE_ARCHIVE/);
   assert.match(prepareSlice, /gatherStagingPreflightEvidence/);
@@ -546,6 +548,66 @@ test("phase split keeps scan, build, deploy, and combined preparation boundaries
   assert.match(source, /projectConfig = \(\) => projectStrictStagingConfiguration/);
   assert.match(source, /readDiagnostic = readStagingDiagnosticEnabled/);
   assert.equal(source.includes('ignorefile: path.join(repositoryRoot, ".trivyignore")'), false);
+});
+
+test("scan-only does not read operational staging secret files", async () => {
+  const secretReads = [];
+  const readStagingSecretFile = (filePath) => {
+    secretReads.push(String(filePath));
+    throw new Error("SCAN_ONLY_SECRET_FILE_ACCESSED");
+  };
+  const { reads, deps } = passingBuildDeps({
+    deps: {
+      readFile: readStagingSecretFile,
+      readDiagnostic: () =>
+        readStagingSecretFile(path.join(repositoryRoot, ".env.staging", ".env.runtime.docker.local")),
+      projectConfig: () => readStagingSecretFile(path.join(repositoryRoot, ".env.staging")),
+      materializeTree: () => {
+        throw new Error("SCAN_CANDIDATE_MUST_NOT_MATERIALIZE_ARCHIVE");
+      },
+      compose: () => {
+        throw new Error("SCAN_CANDIDATE_MUST_NOT_COMPOSE_BUILD");
+      },
+    },
+  });
+  const directory = mkdtempSync(path.join(os.tmpdir(), "boba-scan-secret-"));
+  const evidenceFile = path.join(directory, "evidence.json");
+  let evidenceWritten = false;
+  const effects = [];
+  try {
+    await assert.rejects(
+      () =>
+        runStagingScanCandidate(candidate, {
+          ...deps,
+          effects,
+          evidenceFile,
+          inspectImage: (name) => syntheticBoundImages().find((image) => image.name === name),
+          inspectRevision: () => candidate.head,
+          scanImages: async () => ({ passed: false, reason: "SCANNER_REFUSED" }),
+          writeEvidence: () => {
+            evidenceWritten = true;
+          },
+          log: () => {},
+        }),
+      /IMAGE_SECURITY_SCAN_FAILED SCANNER_REFUSED/,
+    );
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+  assert.deepEqual(secretReads, []);
+  assert.throws(
+    () => readStagingSecretFile(path.join(repositoryRoot, ".env.staging", ".env.runtime.docker.local")),
+    /SCAN_ONLY_SECRET_FILE_ACCESSED/,
+  );
+  assert.deepEqual(secretReads, [
+    path.join(repositoryRoot, ".env.staging", ".env.runtime.docker.local"),
+  ]);
+  assert.equal(evidenceWritten, false);
+  assert.equal(reads.some((rel) => String(rel).includes(".env.staging")), false);
+  assert.deepEqual(reads, ["compose.yaml", "Dockerfile", ".env"]);
+  assert.deepEqual(effects, ["assertBuildPreconditions", "candidateImagesBound", "scanPreparedImages"]);
+  assert.equal(effects.includes("composeBuildCandidate"), false);
+  assert.equal(effects.includes("materializeCandidateArchive"), false);
 });
 
 function passingEligibility() {

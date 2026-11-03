@@ -170,10 +170,13 @@ candidate images. It does not run Trivy, does not write
 A dirty protected checkout may remain when the archive proof excludes WIP.
 Running the command is not authorized by this document.
 
-Scan-and-bind is `npm run env:staging:scan-candidate`. It does not rebuild or
-deploy. It requires the same verified source SHA/tree, the exact six candidate
-images with matching revision labels and immutable ids/digests, then scans by
-immutable image id. Scanner inputs are the candidate commit's `.trivyignore`,
+Scan-and-bind is `npm run env:staging:scan-candidate`. It evaluates the same
+`evaluateCandidateBuildEligibility` gate as build-only and gathers that
+evidence with `gatherStagingBuildOnlyEvidence`. That collector does not read
+`.env.staging` or project strict staging runtime configuration. The command
+does not rebuild or deploy. It requires the same verified source SHA/tree and
+the exact six candidate images with matching revision labels and immutable
+ids/digests, then scans by immutable image id. Scanner inputs are the candidate commit's `.trivyignore`,
 container exception register, and `scripts/run-trivy.mjs`. If any of those
 working-tree bytes differ from that commit, the scan fails closed and writes no
 PASS evidence. Unrelated dirty paths may remain. The scan uses the existing

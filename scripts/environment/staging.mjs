@@ -2227,8 +2227,11 @@ export async function runStagingPrepareCandidateBuildOnly(candidate, deps = {}) 
 }
 
 /**
- * Exact-artifact scan-and-bind. Does not rebuild or deploy. Writes
- * staging-image-security-v1 only after immutable identity + scanner PASS.
+ * Exact-artifact scan-and-bind. Uses build-only evidence: canonical source
+ * identity, image ownership, and protected-session checks, without reading
+ * operational `.env.staging` or projecting strict staging runtime configuration.
+ * Does not rebuild or deploy. Writes staging-image-security-v1 only after
+ * immutable identity + scanner PASS.
  */
 export async function runStagingScanCandidate(candidate, deps = {}) {
   const effects = deps.effects ?? [];
@@ -2237,7 +2240,7 @@ export async function runStagingScanCandidate(candidate, deps = {}) {
   };
   const {
     assertPreconditions = assertBuildPreconditions,
-    gatherPreparation = (value) => gatherStagingPreflightEvidence(value, deps),
+    gatherPreparation = (value) => gatherStagingBuildOnlyEvidence(value, deps),
     evaluateBuild = evaluateCandidateBuildEligibility,
     materializeTree = () => {
       throw new Error("SCAN_CANDIDATE_MUST_NOT_MATERIALIZE_ARCHIVE");
