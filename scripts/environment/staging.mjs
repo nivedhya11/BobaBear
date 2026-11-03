@@ -43,6 +43,12 @@ import {
 } from "./staging-image-security-evidence.mjs";
 import { extractVerifiedGitArchive, observeIsolatedArtifactContext, readPinnedGithubMainSha } from "./staging-source-isolation.mjs";
 import { projectStrictStagingConfiguration } from "./staging-config-projection.mjs";
+import {
+  assertOperationalStagingSecretUnread,
+  evaluateCommittedComposeBuildIsolation,
+  evaluateCommittedDockerfileBuildIsolation,
+} from "./staging-build-inputs.mjs";
+import { closeBoundCandidateScan, openBoundCandidateScan } from "./staging-scan-policy.mjs";
 import { copyOwnerOnlySecretFile, ensureOwnerOnlySecretDirectory, inspectOwnerOnlyDirectory, inspectOwnerOnlyFile } from "./staging-secret-files.mjs";
 import { bindStagingRecoveryEvidence } from "./staging-recovery-binding.mjs";
 import { gatherPublishingEvidence } from "./staging-publishing-probe.mjs";
@@ -126,6 +132,15 @@ function git(args) {
     encoding: "utf8",
     stdio: closedStdinPipes(),
   }).trim();
+}
+
+/** Exact committed bytes. Unlike `git()`, this does not trim policy or build text. */
+function gitBytes(args) {
+  return execFileSync("git", args, {
+    cwd: repositoryRoot,
+    encoding: "utf8",
+    stdio: closedStdinPipes(),
+  });
 }
 
 function fingerprint() {
@@ -228,6 +243,7 @@ function assertBuildPreconditions(candidate) {
 function readRepositoryPublicBuildEnv() {
   // Browser build key only. It is not artifact authority and is absent from git archive.
   const envPath = path.join(repositoryRoot, ".env");
+  assertOperationalStagingSecretUnread(envPath, repositoryRoot);
   if (!existsSync(envPath)) return {};
   const parsed = parseEnvFile(readFileSync(envPath, "utf8"));
   const extracted = extractValues(parsed);
@@ -498,49 +514,83 @@ function assertBoundCandidateImages(security, inspectImage = inspectLocalImageId
   return builtImageIds;
 }
 
-async function scanPreparedImagesWithTrivy(images, { inspectImage = inspectLocalImageIdentity } = {}) {
-  const trivy = await import("../run-trivy.mjs");
-  const bin = await trivy.ensureBinary();
-  const reports = [];
-  for (const image of images) {
-    const resolved = resolveImmutableScanTarget(image);
-    if (!resolved) {
-      return { passed: false, reportSha256: null, reason: "IMMUTABLE_SCAN_TARGET_UNBOUND" };
-    }
-    const before = inspectImage(image.name);
-    if (!before || before.imageId !== image.imageId || before.digest !== image.digest) {
-      return { passed: false, reportSha256: null, reason: "IMAGE_IDENTITY_DRIFT_BEFORE_SCAN" };
-    }
-    const scanned = trivy.scanImage({
-      bin,
-      image: resolved.target,
-      ignorefile: path.join(repositoryRoot, ".trivyignore"),
-      cwd: repositoryRoot,
-    });
-    const after = inspectImage(image.name);
-    if (!after || after.imageId !== image.imageId || after.digest !== image.digest) {
-      return { passed: false, reportSha256: null, reason: "IMAGE_IDENTITY_DRIFT_DURING_SCAN" };
-    }
-    const blocking = (scanned.findings ?? []).some(
-      (finding) => finding.severity === "CRITICAL" || finding.severity === "HIGH",
-    );
-    if (scanned.status !== 0 || blocking || (scanned.errors ?? []).length > 0) {
-      return { passed: false, reportSha256: null, reason: "SCANNER_BLOCKING_OR_ERROR" };
-    }
-    reports.push({
-      name: image.name,
-      imageId: image.imageId,
-      digest: image.digest,
-      scanTarget: resolved.target,
-      scanBinding: resolved.binding,
-      status: scanned.status,
-      findings: scanned.findings ?? [],
-    });
+async function scanPreparedImagesWithTrivy(images, options = {}) {
+  const inspectImage = options.inspectImage ?? inspectLocalImageIdentity;
+  const scanRoot = options.repositoryRoot ?? repositoryRoot;
+  const trivy = options.trivyModule ?? (await import("../run-trivy.mjs"));
+  const opened = openBoundCandidateScan({
+    sourceSha: options.sourceSha,
+    repositoryRoot: scanRoot,
+    images,
+    trivy,
+    todayIso: options.todayIso,
+    tempParent: options.tempParent,
+    readCommittedBlob: options.readCommittedBlob,
+    readWorktreeBlob: options.readWorktreeBlob,
+    readCommittedText: options.readCommittedText,
+  });
+  if (!opened.ok) {
+    return {
+      passed: false,
+      reportSha256: null,
+      reason: opened.reason,
+      path: opened.path ?? null,
+      errors: opened.errors ?? [],
+    };
   }
-  return {
-    passed: true,
-    reportSha256: createHash("sha256").update(JSON.stringify(reports)).digest("hex"),
-  };
+  try {
+    const bin = options.bin ?? (await trivy.ensureBinary());
+    const reports = [];
+    for (const image of images) {
+      const resolved = resolveImmutableScanTarget(image);
+      if (!resolved) {
+        return { passed: false, reportSha256: null, reason: "IMMUTABLE_SCAN_TARGET_UNBOUND" };
+      }
+      const before = inspectImage(image.name);
+      if (!before || before.imageId !== image.imageId || before.digest !== image.digest) {
+        return { passed: false, reportSha256: null, reason: "IMAGE_IDENTITY_DRIFT_BEFORE_SCAN" };
+      }
+      const bound = opened.ignores?.get(image.name);
+      if (!bound || path.basename(bound.ignorefile) === ".trivyignore") {
+        return { passed: false, reportSha256: null, reason: "SCAN_IMAGE_SCOPE_UNMAPPED" };
+      }
+      const scanned = trivy.scanImage({
+        bin,
+        image: resolved.target,
+        ignorefile: bound.ignorefile,
+        cwd: scanRoot,
+      });
+      const after = inspectImage(image.name);
+      if (!after || after.imageId !== image.imageId || after.digest !== image.digest) {
+        return { passed: false, reportSha256: null, reason: "IMAGE_IDENTITY_DRIFT_DURING_SCAN" };
+      }
+      const blocking = (scanned.findings ?? []).some(
+        (finding) => finding.severity === "CRITICAL" || finding.severity === "HIGH",
+      );
+      if (scanned.status !== 0 || blocking || (scanned.errors ?? []).length > 0) {
+        return { passed: false, reportSha256: null, reason: "SCANNER_BLOCKING_OR_ERROR" };
+      }
+      reports.push({
+        name: image.name,
+        imageId: image.imageId,
+        digest: image.digest,
+        scanTarget: resolved.target,
+        scanBinding: resolved.binding,
+        exceptionScope: bound.scope,
+        status: scanned.status,
+        findings: scanned.findings ?? [],
+        policyBlobs: opened.policy?.inputs ?? [],
+        scannerVersion: opened.policy?.scannerVersion ?? null,
+      });
+    }
+    return {
+      passed: true,
+      reportSha256: createHash("sha256").update(JSON.stringify(reports)).digest("hex"),
+      policy: opened.policy,
+    };
+  } finally {
+    closeBoundCandidateScan(opened);
+  }
 }
 
 function observeCandidateImageOwnership(
@@ -1879,9 +1929,9 @@ export async function runStagingPrepareCandidate(candidate, deps = {}) {
       }
       return { name, imageId: live.imageId, digest: live.digest };
     });
-    const scan = await scanImages(images, { inspectImage });
+    const scan = await scanImages(images, scanImageOptions(candidate, deps, inspectImage));
     if (!scan || scan.passed !== true || !/^[0-9a-f]{64}$/.test(scan.reportSha256 ?? "")) {
-      throw new Error("IMAGE_SECURITY_SCAN_FAILED");
+      throw new Error(scan?.reason ? `IMAGE_SECURITY_SCAN_FAILED ${scan.reason}` : "IMAGE_SECURITY_SCAN_FAILED");
     }
     writeEvidence(evidenceFile, {
       schema: IMAGE_SECURITY_EVIDENCE_SCHEMA,
@@ -1890,6 +1940,7 @@ export async function runStagingPrepareCandidate(candidate, deps = {}) {
       images,
       scanPassed: true,
       scanReportSha256: scan.reportSha256,
+      ...(scan.policy ? { scanPolicy: scan.policy } : {}),
     });
     record("imageSecurityEvidenceWritten");
   } finally {
@@ -1899,6 +1950,173 @@ export async function runStagingPrepareCandidate(candidate, deps = {}) {
   log("ACTIVATION_STARTED NO");
   log("CANDIDATE_PREPARATION_IS_NOT_DEPLOYMENT YES");
   return { ok: true, deploymentAuthorized: false, effects };
+}
+
+function scanImageOptions(candidate, deps, inspectImage) {
+  return {
+    inspectImage,
+    sourceSha: candidate.head,
+    repositoryRoot: deps.repositoryRoot ?? repositoryRoot,
+    todayIso: deps.todayIso,
+    tempParent: deps.tempParent,
+    readCommittedBlob: deps.readCommittedBlob,
+    readWorktreeBlob: deps.readWorktreeBlob,
+    readCommittedText: deps.readCommittedText,
+    trivyModule: deps.trivyModule,
+    bin: deps.bin,
+  };
+}
+
+function assertBuildDirectoryIsolated(buildDir) {
+  const resolved = path.resolve(buildDir);
+  const root = path.resolve(repositoryRoot);
+  const staging = path.resolve(STAGING_ENV_DIR);
+  const inside = (parent) => resolved === parent || resolved.startsWith(`${parent}${path.sep}`);
+  if (inside(root) || inside(staging)) {
+    throw new Error("BUILD_DIRECTORY_SECRET_OR_CHECKOUT_SCOPE");
+  }
+}
+
+/**
+ * Build-only evidence. Proves candidate identity, archive isolation, image ownership,
+ * and committed public build inputs. Does not read `.env.staging` or project strict
+ * staging runtime configuration.
+ */
+function gatherStagingBuildOnlyEvidence(candidate, deps = {}) {
+  const {
+    treeOf = (sha) => git(["rev-parse", `${sha}^{tree}`]),
+    repositoryIdentityOf = readRepositoryIdentityFromRemote,
+    readGithubMain = () => readPinnedGithubMainSha(repositoryRoot),
+    observeSource = observeIsolatedArtifactContext,
+    observeImageOwnership = (sha) => observeCandidateImageOwnership(sha),
+    observeProtectedSession = () => observeProtectedSessionSafety(),
+    readCommittedText = (sha, rel) => gitBytes(["show", `${sha}:${rel}`]),
+    readPublicBuildEnv = readRepositoryPublicBuildEnv,
+    assertSecretPath = assertOperationalStagingSecretUnread,
+  } = deps;
+
+  let tree;
+  let originMainTree;
+  try {
+    tree = treeOf(candidate.head);
+    originMainTree = treeOf(candidate.originMain);
+  } catch (error) {
+    return {
+      probeError: true,
+      probeDetail: error instanceof Error ? error.message : "tree probe failed",
+    };
+  }
+
+  const repositoryIdentity = repositoryIdentityOf();
+  let githubMainMatchesHead = false;
+  try {
+    const pinned = readGithubMain();
+    githubMainMatchesHead = pinned?.ok === true && pinned.sha === candidate.head;
+  } catch {
+    githubMainMatchesHead = false;
+  }
+
+  let sourceObservation = {
+    ok: false,
+    protectedCheckoutUsed: true,
+    isolatedArtifactContextVerified: false,
+    artifactContextInsideProtectedRoot: true,
+    authoritativeSourceRoot: repositoryRoot,
+  };
+  try {
+    sourceObservation = observeSource({
+      repositoryRoot,
+      sha: candidate.head,
+      expectedTree: tree,
+    });
+  } catch {
+    sourceObservation = {
+      ...sourceObservation,
+      isolatedArtifactContextVerified: false,
+      protectedCheckoutUsed: true,
+    };
+  }
+
+  let composeText = null;
+  let dockerfileText = null;
+  try {
+    composeText = readCommittedText(candidate.head, "compose.yaml");
+    dockerfileText = readCommittedText(candidate.head, "Dockerfile");
+  } catch {
+    composeText = null;
+    dockerfileText = null;
+  }
+  const composeIsolation = evaluateCommittedComposeBuildIsolation(composeText ?? "");
+  const dockerfileIsolation = evaluateCommittedDockerfileBuildIsolation(dockerfileText ?? "");
+
+  let publicBrowserKeyPresent = false;
+  let secretReadRefused = false;
+  try {
+    assertSecretPath(path.join(repositoryRoot, ".env"), repositoryRoot);
+    const publicBuild = readPublicBuildEnv();
+    publicBrowserKeyPresent =
+      typeof publicBuild?.NEXT_PUBLIC_BOBA_BEAR_GOOGLE_MAPS_BROWSER_KEY === "string" &&
+      publicBuild.NEXT_PUBLIC_BOBA_BEAR_GOOGLE_MAPS_BROWSER_KEY.length > 0;
+  } catch {
+    secretReadRefused = true;
+  }
+
+  const inputsOk =
+    composeIsolation.ok === true && dockerfileIsolation.ok === true && secretReadRefused === false;
+  const environment = {
+    projectedConfigState: inputsOk ? "BUILD_INPUTS_VALIDATED" : "UNKNOWN",
+    projectedConfigValid: false,
+    unsafeAdaptersExplicitlyFalse: inputsOk && composeIsolation.unsafeAdapterArgsAbsent === true,
+    secretsPrinted: false,
+    stagingSecretFilesRead: false,
+    composeBuildPrivateEnvDependency:
+      composeIsolation.ok !== true || composeIsolation.serviceEnvFileConsumedByBuild === true,
+    dockerfilePrivateEnvDependency: dockerfileIsolation.ok !== true,
+    publicBrowserKeyPresent,
+  };
+  if (/(?:AUTH_SECRET|KEY_SECRET|WEBHOOK_SECRET|PASSWORD)=/.test(JSON.stringify(environment))) {
+    environment.secretsPrinted = true;
+    environment.unsafeAdaptersExplicitlyFalse = false;
+    environment.projectedConfigState = "UNKNOWN";
+  }
+
+  let imageOwnership;
+  try {
+    imageOwnership = observeImageOwnership(candidate.head);
+  } catch {
+    imageOwnership = { evidenceComplete: false, observations: [], ownershipOk: false, detail: "ownership probe failed" };
+  }
+  let protectedSession;
+  try {
+    protectedSession = observeProtectedSession();
+  } catch {
+    protectedSession = {
+      evidenceComplete: false,
+      composeProject: null,
+      protectedSessionImpact: null,
+      xr010ProjectCollision: null,
+    };
+  }
+
+  return {
+    source: {
+      repositoryIdentity: repositoryIdentity ?? "UNKNOWN",
+      branch: candidate.branch,
+      head: candidate.head,
+      originMain: candidate.originMain,
+      tree,
+      originMainTree,
+      trackedDirty: candidate.trackedDirty,
+      protectedCheckoutUsed: sourceObservation.protectedCheckoutUsed === false ? false : true,
+      isolatedArtifactContextVerified: sourceObservation.isolatedArtifactContextVerified === true,
+      artifactContextInsideProtectedRoot: sourceObservation.artifactContextInsideProtectedRoot !== false,
+      authoritativeSourceRoot: sourceObservation.authoritativeSourceRoot ?? repositoryRoot,
+      githubMainMatchesHead,
+    },
+    environment,
+    imageOwnership,
+    protectedSession,
+  };
 }
 
 /**
@@ -1913,7 +2131,7 @@ export async function runStagingPrepareCandidateBuildOnly(candidate, deps = {}) 
   };
   const {
     assertPreconditions = assertBuildPreconditions,
-    gatherPreparation = (value) => gatherStagingPreflightEvidence(value, deps),
+    gatherPreparation = (value) => gatherStagingBuildOnlyEvidence(value, deps),
     evaluateBuild = evaluateCandidateBuildEligibility,
     materializeTree = materializeExactGitTree,
     compose = podmanCompose,
@@ -1951,6 +2169,7 @@ export async function runStagingPrepareCandidateBuildOnly(candidate, deps = {}) 
   /** @type {{ name: string, imageId: string, digest: string, revision: string }[]} */
   let images = [];
   try {
+    assertBuildDirectoryIsolated(buildDir);
     compose(buildDir, PREPARE_BUILD_ARGS, { BOBA_BUILD_SHA: candidate.head, COMPOSE_PROFILES: "tools" });
     record("composeBuildCandidate");
     images = Object.values(BOBA_BUILD_IMAGES).map((name) => {
@@ -2058,7 +2277,7 @@ export async function runStagingScanCandidate(candidate, deps = {}) {
   });
   record("candidateImagesBound");
 
-  const scan = await scanImages(images, { inspectImage });
+  const scan = await scanImages(images, scanImageOptions(candidate, deps, inspectImage));
   record("scanPreparedImages");
   if (!scan || scan.passed !== true || !/^[0-9a-f]{64}$/.test(scan.reportSha256 ?? "")) {
     throw new Error(scan?.reason ? `IMAGE_SECURITY_SCAN_FAILED ${scan.reason}` : "IMAGE_SECURITY_SCAN_FAILED");
@@ -2082,6 +2301,7 @@ export async function runStagingScanCandidate(candidate, deps = {}) {
     images,
     scanPassed: true,
     scanReportSha256: scan.reportSha256,
+    ...(scan.policy ? { scanPolicy: scan.policy } : {}),
   });
   record("imageSecurityEvidenceWritten");
   log("ACTIVATION_STARTED NO");
@@ -2168,6 +2388,7 @@ export {
   classifyStagingBaselineInTooling,
   runLegacySeedBootstrapChain,
   gatherStagingPreflightEvidence,
+  gatherStagingBuildOnlyEvidence,
   verifyPreMutationReadiness,
   resolveStagingPostgresInitMount,
   readStagingDiagnosticEnabled,

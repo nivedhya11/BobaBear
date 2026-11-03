@@ -156,9 +156,16 @@ context. An operator boolean cannot set the flag false.
 Build-only is `npm run env:staging:prepare-candidate:build-only`. It evaluates
 `evaluateCandidateBuildEligibility` (canonical source identity, pinned
 remote-main SHA/tree, isolated archive provenance, image-tag ownership, narrow
-build-time public settings, and no XR-010 target collision). It may materialize
-a verified archive and build the six inactive candidate images, then collect
-immutable identities. It does not run Trivy, does not write
+build-time public settings, and no XR-010 target collision). Its evidence
+collector reads the candidate commit's Compose and Dockerfile build inputs and
+the optional public browser key from the repository `.env`. It does not read
+`.env.staging` or call strict staging configuration projection. Service
+`env_file` entries stay runtime container inputs: `podman-compose build` passes
+only declared build args and does not open those files. A committed build
+section that consumes a private env file, build secret, or unauthorized
+interpolation fails closed before any image build. The command may then
+materialize a verified archive outside the checkout and build the six inactive
+candidate images. It does not run Trivy, does not write
 `staging-image-security-v1` PASS evidence, and does not authorize deployment.
 A dirty protected checkout may remain when the archive proof excludes WIP.
 Running the command is not authorized by this document.
@@ -166,7 +173,13 @@ Running the command is not authorized by this document.
 Scan-and-bind is `npm run env:staging:scan-candidate`. It does not rebuild or
 deploy. It requires the same verified source SHA/tree, the exact six candidate
 images with matching revision labels and immutable ids/digests, then scans by
-immutable image id and writes `staging-image-security-v1` outside the protected
+immutable image id. Scanner inputs are the candidate commit's `.trivyignore`,
+container exception register, and `scripts/run-trivy.mjs`. If any of those
+working-tree bytes differ from that commit, the scan fails closed and writes no
+PASS evidence. Unrelated dirty paths may remain. The scan uses the existing
+per-image ACTIVE/expiry exception policy. The tooling image has no exception
+scope and does not inherit another service's ignores. A global unvalidated
+ignore file is not passed to Trivy. Evidence is written outside the protected
 checkout only after a fail-closed scanner PASS. Image replacement during
 verification fails closed. Running the command is not authorized by this
 document.
