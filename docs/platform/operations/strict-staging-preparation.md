@@ -187,7 +187,9 @@ document.
 Combined prepare remains `npm run env:staging:prepare-candidate`. It keeps the
 historical combined build+scan path and still requires
 `evaluateCandidatePreparationEligibility` (including publishing and full
-environment projection). It does not call `assertPreflightAllowsDeployment`.
+environment projection). Before it builds, it applies the same committed
+Compose and Dockerfile private-env refusal as build-only. It does not call
+`assertPreflightAllowsDeployment`.
 `PREPARATION_ELIGIBLE` and `BUILD_ELIGIBLE` are not deployment authorization.
 
 Deploy is `npm run env:staging:deploy`. Activation (stop, env write, migrate,

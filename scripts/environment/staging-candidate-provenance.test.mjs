@@ -14,8 +14,10 @@ import {
 import { gitBlobSha1 } from "./staging-scan-policy.mjs";
 import { PROTECTED_PRIMARY_REPOSITORY } from "./staging-source-isolation.mjs";
 import { STAGING_CANDIDATE_IMAGE_NAMES, syntheticBoundImages } from "./staging-image-security-evidence.mjs";
+import { validPreflightEvidence } from "./staging-preflight.mjs";
 import {
   gatherStagingBuildOnlyEvidence,
+  runStagingPrepareCandidate,
   runStagingPrepareCandidateBuildOnly,
   runStagingScanCandidate,
 } from "./staging.mjs";
@@ -435,6 +437,54 @@ test("build-only fails closed when committed compose build would consume a priva
     },
   });
   await assert.rejects(() => runStagingPrepareCandidateBuildOnly(candidate, deps), /CANDIDATE_BUILD_BLOCKED/);
+  assert.equal(composed, false);
+});
+
+test("indirect private env build references fail closed", () => {
+  const base = composeFixture();
+  assert.equal(evaluateCommittedComposeBuildIsolation(base.replace("dockerfile: Dockerfile", "dockerfile: .env.runtime.docker.local")).ok, false);
+  assert.equal(evaluateCommittedComposeBuildIsolation(base.replace("context: .", "context: .env.docker.local")).ok, false);
+  assert.equal(
+    evaluateCommittedComposeBuildIsolation(base.replace("      args:", "      additional_contexts:\n        env: .env.migration.docker.local\n      args:")).ok,
+    false,
+  );
+  assert.equal(
+    evaluateCommittedComposeBuildIsolation(base.replace("dockerfile: Dockerfile", "dockerfile: ${DOCKERFILE:-Dockerfile}")).ok,
+    false,
+  );
+  assert.equal(evaluateCommittedDockerfileBuildIsolation("ADD .env.runtime.docker.local /tmp/env\n").ok, false);
+  assert.equal(evaluateCommittedDockerfileBuildIsolation("COPY config/.env /app/.env\n").ok, false);
+  assert.equal(evaluateCommittedDockerfileBuildIsolation("RUN cp .env.docker.local /tmp/env\n").ok, false);
+  assert.equal(evaluateCommittedDockerfileBuildIsolation("# no `.env` file is copied\nCOPY scripts/environment/staging-baseline-classify.ts ./\n").ok, true);
+});
+
+test("combined preparation refuses a private-env build input before compose", async () => {
+  let composed = false;
+  const directory = mkdtempSync(path.join(os.tmpdir(), "boba-prepare-private-env-"));
+  try {
+    await assert.rejects(
+      () =>
+        runStagingPrepareCandidate(candidate, {
+          assertPreconditions: () => {},
+          gatherPreparation: () => validPreflightEvidence(),
+          materializeTree: () => "/tmp/boba-staging-prepare-private-env",
+          compose: () => {
+            composed = true;
+          },
+          readCommittedText: (_sha, rel) => {
+            if (rel === "compose.yaml") return composeFixture().replace("dockerfile: Dockerfile", "dockerfile: .env.runtime.docker.local");
+            if (rel === "Dockerfile") return "FROM scratch\n";
+            throw new Error(rel);
+          },
+          evidenceFile: path.join(directory, "evidence.json"),
+          removeDir: () => {},
+          log: () => {},
+        }),
+      /COMPOSE_BUILD_DOCKERFILE_UNBOUND|COMPOSE_BUILD_PRIVATE_ENV_DEPENDENCY/,
+    );
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
   assert.equal(composed, false);
 });
 

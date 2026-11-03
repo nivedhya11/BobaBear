@@ -27,7 +27,13 @@ export const CANDIDATE_BUILD_SERVICES = Object.freeze([
 ]);
 
 const AUTHORIZED_ARG_NAMES = new Set(AUTHORIZED_COMPOSE_BUILD_ARGS);
+const ALLOWED_BUILD_KEYS = new Set(["context", "dockerfile", "target", "args"]);
 const SECRET_ARG_NAME = /SECRET|PASSWORD|TOKEN|CREDENTIAL|PRIVATE_KEY|WEBHOOK|DATABASE_URL|ALLOW_UNSAFE/i;
+const PRIVATE_ENV_REFERENCE = /(?:^|[^\w])\.env(?:[^\w]|$)/;
+
+function containsPrivateEnvReference(text) {
+  return PRIVATE_ENV_REFERENCE.test(text);
+}
 
 /**
  * Refuse a path that is the operational staging secret directory or a file inside it.
@@ -105,30 +111,37 @@ export function evaluateCommittedComposeBuildIsolation(composeText) {
   for (const name of CANDIDATE_BUILD_SERVICES) {
     const blockLines = buildBlocks.get(name) ?? [];
     const text = blockLines.join("\n");
-    if (/\bsecrets\s*:/.test(text) || /\benv_file\s*:/.test(text) || text.includes(".env.staging")) {
+    if (containsPrivateEnvReference(text) || /\bsecrets\s*:/.test(text) || /\benv_file\s*:/.test(text)) {
       return refused(`COMPOSE_BUILD_PRIVATE_ENV_DEPENDENCY ${name}`);
     }
+    for (const variable of [...text.matchAll(/\$\{([A-Z0-9_]+)/g)].map((match) => match[1])) {
+      if (!AUTHORIZED_ARG_NAMES.has(variable) || SECRET_ARG_NAME.test(variable)) {
+        return refused(`COMPOSE_BUILD_INTERPOLATION_UNAUTHORIZED ${name} ${variable}`);
+      }
+    }
+    let context = null;
+    let dockerfile = null;
     /** @type {string[]} */
     const argNames = [];
     for (const line of blockLines) {
+      const key = /^      ([A-Za-z0-9_]+):\s*(.*)$/.exec(line);
+      if (key) {
+        if (!ALLOWED_BUILD_KEYS.has(key[1])) {
+          return refused(`COMPOSE_BUILD_KEY_UNAUTHORIZED ${name} ${key[1]}`);
+        }
+        const value = key[2].trim().replace(/^["']|["']$/g, "");
+        if (key[1] === "context") context = value;
+        if (key[1] === "dockerfile") dockerfile = value;
+      }
       const arg = /^        ([A-Z][A-Z0-9_]*):\s*(.*)$/.exec(line);
       if (!arg) continue;
-      const key = arg[1];
-      const value = arg[2];
-      if (!AUTHORIZED_ARG_NAMES.has(key) || SECRET_ARG_NAME.test(key)) {
-        return refused(`COMPOSE_BUILD_ARG_UNAUTHORIZED ${name} ${key}`);
+      if (!AUTHORIZED_ARG_NAMES.has(arg[1]) || SECRET_ARG_NAME.test(arg[1])) {
+        return refused(`COMPOSE_BUILD_ARG_UNAUTHORIZED ${name} ${arg[1]}`);
       }
-      if (value.includes(".env.staging") || value.includes(".env.runtime") || value.includes(".env.docker")) {
-        return refused(`COMPOSE_BUILD_ENV_FILE_REFERENCE ${name}`);
-      }
-      const interpolations = [...value.matchAll(/\$\{([A-Z0-9_]+)/g)].map((match) => match[1]);
-      for (const variable of interpolations) {
-        if (!AUTHORIZED_ARG_NAMES.has(variable) || SECRET_ARG_NAME.test(variable)) {
-          return refused(`COMPOSE_BUILD_INTERPOLATION_UNAUTHORIZED ${name} ${variable}`);
-        }
-      }
-      argNames.push(key);
+      argNames.push(arg[1]);
     }
+    if (context !== ".") return refused(`COMPOSE_BUILD_CONTEXT_UNBOUND ${name}`);
+    if (dockerfile !== "Dockerfile") return refused(`COMPOSE_BUILD_DOCKERFILE_UNBOUND ${name}`);
     if (!argNames.includes("BOBA_BUILD_SHA")) return refused(`COMPOSE_BUILD_SHA_UNBOUND ${name}`);
     argsByService[name] = argNames;
   }
@@ -150,11 +163,12 @@ export function evaluateCommittedDockerfileBuildIsolation(dockerfileText) {
   if (typeof dockerfileText !== "string" || dockerfileText.trim().length === 0) {
     return { ok: false, reason: "DOCKERFILE_UNREADABLE" };
   }
-  if (dockerfileText.includes(".env.staging")) {
-    return { ok: false, reason: "DOCKERFILE_PRIVATE_ENV_DEPENDENCY" };
-  }
-  if (/^\s*(?:COPY|ADD)\b.*(?:^|\s)\.env(?:\s|$)/m.test(dockerfileText)) {
-    return { ok: false, reason: "DOCKERFILE_PRIVATE_ENV_DEPENDENCY" };
+  for (const line of dockerfileText.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (trimmed.length === 0 || trimmed.startsWith("#")) continue;
+    if (containsPrivateEnvReference(trimmed)) {
+      return { ok: false, reason: "DOCKERFILE_PRIVATE_ENV_DEPENDENCY" };
+    }
   }
   return { ok: true, reason: null };
 }

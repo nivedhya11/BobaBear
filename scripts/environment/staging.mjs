@@ -1920,6 +1920,7 @@ export async function runStagingPrepareCandidate(candidate, deps = {}) {
   const buildDir = materializeTree(candidate.head);
   record("materializeCandidateArchive");
   try {
+    assertCandidateBuildInputsIsolated(candidate, deps);
     compose(buildDir, PREPARE_BUILD_ARGS, { BOBA_BUILD_SHA: candidate.head, COMPOSE_PROFILES: "tools" });
     record("composeBuildCandidate");
     const images = Object.values(BOBA_BUILD_IMAGES).map((name) => {
@@ -1965,6 +1966,26 @@ function scanImageOptions(candidate, deps, inspectImage) {
     trivyModule: deps.trivyModule,
     bin: deps.bin,
   };
+}
+
+function assertCandidateBuildInputsIsolated(candidate, deps = {}) {
+  const readCommittedText = deps.readCommittedText ?? ((sha, rel) => gitBytes(["show", `${sha}:${rel}`]));
+  let composeText;
+  let dockerfileText;
+  try {
+    composeText = readCommittedText(candidate.head, "compose.yaml");
+    dockerfileText = readCommittedText(candidate.head, "Dockerfile");
+  } catch {
+    throw new Error("COMPOSE_BUILD_SOURCE_UNREADABLE");
+  }
+  const composeIsolation = evaluateCommittedComposeBuildIsolation(composeText ?? "");
+  if (composeIsolation.ok !== true) {
+    throw new Error(composeIsolation.reason ?? "COMPOSE_BUILD_PRIVATE_ENV_DEPENDENCY");
+  }
+  const dockerfileIsolation = evaluateCommittedDockerfileBuildIsolation(dockerfileText ?? "");
+  if (dockerfileIsolation.ok !== true) {
+    throw new Error(dockerfileIsolation.reason ?? "DOCKERFILE_PRIVATE_ENV_DEPENDENCY");
+  }
 }
 
 function assertBuildDirectoryIsolated(buildDir) {
@@ -2169,6 +2190,7 @@ export async function runStagingPrepareCandidateBuildOnly(candidate, deps = {}) 
   /** @type {{ name: string, imageId: string, digest: string, revision: string }[]} */
   let images = [];
   try {
+    assertCandidateBuildInputsIsolated(candidate, deps);
     assertBuildDirectoryIsolated(buildDir);
     compose(buildDir, PREPARE_BUILD_ARGS, { BOBA_BUILD_SHA: candidate.head, COMPOSE_PROFILES: "tools" });
     record("composeBuildCandidate");

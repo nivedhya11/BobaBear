@@ -176,6 +176,10 @@ test("10. build-only triggers zero scan/deploy effects", async () => {
     compose: () => {},
     inspectImage: (name) => images.find((image) => image.name === name),
     inspectRevision: () => candidate.head,
+    readCommittedText: (_sha, rel) => {
+      if (rel === "compose.yaml" || rel === "Dockerfile") return readFileSync(path.join(repositoryRoot, rel), "utf8");
+      throw new Error(rel);
+    },
     scanImages: async () => {
       scanned = true;
       return { passed: true, reportSha256: "ab".repeat(32) };
@@ -386,6 +390,10 @@ test("20. existing prepare-candidate combined behavior does not silently drop sc
       compose: () => {},
       inspectImage: (name) => images.find((image) => image.name === name),
       scanImages: async () => ({ passed: true, reportSha256: "ab".repeat(32) }),
+      readCommittedText: (_sha, rel) => {
+        if (rel === "compose.yaml" || rel === "Dockerfile") return readFileSync(path.join(repositoryRoot, rel), "utf8");
+        throw new Error(rel);
+      },
       evidenceFile,
       removeDir: () => {},
       log: () => {},
