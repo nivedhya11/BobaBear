@@ -545,6 +545,7 @@
     "scripts/customer-otp-transport-assessment.test.mjs",
     "scripts/database/lib/migration-history.test.mjs",
     "scripts/database/lib/migration-integrity.test.mjs",
+    "scripts/database/testcontainers-host-publish.test.mjs",
     "scripts/decision-register-table.test.mjs",
     "scripts/docker-tool-command-wiring.test.mjs",
     "scripts/docker/customer-auth-inspect.test.mjs",
@@ -1993,6 +1994,23 @@
     },
     {
       "path": "scripts/database/lib/migration-integrity.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/database/testcontainers-host-publish.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
       "testType": "script-unit",

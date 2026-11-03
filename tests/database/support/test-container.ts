@@ -4,6 +4,12 @@
  * exactly `postgres:18.4-trixie`, on a dynamically-assigned host port, with
  * a runtime-only administrator password — never bound to the local Compose
  * database's fixed host port (5433), never reused across runs.
+ *
+ * Host publish is loopback-scoped (`127.0.0.1`). Installed
+ * `testcontainers@12.1.0` `PortWithBinding` has no `hostIp` field, so the
+ * PortBindings entry created by `withExposedPorts(5432)` is amended with
+ * `HostIp: "127.0.0.1"` before start. Random host port, no reuse, and
+ * explicit disposal are preserved.
  */
 import { randomBytes } from "node:crypto";
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
@@ -11,6 +17,7 @@ import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testconta
 export const POSTGRES_TEST_IMAGE = "postgres:18.4-trixie";
 export const TEST_ADMIN_USERNAME = "boba_bear_test_admin";
 export const TEST_ADMIN_DATABASE = "postgres";
+export const DISPOSABLE_POSTGRES_HOST_PUBLISH_IP = "127.0.0.1";
 
 export interface AdminConnectionInfo {
   /** Full `postgresql://` connection string for the container's runtime
@@ -25,6 +32,9 @@ export interface TestContainerHandle {
   stop(): Promise<void>;
 }
 
+type PortBinding = { HostIp?: string; HostPort: string };
+type MutableHostConfig = { PortBindings?: Record<string, PortBinding[]> };
+
 /** `@testcontainers/postgresql` builds connection URIs with the `postgres:`
  * scheme; the BOBA Bear configuration boundary (and `pg`) accept either, but
  * `validateDatabaseUrl` requires exactly `postgresql:` — normalize once here
@@ -35,10 +45,30 @@ function toPostgresqlScheme(connectionUri: string): string {
 }
 
 /**
+ * Scope the disposable Postgres host publish to loopback without fixing the
+ * host port. Compatible with testcontainers 12.1.0 (no PortWithBinding.hostIp).
+ */
+export function bindDisposablePostgresPublishToLoopback(
+  container: PostgreSqlContainer,
+): void {
+  const hostConfig = (container as unknown as { hostConfig: MutableHostConfig }).hostConfig;
+  const bindings = hostConfig.PortBindings?.["5432/tcp"];
+  if (!bindings?.length) {
+    throw new Error(
+      "PostgreSqlContainer must expose 5432/tcp before loopback host-publish binding can be applied.",
+    );
+  }
+  for (const binding of bindings) {
+    binding.HostIp = DISPOSABLE_POSTGRES_HOST_PUBLISH_IP;
+  }
+}
+
+/**
  * Start one disposable PostgreSQL 18 Testcontainers container. No fixed
  * name, no `.withReuse()`, no privileged mode, no host networking — a fresh
  * container every run, stopped explicitly by the caller (including on
- * failure).
+ * failure). Host publish is loopback-only; the mapped host port remains
+ * ephemeral.
  */
 export async function startPostgresTestContainer(): Promise<TestContainerHandle> {
   // Rootless Podman is the supported local runtime. Ryuk is deliberately not
@@ -49,7 +79,7 @@ export async function startPostgresTestContainer(): Promise<TestContainerHandle>
 
   let container: StartedPostgreSqlContainer;
   try {
-    container = await new PostgreSqlContainer(POSTGRES_TEST_IMAGE)
+    const pending = new PostgreSqlContainer(POSTGRES_TEST_IMAGE)
       .withUsername(TEST_ADMIN_USERNAME)
       .withPassword(password)
       .withDatabase(TEST_ADMIN_DATABASE)
@@ -57,8 +87,9 @@ export async function startPostgresTestContainer(): Promise<TestContainerHandle>
       .withLabels({
         "com.bobabear.environment": "test",
         "com.bobabear.lifecycle": "ephemeral",
-      })
-      .start();
+      });
+    bindDisposablePostgresPublishToLoopback(pending);
+    container = await pending.start();
   } catch (error) {
     throw new Error(
       "Could not start the PostgreSQL Testcontainers container. Rootless Podman WSL must be running and " +
