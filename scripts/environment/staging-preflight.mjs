@@ -19,7 +19,11 @@ import {
   syntheticIsolatedCheckpointFixture,
 } from "./staging-recovery-checkpoint.mjs";
 import { POSTGRES_INIT_DISPOSITION } from "./postgres-init-identity.mjs";
-import { syntheticBoundImages, sameBoundImages } from "./staging-image-security-evidence.mjs";
+import {
+  evaluateCandidateImageTagOwnership,
+  syntheticBoundImages,
+  sameBoundImages,
+} from "./staging-image-security-evidence.mjs";
 import { PROTECTED_PRIMARY_REPOSITORY } from "./staging-source-isolation.mjs";
 import {
   classifyPublishingIsolation,
@@ -55,6 +59,9 @@ export const PREFLIGHT_REASON = Object.freeze({
   SECURITY_EVIDENCE_MISSING: "SECURITY_EVIDENCE_MISSING",
   SECURITY_RISK_WAIVED: "SECURITY_RISK_WAIVED",
   IMAGE_SECURITY_NOT_BOUND: "IMAGE_SECURITY_NOT_BOUND",
+  IMAGE_OWNERSHIP_COLLISION: "IMAGE_OWNERSHIP_COLLISION",
+  BUILD_SETTINGS_INVALID: "BUILD_SETTINGS_INVALID",
+  PROTECTED_SESSION_IMPACT: "PROTECTED_SESSION_IMPACT",
   CAPACITY_OR_PRESERVATION_UNSAFE: "CAPACITY_OR_PRESERVATION_UNSAFE",
   POSTGRES_INIT_NOT_PRESERVABLE: "POSTGRES_INIT_NOT_PRESERVABLE",
   PROBE_FAILURE: "PROBE_FAILURE",
@@ -239,6 +246,51 @@ export function evaluateCandidatePreparationEligibility(evidence) {
   };
 }
 
+/**
+ * Build-only eligibility for inactive candidate images.
+ * Narrower than evaluateCandidatePreparationEligibility: does not require
+ * publishing/DNS/TLS/recovery/runtime-secret deployment readiness, and does not
+ * refuse a dirty protected checkout when isolated archive provenance is verified.
+ * Never authorizes deployment, scan PASS, or staging-image-security-v1 evidence.
+ * @param {unknown} evidence
+ */
+export function evaluateCandidateBuildEligibility(evidence) {
+  /** @type {PreflightFinding[]} */
+  const findings = [];
+  if (evidence == null || typeof evidence !== "object" || Array.isArray(evidence)) {
+    return {
+      outcome: "BLOCKED",
+      findings: [{ code: PREFLIGHT_REASON.EVIDENCE_MALFORMED, category: "meta", detail: "evidence object required" }],
+      deploymentAuthorized: false,
+      scanAuthorized: false,
+    };
+  }
+  const e = /** @type {Record<string, any>} */ (evidence);
+  if (PREPARATION_BYPASS_FLAGS.some((flag) => e[flag] === true)) {
+    findings.push({
+      code: PREFLIGHT_REASON.EVIDENCE_MALFORMED,
+      category: "meta",
+      detail: "operator ready/bypass flags are not authoritative and do not establish build eligibility",
+    });
+  }
+  const source = evaluateSourceForBuild(e.source, findings);
+  const buildSettings = evaluateBuildTimeSettings(e.environment, findings);
+  const imageOwnership = evaluateImageOwnership(e.imageOwnership, e.source?.head, findings);
+  const protectedSession = evaluateProtectedSessionSafety(e.protectedSession, findings);
+  const categoriesPass = [source, buildSettings, imageOwnership, protectedSession].every(
+    (value) => value === PREFLIGHT_OUTCOME.PASS,
+  );
+  const blocked =
+    !categoriesPass || findings.some((finding) => finding.code === PREFLIGHT_REASON.EVIDENCE_MALFORMED);
+  return {
+    outcome: blocked ? "BLOCKED" : "BUILD_ELIGIBLE",
+    findings,
+    categories: { source, buildSettings, imageOwnership, protectedSession },
+    deploymentAuthorized: false,
+    scanAuthorized: false,
+  };
+}
+
 function evaluateSource(source, findings) {
   if (!source || typeof source !== "object") {
     findings.push({
@@ -357,6 +409,241 @@ function evaluateSource(source, findings) {
     return PREFLIGHT_OUTCOME.BLOCKED;
   }
 
+  return PREFLIGHT_OUTCOME.PASS;
+}
+
+/**
+ * Build-only source gate. Unlike evaluateSource, a non-empty trackedDirty string is
+ * allowed when isolated archive provenance already proves WIP cannot enter the build.
+ */
+function evaluateSourceForBuild(source, findings) {
+  if (!source || typeof source !== "object") {
+    findings.push({
+      code: PREFLIGHT_REASON.SOURCE_AUTHORITY_INVALID,
+      category: "source",
+      detail: "missing source evidence",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+
+  if (source.repositoryIdentity !== EXPECTED_REPOSITORY_IDENTITY) {
+    findings.push({
+      code: PREFLIGHT_REASON.SOURCE_AUTHORITY_INVALID,
+      category: "source",
+      detail: "repositoryIdentity must be verified and exact",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+
+  if (source.branch !== "main") {
+    findings.push({
+      code: PREFLIGHT_REASON.SOURCE_AUTHORITY_INVALID,
+      category: "source",
+      detail: "branch must be exact main",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+
+  if (!isFullGitSha(source.head) || !isFullGitSha(source.originMain)) {
+    findings.push({
+      code: PREFLIGHT_REASON.SOURCE_SHA_TREE_DRIFT,
+      category: "source",
+      detail: "source head and origin-main must be exact full SHAs",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+
+  if (source.head !== source.originMain) {
+    findings.push({
+      code: PREFLIGHT_REASON.SOURCE_SHA_TREE_DRIFT,
+      category: "source",
+      detail: "source head must equal origin-main",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+
+  if (!isFullGitSha(source.tree) || !isFullGitSha(source.originMainTree)) {
+    findings.push({
+      code: PREFLIGHT_REASON.SOURCE_SHA_TREE_DRIFT,
+      category: "source",
+      detail: "candidate and authoritative trees must be present and valid full SHAs",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+
+  if (source.tree !== source.originMainTree) {
+    findings.push({
+      code: PREFLIGHT_REASON.SOURCE_SHA_TREE_DRIFT,
+      category: "source",
+      detail: "candidate tree must equal authoritative origin-main tree",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+
+  if (typeof source.trackedDirty !== "string") {
+    findings.push({
+      code: PREFLIGHT_REASON.SOURCE_DIRTY_OR_PROTECTED,
+      category: "source",
+      detail: "trackedDirty evidence must be explicitly known",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+
+  if (source.protectedCheckoutUsed !== false || source.artifactContextInsideProtectedRoot !== false) {
+    findings.push({
+      code: PREFLIGHT_REASON.SOURCE_DIRTY_OR_PROTECTED,
+      category: "source",
+      detail: "artifact context must be observed outside the protected checkout",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+
+  if (source.isolatedArtifactContextVerified !== true) {
+    findings.push({
+      code: PREFLIGHT_REASON.SOURCE_DIRTY_OR_PROTECTED,
+      category: "source",
+      detail: "isolated git-archive context was not verified",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+
+  if (source.authoritativeSourceRoot !== PROTECTED_PRIMARY_REPOSITORY) {
+    findings.push({
+      code: PREFLIGHT_REASON.SOURCE_AUTHORITY_INVALID,
+      category: "source",
+      detail: "authoritative source root must be the canonical repository",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+
+  if (source.githubMainMatchesHead !== true) {
+    findings.push({
+      code: PREFLIGHT_REASON.SOURCE_SHA_TREE_DRIFT,
+      category: "source",
+      detail: "pinned GitHub main must equal the candidate head",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+
+  return PREFLIGHT_OUTCOME.PASS;
+}
+
+/**
+ * Narrow build-time public settings. Does not require projectedConfigValid,
+ * public DNS/TLS, payment isolation, or full runtime secret readiness.
+ */
+function evaluateBuildTimeSettings(environment, findings) {
+  if (!environment || typeof environment !== "object") {
+    findings.push({
+      code: PREFLIGHT_REASON.BUILD_SETTINGS_INVALID,
+      category: "buildSettings",
+      detail: "missing build-time settings evidence",
+    });
+    return PREFLIGHT_OUTCOME.UNKNOWN;
+  }
+  if (environment.projectedConfigState === "UNKNOWN" || environment.unsafeAdaptersExplicitlyFalse == null) {
+    findings.push({
+      code: PREFLIGHT_REASON.BUILD_SETTINGS_INVALID,
+      category: "buildSettings",
+      detail: "build-time adapter settings must be positively known",
+    });
+    return PREFLIGHT_OUTCOME.UNKNOWN;
+  }
+  if (environment.secretsPrinted == null) {
+    findings.push({
+      code: PREFLIGHT_REASON.BUILD_SETTINGS_INVALID,
+      category: "buildSettings",
+      detail: "secretsPrinted evidence must be explicitly known",
+    });
+    return PREFLIGHT_OUTCOME.UNKNOWN;
+  }
+  if (environment.unsafeAdaptersExplicitlyFalse !== true || environment.secretsPrinted !== false) {
+    findings.push({
+      code: PREFLIGHT_REASON.BUILD_SETTINGS_INVALID,
+      category: "buildSettings",
+      detail: "unsafe adapters must be explicitly false and secrets must not be printed",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+  return PREFLIGHT_OUTCOME.PASS;
+}
+
+/**
+ * Existing candidate tags may be absent or already owned by this exact SHA.
+ * Foreign or unlabeled tags block overwrite.
+ */
+function evaluateImageOwnership(imageOwnership, expectedSha, findings) {
+  if (!imageOwnership || typeof imageOwnership !== "object") {
+    findings.push({
+      code: PREFLIGHT_REASON.IMAGE_OWNERSHIP_COLLISION,
+      category: "imageOwnership",
+      detail: "missing image ownership evidence",
+    });
+    return PREFLIGHT_OUTCOME.UNKNOWN;
+  }
+  if (imageOwnership.evidenceComplete !== true || !Array.isArray(imageOwnership.observations)) {
+    findings.push({
+      code: PREFLIGHT_REASON.IMAGE_OWNERSHIP_COLLISION,
+      category: "imageOwnership",
+      detail: "image ownership observations incomplete",
+    });
+    return PREFLIGHT_OUTCOME.UNKNOWN;
+  }
+  if (!isFullGitSha(expectedSha)) {
+    findings.push({
+      code: PREFLIGHT_REASON.IMAGE_OWNERSHIP_COLLISION,
+      category: "imageOwnership",
+      detail: "expected candidate SHA must be a full Git SHA",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+  const ownership = evaluateCandidateImageTagOwnership({
+    expectedSha,
+    observations: imageOwnership.observations,
+  });
+  if (ownership.ok !== true) {
+    findings.push({
+      code: PREFLIGHT_REASON.IMAGE_OWNERSHIP_COLLISION,
+      category: "imageOwnership",
+      detail: ownership.detail ?? "candidate image ownership refused",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+  return PREFLIGHT_OUTCOME.PASS;
+}
+
+/**
+ * Build-only must not target or mutate a protected attended XR-010 session.
+ */
+function evaluateProtectedSessionSafety(protectedSession, findings) {
+  if (!protectedSession || typeof protectedSession !== "object") {
+    findings.push({
+      code: PREFLIGHT_REASON.PROTECTED_SESSION_IMPACT,
+      category: "protectedSession",
+      detail: "missing protected-session safety evidence",
+    });
+    return PREFLIGHT_OUTCOME.UNKNOWN;
+  }
+  if (protectedSession.evidenceComplete !== true) {
+    findings.push({
+      code: PREFLIGHT_REASON.PROTECTED_SESSION_IMPACT,
+      category: "protectedSession",
+      detail: "protected-session evidence incomplete",
+    });
+    return PREFLIGHT_OUTCOME.UNKNOWN;
+  }
+  if (
+    protectedSession.composeProject !== "boba-staging" ||
+    protectedSession.protectedSessionImpact !== false ||
+    protectedSession.xr010ProjectCollision !== false
+  ) {
+    findings.push({
+      code: PREFLIGHT_REASON.PROTECTED_SESSION_IMPACT,
+      category: "protectedSession",
+      detail: "build must target boba-staging without XR-010 collision",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
   return PREFLIGHT_OUTCOME.PASS;
 }
 
@@ -936,6 +1223,25 @@ export function validPreflightEvidence(overrides = {}) {
       paymentIsolation: "DISABLED",
       ...(overrides.environment ?? {}),
     },
+    imageOwnership: {
+      evidenceComplete: true,
+      observations: [
+        { name: "boba-bear-app:local", present: false, revision: null },
+        { name: "boba-bear-customer-auth:local", present: false, revision: null },
+        { name: "boba-bear-workforce-auth:local", present: false, revision: null },
+        { name: "boba-bear-customer-commerce:local", present: false, revision: null },
+        { name: "boba-bear-operations:local", present: false, revision: null },
+        { name: "boba-bear-tooling:local", present: false, revision: null },
+      ],
+      ...(overrides.imageOwnership ?? {}),
+    },
+    protectedSession: {
+      evidenceComplete: true,
+      composeProject: "boba-staging",
+      protectedSessionImpact: false,
+      xr010ProjectCollision: false,
+      ...(overrides.protectedSession ?? {}),
+    },
     database: {
       migrationIdentityKnown: true,
       migrationLedgerState: "APPLIED_CURRENT",
@@ -990,6 +1296,8 @@ export function validPreflightEvidence(overrides = {}) {
           "publishing",
           "runtime",
           "environment",
+          "imageOwnership",
+          "protectedSession",
           "database",
           "recovery",
           "security",
