@@ -9,11 +9,13 @@ PHASE = 1 (remote/source/CI/log/document review ONLY)
 WORKTREE = /home/ajoshi/repos/boba-bear-wave-r1-b-sec
 BRANCH = wave-r1-b-security-c1-20261103
 BASELINE_SHA = a7026d2c80d2cfaf9184489a2dbf24b9698772b0
-HEAD_SHA = (post-commit on wave-r1-b-security-c1-20261103; baseline ancestor a7026d2c)
+HEAD_SHA = SEE_SECTION_8_AFTER_R2_PUSH
 DATE = 2026-11-03
 STATUS = COMPLETE (evidence delta; no merge; no runtime mutation)
 XR010_SESSION_UNTOUCHED = YES
-PR_PREPARED = PENDING_COORDINATOR_HOLD_PR
+PR = https://github.com/nivedhya11/BobaBear/pull/542
+PR_STATE = OPEN draft / MERGE HOLD
+PR_PREPARED = YES (held; not merge-authorized)
 ```
 
 Anti-hallucination vocabulary used below: `VERIFIED` | `KNOWN` | `INFERRED` | `ASSUMED` | `UNVERIFIED` | `NOT_FOUND` | `CONFLICT`.
@@ -28,18 +30,20 @@ This artifact is **evidence input**, not acceptance, staging readiness, Founder 
 ALIGNMENT_GATE (compact)
 
 Repository Authority: VERIFIED (/home/ajoshi/repos/boba-bear-wave-r1-b-sec)
-Branch / HEAD: wave-r1-b-security-c1-20261103 @ a7026d2c80d2cfaf9184489a2dbf24b9698772b0
+Branch: wave-r1-b-security-c1-20261103
+Baseline (origin/main merge-base): a7026d2c80d2cfaf9184489a2dbf24b9698772b0
+Branch HEAD: see §8 after each docs commit (docs tip ≠ baseline)
 Accepted Through: IMP-036I (ROADMAP/STATE)
 Current Product Slice: IMP-036J (pendingAcceptance; Founder UAT NOT_PERFORMED)
-Task: Security C1 / Trivy / Compose host-publish decision delta (Lane B)
+Task: Security C1 / Trivy / Compose host-publish decision delta (Lane B) + R2 metadata correction
 MAY MODIFY: this evidence markdown under docs/platform/operations/evidence/
 MUST NOT MODIFY: XR-010 resources; primary checkout; attended worktree; ports 8179/8183/4175;
   Podman projects/volumes; staging secrets; held PR merges; production; scanner pin; .trivyignore;
   exception register; live Compose/runtime
 EXPLICITLY OUT OF SCOPE: Trivy rebuild affecting owner runtime; DB/volume migration; C2 chown;
-  VEX renewal/bypass; Founder UAT; IMP-036K
-Risk: R2 analysis / R0 mutation of evidence only
-DELIVERY_MODE: LOCAL_ONLY evidence (no PUBLISH_PR this lane)
+  VEX renewal/bypass; Founder UAT; IMP-036K; merge of #428; container scans on attended env
+Risk: R2 documentation correction
+DELIVERY_MODE: PUBLISH_PR (docs-only amendments onto held #542; merge not authorized)
 Gate Result: PASS for documentation-only write
 PROMPT DEVIATIONS: NONE
 ```
@@ -54,7 +58,7 @@ PROMPT DEVIATIONS: NONE
 | Production non-root PostgreSQL (C1 source) | **Already on `main`** via merged [#485](https://github.com/nivedhya11/BobaBear/pull/485) (`USER postgres`, root refusal, VEX-TRIVY-001 retired) | `VERIFIED` in baseline tree + merge commit `75f8d932802c7485f76b6766998f70c5d2a8417d` |
 | Compose PostgreSQL loopback (#428) | **Still HELD / unmerged**; baseline `compose.yaml` still publishes `${POSTGRES_HOST_PORT:-5433}:5432` (all-interfaces) | Source posture: `VERIFIED`. Live listener exposure: `UNVERIFIED` (not probed) |
 | Testcontainers loopback (#539) | **MERGED into baseline** `a7026d2c`; disposable harness only — **does not** replace #428 | `VERIFIED` |
-| Six-image CI Trivy on baseline | Security SDLC SUCCESS; Trivy **0.69.3**; **6/6** `PASS: trivy image scan`; aggregate “no unexcepted CRITICAL/HIGH”; **0 active container exceptions** | Gate outcome: `VERIFIED`. Exact OCI image digests of scanned artifacts: `UNKNOWN`. Unfixed CVE census: `UNKNOWN` for this run (gate uses `--ignore-unfixed`) |
+| Six-image CI Trivy on baseline | Security SDLC SUCCESS; Trivy **0.69.3**; **6/6** `PASS: trivy image scan`; aggregate “no unexcepted CRITICAL/HIGH”; **0 active container exceptions** | **CI image-scanning PASS only** (`VERIFIED`). Exact OCI digests of scanned CI artifacts: `UNKNOWN`. Staging/deploy artifact safety: **`UNVERIFIED` / not cleared** by CI PASS. Unfixed CVE census: `UNKNOWN` (gate uses `--ignore-unfixed`) |
 | Docker Engine C1 equivalence | Still `UNVERIFIED` (historical C1 reports: Docker CLI absent) | `UNVERIFIED` |
 | Existing-volume C1 cutover / C2 | Not authorized; selection of migration strategy still Founder RED | `KNOWN` from #447 / #444 holds |
 
@@ -247,7 +251,15 @@ REQUIRED_BEFORE_MODE_FIX = explicit Founder scoped approval + lstat-verified pat
 | Existing-volume C1 cutover / C2 initializer | Out of scope; C2 not selected default | Explicit RED product/ops decision |
 | Close #409 | Only after staging/deploy artifact gate disposition | Founder |
 
-**PR prepared by this lane: `NONE`.**
+**PR for this evidence delta:** [#542](https://github.com/nivedhya11/BobaBear/pull/542) — **OPEN draft / MERGE HOLD**. Does **not** authorize merge of #428, C1/C2 cutover, VEX/scanner policy changes, or staging Trivy of live artifacts.
+
+```text
+CI_IMAGE_SCAN_PASS ≠ STAGING_ARTIFACT_SAFETY
+STAGING_ARTIFACT_TRIVY = UNVERIFIED
+#428_MERGE = NOT_AUTHORIZED_BY_THIS_PR
+CONTAINER_SCAN_ON_ATTENDED_ENV = NOT_PERFORMED
+SECURITY_EXCEPTION_MUTATION = NOT_PERFORMED
+```
 
 ---
 
@@ -279,12 +291,30 @@ Non-decisions (do **not** ask agents to self-grant): XR-010 PASS, Founder UAT, I
 ## 8. Lane confirmation
 
 ```text
-HEAD_SHA = (post-commit on wave-r1-b-security-c1-20261103; baseline ancestor a7026d2c)
+BASELINE_SHA = a7026d2c80d2cfaf9184489a2dbf24b9698772b0
 BRANCH = wave-r1-b-security-c1-20261103
-DELTA_PATH = docs/platform/operations/evidence/BOBA_SECURITY_C1_TRIVY_DECISION_DELTA-20261103.md
-PR_URL = NONE
+HEAD_SHA = SEE_AFTER_COMMIT
+DELTA_PATH = docs/platform/operations/evidence/security-c1-trivy-decision-delta.md
+PR_URL = https://github.com/nivedhya11/BobaBear/pull/542
+PR_STATE = OPEN draft / MERGE HOLD
 XR010_SESSION_UNTOUCHED = YES
 HOST_RUNTIME_MUTATION = NO
 HELD_PR_MERGES = NONE
+#428_NOT_MERGED = YES
+ATTENDED_ENV_CONTAINER_SCAN = NOT_PERFORMED
+SECURITY_EXCEPTIONS_UNCHANGED = YES
+CI_PASS_VS_STAGING_ARTIFACT_SAFETY = DISTINCTION_PRESERVED
 STATUS = COMPLETE
+```
+
+---
+
+## 9. R2 metadata correction (2026-11-03)
+
+Replaced pre-publication placeholders (`HEAD_SHA` parenthetical, `PR_PREPARED=PENDING`, `PR_URL=NONE`, wrong `DELTA_PATH` filename, alignment gate treating branch HEAD as baseline) with actual PR/ref/status. No change to Trivy/C1/C2 substance, `#428` HOLD, exception register, or scanner policy.
+
+```text
+R2_CORRECTION = METADATA_ONLY
+SUBSTANTIVE_SECURITY_DISPOSITION_CHANGE = NONE
+PROMPT DEVIATIONS: NONE
 ```
