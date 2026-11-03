@@ -56,11 +56,11 @@ Severity is proposed for Founder triage only. It is not a conversion claim and n
 | Severity | **P0 launch-trust** (proposed) |
 | Journey | Scheduled ordering → Confirmation / My Orders → Cancellation |
 | Class | **Bug / incomplete customer surface** relative to accepted IMP-036I server capability (not a future redesign idea) |
-| Evidence class | `VERIFIED` source gap on `a7026d2c` |
+| Evidence class | `VERIFIED` **source** promise↔surface mismatch on `a7026d2c`. Interactive / live-browser Founder UAT of cancel = **not performed** this wave (`UNVERIFIED` runtime). |
 | Provenance | `CheckoutTimingChoice.tsx` renders “Self-service cancellation for this scheduled order closes {N} minutes before the window starts.” Server: `cancelCustomerScheduledOrder` + `POST /api/v1/orders/{orderId}/cancel` in `customer-commerce/http/router.ts`. Customer client `src/lib/customer-commerce/orders.ts` exports only `listCustomerOrders` / `getCustomerOrder` — **no cancel wrapper** (`NOT_FOUND`). `OrderDetailClient.tsx` exposes status, fulfilment, money, financial docs, and `OrderSupportAction` (WhatsApp/Email/Call) only — **no Cancel control**. `OrderConfirmationClient.tsx` has no cancellation guidance beyond load lifecycle. `commerceErrorCopy` omits `ORDER_CANCEL_CUTOFF_CLOSED` / `ORDER_CANCEL_NOT_ALLOWED` (present in shared order errors / HTTP error-map). |
 | Impact hypothesis | Customer is told self-service cancellation exists at timing choice, then after pay can only contact support. Operational-promise integrity risk under EXP-1 Cancellation / Errors-recovery. |
-| Untested | Interactive cancel eligibility against a live scheduled order = `UNVERIFIED` (Phase 1; no E2E). |
-| Recommended change | Product/Experience disposition: wire customer cancel UI + client to existing API with cutoff-closed recovery copy, **or** remove/soften Checkout timing promise until the surface exists. Not authorized here. |
+| Untested | Interactive cancel eligibility against a live scheduled order = `UNVERIFIED` (Phase 1; no E2E; **no interactive UAT claimed**). |
+| Recommended change | Product/Experience disposition: wire customer cancel UI + client to existing API with cutoff-closed recovery copy, **or** Founder/Product/Content explicitly approve honest promise changes until the surface exists. Do not silently alter accepted cancellation policy. Not authorized here. |
 | Owner / next gate | Customer Product + IMP-036I residual owner; Content QA for promise wording; Founder triage before any IMP-040 audit claim. Not IMP-036K. |
 | Disposition candidate | `OPEN` |
 
@@ -68,14 +68,14 @@ Severity is proposed for Founder triage only. It is not a conversion claim and n
 
 | Field | Value |
 |---|---|
-| Severity | **P0 trust / legal-language** (proposed) |
+| Severity | **P0 trust / legal-language** (proposed) — **conditional** on GA being active in the **deployed** build |
 | Journey | Home / any customer layout page → Privacy; measurement readiness |
-| Class | **Content accuracy / experience debt** (possible `CONFLICT` if GA env is set in a live deploy) |
-| Evidence class | `VERIFIED` source capability + privacy text; live env enablement = `UNVERIFIED` |
-| Provenance | `/privacy` states: “We do not use advertising or third-party tracking cookies…” (`privacy/page.tsx`, LAST_UPDATED 19 August 2026). Customer layout mounts `<Analytics />` (`app/(customer)/layout.tsx`). `Analytics.tsx` loads `googletagmanager.com/gtag/js` whenever `NEXT_PUBLIC_GA_MEASUREMENT_ID` is non-empty. `.env.example` ships `NEXT_PUBLIC_GA_MEASUREMENT_ID=G-CFR3M3J59V`. No cookie/CMP consent banner in `src/` (`NOT_FOUND`). |
-| Impact hypothesis | If GA is enabled in any public environment, privacy language is false. If GA is disabled everywhere, marketing measurement for GTM still lacks an honest disclosure path. |
-| Untested | Actual staging/production env value and network calls = `UNVERIFIED` (no deploy access this lane). |
-| Recommended change | Founder/legal disposition: align privacy + GA (disable GA until policy updated, or update privacy + add consent before load). Measurement plan must name marketing vs commercial writers. |
+| Class | **Content accuracy / experience debt**. Live tracking incident = **not verified**. `CONFLICT` only if `NEXT_PUBLIC_GA_MEASUREMENT_ID` is non-empty in that deployed build. |
+| Evidence class | `VERIFIED` source capability + privacy text; live env enablement / network calls = `UNVERIFIED` |
+| Provenance | `/privacy` states: “We do not use advertising or third-party tracking cookies…” (`privacy/page.tsx`, LAST_UPDATED 19 August 2026). Customer layout mounts `<Analytics />` (`app/(customer)/layout.tsx`). `Analytics.tsx` returns `null` when `NEXT_PUBLIC_GA_MEASUREMENT_ID` is empty; loads `googletagmanager.com/gtag/js` only when the id is non-empty. `.env.example` ships `NEXT_PUBLIC_GA_MEASUREMENT_ID=G-CFR3M3J59V` (example only — not proof of a live deploy). No cookie/CMP consent banner in `src/` (`NOT_FOUND`). Existing Founder **A0 GA OFF** applies to restricted pre-UAT; it is **not** proof GA is disabled on every published route. |
+| Impact hypothesis | **If** GA is enabled in a published build, privacy language is false. **If** GA remains disabled everywhere that build ships, this is a latent readiness/disclosure gap, not a demonstrated unlawful-cookie incident. |
+| Untested | Actual staging/production env value and network calls = `UNVERIFIED` (no deploy access this lane; **do not claim currently unlawful cookies without runtime proof**). |
+| Recommended change | Founder/legal disposition: retain GA OFF for staging/pre-UAT; verify real published-build behaviour before enabling analytics; align privacy + consent/CMP before any future enablement. Measurement plan must name marketing vs commercial writers. |
 | Owner / next gate | Privacy/Content owner + Product Language; separate from UOE MI. Blocks honest `PRE_GTM_…_INSTRUMENTATION_AUDIT` closure. |
 | Disposition candidate | `OPEN` |
 
@@ -110,20 +110,20 @@ Severity is proposed for Founder triage only. It is not a conversion claim and n
 | UOE QT/MI residual link | Design table “Serviceability vs eligibility / Orientation is not Deliver to” in #456; AS-14 PLANNED. |
 | Disposition candidate | `OPEN` |
 
-### CX-P5 — Offers journey has no discovery surface outside Cart
+### CX-P5 — Missing pre-cart Offers discovery (Cart/Checkout/Payment already expose offers)
 
 | Field | Value |
 |---|---|
 | Severity | **P1 discoverability** (proposed) |
-| Journey | Offers / Cart |
-| Class | **Experience debt** (accepted coupon stack exists; discovery surface absent) |
-| Evidence class | `VERIFIED` nav/routing; offer effectiveness = `UNVERIFIED` |
-| Provenance | Primary nav destinations: Menu, Drops, Sign In / My BOBA, Cart (`Nav.tsx`). No Offers/Deals customer route under `src/app/(customer)/order/` (`NOT_FOUND`). Coupon apply + `CommercialOfferStack` live inside `CartClient.tsx` only. |
-| Impact hypothesis | EXP-1 pre-GTM scope lists Offers as a required audit journey; customers must already know a code or reach Cart to see offer stack. |
+| Journey | Pre-cart Offers discovery → Cart → Checkout → Payment |
+| Class | **Experience debt** — pre-cart discoverability gap only (not “offers exist only in Cart”) |
+| Evidence class | `VERIFIED` nav/routing + in-journey offer surfaces on `a7026d2c`; offer effectiveness = `UNVERIFIED` |
+| Provenance | Primary nav destinations: Menu, Drops, Sign In / My BOBA, Cart (`Nav.tsx`). No Offers/Deals customer route under `src/app/(customer)/order/` (`NOT_FOUND` — no Deals/Offers discovery route added). **In-journey offer surfaces already present:** `CartClient.tsx` renders `CommercialOfferStack` + interactive `CouponField`; `CheckoutClient.tsx` renders `CommercialOfferStack` + interactive `CouponField` (apply/remove); `PaymentPanel.tsx` renders `CommercialOfferStack` (**display** of applied/available commercial offers — no separate `CouponField` on Payment). Prior “Cart-only Offers” / Cart-only audit-exception wording was **incorrect** and is withdrawn. |
+| Impact hypothesis | EXP-1 pre-GTM scope lists Offers as a required audit journey. Customers can apply/see offers once in Cart/Checkout (and see the stack at Payment), but lack a **pre-cart** Offers discovery surface in nav/IA. |
 | Untested | Whether marketing Home/Drops copy currently carries codes = partial `UNVERIFIED` without browser. |
-| Recommended change | Product disposition: keep Cart-only Offers for GTM with explicit audit exception, or schedule governed Offers discovery surface under #379 / offers discovery docs — not shadow IMP-036K. |
+| Recommended change | Product disposition: accept GTM without a pre-cart Offers/Deals route (with an explicit **pre-cart discovery** audit note — not a Cart-only exception), or schedule a governed pre-cart Offers discovery surface under #379 / offers discovery docs. **Do not** add an unapproved Deals/Offers route from this note; not shadow IMP-036K. |
 | Owner / next gate | Customer Product / #379; coupon correctness remains IMP-036J / #381/#384 lanes. |
-| Disposition candidate | `OPEN` |
+| Disposition candidate | `OPEN` (narrowed to pre-cart discovery) |
 
 ### CX-P6 — “Customize / Make it yours” capability empty on static seed catalog
 
@@ -204,11 +204,11 @@ Main-tree CX findings CX-P1..P8 do **not** grant or deny those UOE gates.
 
 ## 4. Suggested Founder triage order
 
-1. **CX-P1** — cancel promise vs missing customer surface (trust-critical, server already exists).
-2. **CX-P2** — privacy ↔ GA honesty before any public measurement enablement.
+1. **CX-P1** — cancel promise vs missing customer surface (trust-critical, server already exists; source mismatch demonstrated; interactive UAT not claimed).
+2. **CX-P2** — privacy ↔ GA honesty **if/when** GA is active in a deployed build; verify published-build behaviour before enablement (not a verified live tracking incident).
 3. **CX-P3** / **CX-P7** — instrumentation audit posture + EDR still not performed.
 4. **CX-P4** / UOE orientation residual — with #456 Design packet, not a silent main hotfix claim.
-5. **CX-P5**, **CX-P6**, **CX-P8** — discoverability / customization / refund disposition for GTM scope.
+5. **CX-P5**, **CX-P6**, **CX-P8** — **pre-cart** Offers discovery / customization / refund disposition for GTM scope (Cart/Checkout/Payment offer surfaces already exist).
 
 ```text
 FOUNDER_AUDIT_EVIDENCE_DISPOSITION = AUDIT_EVIDENCE_INCOMPLETE
@@ -234,4 +234,25 @@ UOE_OR_WXE_GATE_CLAIMED = NO
 IMP036K_ACTIVATED_CLAIM = NO
 XR010_SESSION_UNTOUCHED = YES
 STATUS = COMPLETE
+```
+
+---
+
+## 6. R2 correction (2026-11-03) — Codex CX-P5 + CX-P1/P2 clarification
+
+Addresses unresolved Codex review thread on PR [#541](https://github.com/nivedhya11/BobaBear/pull/541#discussion_r4446841605).
+
+| Item | Correction |
+|---|---|
+| CX-P5 | Narrowed to **missing pre-cart Offers discovery**. Documented existing `CheckoutClient` `CommercialOfferStack` + `CouponField`, and `PaymentPanel` `CommercialOfferStack`. Withdrew incorrect “Cart-only Offers” / Cart-only audit exception. |
+| CX-P2 | Marked **conditional** on GA active in the deployed build; not a verified live tracking incident; A0 GA OFF ≠ proof for every published route. |
+| CX-P1 | Retained demonstrated **source** cancellation-promise mismatch; explicitly **no interactive UAT claimed**. |
+
+```text
+CODEX_CX_P5_FINDING = ADDRESSED_IN_SOURCE
+CART_ONLY_OFFERS_CLAIM = WITHDRAWN
+UNAPPROVED_DEALS_ROUTE = NOT_ADDED
+INTERACTIVE_UAT_CLAIMED = NO
+R2_DOCS_ONLY = YES
+PROMPT_DEVIATIONS = NONE
 ```
