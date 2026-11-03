@@ -27,7 +27,6 @@ export const CANDIDATE_BUILD_SERVICES = Object.freeze([
 ]);
 
 const AUTHORIZED_ARG_NAMES = new Set(AUTHORIZED_COMPOSE_BUILD_ARGS);
-const ALLOWED_BUILD_KEYS = new Set(["context", "dockerfile", "target", "args"]);
 const SECRET_ARG_NAME = /SECRET|PASSWORD|TOKEN|CREDENTIAL|PRIVATE_KEY|WEBHOOK|DATABASE_URL|ALLOW_UNSAFE/i;
 const PRIVATE_ENV_REFERENCE = /(?:^|[^\w])\.env(?:[^\w]|$)/;
 
@@ -87,6 +86,9 @@ export function evaluateCommittedComposeBuildIsolation(composeText) {
       continue;
     }
     if (!service) continue;
+    if (CANDIDATE_BUILD_SERVICES.includes(service) && /^    build:\s+\S/.test(line)) {
+      return refused(`COMPOSE_BUILD_LINE_UNAUTHORIZED ${service}`);
+    }
     if (/^    build:\s*$/.test(line)) {
       inBuild = true;
       block = [];
@@ -124,21 +126,24 @@ export function evaluateCommittedComposeBuildIsolation(composeText) {
     /** @type {string[]} */
     const argNames = [];
     for (const line of blockLines) {
-      const key = /^      ([A-Za-z0-9_]+):\s*(.*)$/.exec(line);
-      if (key) {
-        if (!ALLOWED_BUILD_KEYS.has(key[1])) {
-          return refused(`COMPOSE_BUILD_KEY_UNAUTHORIZED ${name} ${key[1]}`);
+      if (/^      context: \.$/.test(line)) {
+        context = ".";
+        continue;
+      }
+      if (/^      dockerfile: Dockerfile$/.test(line)) {
+        dockerfile = "Dockerfile";
+        continue;
+      }
+      if (/^      target: [a-z0-9-]+$/.test(line) || /^      args:$/.test(line)) continue;
+      const arg = /^        ([A-Z][A-Z0-9_]*):[ \t]+(.*)$/.exec(line);
+      if (arg) {
+        if (!AUTHORIZED_ARG_NAMES.has(arg[1]) || SECRET_ARG_NAME.test(arg[1])) {
+          return refused(`COMPOSE_BUILD_ARG_UNAUTHORIZED ${name} ${arg[1]}`);
         }
-        const value = key[2].trim().replace(/^["']|["']$/g, "");
-        if (key[1] === "context") context = value;
-        if (key[1] === "dockerfile") dockerfile = value;
+        argNames.push(arg[1]);
+        continue;
       }
-      const arg = /^        ([A-Z][A-Z0-9_]*):\s*(.*)$/.exec(line);
-      if (!arg) continue;
-      if (!AUTHORIZED_ARG_NAMES.has(arg[1]) || SECRET_ARG_NAME.test(arg[1])) {
-        return refused(`COMPOSE_BUILD_ARG_UNAUTHORIZED ${name} ${arg[1]}`);
-      }
-      argNames.push(arg[1]);
+      return refused(`COMPOSE_BUILD_LINE_UNAUTHORIZED ${name}`);
     }
     if (context !== ".") return refused(`COMPOSE_BUILD_CONTEXT_UNBOUND ${name}`);
     if (dockerfile !== "Dockerfile") return refused(`COMPOSE_BUILD_DOCKERFILE_UNBOUND ${name}`);

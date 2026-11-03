@@ -456,6 +456,12 @@ test("indirect private env build references fail closed", () => {
   assert.equal(evaluateCommittedDockerfileBuildIsolation("COPY config/.env /app/.env\n").ok, false);
   assert.equal(evaluateCommittedDockerfileBuildIsolation("RUN cp .env.docker.local /tmp/env\n").ok, false);
   assert.equal(evaluateCommittedDockerfileBuildIsolation("# no `.env` file is copied\nCOPY scripts/environment/staging-baseline-classify.ts ./\n").ok, true);
+  assert.equal(evaluateCommittedComposeBuildIsolation(composeFixture("      <<: *hidden\n")).ok, false);
+  assert.equal(evaluateCommittedComposeBuildIsolation(composeFixture('      "additional_contexts":\n')).ok, false);
+  assert.equal(
+    evaluateCommittedComposeBuildIsolation(composeFixture().replace("    build:\n", "    build: *hidden\n")).ok,
+    false,
+  );
 });
 
 test("combined preparation refuses a private-env build input before compose", async () => {
