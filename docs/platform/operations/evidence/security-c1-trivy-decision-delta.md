@@ -9,7 +9,7 @@ PHASE = 1 (remote/source/CI/log/document review ONLY)
 WORKTREE = /home/ajoshi/repos/boba-bear-wave-r1-b-sec
 BRANCH = wave-r1-b-security-c1-20261103
 BASELINE_SHA = a7026d2c80d2cfaf9184489a2dbf24b9698772b0
-HEAD_SHA = SEE_SECTION_8_AFTER_R2_PUSH
+HEAD_SHA = e1ec4bdecef96ee59c3bc71170c03822f4f94264
 DATE = 2026-11-03
 STATUS = COMPLETE (evidence delta; no merge; no runtime mutation)
 XR010_SESSION_UNTOUCHED = YES
@@ -293,7 +293,7 @@ Non-decisions (do **not** ask agents to self-grant): XR-010 PASS, Founder UAT, I
 ```text
 BASELINE_SHA = a7026d2c80d2cfaf9184489a2dbf24b9698772b0
 BRANCH = wave-r1-b-security-c1-20261103
-HEAD_SHA = SEE_AFTER_COMMIT
+HEAD_SHA = e1ec4bdecef96ee59c3bc71170c03822f4f94264
 DELTA_PATH = docs/platform/operations/evidence/security-c1-trivy-decision-delta.md
 PR_URL = https://github.com/nivedhya11/BobaBear/pull/542
 PR_STATE = OPEN draft / MERGE HOLD
