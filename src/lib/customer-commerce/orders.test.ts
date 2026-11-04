@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { getCustomerOrder, listCustomerOrders } from "./orders";
+import {
+  cancelCustomerScheduledOrder,
+  getCustomerOrder,
+  listCustomerOrders,
+} from "./orders";
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -102,6 +106,80 @@ describe("order client", () => {
       code: "ORDER_NOT_FOUND",
       requestId: "req-o",
       status: 404,
+    });
+  });
+
+  it("posts scheduled self-service cancel with expected revision", async () => {
+    const fetchMock = vi.fn(async () =>
+      jsonResponse({
+        ok: true,
+        order: {
+          orderId: summary.orderId,
+          orderNumber: summary.orderNumber,
+          status: "CANCELLED",
+          revision: "2",
+          cancelledAt: "2026-08-13T00:30:00.000Z",
+          cancellationReasonCode: "CUSTOMER_REQUESTED",
+        },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const cancelled = await cancelCustomerScheduledOrder({
+      orderId: summary.orderId,
+      expectedOrderRevision: "1",
+    });
+    expect(cancelled.ok).toBe(true);
+    if (!cancelled.ok) return;
+    expect(cancelled.data.order.status).toBe("CANCELLED");
+    expect(String(fetchMock.mock.calls[0]?.[0])).toBe(
+      `/api/v1/orders/${summary.orderId}/cancel`,
+    );
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
+      method: "POST",
+      body: JSON.stringify({ expectedOrderRevision: "1" }),
+    });
+  });
+
+  it("surfaces cutoff-closed and not-allowed cancel denials", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        jsonResponse(
+          { ok: false, code: "ORDER_CANCEL_CUTOFF_CLOSED", requestId: "req-cut" },
+          409,
+        ),
+      ),
+    );
+    const closed = await cancelCustomerScheduledOrder({
+      orderId: summary.orderId,
+      expectedOrderRevision: "1",
+    });
+    expect(closed).toEqual({
+      ok: false,
+      code: "ORDER_CANCEL_CUTOFF_CLOSED",
+      requestId: "req-cut",
+      status: 409,
+    });
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        jsonResponse(
+          { ok: false, code: "ORDER_CANCEL_NOT_ALLOWED", requestId: "req-na" },
+          409,
+        ),
+      ),
+    );
+    const denied = await cancelCustomerScheduledOrder({
+      orderId: summary.orderId,
+      expectedOrderRevision: "1",
+    });
+    expect(denied).toEqual({
+      ok: false,
+      code: "ORDER_CANCEL_NOT_ALLOWED",
+      requestId: "req-na",
+      status: 409,
     });
   });
 });
