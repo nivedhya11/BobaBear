@@ -6,7 +6,7 @@
  * database's fixed host port (5433), never reused across runs.
  *
  * Host publish is loopback-scoped (`127.0.0.1`). Installed
- * `testcontainers@12.1.0` `PortWithBinding` has no `hostIp` field, so the
+ * `testcontainers@12.2.1` `PortWithBinding` has no `hostIp` field, so the
  * PortBindings entry created by `withExposedPorts(5432)` is amended with
  * `HostIp: "127.0.0.1"` before start. Random host port, no reuse, and
  * explicit disposal are preserved.
@@ -46,7 +46,7 @@ function toPostgresqlScheme(connectionUri: string): string {
 
 /**
  * Scope the disposable Postgres host publish to loopback without fixing the
- * host port. Compatible with testcontainers 12.1.0 (no PortWithBinding.hostIp).
+ * host port. Compatible with testcontainers 12.2.1 (no PortWithBinding.hostIp).
  */
 export function bindDisposablePostgresPublishToLoopback(
   container: PostgreSqlContainer,
