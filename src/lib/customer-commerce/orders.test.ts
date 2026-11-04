@@ -132,13 +132,13 @@ describe("order client", () => {
     expect(cancelled.ok).toBe(true);
     if (!cancelled.ok) return;
     expect(cancelled.data.order.status).toBe("CANCELLED");
-    expect(String(fetchMock.mock.calls[0]?.[0])).toBe(
+    expect(fetchMock).toHaveBeenCalledWith(
       `/api/v1/orders/${summary.orderId}/cancel`,
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ expectedOrderRevision: "1" }),
+      }),
     );
-    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
-      method: "POST",
-      body: JSON.stringify({ expectedOrderRevision: "1" }),
-    });
   });
 
   it("surfaces cutoff-closed and not-allowed cancel denials", async () => {
