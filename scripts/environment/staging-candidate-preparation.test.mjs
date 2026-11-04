@@ -145,6 +145,10 @@ test("synthetic evidence traverses preparation then activation without a deadloc
       compose: () => {},
       inspectImage: (name) => images.find((image) => image.name === name),
       scanImages: async () => ({ passed: true, reportSha256: "ab".repeat(32) }),
+      readCommittedText: (_sha, rel) => {
+        if (rel === "compose.yaml" || rel === "Dockerfile") return readFileSync(path.join(repositoryRoot, rel), "utf8");
+        throw new Error(rel);
+      },
       evidenceFile,
       removeDir: () => {},
       log: () => {},

@@ -88,6 +88,8 @@ const COPY: Readonly<Record<string, string>> = Object.freeze({
   PAYMENT_NEGATIVE_PAYABLE: "This checkout total isn't valid for payment.",
   PAYMENT_INVALID_INPUT: "That payment request wasn't valid. Try again.",
   PAYMENT_UNSUPPORTED_METHOD: "That payment method isn't supported.",
+  PAYMENT_PROMOTION_CAPACITY_UNAVAILABLE:
+    "That offer is no longer available. Review your order and continue with the updated total.",
   PAYMENT_PROVIDER_EVIDENCE_INVALID: "Payment confirmation could not be verified. Checking status…",
   PAYMENT_PROVIDER_INDETERMINATE:
     "We're still checking your payment. Don't pay again yet.",

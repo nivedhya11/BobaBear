@@ -2,13 +2,17 @@
 
 ```text
 AUTHORITY = NON_AUTHORITATIVE_UAT_EVIDENCE
-TASK = BOBA_IMP036J_AC_XR_EVIDENCE_CLOSURE
-MAIN_HEAD = ee90bc9e78b8e5345275a7b28c6703e38201872f
-MAIN_TREE = a8e05bbc4dab8256a4a1a6f6ee3c64267a4ef2d1
-MERGED = #525 1e59a4cd6, #523 029a37741, #526 8552cc63f, #527 2820f3989, #529 b3b14f76a, #530 39954301d, #531 43b02b5b4, #532 23b7e557b, #533 732c23199, #534 ee90bc9e7
+TASK = BOBA_IMP036J_NIGHTLY_AND_XR010_CLOSURE
+MAIN_HEAD = 5151414a794934f2c190f33d0dda2dda513e9090
+MAIN_TREE = e917d823f68ebb6788914ba49896c77c6cdc1c7c
+WORKING_TREE_FINGERPRINT = a97b36d44630516ac514377856e5d06c7e75c5c646015ddbd5a9de583d027aec
+MERGED = prior #523–#535 plus #536 5151414a7 (nightly concurrency + commercial E2E + XR-010 handoff)
+NIGHTLY_FAILED_BASELINE = 41346969389 on 77da9cfbe (concurrency 14/16 + commercial E2E)
+NIGHTLY_FINAL = 41396942594 on 5151414a7 SUCCESS (all mandatory jobs)
+CI_FINAL = 41396902940 on 5151414a7
+CODEQL_FINAL = 41396902962 on 5151414a7
 CROSS_PORTAL_EXECUTED_HEAD = ee90bc9e78b8e5345275a7b28c6703e38201872f
 CROSS_PORTAL_RESULT = 4 passed / EXIT 0 / 2026-11-01T19:07:57Z / project imp036jxp_88146389d22f
-CROSS_PORTAL_LOG = local terminal record; result line above is the record
 PROMOTION_BROWSER_RESULT = 15 passed / 1 skipped / EXIT 0 / 2026-11-01T19:34:07Z
 PROMOTION_BROWSER_HEAD = 154c293cc1efbe271bce73556d8a65b4b889beaf contained in #534
 FOUNDER_UAT = NOT_PERFORMED
@@ -17,13 +21,14 @@ PROOF_RULE = PASS only if every Quality-plan layer has executed proof on an attr
 DOMAIN_PASS_IS_NOT_BROWSER_PASS = YES
 MANDATORY_AC_PROVEN_MAIN = 40/40
 EXPERIENCE_REQUIREMENTS_PROVEN = 12/13
+XR_010 = PARTIAL — attended NVDA/Orca handoff recorded; no genuine screen-reader session in this environment
 ```
 
-Independent review (this closure):
+Independent review (nightly + XR-010 closure):
 
-- QA: MAIN-strict is **40/40**. Promotion-browser on the #534 source is 15 passed / 1 skipped / EXIT 0. The skip is the desktop project skipping the mobile-tagged test; mobile-chromium passed in that command. Operator HTTP `tests/database/operator-promotion-administration-http.integration.test.ts` is 1 passed / EXIT 0.
-- PE: XR strict PASS is **12/13**. Checkout Review no longer adds the unavailable-item sentence when the outcome is `NONE_CHOSEN`. XR-010 stays PARTIAL because no screen-reader session ran. This is not Founder UAT or IMP acceptance.
-- Security: no material findings on the #534 diff. The 4-second Security HTTP gate is a path gate, not a new security-suite execution.
+- QA: MAIN-strict remains **40/40**. Payment concurrency 20/20 and Commercial Workspace E2E 3/3 (fresh + repeat) proved on the #536 candidate; exact-main Nightly `41396942594` SUCCESS. This is not Founder UAT or IMP acceptance.
+- PE: XR strict PASS remains **12/13**. XR-010 stays PARTIAL with attended handoff at `docs/uat/acxr-closure/xr-010-attended-screen-reader-handoff.md` (no Orca/NVDA session available here).
+- Security: no material findings on the #536 payment/prepare diff (claim-lock capacity preserved; sealed-applied-only preserve).
 
 ## Candidate attribution rules
 
@@ -138,6 +143,9 @@ PASS: `001, 002, 003, 004, 005, 006, 007, 008, 009, 011, 012, 013`. PARTIAL: `01
 | Nightly Verification | `8552cc63f` | **success** | Historical. Not the #534 main. |
 | `npm run test:e2e:promotion-browser` | `154c293cc` contained in #534 | **15 passed / 1 skipped / EXIT 0** | 2026-11-01T19:34:07Z. The skip is the desktop project skipping the mobile-tagged test. Mobile-chromium passed in the same command. |
 | `npm run test:e2e:commercial-workspace` | tree squashed into `39954301d` | **3 passed / EXIT 0** | Log `/tmp/m2-commercial-2.log`. Retire keyboard and redemption counts ran. Purchased-order savings were not asserted. |
+| Nightly Verification | `5151414a7` | **success** | Run `41396942594`. Concurrency matrix + Commercial Workspace + all other mandatory jobs SUCCESS. |
+| Payment concurrency 20/20 | #536 / main `5151414a7` | **20 passed / EXIT 0** | Cases 14/16 return `PAYMENT_PROMOTION_CAPACITY_UNAVAILABLE`. |
+| Commercial Workspace E2E (fresh+repeat) | #536 pre-merge | **3 passed / EXIT 0** twice | Desktop/tablet/mobile. |
 
 ## Product defects
 

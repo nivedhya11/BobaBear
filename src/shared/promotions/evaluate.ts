@@ -57,6 +57,12 @@ export type EvaluatePromotionsInput = Readonly<{
     promotionGlobalCap: number | null;
     promotionPersonalCap: number | null;
   }>;
+  /**
+   * Sealed applied promotion ids (prepare / payment-bind only). Cap exhaustion
+   * for these ids is ignored at quote time so structural equality preserves the
+   * accepted snapshot; Payment claim locks still enforce capacity.
+   */
+  preserveAppliedPromotionIds?: readonly string[];
 }>;
 
 function couponNotApplied(
@@ -178,7 +184,10 @@ function evaluateSubmittedCoupon(
       (usage.promotionPersonalCap !== null &&
         usage.personalUnits !== null &&
         usage.personalUnits >= BigInt(usage.promotionPersonalCap));
-    if (personalReached) {
+    const preserve = Boolean(
+      input.preserveAppliedPromotionIds?.includes(coupon.promotionId),
+    );
+    if (personalReached && !preserve) {
       return {
         result: couponNotApplied("NOT_APPLICABLE", "PERSONAL_CAP_REACHED", identity),
         couponPromotion: null,
@@ -189,7 +198,7 @@ function evaluateSubmittedCoupon(
         usage.globalUnits >= BigInt(coupon.maximumRedemptions)) ||
       (usage.promotionGlobalCap !== null &&
         usage.globalUnits >= BigInt(usage.promotionGlobalCap));
-    if (globalReached) {
+    if (globalReached && !preserve) {
       return {
         result: couponNotApplied("NOT_APPLICABLE", "GLOBAL_CAP_REACHED", identity),
         couponPromotion: null,
