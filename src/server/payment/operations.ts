@@ -176,6 +176,28 @@ function clockOf(options: PaymentOperationOptions): PaymentClock {
   return options.clock ?? systemPaymentClock;
 }
 
+async function invalidateReadyCheckoutForRecovery(
+  persistence: Persistence,
+  checkoutId: string,
+  now: Date,
+): Promise<void> {
+  await persistence.transaction(async (tx) => {
+    const peek = await findCheckoutRowById(tx, checkoutId);
+    if (!peek) return;
+    await lockCartForUpdate(tx, peek.cartId);
+    const row = await lockCheckoutForUpdate(tx, checkoutId);
+    if (row && row.status === "READY_FOR_PAYMENT") {
+      const updated = await invalidateReadyToDraft(tx, row, now);
+      await tryRecordStaleRecoveryOrigin({
+        context: tx,
+        cartId: updated.cartId,
+        checkoutId: updated.id,
+        checkoutJourneyKey: updated.checkoutJourneyKey,
+      });
+    }
+  });
+}
+
 async function bindOrInvalidate<T>(
   persistence: Persistence,
   checkoutId: string,
@@ -185,22 +207,15 @@ async function bindOrInvalidate<T>(
   try {
     return await bind();
   } catch (error) {
+    // Structural reprice and final-slot capacity both require Review recovery;
+    // leave READY_FOR_PAYMENT only when bind can safely retry unchanged.
     if (isCheckoutError(error) && error.code === "CHECKOUT_REPRICED") {
-      await persistence.transaction(async (tx) => {
-        const peek = await findCheckoutRowById(tx, checkoutId);
-        if (!peek) return;
-        await lockCartForUpdate(tx, peek.cartId);
-        const row = await lockCheckoutForUpdate(tx, checkoutId);
-        if (row && row.status === "READY_FOR_PAYMENT") {
-          const updated = await invalidateReadyToDraft(tx, row, now);
-          await tryRecordStaleRecoveryOrigin({
-            context: tx,
-            cartId: updated.cartId,
-            checkoutId: updated.id,
-            checkoutJourneyKey: updated.checkoutJourneyKey,
-          });
-        }
-      });
+      await invalidateReadyCheckoutForRecovery(persistence, checkoutId, now);
+    } else if (
+      error instanceof PaymentError &&
+      error.code === "PAYMENT_PROMOTION_CAPACITY_UNAVAILABLE"
+    ) {
+      await invalidateReadyCheckoutForRecovery(persistence, checkoutId, now);
     }
     throw error;
   }

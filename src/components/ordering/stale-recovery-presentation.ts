@@ -8,6 +8,7 @@ import { IMP036J_COPY } from "@/components/ordering/imp036j-copy";
 export type StaleRecoveryTrigger =
   | "CHECKOUT_REPRICED"
   | "CHECKOUT_CART_CHANGED"
+  | "PAYMENT_PROMOTION_CAPACITY_UNAVAILABLE"
   | "UNKNOWN";
 
 export type StaleRecoveryPresentationKind =
@@ -52,7 +53,11 @@ export function compareAuthoritativePayablePaise(
 export function normalizeStaleRecoveryTrigger(
   code: string | undefined,
 ): StaleRecoveryTrigger {
-  if (code === "CHECKOUT_REPRICED" || code === "CHECKOUT_CART_CHANGED") {
+  if (
+    code === "CHECKOUT_REPRICED" ||
+    code === "CHECKOUT_CART_CHANGED" ||
+    code === "PAYMENT_PROMOTION_CAPACITY_UNAVAILABLE"
+  ) {
     return code;
   }
   return "UNKNOWN";
@@ -87,7 +92,12 @@ export function decideStaleRecoveryPresentation(input: {
     });
   }
 
-  if (trigger !== "CHECKOUT_REPRICED") {
+  // Capacity exhaustion after Review uses the same before/after payable compare
+  // as CHECKOUT_REPRICED once a fresh snapshot is confirmed.
+  if (
+    trigger !== "CHECKOUT_REPRICED" &&
+    trigger !== "PAYMENT_PROMOTION_CAPACITY_UNAVAILABLE"
+  ) {
     return Object.freeze({
       kind: "unknown" as const,
       message: IMP036J_COPY.STALE_UNCONFIRMED,
