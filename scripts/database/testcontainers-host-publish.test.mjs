@@ -21,7 +21,7 @@ test("installed testcontainers PortWithBinding has no hostIp field", () => {
   assert.match(portDts, /export type PortWithBinding = \{/);
   assert.doesNotMatch(portDts, /hostIp/);
   const pkg = require(path.join(projectRoot, "node_modules/testcontainers/package.json"));
-  assert.equal(pkg.version, "12.1.0");
+  assert.equal(pkg.version, "12.2.1");
 });
 
 test("test-container helper scopes disposable publish to 127.0.0.1 before start", async () => {
