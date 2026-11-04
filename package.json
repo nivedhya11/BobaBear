@@ -270,7 +270,7 @@
     "@better-auth/drizzle-adapter": "1.7.14",
     "@next/env": "16.4.3",
     "@radix-ui/react-slot": "^1.5.0",
-    "better-auth": "1.7.14",
+    "better-auth": "1.7.15",
     "clsx": "^2.1.1",
     "drizzle-orm": "0.45.4",
     "framer-motion": "^12.38.0",
