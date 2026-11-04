@@ -95,6 +95,11 @@ const COPY: Readonly<Record<string, string>> = Object.freeze({
     "We're still checking your payment. Don't pay again yet.",
   ORDER_NOT_FOUND: "We couldn't find that order.",
   ORDER_INVALID_INPUT: "That order request wasn't valid. Try again.",
+  ORDER_CONFLICT: "This order changed. Refresh and try again.",
+  ORDER_CANCEL_CUTOFF_CLOSED:
+    "Self-service cancellation is closed for this scheduled order. Contact the outlet or support.",
+  ORDER_CANCEL_NOT_ALLOWED:
+    "This order can't be cancelled from its current status. Contact the outlet or support.",
   NETWORK_ERROR: "Network problem. Check your connection and try again.",
   INVALID_RESPONSE: "Something went wrong. Please try again.",
 });

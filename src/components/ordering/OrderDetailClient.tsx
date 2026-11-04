@@ -14,14 +14,26 @@ import { formatPaise } from "@/components/ordering/format-money";
 import { orderStatusLabel } from "@/components/ordering/order-status";
 import { fetchCustomerSession } from "@/lib/customer-auth/client";
 import { loginUrlWithReturn } from "@/lib/customer-auth/return-to";
-import { getCustomerOrder, type CommerceOrderDetail } from "@/lib/customer-commerce";
+import {
+  cancelCustomerScheduledOrder,
+  getCustomerOrder,
+  type CommerceOrderDetail,
+} from "@/lib/customer-commerce";
+
+function canOfferScheduledSelfServiceCancel(order: CommerceOrderDetail): boolean {
+  if (order.fulfilmentTiming !== "SCHEDULED") return false;
+  return order.status === "PLACED" || order.status === "ACCEPTED";
+}
 
 export function OrderDetailClient() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
   const [order, setOrder] = useState<CommerceOrderDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -53,6 +65,37 @@ export function OrderDetailClient() {
       cancelled = true;
     };
   }, [orderId]);
+
+  async function onConfirmCancel() {
+    if (!order || cancelling) return;
+    setCancelling(true);
+    setActionError(null);
+    const result = await cancelCustomerScheduledOrder({
+      orderId: order.orderId,
+      expectedOrderRevision: order.revision,
+    });
+    if (!result.ok) {
+      setActionError(commerceErrorCopy(result.code));
+      setCancelling(false);
+      setConfirmingCancel(false);
+      return;
+    }
+    const refreshed = await getCustomerOrder(order.orderId);
+    if (refreshed.ok) {
+      setOrder(refreshed.data.order);
+    } else {
+      setOrder({
+        ...order,
+        status: result.data.order.status,
+        revision: result.data.order.revision,
+        cancelledAt: result.data.order.cancelledAt ?? order.cancelledAt,
+        cancellationReasonCode:
+          result.data.order.cancellationReasonCode ?? order.cancellationReasonCode,
+      });
+    }
+    setConfirmingCancel(false);
+    setCancelling(false);
+  }
 
   return (
     <main id="main-content" tabIndex={-1} className="bg-[var(--bg-page)] focus:outline-none">
@@ -121,6 +164,66 @@ export function OrderDetailClient() {
             <OrderMoneySummaryPanel moneySummary={order.moneySummary} title="Payment summary" />
 
             <OrderFinancialDocuments orderId={order.orderId} />
+
+            {canOfferScheduledSelfServiceCancel(order) ? (
+              <div className="flex flex-col gap-3" data-testid="order-scheduled-cancel">
+                <p className="font-body text-[14px] text-[var(--text-secondary)]">
+                  Self-service cancellation stays available until the sealed cutoff for this
+                  scheduled order.
+                </p>
+                {actionError ? (
+                  <p role="alert" data-testid="order-cancel-error" className="font-body text-[14px] text-[var(--text-secondary)]">
+                    {actionError}
+                  </p>
+                ) : null}
+                {confirmingCancel ? (
+                  <div className="flex flex-col gap-2" data-testid="order-cancel-confirm">
+                    <p className="font-body text-[14px] font-semibold text-[var(--text-primary)]">
+                      Cancel this scheduled order?
+                    </p>
+                    <p className="font-body text-[13px] text-[var(--text-secondary)]">
+                      This cannot be undone from self-service. Support can still help after the
+                      cutoff closes.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        className="min-h-[44px]"
+                        disabled={cancelling}
+                        onClick={() => {
+                          void onConfirmCancel();
+                        }}
+                      >
+                        {cancelling ? "Cancelling…" : "Confirm cancellation"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="min-h-[44px]"
+                        disabled={cancelling}
+                        onClick={() => setConfirmingCancel(false)}
+                      >
+                        Keep order
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    className="min-h-[44px] self-start"
+                    data-testid="order-cancel-open"
+                    onClick={() => {
+                      setActionError(null);
+                      setConfirmingCancel(true);
+                    }}
+                  >
+                    Cancel scheduled order
+                  </Button>
+                )}
+              </div>
+            ) : null}
 
             <OrderSupportAction orderNumber={order.orderNumber} />
 

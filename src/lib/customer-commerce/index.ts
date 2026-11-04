@@ -80,7 +80,11 @@ export {
   startPayment,
   submitPaymentClientEvidence,
 } from "./payment";
-export { getCustomerOrder, listCustomerOrders } from "./orders";
+export {
+  cancelCustomerScheduledOrder,
+  getCustomerOrder,
+  listCustomerOrders,
+} from "./orders";
 export {
   customerFinancialDocumentPdfPath,
   downloadCustomerFinancialDocumentPdf,

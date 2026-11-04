@@ -51,3 +51,37 @@ export async function getCustomerOrder(
   }
   return { ok: true, status: result.status, data: { order: result.data.order } };
 }
+
+type CancelEnvelope = Readonly<{
+  ok: true;
+  order: Readonly<{
+    orderId: string;
+    orderNumber: string;
+    status: string;
+    revision: string;
+    cancelledAt?: string | null;
+    cancellationReasonCode?: string | null;
+  }>;
+}>;
+
+/**
+ * Customer self-service cancel for a purchased Scheduled Order (IMP-036I).
+ * Server enforces sealed cutoff + ownership; this wrapper does not invent policy.
+ */
+export async function cancelCustomerScheduledOrder(input: {
+  orderId: string;
+  expectedOrderRevision: string;
+}): Promise<CommerceHttpResult<{ order: CancelEnvelope["order"] }>> {
+  const result = await commerceRequest<CancelEnvelope>(
+    `/api/v1/orders/${input.orderId}/cancel`,
+    {
+      method: "POST",
+      body: { expectedOrderRevision: input.expectedOrderRevision },
+    },
+  );
+  if (!result.ok) return result;
+  if (!result.data.order?.orderId || !result.data.order.revision) {
+    return { ok: false, code: "INVALID_RESPONSE", status: result.status };
+  }
+  return { ok: true, status: result.status, data: { order: result.data.order } };
+}
