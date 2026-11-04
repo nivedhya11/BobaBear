@@ -58,6 +58,8 @@ updates:
           - "better-auth"
           - "@better-auth/*"
           - "auth"
+          # Customer phone OTP — foundation pin 1.13.10 (audit + accepted-foundation-operating-rules).
+          - "libphonenumber-js"
         update-types:
           - "minor"
           - "patch"
