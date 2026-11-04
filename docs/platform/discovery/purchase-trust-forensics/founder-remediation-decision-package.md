@@ -24,9 +24,11 @@ Needed from the Founder: leave #391 open until a same-candidate explanation exis
 
 ## Decision 2 — bind fulfilment timing
 
-`assertCommercialTermsStillAccepted` omits `fulfilmentTiming` while prepare passes it. A timing-scoped promotion can therefore fail at payment start after prepare accepted the seal. This was read from source and not executed. It is not established as the 16 October cause.
+**Wave 2 reconcile (main `bb8d970cc` / lineage including `1a8b30e`):** **SOURCE FIXED** — `scheduled-bind.ts` now passes `fulfilmentTiming: input.snapshot.fulfilmentTiming ?? "ASAP"` into the bind commercial rebuild, with `tests/payment/payment-binding-fulfilment-timing.domain.test.ts`. No new Founder authorization is required for that already-merged correction.
 
-Needed from the Founder: authorize a later same-authority correction that passes the snapshot timing into that rebuild, only together with a disposable fake-provider regression, or decline it. Do not authorize a rule that pays whenever the displayed rupees match.
+Historical discovery note (pre-fix source at `a6155378`): prepare passed timing while bind omitted it; a timing-scoped promotion could fail at payment start after prepare accepted the seal. That mechanism was read from source and not executed in the discovery batch. **It is still not established as the 16 October root cause** (`PAYMENT_START_391_ROOT_CAUSE = INSUFFICIENT_EVIDENCE`).
+
+Needed from the Founder: none for the bind-timing mechanism (already on main). Leave #391 open until a same-candidate historical explanation exists; do not authorize a rule that pays whenever the displayed rupees match.
 
 ## Decision 3 — do not reject unavailable adds inside the Cart command
 

@@ -63,13 +63,13 @@ The 16 October revision was stable, so the cart-revision guard is not the record
 
 `#392` adds the pure `explain-snapshot-difference` helper and a diagnostic test. It is not wired into payment start. `#393` adds the default-disabled prepare observer. Neither changes accept or reject. Neither recorded the 16 October differing field: on that day `#393` was still unmerged and disabled, and `#392` was not on the payment path.
 
-## Remaining source gap, not executed
+## Remaining source gap (historical) — SOURCE FIXED on current main
 
-`prepareCheckoutForPayment` passes `fulfilmentTiming` into `buildCheckoutCommercialResult` (`prepare.ts`). `assertCommercialTermsStillAccepted` does not (`scheduled-bind.ts`). `buildCheckoutCommercialResult` then sends `null` (`src/server/checkout/adapters/pricing.ts`). A promotion with a non-empty `eligibleFulfilmentTimings` list is ineligible when timing is null (`src/shared/promotions/eligibility.ts`, `matchesModeTiming`).
+**Discovery-batch source (HEAD `a6155378`):** `prepareCheckoutForPayment` passed `fulfilmentTiming` into `buildCheckoutCommercialResult` (`prepare.ts`) while `assertCommercialTermsStillAccepted` did not (`scheduled-bind.ts`), so pricing could see `null` timing and reject a timing-scoped promotion at bind after prepare accepted the seal.
 
-That can reject at bind after prepare already accepted the sealed snapshot, with no payment row and no provider call. Recovery evaluates with timing present, so the displayed payable can stay the same and the next Pay can fail again. The Review sentence for an equal resealed payable is the neutral sentence, not the 16 October money sentence. Offers with a null timing list are unaffected.
+**Wave 2 reconcile:** that omission is **SOURCE FIXED** on current main (`fulfilmentTiming: input.snapshot.fulfilmentTiming ?? "ASAP"` at bind; covered by `tests/payment/payment-binding-fulfilment-timing.domain.test.ts`, introduced with `1a8b30e`). Do not open a new Founder authorization for that mechanism.
 
-This batch did not execute that path. Whether the 16 October coupon was timing-scoped is unknown. `scheduled-bind.ts` is unchanged since `5773dac`.
+Whether the 16 October coupon was timing-scoped remains **unknown**. The discovery batch did not execute that path against the historical candidate.
 
 ## Disposable proof executed in this batch
 
@@ -77,9 +77,9 @@ This batch did not execute that path. Whether the 16 October coupon was timing-s
 
 Not executed here: `tests/checkout/imp036j-391-equal-payable-repricing.diagnostic.test.ts`, `tests/checkout/imp036j-391b-prepare-observer.diagnostic.test.ts`, `src/components/ordering/stale-recovery-presentation.test.ts`, `src/components/ordering/imp036j-391a-stale-recovery.checkout-client.test.tsx`.
 
-## Smallest later correction, not authorized here
+## Smallest later correction — landed; no further authorization
 
-Pass the snapshot timing into the bind commercial rebuild, the same value prepare already passes. Do not treat equal rupees as sufficient to bind. Do not weaken structural equality. Add a disposable fake-provider regression for an ASAP promotion limited to `["ASAP"]` and a scheduled promotion limited to `["SCHEDULED"]` before changing `scheduled-bind.ts`. Keep the existing promotion-revision and genuine-price rejections.
+The bind-timing correction described in the discovery batch (pass snapshot timing into the bind rebuild; keep structural equality; disposable ASAP/SCHEDULED regressions) **has already merged**. Retain equal-rupee-only binding as **not** authorized.
 
 `PAYMENT_START_391_ROOT_CAUSE = INSUFFICIENT_EVIDENCE`
 
