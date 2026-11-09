@@ -317,7 +317,7 @@
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.2",
     "@vitest/coverage-v8": "4.1.12",
-    "auth": "1.7.14",
+    "auth": "1.7.18",
     "drizzle-kit": "0.31.11",
     "eslint": "^9",
     "eslint-config-next": "16.4.3",
