@@ -267,7 +267,7 @@
     "docker:operations:logs": "docker compose logs --tail=200 operations"
   },
   "dependencies": {
-    "@better-auth/drizzle-adapter": "1.7.14",
+    "@better-auth/drizzle-adapter": "1.7.18",
     "@next/env": "16.4.3",
     "@radix-ui/react-slot": "^1.5.0",
     "better-auth": "1.7.14",
