@@ -59,6 +59,7 @@ import {
   parseDfAvailBytesForPath,
   parseMemAvailableBytes,
 } from "./staging-capacity.mjs";
+import { loadStagingCapacityMeasurement } from "./staging-capacity-measurement.mjs";
 import { probeCandidatePostgresImageCompat } from "./staging-postgres-image-compat.mjs";
 import {
   buildRecommendedRecoveryBindingPolicy,
@@ -1700,6 +1701,7 @@ function gatherStagingPreflightEvidence(
     projectConfig = () => projectStrictStagingConfiguration({ directory: STAGING_ENV_DIR }),
     bindRecovery = null,
     loadFounderAuthorization = loadStagingFounderAuthorization,
+    loadCapacityMeasurement = loadStagingCapacityMeasurement,
     readImageSecurity = null,
     observeImageOwnership = (sha) => observeCandidateImageOwnership(sha),
     observeProtectedSession = () => observeProtectedSessionSafety(),
@@ -1865,6 +1867,7 @@ function gatherStagingPreflightEvidence(
     };
   }
 
+  const capacityMeasurement = loadCapacityMeasurement();
   const capacity = measureStagingCapacityEvidence({
     // Preservation: XR/attended projects are separate; staging volume absence means
     // no unintended replacement of an existing staging DB in this observation.
@@ -1875,9 +1878,10 @@ function gatherStagingPreflightEvidence(
         : persistence.state === "INITIALIZED_PRESENT"
           ? false
           : null,
-    // Footprint/peak remain fail-closed unless an authorized measurement is injected.
-    measuredIncrementalBuildFootprintBytes: null,
-    measuredIncrementalPeakMemoryBytes: null,
+    // Footprint/peak come only from an auditable independent measurement record.
+    measuredIncrementalBuildFootprintBytes:
+      capacityMeasurement.measuredIncrementalBuildFootprintBytes,
+    measuredIncrementalPeakMemoryBytes: capacityMeasurement.measuredIncrementalPeakMemoryBytes,
   });
 
   const founderAuthorization = loadFounderAuthorization();
@@ -1988,6 +1992,13 @@ function gatherStagingPreflightEvidence(
       unintendedPostgresReplacement: capacity.unintendedPostgresReplacement,
       reasons: capacity.reasons,
       policy: capacity.policy,
+      measurement: {
+        present: capacityMeasurement.present === true,
+        valid: capacityMeasurement.valid === true,
+        path: capacityMeasurement.path ?? null,
+        operationClass: capacityMeasurement.operationClass ?? null,
+        reasons: capacityMeasurement.reasons ?? [],
+      },
     },
     postgresInit: {
       disposition: initResolution.disposition?.disposition ?? POSTGRES_INIT_DISPOSITION.UNKNOWN,

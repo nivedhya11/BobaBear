@@ -31,11 +31,11 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2479,
-    "executableTestFiles": 584,
+    "trackedPathsConsidered": 2481,
+    "executableTestFiles": 585,
     "sourceTestFiles": 167,
     "testsTreeExecutableFiles": 301,
-    "scriptTestFiles": 116,
+    "scriptTestFiles": 117,
     "playwrightSpecs": 15,
     "vitestConfigs": 2,
     "playwrightConfigs": 9,
@@ -562,6 +562,7 @@
     "scripts/environment/staging-bootstrap-phase.test.mjs",
     "scripts/environment/staging-candidate-preparation.test.mjs",
     "scripts/environment/staging-candidate-provenance.test.mjs",
+    "scripts/environment/staging-capacity-measurement.test.mjs",
     "scripts/environment/staging-capacity.test.mjs",
     "scripts/environment/staging-config-projection.test.mjs",
     "scripts/environment/staging-database-preflight.test.mjs",
@@ -2292,6 +2293,23 @@
     },
     {
       "path": "scripts/environment/staging-candidate-provenance.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/environment/staging-capacity-measurement.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
       "testType": "script-unit",

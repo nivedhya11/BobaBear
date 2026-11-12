@@ -247,7 +247,10 @@ into a synthetic PASS. Instead it requires:
 - candidate PostgreSQL image compatibility positively determined from the
   Compose candidate image (`boba-bear-postgres:local`), with UNKNOWN retained
   when evidence is insufficient
-- sufficient measured AD-PF-02 capacity
+- sufficient measured AD-PF-02 capacity, including independently measured
+  footprint/peak evidence from the auditable capacity measurement record
+  (`~/.local/state/boba-bear/staging-capacity-measurement.json`); live
+  collectors never invent those figures
 - mandatory post-provision IMP-037 checkpoint before treating the environment
   as Phase B
 

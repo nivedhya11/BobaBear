@@ -66,3 +66,11 @@ test("application activation request is refused by Phase A plan", () => {
   assert.equal(plan.allowed, false);
   assert.ok(plan.blockers.includes(PHASE_A_PROVISION_BLOCKERS.APP_ACTIVATION_FORBIDDEN));
 });
+
+test("unmeasured capacity blocks Phase A provision plan", () => {
+  const plan = validPlan({
+    capacity: { memorySufficient: null, diskSufficient: null },
+  });
+  assert.equal(plan.allowed, false);
+  assert.ok(plan.blockers.includes(PHASE_A_PROVISION_BLOCKERS.CAPACITY_INSUFFICIENT));
+});
