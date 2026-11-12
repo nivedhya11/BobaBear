@@ -10,8 +10,11 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
+import { resolveLoopbackPort } from "./loopback-port.mjs";
+
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const IGNORED_ENV_FILE = path.join(projectRoot, ".env.customer-auth.docker.local");
+const PREFERRED_OUTER_PORT = 4178;
 
 function readIgnoredFixedCode() {
   if (!existsSync(IGNORED_ENV_FILE)) return null;
@@ -59,6 +62,13 @@ function harnessRunId() {
   return randomUUID();
 }
 
+const preferredOuter =
+  process.env.E2E_CUSTOMER_ORDERING_OUTER_PORT &&
+  Number.isInteger(Number(process.env.E2E_CUSTOMER_ORDERING_OUTER_PORT))
+    ? Number(process.env.E2E_CUSTOMER_ORDERING_OUTER_PORT)
+    : PREFERRED_OUTER_PORT;
+const ownedOuterPort = await resolveLoopbackPort(preferredOuter);
+
 const result = spawnSync(
   "npx",
   ["playwright", "test", "--config=playwright.promotion-browser.config.ts"],
@@ -71,6 +81,8 @@ const result = spawnSync(
       E2E_GTM_UAT_FIXTURES: "1",
       E2E_HARNESS_CONTROL_TOKEN: harnessControlToken(),
       E2E_HARNESS_RUN_ID: harnessRunId(),
+      // Pin once for this process tree so Playwright config reloads / workers share one server.
+      E2E_CUSTOMER_ORDERING_OUTER_PORT_RESOLVED: String(ownedOuterPort),
     },
     stdio: "inherit",
   },
