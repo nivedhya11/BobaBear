@@ -481,8 +481,24 @@ function podmanInspect(name, format) {
   return execIgnoringStdin("podman", ["inspect", name, "--format", format], { encoding: "utf8" }).trim();
 }
 
+/**
+ * Podman 4.x often returns bare 64-hex content IDs from `inspect --format {{.Id}}`
+ * while RepoDigests use the `sha256:` digest form. Candidate bind/scan gates require
+ * canonical `sha256:<64-hex>` for both fields.
+ *
+ * @param {unknown} value
+ * @returns {string}
+ */
+export function normalizePodmanImageDigest(value) {
+  if (typeof value !== "string") return "";
+  const trimmed = value.trim();
+  if (/^sha256:[0-9a-f]{64}$/i.test(trimmed)) return `sha256:${trimmed.slice(7).toLowerCase()}`;
+  if (/^[0-9a-f]{64}$/i.test(trimmed)) return `sha256:${trimmed.toLowerCase()}`;
+  return trimmed;
+}
+
 function inspectLocalImageIdentity(name) {
-  const imageId = podmanInspect(name, "{{.Id}}");
+  const imageId = normalizePodmanImageDigest(podmanInspect(name, "{{.Id}}"));
   let digest = "";
   try {
     const parsed = JSON.parse(podmanInspect(name, "{{json .RepoDigests}}"));
@@ -493,6 +509,7 @@ function inspectLocalImageIdentity(name) {
   } catch {
     digest = "";
   }
+  digest = normalizePodmanImageDigest(digest);
   if (!/^sha256:[0-9a-f]{64}$/.test(digest)) digest = imageId;
   return { imageId, digest };
 }
