@@ -31,11 +31,11 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2466,
-    "executableTestFiles": 577,
+    "trackedPathsConsidered": 2467,
+    "executableTestFiles": 578,
     "sourceTestFiles": 167,
     "testsTreeExecutableFiles": 301,
-    "scriptTestFiles": 109,
+    "scriptTestFiles": 110,
     "playwrightSpecs": 15,
     "vitestConfigs": 2,
     "playwrightConfigs": 9,
@@ -564,6 +564,7 @@
     "scripts/environment/staging-config-projection.test.mjs",
     "scripts/environment/staging-database-preflight.test.mjs",
     "scripts/environment/staging-phase-split.test.mjs",
+    "scripts/environment/staging-podman-image-id.test.mjs",
     "scripts/environment/staging-preflight.test.mjs",
     "scripts/environment/staging-publishing-probe.test.mjs",
     "scripts/environment/staging-recovery-binding.test.mjs",
@@ -2319,6 +2320,23 @@
     },
     {
       "path": "scripts/environment/staging-phase-split.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/environment/staging-podman-image-id.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
       "testType": "script-unit",

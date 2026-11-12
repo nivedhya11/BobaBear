@@ -261,20 +261,23 @@ test("all persistent BOBA services require their inspected running image revisio
 });
 
 test("running image ids must match the freshly built ids when that record exists", () => {
-  const records = BOBA_RUNTIME_SERVICES.map((service) => ({
+  const records = BOBA_RUNTIME_SERVICES.map((service, index) => ({
     service,
     revision: candidateSha,
-    imageId: `sha256:${service}`,
+    imageId: `sha256:${index.toString(16).padStart(64, "a")}`,
   }));
   const built = Object.fromEntries(records.map((record) => [record.service, record.imageId]));
   assert.doesNotThrow(() => assertRunningProvenance(candidateSha, records, built));
-  built[records[0].service] = "sha256:stale";
+  built[records[0].service] = `sha256:${"b".repeat(64)}`;
   assert.throws(() => assertRunningProvenance(candidateSha, records, built), /image id mismatch/);
 });
 
 test("staging status reports inspected image IDs and labels instead of a Git-only deployment claim", () => {
   const source = readFileSync(path.resolve("scripts/environment/staging.mjs"), "utf8");
-  assert.match(source, /const imageId = podmanInspect\(container, "\{\{\.Image\}\}"\)/);
+  assert.match(
+    source,
+    /const imageId = normalizePodmanImageDigest\(podmanInspect\(container, "\{\{\.Image\}\}"\)\)/,
+  );
   assert.match(source, /const revision = imageRevision\(imageId\)/);
   assert.match(source, /CURRENT_MAIN_SHA \$\{candidate\.originMain\}/);
   assert.match(source, /CANDIDATE_MATCH YES/);
