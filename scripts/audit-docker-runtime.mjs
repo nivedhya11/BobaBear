@@ -488,6 +488,62 @@ export function checkToolingServicesUseToolsProfile(composeText) {
   return { name: 'tooling profile services (migrate/db-check/menu-*) all use the "tools" Compose profile', passed: failures.length === 0, detail: failures.join(", ") };
 }
 
+export function checkToolingImageMinimizesDevDependencyClosure(dockerfileText) {
+  const toolingDeps =
+    dockerfileText.split(/FROM\s+\S+\s+AS\s+tooling-dependencies\b/i)[1]?.split(/FROM\s+\S+\s+AS\s+/i)[0] ?? "";
+  // Negative lookahead so `tooling-dependencies` is not treated as the tooling stage.
+  const tooling =
+    dockerfileText.split(/FROM\s+\S+\s+AS\s+tooling(?!-)/i)[1]?.split(/FROM\s+\S+\s+AS\s+/i)[0] ?? "";
+  const checks = {
+    "tooling-dependencies stage exists": /FROM\s+\S+\s+AS\s+tooling-dependencies\b/i.test(dockerfileText),
+    "tooling-dependencies uses npm ci --omit=dev --omit=optional":
+      /npm ci --omit=dev --omit=optional/.test(toolingDeps),
+    "tooling-dependencies refuses drizzle-kit": /test ! -e node_modules\/drizzle-kit\/package\.json/.test(toolingDeps),
+    "tooling-dependencies refuses @esbuild-kit core-utils":
+      /test ! -e node_modules\/@esbuild-kit\/core-utils\/package\.json/.test(toolingDeps),
+    "tooling copies from tooling-dependencies":
+      /COPY --from=tooling-dependencies[\s\S]*node_modules/.test(tooling),
+    "tooling does not copy full dependencies node_modules":
+      !/COPY --from=dependencies[\s\S]*node_modules/.test(tooling),
+    "tooling removes bundled npm/npx/corepack":
+      /rm -rf \/usr\/local\/lib\/node_modules\/npm/.test(tooling),
+  };
+  const failed = Object.entries(checks).filter(([, ok]) => !ok).map(([name]) => name);
+  return {
+    name: "tooling image uses minimized production+tsx dependency closure and removes bundled npm",
+    passed: failed.length === 0,
+    detail: failed.join(", "),
+  };
+}
+
+export function checkToolingComposeInvokesNodeTsxDirectly(composeText) {
+  const services = [
+    "migrate",
+    "db-check",
+    "db-check-migration",
+    "menu-import-existing",
+    "menu-verify-existing",
+    "assortment-bootstrap-existing-menu",
+    "assortment-verify-existing-menu",
+    "pricing-bootstrap-existing-menu",
+    "pricing-verify-existing-menu",
+    "catalog-bootstrap-imp028c-modifiers",
+    "catalog-bootstrap-imp036c-required-topping",
+  ];
+  const failures = services.filter((name) => {
+    const block = extractServiceBlock(composeText, name);
+    if (!block.trim()) return false;
+    const usesNpmRun = /command:\s*\[[^\]]*\"npm\"/.test(block);
+    const usesNodeTsx = /\"--import\",\s*\"tsx\"/.test(block);
+    return usesNpmRun || !usesNodeTsx;
+  });
+  return {
+    name: "tooling Compose services invoke node --import tsx directly (no npm run)",
+    passed: failures.length === 0,
+    detail: failures.join(", "),
+  };
+}
+
 export function checkMigrateDependsOnHealthyPostgres(composeText) {
   const block = extractServiceBlock(composeText, "migrate");
   const passed = /depends_on:\s*\n\s*postgres:\s*\n\s*condition:\s*service_healthy/.test(block);
@@ -611,6 +667,8 @@ export function runAllChecks({ dockerfileText, composeText, nginxConfText, nextC
     checkNginxProxiesRazorpayWebhook(nginxConfText),
     checkNoDockerSocketOrPrivileged(composeText),
     checkToolingServicesUseToolsProfile(composeText),
+    checkToolingImageMinimizesDevDependencyClosure(dockerfileText),
+    checkToolingComposeInvokesNodeTsxDirectly(composeText),
     checkMigrateDependsOnHealthyPostgres(composeText),
     checkNoCredentialsInTrackedFiles({ "Dockerfile": dockerfileText, "compose.yaml": composeText, "docker/nginx/nginx.conf": nginxConfText }),
     checkGeneratedEnvFilesAreIgnored(gitignoreText),

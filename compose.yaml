@@ -264,7 +264,7 @@ services:
     profiles: ["tools"]
     env_file:
       - .env.migration.docker.local
-    command: ["npm", "run", "db:migrate"]
+    command: ["node", "--import", "tsx", "scripts/database/migrate.ts"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -290,7 +290,7 @@ services:
     profiles: ["tools"]
     env_file:
       - .env.runtime.docker.local
-    command: ["npm", "run", "db:check"]
+    command: ["node", "--conditions=react-server", "--import", "tsx", "scripts/database/check.ts", "--role", "application"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -316,7 +316,7 @@ services:
     profiles: ["tools"]
     env_file:
       - .env.migration.docker.local
-    command: ["npm", "run", "db:check:migration"]
+    command: ["node", "--conditions=react-server", "--import", "tsx", "scripts/database/check.ts", "--role", "migration"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -342,7 +342,7 @@ services:
     profiles: ["tools"]
     env_file:
       - .env.runtime.docker.local
-    command: ["npm", "run", "menu:import-existing"]
+    command: ["node", "--conditions=react-server", "--import", "tsx", "scripts/menu/import-existing.ts"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -366,7 +366,7 @@ services:
     profiles: ["tools"]
     env_file:
       - .env.runtime.docker.local
-    command: ["npm", "run", "menu:verify-existing"]
+    command: ["node", "--conditions=react-server", "--import", "tsx", "scripts/menu/verify-existing.ts"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -392,7 +392,7 @@ services:
     profiles: ["tools"]
     env_file:
       - .env.runtime.docker.local
-    command: ["npm", "run", "assortment:bootstrap-existing-menu"]
+    command: ["node", "--conditions=react-server", "--import", "tsx", "scripts/assortment/bootstrap-existing-menu.ts"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -416,7 +416,7 @@ services:
     profiles: ["tools"]
     env_file:
       - .env.runtime.docker.local
-    command: ["npm", "run", "assortment:verify-existing-menu"]
+    command: ["node", "--conditions=react-server", "--import", "tsx", "scripts/assortment/verify-existing-menu.ts"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -442,7 +442,7 @@ services:
     profiles: ["tools"]
     env_file:
       - .env.runtime.docker.local
-    command: ["npm", "run", "pricing:bootstrap-existing-menu"]
+    command: ["node", "--conditions=react-server", "--import", "tsx", "scripts/pricing/bootstrap-existing-menu.ts"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -466,7 +466,7 @@ services:
     profiles: ["tools"]
     env_file:
       - .env.runtime.docker.local
-    command: ["npm", "run", "pricing:verify-existing-menu"]
+    command: ["node", "--conditions=react-server", "--import", "tsx", "scripts/pricing/verify-existing-menu.ts"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -492,7 +492,7 @@ services:
     profiles: ["tools"]
     env_file:
       - .env.runtime.docker.local
-    command: ["npm", "run", "catalog:bootstrap-imp028c-modifiers"]
+    command: ["node", "--conditions=react-server", "--import", "tsx", "scripts/catalog/bootstrap-imp028c-modifiers.ts"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -518,7 +518,7 @@ services:
     profiles: ["tools"]
     env_file:
       - .env.runtime.docker.local
-    command: ["npm", "run", "catalog:bootstrap-imp036c-required-topping"]
+    command: ["node", "--conditions=react-server", "--import", "tsx", "scripts/catalog/bootstrap-imp036c-required-topping.ts"]
     depends_on:
       postgres:
         condition: service_healthy

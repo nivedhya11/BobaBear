@@ -84,6 +84,28 @@ RUN npm run build \
   && test -f out/workforce/login/index.html \
   && test -d out/_next
 
+# ── tooling-dependencies ─────────────────────────────────────────────────
+# Production dependency closure for one-shot admin CLIs. A full `npm ci`
+# would ship drizzle-kit / @esbuild-kit Go esbuild binaries that produce
+# Trivy HIGH/CRITICAL gobinary findings. Runtime Node services already use
+# `--omit=dev --omit=optional`; tooling additionally needs `tsx` to execute
+# TypeScript CLIs. Install tsx from an isolated prefix and merge it in so
+# npm does not re-expand the root lockfile into unused dev tooling.
+FROM base AS tooling-dependencies
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev --omit=optional \
+  && TSX_VERSION="$(node -p "require('./package.json').devDependencies.tsx")" \
+  && mkdir -p /tmp/boba-tsx-prefix \
+  && npm install --prefix /tmp/boba-tsx-prefix "tsx@${TSX_VERSION}" \
+  && cp -a /tmp/boba-tsx-prefix/node_modules/. /app/node_modules/ \
+  && rm -rf /tmp/boba-tsx-prefix \
+  && rmdir node_modules/@esbuild-kit 2>/dev/null || true \
+  && test ! -e node_modules/drizzle-kit/package.json \
+  && test ! -e node_modules/@esbuild-kit/core-utils/package.json \
+  && ESBUILD_PLATFORM="$(node -p "process.arch === 'arm64' ? 'linux-arm64' : 'linux-x64'")" \
+  && test -x "node_modules/@esbuild/${ESBUILD_PLATFORM}/bin/esbuild" \
+  && node --import tsx -e "const n: number = 1; if (n !== 1) process.exit(1)"
+
 # ── tooling ──────────────────────────────────────────────────────────────
 # Used only by one-shot Compose services under the `tools` profile
 # (migrate / db-check / db-check-migration). Never the default target,
@@ -101,7 +123,7 @@ ENV NODE_ENV=production
 # from an operator shell) can otherwise COPY files as mode 0600 root-owned,
 # which makes `USER node` hit EACCES on /app/package.json during one-shot
 # staging workforce operator runs.
-COPY --from=dependencies --chown=node:node /app/node_modules ./node_modules
+COPY --from=tooling-dependencies --chown=node:node /app/node_modules ./node_modules
 COPY --chown=node:node package.json package-lock.json tsconfig.json drizzle.config.ts ./
 COPY --chown=node:node src ./src
 COPY --chown=node:node drizzle ./drizzle
@@ -114,14 +136,19 @@ COPY --chown=node:node scripts/workforce ./scripts/workforce
 COPY --chown=node:node scripts/access ./scripts/access
 COPY --chown=node:node scripts/serviceability ./scripts/serviceability
 COPY --chown=node:node scripts/check-config.ts ./scripts/check-config.ts
-# Staging deploy invokes `npm run staging:baseline-classify` inside the tooling
-# image (via menu-import-existing). Package only the classifier entrypoint —
+# Staging deploy invokes baseline classification inside the tooling image
+# (via menu-import-existing). Package only the classifier entrypoint —
 # not the full scripts/environment/ tree (host-side staging orchestration).
 COPY --chown=node:node scripts/environment/staging-baseline-classify.ts ./scripts/environment/staging-baseline-classify.ts
 COPY --chown=node:node data/platform/imports ./data/platform/imports
 COPY --chown=node:node data/platform/pricing ./data/platform/pricing
 COPY --chown=node:node data/platform/catalog ./data/platform/catalog
 COPY --chown=node:node public/assets/menu ./public/assets/menu
+# Compose/staging invoke `node --import tsx …` directly. Removing npm/npx/
+# corepack matches the runtime Node images and clears fixed HIGH/CRITICAL
+# findings in the base image's bundled npm dependency tree.
+USER root
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 USER node
 
 # ── customer-auth-builder ────────────────────────────────────────────────

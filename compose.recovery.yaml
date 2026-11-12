@@ -46,12 +46,12 @@ services:
       BOBA_LOGICAL_BACKUP_DB_USER: "${BOBA_LOGICAL_BACKUP_DB_USER:-boba_bear_logical_backup}"
       # Non-secret explicit classification; presence alone is not authority — CLI validates.
       BOBA_RECOVERY_SOURCE_CLASSIFICATION: "${BOBA_RECOVERY_SOURCE_CLASSIFICATION:?BOBA_RECOVERY_SOURCE_CLASSIFICATION must be set explicitly to production or staging}"
+    # Invoke the recovery CLI with node directly — the tooling image no longer
+    # ships npm/npx (same attack-surface reduction as runtime Node services).
     command:
       [
-        "npm",
-        "run",
-        "recovery",
-        "--",
+        "node",
+        "scripts/recovery/cli.mjs",
         "backup",
         "layer2",
         "--source-class",
