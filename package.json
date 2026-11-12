@@ -305,7 +305,7 @@
   },
   "devDependencies": {
     "@playwright/test": "1.64.1",
-    "@tailwindcss/postcss": "4.3.3",
+    "@tailwindcss/postcss": "4.3.5",
     "@testcontainers/postgresql": "12.2.1",
     "@testing-library/dom": "10.4.2",
     "@testing-library/jest-dom": "7.0.1",
@@ -325,7 +325,7 @@
     "jsdom": "29.1.1",
     "pdfjs-dist": "4.10.38",
     "playwright": "1.64.1",
-    "tailwindcss": "4.3.3",
+    "tailwindcss": "4.3.5",
     "tsx": "4.23.15",
     "typescript": "^5",
     "vite": "8.3.5",
