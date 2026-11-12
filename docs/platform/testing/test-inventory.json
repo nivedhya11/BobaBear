@@ -31,15 +31,15 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2481,
-    "executableTestFiles": 585,
+    "trackedPathsConsidered": 2484,
+    "executableTestFiles": 587,
     "sourceTestFiles": 167,
-    "testsTreeExecutableFiles": 301,
-    "scriptTestFiles": 117,
+    "testsTreeExecutableFiles": 302,
+    "scriptTestFiles": 118,
     "playwrightSpecs": 15,
     "vitestConfigs": 2,
     "playwrightConfigs": 9,
-    "testSupportScripts": 57,
+    "testSupportScripts": 58,
     "packageTestCommands": 94,
     "packageAuditCommands": 28,
     "packageE2eCommands": 12,
@@ -319,6 +319,7 @@
     "tests/customer-auth/trusted-identity.integration.test.ts",
     "tests/customer-commerce/financial-document.http.integration.test.ts",
     "tests/customer-commerce/gtm-commerce-regression.http.integration.test.ts",
+    "tests/customer-commerce/guest-auth-cart-continuity.http.integration.test.ts",
     "tests/customer-commerce/http.integration.test.ts",
     "tests/customer-commerce/razorpay.http.integration.test.ts",
     "tests/customer-commerce/scheduled-http.tranche3.integration.test.ts",
@@ -556,6 +557,7 @@
     "scripts/docker/smoke.test.mjs",
     "scripts/docker/workforce-auth-inspect.test.mjs",
     "scripts/docker/workforce-auth-smoke.test.mjs",
+    "scripts/e2e/loopback-port.test.mjs",
     "scripts/environment/hygiene.test.mjs",
     "scripts/environment/podman-compose.test.mjs",
     "scripts/environment/postgres-init-identity.test.mjs",
@@ -681,6 +683,7 @@
     "scripts/e2e/customer-ordering-server.ts",
     "scripts/e2e/evaluate-competing-complimentary.ts",
     "scripts/e2e/gtm-uat-browser-control.ts",
+    "scripts/e2e/loopback-port.mjs",
     "scripts/e2e/run-commercial-workspace-e2e.mjs",
     "scripts/e2e/run-cross-portal-promotion-e2e.mjs",
     "scripts/e2e/run-customer-auth-e2e.mjs",
@@ -969,7 +972,7 @@
     "test:customer-address-security": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-address-security",
     "test:customer-addresses": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-addresses",
     "test:customer-auth:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-auth/http.integration.test.ts tests/customer-auth/trusted-identity.integration.test.ts",
-    "test:customer-commerce:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-commerce/http.integration.test.ts tests/customer-commerce/scheduled-http.tranche3.integration.test.ts tests/customer-commerce/gtm-commerce-regression.http.integration.test.ts",
+    "test:customer-commerce:http": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-commerce/http.integration.test.ts tests/customer-commerce/scheduled-http.tranche3.integration.test.ts tests/customer-commerce/gtm-commerce-regression.http.integration.test.ts tests/customer-commerce/guest-auth-cart-continuity.http.integration.test.ts",
     "test:customer-profile-auth-integration": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-profile-auth-integration",
     "test:customer-profile-security": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-profile-security",
     "test:customer-profiles": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/customer-profiles",
@@ -2191,6 +2194,23 @@
     },
     {
       "path": "scripts/docker/workforce-auth-smoke.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/e2e/loopback-port.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
       "testType": "script-unit",
@@ -8579,6 +8599,25 @@
     },
     {
       "path": "tests/customer-commerce/gtm-commerce-regression.http.integration.test.ts",
+      "runner": "vitest",
+      "domain": "customer-commerce",
+      "testType": "integration",
+      "dbRequired": "YES",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:customer-commerce:http"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "4-integration",
+        "5-database-integration",
+        "6-http-api-contract"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "tests/customer-commerce/guest-auth-cart-continuity.http.integration.test.ts",
       "runner": "vitest",
       "domain": "customer-commerce",
       "testType": "integration",

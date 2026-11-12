@@ -46,6 +46,7 @@ import { randomBytes } from "node:crypto";
 import { existsSync } from "node:fs";
 
 import { createStaticExportHandler } from "../serve-static-export.mjs";
+import { resolveLoopbackPort } from "./loopback-port.mjs";
 import { applyMigrations } from "../../tests/database/support/test-database";
 import { startPostgresTestContainer, type TestContainerHandle } from "../../tests/database/support/test-container";
 
@@ -60,7 +61,8 @@ const CUSTOMER_AUTH_ENTRY = path.join(
   "main.js",
 );
 const HOST = "127.0.0.1"; // loopback only — never bind 0.0.0.0
-const INNER_SERVICE_PORT = 8179; // fixed, distinct from the compose customer-auth port (8081)
+/** Preferred when free; falls back so concurrent XR-010 / ordering harnesses stay untouched. */
+const PREFERRED_INNER_SERVICE_PORT = 8179;
 const CUSTOMER_AUTH_PROXY_PREFIX = "/api/customer-auth/";
 const READY_POLL_TIMEOUT_MS = 180_000;
 const READY_POLL_INTERVAL_MS = 200;
@@ -102,11 +104,15 @@ function requireCustomerAuthBuildExists(): void {
  * mirrors `docker/nginx/nginx.conf`'s `location ^~ /api/customer-auth/`
  * block closely enough for E2E purposes (forwards method/headers/body,
  * streams the response back, never buffers the whole body in memory). */
-function proxyToCustomerAuthService(req: IncomingMessage, res: ServerResponse): void {
+function proxyToCustomerAuthService(
+  req: IncomingMessage,
+  res: ServerResponse,
+  innerServicePort: number,
+): void {
   const proxyReq = http.request(
     {
       host: HOST,
-      port: INNER_SERVICE_PORT,
+      port: innerServicePort,
       path: req.url,
       method: req.method,
       headers: req.headers,
@@ -133,11 +139,11 @@ function startCustomerAuthChildProcess(env: Readonly<Record<string, string>>): C
   });
 }
 
-async function waitForReady(deadlineMs: number): Promise<void> {
+async function waitForReady(innerServicePort: number, deadlineMs: number): Promise<void> {
   const startedAt = Date.now();
   while (Date.now() - startedAt < deadlineMs) {
     try {
-      const response = await fetch(`http://${HOST}:${INNER_SERVICE_PORT}/health/ready`);
+      const response = await fetch(`http://${HOST}:${innerServicePort}/health/ready`);
       if (response.ok) return;
     } catch {
       // Not up yet — keep polling.
@@ -183,6 +189,12 @@ async function main(): Promise<void> {
 
   try {
     await applyMigrations(containerHandle.adminConnectionInfo.connectionString);
+    const preferredInner =
+      process.env.CUSTOMER_AUTH_E2E_INNER_PORT &&
+      Number.isInteger(Number(process.env.CUSTOMER_AUTH_E2E_INNER_PORT))
+        ? Number(process.env.CUSTOMER_AUTH_E2E_INNER_PORT)
+        : PREFERRED_INNER_SERVICE_PORT;
+    const innerServicePort = await resolveLoopbackPort(preferredInner);
 
     customerAuthProcess = startCustomerAuthChildProcess({
       BOBA_BEAR_ENV: "test",
@@ -197,7 +209,7 @@ async function main(): Promise<void> {
       CUSTOMER_OTP_LOCAL_FIXED_CODE: fixedCode,
       CUSTOMER_AUTH_TRUST_PROXY_HOPS: "0",
       CUSTOMER_AUTH_SERVICE_HOST: HOST,
-      CUSTOMER_AUTH_SERVICE_PORT: String(INNER_SERVICE_PORT),
+      CUSTOMER_AUTH_SERVICE_PORT: String(innerServicePort),
     });
     customerAuthProcess.once("exit", (code, signal) => {
       if (code !== 0 && code !== null) {
@@ -205,13 +217,13 @@ async function main(): Promise<void> {
       }
     });
 
-    await waitForReady(READY_POLL_TIMEOUT_MS);
+    await waitForReady(innerServicePort, READY_POLL_TIMEOUT_MS);
 
     const staticHandler = createStaticExportHandler(OUT_DIR);
     outerServer = http.createServer((req, res) => {
       const url = req.url ?? "/";
       if (url.startsWith(CUSTOMER_AUTH_PROXY_PREFIX)) {
-        proxyToCustomerAuthService(req, res);
+        proxyToCustomerAuthService(req, res, innerServicePort);
         return;
       }
       staticHandler(req, res);

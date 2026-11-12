@@ -14,6 +14,7 @@ import os from "node:os";
 
 import { createStaticExportHandler } from "../serve-static-export.mjs";
 import { handleGtmUatBrowserControl } from "./gtm-uat-browser-control";
+import { resolveLoopbackPort } from "./loopback-port.mjs";
 import { applyMigrations } from "../../tests/database/support/test-database";
 import { startPostgresTestContainer, type TestContainerHandle } from "../../tests/database/support/test-container";
 
@@ -35,8 +36,9 @@ const CUSTOMER_COMMERCE_ENTRY = path.join(
   "e2e-fake-main.js",
 );
 const HOST = "127.0.0.1";
-const INNER_AUTH_PORT = 8179;
-const INNER_COMMERCE_PORT = 8183;
+/** Preferred defaults when free; harness falls back so XR-010 / peer runs stay untouched. */
+const PREFERRED_INNER_AUTH_PORT = 8179;
+const PREFERRED_INNER_COMMERCE_PORT = 8183;
 const CUSTOMER_AUTH_PROXY_PREFIX = "/api/customer-auth/";
 const CUSTOMER_COMMERCE_PROXY_PREFIX = "/api/v1/";
 const READY_POLL_TIMEOUT_MS = 180_000;
@@ -47,6 +49,38 @@ const portArgIndex = process.argv.indexOf("--port");
 const OUTER_PORT = Number(
   portArgIndex !== -1 ? process.argv[portArgIndex + 1] : process.env.PORT ?? 4175,
 );
+
+function envPortOrUndefined(name: string): number | undefined {
+  const raw = process.env[name];
+  if (!raw) return undefined;
+  const parsed = Number(raw);
+  if (!Number.isInteger(parsed) || parsed <= 0 || parsed > 65535) {
+    throw new Error(`${name} must be an integer port in 1..65535 when set.`);
+  }
+  return parsed;
+}
+
+async function resolveOwnedInnerPorts(): Promise<{
+  innerAuthPort: number;
+  innerCommercePort: number;
+}> {
+  const preferredAuth =
+    envPortOrUndefined("CUSTOMER_ORDERING_INNER_AUTH_PORT") ?? PREFERRED_INNER_AUTH_PORT;
+  const preferredCommerce =
+    envPortOrUndefined("CUSTOMER_ORDERING_INNER_COMMERCE_PORT") ?? PREFERRED_INNER_COMMERCE_PORT;
+  const innerAuthPort = await resolveLoopbackPort(preferredAuth);
+  const innerCommercePort = await resolveLoopbackPort(
+    innerAuthPort === preferredCommerce ? undefined : preferredCommerce,
+  );
+  if (innerAuthPort === innerCommercePort) {
+    const retryCommerce = await resolveLoopbackPort(undefined);
+    if (retryCommerce === innerAuthPort) {
+      throw new Error("customer-ordering E2E harness could not allocate distinct inner ports.");
+    }
+    return { innerAuthPort, innerCommercePort: retryCommerce };
+  }
+  return { innerAuthPort, innerCommercePort };
+}
 
 function requireFixedOtpCode(): string {
   const raw = process.env.CUSTOMER_OTP_LOCAL_FIXED_CODE;
@@ -232,6 +266,7 @@ async function main(): Promise<void> {
 
     const customerAuthSecret = ephemeralSecret("customer-ordering-e2e-auth");
     const customerPiiSecret = ephemeralSecret("customer-ordering-e2e-pii");
+    const { innerAuthPort, innerCommercePort } = await resolveOwnedInnerPorts();
     const sharedAuthEnv = {
       BOBA_BEAR_ENV: "test",
       BOBA_BEAR_PUBLIC_ORIGIN: publicOrigin,
@@ -249,19 +284,19 @@ async function main(): Promise<void> {
     customerAuthProcess = startChild("customer-auth", CUSTOMER_AUTH_ENTRY, {
       ...sharedAuthEnv,
       CUSTOMER_AUTH_SERVICE_HOST: HOST,
-      CUSTOMER_AUTH_SERVICE_PORT: String(INNER_AUTH_PORT),
+      CUSTOMER_AUTH_SERVICE_PORT: String(innerAuthPort),
     });
     customerAuthProcess.once("exit", (code, signal) => {
       process.stderr.write(
         `customer-ordering E2E harness: customer-auth exited (code ${code}, signal ${signal}).\n`,
       );
     });
-    await waitForReady(INNER_AUTH_PORT, "customer-auth");
+    await waitForReady(innerAuthPort, "customer-auth");
 
     customerCommerceProcess = startChild("customer-commerce", CUSTOMER_COMMERCE_ENTRY, {
       ...sharedAuthEnv,
       CUSTOMER_COMMERCE_SERVICE_HOST: HOST,
-      CUSTOMER_COMMERCE_SERVICE_PORT: String(INNER_COMMERCE_PORT),
+      CUSTOMER_COMMERCE_SERVICE_PORT: String(innerCommercePort),
       CUSTOMER_COMMERCE_TRUST_PROXY_HOPS: "0",
       CUSTOMER_COMMERCE_FAKE_PAYMENT_OUTCOME: "razorpay_standard_checkout",
     });
@@ -270,7 +305,7 @@ async function main(): Promise<void> {
         `customer-ordering E2E harness: customer-commerce exited (code ${code}, signal ${signal}).\n`,
       );
     });
-    await waitForReady(INNER_COMMERCE_PORT, "customer-commerce");
+    await waitForReady(innerCommercePort, "customer-commerce");
 
     staticExportDir = copyStaticExportToLinuxTmp();
     const staticHandler = createStaticExportHandler(staticExportDir);
@@ -290,11 +325,11 @@ async function main(): Promise<void> {
         return;
       }
       if (url.startsWith(CUSTOMER_AUTH_PROXY_PREFIX)) {
-        proxyTo(INNER_AUTH_PORT, req, res);
+        proxyTo(innerAuthPort, req, res);
         return;
       }
       if (url.startsWith(CUSTOMER_COMMERCE_PROXY_PREFIX)) {
-        proxyTo(INNER_COMMERCE_PORT, req, res);
+        proxyTo(innerCommercePort, req, res);
         return;
       }
       staticHandler(req, res);
@@ -313,7 +348,9 @@ async function main(): Promise<void> {
     }
 
     process.stderr.write(
-      `✓  customer-ordering E2E harness ready at http://${HOST}:${OUTER_PORT} (out=${staticExportDir})\n`,
+      `✓  customer-ordering E2E harness ready at http://${HOST}:${OUTER_PORT} ` +
+        `(out=${staticExportDir}; ownedInnerAuth=${innerAuthPort}; ownedInnerCommerce=${innerCommercePort}; ` +
+        `ownedOuter=${OUTER_PORT}; pid=${process.pid})\n`,
     );
   } catch (error) {
     await shutdown();
