@@ -292,6 +292,18 @@ test("I11: absent PostgreSQL state -> governed decision, not assumed fresh boots
   assert.match(result.note ?? "", /governed|legacy recovery|fresh-start/i);
 });
 
+test("I11b: positively absent container+volume with image compat is Phase A candidate only", () => {
+  const result = resolvePostgresInitDisposition({
+    candidateManifest: { ok: true, files: [], digest: "x" },
+    activePostgres: { present: false, volumePresent: false, imageCompatConflict: false },
+    trustRoots: { runtimeAssetsRoot: "/tmp/runtime-assets" },
+  });
+  assert.equal(result.disposition, POSTGRES_INIT_DISPOSITION.BLOCK);
+  assert.equal(result.reasonCode, POSTGRES_INIT_REASON.FIRST_BOOTSTRAP_CANDIDATE);
+  assert.equal(result.imageCompatConflict, false);
+  assert.match(result.note ?? "", /Phase A|Founder authorization/i);
+});
+
 test("I12: older active mount and new candidate manifest match -> Compose mount path remains stable", () => {
   const tmp = mkdtempSync(path.join(os.tmpdir(), "boba-init-i12-"));
   try {

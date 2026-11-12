@@ -29,6 +29,10 @@ import {
   classifyPublishingIsolation,
   PUBLISHING_CLASSIFICATION,
 } from "./staging-publishing-probe.mjs";
+import {
+  STAGING_DEPLOYMENT_PHASE,
+  STAGING_PERSISTENCE_STATE,
+} from "./staging-persistence-classification.mjs";
 
 export const PREFLIGHT_OUTCOME = Object.freeze({
   PASS: "PASS",
@@ -64,6 +68,9 @@ export const PREFLIGHT_REASON = Object.freeze({
   PROTECTED_SESSION_IMPACT: "PROTECTED_SESSION_IMPACT",
   CAPACITY_OR_PRESERVATION_UNSAFE: "CAPACITY_OR_PRESERVATION_UNSAFE",
   POSTGRES_INIT_NOT_PRESERVABLE: "POSTGRES_INIT_NOT_PRESERVABLE",
+  PERSISTENCE_STATE_UNSAFE: "PERSISTENCE_STATE_UNSAFE",
+  INITIAL_PROVISION_UNAUTHORIZED: "INITIAL_PROVISION_UNAUTHORIZED",
+  PHASE_A_REQUIRES_EMPTY_DATABASE: "PHASE_A_REQUIRES_EMPTY_DATABASE",
   PROBE_FAILURE: "PROBE_FAILURE",
   EVIDENCE_MALFORMED: "EVIDENCE_MALFORMED",
 });
@@ -144,16 +151,30 @@ export function evaluateStagingDeployPreflight(evidence) {
     });
   }
 
+  const phaseContext = resolvePreflightPhase(e, findings);
+  categories.persistence = phaseContext.persistenceOutcome;
+
   categories.source = evaluateSource(e.source, findings);
   categories.publishing = evaluatePublishing(e.publishing, findings, e.source?.head);
-  categories.runtime = evaluateRuntime(e.runtime, findings);
   categories.environment = evaluateEnvironment(e.environment, findings);
-  categories.database = evaluateDatabase(e.database, findings);
-  const recovery = evaluateRecovery(e.recovery, e.source, findings);
-  categories.recovery = recovery.outcome;
   categories.security = evaluateSecurity(e.security, e.source, findings);
   categories.capacity = evaluateCapacity(e.capacity, findings);
-  categories.postgresInit = evaluatePostgresInit(e.postgresInit, findings);
+
+  /** @type {{ outcome: PreflightOutcome, binding?: string }} */
+  let recovery;
+  if (phaseContext.phase === STAGING_DEPLOYMENT_PHASE.PHASE_A_INITIAL_PROVISION) {
+    categories.runtime = evaluateRuntimePhaseA(e.runtime, e.persistence, findings);
+    categories.database = evaluateDatabasePhaseA(e.database, findings);
+    recovery = evaluateRecoveryPhaseA(e.recovery, findings);
+    categories.recovery = recovery.outcome;
+    categories.postgresInit = evaluatePostgresInitPhaseA(e.postgresInit, findings);
+  } else {
+    categories.runtime = evaluateRuntime(e.runtime, findings);
+    categories.database = evaluateDatabase(e.database, findings);
+    recovery = evaluateRecovery(e.recovery, e.source, findings);
+    categories.recovery = recovery.outcome;
+    categories.postgresInit = evaluatePostgresInit(e.postgresInit, findings);
+  }
 
   const values = Object.values(categories);
   let outcome = PREFLIGHT_OUTCOME.PASS;
@@ -736,6 +757,55 @@ function evaluatePublishing(publishing, findings, sourceHead) {
   return PREFLIGHT_OUTCOME.BLOCKED;
 }
 
+function resolvePreflightPhase(evidence, findings) {
+  const persistence = evidence?.persistence;
+  if (!persistence || typeof persistence !== "object") {
+    // Backward compatible: missing persistence classification keeps Phase B
+    // established-deploy rules (existing runtime must still prove itself).
+    return {
+      phase: STAGING_DEPLOYMENT_PHASE.PHASE_B_ESTABLISHED_DEPLOY,
+      persistenceOutcome: PREFLIGHT_OUTCOME.PASS,
+    };
+  }
+
+  if (persistence.state === STAGING_PERSISTENCE_STATE.INITIALIZED_PRESENT) {
+    return {
+      phase: STAGING_DEPLOYMENT_PHASE.PHASE_B_ESTABLISHED_DEPLOY,
+      persistenceOutcome: PREFLIGHT_OUTCOME.PASS,
+    };
+  }
+
+  if (persistence.state === STAGING_PERSISTENCE_STATE.NEVER_INITIALIZED) {
+    if (persistence.mayCreateNewVolume !== true) {
+      findings.push({
+        code: PREFLIGHT_REASON.PERSISTENCE_STATE_UNSAFE,
+        category: "persistence",
+        detail: "NEVER_INITIALIZED without create authorization flag",
+      });
+      return { phase: STAGING_DEPLOYMENT_PHASE.BLOCKED, persistenceOutcome: PREFLIGHT_OUTCOME.BLOCKED };
+    }
+    if (evidence.initialProvisionAuthorized !== true) {
+      findings.push({
+        code: PREFLIGHT_REASON.INITIAL_PROVISION_UNAUTHORIZED,
+        category: "persistence",
+        detail: "Phase A requires explicit Founder initial-provision authorization",
+      });
+      return { phase: STAGING_DEPLOYMENT_PHASE.BLOCKED, persistenceOutcome: PREFLIGHT_OUTCOME.BLOCKED };
+    }
+    return {
+      phase: STAGING_DEPLOYMENT_PHASE.PHASE_A_INITIAL_PROVISION,
+      persistenceOutcome: PREFLIGHT_OUTCOME.PASS,
+    };
+  }
+
+  findings.push({
+    code: PREFLIGHT_REASON.PERSISTENCE_STATE_UNSAFE,
+    category: "persistence",
+    detail: persistence.detail ?? persistence.state ?? "persistence state blocks deployment",
+  });
+  return { phase: STAGING_DEPLOYMENT_PHASE.BLOCKED, persistenceOutcome: PREFLIGHT_OUTCOME.BLOCKED };
+}
+
 function evaluateRuntime(runtime, findings) {
   if (!runtime || typeof runtime !== "object") {
     findings.push({ code: PREFLIGHT_REASON.RUNTIME_IDENTITY_INVALID, category: "runtime", detail: "missing runtime evidence" });
@@ -760,6 +830,148 @@ function evaluateRuntime(runtime, findings) {
     return PREFLIGHT_OUTCOME.BLOCKED;
   }
   return PREFLIGHT_OUTCOME.PASS;
+}
+
+function evaluateRuntimePhaseA(runtime, persistence, findings) {
+  if (!persistence || persistence.state !== STAGING_PERSISTENCE_STATE.NEVER_INITIALIZED) {
+    findings.push({
+      code: PREFLIGHT_REASON.RUNTIME_IDENTITY_INVALID,
+      category: "runtime",
+      detail: "Phase A runtime requires NEVER_INITIALIZED persistence",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+  if (!runtime || typeof runtime !== "object") {
+    findings.push({
+      code: PREFLIGHT_REASON.RUNTIME_IDENTITY_INVALID,
+      category: "runtime",
+      detail: "missing Phase A runtime evidence",
+    });
+    return PREFLIGHT_OUTCOME.UNKNOWN;
+  }
+  if (runtime.podmanRootless !== true || runtime.evidenceComplete !== true) {
+    findings.push({
+      code: PREFLIGHT_REASON.RUNTIME_IDENTITY_INVALID,
+      category: "runtime",
+      detail: "Phase A requires proven rootless podman and complete absence evidence",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+  if (runtime.postgresContainer != null || runtime.postgresVolume != null || runtime.composeProject != null) {
+    findings.push({
+      code: PREFLIGHT_REASON.RUNTIME_IDENTITY_INVALID,
+      category: "runtime",
+      detail: "Phase A forbids an existing staging postgres identity",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+  if (runtime.unexpectedTarget === true) {
+    findings.push({ code: PREFLIGHT_REASON.RUNTIME_IDENTITY_INVALID, category: "runtime" });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+  return PREFLIGHT_OUTCOME.PASS;
+}
+
+function evaluateDatabasePhaseA(database, findings) {
+  if (!database || typeof database !== "object") {
+    findings.push({
+      code: PREFLIGHT_REASON.PHASE_A_REQUIRES_EMPTY_DATABASE,
+      category: "database",
+      detail: "missing Phase A database absence evidence",
+    });
+    return PREFLIGHT_OUTCOME.UNKNOWN;
+  }
+  if (database.baselineCompatibility !== "FRESH_EMPTY" && database.baselineCompatibility !== "ABSENT_NEVER_INITIALIZED") {
+    findings.push({
+      code: PREFLIGHT_REASON.PHASE_A_REQUIRES_EMPTY_DATABASE,
+      category: "database",
+      detail: "Phase A requires positively empty/absent database baseline",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+  if (database.migrationIdentityKnown === true && database.migrationLedgerState !== "UNKNOWN") {
+    findings.push({
+      code: PREFLIGHT_REASON.PHASE_A_REQUIRES_EMPTY_DATABASE,
+      category: "database",
+      detail: "Phase A refuses an existing known migration ledger",
+    });
+    return PREFLIGHT_OUTCOME.BLOCKED;
+  }
+  return PREFLIGHT_OUTCOME.PASS;
+}
+
+function evaluateRecoveryPhaseA(recovery, findings) {
+  // First provision cannot require a staging-bound restore of a DB that does not
+  // exist. It still refuses DESIGN_DEPENDENCY bypass via operator flags and
+  // requires an explicit post-provision checkpoint plan marker.
+  if (!recovery || typeof recovery !== "object") {
+    findings.push({
+      code: PREFLIGHT_REASON.RECOVERY_PROOF_MISSING,
+      category: "recovery",
+      detail: "Phase A requires an explicit post-provision recovery plan marker",
+    });
+    return { outcome: PREFLIGHT_OUTCOME.UNKNOWN, binding: "RECOVERY_PROOF_BINDING = PHASE_A_PLAN_REQUIRED" };
+  }
+  if (recovery.phaseAPostProvisionCheckpointRequired !== true) {
+    findings.push({
+      code: PREFLIGHT_REASON.RECOVERY_PROOF_MISSING,
+      category: "recovery",
+      detail: "Phase A must require a post-provision IMP-037 checkpoint before app start",
+    });
+    return { outcome: PREFLIGHT_OUTCOME.BLOCKED, binding: "RECOVERY_PROOF_BINDING = PHASE_A_PLAN_REQUIRED" };
+  }
+  if (recovery.phaseAAllowsEmptySource !== true) {
+    findings.push({
+      code: PREFLIGHT_REASON.RECOVERY_PROOF_MISSING,
+      category: "recovery",
+      detail: "Phase A empty-source recovery posture not affirmed",
+    });
+    return { outcome: PREFLIGHT_OUTCOME.BLOCKED, binding: "RECOVERY_PROOF_BINDING = PHASE_A_PLAN_REQUIRED" };
+  }
+  return {
+    outcome: PREFLIGHT_OUTCOME.PASS,
+    binding: "RECOVERY_PROOF_BINDING = PHASE_A_EMPTY_SOURCE_WITH_POST_PROVISION_CHECKPOINT",
+  };
+}
+
+function evaluatePostgresInitPhaseA(postgresInit, findings) {
+  if (!postgresInit || typeof postgresInit !== "object") {
+    findings.push({
+      code: PREFLIGHT_REASON.POSTGRES_INIT_NOT_PRESERVABLE,
+      category: "postgresInit",
+      detail: "missing Phase A postgres init disposition",
+    });
+    return PREFLIGHT_OUTCOME.UNKNOWN;
+  }
+  if (
+    postgresInit.reasonCode === "POSTGRES_INIT_ABSENT_CONTAINER" ||
+    postgresInit.reasonCode === "POSTGRES_INIT_ABSENT_VOLUME" ||
+    postgresInit.reasonCode === "POSTGRES_INIT_FIRST_BOOTSTRAP_CANDIDATE"
+  ) {
+    if (postgresInit.imageCompatConflict === true) {
+      findings.push({
+        code: PREFLIGHT_REASON.POSTGRES_INIT_NOT_PRESERVABLE,
+        category: "postgresInit",
+        detail: "candidate PostgreSQL image compatibility conflict",
+      });
+      return PREFLIGHT_OUTCOME.BLOCKED;
+    }
+    if (postgresInit.imageCompatConflict !== false) {
+      findings.push({
+        code: PREFLIGHT_REASON.POSTGRES_INIT_NOT_PRESERVABLE,
+        category: "postgresInit",
+        detail: "Phase A still requires positive candidate image compatibility determination",
+      });
+      return PREFLIGHT_OUTCOME.UNKNOWN;
+    }
+    return PREFLIGHT_OUTCOME.PASS;
+  }
+  findings.push({
+    code: PREFLIGHT_REASON.POSTGRES_INIT_NOT_PRESERVABLE,
+    category: "postgresInit",
+    detail: postgresInit.reasonCode ?? "Phase A init disposition not first-bootstrap candidate",
+  });
+  return PREFLIGHT_OUTCOME.BLOCKED;
 }
 
 function evaluateEnvironment(environment, findings) {

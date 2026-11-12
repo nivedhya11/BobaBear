@@ -1,14 +1,18 @@
 /**
  * Staging recovery-proof adapter.
  *
- * IMP-037 can qualify a backup chain. The checkpoint qualifier can assess an
- * isolated evidence root. This live adapter still keeps
- * RECOVERY_PROOF_BINDING = DESIGN_DEPENDENCY until the remaining Founder
- * decisions are made and an authorized batch records real proof.
- * Supplied records, backup-success files, and synthetic fixtures cannot clear it.
+ * Default live binding remains DESIGN_DEPENDENCY until Founder selections are
+ * present AND an independently qualified staging restore checkpoint passes.
+ * Supplied records, backup-success files, and synthetic fixtures cannot clear
+ * unresolved policy blockers.
  */
 import { evaluateQualifyingRecoveryProof } from "../recovery/evidence.mjs";
 import { ENVIRONMENT_CLASSIFICATION } from "../recovery/constants.mjs";
+import {
+  defaultStagingRecoveryBindingPolicy,
+  listUnresolvedRecoveryBindingBlockers,
+} from "./staging-recovery-binding-policy.mjs";
+import { evaluateStagingRecoveryChain } from "./staging-recovery-checkpoint.mjs";
 
 export const STAGING_RECOVERY_BINDING = "RECOVERY_PROOF_BINDING = DESIGN_DEPENDENCY";
 
@@ -25,8 +29,8 @@ export const STAGING_RECOVERY_SPECIFIED_CONTRACTS = Object.freeze([
 ]);
 
 /**
- * Remaining Founder decisions. A qualifying backup record cannot clear these.
- * The live cluster system identifier is not invented here.
+ * Remaining Founder decisions when the live default policy is unbound.
+ * A qualifying backup record cannot clear these.
  */
 export const STAGING_RECOVERY_BINDING_BLOCKERS = Object.freeze([
   "STAGING_EVIDENCE_ROOT_UNNAMED",
@@ -50,11 +54,7 @@ export function countQualifyingStagingRecords(records) {
   }).length;
 }
 
-/**
- * Always fail-closed. `records` are counted for diagnostics and cannot clear the dependency.
- * @param {{ records?: unknown[] }} [input]
- */
-export function bindStagingRecoveryEvidence(input = {}) {
+function designDependencyResult(extra = {}) {
   return {
     bindingDesignDependency: true,
     binding: STAGING_RECOVERY_BINDING,
@@ -66,8 +66,87 @@ export function bindStagingRecoveryEvidence(input = {}) {
     stagingBound: false,
     freshnessOk: false,
     evidenceRecords: [],
-    observedQualifyingStagingRecords: countQualifyingStagingRecords(input.records),
-    bindingBlockers: [...STAGING_RECOVERY_BINDING_BLOCKERS],
+    operationalAuthority: false,
+    ...extra,
+  };
+}
+
+/**
+ * Fail-closed binder. Policy defaults keep DESIGN_DEPENDENCY.
+ * @param {{
+ *   records?: unknown[],
+ *   policy?: ReturnType<typeof defaultStagingRecoveryBindingPolicy>,
+ *   checkpointObservation?: object,
+ *   now?: Date | string | number,
+ *   evaluateCheckpoint?: typeof evaluateStagingRecoveryChain,
+ * }} [input]
+ */
+export function bindStagingRecoveryEvidence(input = {}) {
+  const policy = input.policy ?? defaultStagingRecoveryBindingPolicy();
+  const blockers = listUnresolvedRecoveryBindingBlockers(policy);
+  const observedQualifyingStagingRecords = countQualifyingStagingRecords(input.records);
+
+  if (blockers.length > 0) {
+    return designDependencyResult({
+      observedQualifyingStagingRecords,
+      bindingBlockers: blockers,
+      specifiedContracts: [...STAGING_RECOVERY_SPECIFIED_CONTRACTS],
+      policySelections: {
+        evidenceRoot: policy.evidenceRoot.status,
+        databaseVolumeIdentity: policy.databaseVolumeIdentity.status,
+        freshnessWindow: policy.freshnessWindow.status,
+        ledgerStateMapping: policy.ledgerStateMapping.status,
+      },
+    });
+  }
+
+  const evaluateCheckpoint = input.evaluateCheckpoint ?? evaluateStagingRecoveryChain;
+  let checkpoint;
+  try {
+    checkpoint = evaluateCheckpoint({
+      records: input.records ?? [],
+      observation: input.checkpointObservation,
+      now: input.now,
+    });
+  } catch (error) {
+    return designDependencyResult({
+      observedQualifyingStagingRecords,
+      bindingBlockers: ["CHECKPOINT_EVALUATION_FAILED"],
+      specifiedContracts: [...STAGING_RECOVERY_SPECIFIED_CONTRACTS],
+      detail: error instanceof Error ? error.message : "checkpoint evaluation failed",
+    });
+  }
+
+  const qualified = checkpoint?.outcome === "PASS" && checkpoint?.isolatedQualification === "PASS";
+  if (!qualified) {
+    return designDependencyResult({
+      observedQualifyingStagingRecords,
+      bindingBlockers: checkpoint?.reasonCodes?.length
+        ? checkpoint.reasonCodes
+        : ["CHECKPOINT_NOT_QUALIFIED"],
+      specifiedContracts: [...STAGING_RECOVERY_SPECIFIED_CONTRACTS],
+      checkpointOutcome: checkpoint?.outcome ?? "BLOCKED",
+    });
+  }
+
+  return {
+    bindingDesignDependency: false,
+    binding: "RECOVERY_PROOF_BINDING = STAGING_CHECKPOINT_QUALIFIED",
+    checkpointPresent: true,
+    integrityVerified: true,
+    restoreProofPresent: true,
+    recoveryPointIdentifiable: true,
+    rollbackPlanSuitable: true,
+    stagingBound: true,
+    freshnessOk: true,
+    evidenceRecords: Array.isArray(input.records) ? input.records : [],
+    checkpointObservation: input.checkpointObservation ?? null,
+    observedQualifyingStagingRecords,
+    bindingBlockers: [],
     specifiedContracts: [...STAGING_RECOVERY_SPECIFIED_CONTRACTS],
+    operationalAuthority: false,
+    checkpointOutcome: "PASS",
+    selectedEvidenceRoot: policy.evidenceRoot.path,
+    selectedVolumeSystemIdentity: policy.databaseVolumeIdentity.systemIdentity,
   };
 }

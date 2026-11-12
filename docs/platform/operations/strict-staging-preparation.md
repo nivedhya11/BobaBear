@@ -221,12 +221,42 @@ designation. Local
 Every runtime service must carry the same valid public origin; a missing or
 malformed service origin is not ignored when other services agree.
 
+## Two-phase staging deployment
+
+Fail-closed persistence classification distinguishes first provisioning from
+ongoing deployment. UNKNOWN existing data never authorizes creating a
+replacement volume.
+
+| Persistence state | Phase | Create new volume? |
+|---|---|---|
+| `NEVER_INITIALIZED` (container + volume positively absent) | Phase A candidate | Only after explicit Founder initial-provision authorization |
+| `INITIALIZED_PRESENT` | Phase B established deploy | No |
+| `VOLUME_WITHOUT_CONTAINER` | Blocked | No — start/recovery only |
+| `UNKNOWN_EXISTING` / `OWNERSHIP_CONFLICT` / `TEMPORARILY_UNAVAILABLE` | Blocked | No |
+
+**Phase A — initial staging provisioning** keeps strong source, publishing,
+environment, security, and capacity gates. It does **not** relax Phase B
+runtime identity, preservable init, or staging-bound restore-proof requirements
+into a synthetic PASS. Instead it requires:
+
+- positively classified `NEVER_INITIALIZED`
+- `initialProvisionAuthorized=true` (Founder)
+- empty/absent database baseline
+- candidate PostgreSQL image compatibility positively determined
+- mandatory post-provision IMP-037 checkpoint before treating the environment
+  as Phase B
+
+**Phase B — established staging deployment** retains the full preflight,
+including runtime identity, migration ledger, recovery binding, and init
+PRESERVE.
+
 ## Recovery and database
 
-The live collector keeps `RECOVERY_PROOF_BINDING = DESIGN_DEPENDENCY`. A
-qualifying backup record is not a staging restore checkpoint. The checkpoint
-qualifier can accept a complete synthetic chain only in isolated tests, and
-that result has no operational authority.
+The live collector keeps `RECOVERY_PROOF_BINDING = DESIGN_DEPENDENCY` until
+Founder binding selections are present and a staging restore checkpoint
+qualifies. A qualifying backup record alone is not a staging restore
+checkpoint. The checkpoint qualifier can accept a complete synthetic chain only
+in isolated tests, and that result has no operational authority.
 
 Locked rules already applied by that qualifier:
 
@@ -240,14 +270,17 @@ These Founder decisions remain, so the live binding cannot pass:
 
 - `STAGING_EVIDENCE_ROOT_UNNAMED` — proposed private root is not selected.
 - `STAGING_DATABASE_VOLUME_IDENTITY_UNBOUND` — volume name is known; the live
-  cluster system identifier has not been observed.
-- `STAGING_FRESHNESS_WINDOW_UNDECIDED` — no extra staging restore-proof window
-  is adopted here.
-- `LEDGER_STATE_MAPPING_UNDECIDED` — hash comparison is not a known-safe label.
+  cluster system identifier has not been observed (and cannot be before first
+  provision).
+- `STAGING_FRESHNESS_WINDOW_UNDECIDED` — recommended selection is reuse of locked
+  IMP-037 limits with no extra staging restore-proof window.
+- `LEDGER_STATE_MAPPING_UNDECIDED` — recommended selection is exact journal /
+  applied set equality → `LEDGER_CURRENT` / empty → `FRESH_EMPTY` baseline.
 
 Database probes that compare migration hashes do not emit `APPLIED_CURRENT` or
-`LEDGER_CURRENT`. Duplicate auth-account checks return a group count only and
-are not run against the persistent staging database by this preparation change.
+`LEDGER_CURRENT` until that mapping is Founder-selected. Duplicate auth-account
+checks return a group count only and are not run against the persistent staging
+database by this preparation change.
 
 ## Secret files
 
