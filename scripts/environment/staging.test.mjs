@@ -408,7 +408,8 @@ test("createStagingWorkforceUser delivers password to final podman run only", ()
         assert.equal(args.includes("--tty"), false);
         assert.equal(args.includes("-t"), false);
         assert.ok(args.indexOf("--interactive") < args.indexOf(`boba-bear-staging-workforce-operator:${candidateSha}`));
-        assert.equal(args.join(" ").includes("workforce:user:create"), true);
+        assert.equal(args.join(" ").includes("scripts/workforce/create-user.ts"), true);
+        assert.equal(args.includes("tsx"), true);
         assert.equal(args.join(" ").includes("exact-founder-password-bytes"), false);
         assert.equal(JSON.stringify(options ?? {}).includes("exact-founder-password-bytes"), false);
       },
@@ -750,7 +751,8 @@ test("classifyStagingBaselineInTooling disables pseudo-TTY for machine-readable 
   const runIndex = capturedArgs.indexOf("run");
   assert.ok(runIndex >= 0, "expected podman-compose run");
   assert.equal(capturedArgs[runIndex + 1], "-T", "classifier run must disable pseudo-TTY with -T");
-  assert.equal(capturedArgs.includes("staging:baseline-classify"), true);
+  assert.equal(capturedArgs.includes("scripts/environment/staging-baseline-classify.ts"), true);
+  assert.equal(capturedArgs.includes("tsx"), true);
 });
 
 test("stagingBaselineDecisionLogLines emit stable non-secret markers", () => {
@@ -844,7 +846,8 @@ test("decideAndApplyStagingBootstrap fails closed when fresh apply does not reac
 
 test("staging deploy uses hardened tooling run for baseline classify", () => {
   const source = readFileSync(path.resolve("scripts/environment/staging.mjs"), "utf8");
-  assert.match(source, /staging:baseline-classify/);
+  assert.match(source, /scripts\/environment\/staging-baseline-classify\.ts/);
+  assert.match(source, /toolingTsxCommand/);
   assert.match(source, /menu-import-existing/);
   assert.match(source, /COMPOSE_PROFILES: "tools"/);
   assert.match(

@@ -985,10 +985,11 @@ function createStagingWorkforceUser(args, deps = {}) {
       "no-new-privileges:true",
       ...envFiles.flatMap((file) => ["--env-file", file]),
       image,
-      "npm",
-      "run",
-      "workforce:user:create",
-      "--",
+      "node",
+      "--conditions=react-server",
+      "--import",
+      "tsx",
+      "scripts/workforce/create-user.ts",
       ...args,
     ];
     runOperator(runArgs, secretBuffer, {});
@@ -1114,7 +1115,18 @@ function recoverPostgres(candidate) {
   }
 }
 
-function runBootstrapApply(buildDir, service, npmArgs) {
+function toolingTsxCommand(scriptPath, extraArgs = []) {
+  return [
+    "node",
+    "--conditions=react-server",
+    "--import",
+    "tsx",
+    scriptPath,
+    ...extraArgs,
+  ];
+}
+
+function runBootstrapApply(buildDir, service, scriptPath) {
   podmanCompose(buildDir, [
     "run",
     "--rm",
@@ -1122,20 +1134,16 @@ function runBootstrapApply(buildDir, service, npmArgs) {
     "--entrypoint",
     "",
     service,
-    "npm",
-    "run",
-    ...npmArgs,
-    "--",
-    "--apply",
+    ...toolingTsxCommand(scriptPath, ["--apply"]),
   ], { COMPOSE_PROFILES: "tools" });
 }
 
 function runLegacySeedBootstrapChain(buildDir) {
-  runBootstrapApply(buildDir, "menu-import-existing", ["menu:import-existing"]);
-  runBootstrapApply(buildDir, "assortment-bootstrap-existing-menu", ["assortment:bootstrap-existing-menu"]);
-  runBootstrapApply(buildDir, "pricing-bootstrap-existing-menu", ["pricing:bootstrap-existing-menu"]);
-  runBootstrapApply(buildDir, "catalog-bootstrap-imp028c-modifiers", ["catalog:bootstrap-imp028c-modifiers"]);
-  runBootstrapApply(buildDir, "catalog-bootstrap-imp036c-required-topping", ["catalog:bootstrap-imp036c-required-topping"]);
+  runBootstrapApply(buildDir, "menu-import-existing", "scripts/menu/import-existing.ts");
+  runBootstrapApply(buildDir, "assortment-bootstrap-existing-menu", "scripts/assortment/bootstrap-existing-menu.ts");
+  runBootstrapApply(buildDir, "pricing-bootstrap-existing-menu", "scripts/pricing/bootstrap-existing-menu.ts");
+  runBootstrapApply(buildDir, "catalog-bootstrap-imp028c-modifiers", "scripts/catalog/bootstrap-imp028c-modifiers.ts");
+  runBootstrapApply(buildDir, "catalog-bootstrap-imp036c-required-topping", "scripts/catalog/bootstrap-imp036c-required-topping.ts");
 }
 
 /**
@@ -1165,9 +1173,7 @@ function classifyStagingBaselineInTooling(
       "--entrypoint",
       "",
       "menu-import-existing",
-      "npm",
-      "run",
-      "staging:baseline-classify",
+      ...toolingTsxCommand("scripts/environment/staging-baseline-classify.ts"),
     ],
     {
       cwd: buildDir,

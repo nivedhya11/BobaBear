@@ -35,7 +35,13 @@ FROM base AS dependencies
 FROM base AS builder
 ARG NEXT_PUBLIC_SITE_URL=""
 ARG NEXT_PUBLIC_GA_MEASUREMENT_ID=""
+FROM base AS tooling-dependencies
+RUN npm ci --omit=dev --omit=optional \
+  && test ! -e node_modules/drizzle-kit/package.json \
+  && test ! -e node_modules/@esbuild-kit/core-utils/package.json
 FROM base AS tooling
+COPY --from=tooling-dependencies --chown=node:node /app/node_modules ./node_modules
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 FROM dependencies AS customer-auth-builder
 FROM base AS customer-auth-dependencies
 FROM base AS customer-auth-runtime
@@ -142,17 +148,22 @@ services:
       test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:8084/health/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
   migrate:
     profiles: ["tools"]
+    command: ["node", "--import", "tsx", "scripts/database/migrate.ts"]
     depends_on:
       postgres:
         condition: service_healthy
   db-check:
     profiles: ["tools"]
+    command: ["node", "--conditions=react-server", "--import", "tsx", "scripts/database/check.ts", "--role", "application"]
   db-check-migration:
     profiles: ["tools"]
+    command: ["node", "--conditions=react-server", "--import", "tsx", "scripts/database/check.ts", "--role", "migration"]
   menu-import-existing:
     profiles: ["tools"]
+    command: ["node", "--conditions=react-server", "--import", "tsx", "scripts/menu/import-existing.ts"]
   menu-verify-existing:
     profiles: ["tools"]
+    command: ["node", "--conditions=react-server", "--import", "tsx", "scripts/menu/verify-existing.ts"]
 volumes:
   postgres-data:
 `;
