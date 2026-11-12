@@ -31,11 +31,11 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2467,
-    "executableTestFiles": 578,
+    "trackedPathsConsidered": 2473,
+    "executableTestFiles": 581,
     "sourceTestFiles": 167,
     "testsTreeExecutableFiles": 301,
-    "scriptTestFiles": 110,
+    "scriptTestFiles": 113,
     "playwrightSpecs": 15,
     "vitestConfigs": 2,
     "playwrightConfigs": 9,
@@ -559,10 +559,13 @@
     "scripts/environment/hygiene.test.mjs",
     "scripts/environment/podman-compose.test.mjs",
     "scripts/environment/postgres-init-identity.test.mjs",
+    "scripts/environment/staging-bootstrap-phase.test.mjs",
     "scripts/environment/staging-candidate-preparation.test.mjs",
     "scripts/environment/staging-candidate-provenance.test.mjs",
+    "scripts/environment/staging-capacity.test.mjs",
     "scripts/environment/staging-config-projection.test.mjs",
     "scripts/environment/staging-database-preflight.test.mjs",
+    "scripts/environment/staging-persistence-classification.test.mjs",
     "scripts/environment/staging-phase-split.test.mjs",
     "scripts/environment/staging-podman-image-id.test.mjs",
     "scripts/environment/staging-preflight.test.mjs",
@@ -2251,6 +2254,23 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "scripts/environment/staging-bootstrap-phase.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "scripts/environment/staging-candidate-preparation.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
@@ -2285,6 +2305,23 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "scripts/environment/staging-capacity.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "scripts/environment/staging-config-projection.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
@@ -2303,6 +2340,23 @@
     },
     {
       "path": "scripts/environment/staging-database-preflight.test.mjs",
+      "runner": "node:test",
+      "domain": "scripts",
+      "testType": "script-unit",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test:scripts"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "scripts/environment/staging-persistence-classification.test.mjs",
       "runner": "node:test",
       "domain": "scripts",
       "testType": "script-unit",
