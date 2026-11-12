@@ -18,11 +18,20 @@ export function stagingSourceIdentityFindings(options = {}) {
   const postgresVolume = typeof identity.postgresVolume === "string" ? identity.postgresVolume.trim() : "";
   const databaseSystemIdentifier =
     typeof identity.databaseSystemIdentifier === "string" ? identity.databaseSystemIdentifier.trim() : "";
+  const volumeSystemIdentity =
+    typeof identity.volumeSystemIdentity === "string" ? identity.volumeSystemIdentity.trim() : "";
   const postgresMajor =
     typeof identity.postgresMajor === "number" && Number.isInteger(identity.postgresMajor)
       ? identity.postgresMajor
       : null;
-  if (!composeProject || !postgresContainer || !postgresVolume || !databaseSystemIdentifier || postgresMajor == null) {
+  if (
+    !composeProject ||
+    !postgresContainer ||
+    !postgresVolume ||
+    !databaseSystemIdentifier ||
+    !volumeSystemIdentity ||
+    postgresMajor == null
+  ) {
     return [];
   }
   return [
@@ -32,6 +41,7 @@ export function stagingSourceIdentityFindings(options = {}) {
       postgresContainer,
       postgresVolume,
       databaseSystemIdentifier,
+      volumeSystemIdentity,
       postgresMajor,
     },
   ];

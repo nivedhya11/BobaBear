@@ -295,6 +295,9 @@ function assessObservation(observation, source, reasons) {
   if (typeof observation.databaseSystemIdentifier !== "string" || observation.databaseSystemIdentifier.trim() === "") {
     reasons.push(STAGING_CHECKPOINT_REASON.WRONG_PROJECT_OR_DATABASE);
   }
+  if (typeof observation.volumeSystemIdentity !== "string" || observation.volumeSystemIdentity.trim() === "") {
+    reasons.push(STAGING_CHECKPOINT_REASON.WRONG_SOURCE_VOLUME);
+  }
   if (observation.postgresMajor !== EXPECTED_STAGING_POSTGRES_MAJOR) {
     reasons.push(STAGING_CHECKPOINT_REASON.WRONG_PROJECT_OR_DATABASE);
   }
@@ -338,6 +341,13 @@ function assessRecordIdentity(record, observation, reasons) {
     reasons.push(STAGING_CHECKPOINT_REASON.WRONG_PROJECT_OR_DATABASE);
   }
   if (identity.postgresVolume !== observation.postgresVolume) {
+    reasons.push(STAGING_CHECKPOINT_REASON.WRONG_SOURCE_VOLUME);
+  }
+  if (
+    typeof identity.volumeSystemIdentity !== "string" ||
+    identity.volumeSystemIdentity.trim() === "" ||
+    identity.volumeSystemIdentity !== observation.volumeSystemIdentity
+  ) {
     reasons.push(STAGING_CHECKPOINT_REASON.WRONG_SOURCE_VOLUME);
   }
   if (identity.databaseSystemIdentifier !== observation.databaseSystemIdentifier) {
@@ -717,7 +727,13 @@ export function evaluateStagingRecoveryCheckpoint(input = {}) {
 
 /**
  * Isolated-test fixture only. Not operational authority and not live proof.
- * @param {{ now?: Date, candidateSha?: string, candidateTree?: string }} [options]
+ * @param {{
+ *   now?: Date,
+ *   candidateSha?: string,
+ *   candidateTree?: string,
+ *   databaseSystemIdentifier?: string,
+ *   volumeSystemIdentity?: string,
+ * }} [options]
  */
 export function syntheticIsolatedCheckpointFixture(options = {}) {
   const now = options.now instanceof Date ? options.now : new Date("2026-10-29T10:00:00.000Z");
@@ -727,7 +743,9 @@ export function syntheticIsolatedCheckpointFixture(options = {}) {
   const candidateSha = options.candidateSha ?? "a".repeat(40);
   const candidateTree = options.candidateTree ?? "b".repeat(40);
   const schema = "synthetic-schema-context";
-  const cluster = "synthetic-cluster-0001";
+  const cluster = options.databaseSystemIdentifier ?? "synthetic-cluster-0001";
+  const volumeSystemIdentity =
+    options.volumeSystemIdentity ?? "synthetic-volume-system-identity-001";
   const layer1Run = "20261029T095700Z-1111111111111111";
   const layer2Run = "20261029T095800Z-2222222222222222";
   const pitrRun = "20261029T095900Z-3333333333333333";
@@ -739,6 +757,7 @@ export function syntheticIsolatedCheckpointFixture(options = {}) {
     postgresContainer: EXPECTED_STAGING_POSTGRES_CONTAINER,
     postgresVolume: EXPECTED_STAGING_POSTGRES_VOLUME,
     databaseSystemIdentifier: cluster,
+    volumeSystemIdentity,
     postgresMajor: EXPECTED_STAGING_POSTGRES_MAJOR,
   };
   const candidate = { commitSha: candidateSha, tree: candidateTree, repositoryPath: PROTECTED_PRIMARY_REPOSITORY };
@@ -836,6 +855,7 @@ export function syntheticIsolatedCheckpointFixture(options = {}) {
       postgresContainer: EXPECTED_STAGING_POSTGRES_CONTAINER,
       postgresVolume: EXPECTED_STAGING_POSTGRES_VOLUME,
       databaseSystemIdentifier: cluster,
+      volumeSystemIdentity,
       postgresMajor: EXPECTED_STAGING_POSTGRES_MAJOR,
       migrationSchemaContext: schema,
       migrationLedgerState: "APPLIED_CURRENT",

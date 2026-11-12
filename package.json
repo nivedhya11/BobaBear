@@ -50,6 +50,7 @@
     "env:staging:prepare-candidate:build-only": "node scripts/environment/staging.mjs prepare-candidate-build-only",
     "env:staging:scan-candidate": "node scripts/environment/staging.mjs scan-candidate",
     "env:staging:recover-postgres": "node scripts/environment/staging.mjs recover-postgres",
+    "env:staging:phase-a-provision": "node scripts/environment/staging.mjs phase-a-provision",
     "env:staging:workforce:user:create": "node scripts/environment/staging.mjs workforce-user-create",
     "staging:baseline-classify": "node --conditions=react-server --import tsx scripts/environment/staging-baseline-classify.ts",
     "test:staging-baseline": "node scripts/run-vitest.mjs run --config vitest.database.config.mts tests/staging-baseline",

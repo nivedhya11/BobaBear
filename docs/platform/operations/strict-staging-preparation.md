@@ -240,11 +240,21 @@ runtime identity, preservable init, or staging-bound restore-proof requirements
 into a synthetic PASS. Instead it requires:
 
 - positively classified `NEVER_INITIALIZED`
-- `initialProvisionAuthorized=true` (Founder)
+- `initialProvisionAuthorized=true` from an auditable Founder authorization
+  record bound to the exact environment (not a CLI boolean)
+- verified rootless Podman and positive volume/container absence
 - empty/absent database baseline
-- candidate PostgreSQL image compatibility positively determined
+- candidate PostgreSQL image compatibility positively determined from the
+  Compose candidate image (`boba-bear-postgres:local`), with UNKNOWN retained
+  when evidence is insufficient
+- sufficient measured AD-PF-02 capacity
 - mandatory post-provision IMP-037 checkpoint before treating the environment
   as Phase B
+
+Operational entrypoint: `npm run env:staging:phase-a-provision`. It creates
+PostgreSQL only, captures volume system identity and PostgreSQL system
+identifier from the created database, and refuses application activation until
+the post-provision checkpoint and Phase B verification pass.
 
 **Phase B — established staging deployment** retains the full preflight,
 including runtime identity, migration ledger, recovery binding, and init
@@ -270,8 +280,10 @@ These Founder decisions remain, so the live binding cannot pass:
 
 - `STAGING_EVIDENCE_ROOT_UNNAMED` — proposed private root is not selected.
 - `STAGING_DATABASE_VOLUME_IDENTITY_UNBOUND` — volume name is known; the live
-  cluster system identifier has not been observed (and cannot be before first
-  provision).
+  volume system-identity hash / cluster system identifier has not been observed
+  (and cannot be before first provision). Clearing design dependency also
+  requires the selected identity to match independently observed checkpoint
+  evidence; a checkpoint from another PostgreSQL cluster never qualifies.
 - `STAGING_FRESHNESS_WINDOW_UNDECIDED` — recommended selection is reuse of locked
   IMP-037 limits with no extra staging restore-proof window.
 - `LEDGER_STATE_MAPPING_UNDECIDED` — recommended selection is exact journal /

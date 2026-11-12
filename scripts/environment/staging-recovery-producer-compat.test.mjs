@@ -43,11 +43,14 @@ const RECOVERY_POINT = new Date(NOW.getTime() - 3 * 60 * 1000).toISOString();
 const ENDED = new Date(NOW.getTime() - 60 * 1000).toISOString();
 const STARTED = new Date(NOW.getTime() - 2 * 60 * 1000).toISOString();
 
+const VOLUME_SYSTEM_IDENTITY = "producer-compat-volume-system-identity-001";
+
 const STAGING_IDENTITY = {
   composeProject: EXPECTED_STAGING_COMPOSE_PROJECT,
   postgresContainer: EXPECTED_STAGING_POSTGRES_CONTAINER,
   postgresVolume: EXPECTED_STAGING_POSTGRES_VOLUME,
   databaseSystemIdentifier: CLUSTER,
+  volumeSystemIdentity: VOLUME_SYSTEM_IDENTITY,
   postgresMajor: EXPECTED_STAGING_POSTGRES_MAJOR,
 };
 
@@ -57,6 +60,7 @@ const OBSERVATION = {
   postgresContainer: EXPECTED_STAGING_POSTGRES_CONTAINER,
   postgresVolume: EXPECTED_STAGING_POSTGRES_VOLUME,
   databaseSystemIdentifier: CLUSTER,
+  volumeSystemIdentity: VOLUME_SYSTEM_IDENTITY,
   postgresMajor: EXPECTED_STAGING_POSTGRES_MAJOR,
   migrationSchemaContext: SCHEMA,
   migrationLedgerState: "APPLIED_CURRENT",
