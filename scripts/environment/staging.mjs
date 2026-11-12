@@ -23,6 +23,7 @@ import {
   isTrustedStagingInitMountPath,
   resolvePostgresInitDisposition,
   POSTGRES_INIT_DISPOSITION,
+  EXPECTED_STAGING_POSTGRES_MAJOR,
 } from "./postgres-init-identity.mjs";
 import {
   assertPreflightAllowsDeployment,
@@ -52,6 +53,20 @@ import { closeBoundCandidateScan, openBoundCandidateScan } from "./staging-scan-
 import { copyOwnerOnlySecretFile, ensureOwnerOnlySecretDirectory, inspectOwnerOnlyDirectory, inspectOwnerOnlyFile } from "./staging-secret-files.mjs";
 import { bindStagingRecoveryEvidence } from "./staging-recovery-binding.mjs";
 import { gatherPublishingEvidence } from "./staging-publishing-probe.mjs";
+import { classifyStagingPersistence } from "./staging-persistence-classification.mjs";
+import {
+  evaluateStagingCapacity,
+  parseDfAvailBytesForPath,
+  parseMemAvailableBytes,
+} from "./staging-capacity.mjs";
+import { loadStagingCapacityMeasurement } from "./staging-capacity-measurement.mjs";
+import { probeCandidatePostgresImageCompat } from "./staging-postgres-image-compat.mjs";
+import {
+  buildRecommendedRecoveryBindingPolicy,
+  loadStagingFounderAuthorization,
+} from "./staging-founder-authorization.mjs";
+import { evaluatePhaseAProvisionPlan } from "./staging-phase-a-provision.mjs";
+import { PROPOSED_STAGING_RECOVERY_EVIDENCE_ROOT } from "./staging-recovery-checkpoint.mjs";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = path.resolve(scriptDir, "..", "..");
@@ -108,11 +123,12 @@ const STAGING_CLI_COMMANDS = [
   "prepare-candidate-build-only",
   "scan-candidate",
   "recover-postgres",
+  "phase-a-provision",
   "workforce-user-create",
 ];
 if (isCli && !STAGING_CLI_COMMANDS.includes(command)) {
   console.error(
-    "Usage: npm run env:staging:status | npm run env:staging:deploy:dry-run | npm run env:staging:deploy | npm run env:staging:prepare-candidate | npm run env:staging:prepare-candidate:build-only | npm run env:staging:scan-candidate | npm run env:staging:recover-postgres | npm run env:staging:workforce:user:create -- [workforce:user:create arguments]",
+    "Usage: npm run env:staging:status | npm run env:staging:deploy:dry-run | npm run env:staging:deploy | npm run env:staging:prepare-candidate | npm run env:staging:prepare-candidate:build-only | npm run env:staging:scan-candidate | npm run env:staging:recover-postgres | npm run env:staging:phase-a-provision | npm run env:staging:workforce:user:create -- [workforce:user:create arguments]",
   );
   process.exit(1);
 }
@@ -420,16 +436,28 @@ function resolveStagingPostgresInitMount(
   const candidateManifest = collect(candidateSource);
   const candidateMaterializedPath = path.join(runtimeAssetsDir, "postgres-init", sha);
 
+  const volumeProbe = probeVolumePresence(volume);
+  let containerPresent = false;
+  try {
+    inspect(container);
+    containerPresent = true;
+  } catch (error) {
+    if (!String(error.message ?? error).includes("no such object")) throw error;
+  }
+  const imageCompat = probeStagingPostgresImageCompat({
+    volumePresent: volumeProbe.present === true,
+    container,
+  });
   let activePostgres = {
     present: false,
-    volumePresent: false,
+    volumePresent: volumeProbe.present === true,
     mountSource: null,
     project: null,
-    persistentVolume: null,
-    // Image upgrades are R3; preflight must not invent compatibility PASS.
-    imageCompatConflict: null,
+    persistentVolume: volumeProbe.present === true ? volume : null,
+    // Positive determination required; null remains UNKNOWN/non-PASS.
+    imageCompatConflict: imageCompat.imageCompatConflict,
   };
-  try {
+  if (containerPresent) {
     const database = inspect(container);
     const dataMounts = database.Mounts.filter(
       (mount) => mount.Name === volume && mount.Destination === "/var/lib/postgresql",
@@ -441,18 +469,16 @@ function resolveStagingPostgresInitMount(
       mountSource: initMount?.Source ?? null,
       project: database.Config.Labels?.["io.podman.compose.project"] ?? null,
       persistentVolume: dataMounts.length === 1 ? volume : null,
-      // Live image-compat determination is not established by this probe.
-      imageCompatConflict: null,
+      imageCompatConflict: imageCompat.imageCompatConflict,
     };
-  } catch (error) {
-    if (!String(error.message ?? error).includes("no such object")) throw error;
+  } else {
     activePostgres = {
       present: false,
-      volumePresent: false,
+      volumePresent: volumeProbe.present === true,
       mountSource: null,
       project: null,
-      persistentVolume: null,
-      imageCompatConflict: null,
+      persistentVolume: volumeProbe.present === true ? volume : null,
+      imageCompatConflict: imageCompat.imageCompatConflict,
     };
   }
 
@@ -1407,6 +1433,120 @@ function readStagingDiagnosticEnabled(
  * PostgreSQL container's Compose project / volume identity.
  * Never creates or starts containers.
  */
+function probeVolumePresence(volumeName, { run = execIgnoringStdin } = {}) {
+  try {
+    const raw = run("podman", ["volume", "inspect", volumeName], { encoding: "utf8" });
+    const parsed = JSON.parse(raw);
+    const entry = Array.isArray(parsed) ? parsed[0] : parsed;
+    if (!entry || typeof entry !== "object") {
+      return { present: null, inspectOk: false, systemIdentity: null };
+    }
+    const mountpoint = typeof entry.Mountpoint === "string" ? entry.Mountpoint : "";
+    const created = typeof entry.CreatedAt === "string" ? entry.CreatedAt : "";
+    const name = typeof entry.Name === "string" ? entry.Name : volumeName;
+    const systemIdentity = createHash("sha256")
+      .update(`podman-volume:${name}\n${mountpoint}\n${created}`)
+      .digest("hex");
+    return { present: true, inspectOk: true, systemIdentity, name };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (/no such volume|no such object|volume .+ not found/i.test(message)) {
+      return { present: false, inspectOk: true, systemIdentity: null, name: volumeName };
+    }
+    return { present: null, inspectOk: false, systemIdentity: null, name: volumeName, detail: message };
+  }
+}
+
+/**
+ * Resolve the configured staging PostgreSQL bootstrap role/database.
+ * Official images replace the `postgres` role when POSTGRES_USER is set.
+ */
+function resolveStagingPostgresBootstrapIdentity({
+  envDir = STAGING_ENV_DIR,
+  repositoryEnvFile = path.join(repositoryRoot, ".env.docker.local"),
+  readFile = readFileSync,
+  exists = existsSync,
+} = {}) {
+  const candidates = [
+    path.join(envDir, ".env.docker.local"),
+    repositoryEnvFile,
+    path.join(repositoryRoot, ".env.docker.example"),
+  ];
+  for (const file of candidates) {
+    if (!exists(file)) continue;
+    try {
+      const extracted = extractValues(parseEnvFile(readFile(file, "utf8")));
+      if (extracted.ok !== true || !extracted.values) continue;
+      const user =
+        typeof extracted.values.POSTGRES_USER === "string" ? extracted.values.POSTGRES_USER.trim() : "";
+      const database =
+        typeof extracted.values.POSTGRES_DB === "string" ? extracted.values.POSTGRES_DB.trim() : "";
+      if (user && database) {
+        return { user, database, source: file };
+      }
+    } catch {
+      // try next candidate
+    }
+  }
+  return { user: null, database: null, source: null };
+}
+
+function readExistingStagingPostgresMajor({
+  run = execIgnoringStdin,
+  container = `${STAGING_PROJECT}_postgres_1`,
+  volumePresent = null,
+  resolveIdentity = resolveStagingPostgresBootstrapIdentity,
+} = {}) {
+  if (volumePresent !== true) return null;
+  const identity = resolveIdentity();
+  if (!identity.user || !identity.database) {
+    throw new Error("configured staging PostgreSQL bootstrap identity unreadable");
+  }
+  try {
+    const raw = run(
+      "podman",
+      [
+        "exec",
+        container,
+        "psql",
+        "-U",
+        identity.user,
+        "-d",
+        identity.database,
+        "-Atc",
+        "SHOW server_version_num",
+      ],
+      { encoding: "utf8" },
+    );
+    const numeric = Number(String(raw).trim());
+    if (!Number.isFinite(numeric) || numeric <= 0) {
+      throw new Error("existing database version evidence unreadable");
+    }
+    return Math.floor(numeric / 10000);
+  } catch (error) {
+    // Volume present but version unreadable must stay UNKNOWN for preserve paths.
+    if (volumePresent === true) {
+      throw error instanceof Error ? error : new Error("existing database version evidence unreadable");
+    }
+    return null;
+  }
+}
+
+function probeStagingPostgresImageCompat(deps = {}) {
+  const run = deps.run ?? execIgnoringStdin;
+  const volumePresent = deps.volumePresent;
+  return probeCandidatePostgresImageCompat({
+    run,
+    expectedMajor: EXPECTED_STAGING_POSTGRES_MAJOR,
+    readExistingDatabaseMajor: () =>
+      readExistingStagingPostgresMajor({
+        run,
+        container: deps.container,
+        volumePresent,
+      }),
+  });
+}
+
 function probeStagingRuntimeIdentity({
   inspect = inspectJson,
   uid = process.getuid?.(),
@@ -1415,6 +1555,7 @@ function probeStagingRuntimeIdentity({
   expectedProject = STAGING_PROJECT,
   expectedContainer = `${STAGING_PROJECT}_postgres_1`,
   expectedVolume = `${STAGING_PROJECT}_postgres-data`,
+  probeVolume = probeVolumePresence,
 } = {}) {
   if (uid == null || uid === 0) {
     return {
@@ -1425,6 +1566,8 @@ function probeStagingRuntimeIdentity({
       postgresContainer: null,
       postgresVolume: null,
       unexpectedTarget: null,
+      volumePresent: null,
+      volumeSystemIdentity: null,
       detail: "podman rootless uid proof missing",
     };
   }
@@ -1438,10 +1581,13 @@ function probeStagingRuntimeIdentity({
       postgresContainer: null,
       postgresVolume: null,
       unexpectedTarget: null,
+      volumePresent: null,
+      volumeSystemIdentity: null,
       detail: "podman rootless socket missing",
     };
   }
 
+  const volumeProbe = probeVolume(expectedVolume);
   try {
     const database = inspect(expectedContainer);
     const project = database?.Config?.Labels?.["io.podman.compose.project"] ?? null;
@@ -1460,20 +1606,95 @@ function probeStagingRuntimeIdentity({
       postgresContainer: expectedContainer,
       postgresVolume: volumeOk ? expectedVolume : null,
       unexpectedTarget,
+      volumePresent: volumeProbe.present,
+      volumeSystemIdentity: volumeProbe.systemIdentity,
+      containerPresent: true,
+      containerInspectOk: true,
+      volumeInspectOk: volumeProbe.inspectOk,
       detail: unexpectedTarget ? "compose project or persistent volume identity mismatch" : undefined,
     };
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const absent = /no such object|no such container/i.test(message);
+    if (!absent) {
+      return {
+        evidenceComplete: false,
+        identityUnknown: true,
+        podmanRootless: true,
+        composeProject: null,
+        postgresContainer: null,
+        postgresVolume: null,
+        unexpectedTarget: null,
+        volumePresent: volumeProbe.present,
+        volumeSystemIdentity: volumeProbe.systemIdentity,
+        containerPresent: null,
+        containerInspectOk: false,
+        volumeInspectOk: volumeProbe.inspectOk,
+        detail: message,
+      };
+    }
+    const neverInitialized = volumeProbe.present === false && volumeProbe.inspectOk === true;
     return {
-      evidenceComplete: false,
-      identityUnknown: true,
+      evidenceComplete: neverInitialized || volumeProbe.present === true,
+      identityUnknown: !neverInitialized && volumeProbe.present !== true,
       podmanRootless: true,
       composeProject: null,
       postgresContainer: null,
       postgresVolume: null,
-      unexpectedTarget: null,
-      detail: error instanceof Error ? error.message : "container inspect failed",
+      unexpectedTarget: false,
+      volumePresent: volumeProbe.present,
+      volumeSystemIdentity: volumeProbe.systemIdentity,
+      containerPresent: false,
+      containerInspectOk: true,
+      volumeInspectOk: volumeProbe.inspectOk,
+      detail: neverInitialized
+        ? "staging postgres container and volume absent"
+        : volumeProbe.present === true
+          ? "staging volume present without container"
+          : "container absent; volume identity incomplete",
     };
   }
+}
+
+function measureStagingCapacityEvidence({
+  readMeminfo = () => readFileSync("/proc/meminfo", "utf8"),
+  runDfForPath = (target) =>
+    execIgnoringStdin("df", ["-B1", "--output=avail", target], {
+      encoding: "utf8",
+    }),
+  capacityPaths = ["/home/ajoshi", "/var/tmp", "/tmp"],
+  priorImagesPreserved = null,
+  unintendedPostgresReplacement = null,
+  measuredIncrementalBuildFootprintBytes = null,
+  measuredIncrementalPeakMemoryBytes = null,
+} = {}) {
+  /** @type {Array<{ path: string, availableBytes: number | null }>} */
+  let filesystems = [];
+  try {
+    filesystems = capacityPaths.map((target) => {
+      try {
+        return parseDfAvailBytesForPath(runDfForPath(target), target);
+      } catch {
+        return { path: target, availableBytes: null };
+      }
+    });
+  } catch {
+    filesystems = [];
+  }
+  let availableMemoryBytes = null;
+  try {
+    availableMemoryBytes = parseMemAvailableBytes(readMeminfo());
+  } catch {
+    availableMemoryBytes = null;
+  }
+  return evaluateStagingCapacity({
+    filesystems,
+    availableMemoryBytes,
+    measuredIncrementalBuildFootprintBytes,
+    measuredIncrementalPeakMemoryBytes,
+    priorImagesPreserved,
+    unintendedPostgresReplacement,
+  });
 }
 
 function readRepositoryIdentityFromRemote(remoteUrl = null) {
@@ -1517,7 +1738,9 @@ function gatherStagingPreflightEvidence(
     readGithubMain = () => readPinnedGithubMainSha(repositoryRoot),
     observeSource = observeIsolatedArtifactContext,
     projectConfig = () => projectStrictStagingConfiguration({ directory: STAGING_ENV_DIR }),
-    bindRecovery = () => bindStagingRecoveryEvidence(),
+    bindRecovery = null,
+    loadFounderAuthorization = loadStagingFounderAuthorization,
+    loadCapacityMeasurement = loadStagingCapacityMeasurement,
     readImageSecurity = null,
     observeImageOwnership = (sha) => observeCandidateImageOwnership(sha),
     observeProtectedSession = () => observeProtectedSessionSafety(),
@@ -1537,6 +1760,18 @@ function gatherStagingPreflightEvidence(
 
   const diagnostic = readDiagnostic();
   const runtime = probeRuntime();
+  const persistence = classifyStagingPersistence({
+    podmanRootless: runtime.podmanRootless === true,
+    socketPresent: runtime.podmanRootless === true && runtime.detail !== "podman rootless socket missing",
+    containerPresent: runtime.containerPresent,
+    containerInspectOk: runtime.containerInspectOk,
+    composeProject: runtime.composeProject,
+    postgresContainer: runtime.postgresContainer,
+    volumePresent: runtime.volumePresent,
+    volumeInspectOk: runtime.volumeInspectOk,
+    volumeName: runtime.postgresVolume ?? (runtime.volumePresent === true ? `${STAGING_PROJECT}_postgres-data` : null),
+    volumeSystemIdentity: runtime.volumeSystemIdentity,
+  });
   const repositoryIdentity = repositoryIdentityOf();
   let githubMainMatchesHead = false;
   try {
@@ -1602,7 +1837,6 @@ function gatherStagingPreflightEvidence(
   const secretModesSecure =
     inspectOwnerOnlyDirectory(STAGING_ENV_DIR).ok === true &&
     STAGING_ENV_FILES.every((file) => inspectOwnerOnlyFile(path.join(STAGING_ENV_DIR, file)).ok === true);
-  const recovery = bindRecovery();
   let security = absentImageSecurityEvidence();
   try {
     const reader =
@@ -1672,6 +1906,52 @@ function gatherStagingPreflightEvidence(
     };
   }
 
+  const expectedCapacityOperationClass =
+    persistence.state === "NEVER_INITIALIZED"
+      ? "PHASE_A_POSTGRES_PROVISION"
+      : persistence.state === "INITIALIZED_PRESENT"
+        ? "PHASE_B_DEPLOY"
+        : null;
+  const capacityMeasurement = loadCapacityMeasurement({
+    expectedOperationClass: expectedCapacityOperationClass,
+  });
+  const capacity = measureStagingCapacityEvidence({
+    // Preservation: XR/attended projects are separate; staging volume absence means
+    // no unintended replacement of an existing staging DB in this observation.
+    priorImagesPreserved: imageOwnership?.ownershipOk === true ? true : null,
+    unintendedPostgresReplacement:
+      persistence.state === "NEVER_INITIALIZED"
+        ? false
+        : persistence.state === "INITIALIZED_PRESENT"
+          ? false
+          : null,
+    // Footprint/peak come only from an auditable independent measurement record
+    // whose operation class matches the operation being authorized.
+    measuredIncrementalBuildFootprintBytes:
+      capacityMeasurement.measuredIncrementalBuildFootprintBytes,
+    measuredIncrementalPeakMemoryBytes: capacityMeasurement.measuredIncrementalPeakMemoryBytes,
+  });
+
+  const founderAuthorization = loadFounderAuthorization();
+  const phaseA = persistence.state === "NEVER_INITIALIZED";
+  const recoveryBinder =
+    bindRecovery ??
+    (() => {
+      if (
+        founderAuthorization.recoveryBindingRecommendedAccepted === true &&
+        typeof runtime.volumeSystemIdentity === "string" &&
+        runtime.volumeSystemIdentity.length >= 8
+      ) {
+        const policy = buildRecommendedRecoveryBindingPolicy({
+          volumeSystemIdentity: runtime.volumeSystemIdentity,
+          evidenceRootPath: PROPOSED_STAGING_RECOVERY_EVIDENCE_ROOT,
+        });
+        if (policy) return bindStagingRecoveryEvidence({ policy });
+      }
+      return bindStagingRecoveryEvidence();
+    });
+  const recovery = typeof recoveryBinder === "function" ? recoveryBinder() : bindStagingRecoveryEvidence();
+
   return {
     source: {
       repositoryIdentity: repositoryIdentity ?? "UNKNOWN",
@@ -1688,6 +1968,18 @@ function gatherStagingPreflightEvidence(
       githubMainMatchesHead,
     },
     publishing,
+    persistence,
+    founderAuthorization: {
+      present: founderAuthorization.present === true,
+      valid: founderAuthorization.valid === true,
+      path: founderAuthorization.path ?? null,
+      initialProvisionAuthorized: founderAuthorization.initialProvisionAuthorized === true,
+      recoveryBindingRecommendedAccepted:
+        founderAuthorization.recoveryBindingRecommendedAccepted === true,
+      localUatSelected: founderAuthorization.localUatSelected === true,
+      reasons: founderAuthorization.reasons ?? [],
+    },
+    initialProvisionAuthorized: founderAuthorization.initialProvisionAuthorized === true,
     runtime: {
       evidenceComplete: runtime.evidenceComplete === true,
       identityUnknown: runtime.identityUnknown === true,
@@ -1696,6 +1988,9 @@ function gatherStagingPreflightEvidence(
       postgresContainer: runtime.postgresContainer,
       postgresVolume: runtime.postgresVolume,
       unexpectedTarget: runtime.unexpectedTarget,
+      containerPresent: runtime.containerPresent,
+      volumePresent: runtime.volumePresent,
+      volumeSystemIdentity: runtime.volumeSystemIdentity,
     },
     environment: {
       requiredEnvFilesPresent: requiredEnvFilesPresent(),
@@ -1713,25 +2008,50 @@ function gatherStagingPreflightEvidence(
     },
     imageOwnership,
     protectedSession,
-    database: {
-      migrationIdentityKnown: false,
-      migrationLedgerState: "UNKNOWN",
-      baselineCompatibility: "UNKNOWN",
-      unexplainedPendingMutation: null,
-      authAccountUniquenessKnown: null,
-      duplicateAuthAccountGroupCount: null,
-    },
-    recovery,
+    database: phaseA
+      ? {
+          migrationIdentityKnown: false,
+          migrationLedgerState: "UNKNOWN",
+          baselineCompatibility: "ABSENT_NEVER_INITIALIZED",
+          unexplainedPendingMutation: false,
+          authAccountUniquenessKnown: true,
+          duplicateAuthAccountGroupCount: 0,
+        }
+      : {
+          migrationIdentityKnown: false,
+          migrationLedgerState: "UNKNOWN",
+          baselineCompatibility: "UNKNOWN",
+          unexplainedPendingMutation: null,
+          authAccountUniquenessKnown: null,
+          duplicateAuthAccountGroupCount: null,
+        },
+    recovery: phaseA
+      ? {
+          ...recovery,
+          phaseAPostProvisionCheckpointRequired: true,
+          phaseAAllowsEmptySource: true,
+        }
+      : recovery,
     security,
     capacity: {
-      diskSufficient: null,
-      memorySufficient: null,
-      priorImagesPreserved: null,
-      unintendedPostgresReplacement: null,
+      diskSufficient: capacity.diskSufficient,
+      memorySufficient: capacity.memorySufficient,
+      priorImagesPreserved: capacity.priorImagesPreserved,
+      unintendedPostgresReplacement: capacity.unintendedPostgresReplacement,
+      reasons: capacity.reasons,
+      policy: capacity.policy,
+      measurement: {
+        present: capacityMeasurement.present === true,
+        valid: capacityMeasurement.valid === true,
+        path: capacityMeasurement.path ?? null,
+        operationClass: capacityMeasurement.operationClass ?? null,
+        reasons: capacityMeasurement.reasons ?? [],
+      },
     },
     postgresInit: {
       disposition: initResolution.disposition?.disposition ?? POSTGRES_INIT_DISPOSITION.UNKNOWN,
       reasonCode: initResolution.disposition?.reasonCode,
+      imageCompatConflict: initResolution.activePostgres?.imageCompatConflict ?? null,
     },
   };
 }
@@ -2382,6 +2702,137 @@ function deploy(candidate) {
   runStagingDeploy(candidate);
 }
 
+/**
+ * Guarded Phase A: create isolated staging PostgreSQL only.
+ * Never starts application services. Requires an auditable Founder authorization
+ * record (not a CLI boolean). Post-provision recovery checkpoint remains mandatory
+ * before Phase B / app activation.
+ */
+export function runStagingPhaseAProvision(candidate, deps = {}) {
+  const effects = deps.effects ?? [];
+  const record = (name) => {
+    effects.push(name);
+  };
+  const {
+    assertPreconditions = assertDeployPreconditions,
+    verifyReadiness = verifyPreMutationReadiness,
+    materializeTree = materializeExactGitTree,
+    ensureEnv = ensureStagingEnvFiles,
+    compose = podmanCompose,
+    materializeInit = materializeStagingPostgresInit,
+    wait = waitForHealthy,
+    probeVolume = probeVolumePresence,
+    captureSystemIdentifier = (container) => {
+      const identity = resolveStagingPostgresBootstrapIdentity();
+      if (!identity.user || !identity.database) {
+        throw new Error("configured staging PostgreSQL bootstrap identity unreadable");
+      }
+      return execIgnoringStdin(
+        "podman",
+        [
+          "exec",
+          container,
+          "psql",
+          "-U",
+          identity.user,
+          "-d",
+          identity.database,
+          "-Atc",
+          "SELECT system_identifier FROM pg_control_system()",
+        ],
+        { encoding: "utf8" },
+      ).trim();
+    },
+    removeDir = rmSync,
+    log = console.log,
+    evaluatePlan = evaluatePhaseAProvisionPlan,
+    loadFounderAuthorization = loadStagingFounderAuthorization,
+  } = deps;
+
+  assertPreconditions(candidate);
+  record("assertDeployPreconditions");
+  const founderAuthorization = loadFounderAuthorization();
+  const readiness = verifyReadiness(candidate, {
+    ...deps,
+    loadFounderAuthorization: () => founderAuthorization,
+  });
+  record("verifyPreMutationReadiness");
+
+  const plan = evaluatePlan({
+    founderAuthorization,
+    persistence: readiness.evidence?.persistence,
+    preflightOutcome: readiness.decision?.outcome,
+    phase: readiness.decision?.phase,
+    postgresInit: readiness.evidence?.postgresInit,
+    capacity: readiness.evidence?.capacity,
+    recovery: readiness.evidence?.recovery,
+    activateApplication: false,
+  });
+  log(`STAGING_PHASE_A_PROVISION_PLAN ${plan.allowed ? "ALLOWED" : "BLOCKED"}`);
+  for (const blocker of plan.blockers) {
+    log(`STAGING_PHASE_A_PROVISION_BLOCKER ${blocker}`);
+  }
+  if (!plan.allowed) {
+    log("STAGING_DEPLOY_MUTATION_STARTED NO");
+    log("STAGING_APPLICATION_ACTIVATION NO");
+    throw new Error(`Phase A provision blocked: ${plan.blockers.join(",") || "unspecified"}`);
+  }
+  record("phaseAPlanAllowed");
+
+  const volumeName = `${STAGING_PROJECT}_postgres-data`;
+  const absence = probeVolume(volumeName);
+  if (absence.present !== false) {
+    log("STAGING_DEPLOY_MUTATION_STARTED NO");
+    throw new Error("Phase A refuses create unless postgres volume is positively absent");
+  }
+
+  const buildDir = materializeTree(candidate.head);
+  record("materializeExactGitTree");
+  try {
+    ensureEnv(buildDir);
+    record("ensureStagingEnvFiles");
+    const initDir = materializeInit(buildDir, candidate.head, deps);
+    record("materializeStagingPostgresInit");
+    log("STAGING_DEPLOY_MUTATION_STARTED YES");
+    log("STAGING_PHASE_A_POSTGRES_CREATE YES");
+    compose(buildDir, ["up", "-d", "postgres"], { BOBA_POSTGRES_INIT_DIR: initDir });
+    record("composeUpPostgresOnly");
+    const container = `${STAGING_PROJECT}_postgres_1`;
+    wait(container);
+    record("waitPostgresHealthy");
+
+    const volume = probeVolume(volumeName);
+    if (volume.present !== true || typeof volume.systemIdentity !== "string") {
+      throw new Error("Phase A create did not yield an inspectable staging volume identity");
+    }
+    const databaseSystemIdentifier = captureSystemIdentifier(container);
+    if (!databaseSystemIdentifier) {
+      throw new Error("Phase A create did not yield a PostgreSQL system identifier");
+    }
+
+    log(`STAGING_VOLUME_SYSTEM_IDENTITY ${volume.systemIdentity}`);
+    log(`STAGING_DATABASE_SYSTEM_IDENTIFIER ${databaseSystemIdentifier}`);
+    log("STAGING_APPLICATION_ACTIVATION NO");
+    log("STAGING_PHASE_A_POST_PROVISION_CHECKPOINT_REQUIRED YES");
+    for (const step of plan.postProvisionRequired) {
+      log(`STAGING_PHASE_A_POST_PROVISION_STEP ${step}`);
+    }
+    log("STAGING_PHASE_B_TRANSITION BLOCKED_UNTIL_CHECKPOINT");
+    return {
+      ok: true,
+      effects,
+      volumeSystemIdentity: volume.systemIdentity,
+      databaseSystemIdentifier,
+      applicationActivated: false,
+      postProvisionCheckpointRequired: true,
+      plan,
+    };
+  } finally {
+    removeDir(buildDir, { recursive: true, force: true });
+    log("STAGING_BUILD_DIR_REMOVED YES");
+  }
+}
+
 if (isCli) {
   const candidate = readCandidate();
   console.log(`STAGING_PROJECT ${STAGING_PROJECT}`);
@@ -2427,6 +2878,14 @@ if (isCli) {
     });
   }
   if (command === "recover-postgres") recoverPostgres(candidate);
+  if (command === "phase-a-provision") {
+    try {
+      runStagingPhaseAProvision(candidate);
+    } catch (error) {
+      console.error(error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
+  }
   if (command === "status") reportRunningProvenance(candidate.originMain);
   if (command === "workforce-user-create") createStagingWorkforceUser(process.argv.slice(3));
 }
@@ -2436,6 +2895,7 @@ export {
   BOBA_RUNTIME_SERVICES,
   STAGING_RUNTIME_ASSETS_DIR,
   CUSTOMER_COMMERCE_ENV_FILE_PRECEDENCE,
+  resolveStagingPostgresBootstrapIdentity,
   assertImageRevisions,
   assertRunningProvenance,
   assertLegacyPostgresRecoveryTarget,
@@ -2458,6 +2918,9 @@ export {
   runLegacySeedBootstrapChain,
   gatherStagingPreflightEvidence,
   gatherStagingBuildOnlyEvidence,
+  measureStagingCapacityEvidence,
+  probeVolumePresence,
+  classifyStagingPersistence,
   verifyPreMutationReadiness,
   resolveStagingPostgresInitMount,
   readStagingDiagnosticEnabled,

@@ -30,6 +30,7 @@ export const POSTGRES_INIT_REASON = Object.freeze({
   UNTRUSTED_MOUNT: "POSTGRES_INIT_UNTRUSTED_MOUNT",
   ABSENT_CONTAINER: "POSTGRES_INIT_ABSENT_CONTAINER",
   ABSENT_VOLUME: "POSTGRES_INIT_ABSENT_VOLUME",
+  FIRST_BOOTSTRAP_CANDIDATE: "POSTGRES_INIT_FIRST_BOOTSTRAP_CANDIDATE",
   MALFORMED_MOUNT: "POSTGRES_INIT_MALFORMED_MOUNT",
   IMAGE_COMPAT_CONFLICT: "POSTGRES_INIT_IMAGE_COMPAT_CONFLICT",
   IMAGE_COMPAT_UNKNOWN: "POSTGRES_INIT_IMAGE_COMPAT_UNKNOWN",
@@ -38,6 +39,9 @@ export const POSTGRES_INIT_REASON = Object.freeze({
   WRONG_PERSISTENT_VOLUME: "POSTGRES_INIT_WRONG_PERSISTENT_VOLUME",
   SOURCE_ISOLATION_UNRESOLVED: "POSTGRES_INIT_SOURCE_ISOLATION_UNRESOLVED",
 });
+
+/** Expected PostgreSQL major for Founder staging first-bootstrap and preserve paths. */
+export const EXPECTED_STAGING_POSTGRES_MAJOR = 18;
 
 /** Authoritative Founder staging Compose project for PostgreSQL init preservation. */
 export const EXPECTED_STAGING_COMPOSE_PROJECT = "boba-staging";
@@ -321,6 +325,18 @@ export function resolvePostgresInitDisposition(input) {
   }
 
   if (active.present !== true) {
+    // Positively known absence of both container and volume is a Phase A
+    // first-bootstrap candidate, not an automatic create authorization.
+    if (active.volumePresent === false && active.imageCompatConflict === false) {
+      return {
+        disposition: POSTGRES_INIT_DISPOSITION.BLOCK,
+        reasonCode: POSTGRES_INIT_REASON.FIRST_BOOTSTRAP_CANDIDATE,
+        preserveMountSource: null,
+        composeInitDir: null,
+        imageCompatConflict: false,
+        note: "Never-initialized staging volume is a Phase A candidate only; create requires Founder authorization.",
+      };
+    }
     return {
       disposition: POSTGRES_INIT_DISPOSITION.BLOCK,
       reasonCode: POSTGRES_INIT_REASON.ABSENT_CONTAINER,

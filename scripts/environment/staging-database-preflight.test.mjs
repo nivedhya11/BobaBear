@@ -47,3 +47,52 @@ test("ledger comparison never invents a known-safe label", () => {
   assert.equal(extra.unexplainedPendingMutation, true);
   assert.equal(extra.migrationLedgerState, "UNKNOWN");
 });
+
+test("selected exact-set mapping labels equal non-empty ledgers and empty baselines", () => {
+  const policy = {
+    status: "SELECTED",
+    mode: "EXACT_JOURNAL_APPLIED_SET_EQUALITY",
+    mapping: {
+      equalNonEmptyLabel: "LEDGER_CURRENT",
+      equalNonEmptySynonym: "APPLIED_CURRENT",
+      emptyLabel: "FRESH_EMPTY_BASELINE",
+    },
+  };
+  const current = interpretMigrationLedgerComparison(
+    {
+      appliedCount: 50,
+      journalCount: 50,
+      appliedNotInJournalCount: 0,
+      journalNotAppliedCount: 0,
+    },
+    policy,
+  );
+  assert.equal(current.migrationIdentityKnown, true);
+  assert.equal(current.migrationLedgerState, "LEDGER_CURRENT");
+  assert.equal(current.baselineCompatibility, "COMPLETE_COMPATIBLE");
+
+  const empty = interpretMigrationLedgerComparison(
+    {
+      appliedCount: 0,
+      journalCount: 0,
+      appliedNotInJournalCount: 0,
+      journalNotAppliedCount: 0,
+    },
+    policy,
+  );
+  assert.equal(empty.baselineCompatibility, "FRESH_EMPTY");
+  assert.equal(empty.migrationLedgerState, "UNKNOWN");
+  assert.equal(empty.ledgerLabelReason, "FRESH_EMPTY_BASELINE");
+
+  const drift = interpretMigrationLedgerComparison(
+    {
+      appliedCount: 2,
+      journalCount: 3,
+      appliedNotInJournalCount: 0,
+      journalNotAppliedCount: 1,
+    },
+    policy,
+  );
+  assert.equal(drift.baselineCompatibility, "PARTIAL_OR_INCOMPATIBLE");
+  assert.equal(drift.migrationLedgerState, "UNKNOWN");
+});

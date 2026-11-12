@@ -2,8 +2,9 @@
  * Non-mutating staging database evidence shapes.
  *
  * These helpers do not open a connection. Live preflight must not point them
- * at the persistent Founder database. Ledger labels stay UNKNOWN until the
- * Founder names the mapping from hash comparison to APPLIED_CURRENT / LEDGER_CURRENT.
+ * at the persistent Founder database unless an authorized read-only probe is
+ * explicitly invoked. Ledger labels stay UNKNOWN until a Founder-selected
+ * mapping is supplied to interpretMigrationLedgerComparison.
  */
 
 export const CUSTOMER_AUTH_ACCOUNTS_TABLE = "app.customer_auth_accounts";
@@ -45,31 +46,100 @@ export function interpretDuplicateGroupCount(row) {
 }
 
 /**
- * Comparison counts are diagnostic. They do not authorize a known-safe ledger label.
+ * Comparison counts are diagnostic by default. A Founder-selected mapping may
+ * authorize known-safe labels; without it, labels remain UNKNOWN.
+ *
+ * Selected mapping mode EXACT_JOURNAL_APPLIED_SET_EQUALITY:
+ * - appliedNotInJournal=0 AND journalNotApplied=0 AND appliedCount=journalCount=0
+ *   → migrationIdentityKnown true, migrationLedgerState "UNKNOWN",
+ *     baselineCompatibility "FRESH_EMPTY", ledgerLabelReason FRESH_EMPTY_BASELINE
+ * - same equality with appliedCount=journalCount>0
+ *   → LEDGER_CURRENT (APPLIED_CURRENT accepted as synonym by callers)
+ *
  * @param {{
  *   appliedCount?: number,
  *   journalCount?: number,
  *   appliedNotInJournalCount?: number,
  *   journalNotAppliedCount?: number,
  * }} counts
+ * @param {{
+ *   status?: string,
+ *   mode?: string | null,
+ *   mapping?: {
+ *     equalNonEmptyLabel?: string,
+ *     equalNonEmptySynonym?: string,
+ *     emptyLabel?: string,
+ *   } | null,
+ * } | null} [ledgerMappingPolicy]
  */
-export function interpretMigrationLedgerComparison(counts) {
+export function interpretMigrationLedgerComparison(counts, ledgerMappingPolicy = null) {
   const appliedNotInJournalCount = counts.appliedNotInJournalCount;
+  const journalNotAppliedCount = counts.journalNotAppliedCount;
+  const appliedCount = counts.appliedCount;
+  const journalCount = counts.journalCount;
+
   const unexplained =
     typeof appliedNotInJournalCount === "number" && appliedNotInJournalCount > 0
       ? true
       : typeof appliedNotInJournalCount === "number" && appliedNotInJournalCount === 0
         ? false
         : null;
-  return {
+
+  const base = {
     migrationIdentityKnown: false,
     migrationLedgerState: "UNKNOWN",
     baselineCompatibility: "UNKNOWN",
     unexplainedPendingMutation: unexplained,
-    appliedCount: counts.appliedCount ?? null,
-    journalCount: counts.journalCount ?? null,
-    journalNotAppliedCount: counts.journalNotAppliedCount ?? null,
+    appliedCount: appliedCount ?? null,
+    journalCount: journalCount ?? null,
+    journalNotAppliedCount: journalNotAppliedCount ?? null,
     ledgerLabelReason: "LEDGER_STATE_MAPPING_UNDECIDED",
+  };
+
+  if (ledgerMappingPolicy?.status !== "SELECTED" || ledgerMappingPolicy.mode !== "EXACT_JOURNAL_APPLIED_SET_EQUALITY") {
+    return base;
+  }
+
+  const countsComplete = [appliedCount, journalCount, appliedNotInJournalCount, journalNotAppliedCount].every(
+    (value) => typeof value === "number" && Number.isInteger(value) && value >= 0,
+  );
+  if (!countsComplete) {
+    return {
+      ...base,
+      ledgerLabelReason: "LEDGER_COUNTS_INCOMPLETE",
+    };
+  }
+
+  if (appliedNotInJournalCount !== 0 || journalNotAppliedCount !== 0 || appliedCount !== journalCount) {
+    return {
+      ...base,
+      migrationIdentityKnown: true,
+      unexplainedPendingMutation: true,
+      ledgerLabelReason: "LEDGER_SETS_NOT_EQUAL",
+      baselineCompatibility: "PARTIAL_OR_INCOMPATIBLE",
+    };
+  }
+
+  if (appliedCount === 0 && journalCount === 0) {
+    return {
+      ...base,
+      migrationIdentityKnown: true,
+      unexplainedPendingMutation: false,
+      migrationLedgerState: "UNKNOWN",
+      baselineCompatibility: "FRESH_EMPTY",
+      ledgerLabelReason: ledgerMappingPolicy.mapping?.emptyLabel ?? "FRESH_EMPTY_BASELINE",
+    };
+  }
+
+  const label = ledgerMappingPolicy.mapping?.equalNonEmptyLabel ?? "LEDGER_CURRENT";
+  return {
+    ...base,
+    migrationIdentityKnown: true,
+    unexplainedPendingMutation: false,
+    migrationLedgerState: label,
+    baselineCompatibility: "COMPLETE_COMPATIBLE",
+    ledgerLabelReason: "LEDGER_SETS_EQUAL_CURRENT",
+    acceptedSynonym: ledgerMappingPolicy.mapping?.equalNonEmptySynonym ?? "APPLIED_CURRENT",
   };
 }
 
