@@ -24,6 +24,7 @@ import {
   isFullGitSha,
   normalizeEnvAssignment,
   readSecretStdinBuffer,
+  resolveStagingPostgresBootstrapIdentity,
   runPodmanWithSecretStdin,
   spawnIgnoringStdin,
   spawnWithStdinBuffer,
@@ -856,4 +857,26 @@ test("staging deploy uses hardened tooling run for baseline classify", () => {
   );
   assert.doesNotMatch(source, /catch\s*\([^)]*IMPORT_CONFLICT/);
   assert.doesNotMatch(source, /IMPORT_CONFLICT[\s\S]{0,80}continue/);
+});
+
+test("resolveStagingPostgresBootstrapIdentity uses configured POSTGRES_USER not hardcoded postgres", () => {
+  const dir = mkdtempSync(path.join(os.tmpdir(), "boba-staging-pg-identity-"));
+  try {
+    writeFileSync(
+      path.join(dir, ".env.docker.local"),
+      "POSTGRES_USER=boba_bear_admin\nPOSTGRES_DB=boba_bear\n",
+      "utf8",
+    );
+    const identity = resolveStagingPostgresBootstrapIdentity({
+      envDir: dir,
+      repositoryEnvFile: path.join(dir, "missing.env"),
+      exists: (file) => file.endsWith(".env.docker.local"),
+      readFile: (file) => readFileSync(file, "utf8"),
+    });
+    assert.equal(identity.user, "boba_bear_admin");
+    assert.equal(identity.database, "boba_bear");
+    assert.notEqual(identity.user, "postgres");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

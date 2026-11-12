@@ -52,6 +52,16 @@ test("stale measurement is refused", () => {
   assert.ok(evaluated.reasons.includes("CAPACITY_MEASUREMENT_STALE_OR_FUTURE"));
 });
 
+test("measurement for a different operation class stays UNKNOWN", () => {
+  const evaluated = evaluateStagingCapacityMeasurement(validRecord(), {
+    now: new Date("2026-11-12T13:30:00.000Z"),
+    expectedOperationClass: "PHASE_B_DEPLOY",
+  });
+  assert.equal(evaluated.valid, false);
+  assert.equal(evaluated.measuredIncrementalBuildFootprintBytes, null);
+  assert.ok(evaluated.reasons.includes("CAPACITY_MEASUREMENT_OPERATION_CLASS_MISMATCH"));
+});
+
 test("loadStagingCapacityMeasurement wires injectable filesystem evidence", () => {
   const loaded = loadStagingCapacityMeasurement({
     measurementPath: "/tmp/synthetic-capacity.json",

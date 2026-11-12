@@ -37,12 +37,15 @@ function isObject(value) {
  *   now?: Date,
  *   expectedEnvironment?: typeof STAGING_AUTHORIZED_ENVIRONMENT,
  *   maxAgeMs?: number,
+ *   expectedOperationClass?: string | null,
  * }} [options]
  */
 export function evaluateStagingCapacityMeasurement(raw, options = {}) {
   const now = options.now instanceof Date ? options.now : new Date();
   const expected = options.expectedEnvironment ?? STAGING_AUTHORIZED_ENVIRONMENT;
   const maxAgeMs = options.maxAgeMs ?? STAGING_CAPACITY_MEASUREMENT_MAX_AGE_MS;
+  const expectedOperationClass =
+    typeof options.expectedOperationClass === "string" ? options.expectedOperationClass : null;
 
   if (!isObject(raw)) {
     return {
@@ -67,6 +70,8 @@ export function evaluateStagingCapacityMeasurement(raw, options = {}) {
     !STAGING_CAPACITY_OPERATION_CLASSES.includes(raw.operationClass)
   ) {
     reasons.push("CAPACITY_MEASUREMENT_OPERATION_CLASS_INVALID");
+  } else if (expectedOperationClass && raw.operationClass !== expectedOperationClass) {
+    reasons.push("CAPACITY_MEASUREMENT_OPERATION_CLASS_MISMATCH");
   }
   if (typeof raw.measurementMethod !== "string" || raw.measurementMethod.trim().length < 8) {
     reasons.push("CAPACITY_MEASUREMENT_METHOD_MISSING");
@@ -118,6 +123,7 @@ export function evaluateStagingCapacityMeasurement(raw, options = {}) {
  *   readFile?: (path: string, encoding: string) => string,
  *   now?: Date,
  *   expectedEnvironment?: typeof STAGING_AUTHORIZED_ENVIRONMENT,
+ *   expectedOperationClass?: string | null,
  * }} [deps]
  */
 export function loadStagingCapacityMeasurement(deps = {}) {
@@ -126,7 +132,9 @@ export function loadStagingCapacityMeasurement(deps = {}) {
   const readFile = deps.readFile ?? readFileSync;
   if (!exists(measurementPath)) {
     return {
-      ...evaluateStagingCapacityMeasurement(null),
+      ...evaluateStagingCapacityMeasurement(null, {
+        expectedOperationClass: deps.expectedOperationClass,
+      }),
       path: measurementPath,
     };
   }
@@ -136,6 +144,7 @@ export function loadStagingCapacityMeasurement(deps = {}) {
       ...evaluateStagingCapacityMeasurement(raw, {
         now: deps.now,
         expectedEnvironment: deps.expectedEnvironment,
+        expectedOperationClass: deps.expectedOperationClass,
       }),
       path: measurementPath,
     };

@@ -1457,12 +1457,51 @@ function probeVolumePresence(volumeName, { run = execIgnoringStdin } = {}) {
   }
 }
 
+/**
+ * Resolve the configured staging PostgreSQL bootstrap role/database.
+ * Official images replace the `postgres` role when POSTGRES_USER is set.
+ */
+function resolveStagingPostgresBootstrapIdentity({
+  envDir = STAGING_ENV_DIR,
+  repositoryEnvFile = path.join(repositoryRoot, ".env.docker.local"),
+  readFile = readFileSync,
+  exists = existsSync,
+} = {}) {
+  const candidates = [
+    path.join(envDir, ".env.docker.local"),
+    repositoryEnvFile,
+    path.join(repositoryRoot, ".env.docker.example"),
+  ];
+  for (const file of candidates) {
+    if (!exists(file)) continue;
+    try {
+      const extracted = extractValues(parseEnvFile(readFile(file, "utf8")));
+      if (extracted.ok !== true || !extracted.values) continue;
+      const user =
+        typeof extracted.values.POSTGRES_USER === "string" ? extracted.values.POSTGRES_USER.trim() : "";
+      const database =
+        typeof extracted.values.POSTGRES_DB === "string" ? extracted.values.POSTGRES_DB.trim() : "";
+      if (user && database) {
+        return { user, database, source: file };
+      }
+    } catch {
+      // try next candidate
+    }
+  }
+  return { user: null, database: null, source: null };
+}
+
 function readExistingStagingPostgresMajor({
   run = execIgnoringStdin,
   container = `${STAGING_PROJECT}_postgres_1`,
   volumePresent = null,
+  resolveIdentity = resolveStagingPostgresBootstrapIdentity,
 } = {}) {
   if (volumePresent !== true) return null;
+  const identity = resolveIdentity();
+  if (!identity.user || !identity.database) {
+    throw new Error("configured staging PostgreSQL bootstrap identity unreadable");
+  }
   try {
     const raw = run(
       "podman",
@@ -1471,9 +1510,9 @@ function readExistingStagingPostgresMajor({
         container,
         "psql",
         "-U",
-        "postgres",
+        identity.user,
         "-d",
-        "postgres",
+        identity.database,
         "-Atc",
         "SHOW server_version_num",
       ],
@@ -1867,7 +1906,15 @@ function gatherStagingPreflightEvidence(
     };
   }
 
-  const capacityMeasurement = loadCapacityMeasurement();
+  const expectedCapacityOperationClass =
+    persistence.state === "NEVER_INITIALIZED"
+      ? "PHASE_A_POSTGRES_PROVISION"
+      : persistence.state === "INITIALIZED_PRESENT"
+        ? "PHASE_B_DEPLOY"
+        : null;
+  const capacityMeasurement = loadCapacityMeasurement({
+    expectedOperationClass: expectedCapacityOperationClass,
+  });
   const capacity = measureStagingCapacityEvidence({
     // Preservation: XR/attended projects are separate; staging volume absence means
     // no unintended replacement of an existing staging DB in this observation.
@@ -1878,7 +1925,8 @@ function gatherStagingPreflightEvidence(
         : persistence.state === "INITIALIZED_PRESENT"
           ? false
           : null,
-    // Footprint/peak come only from an auditable independent measurement record.
+    // Footprint/peak come only from an auditable independent measurement record
+    // whose operation class matches the operation being authorized.
     measuredIncrementalBuildFootprintBytes:
       capacityMeasurement.measuredIncrementalBuildFootprintBytes,
     measuredIncrementalPeakMemoryBytes: capacityMeasurement.measuredIncrementalPeakMemoryBytes,
@@ -2674,22 +2722,27 @@ export function runStagingPhaseAProvision(candidate, deps = {}) {
     materializeInit = materializeStagingPostgresInit,
     wait = waitForHealthy,
     probeVolume = probeVolumePresence,
-    captureSystemIdentifier = (container) =>
-      execIgnoringStdin(
+    captureSystemIdentifier = (container) => {
+      const identity = resolveStagingPostgresBootstrapIdentity();
+      if (!identity.user || !identity.database) {
+        throw new Error("configured staging PostgreSQL bootstrap identity unreadable");
+      }
+      return execIgnoringStdin(
         "podman",
         [
           "exec",
           container,
           "psql",
           "-U",
-          "postgres",
+          identity.user,
           "-d",
-          "postgres",
+          identity.database,
           "-Atc",
           "SELECT system_identifier FROM pg_control_system()",
         ],
         { encoding: "utf8" },
-      ).trim(),
+      ).trim();
+    },
     removeDir = rmSync,
     log = console.log,
     evaluatePlan = evaluatePhaseAProvisionPlan,
@@ -2842,6 +2895,7 @@ export {
   BOBA_RUNTIME_SERVICES,
   STAGING_RUNTIME_ASSETS_DIR,
   CUSTOMER_COMMERCE_ENV_FILE_PRECEDENCE,
+  resolveStagingPostgresBootstrapIdentity,
   assertImageRevisions,
   assertRunningProvenance,
   assertLegacyPostgresRecoveryTarget,
