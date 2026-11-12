@@ -102,7 +102,8 @@ RUN npm ci --omit=dev --omit=optional \
   && rmdir node_modules/@esbuild-kit 2>/dev/null || true \
   && test ! -e node_modules/drizzle-kit/package.json \
   && test ! -e node_modules/@esbuild-kit/core-utils/package.json \
-  && test -x node_modules/@esbuild/linux-x64/bin/esbuild \
+  && ESBUILD_PLATFORM="$(node -p "process.arch === 'arm64' ? 'linux-arm64' : 'linux-x64'")" \
+  && test -x "node_modules/@esbuild/${ESBUILD_PLATFORM}/bin/esbuild" \
   && node --import tsx -e "const n: number = 1; if (n !== 1) process.exit(1)"
 
 # ── tooling ──────────────────────────────────────────────────────────────
