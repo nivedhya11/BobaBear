@@ -497,6 +497,21 @@ export function normalizePodmanImageDigest(value) {
   return trimmed;
 }
 
+/**
+ * Treat bare 64-hex Podman content IDs and equivalent `sha256:`-prefixed digests as
+ * the same identity. Invalid or missing values never match.
+ *
+ * @param {unknown} left
+ * @param {unknown} right
+ * @returns {boolean}
+ */
+export function samePodmanImageIdentity(left, right) {
+  const a = normalizePodmanImageDigest(left);
+  const b = normalizePodmanImageDigest(right);
+  if (!/^sha256:[0-9a-f]{64}$/.test(a) || !/^sha256:[0-9a-f]{64}$/.test(b)) return false;
+  return a === b;
+}
+
 function inspectLocalImageIdentity(name) {
   const imageId = normalizePodmanImageDigest(podmanInspect(name, "{{.Id}}"));
   let digest = "";
@@ -523,10 +538,14 @@ function assertBoundCandidateImages(security, inspectImage = inspectLocalImageId
     const bound = security.boundImages.find((image) => image?.name === imageName);
     if (!bound) throw new Error(`Activation refused: scanned image missing for ${service}.`);
     const live = inspectImage(imageName);
-    if (!live || live.imageId !== bound.imageId || live.digest !== bound.digest) {
+    if (
+      !live ||
+      !samePodmanImageIdentity(live.imageId, bound.imageId) ||
+      !samePodmanImageIdentity(live.digest, bound.digest)
+    ) {
       throw new Error(`Activation refused: ${service} image digest does not match the scanned candidate.`);
     }
-    builtImageIds[service] = live.imageId;
+    builtImageIds[service] = normalizePodmanImageDigest(live.imageId);
   }
   return builtImageIds;
 }
@@ -730,7 +749,9 @@ function assertImageRevisions(expectedSha, images = BOBA_BUILD_IMAGES, inspectRe
 function readRunningProvenance(service) {
   const container = `${STAGING_PROJECT}_${service}_1`;
   const containerId = podmanInspect(container, "{{.Id}}");
-  const imageId = podmanInspect(container, "{{.Image}}");
+  // Podman 4.x exposes {{.Image}} as a bare 64-hex content ID; canonicalize before
+  // comparing against built/scanned `sha256:`-prefixed identities.
+  const imageId = normalizePodmanImageDigest(podmanInspect(container, "{{.Image}}"));
   const imageName = podmanInspect(container, "{{.ImageName}}");
   const revision = imageRevision(imageId);
   const health = podmanInspect(container, "{{.State.Health.Status}}");
@@ -741,7 +762,7 @@ function readToolingProvenance() {
   const imageName = BOBA_BUILD_IMAGES.tooling;
   return {
     imageName,
-    imageId: podmanInspect(imageName, "{{.Id}}"),
+    imageId: normalizePodmanImageDigest(podmanInspect(imageName, "{{.Id}}")),
     revision: imageRevision(imageName),
   };
 }
@@ -753,7 +774,7 @@ function assertRunningProvenance(expectedSha, records, builtImageIds = null) {
         `Running image provenance mismatch for ${record.service}: expected ${expectedSha}, found ${record.revision || "MISSING"}.`,
       );
     }
-    if (builtImageIds && builtImageIds[record.service] !== record.imageId) {
+    if (builtImageIds && !samePodmanImageIdentity(builtImageIds[record.service], record.imageId)) {
       throw new Error(`Running image id mismatch for ${record.service}.`);
     }
   }
