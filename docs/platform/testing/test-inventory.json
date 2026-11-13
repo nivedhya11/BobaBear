@@ -31,9 +31,9 @@
     "note": "Protected evidence and generated reports are never classified as executable test source."
   },
   "counts": {
-    "trackedPathsConsidered": 2484,
-    "executableTestFiles": 587,
-    "sourceTestFiles": 167,
+    "trackedPathsConsidered": 2488,
+    "executableTestFiles": 589,
+    "sourceTestFiles": 169,
     "testsTreeExecutableFiles": 302,
     "scriptTestFiles": 118,
     "playwrightSpecs": 15,
@@ -105,6 +105,7 @@
     "src/components/ordering/order-status.test.ts",
     "src/components/ordering/order-support.test.ts",
     "src/components/ordering/payment-recovery-presentation.test.ts",
+    "src/components/ordering/resolve-resume-payment-id.test.ts",
     "src/components/ordering/serviceability-copy.test.ts",
     "src/components/ordering/stale-recovery-presentation.test.ts",
     "src/components/ui/Button.test.tsx",
@@ -170,6 +171,7 @@
     "src/server/customer-commerce/checkout-prepare-diagnostic-config.test.ts",
     "src/server/customer-commerce/checkout-prepare-diagnostic-log.test.ts",
     "src/server/customer-commerce/checkout-prepare-diagnostic-startup.test.ts",
+    "src/server/customer-commerce/http/checkout-open-payment.test.ts",
     "src/server/customer-commerce/http/helpers.test.ts",
     "src/server/customer-commerce/http/request.test.ts",
     "src/server/customer-commerce/measurement/compare-presentation.test.ts",
@@ -4687,6 +4689,24 @@
       "classificationConfidence": "HEURISTIC"
     },
     {
+      "path": "src/components/ordering/resolve-resume-payment-id.test.ts",
+      "runner": "vitest",
+      "domain": "components/ordering",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
       "path": "src/components/ordering/serviceability-copy.test.ts",
       "runner": "vitest",
       "domain": "components/ordering",
@@ -5866,6 +5886,25 @@
     },
     {
       "path": "src/server/customer-commerce/checkout-prepare-diagnostic-startup.test.ts",
+      "runner": "vitest",
+      "domain": "server/customer-commerce",
+      "testType": "unit-or-domain",
+      "dbRequired": "NO",
+      "browserRequired": "NO",
+      "externalProviderSubstitute": "UNKNOWN",
+      "packageCommands": [
+        "test",
+        "test:coverage"
+      ],
+      "ciInclusion": "YES",
+      "test1Layers": [
+        "1-unit",
+        "3-domain-use-case"
+      ],
+      "classificationConfidence": "HEURISTIC"
+    },
+    {
+      "path": "src/server/customer-commerce/http/checkout-open-payment.test.ts",
       "runner": "vitest",
       "domain": "server/customer-commerce",
       "testType": "unit-or-domain",
