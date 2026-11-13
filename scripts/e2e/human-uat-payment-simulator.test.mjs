@@ -32,7 +32,10 @@ describe("human-uat-payment-simulator", () => {
     const html = "<!doctype html><html><head><title>t</title></head><body>ok</body></html>";
     const once = injectHumanPaymentSimulator(html);
     assert.match(once, /data-boba-human-uat-payment="true"/);
-    assert.match(once, new RegExp(HUMAN_UAT_PAYMENT_SIMULATOR_PATH.replace(/\//g, "\\/")));
+    assert.ok(
+      once.includes(`src="${HUMAN_UAT_PAYMENT_SIMULATOR_PATH}"`),
+      "injected script src must point at the harness simulator path",
+    );
     const twice = injectHumanPaymentSimulator(once);
     assert.equal(
       twice.split("data-boba-human-uat-payment").length - 1,
