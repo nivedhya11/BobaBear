@@ -118,6 +118,7 @@ import {
   sendNotFound,
   sendPdf,
 } from "./response";
+import { withOpenPaymentId } from "./checkout-open-payment";
 
 export type CustomerCommerceRouteDependencies = Readonly<{
   runtime: CustomerAuthRuntime;
@@ -809,7 +810,11 @@ export async function routeCustomerCommerceRequest(
       const checkout = await getActiveCheckout(deps.persistence, actor, input, {
         policy: CUSTOMER_COMMERCE_CHECKOUT_POLICY,
       });
-      sendJson(res, { ok: true, checkout }, { status: 200, requestId });
+      sendJson(
+        res,
+        { ok: true, checkout: await withOpenPaymentId(deps.persistence, checkout) },
+        { status: 200, requestId },
+      );
       return outcome("get_active_checkout", 200, "OK");
     }
 
@@ -821,7 +826,11 @@ export async function routeCustomerCommerceRequest(
       const checkout = await startCheckout(deps.persistence, actor, body, {
         policy: CUSTOMER_COMMERCE_CHECKOUT_POLICY,
       });
-      sendJson(res, { ok: true, checkout }, { status: 200, requestId });
+      sendJson(
+        res,
+        { ok: true, checkout: await withOpenPaymentId(deps.persistence, checkout) },
+        { status: 200, requestId },
+      );
       return outcome("start_checkout", 200, "OK");
     }
 
@@ -838,7 +847,11 @@ export async function routeCustomerCommerceRequest(
           { ...body, checkoutId: destParams.checkoutId },
           { policy: CUSTOMER_COMMERCE_CHECKOUT_POLICY },
         );
-        sendJson(res, { ok: true, checkout }, { status: 200, requestId });
+        sendJson(
+          res,
+          { ok: true, checkout: await withOpenPaymentId(deps.persistence, checkout) },
+          { status: 200, requestId },
+        );
         return outcome("set_checkout_destination", 200, "OK");
       }
       if (destParams) {
@@ -863,7 +876,11 @@ export async function routeCustomerCommerceRequest(
           { ...body, checkoutId: clearParams.checkoutId },
           { policy: CUSTOMER_COMMERCE_CHECKOUT_POLICY },
         );
-        sendJson(res, { ok: true, checkout }, { status: 200, requestId });
+        sendJson(
+          res,
+          { ok: true, checkout: await withOpenPaymentId(deps.persistence, checkout) },
+          { status: 200, requestId },
+        );
         return outcome("clear_checkout_destination", 200, "OK");
       }
       if (clearParams) {
@@ -911,7 +928,11 @@ export async function routeCustomerCommerceRequest(
           { ...body, checkoutId: fulfilmentParams.checkoutId },
           { policy: CUSTOMER_COMMERCE_CHECKOUT_POLICY },
         );
-        sendJson(res, { ok: true, checkout }, { status: 200, requestId });
+        sendJson(
+          res,
+          { ok: true, checkout: await withOpenPaymentId(deps.persistence, checkout) },
+          { status: 200, requestId },
+        );
         return outcome("set_checkout_fulfilment", 200, "OK");
       }
       if (fulfilmentParams) {
@@ -959,7 +980,11 @@ export async function routeCustomerCommerceRequest(
           { ...body, checkoutId: timingParams.checkoutId },
           { policy: CUSTOMER_COMMERCE_CHECKOUT_POLICY },
         );
-        sendJson(res, { ok: true, checkout }, { status: 200, requestId });
+        sendJson(
+          res,
+          { ok: true, checkout: await withOpenPaymentId(deps.persistence, checkout) },
+          { status: 200, requestId },
+        );
         return outcome("set_checkout_fulfilment_timing", 200, "OK");
       }
       if (timingParams) {

@@ -151,6 +151,29 @@ export async function findPaymentBySnapshotId(
   return rows[0] ?? null;
 }
 
+/**
+ * Non-terminal Payment for a Checkout (OPEN / PROCESSING).
+ * Used for ownership-enforced customer recovery identity on PAYMENT_PENDING.
+ */
+export async function findNonTerminalPaymentByCheckoutId(
+  context: PersistenceQueryContext,
+  checkoutId: string,
+): Promise<PaymentRow | null> {
+  assertApplicationRole(context, "findNonTerminalPaymentByCheckoutId");
+  const rows = await context.db
+    .select()
+    .from(paymentsTable)
+    .where(
+      and(
+        eq(paymentsTable.checkoutId, checkoutId),
+        inArray(paymentsTable.status, ["OPEN", "PROCESSING"]),
+      ),
+    )
+    .orderBy(desc(paymentsTable.createdAt))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
 export async function lockPaymentForUpdate(
   context: PersistenceTransactionContext,
   paymentId: string,
