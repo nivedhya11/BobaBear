@@ -14,6 +14,10 @@ import os from "node:os";
 
 import { createStaticExportHandler } from "../serve-static-export.mjs";
 import { handleGtmUatBrowserControl } from "./gtm-uat-browser-control";
+import {
+  isHumanPaymentSimulatorEnabled,
+  wrapStaticHandlerWithHumanPaymentSimulator,
+} from "./human-uat-payment-simulator.mjs";
 import { resolveLoopbackPort } from "./loopback-port.mjs";
 import { applyMigrations } from "../../tests/database/support/test-database";
 import { startPostgresTestContainer, type TestContainerHandle } from "../../tests/database/support/test-container";
@@ -308,7 +312,11 @@ async function main(): Promise<void> {
     await waitForReady(innerCommercePort, "customer-commerce");
 
     staticExportDir = copyStaticExportToLinuxTmp();
-    const staticHandler = createStaticExportHandler(staticExportDir);
+    const humanPaymentSimulator = isHumanPaymentSimulatorEnabled(process.env);
+    const staticHandler = wrapStaticHandlerWithHumanPaymentSimulator(
+      createStaticExportHandler(staticExportDir),
+      { enabled: humanPaymentSimulator },
+    );
     const controlToken = process.env.E2E_HARNESS_CONTROL_TOKEN ?? "";
     const controlRunId = process.env.E2E_HARNESS_RUN_ID ?? "";
     const controlTestMode = process.env.BOBA_BEAR_ENV === "test";
@@ -346,11 +354,28 @@ async function main(): Promise<void> {
         `customer-ordering E2E harness: static /order/ probe failed (${orderProbe.status}) outDir=${staticExportDir}`,
       );
     }
+    if (humanPaymentSimulator) {
+      const html = await orderProbe.clone().text();
+      if (!html.includes("data-boba-human-uat-payment")) {
+        throw new Error(
+          "customer-ordering E2E harness: human payment simulator enabled but /order/ HTML was not injected.",
+        );
+      }
+      const simJs = await fetch(
+        `http://${HOST}:${OUTER_PORT}/__e2e/human-uat-payment-simulator.js`,
+      );
+      if (!simJs.ok) {
+        throw new Error(
+          `customer-ordering E2E harness: human payment simulator script probe failed (${simJs.status}).`,
+        );
+      }
+    }
 
     process.stderr.write(
       `✓  customer-ordering E2E harness ready at http://${HOST}:${OUTER_PORT} ` +
         `(out=${staticExportDir}; ownedInnerAuth=${innerAuthPort}; ownedInnerCommerce=${innerCommercePort}; ` +
-        `ownedOuter=${OUTER_PORT}; pid=${process.pid})\n`,
+        `ownedOuter=${OUTER_PORT}; humanPaymentSimulator=${humanPaymentSimulator ? "on" : "off"}; ` +
+        `pid=${process.pid})\n`,
     );
   } catch (error) {
     await shutdown();
