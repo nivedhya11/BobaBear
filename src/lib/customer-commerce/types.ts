@@ -207,6 +207,11 @@ export type CommerceCheckout = Readonly<{
   updatedAt: string;
   destination: CommerceCheckoutDestination | null;
   activeSnapshot: CommerceCheckoutSnapshot | null;
+  /**
+   * Server-authoritative non-terminal Payment id when status is PAYMENT_PENDING.
+   * Preferred over browser session recovery for resume/reconcile.
+   */
+  openPaymentId?: string | null;
 }>;
 
 export type SavedAddressDestinationInput = Readonly<{

@@ -1338,6 +1338,23 @@ describe("PaymentPanel", () => {
     expect(getPaymentState).toHaveBeenCalledWith("pay-1");
   });
 
+  it("does not poll payment state when cart-changed resume id is missing", async () => {
+    render(
+      <PaymentPanel
+        checkout={checkout}
+        snapshot={snapshotBase}
+        onOrderReady={vi.fn()}
+        resumePaymentId={null}
+        cartChangedWhilePending
+        embeddedInPreviousPaymentRecovery
+      />,
+    );
+    await waitFor(() => expect(screen.getByTestId("checkout-payment")).toBeInTheDocument());
+    expect(getPaymentState).not.toHaveBeenCalled();
+    expect(screen.queryByTestId("payment-start")).not.toBeInTheDocument();
+    expect(startPayment).not.toHaveBeenCalled();
+  });
+
   it("notifies parent when resumed cart-changed payment is terminal", async () => {
     const onTerminal = vi.fn();
     getPaymentState.mockImplementation(async () => ({

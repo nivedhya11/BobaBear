@@ -73,6 +73,7 @@ import { narrowCheckoutSnapshotLines } from "@/components/ordering/checkout-line
 import { PaymentPanel } from "@/components/ordering/PaymentPanel";
 import { PreviousPaymentRecoveryView } from "@/components/ordering/PreviousPaymentRecoveryView";
 import { cartChangedRecoveryPresentation } from "@/components/ordering/cart-changed-recovery-presentation";
+import { resolveResumePaymentId } from "@/components/ordering/resolve-resume-payment-id";
 import {
   decideStaleRecoveryPresentation,
   type StaleRecoveryPresentation,
@@ -750,19 +751,26 @@ export function CheckoutClient(props: { brandId: string }) {
       // Server getActiveCheckout should already hide these; belt-and-braces.
       current = null;
     }
-    if (
-      current &&
-      current.sourceCartRevision !== ownedCart.revision &&
-      current.status === "PAYMENT_PENDING"
-    ) {
+    if (current && current.status === "PAYMENT_PENDING") {
       // Payment authority first — never present the old snapshot as current checkout.
+      // Resume id comes from server openPaymentId; session storage is cache-only.
       setCheckout(current);
       setSnapshot(current.activeSnapshot);
-      setCartChangedWhilePending(true);
       showTextError(null);
-      const recovery = readPaymentRecovery();
-      setResumePaymentId(recovery?.checkoutId === current.id ? recovery.paymentId : null);
-      setScreen("cart_changed_unresolved");
+      setResumePaymentId(
+        resolveResumePaymentId({
+          checkoutId: current.id,
+          openPaymentId: current.openPaymentId,
+          recovery: readPaymentRecovery(),
+        }),
+      );
+      if (current.sourceCartRevision !== ownedCart.revision) {
+        setCartChangedWhilePending(true);
+        setScreen("cart_changed_unresolved");
+        return;
+      }
+      setCartChangedWhilePending(false);
+      setScreen("payment");
       return;
     }
     setCartChangedWhilePending(false);
@@ -825,16 +833,23 @@ export function CheckoutClient(props: { brandId: string }) {
       return;
     }
     const fresh = started.data.checkout;
-    if (
-      fresh.status === "PAYMENT_PENDING" &&
-      fresh.sourceCartRevision !== cart.revision
-    ) {
+    if (fresh.status === "PAYMENT_PENDING") {
       setCheckout(fresh);
       setSnapshot(fresh.activeSnapshot);
-      setCartChangedWhilePending(true);
-      const recovery = readPaymentRecovery();
-      setResumePaymentId(recovery?.checkoutId === fresh.id ? recovery.paymentId : null);
-      setScreen("cart_changed_unresolved");
+      setResumePaymentId(
+        resolveResumePaymentId({
+          checkoutId: fresh.id,
+          openPaymentId: fresh.openPaymentId,
+          recovery: readPaymentRecovery(),
+        }),
+      );
+      if (fresh.sourceCartRevision !== cart.revision) {
+        setCartChangedWhilePending(true);
+        setScreen("cart_changed_unresolved");
+        return;
+      }
+      setCartChangedWhilePending(false);
+      setScreen("payment");
       return;
     }
     await continueWithCart(cart);
@@ -1190,15 +1205,23 @@ export function CheckoutClient(props: { brandId: string }) {
         setScreen("cart_changed_fresh");
         return;
       }
-      if (
-        current.status === "PAYMENT_PENDING" &&
-        current.sourceCartRevision !== cart.revision
-      ) {
+      if (current.status === "PAYMENT_PENDING") {
         setCheckout(current);
         setSnapshot(current.activeSnapshot);
-        setCartChangedWhilePending(true);
-        setResumePaymentId(recovery?.checkoutId === current.id ? recovery.paymentId : null);
-        setScreen("cart_changed_unresolved");
+        setResumePaymentId(
+          resolveResumePaymentId({
+            checkoutId: current.id,
+            openPaymentId: current.openPaymentId,
+            recovery,
+          }),
+        );
+        if (current.sourceCartRevision !== cart.revision) {
+          setCartChangedWhilePending(true);
+          setScreen("cart_changed_unresolved");
+          return;
+        }
+        setCartChangedWhilePending(false);
+        setScreen("payment");
         return;
       }
       if (current.sourceCartRevision !== cart.revision) {

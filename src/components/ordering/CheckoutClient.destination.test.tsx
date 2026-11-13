@@ -669,6 +669,65 @@ describe("CheckoutClient cart-changed payment recovery", () => {
     expect(startCheckout).not.toHaveBeenCalled();
   });
 
+  it("resumes from server openPaymentId when session recovery is missing", async () => {
+    readPaymentRecovery.mockReturnValue(null);
+    getActiveCheckout.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: { checkout: { ...pendingCheckout, openPaymentId: "pay-server-1" } },
+    });
+
+    render(<CheckoutClient brandId={catalog.brandId} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("cart-changed-unresolved")).toBeInTheDocument();
+    });
+    const panel = screen.getByTestId("payment-panel-mock");
+    expect(panel.getAttribute("data-resume-payment-id")).toBe("pay-server-1");
+    expect(panel.getAttribute("data-cart-changed")).toBe("true");
+    expect(panel.getAttribute("data-embedded-recovery")).toBe("true");
+    expect(startCheckout).not.toHaveBeenCalled();
+  });
+
+  it("ignores session recovery that belongs to another checkout when server id is absent", async () => {
+    readPaymentRecovery.mockReturnValue({
+      paymentId: "pay-other",
+      checkoutId: "chk-other",
+      checkoutRevision: "1",
+    });
+
+    render(<CheckoutClient brandId={catalog.brandId} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("cart-changed-unresolved")).toBeInTheDocument();
+    });
+    expect(screen.getByTestId("payment-panel-mock").getAttribute("data-resume-payment-id")).toBe(
+      "",
+    );
+  });
+
+  it("prefers server openPaymentId over mismatched session recovery", async () => {
+    readPaymentRecovery.mockReturnValue({
+      paymentId: "pay-browser",
+      checkoutId: "chk-1",
+      checkoutRevision: "4",
+    });
+    getActiveCheckout.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: { checkout: { ...pendingCheckout, openPaymentId: "pay-server-2" } },
+    });
+
+    render(<CheckoutClient brandId={catalog.brandId} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("payment-panel-mock")).toBeInTheDocument();
+    });
+    expect(screen.getByTestId("payment-panel-mock").getAttribute("data-resume-payment-id")).toBe(
+      "pay-server-2",
+    );
+  });
+
   it("keeps recovery presentation when session recovery matches (no normal payment layout)", async () => {
     readPaymentRecovery.mockReturnValue({
       paymentId: "pay-1",

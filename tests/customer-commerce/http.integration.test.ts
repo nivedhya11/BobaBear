@@ -849,6 +849,26 @@ describe("IMP-024 HTTP: payment transport", () => {
           expect(typeof startedBody.payment.expectedAmountPaise).toBe("string");
           const paymentId = startedBody.payment.id as string;
 
+          const activePending = await fetch(
+            `${baseUrl}/api/v1/checkouts/active?cartId=${encodeURIComponent(harness.cartId)}`,
+            { headers: { cookie } },
+          );
+          expect(activePending.status).toBe(200);
+          const activePendingBody = await activePending.json();
+          expect(activePendingBody.checkout.status).toBe("PAYMENT_PENDING");
+          expect(activePendingBody.checkout.openPaymentId).toBe(paymentId);
+
+          const otherCookie = await authCookie(
+            harness.database.connectionString,
+            harness.actors.customerBId,
+          );
+          const crossUserState = await fetch(
+            `${baseUrl}/api/v1/payments/${paymentId}/state`,
+            { headers: { cookie: otherCookie } },
+          );
+          expect(crossUserState.status).toBe(404);
+          expect((await crossUserState.json()).code).toBe("PAYMENT_NOT_FOUND");
+
           const replay = await fetch(`${baseUrl}/api/v1/payments`, {
             method: "POST",
             headers: jsonHeaders(cookie),
